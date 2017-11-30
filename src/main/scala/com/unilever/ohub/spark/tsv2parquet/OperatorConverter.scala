@@ -1,10 +1,10 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import java.text.SimpleDateFormat
 import java.sql.Timestamp
 
-import org.apache.spark.sql.SparkSession
+import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 import org.apache.spark.sql.SaveMode._
+import org.apache.spark.sql.SparkSession
 
 case class OperatorRecord(refId:String, source:String, countryCode:String, status:String, name:String, integrationId:String,
                           created:Option[Timestamp], modified:Option[Timestamp], channel:String, subChannel:String, region:String,
@@ -37,60 +37,15 @@ object OperatorConverter extends App {
 
   import spark.implicits._
 
-  val expectedPartCount = 59
-  def checkLineLength(lineParts: Array[String]) = {
-    if (lineParts.length != expectedPartCount)
-      throw new RuntimeException(s"Found ${lineParts.length} parts, expected ${expectedPartCount} in line: ${lineParts.mkString("‰")}")
-  }
-
-  def parseTimeStampOption(input:String):Option[Timestamp] = {
-    if (input.isEmpty) {
-      None
-    } else {
-      try {
-        Some(new Timestamp(dateFormatter.get.parse(input).getTime))
-      } catch { // some ancient records use an alternate dateformat
-        case _ => Some(new Timestamp(oldDateFormatter.get.parse(input).getTime))
-      }
-    }
-  }
-  def parseIntOption(input:String):Option[Int] = {
-    if (input.isEmpty || input.equals("\"")) {
-      None
-    } else {
-      try {
-        Some(input.toInt)
-      } catch {
-        // there's some > Int.MAX values floating around in mellowmessage data, this is the least invasive workaround
-        case _ => Some(input.toLong.toInt)
-      }
-    }
-  }
-  def parseBoolOption(input:String):Option[Boolean] = {
-    input match {
-      case "" => None
-      case "Y" => Some(true)
-      case "N" => Some(false)
-      case _ => throw new RuntimeException(s"Unsupported boolean value: $input")
-    }
-  }
-
-  val dateFormatter = new ThreadLocal[SimpleDateFormat]() {
-    override protected def initialValue = new SimpleDateFormat("yyyyMMdd hh:mm:ss")
-  }
-  val oldDateFormatter = new ThreadLocal[SimpleDateFormat]() { // some ancient records use an alternate dateformat
-    override protected def initialValue = new SimpleDateFormat("dd.MM.yyyy hh:mm")
-  }
-
   val startOfJob = System.currentTimeMillis()
-
+  val expectedPartCount = 59
   val lines = spark.read.textFile(inputFile)
 
   val records = lines
     .filter(line => !line.isEmpty && !line.startsWith("REF_OPERATOR_ID"))
     .map(line => line.split("‰", -1))
     .map(lineParts => {
-      checkLineLength(lineParts)
+      checkLineLength(lineParts, expectedPartCount)
       try {
         new OperatorRecord(
           refId = lineParts(0),
@@ -138,7 +93,7 @@ object OperatorConverter extends App {
           otmReason = lineParts(42),
           otmDoNotRecalculate = lineParts(43),
           npsPotential = lineParts(44),
-          salesRep = lineParts(44),
+          salesRep = lineParts(45),
           convenienceLevel = lineParts(46),
           privateHousehold = lineParts(47),
           vatNumber = lineParts(48),
