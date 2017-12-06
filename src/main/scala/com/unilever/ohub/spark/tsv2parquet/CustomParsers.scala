@@ -26,29 +26,19 @@ object CustomParsers {
     if (input.isEmpty) {
       None
     } else {
-      try {
         Some(new Timestamp(timestampFormatter.get.parse(input).getTime))
-      } catch { // some ancient records use an alternate dateformat
-        case _ => {
-          try {
-            Some(new Timestamp(oldTimestampFormatter1.get.parse(input).getTime))
-          } catch {
-            case _ => {
-              try {
-                Some(new Timestamp(oldTimestampFormatter2.get.parse(input).getTime))
-              } catch {
-                case _ => {
-                  try {
-                    Some(new Timestamp(dateFormatter.get.parse(input).getTime))
-                  } catch {
-                    case _ => None // Ok, I give up, too many date format anomalies, need to discuss this in team.
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+    }
+  }
+
+  private val longRegex = "([0-9]+)".r
+  private val longRangeRegex = "([0-9]+)-([0-9]+)".r
+
+  def parseLongRangeOption(input:String): Option[Long] = {
+    input match {
+      case "" => None
+      case longRegex(longString) => Some(longString.toLong)
+      case longRangeRegex(longString1,longString2) => Some((longString1.toLong + longString2.toLong)/2)
+      case _ => None
     }
   }
 
@@ -60,15 +50,14 @@ object CustomParsers {
     }
   }
 
-  def parseIntOption(input:String):Option[Int] = {
+  def parseIntOption(input:String):Option[Long] = {
     if (input.isEmpty || input.equals("\"")) {
       None
     } else {
       try {
-        Some(input.toInt)
+        Some(input.toLong)
       } catch {
-        // there's some > Int.MAX values floating around in mellowmessage data, this is the least invasive workaround
-        case _ => Some(input.toLong.toInt)
+        case _: NumberFormatException => Some(input.toLong)
       }
     }
   }
@@ -77,6 +66,8 @@ object CustomParsers {
       case "" => None
       case "Y" => Some(true)
       case "N" => Some(false)
+      case "A" => Some(true)
+      case "D" => Some(false)
       case _ => throw new RuntimeException(s"Unsupported boolean value: $input")
     }
   }
