@@ -81,9 +81,9 @@ object CustomParsers {
     }
   }
 
-  def checkLineLength(lineParts: Array[String], expectedPartCount:Int) = {
+  def checkLineLength(lineParts: Array[String], expectedPartCount:Int):Unit = {
     if (lineParts.length != expectedPartCount)
-      throw new RuntimeException(s"Found ${lineParts.length} parts, expected ${expectedPartCount} in line: ${lineParts.mkString("‰")}")
+      throw new IllegalArgumentException(s"Found ${lineParts.length} parts, expected ${expectedPartCount} in line: ${lineParts.mkString("‰")}")
   }
 
 }
