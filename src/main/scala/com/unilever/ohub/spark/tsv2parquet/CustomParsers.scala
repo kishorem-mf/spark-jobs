@@ -5,28 +5,37 @@ import java.text.SimpleDateFormat
 
 object CustomParsers {
 
-  val timestampFormatter = new ThreadLocal[SimpleDateFormat]() {
+  private val timestampFormatter = new ThreadLocal[SimpleDateFormat]() {
     override protected def initialValue = new SimpleDateFormat("yyyyMMdd HH:mm:ss")
   }
 
-  val oldTimestampFormatter1 = new ThreadLocal[SimpleDateFormat]() { // some ancient records use an alternate dateformat
-    override protected def initialValue = new SimpleDateFormat("dd.MM.yyyy HH:mm")
-  }
-
-  val oldTimestampFormatter2 = new ThreadLocal[SimpleDateFormat]() { // some ancient records use an alternate dateformat
-    override protected def initialValue = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss")
-  }
-
-  val dateFormatter = new ThreadLocal[SimpleDateFormat]() {
-    override protected def initialValue = new SimpleDateFormat("yyyyMMdd")
-  }
-
-  // TODO find something better then nested try statements for this
   def parseTimeStampOption(input:String):Option[Timestamp] = {
     if (input.isEmpty) {
       None
     } else {
         Some(new Timestamp(timestampFormatter.get.parse(input).getTime))
+    }
+  }
+
+  private val dateFormatter = new ThreadLocal[SimpleDateFormat]() {
+    override protected def initialValue = new SimpleDateFormat("yyyyMMdd")
+  }
+
+  // TODO See if we can get rid of the "0" case after isempty
+  def parseDateOption(input:String):Option[Date] = {
+    if (input.isEmpty|| input.equals("0")) {
+      None
+    } else {
+      Some(new Date(dateFormatter.get.parse(input).getTime))
+    }
+  }
+
+  // TODO See if we can get rid of the "\"" case after isempty
+  def parseLongOption(input:String):Option[Long] = {
+    if (input.isEmpty || input.equals("\"")) {
+      None
+    } else {
+      Some(input.toLong)
     }
   }
 
@@ -42,25 +51,6 @@ object CustomParsers {
     }
   }
 
-  def parseDateOption(input:String):Option[Date] = {
-    if (input.isEmpty|| input.equals("0")) {
-      None
-    } else {
-      Some(new Date(dateFormatter.get.parse(input).getTime))
-    }
-  }
-
-  def parseIntOption(input:String):Option[Long] = {
-    if (input.isEmpty || input.equals("\"")) {
-      None
-    } else {
-      try {
-        Some(input.toLong)
-      } catch {
-        case _: NumberFormatException => Some(input.toLong)
-      }
-    }
-  }
   def parseBoolOption(input:String):Option[Boolean] = {
     input match {
       case "" => None
@@ -68,7 +58,7 @@ object CustomParsers {
       case "N" => Some(false)
       case "A" => Some(true)
       case "D" => Some(false)
-      case _ => throw new RuntimeException(s"Unsupported boolean value: $input")
+      case _ => throw new IllegalArgumentException(s"Unsupported boolean value: $input")
     }
   }
 
