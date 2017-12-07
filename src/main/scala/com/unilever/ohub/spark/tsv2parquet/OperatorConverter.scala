@@ -12,11 +12,11 @@ case class OperatorRecord(REF_OPERATOR_ID:String, SOURCE:String, COUNTRY_CODE:St
                           COUNTRY:String, EMAIL_ADDRESS:String, PHONE_NUMBER:String, MOBILE_PHONE_NUMBER:String, FAX_NUMBER:String,
                           OPT_OUT:Option[Boolean], EM_OPT_IN:Option[Boolean], EM_OPT_OUT:Option[Boolean], DM_OPT_IN: Option[Boolean], DM_OPT_OUT:Option[Boolean],
                           TM_OPT_IN:Option[Boolean], TM_OPT_OUT:Option[Boolean], MOB_OPT_IN: Option[Boolean], MOB_OPT_OUT:Option[Boolean],
-                          FAX_OPT_IN:Option[Boolean], FAX_OPT_OUT:Option[Boolean], NR_OF_DISHES:Option[Long], NR_OF_DISHES_ORIGINAL:String, NR_OF_LOCATIONS:String, NR_OF_STAFF:String, AVG_PRICE:String,
-                          DAYS_OPEN:Option[Long], WEEKS_CLOSED:Option[Long], DISTRIBUTOR_NAME:String, DISTRIBUTOR_CUSTOMER_NR:String, OTM:String,
-                          OTM_REASON:String, OTM_DNR:String, NPS_POTENTIAL:String, SALES_REP:String, CONVENIENCE_LEVEL:String,
-                          PRIVATE_HOUSEHOLD:String, VAT_NUMBER:String, OPEN_ON_MONDAY:String, OPEN_ON_TUESDAY:String, OPEN_ON_WEDNESDAY:String,
-                          OPEN_ON_THURSDAY:String, OPEN_ON_FRIDAY:String, OPEN_ON_SATURDAY:String, OPEN_ON_SUNDAY:String, CHAIN_NAME:String,
+                          FAX_OPT_IN:Option[Boolean], FAX_OPT_OUT:Option[Boolean], NR_OF_DISHES:Option[Long], NR_OF_DISHES_ORIGINAL:String, NR_OF_LOCATIONS:String, NR_OF_STAFF:String, AVG_PRICE:Option[Double], AVG_PRICE_ORIGINAL:String,
+                          DAYS_OPEN:Option[Long], DAYS_OPEN_ORIGINAL:String, WEEKS_CLOSED:Option[Long], WEEKS_CLOSED_ORIGINAL:String, DISTRIBUTOR_NAME:String, DISTRIBUTOR_CUSTOMER_NR:String, OTM:String,
+                          OTM_REASON:String, OTM_DNR:Option[Boolean], OTM_DNR_ORIGINAL:String, NPS_POTENTIAL:Option[Double], NPS_POTENTIAL_ORIGINAL:String, SALES_REP:String, CONVENIENCE_LEVEL:String,
+                          PRIVATE_HOUSEHOLD:Option[Boolean], PRIVATE_HOUSEHOLD_ORIGINAL:String, VAT_NUMBER:String, OPEN_ON_MONDAY:Option[Boolean], OPEN_ON_MONDAY_ORIGINAL:String, OPEN_ON_TUESDAY:Option[Boolean], OPEN_ON_TUESDAY_ORIGINAL:String, OPEN_ON_WEDNESDAY:Option[Boolean], OPEN_ON_WEDNESDAY_ORIGINAL:String,
+                          OPEN_ON_THURSDAY:Option[Boolean], OPEN_ON_THURSDAY_ORIGINAL:String, OPEN_ON_FRIDAY:Option[Boolean], OPEN_ON_FRIDAY_ORIGINAL:String, OPEN_ON_SATURDAY:Option[Boolean], OPEN_ON_SATURDAY_ORIGINAL:String, OPEN_ON_SUNDAY:Option[Boolean], OPEN_ON_SUNDAY_ORIGINAL:String, CHAIN_NAME:String,
                           CHAIN_ID:String, KITCHEN_TYPE:String)
 
 object OperatorConverter extends App {
@@ -47,7 +47,7 @@ object OperatorConverter extends App {
     .map(lineParts => {
       checkLineLength(lineParts, expectedPartCount)
       try {
-        new OperatorRecord(
+        OperatorRecord(
           REF_OPERATOR_ID = lineParts(0),
           SOURCE = lineParts(1),
           COUNTRY_CODE = lineParts(2),
@@ -86,26 +86,39 @@ object OperatorConverter extends App {
           NR_OF_DISHES_ORIGINAL = lineParts(33),
           NR_OF_LOCATIONS = lineParts(34),
           NR_OF_STAFF = lineParts(35),
-          AVG_PRICE = lineParts(36),
+          AVG_PRICE = parseDoubleRangeOption(lineParts(36)),
+          AVG_PRICE_ORIGINAL = lineParts(36),
           DAYS_OPEN = parseLongOption(lineParts(37)),
+          DAYS_OPEN_ORIGINAL = lineParts(37),
           WEEKS_CLOSED = parseLongOption(lineParts(38)),
+          WEEKS_CLOSED_ORIGINAL = lineParts(38),
           DISTRIBUTOR_NAME = lineParts(39),
           DISTRIBUTOR_CUSTOMER_NR = lineParts(40),
           OTM = lineParts(41),
           OTM_REASON = lineParts(42),
-          OTM_DNR = lineParts(43),
-          NPS_POTENTIAL = lineParts(44),
+          OTM_DNR = parseBoolOption(lineParts(43)),
+          OTM_DNR_ORIGINAL = lineParts(43),
+          NPS_POTENTIAL = parseDoubleRangeOption(lineParts(44)),
+          NPS_POTENTIAL_ORIGINAL = lineParts(44),
           SALES_REP = lineParts(45),
           CONVENIENCE_LEVEL = lineParts(46),
-          PRIVATE_HOUSEHOLD = lineParts(47),
+          PRIVATE_HOUSEHOLD = parseBoolOption(lineParts(47)),
+          PRIVATE_HOUSEHOLD_ORIGINAL = lineParts(47),
           VAT_NUMBER = lineParts(48),
-          OPEN_ON_MONDAY = lineParts(49),
-          OPEN_ON_TUESDAY = lineParts(50),
-          OPEN_ON_WEDNESDAY = lineParts(51),
-          OPEN_ON_THURSDAY = lineParts(52),
-          OPEN_ON_FRIDAY = lineParts(53),
-          OPEN_ON_SATURDAY = lineParts(54),
-          OPEN_ON_SUNDAY = lineParts(55),
+          OPEN_ON_MONDAY = parseBoolOption(lineParts(49)),
+          OPEN_ON_MONDAY_ORIGINAL = lineParts(49),
+          OPEN_ON_TUESDAY = parseBoolOption(lineParts(50)),
+          OPEN_ON_TUESDAY_ORIGINAL = lineParts(50),
+          OPEN_ON_WEDNESDAY = parseBoolOption(lineParts(51)),
+          OPEN_ON_WEDNESDAY_ORIGINAL = lineParts(51),
+          OPEN_ON_THURSDAY = parseBoolOption(lineParts(52)),
+          OPEN_ON_THURSDAY_ORIGINAL = lineParts(52),
+          OPEN_ON_FRIDAY = parseBoolOption(lineParts(53)),
+          OPEN_ON_FRIDAY_ORIGINAL = lineParts(53),
+          OPEN_ON_SATURDAY = parseBoolOption(lineParts(54)),
+          OPEN_ON_SATURDAY_ORIGINAL = lineParts(54),
+          OPEN_ON_SUNDAY = parseBoolOption(lineParts(55)),
+          OPEN_ON_SUNDAY_ORIGINAL = lineParts(55),
           CHAIN_NAME = lineParts(56),
           CHAIN_ID = lineParts(57),
           KITCHEN_TYPE = lineParts(58)
@@ -120,7 +133,7 @@ object OperatorConverter extends App {
   records.printSchema()
 
   val count = records.count()
-  println(s"Processed ${count} records in ${(System.currentTimeMillis - startOfJob) / 1000}s")
+  println(s"Processed $count records in ${(System.currentTimeMillis - startOfJob) / 1000}s")
   println("Done")
 
 }

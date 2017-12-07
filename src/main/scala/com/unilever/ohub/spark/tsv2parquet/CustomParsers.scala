@@ -51,6 +51,18 @@ object CustomParsers {
     }
   }
 
+  private val doubleRegex = "([0-9.]+)".r
+  private val doubleRangeRegex = "([0-9.]+)-([0-9.]+)".r
+
+  def parseDoubleRangeOption(input:String): Option[Double] = {
+    input match {
+      case "" => None
+      case doubleRegex(doubleString) => Some(doubleString.toDouble)
+      case doubleRangeRegex(doubleString1,doubleString2) => Some((doubleString1.toDouble + doubleString2.toDouble)/2)
+      case _ => None
+    }
+  }
+
   def parseBoolOption(input:String):Option[Boolean] = {
     input match {
       case "" => None
@@ -64,7 +76,7 @@ object CustomParsers {
 
   def checkLineLength(lineParts: Array[String], expectedPartCount:Int):Unit = {
     if (lineParts.length != expectedPartCount)
-      throw new IllegalArgumentException(s"Found ${lineParts.length} parts, expected ${expectedPartCount} in line: ${lineParts.mkString("‰")}")
+      throw new IllegalArgumentException(s"Found ${lineParts.length} parts, expected $expectedPartCount in line: ${lineParts.mkString("‰")}")
   }
 
 }
