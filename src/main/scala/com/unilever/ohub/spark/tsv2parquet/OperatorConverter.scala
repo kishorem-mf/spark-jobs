@@ -28,7 +28,7 @@ object OperatorConverter extends App {
   val inputFile = args(0)
   val outputFile = args(1)
 
-  println(s"Generating parquet from [$inputFile] to [$outputFile]")
+  println(s"Generating operator parquet from [$inputFile] to [$outputFile]")
 
   val spark = SparkSession
     .builder()
@@ -38,14 +38,13 @@ object OperatorConverter extends App {
   import spark.implicits._
 
   val startOfJob = System.currentTimeMillis()
-  val expectedPartCount = 59
   val lines = spark.read.textFile(inputFile)
 
   val records = lines
     .filter(line => !line.isEmpty && !line.startsWith("REF_OPERATOR_ID"))
     .map(line => line.split("‰", -1))
     .map(lineParts => {
-      checkLineLength(lineParts, expectedPartCount)
+      checkLineLength(lineParts, 59)
       try {
         OperatorRecord(
           REF_OPERATOR_ID = lineParts(0),
