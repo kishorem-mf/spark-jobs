@@ -64,12 +64,13 @@ object CustomParsers {
   }
 
   def parseBoolOption(input:String):Option[Boolean] = {
-    input match {
+    input.toUpperCase match {
       case "" => None
       case "Y" => Some(true)
       case "N" => Some(false)
       case "A" => Some(true)
       case "D" => Some(false)
+      case "X" => Some(true)
       case _ => throw new IllegalArgumentException(s"Unsupported boolean value: $input")
     }
   }
