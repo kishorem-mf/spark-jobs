@@ -80,6 +80,10 @@ object CustomParsers {
       case "A" => Some(true)
       case "D" => Some(false)
       case "X" => Some(true)
+      case "1" => Some(true)
+      case "0" => Some(false)
+      case "TRUE" => Some(true)
+      case "FALSE" => Some(false)
       case _ => throw new IllegalArgumentException(s"Unsupported boolean value: $input")
     }
   }
