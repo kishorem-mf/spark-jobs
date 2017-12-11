@@ -39,6 +39,14 @@ object CustomParsers {
     }
   }
 
+  def parseDecimalOption(input:String):Option[BigDecimal] = {
+    if (input.isEmpty) {
+      None
+    } else {
+      Some(BigDecimal(input))
+    }
+  }
+
   private val longRegex = "([0-9]+)".r
   private val longRangeRegex = "([0-9]+)-([0-9]+)".r
 

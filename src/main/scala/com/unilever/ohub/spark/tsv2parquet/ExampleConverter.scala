@@ -18,34 +18,33 @@ object ExampleConverter extends App {
 
   val spark = SparkSession
     .builder()
-    .appName("Example Converter")
+    .appName(this.getClass.getSimpleName)
     .getOrCreate()
 
   import spark.implicits._
 
   val lines: Dataset[String] = spark.read.textFile(inputFile)
-//
-//  val records:Dataset[ExampleRecord] = lines
-//    .filter(line => !line.isEmpty && !line.startsWith("firstname"))
-//    .map(line => line.split('\t'))
-//    .map(lineParts => {
-//      new ExampleRecord(
-//        lineParts(0),
-//        lineParts(1),
-//        lineParts(2).toInt,
-//        lineParts(3)
-//      )
-//    })
-//
-//  records.write.mode(Overwrite).partitionBy("country").format("parquet").save(outputFile)
-//
-//  records.printSchema()
+
+  val records:Dataset[ExampleRecord] = lines
+    .filter(line => !line.isEmpty && !line.startsWith("firstname"))
+    .map(line => line.split('\t'))
+    .map(lineParts => {
+      new ExampleRecord(
+        lineParts(0),
+        lineParts(1),
+        lineParts(2).toInt,
+        lineParts(3)
+      )
+    })
+
+  records.write.mode(Overwrite).partitionBy("country").format("parquet").save(outputFile)
+
+  records.printSchema()
 
   // read the parquet file from disk as case classes and print them to check if all went well
-  spark.read.parquet(outputFile).createOrReplaceTempView("myTable")
-  spark.sql("SELECT * FROM myTable WHERE country = 'NL'").show()
-//    .as[ExampleRecord]
-//    .foreach(println(_))
+  spark.read.parquet(outputFile)
+    .as[ExampleRecord]
+    .foreach(println(_))
 
   println("Done")
 

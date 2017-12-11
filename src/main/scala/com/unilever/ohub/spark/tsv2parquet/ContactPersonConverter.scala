@@ -32,7 +32,7 @@ object ContactPersonConverter extends App {
 
   val spark = SparkSession
     .builder()
-    .appName("Example Converter")
+    .appName(this.getClass.getSimpleName)
     .getOrCreate()
 
   import spark.implicits._
