@@ -17,6 +17,16 @@ object CustomParsers {
     }
   }
 
+  def parseDateTimeStampOption(input:String):Option[Timestamp] = {
+    input match {
+      case "" => None
+      case inputString:String if inputString.matches("[ :0-9]+") && inputString.length == 19 => Some(new Timestamp(timestampFormatter.get.parse(input.replace("-","").replace("/","").replace(".","")).getTime))
+      case inputString:String if inputString.matches("[ :0-9]+") && inputString.length == 17 => Some(new Timestamp(timestampFormatter.get.parse(input).getTime))
+      case inputString:String if inputString.matches("[0-9]+") && inputString.length == 8 => Some(new Timestamp(timestampFormatter.get.parse(input.concat(" 00:00:00")).getTime))
+      case _ => None
+    }
+  }
+
   private val dateFormatter = new ThreadLocal[SimpleDateFormat]() {
     override protected def initialValue = new SimpleDateFormat("yyyyMMdd")
   }
@@ -84,7 +94,16 @@ object CustomParsers {
       case "0" => Some(false)
       case "TRUE" => Some(true)
       case "FALSE" => Some(false)
-      case _ => throw new IllegalArgumentException(s"Unsupported boolean value: $input")
+      case "YES" => Some(true)
+      case "NO" => Some(false)
+      /* Capturing strange cases from data source DEX begin*/
+      case "DIRECTOR COMPRAS" => Some(true)
+      case "RESPONSIBLE FOOD" => Some(true)
+      case "RESPONSIBLE TEA" => Some(true)
+      case "RESPONSIBLE GENERAL" => Some(true)
+      case "OTHER" => Some(true)
+      /* Capturing strange cases from data source DEX end*/
+      case _ => Some(true)
     }
   }
 
