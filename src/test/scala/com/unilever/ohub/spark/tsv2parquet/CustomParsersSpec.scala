@@ -7,96 +7,96 @@ import CustomParsers._
 
 class CustomParsersSpec extends FunSpec with Matchers {
 
-  describe("parseTimeStampOption") {
-    it("should parse 20171215 12:34:56") {
-      assert(parseTimeStampOption("20171215 12:34:56").get.toString == "2017-12-15 12:34:56.0")
-    }
-
+  describe("parseDateTimeStampOption") {
     it("should parse empty string") {
-      assert(parseTimeStampOption("") == None)
-    }
-
-    it("should throw exception on other input") {
-      the[ParseException] thrownBy {
-        parseTimeStampOption("Foo")
-      } should have message "Unparseable date: \"Foo\""
-    }
-  }
-
-  describe("parseDateOption") {
-    it("should parse empty string") {
-      assert(parseDateOption("") == None)
+      assert(parseDateTimeStampOption("").isEmpty)
     }
 
     it("should parse 0 as None") {
-      assert(parseDateOption("") == None)
+      assert(parseDateTimeStampOption("0").isEmpty)
     }
 
-    it("should parse 20171215 as 2017-12-15") {
-      assert(parseDateOption("20171215").get.toString == "2017-12-15")
+    it("should parse 20171215 as 2017-12-15 00:00:00") {
+      assert(parseDateTimeStampOption("20171215").get.toString == "2017-12-15 00:00:00")
+    }
+
+    it("should parse 20171215 12:13:14 as 2017-12-15 12:13:14") {
+      assert(parseDateTimeStampOption("20171215 12:13:14").get.toString == "2017-12-15 12:13:14")
+    }
+
+    it("should parse 2017-12-15 12:13:14 as 2017-12-15 12:13:14") {
+      assert(parseDateTimeStampOption("2017-12-15 12:13:14").get.toString == "2017-12-15 12:13:14")
+    }
+
+    it("should parse 2017/12/15 12:13:14 as 2017-12-15 12:13:14") {
+      assert(parseDateTimeStampOption("2017/12/15 12:13:14").get.toString == "2017-12-15 12:13:14")
+    }
+
+    it("should parse 2017.12.15 12:13:14 as 2017-12-15 12:13:14") {
+      assert(parseDateTimeStampOption("2017.12.15 12:13:14").get.toString == "2017-12-15 12:13:14")
     }
 
     it("should throw exception on other input") {
       the[ParseException] thrownBy {
-        parseDateOption("Foo")
+        parseDateTimeStampOption("Foo")
       } should have message "Unparseable date: \"Foo\""
     }
   }
 
-  describe("parseLongOption") {
+  describe("parseLongRangeOption") {
     it("should parse 42") {
-      assert(parseLongOption("42") == Some(42L))
+      assert(parseLongRangeOption("42").contains(42L))
     }
 
     it("should parse \" as None") {
-      assert(parseLongOption("\"") == None)
+      assert(parseLongRangeOption("\"").isEmpty)
     }
 
     it("should parse empty string") {
-      assert(parseLongOption("") == None)
+      assert(parseLongRangeOption("").isEmpty)
     }
 
     it("should throw exception on other input") {
       the[NumberFormatException] thrownBy {
-        parseLongOption("Foo")
+        parseLongRangeOption("Foo")
       } should have message "For input string: \"Foo\""
     }
   }
 
   describe("parseLongRangeOption") {
     it("should parse 42") {
-      assert(parseLongRangeOption("42") == Some(42L))
+      assert(parseLongRangeOption("42").contains(42L))
     }
     it("should parse 10-30") {
-      assert(parseLongRangeOption("10-30") == Some(20L))
+      assert(parseLongRangeOption("10-30").contains(20L))
     }
     it("should parse empty string") {
-      assert(parseLongRangeOption("") == None)
+      assert(parseLongRangeOption("").isEmpty)
     }
     it("should parse other input as None") {
-      assert(parseLongRangeOption("Foo") == None)
+      assert(parseLongRangeOption("Foo").isEmpty)
     }
   }
 
   describe("parseBoolOption") {
     it("should parse Y to true") {
-      assert(parseBoolOption("Y") == Some(true))
+      assert(parseBoolOption("Y").contains(true))
     }
 
     it("should parse N to false") {
-      assert(parseBoolOption("N") == Some(false))
+      assert(parseBoolOption("N").contains(false))
     }
 
     it("should parse A to true") {
-      assert(parseBoolOption("A") == Some(true))
+      assert(parseBoolOption("A").contains(true))
     }
 
     it("should parse D to false") {
-      assert(parseBoolOption("D") == Some(false))
+      assert(parseBoolOption("D").contains(false))
     }
 
     it("should parse empty string to None") {
-      assert(parseBoolOption("") == None)
+      assert(parseBoolOption("").isEmpty)
     }
 
     it("should throw exception on other input") {
