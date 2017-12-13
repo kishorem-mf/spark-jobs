@@ -1,5 +1,6 @@
 package com.unilever.ohub.spark.tsv2parquet
 
+import java.math.BigInteger
 import java.text.ParseException
 
 import org.scalatest.{FunSpec, Matchers}
@@ -17,29 +18,29 @@ class CustomParsersSpec extends FunSpec with Matchers {
     }
 
     it("should parse 20171215 as 2017-12-15 00:00:00") {
-      assert(parseDateTimeStampOption("20171215").get.toString == "2017-12-15 00:00:00")
+      assert(parseDateTimeStampOption("20171215").get.toString == "2017-12-15 00:00:00.0")
     }
 
     it("should parse 20171215 12:13:14 as 2017-12-15 12:13:14") {
-      assert(parseDateTimeStampOption("20171215 12:13:14").get.toString == "2017-12-15 12:13:14")
+      assert(parseDateTimeStampOption("20171215 12:13:14").get.toString == "2017-12-15 12:13:14.0")
     }
 
     it("should parse 2017-12-15 12:13:14 as 2017-12-15 12:13:14") {
-      assert(parseDateTimeStampOption("2017-12-15 12:13:14").get.toString == "2017-12-15 12:13:14")
+      assert(parseDateTimeStampOption("2017-12-15 12:13:14").get.toString == "2017-12-15 12:13:14.0")
     }
 
     it("should parse 2017/12/15 12:13:14 as 2017-12-15 12:13:14") {
-      assert(parseDateTimeStampOption("2017/12/15 12:13:14").get.toString == "2017-12-15 12:13:14")
+      assert(parseDateTimeStampOption("2017/12/15 12:13:14").get.toString == "2017-12-15 12:13:14.0")
     }
 
     it("should parse 2017.12.15 12:13:14 as 2017-12-15 12:13:14") {
-      assert(parseDateTimeStampOption("2017.12.15 12:13:14").get.toString == "2017-12-15 12:13:14")
+      assert(parseDateTimeStampOption("2017.12.15 12:13:14").get.toString == "2017-12-15 12:13:14.0")
     }
 
     it("should throw exception on other input") {
-      the[ParseException] thrownBy {
+      the[MatchError] thrownBy {
         parseDateTimeStampOption("Foo")
-      } should have message "Unparseable date: \"Foo\""
+      } should have message "Foo (of class java.lang.String)"
     }
   }
 
@@ -76,6 +77,33 @@ class CustomParsersSpec extends FunSpec with Matchers {
     }
   }
 
+  describe("parseBigDecimalRangeOption") {
+    it("should parse None on empty string") {
+      assert(parseBigDecimalRangeOption("").isEmpty)
+    }
+    it("should parse 42") {
+      assert(parseBigDecimalRangeOption("42").contains(BigDecimal(42)))
+    }
+    it("should parse €42") {
+      assert(parseBigDecimalRangeOption("€42").contains(BigDecimal(42)))
+    }
+    it("should parse 12.34") {
+      assert(parseBigDecimalRangeOption("12.34").contains(BigDecimal(12.34)))
+    }
+    it("should parse 10.0-30.40") {
+      assert(parseBigDecimalRangeOption("10.0-30.40").contains(BigDecimal(20.2)))
+    }
+    it("should parse €10.0-30.40") {
+      assert(parseBigDecimalRangeOption("€10.0-30.40").contains(BigDecimal(20.2)))
+    }
+    it("should parse 10.0-€30.40") {
+      assert(parseBigDecimalRangeOption("10.0-€30.40").contains(BigDecimal(20.2)))
+    }
+    it("should return None on unknown input") {
+      assert(parseBigDecimalRangeOption("Foo").isEmpty)
+    }
+  }
+
   describe("parseBoolOption") {
     it("should parse Y to true") {
       assert(parseBoolOption("Y").contains(true))
@@ -98,9 +126,7 @@ class CustomParsersSpec extends FunSpec with Matchers {
     }
 
     it("should throw exception on other input") {
-      the[IllegalArgumentException] thrownBy {
-        parseBoolOption("Foo")
-      } should have message "Unsupported boolean value: Foo"
+      assert(parseBoolOption("Foo").isEmpty)
     }
   }
 

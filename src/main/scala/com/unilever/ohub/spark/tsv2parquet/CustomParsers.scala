@@ -14,7 +14,10 @@ object CustomParsers {
   def parseDateTimeStampOption(input:String):Option[Timestamp] = {
     input match {
       case "" => None
-      case inputString:String if inputString.matches("[ :0-9]+") && inputString.length == 19 => Some(new Timestamp(timestampFormatter.get.parse(input.replace("-","").replace("/","").replace(".","")).getTime))
+      case "0" => None
+      case inputString:String if inputString.matches("[ /:0-9]+") && inputString.length == 19 => Some(new Timestamp(timestampFormatter.get.parse(input.replace("/","")).getTime))
+      case inputString:String if inputString.matches("[ \\-:0-9]+") && inputString.length == 19 => Some(new Timestamp(timestampFormatter.get.parse(input.replace("-","")).getTime))
+      case inputString:String if inputString.matches("[ \\.:0-9]+") && inputString.length == 19 => Some(new Timestamp(timestampFormatter.get.parse(input.replace(".","")).getTime))
       case inputString:String if inputString.matches("[ :0-9]+") && inputString.length == 17 => Some(new Timestamp(timestampFormatter.get.parse(input).getTime))
       case inputString:String if inputString.matches("[0-9]+") && inputString.length == 8 => Some(new Timestamp(timestampFormatter.get.parse(input.concat(" 00:00:00")).getTime))
     }
@@ -33,30 +36,28 @@ object CustomParsers {
     }
   }
 
-  private val longRegex = "([-0-9]+)".r
-  private val longRangeRegex = "([-0-9]+)-([-0-9]+)".r
+  private val longRegex = "(-?[0-9]+)[\\.,]?[0-9]*".r
+  private val longRangeRegex = "([0-9]+)-([0-9]+)".r
 
   def parseLongRangeOption(input:String): Option[Long] = {
     input match {
       case "" => None
       case longRegex(longString) => Some(longString.toLong)
       case longRangeRegex(longString1,longString2) => Some((longString1.toLong + longString2.toLong)/2)
-      case inputString:String if inputString.matches("[-,0-9]+") => Some(inputString.substring(0,inputString.indexOf(",")).toLong)
-      case inputString:String if inputString.matches("[-.0-9]+") => Some(inputString.substring(0,inputString.indexOf(".")).toLong)
-      case _ => Some(0.toLong)
+      case _ => None
     }
   }
 
-  private val doubleRegex = "([0-9.]+)".r
-  private val doubleRangeRegex = "([0-9.]+)-([0-9.]+)".r
+  private val currencies = "$₠₡₢₣₤₥₦₧₨₩₪₫€₭₮₯₰₱₲₳₴₵₶₷₸₹"
+  private val doubleRegex = s"[$currencies]?([0-9.]+)".r
+  private val doubleRangeRegex = s"[$currencies]?([0-9.]+)-[$currencies]?([0-9.]+)".r
 
-  // TODO Find something more efficient for that replaceAll
-  def parseBigIntegerRangeOption(input:String): Option[BigDecimal] = {
-    input.replaceAll("[$₠₡₢₣₤₥₦₧₨₩₪₫€₭₮₯₰₱₲₳₴₵₶₷₸₹]","") match {
+  def parseBigDecimalRangeOption(input:String): Option[BigDecimal] = {
+    input match {
       case "" => None
       case doubleRegex(bigDecimalString) => Some(BigDecimal(bigDecimalString))
       case doubleRangeRegex(bigDecimalString1,bigDecimalString2) => Some((BigDecimal(bigDecimalString1) + BigDecimal(bigDecimalString2))/2)
-      case _ => Some(BigDecimal(0))
+      case _ => None
     }
   }
 
@@ -80,7 +81,7 @@ object CustomParsers {
         case "RESPONSIBLE TEA" => Some(true)
         case "RESPONSIBLE GENERAL" => Some(true)
         case "OTHER" => Some(true)
-        case _ => Some(true)
+        case _ => None
       /* Capturing strange cases from data source DEX end*/
     }
   }
