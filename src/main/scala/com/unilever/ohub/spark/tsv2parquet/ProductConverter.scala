@@ -63,7 +63,7 @@ object ProductConverter extends App {
       }
     })
 
-  records.write.mode(Overwrite).format("parquet").save(outputFile)
+  records.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
 
   records.printSchema()
 
