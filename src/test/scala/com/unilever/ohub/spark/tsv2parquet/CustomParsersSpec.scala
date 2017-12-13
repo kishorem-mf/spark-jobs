@@ -43,23 +43,18 @@ class CustomParsersSpec extends FunSpec with Matchers {
     }
   }
 
-  describe("parseLongRangeOption") {
-    it("should parse 42") {
-      assert(parseLongRangeOption("42").contains(42L))
+  describe("parseBigDecimalOption") {
+    it("should parse an empty string") {
+      assert(parseBigDecimalOption("").isEmpty)
     }
-
-    it("should parse \" as None") {
-      assert(parseLongRangeOption("\"").isEmpty)
+    it("should parse -1000,96 as -1000.96") {
+      assert(parseBigDecimalOption("-1000,96").get.toString == "-1000.96")
     }
-
-    it("should parse empty string") {
-      assert(parseLongRangeOption("").isEmpty)
+    it("should parse -1000.96 as -1000.96") {
+      assert(parseBigDecimalOption("-1000.96").get.toString == "-1000.96")
     }
-
-    it("should throw exception on other input") {
-      the[NumberFormatException] thrownBy {
-        parseLongRangeOption("Foo")
-      } should have message "For input string: \"Foo\""
+    it("should parse abc as 0") {
+      assert(parseBigDecimalOption("abc").get.toString == "0")
     }
   }
 
@@ -69,6 +64,9 @@ class CustomParsersSpec extends FunSpec with Matchers {
     }
     it("should parse 10-30") {
       assert(parseLongRangeOption("10-30").contains(20L))
+    }
+    it("should parse \" as None") {
+      assert(parseLongRangeOption("\"").isEmpty)
     }
     it("should parse empty string") {
       assert(parseLongRangeOption("").isEmpty)
@@ -119,6 +117,5 @@ class CustomParsersSpec extends FunSpec with Matchers {
       }
     }
   }
-
 
 }

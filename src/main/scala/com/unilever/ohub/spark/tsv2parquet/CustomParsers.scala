@@ -24,7 +24,7 @@ object CustomParsers {
     override protected def initialValue = new SimpleDateFormat("yyyyMMdd")
   }
 
-  def parseDecimalOption(input:String):Option[BigDecimal] = {
+  def parseBigDecimalOption(input:String):Option[BigDecimal] = {
     input match {
       case "" => None
       case inputString:String if inputString.matches("[-,0-9]+") => Some(BigDecimal(inputString.replace(",",".")))
@@ -47,12 +47,12 @@ object CustomParsers {
     }
   }
 
-  private val doubleRegex = "([-0-9.]+)".r
-  private val doubleRangeRegex = "([-0-9.]+)-([-0-9.]+)".r
+  private val doubleRegex = "([0-9.]+)".r
+  private val doubleRangeRegex = "([0-9.]+)-([0-9.]+)".r
 
   // TODO Find something more efficient for that replaceAll
   def parseBigIntegerRangeOption(input:String): Option[BigDecimal] = {
-    input.replaceAll("[\u20A0\u20A1\u20A2\u20A3\u20A4\u20A5\u20A6\u20A7\u20A8\u20A9\u20AA\u20AB\u20AC\u20AD\u20AE\u20AF\u20B0\u20B1\u20B2\u20B3\u20B4\u20B5\u20B6\u20B7\u20B8\u20B9]","") match {
+    input.replaceAll("[$₠₡₢₣₤₥₦₧₨₩₪₫€₭₮₯₰₱₲₳₴₵₶₷₸₹]","") match {
       case "" => None
       case doubleRegex(bigDecimalString) => Some(BigDecimal(bigDecimalString))
       case doubleRangeRegex(bigDecimalString1,bigDecimalString2) => Some((BigDecimal(bigDecimalString1) + BigDecimal(bigDecimalString2))/2)

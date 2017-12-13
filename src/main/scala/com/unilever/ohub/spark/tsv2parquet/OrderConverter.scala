@@ -61,14 +61,14 @@ object OrderConverter extends App {
           REF_PRODUCT_ID = lineParts(8),
           QUANTITY = parseLongRangeOption(lineParts(9)),
           QUANTITY_ORIGINAL = lineParts(9),
-          ORDER_LINE_VALUE = parseDecimalOption(lineParts(10)), //TODO should be BigDecimal
+          ORDER_LINE_VALUE = parseBigDecimalOption(lineParts(10)), //TODO should be BigDecimal
           ORDER_LINE_VALUE_ORIGINAL = lineParts(10),
-          ORDER_VALUE = parseDecimalOption(lineParts(11)),
+          ORDER_VALUE = parseBigDecimalOption(lineParts(11)),
           ORDER_VALUE_ORIGINAL = lineParts(11),
           WHOLESALER = lineParts(12),
           CAMPAIGN_CODE = lineParts(13),
           CAMPAIGN_NAME = lineParts(14),
-          UNIT_PRICE = parseDecimalOption(lineParts(15)), //TODO should be BigDecimal
+          UNIT_PRICE = parseBigDecimalOption(lineParts(15)), //TODO should be BigDecimal
           UNIT_PRICE_ORIGINAL = lineParts(15),
           CURRENCY_CODE = lineParts(16),
           DATE_CREATED = parseDateTimeStampOption(lineParts(17)),
