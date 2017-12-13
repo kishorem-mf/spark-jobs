@@ -6,8 +6,11 @@ import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 import org.apache.spark.sql.SaveMode.Overwrite
 import org.apache.spark.sql.SparkSession
 
-
-case class ProductRecord(REF_PRODUCT_ID:String, SOURCE:String, COUNTRY_CODE:String, STATUS:String, DATE_CREATED:String, DATE_MODIFIED:String, PRODUCT_NAME:String, EAN_CU:String, EAN_DU:String, MRDR:String, UNIT:String, UNIT_PRICE:String, UNIT_PRICE_CURRENCY:String)
+case class ProductRecord(
+                        REF_PRODUCT_ID:String, SOURCE:String, COUNTRY_CODE:String, STATUS:Option[Boolean], STATUS_ORIGINAL:String, DATE_CREATED:Option[Timestamp],
+                        DATE_CREATED_ORIGINAL:String, DATE_MODIFIED:Option[Timestamp], DATE_MODIFIED_ORIGINAL:String, PRODUCT_NAME:String, EAN_CU:String, EAN_DU:String,
+                        MRDR:String, UNIT:String, UNIT_PRICE:Option[BigDecimal], UNIT_PRICE_ORIGINAL:String, UNIT_PRICE_CURRENCY:String
+                        )
 
 object ProductConverter extends App {
   if (args.length != 2) {
@@ -40,15 +43,19 @@ object ProductConverter extends App {
           REF_PRODUCT_ID = lineParts(0),
           SOURCE = lineParts(1),
           COUNTRY_CODE = lineParts(2),
-          STATUS = lineParts(3),
-          DATE_CREATED = lineParts(4),
-          DATE_MODIFIED = lineParts(5),
+          STATUS = parseBoolOption(lineParts(3)),
+          STATUS_ORIGINAL = lineParts(3),
+          DATE_CREATED = parseDateTimeStampOption(lineParts(4)),
+          DATE_CREATED_ORIGINAL = lineParts(4),
+          DATE_MODIFIED = parseDateTimeStampOption(lineParts(5)),
+          DATE_MODIFIED_ORIGINAL = lineParts(5),
           PRODUCT_NAME = lineParts(6),
           EAN_CU = lineParts(7),
           EAN_DU = lineParts(8),
           MRDR = lineParts(9),
           UNIT = lineParts(10),
-          UNIT_PRICE = lineParts(11),
+          UNIT_PRICE = parseBigDecimalOption(lineParts(11)),
+          UNIT_PRICE_ORIGINAL = lineParts(11),
           UNIT_PRICE_CURRENCY = lineParts(12)
         )
       } catch {
@@ -63,5 +70,4 @@ object ProductConverter extends App {
   val count = records.count()
   println(s"Processed $count records in ${(System.currentTimeMillis - startOfJob) / 1000}s")
   println("Done")
-
 }
