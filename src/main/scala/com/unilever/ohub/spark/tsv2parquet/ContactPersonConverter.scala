@@ -37,7 +37,7 @@ object ContactPersonConverter extends App {
 
   import spark.implicits._
 
-  val expectedPartCount = 48
+  lazy val expectedPartCount = 48
 
   val startOfJob = System.currentTimeMillis()
 
