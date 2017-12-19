@@ -11,6 +11,13 @@ object CustomParsers {
     override protected def initialValue = new SimpleDateFormat("yyyyMMdd HH:mm:ss")
   }
 
+  def parseStringOption(input:String):Option[String] = {
+    input match {
+      case "" => None
+      case _ => Some(input)
+    }
+  }
+
   def parseDateTimeStampOption(input:String):Option[Timestamp] = {
     input match {
       case "" => None

@@ -8,6 +8,16 @@ import CustomParsers._
 
 class CustomParsersSpec extends FunSpec with Matchers {
 
+  describe("parseStringOption") {
+    it("should parse an empty string") {
+      assert(parseStringOption("").isEmpty)
+    }
+
+    it("should parse myTest as a string") {
+      assert(parseStringOption("myTest").get.toString == "myTest")
+    }
+  }
+
   describe("parseDateTimeStampOption") {
     it("should parse empty string") {
       assert(parseDateTimeStampOption("").isEmpty)
