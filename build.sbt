@@ -10,4 +10,7 @@ libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion % Compi
   ExclusionRule(organization = "org.scalatest") // for some reason spark-core pulls in an old version as compile dependency
 }
 libraryDependencies += "org.apache.spark" %% "spark-sql"  % sparkVersion % Compile exclude("org.scalatest", "scalatest")
+
+libraryDependencies += "org.apache.spark" %% "spark-hive" % sparkVersion % Compile exclude("org.scalatest", "scalatest")
+
 libraryDependencies += "org.scalatest"    %% "scalatest"  % "3.0.4"      % Test

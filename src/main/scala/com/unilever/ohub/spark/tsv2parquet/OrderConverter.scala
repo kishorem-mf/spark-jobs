@@ -1,10 +1,13 @@
 package com.unilever.ohub.spark.tsv2parquet
 
+import java.io.InputStream
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 import org.apache.spark.sql.SaveMode.Overwrite
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
+
+import scala.io.Source
 
 
 case class OrderRecord(REF_ORDER_ID:Option[String], SOURCE:Option[String], COUNTRY_CODE:Option[String], STATUS:Option[Boolean], STATUS_ORIGINAL:Option[String], REF_OPERATOR_ID:Option[String],
@@ -30,6 +33,15 @@ object OrderConverter extends App {
 
   import spark.implicits._
 
+  val inputStream:InputStream = getClass.getResourceAsStream("/country_codes.csv")
+  val readSeq:Seq[String] = Source.fromInputStream(inputStream).getLines().toSeq
+  val countryRecordsDF:DataFrame = spark.sparkContext.parallelize(readSeq)
+    .toDS()
+    .map(_.split(","))
+    .map(cells => (parseStringOption(cells(6)),parseStringOption(cells(2)),parseStringOption(cells(9))))
+    .filter(line => line != ("ISO3166_1_Alpha_2","official_name_en","ISO4217_currency_alphabetic_code"))
+    .toDF("COUNTRY_CODE","COUNTRY","CURRENCY_CODE")
+
   lazy val expectedPartCount = 19
 
   val startOfJob = System.currentTimeMillis()
@@ -43,7 +55,7 @@ object OrderConverter extends App {
     }
   }
 
-  val records = lines
+  val recordsDF:DataFrame = lines
     .filter(line => !line.isEmpty && !line.startsWith("REF_ORDER_ID"))
     .map(line => line.split("‰", -1))
     .map(lineParts => {
@@ -80,12 +92,24 @@ object OrderConverter extends App {
         case e:Exception => throw new RuntimeException(s"Exception while parsing line: ${lineParts.mkString("‰")}", e)
       }
     })
+    .toDF()
 
-  records.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
+  recordsDF.createOrReplaceTempView("ORDERS")
+  countryRecordsDF.createOrReplaceTempView("COUNTRIES")
+  val joinedRecordsDF:DataFrame = spark.sql(
+    """
+      |SELECT ORD.REF_ORDER_ID,ORD.SOURCE,ORD.COUNTRY_CODE,ORD.STATUS,ORD.STATUS_ORIGINAL,ORD.REF_OPERATOR_ID,ORD.REF_CONTACT_PERSON_ID,ORD.ORDER_TYPE,ORD.TRANSACTION_DATE,ORD.TRANSACTION_DATE_ORIGINAL,ORD.REF_PRODUCT_ID,ORD.QUANTITY,ORD.QUANTITY_ORIGINAL,ORD.ORDER_LINE_VALUE,ORD.ORDER_LINE_VALUE_ORIGINAL,ORD.ORDER_VALUE,ORD.ORDER_VALUE_ORIGINAL,ORD.WHOLESALER,ORD.CAMPAIGN_CODE,ORD.CAMPAIGN_NAME,ORD.UNIT_PRICE,ORD.UNIT_PRICE_ORIGINAL,CTR.CURRENCY_CODE,ORD.DATE_CREATED,ORD.DATE_MODIFIED
+      |FROM ORDERS ORD
+      |LEFT JOIN COUNTRIES CTR
+      | ON ORD.COUNTRY_CODE = CTR.COUNTRY_CODE
+      |WHERE CTR.CURRENCY_CODE IS NOT NULL
+    """.stripMargin)
 
-  records.printSchema()
+  joinedRecordsDF.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
 
-  val count = records.count()
+  joinedRecordsDF.printSchema()
+
+  val count = joinedRecordsDF.count()
   println(s"Processed $count records in ${(System.currentTimeMillis - startOfJob) / 1000}s")
   println("Done")
 

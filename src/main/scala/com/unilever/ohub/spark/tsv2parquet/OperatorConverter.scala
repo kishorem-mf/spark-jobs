@@ -1,10 +1,15 @@
 package com.unilever.ohub.spark.tsv2parquet
 
 import java.sql.Timestamp
+import java.io.InputStream
 
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SaveMode._
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+
+import scala.io.Source
 
 case class OperatorRecord(REF_OPERATOR_ID:Option[String], SOURCE:Option[String], COUNTRY_CODE:Option[String], STATUS:Option[Boolean], STATUS_ORIGINAL:Option[String], NAME:Option[String], OPR_INTEGRATION_ID:Option[String],
                           DATE_CREATED:Option[Timestamp], DATE_MODIFIED:Option[Timestamp], CHANNEL:Option[String], SUB_CHANNEL:Option[String], REGION:Option[String],
@@ -37,12 +42,21 @@ object OperatorConverter extends App {
 
   import spark.implicits._
 
+  val inputStream:InputStream = getClass.getResourceAsStream("/country_codes.csv")
+  val readSeq:Seq[String] = Source.fromInputStream(inputStream).getLines().toSeq
+  val countryRecordsDF:DataFrame = spark.sparkContext.parallelize(readSeq)
+    .toDS()
+    .map(_.split(","))
+    .map(cells => (parseStringOption(cells(6)),parseStringOption(cells(2)),parseStringOption(cells(9))))
+    .filter(line => line != ("ISO3166_1_Alpha_2","official_name_en","ISO4217_currency_alphabetic_code"))
+    .toDF("COUNTRY_CODE","COUNTRY","CURRENCY_CODE")
+
   lazy val expectedPartCount = 59
 
   val startOfJob = System.currentTimeMillis()
-  val lines = spark.read.textFile(inputFile)
+  val inputLines:Dataset[String] = spark.read.textFile(inputFile)
 
-  val records = lines
+  val recordsDF:DataFrame = inputLines
     .filter(line => !line.isEmpty && !line.startsWith("REF_OPERATOR_ID"))
     .map(line => line.split("‰", -1))
     .map(lineParts => {
@@ -128,13 +142,24 @@ object OperatorConverter extends App {
         case e:Exception => throw new RuntimeException(s"Exception while parsing line: ${lineParts.mkString("‰")}", e)
       }
     })
+    .toDF()
 
-  records.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
+  recordsDF.createOrReplaceTempView("OPERATORS")
+  countryRecordsDF.createOrReplaceTempView("COUNTRIES")
+  val joinedRecordsDF:DataFrame = spark.sql(
+    """
+      |SELECT OPR.REF_OPERATOR_ID,OPR.SOURCE,OPR.COUNTRY_CODE,OPR.STATUS,OPR.STATUS_ORIGINAL,OPR.NAME,OPR.OPR_INTEGRATION_ID,OPR.DATE_CREATED,OPR.DATE_MODIFIED,OPR.CHANNEL,OPR.SUB_CHANNEL,OPR.REGION,OPR.STREET,OPR.HOUSENUMBER,OPR.HOUSENUMBER_EXT,OPR.CITY,OPR.ZIP_CODE,OPR.STATE,CTR.COUNTRY,OPR.EMAIL_ADDRESS,OPR.PHONE_NUMBER,OPR.MOBILE_PHONE_NUMBER,OPR.FAX_NUMBER,OPR.OPT_OUT,OPR.EM_OPT_IN,OPR.EM_OPT_OUT,OPR.DM_OPT_IN,OPR.DM_OPT_OUT,OPR.TM_OPT_IN,OPR.TM_OPT_OUT,OPR.MOB_OPT_IN,OPR.MOB_OPT_OUT,OPR.FAX_OPT_IN,OPR.FAX_OPT_OUT,OPR.NR_OF_DISHES,OPR.NR_OF_DISHES_ORIGINAL,OPR.NR_OF_LOCATIONS,OPR.NR_OF_STAFF,OPR.AVG_PRICE,OPR.AVG_PRICE_ORIGINAL,OPR.DAYS_OPEN,OPR.DAYS_OPEN_ORIGINAL,OPR.WEEKS_CLOSED,OPR.WEEKS_CLOSED_ORIGINAL,OPR.DISTRIBUTOR_NAME,OPR.DISTRIBUTOR_CUSTOMER_NR,OPR.OTM,OPR.OTM_REASON,OPR.OTM_DNR,OPR.OTM_DNR_ORIGINAL,OPR.NPS_POTENTIAL,OPR.NPS_POTENTIAL_ORIGINAL,OPR.SALES_REP,OPR.CONVENIENCE_LEVEL,OPR.PRIVATE_HOUSEHOLD,OPR.PRIVATE_HOUSEHOLD_ORIGINAL,OPR.VAT_NUMBER,OPR.OPEN_ON_MONDAY,OPR.OPEN_ON_MONDAY_ORIGINAL,OPR.OPEN_ON_TUESDAY,OPR.OPEN_ON_TUESDAY_ORIGINAL,OPR.OPEN_ON_WEDNESDAY,OPR.OPEN_ON_WEDNESDAY_ORIGINAL,OPR.OPEN_ON_THURSDAY,OPR.OPEN_ON_THURSDAY_ORIGINAL,OPR.OPEN_ON_FRIDAY,OPR.OPEN_ON_FRIDAY_ORIGINAL,OPR.OPEN_ON_SATURDAY,OPR.OPEN_ON_SATURDAY_ORIGINAL,OPR.OPEN_ON_SUNDAY,OPR.OPEN_ON_SUNDAY_ORIGINAL,OPR.CHAIN_NAME,OPR.CHAIN_ID,OPR.KITCHEN_TYPE
+      |FROM OPERATORS OPR
+      |LEFT JOIN COUNTRIES CTR
+      | ON OPR.COUNTRY_CODE = CTR.COUNTRY_CODE
+      |WHERE CTR.COUNTRY IS NOT NULL
+    """.stripMargin)
 
-  records.printSchema()
+  joinedRecordsDF.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
 
-  val count = records.count()
+  joinedRecordsDF.printSchema()
+
+  val count = joinedRecordsDF.count()
   println(s"Processed $count records in ${(System.currentTimeMillis - startOfJob) / 1000}s")
   println("Done")
-
 }
