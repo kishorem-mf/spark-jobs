@@ -1,143 +1,83 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import java.lang.IndexOutOfBoundsException
+import scala.sys.process._
 
 object StringFunctions extends App {
-  for (i <- 0 to 1000000) calculateSimilarity("test".toCharArray,"roderick".toCharArray)
-  println(calculateSimilarity(null,"roderick".toCharArray))
-  def calculateSimilarity(sourceString:Array[Char],targetString:Array[Char]):Double = {
-    def parseCharArrayOption(input:Array[Char]):Option[Array[Char]] = {
-      input match {
-        case null => None
-        case _ => Some(input)
-      }
-    }
+  val startOfJob = System.currentTimeMillis()
+  val COUNT = 1000000
+  val charArrayFirst = "Συγχαρητήρια"
+  val charArraySecond = "Συγχαρητχαήρια"
+  for (_ <- 0 until COUNT) calculateSimilarity(charArrayFirst,charArraySecond)
+  println(calculateSimilarity(charArrayFirst,charArraySecond))
+  println(charArrayFirst + ":" + charArraySecond)
+  println(s"Processed $COUNT records in ${(System.currentTimeMillis - startOfJob) / 1000}s")
 
-    var lengthSource = 0
-    parseCharArrayOption(sourceString) match {
-      case None => lengthSource = 0
-      case _ => lengthSource = sourceString.length
-    }
+  def calculateSimilarityCPlusPlus(sourceString:Array[Char],targetString:Array[Char]):Double = {
+    val command = "C:\\Users\\roderik-von.maltzahn\\Documents\\1_roderik\\1_crm\\07_projects\\15_ohub_improvement\\03_ohub_2.0\\09_code\\string_similarity.exe " + sourceString.toString + " " + targetString.toString
+    val output = command.!!
+    output.toDouble
+  }
 
-    var lengthTarget = 0
-    parseCharArrayOption(targetString) match {
-      case None => lengthTarget = 0
-      case _ => lengthTarget = targetString.length
-    }
-
-//    val lengthSource = parseCharArrayOption(sourceString).get.length
-//    val lenghtTarget = parseCharArrayOption(targetString).length
-    val CORRECTION = 30
-
-//    Decide which should be the source string and set variables
-    val lengthSourceMinusTarget = lengthSource - lengthTarget
-    var sourceIsLonger = lengthSourceMinusTarget > 0
-    val lengthIsEqual = lengthSourceMinusTarget == 0
-    var firstString:Array[Char] = null
-    var secondString:Array[Char] = null
-    var lengthFirstString:Int = 0
-    var lengthSecondString:Int = 0
-
-    if (lengthSourceMinusTarget == 0) {
-      for(
-          i <- 0 until lengthSource
-          if sourceString(i) > targetString(i)
-      ) yield sourceIsLonger = true
-//      Return 1 when equal
-      if (!sourceIsLonger && sourceString.sameElements(targetString)) 1
-    }
-
-//    Set the first and the second string
-    if (sourceIsLonger) {
-      firstString = targetString
-      secondString = sourceString
-      lengthFirstString = lengthTarget
-      lengthSecondString = lengthSource
+  def calculateSimilarity(first:String, second:String, setToLower:Boolean = true, lengthThreshold:Int = 6):Double = {
+    if(first == null || second == null) return 0.0
+    val firstInput = if(setToLower) first.toLowerCase() else first
+    val secondInput = if(setToLower) second.toLowerCase() else second
+    if(firstInput == secondInput) return 1.0
+    val staysFirstString = if(firstInput.length == secondInput.length) firstInput < secondInput else if (firstInput.length < secondInput.length) true else false
+    var firstString:String= firstInput
+    var secondString:String = secondInput
+    if(staysFirstString) {
+      firstString = firstInput
+      secondString = secondInput
     } else {
-      firstString = sourceString
-      secondString = targetString
-      lengthFirstString = lengthSource
-      lengthSecondString = lengthTarget
+      firstString = secondInput
+      secondString = firstInput
     }
 
-//    Calculate how many times Similarity must by multiplied with itself to correct for big string comparisons
-    val POWER:Int = 1 + ((lengthFirstString - (lengthFirstString / CORRECTION)) / CORRECTION)
-    var similarity:Double = 0.0
-    def calculateSimilarityToPower(similarity:Double,input:Int = POWER):Double = {
-      Math.pow(similarity,input)
+    val lengthFirstString = firstString.length.toDouble
+    val lengthSecondString = secondString.length.toDouble
+    val lengthDifference = math.abs(lengthFirstString - lengthSecondString)
+    if(lengthSecondString < lengthThreshold) return -1.0
+
+    if(lengthFirstString == 1) {
+      lengthSecondString match {
+        case 1.0 => return 0.0
+        case _ => return 1.0 / lengthSecondString
+      }
     }
+
     try {
-//    Deal with the case when source is 1 char and target is many chars
-      if (lengthFirstString == 1) {
-        for(
-            i <- 0 until lengthTarget
-            if firstString(0).toLower.equals(secondString(0).toLower)
-        ) yield return calculateSimilarityToPower(lengthFirstString.toDouble/lengthSecondString.toDouble)
-      }
+      var matchPairCounter: Double = 0.0
+      var totalSinglesSameIndex: Double = 0.0
+      for (i <- 0 until lengthFirstString.toInt) {
+        val firstCharOne =  firstString.charAt(i)
+        val secondCharOne = if(i < lengthFirstString - 1) firstString.charAt(i + 1) else '‰'
+        val sameIndexFirstCharTwo = secondString.charAt(i)
+        if (firstCharOne == sameIndexFirstCharTwo) totalSinglesSameIndex += 1.0
 
-//    Calculate total counts
-      var sameCharAtSameIndexBothStringsTotal:Int = 0
-      var samePairInSourceStringCount:Int = 0
-      var samePairInTargetStringCount:Int = 0
-      var samePairInSourceStringTotal:Int = 0
-      var samePairInTargetStringTotal:Int = 0
-      for (i <- 0 until lengthFirstString - 1) {
-//      1. Count chars at same index in both strings
-        if (firstString(i).toLower.equals(secondString(i).toLower)) sameCharAtSameIndexBothStringsTotal += 1
-//      2. Check occurrence of pairs
-        for (j <- 0 until (lengthFirstString - 1)) {
-//        First string
-          if (
-            firstString(i).toLower.equals(firstString(j).toLower)
-            &&
-            firstString(i + 1).toLower.equals(firstString(j + 1).toLower)
-          ) samePairInSourceStringCount += 1
-//        Second string
-          if (
-            firstString(i).toLower.equals(secondString(j).toLower)
-            &&
-            firstString(i + 1).toLower.equals(secondString(j + 1).toLower)
-          ) samePairInTargetStringCount += 1
-        }
-//      3. Calculate total of matched pairs
-        if (samePairInTargetStringCount > samePairInSourceStringCount) samePairInTargetStringCount = samePairInSourceStringCount
-        samePairInSourceStringTotal = samePairInSourceStringCount
-        samePairInTargetStringTotal = samePairInTargetStringCount
-      }
-
-//    Calculate similarity if not calculated
-      val relativeSizeFirstString:Double = lengthFirstString.toDouble / lengthSecondString.toDouble
-      var pairMatchRatio:Double = {
-          if (
-            ((samePairInSourceStringTotal - samePairInTargetStringTotal) > 1)
-            &&
-            (relativeSizeFirstString != 1.0)
-          ) {
-            samePairInTargetStringTotal.toDouble / samePairInSourceStringTotal.toDouble
-          } else {
-            samePairInTargetStringTotal.toDouble / samePairInSourceStringTotal.toDouble
+        var isCountedPair = false
+        for (j <- 0 until lengthSecondString.toInt) {
+          val firstCharTwo = secondString.charAt(j)
+          val secondCharTwo = if(j < lengthSecondString.toInt - 1) secondString.charAt(j + 1) else null
+          val isDoubleMatch = firstCharOne == firstCharTwo && secondCharOne == secondCharTwo
+          if (isDoubleMatch && !isCountedPair) {
+            matchPairCounter += 1.0
+            isCountedPair = true
           }
         }
-      val sameIndexMatchRatio:Double = sameCharAtSameIndexBothStringsTotal.toDouble / lengthSecondString.toDouble
-      val hasMoreIndexMatches = pairMatchRatio < sameIndexMatchRatio
-      val hasOneOrMoreMatches = (samePairInTargetStringTotal + sameCharAtSameIndexBothStringsTotal) != 0
-
-      if (hasMoreIndexMatches) {
-        similarity = sameIndexMatchRatio * relativeSizeFirstString
-      } else {
-        if (hasOneOrMoreMatches) {
-          similarity = pairMatchRatio * relativeSizeFirstString
-        } else {
-          similarity = 0
-        }
       }
+
+//      Calculate how many times Similarity must by multiplied with itself to correct for big string comparisons
+      val CORRECTION:Int = 30
+      val POWER:Int = 1 + ((lengthFirstString.toInt - (lengthFirstString.toInt / CORRECTION)) / CORRECTION)
+      val pairDenominator = if(lengthFirstString == lengthSecondString) lengthDifference + lengthFirstString else lengthDifference + lengthFirstString - 1
+      def calculateSimilarityToPower(similarity:Double,input:Int = POWER):Double = {
+        Math.pow(similarity,input)
+      }
+
+      calculateSimilarityToPower(Math.max(matchPairCounter/pairDenominator, totalSinglesSameIndex / (lengthFirstString + lengthDifference)))
     } catch {
-      case e: Exception =>
-        e.printStackTrace()
-        throw new Exception("first: ".concat(new String(firstString)).concat("; second: ").concat(new String(secondString)))
-
+      case _: Exception => throw new Exception("first: ".concat(new String(firstString)).concat("; second: ").concat(new String(secondString)))
     }
-    calculateSimilarityToPower(similarity)
-
   }
 }

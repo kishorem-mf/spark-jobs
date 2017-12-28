@@ -13,4 +13,6 @@ libraryDependencies += "org.apache.spark" %% "spark-sql"  % sparkVersion % Compi
 
 libraryDependencies += "org.apache.spark" %% "spark-hive" % sparkVersion % Compile exclude("org.scalatest", "scalatest")
 
+libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.6"
+
 libraryDependencies += "org.scalatest"    %% "scalatest"  % "3.0.4"      % Test
