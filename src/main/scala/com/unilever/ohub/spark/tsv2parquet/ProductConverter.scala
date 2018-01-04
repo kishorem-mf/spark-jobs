@@ -1,10 +1,13 @@
 package com.unilever.ohub.spark.tsv2parquet
 
+import java.io.InputStream
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 import org.apache.spark.sql.SaveMode.Overwrite
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
+
+import scala.io.Source
 
 case class ProductRecord(
                         REF_PRODUCT_ID:Option[String], SOURCE:Option[String], COUNTRY_CODE:Option[String], STATUS:Option[Boolean], STATUS_ORIGINAL:Option[String], DATE_CREATED:Option[Timestamp],
@@ -30,12 +33,21 @@ object ProductConverter extends App {
 
   import spark.implicits._
 
+  val inputStream:InputStream = getClass.getResourceAsStream("/country_codes.csv")
+  val readSeq:Seq[String] = Source.fromInputStream(inputStream).getLines().toSeq
+  val countryRecordsDF:DataFrame = spark.sparkContext.parallelize(readSeq)
+    .toDS()
+    .map(_.split(","))
+    .map(cells => (parseStringOption(cells(6)),parseStringOption(cells(2)),parseStringOption(cells(9))))
+    .filter(line => line != ("ISO3166_1_Alpha_2","official_name_en","ISO4217_currency_alphabetic_code"))
+    .toDF("COUNTRY_CODE","COUNTRY","CURRENCY_CODE")
+
   lazy val expectedPartCount = 13
 
   val startOfJob = System.currentTimeMillis()
   val lines = spark.read.textFile(inputFile)
 
-  val records = lines
+  val recordsDF:DataFrame = lines
     .filter(line => !line.isEmpty && !line.startsWith("REF_PRODUCT_ID"))
     .map(line => line.split("‰", -1))
     .map(lineParts => {
@@ -64,12 +76,24 @@ object ProductConverter extends App {
         case e:Exception => throw new RuntimeException(s"Exception while parsing line: ${lineParts.mkString("‰")}", e)
       }
     })
+    .toDF()
 
-  records.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
+  recordsDF.createOrReplaceTempView("PRODUCTS")
+  countryRecordsDF.createOrReplaceTempView("COUNTRIES")
+  val joinedRecordsDF:DataFrame = spark.sql(
+    """
+      |SELECT PDT.REF_PRODUCT_ID,PDT.SOURCE,PDT.COUNTRY_CODE,PDT.STATUS,PDT.STATUS_ORIGINAL,PDT.DATE_CREATED,PDT.DATE_CREATED_ORIGINAL,PDT.DATE_MODIFIED,PDT.DATE_MODIFIED_ORIGINAL,PDT.PRODUCT_NAME,PDT.EAN_CU,PDT.EAN_DU,PDT.MRDR,PDT.UNIT,PDT.UNIT_PRICE,PDT.UNIT_PRICE_ORIGINAL,CTR.CURRENCY_CODE UNIT_PRICE_CURRENCY
+      |FROM PRODUCTS PDT
+      |LEFT JOIN COUNTRIES CTR
+      | ON PDT.COUNTRY_CODE = CTR.COUNTRY_CODE
+      |WHERE CTR.CURRENCY_CODE IS NOT NULL
+    """.stripMargin)
 
-  records.printSchema()
+  joinedRecordsDF.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
 
-  val count = records.count()
+  joinedRecordsDF.printSchema()
+
+  val count = joinedRecordsDF.count()
   println(s"Processed $count records in ${(System.currentTimeMillis - startOfJob) / 1000}s")
   println("Done")
 }

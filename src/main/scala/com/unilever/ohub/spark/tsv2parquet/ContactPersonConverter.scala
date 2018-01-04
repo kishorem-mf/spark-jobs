@@ -1,10 +1,13 @@
 package com.unilever.ohub.spark.tsv2parquet
 
+import java.io.InputStream
 import java.sql.{Date, Timestamp}
 
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 import org.apache.spark.sql.SaveMode._
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
+
+import scala.io.Source
 
 case class ContactPersonRecord(REF_CONTACT_PERSON_ID:Option[String], SOURCE:Option[String], COUNTRY_CODE:Option[String], STATUS:Option[Boolean],STATUS_ORIGINAL:Option[String], REF_OPERATOR_ID:Option[String], CP_INTEGRATION_ID:Option[String],
                                DATE_CREATED:Option[Timestamp], DATE_MODIFIED:Option[Timestamp], FIRST_NAME:Option[String], LAST_NAME:Option[String], TITLE:Option[String],
@@ -37,13 +40,22 @@ object ContactPersonConverter extends App {
 
   import spark.implicits._
 
+  val inputStream:InputStream = getClass.getResourceAsStream("/country_codes.csv")
+  val readSeq:Seq[String] = Source.fromInputStream(inputStream).getLines().toSeq
+  val countryRecordsDF:DataFrame = spark.sparkContext.parallelize(readSeq)
+    .toDS()
+    .map(_.split(","))
+    .map(cells => (parseStringOption(cells(6)),parseStringOption(cells(2)),parseStringOption(cells(9))))
+    .filter(line => line != ("ISO3166_1_Alpha_2","official_name_en","ISO4217_currency_alphabetic_code"))
+    .toDF("COUNTRY_CODE","COUNTRY","CURRENCY_CODE")
+
   lazy val expectedPartCount = 48
 
   val startOfJob = System.currentTimeMillis()
 
   val lines = spark.read.textFile(inputFile)
 
-  val records = lines
+  val recordsDF:DataFrame = lines
     .filter(line => !line.isEmpty && !line.startsWith("REF_CONTACT_PERSON_ID"))
     .map(line => line.split("‰", -1))
     .map(lineParts => {
@@ -126,12 +138,25 @@ object ContactPersonConverter extends App {
         case e:Exception => throw new RuntimeException(s"Exception while parsing line: ${lineParts.mkString("‰")}", e)
       }
     })
+    .toDF()
 
-  records.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
+  recordsDF.createOrReplaceTempView("CONTACTPERSONS")
+  countryRecordsDF.createOrReplaceTempView("COUNTRIES")
+  val joinedRecordsDF:DataFrame = spark.sql(
+    """
+      |SELECT CPN.REF_CONTACT_PERSON_ID,CPN.SOURCE,CPN.COUNTRY_CODE,CPN.STATUS,CPN.STATUS_ORIGINAL,CPN.REF_OPERATOR_ID,CPN.CP_INTEGRATION_ID,CPN.DATE_CREATED,CPN.DATE_MODIFIED,CPN.FIRST_NAME,CPN.LAST_NAME,CPN.TITLE,CPN.GENDER,CPN.FUNCTION,CPN.LANGUAGE_KEY,CPN.BIRTH_DATE,CPN.STREET,CPN.HOUSENUMBER,CPN.HOUSENUMBER_EXT,CPN.CITY,CPN.ZIP_CODE,CPN.STATE,CTR.COUNTRY,CPN.PREFERRED_CONTACT,CPN.PREFERRED_CONTACT_ORIGINAL,CPN.KEY_DECISION_MAKER,CPN.KEY_DECISION_MAKER_ORIGINAL,CPN.SCM,CPN.EMAIL_ADDRESS,CPN.PHONE_NUMBER,CPN.MOBILE_PHONE_NUMBER,CPN.FAX_NUMBER,CPN.OPT_OUT,CPN.OPT_OUT_ORIGINAL,CPN.REGISTRATION_CONFIRMED,CPN.REGISTRATION_CONFIRMED_ORIGINAL,CPN.REGISTRATION_CONFIRMED_DATE,CPN.REGISTRATION_CONFIRMED_DATE_ORIGINAL,CPN.EM_OPT_IN,CPN.EM_OPT_IN_ORIGINAL,CPN.EM_OPT_IN_DATE,CPN.EM_OPT_IN_DATE_ORIGINAL,CPN.EM_OPT_IN_CONFIRMED,CPN.EM_OPT_IN_CONFIRMED_ORIGINAL,CPN.EM_OPT_IN_CONFIRMED_DATE,CPN.EM_OPT_IN_CONFIRMED_DATE_ORIGINAL,CPN.EM_OPT_OUT,CPN.EM_OPT_OUT_ORIGINAL,CPN.DM_OPT_IN,CPN.DM_OPT_IN_ORIGINAL,CPN.DM_OPT_OUT,CPN.DM_OPT_OUT_ORIGINAL,CPN.TM_OPT_IN,CPN.TM_OPT_IN_ORIGINAL,CPN.TM_OPT_OUT,CPN.TM_OPT_OUT_ORIGINAL,CPN.MOB_OPT_IN,CPN.MOB_OPT_IN_ORIGINAL,CPN.MOB_OPT_IN_DATE,CPN.MOB_OPT_IN_DATE_ORIGINAL,CPN.MOB_OPT_IN_CONFIRMED,CPN.MOB_OPT_IN_CONFIRMED_ORIGINAL,CPN.MOB_OPT_IN_CONFIRMED_DATE,CPN.MOB_OPT_IN_CONFIRMED_DATE_ORIGINAL,CPN.MOB_OPT_OUT,CPN.MOB_OPT_OUT_ORIGINAL,CPN.FAX_OPT_IN,CPN.FAX_OPT_IN_ORIGINAL,CPN.FAX_OPT_OUT,CPN.FAX_OPT_OUT_ORIGINAL
+      |FROM CONTACTPERSONS CPN
+      |LEFT JOIN COUNTRIES CTR
+      | ON CPN.COUNTRY_CODE = CTR.COUNTRY_CODE
+      |WHERE CTR.COUNTRY IS NOT NULL
+    """.stripMargin)
 
-  records.printSchema()
 
-  val count = records.count()
+  joinedRecordsDF.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
+
+  joinedRecordsDF.printSchema()
+
+  val count = joinedRecordsDF.count()
   println(s"Processed $count records in ${(System.currentTimeMillis - startOfJob) / 1000}s")
   println("Done")
 
