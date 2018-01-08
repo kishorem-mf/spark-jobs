@@ -5,14 +5,10 @@ version := "0.1"
 scalaVersion := "2.11.11"
 
 val sparkVersion = "2.1.0" // 2.1.0 is the latest version supported by Azure as of 22/11/17
-//
-libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion % Compile excludeAll {
-  ExclusionRule(organization = "org.scalatest") // for some reason spark-core pulls in an old version as compile dependency
-}
-libraryDependencies += "org.apache.spark" %% "spark-sql"  % sparkVersion % Compile exclude("org.scalatest", "scalatest")
+val sparkDependencyType = sys.props.getOrElse("sparkDependencyType", "compile")
 
-libraryDependencies += "org.apache.spark" %% "spark-hive" % sparkVersion % Compile exclude("org.scalatest", "scalatest")
-
-libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.6"
-
+libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion % sparkDependencyType excludeAll ExclusionRule(organization = "org.scalatest")
+libraryDependencies += "org.apache.spark" %% "spark-sql"  % sparkVersion % sparkDependencyType
 libraryDependencies += "org.scalatest"    %% "scalatest"  % "3.0.4"      % Test
+libraryDependencies += "org.postgresql"   %  "postgresql" % "42.1.4"
+libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.6"
