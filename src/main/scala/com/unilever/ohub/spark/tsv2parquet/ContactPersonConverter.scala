@@ -8,9 +8,10 @@ import org.apache.spark.sql.SaveMode._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.io.Source
+import StringFunctions._
 
-case class ContactPersonRecord(REF_CONTACT_PERSON_ID:Option[String], SOURCE:Option[String], COUNTRY_CODE:Option[String], STATUS:Option[Boolean],STATUS_ORIGINAL:Option[String], REF_OPERATOR_ID:Option[String], CP_INTEGRATION_ID:Option[String],
-                               DATE_CREATED:Option[Timestamp], DATE_MODIFIED:Option[Timestamp], FIRST_NAME:Option[String], LAST_NAME:Option[String], TITLE:Option[String],
+case class ContactPersonRecord(REF_CONTACT_PERSON_ID:Option[String], SOURCE:Option[String], COUNTRY_CODE:Option[String], STATUS:Option[Boolean], STATUS_ORIGINAL:Option[String], REF_OPERATOR_ID:Option[String], CP_INTEGRATION_ID:Option[String],
+                               DATE_CREATED:Option[Timestamp], DATE_MODIFIED:Option[Timestamp], FIRST_NAME:Option[String], FIRST_NAME_CLEANSED:Option[String], LAST_NAME:Option[String], LAST_NAME_CLEANSED:Option[String], TITLE:Option[String],
                                GENDER:Option[String], FUNCTION:Option[String], LANGUAGE_KEY:Option[String], BIRTH_DATE:Option[Timestamp], STREET:Option[String], HOUSENUMBER:Option[String],
                                HOUSENUMBER_EXT:Option[String], CITY:Option[String], ZIP_CODE:Option[String], STATE:Option[String], COUNTRY:Option[String],
                                PREFERRED_CONTACT:Option[Boolean], PREFERRED_CONTACT_ORIGINAL:Option[String], KEY_DECISION_MAKER:Option[Boolean], KEY_DECISION_MAKER_ORIGINAL:Option[String], SCM:Option[String], EMAIL_ADDRESS:Option[String],
@@ -73,7 +74,9 @@ object ContactPersonConverter extends App {
           DATE_CREATED = parseDateTimeStampOption(lineParts(6)),
           DATE_MODIFIED = parseDateTimeStampOption(lineParts(7)),
           FIRST_NAME = parseStringOption(lineParts(8)),
+          FIRST_NAME_CLEANSED = parseStringOption(removeStrangeCharsToLowerAndTrim(lineParts(8))),
           LAST_NAME = parseStringOption(lineParts(9)),
+          LAST_NAME_CLEANSED = parseStringOption(removeStrangeCharsToLowerAndTrim(lineParts(9))),
           TITLE = parseStringOption(lineParts(10)),
           GENDER = parseStringOption(lineParts(11)),
           FUNCTION = parseStringOption(lineParts(12)),
