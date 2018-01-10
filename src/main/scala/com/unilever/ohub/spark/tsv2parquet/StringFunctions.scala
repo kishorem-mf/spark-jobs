@@ -1,10 +1,11 @@
 package com.unilever.ohub.spark.tsv2parquet
 
+import scala.collection.mutable.ArrayBuffer
 import scala.sys.process._
 
 object StringFunctions extends App{
   val startOfJob = System.currentTimeMillis()
-  val COUNT = 1 //Levenshtein 1 billion in 10 minutes
+  val COUNT = 10000000 //Levenshtein 1 billion in 10 minutes
   print(removeStrangeCharsToLowerAndTrim("null"))
 //  val charArrayFirst = "wddwdw".toCharArray //"Συγχαρητήρια"
 //  val charArraySecond = "wdwddw".toCharArray //"Συγχαρητχαήρια"
@@ -221,4 +222,13 @@ object StringFunctions extends App{
       case _: Exception => throw new Exception("string: ".concat(new String(input)))
     }
   }
+
+  val getGrams = (input:String, size:Int) => {
+    val grams = new ArrayBuffer[String]()
+    for (i <- 0 to input.length - size) {
+      grams.append(input.substring(i,i + size))
+    }
+    grams
+  }
+
 }
