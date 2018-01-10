@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.matching
 import org.apache.spark.sql.{SaveMode, SparkSession}
 import com.unilever.ohub.spark.tsv2parquet.StringFunctions
 
-object OperatorMatching extends App {
+object OperatorMatching2 extends App {
 
   if (args.length != 2) {
     println("specify INPUT_FILE OUTPUT_FILE")
