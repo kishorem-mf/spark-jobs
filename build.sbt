@@ -8,7 +8,8 @@ val sparkVersion = "2.1.0" // 2.1.0 is the latest version supported by Azure as 
 val sparkDependencyType = sys.props.getOrElse("sparkDependencyType", "compile")
 
 libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion % sparkDependencyType excludeAll ExclusionRule(organization = "org.scalatest")
-libraryDependencies += "org.apache.spark" %% "spark-sql"  % sparkVersion % sparkDependencyType
-libraryDependencies += "org.scalatest"    %% "scalatest"  % "3.0.4"      % Test
+libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion % sparkDependencyType
+libraryDependencies += "org.apache.spark" %% "spark-mllib" % sparkVersion % sparkDependencyType
+libraryDependencies += "org.scalatest"    %% "scalatest" % "3.0.4" % Test
 libraryDependencies += "org.postgresql"   %  "postgresql" % "42.1.4"
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.6"
