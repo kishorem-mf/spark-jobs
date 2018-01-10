@@ -17,23 +17,23 @@ object LevenshteinOperatorMatch extends App {
   spark.sqlContext.udf.register("REGEXPR_REPLACE",(s1:String) => s1 match {case null => null;case _ => s1.toLowerCase().replaceAll("(^\\s*)|(\\s*$)|[$₠₡₢₣₤₥₦₧₨₩₪₫€₭₮₯₰₱₲₳₴₵₶₷₸\u0081°”\\\\_\\'\\~`!@#$%()={}|:;\\?/<>,\\.\\[\\]\\+\\-\\*\\^&:0-9]+", "")})
   spark.sqlContext.udf.register("SIMILARITY",(s1:String,s2:String) => StringFunctions.getFastSimilarity(s1 match {case null => null;case _ => s1.toCharArray},s2 match {case null => null;case _ => s2.toCharArray}))
   val operatorsDF1 = spark.read.parquet(inputFile)
-  val operatorsDF2 = operatorsDF1 //.where("country_code = 'IE'")
+  val operatorsDF2 = operatorsDF1//.where("country_code = 'IE'")
   operatorsDF2.createOrReplaceTempView("operators2")
   val operatorsDF3 = spark.sql(
     """
-      |select ref_operator_id id,name,lower(regexpr_replace(name)) clean_name
+      |select ref_operator_id id,name, lower(regexpr_replace(name)) clean_name, country_code
       |from operators2
     """.stripMargin)
   operatorsDF3.createOrReplaceTempView("operators3")
   val operatorsDF4 = spark.sql(
     """
-      |select id,name,clean_name,substring(clean_name,1,3) block
+      |select id,name,clean_name,substring(clean_name,1,3) block, country_code
       |from operators3
     """.stripMargin)
   operatorsDF4.createOrReplaceTempView("operators4")
   val operatorsDF5 = spark.sql(
     """
-      |select id,name,clean_name,block
+      |select id,name,clean_name,block,country_code
       |from operators4
       |order by block
     """.stripMargin)
@@ -44,9 +44,9 @@ object LevenshteinOperatorMatch extends App {
       |from operators5 source
       |inner join operators5 target
       | on source.block = target.block
-      |where 1 = 1
+      | and source.country_code = target.country_code
+      |where source.clean_name < target.clean_name
       | and similarity(source.clean_name,target.clean_name) > 0.8
-      | and source.clean_name < target.clean_name
       |order by source_clean
     """.stripMargin)
 
