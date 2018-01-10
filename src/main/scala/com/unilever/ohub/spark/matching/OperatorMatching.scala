@@ -23,8 +23,7 @@ val operatorsDF2 = spark.sql(
   """
     |select distinct country_code,concat(country_code,'~',source,'~',ref_operator_id) id,name,name_cleansed,zip_code,zip_code_cleansed,street,street_cleansed,city,city_cleansed,substring(name_cleansed,1,3) name_block,substring(street_cleansed,1,3) street_block
     |from operators1
-    |where country_code = 'DK'
-    |order by name_block
+    |where country_code = 'IE'
   """.stripMargin)
 operatorsDF2.createOrReplaceTempView("operators2")
 val operatorsDF3 = spark.sql(
@@ -37,7 +36,6 @@ val operatorsDF3 = spark.sql(
     |where 1 = 1
     | and similarity(source.name_cleansed,target.name_cleansed) > 0.85
     | and source.name_cleansed <= target.name_cleansed
-	  | and source.id != target.id
     | and source.zip_code is null and target.zip_code is null and source.city_cleansed is null and target.city_cleansed is null and source.street_cleansed is null and target.street_cleansed is null
 	  |group by source.country_code,target.id
   """.stripMargin)
@@ -46,6 +44,7 @@ val operatorsDF4 = spark.sql(
   """
     |select source_id,target_id
     |from operators3
+	  |where source_id < target_id
   """.stripMargin)
 operatorsDF4.createOrReplaceTempView("operators4")
 val operatorsDF5 = spark.sql(
@@ -58,7 +57,6 @@ val operatorsDF5 = spark.sql(
     |where 1 = 1
     | and similarity(source.name_cleansed,target.name_cleansed) > 0.8
     | and source.name_cleansed <= target.name_cleansed
-	  | and source.id != target.id
     | and source.zip_code is not null and target.zip_code is not null and source.city_cleansed is null and target.city_cleansed is null and source.street_cleansed is null and target.street_cleansed is null
 	  |group by source.country_code,target.id
   """.stripMargin)
@@ -67,6 +65,7 @@ val operatorsDF6 = spark.sql(
   """
     |select source_id,target_id
     |from operators5
+	  |where source_id < target_id
   """.stripMargin)
 operatorsDF6.createOrReplaceTempView("operators6")
 val operatorsDF7 = spark.sql(
@@ -81,7 +80,6 @@ val operatorsDF7 = spark.sql(
     | and similarity(source.name_cleansed,target.name_cleansed) > 0.8
     | and similarity(source.street_cleansed,target.street_cleansed) > 0.8
     | and source.name_cleansed <= target.name_cleansed
-	  | and source.id != target.id
     | and source.street_cleansed is not null and target.street_cleansed is not null
 	  |group by source.country_code,target.id
   """.stripMargin)
@@ -90,6 +88,7 @@ val operatorsDF8 = spark.sql(
   """
     |select source_id,target_id
     |from operators7
+	  |where source_id < target_id
   """.stripMargin)
 operatorsDF8.createOrReplaceTempView("operators8")
 val operatorsDF9 = spark.sql(
@@ -102,7 +101,6 @@ val operatorsDF9 = spark.sql(
     |where 1 = 1
     | and similarity(source.name_cleansed,target.name_cleansed) > 0.8
     | and source.name_cleansed <= target.name_cleansed
-	  | and source.id != target.id
     | and source.zip_code is null and target.zip_code is null and source.city_cleansed is not null and target.city_cleansed is not null and source.street_cleansed is null and target.street_cleansed is null
 	  |group by source.country_code,target.id
   """.stripMargin)
@@ -111,6 +109,7 @@ val operatorsDF10 = spark.sql(
   """
     |select source_id,target_id
     |from operators9
+	  |where source_id < target_id
   """.stripMargin)
 operatorsDF10.createOrReplaceTempView("operators10")
 val operatorsDF11 = operatorsDF4.union(operatorsDF6.union(operatorsDF8.union(operatorsDF10)))
@@ -119,6 +118,7 @@ val operatorsDF12 = spark.sql(
   """
     |select source_id,target_id
     |from operators11
+	  |where source_id < target_id
 	  |group by source_id,target_id
   """.stripMargin)
 operatorsDF12.createOrReplaceTempView("operators12")
