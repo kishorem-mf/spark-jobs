@@ -161,7 +161,7 @@ class CustomParsersSpec extends FunSpec with Matchers {
       assert(getFastSimilarity("jackhammer".toCharArray, " jackhammer".toCharArray) == 0.9)
     }
     it("""should return 0.9 when the first 11 letter string is "شيء لطيف   " and the second 10 letter string is "يء لطيف   """") {
-      assert(getFastSimilarity("شيء لطيف  ".toCharArray, "يء لطيف  ".toCharArray) == 0.9)
+      assert(getFastSimilarity("شيء لطيف   ".toCharArray, "يء لطيف   ".toCharArray) == 0.9)
     }
     it("""should return 0.875 when the first string is "Hotel California" and the second string is "California Hotel"""") {
       assert(getFastSimilarity("Hotel California".toCharArray, "California Hotel".toCharArray) == 0.875)

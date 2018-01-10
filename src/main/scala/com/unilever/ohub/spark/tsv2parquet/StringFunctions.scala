@@ -223,12 +223,12 @@ object StringFunctions extends App{
     }
   }
 
-  val getGrams = (input:String, size:Int) => {
-    val grams = new ArrayBuffer[String]()
+  def getNGrams(input:String, size:Int = 2):Array[String] = {
+    val ngrams = new ArrayBuffer[String]()
     for (i <- 0 to input.length - size) {
-      grams.append(input.substring(i,i + size))
+      ngrams.append(input.substring(i,i + size))
     }
-    grams
+    ngrams.toArray
   }
 
 }
