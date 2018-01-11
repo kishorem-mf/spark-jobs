@@ -15,11 +15,6 @@ object OperatorMatching extends App {
     sys.exit(1)
   }
 
-  if (!new File(args(1)).isDirectory) {
-    println("specify OUTPUT_FOLDER as second argument")
-    sys.exit(1)
-  }
-
   val inputFile = args(0)
   val outputFolder = new File(args(1))
 
