@@ -16,7 +16,7 @@ object OperatorMatching extends App {
   }
 
   val inputFile = args(0)
-  val outputFolder = new File(args(1))
+  val outputFolder = args(1)
 
   import org.apache.spark.sql.SparkSession
   import com.unilever.ohub.spark.tsv2parquet.StringFunctions
@@ -28,7 +28,7 @@ object OperatorMatching extends App {
   val countryList = operatorsDF1.select("country_code").groupBy("country_code").count().orderBy("count").collect().map(row => row(0).toString).toList
   createOperatorMatchGroupsPerCountry(outputFolder,countryList)
 
-  def createOperatorMatchGroupsPerCountry(outputFolder:File,countryList:List[String]): Unit = {
+  def createOperatorMatchGroupsPerCountry(outputFolder:String, countryList:List[String]): Unit = {
     for(i <- countryList.indices) loopPerCountry(countryList(i))
 
     def loopPerCountry(countryCode:String): Unit = {
@@ -150,7 +150,7 @@ object OperatorMatching extends App {
           | on a.target_id = b.id
           |order by a.source_id
         """.stripMargin)
-      operatorsDF14.write.mode(Overwrite).format("parquet").save(outputFolder.toPath.resolve(countryCode.concat(".parquet")).toString)
+      operatorsDF14.write.mode(Overwrite).format("parquet").save(s"$outputFolder/$countryCode.parquet")
     }
   }
 
