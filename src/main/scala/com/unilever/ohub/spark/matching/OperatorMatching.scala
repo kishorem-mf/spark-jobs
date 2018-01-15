@@ -34,7 +34,7 @@ object OperatorMatching extends App {
     def loopPerCountry(countryCode:String): Unit = {
       val operatorsDF2 = spark.sql(
         """
-          |select distinct country_code,concat(country_code,'~',source,'~',ref_operator_id) id,name,name_cleansed,zip_code,zip_code_cleansed,street,street_cleansed,city,city_cleansed,substring(name_cleansed,1,3) name_block,substring(street_cleansed,1,3) street_block
+          |select distinct country_code,concat(country_code,'~',source,'~',ref_contact_person_id) id,name,name_cleansed,zip_code,zip_code_cleansed,street,street_cleansed,city,city_cleansed,substring(name_cleansed,1,3) name_block,substring(street_cleansed,1,3) street_block
           |from operators1
         """.stripMargin).where("country_code = '".concat(countryCode).concat("'"))
       operatorsDF2.createOrReplaceTempView("operators2")

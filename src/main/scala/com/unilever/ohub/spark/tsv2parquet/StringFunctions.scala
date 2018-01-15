@@ -6,7 +6,7 @@ import scala.sys.process._
 object StringFunctions extends App{
   val startOfJob = System.currentTimeMillis()
   val COUNT = 10000000 //Levenshtein 1 billion in 10 minutes
-  print(removeStrangeCharsToLowerAndTrim("null"))
+  print(concatNames("hans",null))
 //  val charArrayFirst = "wddwdw".toCharArray //"Συγχαρητήρια"
 //  val charArraySecond = "wdwddw".toCharArray //"Συγχαρητχαήρια"
 //  for (_ <- 0 until COUNT) getFastSimilarity(charArrayFirst,charArraySecond)
@@ -216,7 +216,7 @@ object StringFunctions extends App{
   def removeSpacesStrangeCharsAndToLower(input:String):String = {
     try{
       if(input == null) null else {
-        input.toLowerCase().replaceAll("[ \u0024\u00A2\u00A3\u00A4\u00A5\u058F\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0\u20A1\u20A2\u20A3\u20A4\u20A5\u20A6\u20A7\u20A8\u20A9\u20AA\u20AB\u20AC\u20AD\u20AE\u20AF\u20B0\u20B1\u20B2\u20B3\u20B4\u20B5\u20B6\u20B7\u20B8\u20B9\u20BA\u20BB\u20BC\u20BD\u20BE\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1\uFFE5\uFFE6\u0081\u0081°”\\\\_\\'\\~`!@#$%()={}|:;\\?/<>,\\.\\[\\]\\+\\-\\*\\^&:]+", "")
+        input.toLowerCase().replaceAll("[ \u0024\u00A2\u00A3\u00A4\u00A5\u058F\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0\u20A1\u20A2\u20A3\u20A4\u20A5\u20A6\u20A7\u20A8\u20A9\u20AA\u20AB\u20AC\u20AD\u20AE\u20AF\u20B0\u20B1\u20B2\u20B3\u20B4\u20B5\u20B6\u20B7\u20B8\u20B9\u20BA\u20BB\u20BC\u20BD\u20BE\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1\uFFE5\uFFE6\u0081°”\\\\_\\'\\~`!@#$%()={}|:;\\?/<>,\\.\\[\\]\\+\\-\\*\\^&:]+", "")
       }
     } catch {
       case _: Exception => throw new Exception("string: ".concat(new String(input)))
@@ -233,6 +233,7 @@ object StringFunctions extends App{
 
   def cleanPhoneNumber(phoneNumber:String,countryCode:String,countryPrefixList:Array[(String,String)]):String = {
     if(phoneNumber == null || countryCode == null) return null
+    if(phoneNumber == "" || countryCode == "") return null
     val digitOnlyNumber = phoneNumber.replaceAll("(^0+)|[^0-9]+", "")
     val prefix = countryPrefixList.filter(_._1 == countryCode).map(_._2).head
     if(!digitOnlyNumber.startsWith(prefix)) prefix.concat(digitOnlyNumber) else digitOnlyNumber
@@ -243,6 +244,32 @@ object StringFunctions extends App{
     if(emailAddress == null) return null
     val isValidEmail = emailAddress.matches("(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])")
     if(isValidEmail) emailAddress else null
+  }
+
+  def concatNames(firstName:String, lastName:String, emailAddress:String = ""):String = {
+    try{
+      val emailWithoutNull = if(emailAddress == null || emailAddress == "") "" else emailAddress
+      if(firstName == null && lastName == null && emailWithoutNull == "") return null
+      if(firstName == "" && lastName == "" && emailWithoutNull == "") return null
+      if(firstName == null && emailWithoutNull == "") return lastName
+      if(lastName == null && emailWithoutNull == "") return firstName
+
+      val extractedNames = if(emailWithoutNull != "") emailWithoutNull.substring(0,emailWithoutNull.indexOf('@')) else ""
+      if(firstName == "" && lastName == "" && extractedNames != "") {
+        extractedNames match {
+          case value:String if value.contains(".") => return extractedNames.split(".").sorted.mkString
+          case value:String if value.contains("-") => return extractedNames.split("-").sorted.mkString
+          case value:String if value.contains("_") => return extractedNames.split("_").sorted.mkString
+          case _ => return extractedNames
+        }
+
+      }
+
+      if(firstName.equals(lastName)) return firstName
+      if(firstName < lastName) firstName + lastName else lastName + firstName
+    } catch {
+      case _: Exception => throw new Exception("string: ".concat(new String(firstName + ", " + lastName + ", " + emailAddress)))
+    }
   }
 
 }
