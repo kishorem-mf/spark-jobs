@@ -283,22 +283,43 @@ class CustomParsersSpec extends FunSpec with Matchers {
       assert(concatNames("","","hanskazan@hotmail.com") == "hanskazan")
     }
     it("should return hanskazan if first and last name are empty and email is hans.kazan@hotmail.com") {
-      assert(concatNames("","","hanskazan@hotmail.com") == "hanskazan")
+      assert(concatNames("","","hans.kazan@hotmail.com") == "hanskazan")
     }
     it("should return hanskazan if first and last name are empty and email is kazan.hans@hotmail.com") {
-      assert(concatNames("","","hanskazan@hotmail.com") == "hanskazan")
+      assert(concatNames("","","kazan.hans@hotmail.com") == "hanskazan")
     }
     it("should return hanskazan if first and last name are empty and email is hans-kazan@hotmail.com") {
-      assert(concatNames("","","hanskazan@hotmail.com") == "hanskazan")
+      assert(concatNames("","","hans-kazan@hotmail.com") == "hanskazan")
     }
     it("should return hanskazan if first and last name are empty and email is kazan-hans@hotmail.com") {
-      assert(concatNames("","","hanskazan@hotmail.com") == "hanskazan")
+      assert(concatNames("","","kazan-hans@hotmail.com") == "hanskazan")
     }
     it("should return hanskazan if first and last name are empty and email is hans_kazan@hotmail.com") {
-      assert(concatNames("","","hanskazan@hotmail.com") == "hanskazan")
+      assert(concatNames("","","hans_kazan@hotmail.com") == "hanskazan")
     }
     it("should return hanskazan if first and last name are empty and email is kazan_hans@hotmail.com") {
-      assert(concatNames("","","hanskazan@hotmail.com") == "hanskazan")
+      assert(concatNames("","","kazan_hans@hotmail.com") == "hanskazan")
+    }
+    it("should return hanskazan if first and last name are null and email is hanskazan@hotmail.com") {
+      assert(concatNames(null,null,"hanskazan@hotmail.com") == "hanskazan")
+    }
+    it("should return hanskazan if first and last name are null and email is hans.kazan@hotmail.com") {
+      assert(concatNames(null,null,"hans.kazan@hotmail.com") == "hanskazan")
+    }
+    it("should return hanskazan if first and last name are null and email is kazan.hans@hotmail.com") {
+      assert(concatNames(null,null,"kazan.hans@hotmail.com") == "hanskazan")
+    }
+    it("should return hanskazan if first and last name are null and email is hans-kazan@hotmail.com") {
+      assert(concatNames(null,null,"hans-kazan@hotmail.com") == "hanskazan")
+    }
+    it("should return hanskazan if first and last name are null and email is kazan-hans@hotmail.com") {
+      assert(concatNames(null,null,"kazan-hans@hotmail.com") == "hanskazan")
+    }
+    it("should return hanskazan if first and last name are null and email is hans_kazan@hotmail.com") {
+      assert(concatNames(null,null,"hans_kazan@hotmail.com") == "hanskazan")
+    }
+    it("should return hanskazan if first and last name are null and email is kazan_hans@hotmail.com") {
+      assert(concatNames(null,null,"kazan_hans@hotmail.com") == "hanskazan")
     }
   }
 }
