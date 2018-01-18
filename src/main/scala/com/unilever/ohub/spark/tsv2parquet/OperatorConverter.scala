@@ -12,7 +12,7 @@ import StringFunctions._
 
 import scala.io.Source
 
-case class OperatorRecord(REF_OPERATOR_ID:Option[String], SOURCE:Option[String], COUNTRY_CODE:Option[String], STATUS:Option[Boolean], STATUS_ORIGINAL:Option[String], NAME:Option[String], NAME_CLEANSED:Option[String], OPR_INTEGRATION_ID:Option[String],
+case class OperatorRecord(OPERATOR_CONCAT_ID:Option[String],REF_OPERATOR_ID:Option[String], SOURCE:Option[String], COUNTRY_CODE:Option[String], STATUS:Option[Boolean], STATUS_ORIGINAL:Option[String], NAME:Option[String], NAME_CLEANSED:Option[String], OPR_INTEGRATION_ID:Option[String],
                           DATE_CREATED:Option[Timestamp], DATE_MODIFIED:Option[Timestamp], CHANNEL:Option[String], SUB_CHANNEL:Option[String], REGION:Option[String],
                           STREET:Option[String], STREET_CLEANSED:Option[String], HOUSENUMBER:Option[String], HOUSENUMBER_EXT:Option[String], CITY:Option[String], CITY_CLEANSED:Option[String], ZIP_CODE:Option[String], ZIP_CODE_CLEANSED:Option[String],STATE:Option[String],
                           COUNTRY:Option[String], EMAIL_ADDRESS:Option[String], PHONE_NUMBER:Option[String], MOBILE_PHONE_NUMBER:Option[String], FAX_NUMBER:Option[String],
@@ -64,6 +64,7 @@ object OperatorConverter extends App {
       checkLineLength(lineParts, expectedPartCount)
       try {
         OperatorRecord(
+          OPERATOR_CONCAT_ID = parseStringOption(lineParts(2) + "~" + lineParts(1) + "~" + lineParts(0)),
           REF_OPERATOR_ID = parseStringOption(lineParts(0)),
           SOURCE = parseStringOption(lineParts(1)),
           COUNTRY_CODE = parseStringOption(lineParts(2)),

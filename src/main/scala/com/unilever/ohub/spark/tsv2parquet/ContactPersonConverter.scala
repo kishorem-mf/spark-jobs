@@ -10,7 +10,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import scala.io.Source
 import StringFunctions._
 
-case class ContactPersonRecord(REF_CONTACT_PERSON_ID:Option[String], SOURCE:Option[String], COUNTRY_CODE:Option[String], STATUS:Option[Boolean], STATUS_ORIGINAL:Option[String], REF_OPERATOR_ID:Option[String], CP_INTEGRATION_ID:Option[String],
+case class ContactPersonRecord(CONTACT_PERSON_CONCAT_ID:Option[String], REF_CONTACT_PERSON_ID:Option[String], SOURCE:Option[String], COUNTRY_CODE:Option[String], STATUS:Option[Boolean], STATUS_ORIGINAL:Option[String], REF_OPERATOR_ID:Option[String], CP_INTEGRATION_ID:Option[String],
                                DATE_CREATED:Option[Timestamp], DATE_MODIFIED:Option[Timestamp], FIRST_NAME:Option[String], FIRST_NAME_CLEANSED:Option[String], LAST_NAME:Option[String], LAST_NAME_CLEANSED:Option[String], BOTH_NAMES_CLEANSED:Option[String], TITLE:Option[String],
                                GENDER:Option[String], FUNCTION:Option[String], LANGUAGE_KEY:Option[String], BIRTH_DATE:Option[Timestamp], STREET:Option[String], STREET_CLEANSED:Option[String], HOUSENUMBER:Option[String],
                                HOUSENUMBER_EXT:Option[String], CITY:Option[String], CITY_CLEANSED:Option[String], ZIP_CODE:Option[String], ZIP_CODE_CLEANSED:Option[String], STATE:Option[String], COUNTRY:Option[String],
@@ -68,6 +68,7 @@ object ContactPersonConverter extends App {
       lineParts.toSeq
       try {
         ContactPersonRecord(
+          CONTACT_PERSON_CONCAT_ID = parseStringOption(lineParts(2) + "~" + lineParts(1) + "~" + lineParts(0)),
           REF_CONTACT_PERSON_ID = parseStringOption(lineParts(0)),
           SOURCE = parseStringOption(lineParts(1)),
           COUNTRY_CODE = parseStringOption(lineParts(2)),

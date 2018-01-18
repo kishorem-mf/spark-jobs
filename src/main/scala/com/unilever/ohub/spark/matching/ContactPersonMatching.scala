@@ -36,6 +36,7 @@ object ContactPersonMatching extends App {
       | on a.email_address = b.email_address
       | and a.id < b.id
       | and a.email_address is not null and b.email_address is not null
+      | and a.mobile_phone_number is null and b.mobile_phone_number null
       | and a.country_code = b.country_code
       |group by a.country_code,b.id
     """.stripMargin)
