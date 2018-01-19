@@ -35,7 +35,7 @@ object OperatorMerging extends App {
   val operators:Dataset[OperatorWrapper] = spark.read.parquet(operatorInputFile)
     .filter("COUNTRY_CODE = 'DK'")
     .as[OperatorRecord]
-    .map(o => OperatorWrapper(id = s"${o.COUNTRY_CODE.get}~${o.SOURCE.get}~${o.REF_OPERATOR_ID.get}", operator = o))
+    .map(o => OperatorWrapper(id = o.OPERATOR_CONCAT_ID.get, operator = o))
 
   val matches = spark.read.parquet(matchingInputFile).select("source_id", "target_id")
 
@@ -52,9 +52,9 @@ object OperatorMerging extends App {
     .map(x => x._1 +: x._2)
 
   // all the IDs of everything from the matching, but we also need individual records that didn't match anything ...
-  val matchedIds = fullyGroupedOperators
-    .flatMap(_.map(o => s"${o.COUNTRY_CODE.get}~${o.SOURCE.get}~${o.REF_OPERATOR_ID.get}"))
-    .createOrReplaceTempView("MATCHED_IDS")
+  val matchedIds:Dataset[String] = fullyGroupedOperators
+    .flatMap(_.map(_.OPERATOR_CONCAT_ID).flatten)
+    //.createOrReplaceTempView("MATCHED_IDS")
 
   spark.sql("select * from MATCHED_IDS").show()
 
