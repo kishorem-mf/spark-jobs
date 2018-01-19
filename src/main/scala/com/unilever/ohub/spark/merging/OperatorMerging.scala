@@ -5,6 +5,7 @@ import java.util.UUID
 
 import com.unilever.ohub.spark.tsv2parquet.OperatorRecord
 import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.SaveMode._
 import org.apache.spark.sql.functions.collect_list
 
 import scala.io.Source
@@ -32,37 +33,40 @@ object OperatorMerging extends App {
 
   import spark.implicits._
 
+  val startOfJob = System.currentTimeMillis()
+
   val operators:Dataset[OperatorWrapper] = spark.read.parquet(operatorInputFile)
-    .filter("COUNTRY_CODE = 'DK'")
     .as[OperatorRecord]
-    .map(o => OperatorWrapper(id = o.OPERATOR_CONCAT_ID.get, operator = o))
+    .filter($"COUNTRY_CODE" === "DK")
+//    .select($"OPERATOR_CONCAT_ID".alias("id"), $"_".alias("operator"))
+//    .as[OperatorWrapper]
+    .map(o => OperatorWrapper(id = o.OPERATOR_CONCAT_ID, operator = o))
+
+
+  operators.printSchema()
+  operators.show()
+  System.exit(0)
 
   val matches = spark.read.parquet(matchingInputFile).select("source_id", "target_id")
 
-  // join the full operators to the target_id side of the matches
-  val targetIdJoined = matches.join(operators.select($"id".alias("target_id"), $"operator"), "target_id")
+  val groupedOperators:Dataset[Seq[OperatorRecord]] = matches
+    .joinWith(operators, $"id" === $"target_id")
     .select("source_id", "operator")
-
-  // group up the operators based on the source id
-  val groupedBySource = targetIdJoined.groupBy("source_id").agg(collect_list("operator").alias("operators"))
-
-  // fetch the operator that goes with the source id and stick it in the group with the operators from the groupBy
-  val fullyGroupedOperators:Dataset[Seq[OperatorRecord]] = groupedBySource.join(operators.select($"id".alias("source_id"), $"operator"), "source_id")
+    .groupBy("source_id")
+    .agg(collect_list("operator").alias("operators"))
+    .join(operators.select($"id".alias("source_id"), $"operator"), "source_id")
     .select($"operator".as[OperatorRecord], $"operators".as[Seq[OperatorRecord]])
     .map(x => x._1 +: x._2)
 
-  // all the IDs of everything from the matching, but we also need individual records that didn't match anything ...
-  val matchedIds:Dataset[String] = fullyGroupedOperators
-    .flatMap(_.map(_.OPERATOR_CONCAT_ID).flatten)
-    //.createOrReplaceTempView("MATCHED_IDS")
+  val matchedIds = groupedOperators
+    .flatMap(_.map(_.OPERATOR_CONCAT_ID))
+    .distinct()
+    .select($"value".alias("id"))
 
-  spark.sql("select * from MATCHED_IDS").show()
-
-  // but we also need all the operators that didn't match any others
-  // TODO implement me and do a union
-
-  println("Temp Done")
-  System.exit(0)
+  val singletonOperators:Dataset[Seq[OperatorRecord]] = operators
+    .join(matchedIds, Seq("id"), "leftanti")
+    .select($"operator".as[OperatorRecord])
+    .map(Seq(_))
 
   lazy val sourcePreference = {
     val filename = "/source_preference.tsv"
@@ -77,7 +81,7 @@ object OperatorMerging extends App {
       val preference2 = sourcePreference.get(o2.SOURCE.getOrElse("UNKNOWN")).getOrElse(Int.MaxValue)
       if (preference1 < preference2) o1
       else if (preference1 > preference2) o2
-      else { // same preference
+      else { // same source preference
         val created1 = o1.DATE_CREATED.getOrElse(new Timestamp(System.currentTimeMillis))
         val created2 = o1.DATE_CREATED.getOrElse(new Timestamp(System.currentTimeMillis))
         if (created1.before(created2)) o1 else o2
@@ -87,11 +91,12 @@ object OperatorMerging extends App {
     GoldenOperatorRecord(id, goldenRecord, refIds)
   }
 
-  val goldenRecords = fullyGroupedOperators.map(pickGoldenRecordAndGroupId(_)).select("OHUB_OPERATOR_ID", "REF_IDS", "OPERATOR")
+  val goldenRecords:Dataset[GoldenOperatorRecord] = groupedOperators
+    .union(singletonOperators)
+    .map(pickGoldenRecordAndGroupId(_))
 
-//  fullyGroupedOperators.write.mode(Overwrite).format("parquet").save(outputFile)
+  goldenRecords.repartition(60).write.mode(Overwrite).format("parquet").save(outputFile)
 
-  println("Done")
-
-
+//  println(s"Went from ${operators.count} to ${spark.read.parquet(outputFile).count} records")
+  println(s"Done in ${(System.currentTimeMillis - startOfJob) / 1000}s")
 }
