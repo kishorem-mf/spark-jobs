@@ -10,12 +10,8 @@ import org.apache.spark.sql.functions._
 
 import scala.io.Source
 
-case class OperatorWrapper(id: String, operator: OperatorRecord)
-
 case class GoldenOperatorRecord(OHUB_OPERATOR_ID: String, OPERATOR: OperatorRecord, REF_IDS: Seq[String])
-
 case class MatchingResult(source_id: String, target_id: String, COUNTRY_CODE: String)
-
 case class IdAndCountry(OPERATOR_CONCAT_ID: String, COUNTRY_CODE: String)
 
 object OperatorMerging extends App {
