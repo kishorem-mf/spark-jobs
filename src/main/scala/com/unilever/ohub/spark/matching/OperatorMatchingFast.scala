@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.matching
 
+import com.unilever.ohub.spark.generic.StringFunctions
 import org.apache.spark.sql.{SaveMode, SparkSession}
-import com.unilever.ohub.spark.tsv2parquet.StringFunctions
 import org.apache.spark.sql.SaveMode._
 
 object OperatorMatchingFast extends App {
@@ -15,7 +15,6 @@ object OperatorMatchingFast extends App {
   val outputFile = args(1)
 
   import org.apache.spark.sql.SparkSession
-  import com.unilever.ohub.spark.tsv2parquet.StringFunctions
   import org.apache.spark.sql.SaveMode.Overwrite
   val spark = SparkSession.builder().getOrCreate()
   spark.sqlContext.udf.register("SIMILARITY",(s1:String,s2:String) => StringFunctions.getFastSimilarity(s1 match {case null => null;case _ => s1.toCharArray},s2 match {case null => null;case _ => s2.toCharArray}))

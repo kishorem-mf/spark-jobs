@@ -10,7 +10,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import scala.io.Source
 
 case class ProductRecord(
-                        REF_PRODUCT_ID:Option[String], SOURCE:Option[String], COUNTRY_CODE:Option[String], STATUS:Option[Boolean], STATUS_ORIGINAL:Option[String], DATE_CREATED:Option[Timestamp],
+                        PRODUCT_CONCAT_ID:Option[String], REF_PRODUCT_ID:Option[String], SOURCE:Option[String], COUNTRY_CODE:Option[String], STATUS:Option[Boolean], STATUS_ORIGINAL:Option[String], DATE_CREATED:Option[Timestamp],
                         DATE_CREATED_ORIGINAL:Option[String], DATE_MODIFIED:Option[Timestamp], DATE_MODIFIED_ORIGINAL:Option[String], PRODUCT_NAME:Option[String], EAN_CU:Option[String], EAN_DU:Option[String],
                         MRDR:Option[String], UNIT:Option[String], UNIT_PRICE:Option[BigDecimal], UNIT_PRICE_ORIGINAL:Option[String], UNIT_PRICE_CURRENCY:Option[String]
                         )
@@ -54,6 +54,7 @@ object ProductConverter extends App {
       checkLineLength(lineParts, expectedPartCount)
       try {
         ProductRecord(
+          PRODUCT_CONCAT_ID = parseStringOption(lineParts(2) + "~" + lineParts(1) + "~" + lineParts(0)),
           REF_PRODUCT_ID = parseStringOption(lineParts(0)),
           SOURCE = parseStringOption(lineParts(1)),
           COUNTRY_CODE = parseStringOption(lineParts(2)),
@@ -82,7 +83,7 @@ object ProductConverter extends App {
   countryRecordsDF.createOrReplaceTempView("COUNTRIES")
   val joinedRecordsDF:DataFrame = spark.sql(
     """
-      |SELECT PDT.REF_PRODUCT_ID,PDT.SOURCE,PDT.COUNTRY_CODE,PDT.STATUS,PDT.STATUS_ORIGINAL,PDT.DATE_CREATED,PDT.DATE_CREATED_ORIGINAL,PDT.DATE_MODIFIED,PDT.DATE_MODIFIED_ORIGINAL,PDT.PRODUCT_NAME,PDT.EAN_CU,PDT.EAN_DU,PDT.MRDR,PDT.UNIT,PDT.UNIT_PRICE,PDT.UNIT_PRICE_ORIGINAL,CTR.CURRENCY_CODE UNIT_PRICE_CURRENCY
+      |SELECT PDT.PRODUCT_CONCAT_ID,PDT.REF_PRODUCT_ID,PDT.SOURCE,PDT.COUNTRY_CODE,PDT.STATUS,PDT.STATUS_ORIGINAL,PDT.DATE_CREATED,PDT.DATE_CREATED_ORIGINAL,PDT.DATE_MODIFIED,PDT.DATE_MODIFIED_ORIGINAL,PDT.PRODUCT_NAME,PDT.EAN_CU,PDT.EAN_DU,PDT.MRDR,PDT.UNIT,PDT.UNIT_PRICE,PDT.UNIT_PRICE_ORIGINAL,CTR.CURRENCY_CODE UNIT_PRICE_CURRENCY
       |FROM PRODUCTS PDT
       |LEFT JOIN COUNTRIES CTR
       | ON PDT.COUNTRY_CODE = CTR.COUNTRY_CODE

@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.tsv2parquet
 
 import java.math.BigInteger
 import java.text.ParseException
-import StringFunctions._
+import com.unilever.ohub.spark.generic.StringFunctions._
 
 import org.scalatest.{FunSpec, Matchers}
 import CustomParsers._

@@ -2,8 +2,8 @@ package com.unilever.ohub.spark.matching
 
 import java.io.File
 
+import com.unilever.ohub.spark.generic.StringFunctions
 import org.apache.spark.sql.{SaveMode, SparkSession}
-import com.unilever.ohub.spark.tsv2parquet.StringFunctions
 import org.apache.spark.sql.SaveMode._
 
 import scala.reflect.io.Path
@@ -19,7 +19,6 @@ object OperatorMatching extends App {
   val outputFolder = args(1)
 
   import org.apache.spark.sql.SparkSession
-  import com.unilever.ohub.spark.tsv2parquet.StringFunctions
   val spark = SparkSession.builder().appName("Operator matching").getOrCreate()
   spark.sqlContext.udf.register("SIMILARITY",(s1:String,s2:String) => StringFunctions.getFastSimilarity(s1 match {case null => null;case _ => s1.toCharArray},s2 match {case null => null;case _ => s2.toCharArray}))
   val operatorsDF1 = spark.read.parquet(inputFile)
