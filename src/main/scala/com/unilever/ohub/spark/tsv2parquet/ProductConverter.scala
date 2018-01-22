@@ -10,7 +10,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import scala.io.Source
 
 case class ProductRecord(
-                        PRODUCT_CONCAT_ID:Option[String], REF_PRODUCT_ID:Option[String], SOURCE:Option[String], COUNTRY_CODE:Option[String], STATUS:Option[Boolean], STATUS_ORIGINAL:Option[String], DATE_CREATED:Option[Timestamp],
+                        PRODUCT_CONCAT_ID:String, REF_PRODUCT_ID:Option[String], SOURCE:Option[String], COUNTRY_CODE:Option[String], STATUS:Option[Boolean], STATUS_ORIGINAL:Option[String], DATE_CREATED:Option[Timestamp],
                         DATE_CREATED_ORIGINAL:Option[String], DATE_MODIFIED:Option[Timestamp], DATE_MODIFIED_ORIGINAL:Option[String], PRODUCT_NAME:Option[String], EAN_CU:Option[String], EAN_DU:Option[String],
                         MRDR:Option[String], UNIT:Option[String], UNIT_PRICE:Option[BigDecimal], UNIT_PRICE_ORIGINAL:Option[String], UNIT_PRICE_CURRENCY:Option[String]
                         )
@@ -54,7 +54,7 @@ object ProductConverter extends App {
       checkLineLength(lineParts, expectedPartCount)
       try {
         ProductRecord(
-          PRODUCT_CONCAT_ID = parseStringOption(lineParts(2) + "~" + lineParts(1) + "~" + lineParts(0)),
+          PRODUCT_CONCAT_ID = s"${lineParts(2)}~${lineParts(1)}~${lineParts(0)}",
           REF_PRODUCT_ID = parseStringOption(lineParts(0)),
           SOURCE = parseStringOption(lineParts(1)),
           COUNTRY_CODE = parseStringOption(lineParts(2)),

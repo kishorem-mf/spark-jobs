@@ -10,7 +10,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import scala.io.Source
 
 
-case class OrderRecord(ORDER_CONCAT_ID:Option[String],REF_ORDER_ID:Option[String], SOURCE:Option[String], COUNTRY_CODE:Option[String], STATUS:Option[Boolean], STATUS_ORIGINAL:Option[String], REF_OPERATOR_ID:Option[String],
+case class OrderRecord(ORDER_CONCAT_ID:String,REF_ORDER_ID:Option[String], SOURCE:Option[String], COUNTRY_CODE:Option[String], STATUS:Option[Boolean], STATUS_ORIGINAL:Option[String], REF_OPERATOR_ID:Option[String],
                        REF_CONTACT_PERSON_ID:Option[String], ORDER_TYPE:Option[String], TRANSACTION_DATE:Option[Timestamp], TRANSACTION_DATE_ORIGINAL:Option[String], REF_PRODUCT_ID:Option[String], QUANTITY:Option[Long], QUANTITY_ORIGINAL:Option[String],
                        ORDER_LINE_VALUE:Option[BigDecimal], ORDER_LINE_VALUE_ORIGINAL:Option[String], ORDER_VALUE:Option[BigDecimal], ORDER_VALUE_ORIGINAL:Option[String], WHOLESALER:Option[String], CAMPAIGN_CODE:Option[String], CAMPAIGN_NAME:Option[String],
                        UNIT_PRICE:Option[BigDecimal], UNIT_PRICE_ORIGINAL:Option[String], CURRENCY_CODE:Option[String], DATE_CREATED:Option[Timestamp], DATE_MODIFIED:Option[Timestamp])
@@ -62,7 +62,7 @@ object OrderConverter extends App {
       checkLineLength(lineParts, expectedPartCount)
       try {
         OrderRecord(
-          ORDER_CONCAT_ID = parseStringOption(lineParts(2) + "~" + lineParts(1) + "~" + lineParts(0)),
+          ORDER_CONCAT_ID = s"${lineParts(2)}~${lineParts(1)}~${lineParts(0)}",
           REF_ORDER_ID = parseStringOption(lineParts(0)),
           SOURCE = parseStringOption(lineParts(1)),
           COUNTRY_CODE = parseStringOption(lineParts(2)),
