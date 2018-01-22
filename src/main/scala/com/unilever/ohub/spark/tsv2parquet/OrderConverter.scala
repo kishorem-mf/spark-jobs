@@ -110,8 +110,5 @@ object OrderConverter extends App {
 
   joinedRecordsDF.printSchema()
 
-  val count = joinedRecordsDF.count()
-  println(s"Processed $count records in ${(System.currentTimeMillis - startOfJob) / 1000}s")
-  println("Done")
-
+  println(s"Done in ${(System.currentTimeMillis - startOfJob) / 1000}s")
 }
