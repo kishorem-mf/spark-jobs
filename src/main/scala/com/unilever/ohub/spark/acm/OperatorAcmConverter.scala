@@ -2,6 +2,7 @@ package com.unilever.ohub.spark.acm
 import org.apache.spark.sql.SparkSession
 import com.unilever.ohub.spark.generic.StringFunctions
 import org.apache.hadoop.fs.FileSystem
+import org.apache.spark.sql.SaveMode.Overwrite
 
 object OperatorAcmConverter extends App{
   if (args.length != 2) {
@@ -59,24 +60,25 @@ object OperatorAcmConverter extends App{
     """.stripMargin)
   operatorFieldsParquetDF.createOrReplaceTempView("OPR")
 
+//  TODO remove country_code filter for production
   val ufsOperatorsDF = spark.sql(
     """
-      |select OPR.OPR_ORIG_INTEGRATION_ID,OPR.OPR_LNKD_INTEGRATION_ID,OPR.GOLDEN_RECORD_FLAG,OPR.COUNTRY_CODE,OPR.NAME,OPR.CHANNEL,OPR.SUB_CHANNEL,OPR.ROUTE_TO_MARKET,OPR.REGION,OPR.OTM,OPR.PREFERRED_PARTNER,OPR.STREET,OPR.HOUSE_NUMBER,OPR.ZIPCODE,OPR.CITY,OPR.COUNTRY,OPR.AVERAGE_SELLING_PRICE,OPR.NUMBER_OF_COVERS,OPR.NUMBER_OF_WEEKS_OPEN,OPR.NUMBER_OF_DAYS_OPEN,OPR.CONVENIENCE_LEVEL,OPR.RESPONSIBLE_EMPLOYEE,OPR.NPS_POTENTIAL,OPR.CAM_KEY,OPR.CAM_TEXT,OPR.CHANNEL_KEY,OPR.CHANNEL_TEXT,OPR.CHAIN_KNOTEN,OPR.CHAIN_NAME,OPR.CUST_SUB_SEG_EXT,OPR.CUST_SEG_EXT,OPR.CUST_SEG_KEY_EXT,OPR.CUST_GRP_EXT,OPR.PARENT_SEGMENT,OPR.DATE_CREATED,OPR.DATE_UPDATED,OPR.DELETE_FLAG,OPR.WHOLESALER_OPERATOR_ID,OPR.PRIVATE_HOUSEHOLD,OPR.VAT,OPR.OPEN_ON_MONDAY,OPR.OPEN_ON_TUESDAY,OPR.OPEN_ON_WEDNESDAY,OPR.OPEN_ON_THURSDAY,OPR.OPEN_ON_FRIDAY,OPR.OPEN_ON_SATURDAY,OPR.OPEN_ON_SUNDAY,OPR.KITCHEN_TYPE,MPG.LOCAL_CHANNEL,MPG.CHANNEL_USAGE,MPG.SOCIAL_COMMERCIAL,MPG.STRATEGIC_CHANNEL,MPG.GLOBAL_CHANNEL,MPG.GLOBAL_SUBCHANNEL
+      |select OPR.OPR_ORIG_INTEGRATION_ID,OPR.OPR_LNKD_INTEGRATION_ID,OPR.GOLDEN_RECORD_FLAG,OPR.COUNTRY_CODE,OPR.NAME,OPR.CHANNEL,OPR.SUB_CHANNEL,OPR.ROUTE_TO_MARKET,OPR.REGION,OPR.OTM,OPR.PREFERRED_PARTNER,OPR.STREET,OPR.HOUSE_NUMBER,OPR.ZIPCODE,OPR.CITY,OPR.COUNTRY,OPR.AVERAGE_SELLING_PRICE,OPR.NUMBER_OF_COVERS,OPR.NUMBER_OF_WEEKS_OPEN,OPR.NUMBER_OF_DAYS_OPEN,OPR.CONVENIENCE_LEVEL,OPR.RESPONSIBLE_EMPLOYEE,OPR.NPS_POTENTIAL,OPR.CAM_KEY,OPR.CAM_TEXT,OPR.CHANNEL_KEY,OPR.CHANNEL_TEXT,OPR.CHAIN_KNOTEN,OPR.CHAIN_NAME,OPR.CUST_SUB_SEG_EXT,OPR.CUST_SEG_EXT,OPR.CUST_SEG_KEY_EXT,OPR.CUST_GRP_EXT,OPR.PARENT_SEGMENT,date_format(OPR.DATE_CREATED,"yyyy-MM-dd HH:mm:ss") DATE_CREATED,date_format(OPR.DATE_UPDATED,"yyyy-MM-dd HH:mm:ss") DATE_UPDATED,OPR.DELETE_FLAG,OPR.WHOLESALER_OPERATOR_ID,OPR.PRIVATE_HOUSEHOLD,OPR.VAT,OPR.OPEN_ON_MONDAY,OPR.OPEN_ON_TUESDAY,OPR.OPEN_ON_WEDNESDAY,OPR.OPEN_ON_THURSDAY,OPR.OPEN_ON_FRIDAY,OPR.OPEN_ON_SATURDAY,OPR.OPEN_ON_SUNDAY,OPR.KITCHEN_TYPE,MPG.LOCAL_CHANNEL,MPG.CHANNEL_USAGE,MPG.SOCIAL_COMMERCIAL,MPG.STRATEGIC_CHANNEL,MPG.GLOBAL_CHANNEL,MPG.GLOBAL_SUBCHANNEL
       |from OPR
       |left join CHANNEL_MAPPING MPG
       | on OPR.CHANNEL = MPG.ORIGINAL_CHANNEL
-    """.stripMargin)
+    """.stripMargin).where("country_code = 'TH'")
 
-  ufsOperatorsDF.coalesce(1).write.option("encoding", "UTF-8").option("header", "true").option("delimiter","\u00B6").csv(outputFile)
+  ufsOperatorsDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true").option("delimiter","\u00B6").csv(outputFile)
 
 //  Rename file
   import org.apache.hadoop.fs.{Path => hadoopPath}
-  val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
+  val fileSystem = FileSystem.get(spark.sparkContext.hadoopConfiguration)
   val originalPath = new hadoopPath(s"$outputFile/part*")
-  val file = fs.globStatus(originalPath)(0).getPath
+  val file = fileSystem.globStatus(originalPath)(0).getPath
   val dateTime = java.time.LocalDateTime.now().toString
   val fileTimeStamp = s"${dateTime.substring(0,4)}${dateTime.substring(5,7)}${dateTime.substring(8,10)}${dateTime.substring(11,13)}${dateTime.substring(14,16)}${dateTime.substring(17,19)}"
 
-  fs.rename(new hadoopPath(s"${file.getParent}/${file.getName}"), new hadoopPath(s"${file.getParent.getParent}/UFS_OPERATORS_$fileTimeStamp.csv"))
-  fs.delete(new hadoopPath(s"${file.getParent}"), true)
+  fileSystem.rename(new hadoopPath(s"${file.getParent}/${file.getName}"), new hadoopPath(s"${file.getParent.getParent}/UFS_OPERATORS_$fileTimeStamp.csv"))
+  fileSystem.delete(new hadoopPath(s"${file.getParent}"), true)
 }
