@@ -5,4 +5,4 @@ project/project
 derby.log
 metastore_db
 src/main/scala/ScratchFile.scala
-*parquet/
+*.parquet/
