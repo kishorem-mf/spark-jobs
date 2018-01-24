@@ -18,7 +18,7 @@ case class RodrigoSchema(matched_string: String,
 object OperatorMatchingTemp extends App {
 
   if (args.length != 3) {
-    println("specify INPUT_FILE OUTPUT_FOLDER")
+    println("specify INPUT_FILE OUTPUT_FOLDER HELP_FILE")
     sys.exit(1)
   }
 
@@ -66,7 +66,7 @@ object OperatorMatchingTemp extends App {
 
     val operatorsDF2 = spark.sql(
       """
-        |select distinct country_code,concat(country_code,'~',source,'~',ref_contact_person_id) id,name,name_cleansed,zip_code,zip_code_cleansed,street,street_cleansed,city,city_cleansed,substring(name_cleansed,1,3) name_block,substring(street_cleansed,1,3) street_block
+        |select distinct country_code,OPERATOR_CONCAT_ID id,name,name_cleansed,zip_code,zip_code_cleansed,street,street_cleansed,city,city_cleansed,substring(name_cleansed,1,3) name_block,substring(street_cleansed,1,3) street_block
         |from operators1
       """.stripMargin)
       .filter($"country_code" === countryCode)
