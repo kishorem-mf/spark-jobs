@@ -76,6 +76,8 @@ object OperatorMatchingTemp extends App {
     val rodrigoTableName = "rodrigo"
     val rodrigoEnriched = rodrigoDs
       .join(operatorsDF2, Seq("id", "country_code"))
+      .filter($"country_code" === countryCode)
+
     rodrigoEnriched.createOrReplaceTempView(rodrigoTableName)
 
     val operatorsDF3 = spark.sql(
