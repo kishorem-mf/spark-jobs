@@ -6,6 +6,14 @@ import org.apache.spark.sql.SaveMode._
 
 case class DatasetAndCountry(ds: Dataset[_], countryCode: String)
 
+case class RodrigoSchema(matched_string: String,
+                         country_code: String,
+                         id_i: String,
+                         id: String,
+                         similarity: Float,
+                         name_i: String,
+                         name_j: String)
+
 object OperatorMatchingTemp extends App {
 
   if (args.length != 3) {
@@ -40,6 +48,7 @@ object OperatorMatchingTemp extends App {
 
   val rodrigo = spark.read.parquet(rodrigoParquet)
     .withColumnRenamed("id_j", "id")
+    .as[RodrigoSchema]
 
   countryList
     .map(countryCode => {
@@ -51,7 +60,7 @@ object OperatorMatchingTemp extends App {
 
   println("Done")
 
-  def createOperatorMatchGroupsPerCountry(outputFolder: String, countryCode: String, rodrigoDs: Dataset[_]): Dataset[_] = {
+  def createOperatorMatchGroupsPerCountry(outputFolder: String, countryCode: String, rodrigoDs: Dataset[RodrigoSchema]): Dataset[_] = {
 
     val operatorsDF2 = spark.sql(
       """
