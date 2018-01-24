@@ -72,6 +72,18 @@ object StringFunctions extends App {
     if (isValidEmail) emailAddress else null
   }
 
+  def onlyFillLastNameWhenFirstEqualsLastName(firstName:String,lastName:String,isFirstName:Boolean):String = {
+    val firstNameWithoutNull = if (firstName == null) "" else firstName
+    val lastNameWithoutNull = if (lastName == null) "" else lastName
+    val isBothEqual = firstNameWithoutNull.equals(lastNameWithoutNull)
+    val isNotEmptyFirst = firstNameWithoutNull != ""
+    if(isFirstName) {
+      if(isNotEmptyFirst && isBothEqual) "" else firstNameWithoutNull
+    } else {
+      lastNameWithoutNull
+    }
+  }
+
   def cleanPhoneNumber(phoneNumber: String, countryCode: String, countryPrefixList: Array[(String, String)]): String = {
     if (phoneNumber == null || countryCode == null) return null
     if (phoneNumber == "" || countryCode == "") return null
