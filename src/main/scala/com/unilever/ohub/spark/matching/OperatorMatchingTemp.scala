@@ -4,6 +4,8 @@ import com.unilever.ohub.spark.generic.StringFunctions
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.SaveMode._
 
+case class DatasetAndCountry(ds: Dataset[_], countryCode: String)
+
 object OperatorMatchingTemp extends App {
 
   if (args.length != 3) {
@@ -39,12 +41,17 @@ object OperatorMatchingTemp extends App {
   val rodrigo = spark.read.parquet(rodrigoParquet)
     .withColumnRenamed("id_j", "id")
 
-  countryList.foreach(countryCode => {
-    createOperatorMatchGroupsPerCountry(outputFolder, countryCode, rodrigo)
-  })
+  countryList
+    .map(countryCode => {
+      DatasetAndCountry(createOperatorMatchGroupsPerCountry(outputFolder, countryCode, rodrigo), countryCode)
+    })
+    .foreach(x =>
+      x.ds.write.mode(Overwrite).parquet(s"$outputFolder/${x.countryCode}.parquet")
+    )
+
   println("Done")
 
-  def createOperatorMatchGroupsPerCountry(outputFolder: String, countryCode: String, rodrigoDs: Dataset[_]): Unit = {
+  def createOperatorMatchGroupsPerCountry(outputFolder: String, countryCode: String, rodrigoDs: Dataset[_]): Dataset[_] = {
 
     val operatorsDF2 = spark.sql(
       """
@@ -162,7 +169,7 @@ object OperatorMatchingTemp extends App {
         | on a.source_id = b.id
       """.stripMargin)
     operatorsDF13.createOrReplaceTempView("operators13")
-    val operatorsDF14 = spark.sql(
+    spark.sql(
       """
         |select distinct a.country_code,a.source_id,a.target_id,a.source_name,b.name target_name,a.source_zip,b.zip_code target_zip,a.source_street,b.street target_street,a.source_city_cleansed,b.city_cleansed target_city_cleansed
         |from operators13 a
@@ -170,7 +177,6 @@ object OperatorMatchingTemp extends App {
         | on a.target_id = b.id
         |order by a.source_id
       """.stripMargin)
-    operatorsDF14.write.mode(Overwrite).format("parquet").save(s"$outputFolder/$countryCode.parquet")
   }
 
 
