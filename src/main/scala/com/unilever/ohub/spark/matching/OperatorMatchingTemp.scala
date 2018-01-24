@@ -3,6 +3,7 @@ package com.unilever.ohub.spark.matching
 import com.unilever.ohub.spark.generic.StringFunctions
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.SaveMode._
+import org.apache.spark.sql.SparkSession
 
 case class DatasetAndCountry(ds: Dataset[_], countryCode: String)
 
@@ -25,12 +26,13 @@ object OperatorMatchingTemp extends App {
   val outputFolder = args(1)
   val rodrigoParquet = args(2)
 
-  import org.apache.spark.sql.SparkSession
 
   val spark = SparkSession
     .builder()
     .appName("Operator matching")
     .getOrCreate()
+
+  import spark.implicits._
 
   spark.sqlContext.udf.register("SIMILARITY", (s1: String, s2: String) => StringFunctions.getFastSimilarity(s1 match { case null => null; case _ => s1.toCharArray }, s2 match { case null => null; case _ => s2.toCharArray }))
 
@@ -66,7 +68,9 @@ object OperatorMatchingTemp extends App {
       """
         |select distinct country_code,concat(country_code,'~',source,'~',ref_contact_person_id) id,name,name_cleansed,zip_code,zip_code_cleansed,street,street_cleansed,city,city_cleansed,substring(name_cleansed,1,3) name_block,substring(street_cleansed,1,3) street_block
         |from operators1
-      """.stripMargin).where("country_code = '".concat(countryCode).concat("'"))
+      """.stripMargin)
+      .filter($"country_code" === countryCode)
+
     operatorsDF2.createOrReplaceTempView("operators2")
 
     val rodrigoTableName = "rodrigo"
