@@ -19,6 +19,12 @@ class CustomParsersSpec extends FunSpec with Matchers {
     }
   }
 
+//  describe("onlyFillLastNameWhenFirstEqualsLastName") {
+//    it("") {
+//      assert("".isEmpty)
+//    }
+//  }
+
   describe("parseDateTimeStampOption") {
     it("should parse empty string") {
       assert(parseDateTimeStampOption("").isEmpty)
