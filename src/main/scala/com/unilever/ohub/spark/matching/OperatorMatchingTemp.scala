@@ -42,9 +42,7 @@ object OperatorMatchingTemp extends App {
   createOperatorMatchGroupsPerCountry(outputFolder, countryList, rodrigo)
 
   def createOperatorMatchGroupsPerCountry(outputFolder: String, countryList: List[String], rodrigoDs: Dataset[_]): Unit = {
-    for (i <- countryList.indices) loopPerCountry(countryList(i))
-
-    def loopPerCountry(countryCode: String): Unit = {
+    countryList.foreach(countryCode => {
       val operatorsDF2 = spark.sql(
         """
           |select distinct country_code,concat(country_code,'~',source,'~',ref_contact_person_id) id,name,name_cleansed,zip_code,zip_code_cleansed,street,street_cleansed,city,city_cleansed,substring(name_cleansed,1,3) name_block,substring(street_cleansed,1,3) street_block
@@ -59,16 +57,16 @@ object OperatorMatchingTemp extends App {
 
       val operatorsDF3 = spark.sql(
         s"""
-          |select source.country_code,min(source.id) source_id,target.id target_id
-          |from operators2 source
-          |inner join $rodrigoTableName target
-          | on source.id = target.id
-          | and source.country_code = target.country_code
-          |where 1 = 1
-          | and similarity(source.name_cleansed,target.name_cleansed) > 0.85
-          | and source.name_cleansed <= target.name_cleansed
-          | and source.zip_code is null and target.zip_code is null and source.city_cleansed is null and target.city_cleansed is null and source.street_cleansed is null and target.street_cleansed is null
-          |group by source.country_code,target.id
+           |select source.country_code,min(source.id) source_id,target.id target_id
+           |from operators2 source
+           |inner join $rodrigoTableName target
+           | on source.id = target.id
+           | and source.country_code = target.country_code
+           |where 1 = 1
+           | and similarity(source.name_cleansed,target.name_cleansed) > 0.85
+           | and source.name_cleansed <= target.name_cleansed
+           | and source.zip_code is null and target.zip_code is null and source.city_cleansed is null and target.city_cleansed is null and source.street_cleansed is null and target.street_cleansed is null
+           |group by source.country_code,target.id
         """.stripMargin)
       operatorsDF3.createOrReplaceTempView("operators3")
       val operatorsDF4 = spark.sql(
@@ -80,16 +78,16 @@ object OperatorMatchingTemp extends App {
       operatorsDF4.createOrReplaceTempView("operators4")
       val operatorsDF5 = spark.sql(
         s"""
-          |select source.country_code,min(source.id) source_id,target.id target_id
-          |from operators2 source
-          |inner join $rodrigoTableName target
-          | on source.zip_code_cleansed = target.zip_code_cleansed
-          | and source.country_code = target.country_code
-          |where 1 = 1
-          | and similarity(source.name_cleansed,target.name_cleansed) > 0.8
-          | and source.name_cleansed <= target.name_cleansed
-          | and source.zip_code is not null and target.zip_code is not null and source.city_cleansed is null and target.city_cleansed is null and source.street_cleansed is null and target.street_cleansed is null
-          |group by source.country_code,target.id
+           |select source.country_code,min(source.id) source_id,target.id target_id
+           |from operators2 source
+           |inner join $rodrigoTableName target
+           | on source.zip_code_cleansed = target.zip_code_cleansed
+           | and source.country_code = target.country_code
+           |where 1 = 1
+           | and similarity(source.name_cleansed,target.name_cleansed) > 0.8
+           | and source.name_cleansed <= target.name_cleansed
+           | and source.zip_code is not null and target.zip_code is not null and source.city_cleansed is null and target.city_cleansed is null and source.street_cleansed is null and target.street_cleansed is null
+           |group by source.country_code,target.id
         """.stripMargin)
       operatorsDF5.createOrReplaceTempView("operators5")
       val operatorsDF6 = spark.sql(
@@ -101,18 +99,18 @@ object OperatorMatchingTemp extends App {
       operatorsDF6.createOrReplaceTempView("operators6")
       val operatorsDF7 = spark.sql(
         s"""
-          |select source.country_code,min(source.id) source_id,target.id target_id
-          |from operators2 source
-          |inner join $rodrigoTableName target
-          | on source.country_code = target.country_code
-          | and source.street_block = target.street_block
-          | and source.city_cleansed = target.city_cleansed
-          |where 1 = 1
-          | and similarity(source.name_cleansed,target.name_cleansed) > 0.8
-          | and similarity(source.street_cleansed,target.street_cleansed) > 0.8
-          | and source.name_cleansed <= target.name_cleansed
-          | and source.street_cleansed is not null and target.street_cleansed is not null
-          |group by source.country_code,target.id
+           |select source.country_code,min(source.id) source_id,target.id target_id
+           |from operators2 source
+           |inner join $rodrigoTableName target
+           | on source.country_code = target.country_code
+           | and source.street_block = target.street_block
+           | and source.city_cleansed = target.city_cleansed
+           |where 1 = 1
+           | and similarity(source.name_cleansed,target.name_cleansed) > 0.8
+           | and similarity(source.street_cleansed,target.street_cleansed) > 0.8
+           | and source.name_cleansed <= target.name_cleansed
+           | and source.street_cleansed is not null and target.street_cleansed is not null
+           |group by source.country_code,target.id
         """.stripMargin)
       operatorsDF7.createOrReplaceTempView("operators7")
       val operatorsDF8 = spark.sql(
@@ -124,16 +122,16 @@ object OperatorMatchingTemp extends App {
       operatorsDF8.createOrReplaceTempView("operators8")
       val operatorsDF9 = spark.sql(
         s"""
-          |select source.country_code,min(source.id) source_id,target.id target_id
-          |from operators2 source
-          |inner join $rodrigoTableName target
-          | on source.country_code = target.country_code
-          | and source.city_cleansed = target.city_cleansed
-          |where 1 = 1
-          | and similarity(source.name_cleansed,target.name_cleansed) > 0.8
-          | and source.name_cleansed <= target.name_cleansed
-          | and source.zip_code is null and target.zip_code is null and source.city_cleansed is not null and target.city_cleansed is not null and source.street_cleansed is null and target.street_cleansed is null
-          |group by source.country_code,target.id
+           |select source.country_code,min(source.id) source_id,target.id target_id
+           |from operators2 source
+           |inner join $rodrigoTableName target
+           | on source.country_code = target.country_code
+           | and source.city_cleansed = target.city_cleansed
+           |where 1 = 1
+           | and similarity(source.name_cleansed,target.name_cleansed) > 0.8
+           | and source.name_cleansed <= target.name_cleansed
+           | and source.zip_code is null and target.zip_code is null and source.city_cleansed is not null and target.city_cleansed is not null and source.street_cleansed is null and target.street_cleansed is null
+           |group by source.country_code,target.id
         """.stripMargin)
       operatorsDF9.createOrReplaceTempView("operators9")
       val operatorsDF10 = spark.sql(
@@ -170,7 +168,7 @@ object OperatorMatchingTemp extends App {
           |order by a.source_id
         """.stripMargin)
       operatorsDF14.write.mode(Overwrite).format("parquet").save(s"$outputFolder/$countryCode.parquet")
-    }
+    })
   }
 
   println("Done")
