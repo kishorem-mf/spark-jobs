@@ -1,8 +1,7 @@
 package com.unilever.ohub.spark.acm
-import org.apache.spark.sql.SparkSession
 import com.unilever.ohub.spark.generic.StringFunctions
-import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.SaveMode.Overwrite
+import org.apache.spark.sql.SparkSession
 
 object OperatorAcmConverter extends App{
   if (args.length != 2) {
@@ -20,9 +19,8 @@ object OperatorAcmConverter extends App{
     .appName(this.getClass.getSimpleName)
     .getOrCreate()
 
-  import spark.implicits._
-  import org.apache.spark.sql.functions._
   import com.unilever.ohub.spark.generic.SparkFunctions._
+  import org.apache.spark.sql.functions._
 
   val startOfJob = System.currentTimeMillis()
 
@@ -71,14 +69,5 @@ object OperatorAcmConverter extends App{
 
   ufsOperatorsDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true").option("delimiter","\u00B6").csv(outputFile)
 
-//  Rename file
-  import org.apache.hadoop.fs.{Path => hadoopPath}
-  val fileSystem = FileSystem.get(spark.sparkContext.hadoopConfiguration)
-  val originalPath = new hadoopPath(s"$outputFile/part*")
-  val file = fileSystem.globStatus(originalPath)(0).getPath
-  val dateTime = java.time.LocalDateTime.now().toString
-  val fileTimeStamp = s"${dateTime.substring(0,4)}${dateTime.substring(5,7)}${dateTime.substring(8,10)}${dateTime.substring(11,13)}${dateTime.substring(14,16)}${dateTime.substring(17,19)}"
-
-  fileSystem.rename(new hadoopPath(s"${file.getParent}/${file.getName}"), new hadoopPath(s"${file.getParent.getParent}/UFS_OPERATORS_$fileTimeStamp.csv"))
-  fileSystem.delete(new hadoopPath(s"${file.getParent}"), true)
+  renameSparkCsvFileUsingHadoopFilesystem(spark,outputFile)
 }
