@@ -21,19 +21,19 @@ class CustomParsersSpec extends FunSpec with Matchers {
 
   describe("onlyFillLastNameWhenFirstEqualsLastName") {
     it("should return the first name if last name is empty and first not") {
-      assert(onlyFillLastNameWhenFirstEqualsLastName("hans","",isFirstName = true).equals("hans"))
+      assert(fillLastNameOnlyWhenFirstEqualsLastName("hans","",isFirstName = true).equals("hans"))
     }
     it("should return nothing if both names are filled, not empty and first name is selected") {
-      assert(onlyFillLastNameWhenFirstEqualsLastName("hans","hans",isFirstName = true).equals(""))
+      assert(fillLastNameOnlyWhenFirstEqualsLastName("hans","hans",isFirstName = true).equals(""))
     }
     it("should return duplicate name if both names are filled, not empty and last name is selected") {
-      assert(onlyFillLastNameWhenFirstEqualsLastName("hans","hans",isFirstName = false).equals("hans"))
+      assert(fillLastNameOnlyWhenFirstEqualsLastName("hans","hans",isFirstName = false).equals("hans"))
     }
     it("""should return "" if both names are null""") {
-      assert(onlyFillLastNameWhenFirstEqualsLastName(null,null,isFirstName = false).equals(""))
+      assert(fillLastNameOnlyWhenFirstEqualsLastName(null,null,isFirstName = false).equals(""))
     }
     it("should return the last name if first name is empty and last not") {
-      assert(onlyFillLastNameWhenFirstEqualsLastName("","hans",isFirstName = false).equals("hans"))
+      assert(fillLastNameOnlyWhenFirstEqualsLastName("","hans",isFirstName = false).equals("hans"))
     }
   }
 

@@ -72,7 +72,7 @@ object StringFunctions extends App {
     if (isValidEmail) emailAddress else null
   }
 
-  def onlyFillLastNameWhenFirstEqualsLastName(firstName:String,lastName:String,isFirstName:Boolean):String = {
+  def fillLastNameOnlyWhenFirstEqualsLastName(firstName:String, lastName:String, isFirstName:Boolean):String = {
     val firstNameWithoutNull = if (firstName == null) "" else firstName
     val lastNameWithoutNull = if (lastName == null) "" else lastName
     val isBothEqual = firstNameWithoutNull.equals(lastNameWithoutNull)
