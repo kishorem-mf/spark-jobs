@@ -69,5 +69,5 @@ object OperatorAcmConverter extends App{
 
   ufsOperatorsDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true").option("delimiter","\u00B6").csv(outputFile)
 
-  renameSparkCsvFileUsingHadoopFileSystem(spark,outputFile)
+  renameSparkCsvFileUsingHadoopFileSystem(spark,outputFile,"UFS_OPERATORS")
 }

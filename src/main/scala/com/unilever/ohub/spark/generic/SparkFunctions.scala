@@ -53,13 +53,13 @@ object SparkFunctions extends App {
     collection.immutable.SortedSet(myList.mkString("").toCharArray.toList: _*)
   }
 
-  def renameSparkCsvFileUsingHadoopFileSystem(spark:SparkSession, filePath:String):Boolean = {
+  def renameSparkCsvFileUsingHadoopFileSystem(spark:SparkSession, filePath:String, newFileName:String):Boolean = {
     import org.apache.hadoop.fs.{Path => hadoopPath}
     try{
       val fileSystem = FileSystem.get(spark.sparkContext.hadoopConfiguration)
       val originalPath = new hadoopPath(s"$filePath/part*")
       val file = fileSystem.globStatus(originalPath)(0).getPath
-      fileSystem.rename(new hadoopPath(s"${file.getParent}/${file.getName}"), new hadoopPath(s"${file.getParent.getParent}/UFS_OPERATORS_$getFileDateString.csv"))
+      fileSystem.rename(new hadoopPath(s"${file.getParent}/${file.getName}"), new hadoopPath(s"${file.getParent.getParent}/${newFileName}_$getFileDateString.csv"))
       fileSystem.delete(new hadoopPath(s"${file.getParent}"), true)
     } catch {
       case _: Exception => false
