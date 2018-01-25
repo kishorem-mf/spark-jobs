@@ -12,7 +12,7 @@ object OperatorAcmConverter extends App{
   val inputFile = args(0)
   val outputFile = args(1)
 
-  println(s"Generating operator parquet from [$inputFile] to [$outputFile]")
+  println(s"Generating operator ACM csv file from [$inputFile] to [$outputFile]")
 
   val spark = SparkSession
     .builder()

@@ -88,6 +88,7 @@ object StringFunctions extends App {
     if (phoneNumber == null || countryCode == null) return null
     if (phoneNumber == "" || countryCode == "") return null
     val digitOnlyNumber = phoneNumber.replaceAll("(^0+)|[^0-9]+", "")
+    if (digitOnlyNumber == "") return null
     val prefix = countryPrefixList.filter(_._1 == countryCode).map(_._2).head
     if (!digitOnlyNumber.startsWith(prefix)) prefix.concat(digitOnlyNumber) else digitOnlyNumber
   }

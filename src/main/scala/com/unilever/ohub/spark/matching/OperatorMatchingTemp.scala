@@ -39,14 +39,15 @@ object OperatorMatchingTemp extends App {
   val operatorsDF1 = spark.read.parquet(inputFile)
   operatorsDF1.createOrReplaceTempView("operators1")
 
-  val countryList = operatorsDF1
-    .select("country_code")
-    .groupBy("country_code")
-    .count()
-    .orderBy("count")
-    .collect()
-    .map(row => row(0).toString)
-    .toList
+//  val countryList = operatorsDF1
+//    .select("country_code")
+//    .groupBy("country_code")
+//    .count()
+//    .orderBy("count")
+//    .collect()
+//    .map(row => row(0).toString)
+//    .toList
+  val countryList = List("US")
 
   val rodrigo = spark.read.parquet(rodrigoParquet)
     .withColumnRenamed("id_j", "id")

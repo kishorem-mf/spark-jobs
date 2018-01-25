@@ -33,7 +33,7 @@ class CustomParsersSpec extends FunSpec with Matchers {
       assert(onlyFillLastNameWhenFirstEqualsLastName(null,null,isFirstName = false).equals(""))
     }
     it("should return the last name if first name is empty and last not") {
-      assert(onlyFillLastNameWhenFirstEqualsLastName("","hans",isFirstName = true).equals("hans"))
+      assert(onlyFillLastNameWhenFirstEqualsLastName("","hans",isFirstName = false).equals("hans"))
     }
   }
 
@@ -236,6 +236,9 @@ class CustomParsersSpec extends FunSpec with Matchers {
     }
     it("should return null when phone number is null") {
       assert(cleanPhoneNumber(null,"DK",countryPrefixList) == null)
+    }
+    it("should return null when phone number is 0000") {
+      assert(cleanPhoneNumber("0000","DK",countryPrefixList) == null)
     }
   }
 
