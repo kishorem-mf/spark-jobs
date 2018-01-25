@@ -36,7 +36,12 @@ object OperatorMerging extends App {
 
   val startOfJob = System.currentTimeMillis()
 
-  val operators: Dataset[OperatorRecord] = spark.read.parquet(operatorInputFile).as[OperatorRecord]
+  val operators: Dataset[OperatorRecord] = spark.read.parquet(operatorInputFile)
+    .as[OperatorRecord]
+    .filter($"COUNTRY_CODE" === "DK")
+
+  println("operators " + operators.count())
+
 
   //TODO Do something smart with lit("DK")
   val matches = spark.read.parquet(matchingInputFile).select("source_id", "target_id")
@@ -50,15 +55,22 @@ object OperatorMerging extends App {
     .joinWith(operators, $"value" === $"OPERATOR_CONCAT_ID")
     .map(x => x._2 +: x._1._2)
 
+  println("groupedOperators " + groupedOperators.count())
+
   val matchedIds: Dataset[IdAndCountry] = groupedOperators
     .flatMap(_.map(x => IdAndCountry(x.OPERATOR_CONCAT_ID, x.COUNTRY_CODE.get)))
     .distinct()
 
+  println("matchedIds " + matchedIds.count())
+
   val singletonOperators: Dataset[Seq[OperatorRecord]] = operators
 //    .filter($"COUNTRY_CODE" === "DK")
-    .join(matchedIds, Seq("OPERATOR_CONCAT_ID", "COUNTRY_CODE"), "leftanti")
+    .join(matchedIds, Seq("OPERATOR_CONCAT_ID"), "leftanti") // TODO  Constantijn: Figure out what to do count being off when COUNTRY_CODE is in Seq even with just DK
     .as[OperatorRecord]
     .map(Seq(_))
+
+  println("singletonOperators " + singletonOperators.count())
+
 
   lazy val sourcePreference = {
     val filename = "/source_preference.tsv"
@@ -89,6 +101,6 @@ object OperatorMerging extends App {
 
   goldenRecords.repartition(60).write.mode(Overwrite).format("parquet").save(outputFile)
 
-    println(s"Went from ${operators.count} to ${spark.read.parquet(outputFile).count} records")
+  println(s"Went from ${operators.count} to ${spark.read.parquet(outputFile).count} records")
   println(s"Done in ${(System.currentTimeMillis - startOfJob) / 1000}s")
 }

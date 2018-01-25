@@ -24,7 +24,7 @@ object ContactPersonMatching extends App {
       |select distinct country_code,concat(country_code,'~',source,'~',ref_contact_person_id) id,first_name,last_name,both_names_cleansed,zip_code,zip_code_cleansed,street,street_cleansed,city,city_cleansed,substring(both_names_cleansed,1,3) name_block,substring(street_cleansed,1,3) street_block,email_address,mobile_phone_number
       |from cpn_full
       |where (both_names_cleansed is not null or mobile_phone_number is not null)
-    """.stripMargin).where("country_code = 'PT'")
+    """.stripMargin).where("country_code = 'DK'")
   cpnPart.createOrReplaceTempView("cpn_part")
   cpnPart.repartition(col("country_code")).persist(StorageLevel.MEMORY_AND_DISK)
 
