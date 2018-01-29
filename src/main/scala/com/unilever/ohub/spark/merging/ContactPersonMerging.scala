@@ -10,7 +10,7 @@ import org.apache.spark.sql.functions._
 
 import scala.io.Source
 
-case class GoldenContactPersonRecord(OHUB_CONTACT_PERSON_ID: String, CONTACT_PERSON: ContactPersonRecord, REF_IDS: Seq[String])
+case class GoldenContactPersonRecord(OHUB_CONTACT_PERSON_ID: String, CONTACT_PERSON: ContactPersonRecord, REF_IDS: Seq[String], COUNTRY_CODE: String)
 case class ContactPersonMatchingResult(source_id: String, target_id: String, COUNTRY_CODE: String)
 case class ContactPersonIdAndCountry(CONTACT_PERSON_CONCAT_ID: String, COUNTRY_CODE: String)
 
@@ -27,18 +27,16 @@ object ContactPersonMerging extends App {
 
   println(s"Merging contact persons from [$matchingInputFile] and [$contactPersonInputFile] to [$outputFile]")
 
-  val spark = SparkSession.
-    builder().
-    appName(this.getClass.getSimpleName).
-    getOrCreate()
+  val spark = SparkSession
+    .builder()
+    .appName(this.getClass.getSimpleName)
+    .getOrCreate()
 
   import spark.implicits._
 
   val startOfJob = System.currentTimeMillis()
 
-  val contactPersons: Dataset[ContactPersonRecord] = spark.read.parquet(contactPersonInputFile)
-    .as[ContactPersonRecord]
-    .filter($"COUNTRY_CODE" === "DK")
+  val contactPersons: Dataset[ContactPersonRecord] = spark.read.parquet(contactPersonInputFile).as[ContactPersonRecord]
 
   println("contactPersons " + contactPersons.count())
 
@@ -62,8 +60,7 @@ object ContactPersonMerging extends App {
   println("matchedIds " + matchedIds.count())
 
   val singletonContactPersons: Dataset[Seq[ContactPersonRecord]] = contactPersons
-//    .filter($"COUNTRY_CODE" === "DK")
-    .join(matchedIds, Seq("CONTACT_PERSON_CONCAT_ID"), "leftanti") // TODO  Constantijn: Figure out what to do count being off when COUNTRY_CODE is in Seq even with just DK
+    .join(matchedIds, Seq("CONTACT_PERSON_CONCAT_ID"), "leftanti")
     .as[ContactPersonRecord]
     .map(Seq(_))
 
@@ -89,14 +86,14 @@ object ContactPersonMerging extends App {
       }
     })
     val id = UUID.randomUUID().toString
-    GoldenContactPersonRecord(id, goldenRecord, refIds)
+    GoldenContactPersonRecord(id, goldenRecord, refIds, goldenRecord.COUNTRY_CODE.get)
   }
 
   val goldenRecords: Dataset[GoldenContactPersonRecord] = groupedContactPersons
     .union(singletonContactPersons)
     .map(pickGoldenRecordAndGroupId(_))
 
-  goldenRecords.repartition(60).write.mode(Overwrite).format("parquet").save(outputFile)
+  goldenRecords.repartition(60).write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
 
   println(s"Went from ${contactPersons.count} to ${spark.read.parquet(outputFile).count} records")
   println(s"Done in ${(System.currentTimeMillis - startOfJob) / 1000}s")
