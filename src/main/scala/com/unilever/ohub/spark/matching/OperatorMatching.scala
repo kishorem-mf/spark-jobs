@@ -22,9 +22,14 @@ object OperatorMatching extends App {
   val spark = SparkSession.builder().appName("Operator matching").getOrCreate()
   spark.sqlContext.udf.register("SIMILARITY",(s1:String,s2:String) => StringFunctions.getFastSimilarity(s1 match {case null => null;case _ => s1.toCharArray},s2 match {case null => null;case _ => s2.toCharArray}))
   val operatorsDF1 = spark.read.parquet(inputFile)
+
+  operatorsDF1.where("source = 'RFB' and country_code = 'NL'")
+
   import spark.implicits._
   operatorsDF1.createOrReplaceTempView("operators1")
-  val countryList = operatorsDF1.select("country_code").groupBy("country_code").count().orderBy("count").collect().map(row => row(0).toString).toList
+  val countryList = Array("NL").toList
+//  TODO change to multiple countries again
+//    operatorsDF1.select("country_code").groupBy("country_code").count().orderBy("count").collect().map(row => row(0).toString).toList
   createOperatorMatchGroupsPerCountry(outputFolder,countryList)
 
   def createOperatorMatchGroupsPerCountry(outputFolder:String, countryList:List[String]): Unit = {
@@ -33,7 +38,7 @@ object OperatorMatching extends App {
     def loopPerCountry(countryCode:String): Unit = {
       val operatorsDF2 = spark.sql(
         """
-          |select distinct country_code,concat(country_code,'~',source,'~',ref_contact_person_id) id,name,name_cleansed,zip_code,zip_code_cleansed,street,street_cleansed,city,city_cleansed,substring(name_cleansed,1,3) name_block,substring(street_cleansed,1,3) street_block
+          |select distinct country_code,concat(country_code,'~',source,'~',ref_operator_id) id,name,name_cleansed,zip_code,zip_code_cleansed,street,street_cleansed,city,city_cleansed,substring(name_cleansed,1,3) name_block,substring(street_cleansed,1,3) street_block
           |from operators1
         """.stripMargin).where("country_code = '".concat(countryCode).concat("'"))
       operatorsDF2.createOrReplaceTempView("operators2")

@@ -2,6 +2,7 @@ package com.unilever.ohub.spark.acm
 import com.unilever.ohub.spark.generic.StringFunctions
 import org.apache.spark.sql.SaveMode.Overwrite
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.storage.StorageLevel
 
 object OperatorAcmConverter extends App{
   if (args.length != 2) {
@@ -29,14 +30,15 @@ object OperatorAcmConverter extends App{
   val allChannelMappingDF = channelMappingDF.join(channelReferencesDF,col("channel_reference_fk") === col("channel_reference_id"),"left")
 
   spark.sqlContext.udf.register("CLEAN",(s1:String) => StringFunctions.removeGenericStrangeChars(s1 match {case null => null;case _ => s1}))
-  val operatorsInputDF = spark.read.parquet(inputFile)
+  val operatorsInputDF = spark.read.parquet(inputFile).select("OHUB_OPERATOR_ID","OPERATOR.*")
+  operatorsInputDF.persist(StorageLevel.MEMORY_AND_DISK)
   allChannelMappingDF.createOrReplaceTempView("CHANNEL_MAPPING")
   operatorsInputDF.createOrReplaceTempView("OPR_INPUT")
 
 //  TODO make sure OPR_LNKD_INTEGRATION_ID = filled with new group id + set GOLDEN_RECORD_FLAG to Y if golden record
   val operatorFieldsParquetDF = spark.sql(
     """
-      |select OPERATOR_CONCAT_ID OPR_ORIG_INTEGRATION_ID,'' OPR_LNKD_INTEGRATION_ID,'' GOLDEN_RECORD_FLAG,COUNTRY_CODE,
+      |select OPERATOR_CONCAT_ID OPR_ORIG_INTEGRATION_ID,OHUB_OPERATOR_ID OPR_LNKD_INTEGRATION_ID,'Y' GOLDEN_RECORD_FLAG,COUNTRY_CODE,
       | clean(NAME) NAME,CHANNEL,SUB_CHANNEL,'' ROUTE_TO_MARKET,REGION,OTM,
       | clean(DISTRIBUTOR_NAME) PREFERRED_PARTNER,STREET,HOUSENUMBER HOUSE_NUMBER,ZIP_CODE ZIPCODE,
       | clean(CITY) CITY,COUNTRY,
@@ -65,7 +67,7 @@ object OperatorAcmConverter extends App{
       |from OPR
       |left join CHANNEL_MAPPING MPG
       | on OPR.CHANNEL = MPG.ORIGINAL_CHANNEL
-    """.stripMargin).where("country_code = 'TH'")
+    """.stripMargin).where("country_code = 'DK'")
 
   ufsOperatorsDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true").option("delimiter","\u00B6").csv(outputFile)
 
