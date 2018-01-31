@@ -19,12 +19,14 @@ object ContactPersonMatching extends App {
   val cpn = spark.read.parquet(inputFile)
   cpn.createOrReplaceTempView("cpn_full")
   import org.apache.spark.sql.functions._
+//  TODO delete country filter
   val cpnPart = spark.sql(
     """
       |select distinct country_code,concat(country_code,'~',source,'~',ref_contact_person_id) id,first_name,last_name,both_names_cleansed,zip_code,zip_code_cleansed,street,street_cleansed,city,city_cleansed,substring(both_names_cleansed,1,3) name_block,substring(street_cleansed,1,3) street_block,email_address,mobile_phone_number
       |from cpn_full
       |where (both_names_cleansed is not null or mobile_phone_number is not null)
-    """.stripMargin).where("country_code = 'DK'")
+    """.stripMargin)
+    .where("country_code = 'DK'")
   cpnPart.createOrReplaceTempView("cpn_part")
   cpnPart.repartition(col("country_code")).persist(StorageLevel.MEMORY_AND_DISK)
 
@@ -36,7 +38,6 @@ object ContactPersonMatching extends App {
       | on a.email_address = b.email_address
       | and a.id < b.id
       | and a.email_address is not null and b.email_address is not null
-      | and a.mobile_phone_number is null and b.mobile_phone_number is null
       | and a.country_code = b.country_code
       |group by a.country_code,b.id
     """.stripMargin)
@@ -51,44 +52,13 @@ object ContactPersonMatching extends App {
       | on a.mobile_phone_number = b.mobile_phone_number
       | and a.id < b.id
       | and a.email_address is null and b.email_address is null
-      | and a.mobile_phone_number is not null and b.mobile_phone_number is not null
       | and a.country_code = b.country_code
       |group by a.country_code,b.id
     """.stripMargin)
   cpnUniqueMobile.createOrReplaceTempView("cpn_unique_mobile")
   cpnUniqueMobile.repartition(col("country_code")).persist(StorageLevel.MEMORY_AND_DISK)
 
-  val cpnUniqueMobileEmail = spark.sql(
-    """
-      |select a.country_code,min(a.id) source_id,b.id target_id
-      |from cpn_part a
-      |inner join cpn_part b
-      | on a.mobile_phone_number = b.mobile_phone_number
-      | and a.id < b.id
-      | and a.email_address is not null and b.email_address is not null
-      | and a.mobile_phone_number is not null and b.mobile_phone_number is not null
-      | and a.country_code = b.country_code
-      |group by a.country_code,b.id
-    """.stripMargin)
-  cpnUniqueMobileEmail.createOrReplaceTempView("cpn_unique_mobile_email")
-  cpnUniqueMobileEmail.repartition(col("country_code")).persist(StorageLevel.MEMORY_AND_DISK)
-
-  val cpnUniqueEmailMobile = spark.sql(
-    """
-      |select a.country_code,min(a.id) source_id,b.id target_id
-      |from cpn_part a
-      |inner join cpn_part b
-      | on a.email_address = b.email_address
-      | and a.id < b.id
-      | and a.email_address is not null and b.email_address is not null
-      | and a.mobile_phone_number is not null and b.mobile_phone_number is not null
-      | and a.country_code = b.country_code
-      |group by a.country_code,b.id
-    """.stripMargin)
-  cpnUniqueEmailMobile.createOrReplaceTempView("cpn_unique_mobile_email")
-  cpnUniqueEmailMobile.repartition(col("country_code")).persist(StorageLevel.MEMORY_AND_DISK)
-
-  val cpnMatchGroups = cpnUniqueEmail.union(cpnUniqueMobile.union(cpnUniqueMobileEmail.union(cpnUniqueEmailMobile))).distinct().sort("country_code","source_id")
+  val cpnMatchGroups = cpnUniqueEmail.union(cpnUniqueMobile).distinct().sort("country_code","source_id")
   cpnMatchGroups.createOrReplaceTempView("cpn_match_groups")
   cpnMatchGroups.repartition(col("country_code")).persist(StorageLevel.MEMORY_AND_DISK)
 

@@ -74,8 +74,8 @@ object OperatorMerging extends App {
   def pickGoldenRecordAndGroupId(operators: Seq[OperatorRecord]): GoldenOperatorRecord = {
     val refIds = operators.map(_.OPERATOR_CONCAT_ID)
     val goldenRecord = operators.reduce((o1, o2) => {
-      val preference1 = sourcePreference.get(o1.SOURCE.getOrElse("UNKNOWN")).getOrElse(Int.MaxValue)
-      val preference2 = sourcePreference.get(o2.SOURCE.getOrElse("UNKNOWN")).getOrElse(Int.MaxValue)
+      val preference1 = sourcePreference.getOrElse(o1.SOURCE.getOrElse("UNKNOWN"), Int.MaxValue)
+      val preference2 = sourcePreference.getOrElse(o2.SOURCE.getOrElse("UNKNOWN"), Int.MaxValue)
       if (preference1 < preference2) o1
       else if (preference1 > preference2) o2
       else { // same source preference
@@ -90,9 +90,11 @@ object OperatorMerging extends App {
 
   val goldenRecords: Dataset[GoldenOperatorRecord] = groupedOperators
     .union(singletonOperators)
-    .map(pickGoldenRecordAndGroupId(_))
+    .map(pickGoldenRecordAndGroupId)
 
-  goldenRecords.repartition(60).write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
+//  goldenRecords.repartition(60).write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
+//  TODO out comment above line and remove below line
+  goldenRecords.select("OHUB_OPERATOR_ID","OPERATOR.*").repartition(60).write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
 
   println(s"Went from ${operators.count} to ${spark.read.parquet(outputFile).count} records")
   println(s"Done in ${(System.currentTimeMillis - startOfJob) / 1000}s")

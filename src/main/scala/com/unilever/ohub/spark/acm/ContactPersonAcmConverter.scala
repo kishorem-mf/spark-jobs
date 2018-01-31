@@ -1,5 +1,6 @@
 package com.unilever.ohub.spark.acm
 
+import com.unilever.ohub.spark.generic.FileSystems.removeFullDirectoryUsingHadoopFileSystem
 import com.unilever.ohub.spark.generic.StringFunctions
 import org.apache.spark.sql.SaveMode.Overwrite
 import org.apache.spark.sql.SparkSession
@@ -12,6 +13,7 @@ object ContactPersonAcmConverter extends App{
 
   val inputFile = args(0)
   val outputFile = args(1)
+  val outputParquetFile = if(outputFile.endsWith(".csv")) outputFile.replace(".csv",".parquet") else outputFile
 
   println(s"Generating contact person ACM csv file from [$inputFile] to [$outputFile]")
 
@@ -29,12 +31,14 @@ object ContactPersonAcmConverter extends App{
   spark.sqlContext.udf.register("CLEAN_NAMES",(s1:String,s2:String,b1:Boolean) => StringFunctions.fillLastNameOnlyWhenFirstEqualsLastName(s1 match {case null => null;case _ => s1},s2 match {case null => null;case _ => s2},b1))
 
   val contactPersonsInputDF = spark.read.parquet(inputFile)
+    .select("OHUB_CONTACT_PERSON_ID","CONTACT_PERSON.*")
   contactPersonsInputDF.createOrReplaceTempView("CPN_INPUT")
 
 //  TODO remove country_code filter for production
-  val ufsRecipientsDF = spark.sql(
+//  Data Model: OPR_ORIG_INTEGRATION_ID can be misleading for Ohub 2.0 as this will contain the new OHUB_OPERATOR_ID and OPR_LNKD_INTEGRATION_ID will contain OPERATOR_CONCAT_ID
+  val recipientsDF = spark.sql(
     s"""
-      |select CONTACT_PERSON_CONCAT_ID CP_ORIG_INTEGRATION_ID,'' CP_LNKD_INTEGRATION_ID,'' OPR_ORIG_INTEGRATION_ID,'' GOLDEN_RECORD_FLAG,'' WEB_CONTACT_ID,
+      |select CONTACT_PERSON_CONCAT_ID CP_ORIG_INTEGRATION_ID,OHUB_CONTACT_PERSON_ID CP_LNKD_INTEGRATION_ID,REF_OPERATOR_ID OPR_ORIG_INTEGRATION_ID,'Y' GOLDEN_RECORD_FLAG,'' WEB_CONTACT_ID,
       | case when EM_OPT_OUT = true then 'Y' when EM_OPT_OUT = false then 'N' else 'U' end EMAIL_OPTOUT,
       | case when TM_OPT_IN = true then 'Y' when TM_OPT_IN = false then 'N' else 'U' end PHONE_OPTOUT,
       | case when FAX_OPT_OUT = true then 'Y' when FAX_OPT_OUT = false then 'N' else 'U' end FAX_OPTOUT,
@@ -66,9 +70,13 @@ object ContactPersonAcmConverter extends App{
       | FIRST_NAME ORG_FIRST_NAME,LAST_NAME ORG_LAST_NAME,EMAIL_ADDRESS_ORIGINAL ORG_EMAIL_ADDRESS,PHONE_NUMBER_ORIGINAL ORG_FIXED_PHONE_NUMBER,PHONE_NUMBER_ORIGINAL ORG_MOBILE_PHONE_NUMBER,FAX_NUMBER ORG_FAX_NUMBER
       |from CPN_INPUT
     """.stripMargin)
-    .where("country_code = 'TH'")
+    .where("country_code = 'DK'")
+
+  recipientsDF.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputParquetFile)
+  val ufsRecipientsDF = spark.read.parquet(outputParquetFile).select("CP_ORIG_INTEGRATION_ID","CP_LNKD_INTEGRATION_ID","OPR_ORIG_INTEGRATION_ID","GOLDEN_RECORD_FLAG","WEB_CONTACT_ID","EMAIL_OPTOUT","PHONE_OPTOUT","FAX_OPTOUT","MOBILE_OPTOUT","DM_OPTOUT","LAST_NAME","FIRST_NAME","MIDDLE_NAME","TITLE","GENDER","LANGUAGE","EMAIL_ADDRESS","MOBILE_PHONE_NUMBER","PHONE_NUMBER","FAX_NUMBER","STREET","HOUSENUMBER","ZIPCODE","CITY","COUNTRY","DATE_CREATED","DATE_UPDATED","DATE_OF_BIRTH","PREFERRED","ROLE","COUNTRY_CODE","SCM","DELETE_FLAG","KEY_DECISION_MAKER","OPT_IN","OPT_IN_DATE","CONFIRMED_OPT_IN","CONFIRMED_OPT_IN_DATE","MOB_OPT_IN","MOB_OPT_IN_DATE","MOB_CONFIRMED_OPT_IN","MOB_CONFIRMED_OPT_IN_DATE","MOB_OPT_OUT_DATE","ORG_FIRST_NAME","ORG_LAST_NAME","ORG_EMAIL_ADDRESS","ORG_FIXED_PHONE_NUMBER","ORG_MOBILE_PHONE_NUMBER","ORG_FAX_NUMBER")
 
   ufsRecipientsDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true").option("delimiter","\u00B6").csv(outputFile)
 
+  removeFullDirectoryUsingHadoopFileSystem(spark,outputParquetFile)
   renameSparkCsvFileUsingHadoopFileSystem(spark,outputFile,"UFS_RECIPIENTS")
 }

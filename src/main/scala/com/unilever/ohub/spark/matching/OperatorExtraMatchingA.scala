@@ -8,7 +8,7 @@ import org.apache.spark.sql.SaveMode._
 
 import scala.reflect.io.Path
 
-object OperatorMatching extends App {
+object OperatorExtraMatchingA extends App {
 
   if (args.length != 2) {
     println("specify INPUT_FILE OUTPUT_FOLDER")
