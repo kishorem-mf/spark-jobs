@@ -15,7 +15,7 @@ case class RodrigoSchema(matched_string: String,
                          name_i: String,
                          name_j: String)
 
-object OperatorMatchingTemp extends App {
+object OperatorExtraMatchingC extends App {
 
   if (args.length != 3) {
     println("specify INPUT_FILE OUTPUT_FOLDER HELP_FILE")

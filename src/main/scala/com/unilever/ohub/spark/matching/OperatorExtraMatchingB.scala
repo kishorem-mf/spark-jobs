@@ -5,7 +5,7 @@ import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.SaveMode._
 import org.apache.spark.sql.SparkSession
 
-object OperatorMatchingFast extends App {
+object OperatorExtraMatchingB extends App {
 
   if (args.length != 3) {
     println("specify INPUT_FILE OUTPUT_FOLDER HELP_FILE")
