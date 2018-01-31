@@ -38,8 +38,6 @@ object ContactPersonMerging extends App {
 
   val contactPersons: Dataset[ContactPersonRecord] = spark.read.parquet(contactPersonInputFile).as[ContactPersonRecord]
 
-  println("contactPersons " + contactPersons.count())
-
   val matches = spark.read.parquet(matchingInputFile)
     .select("source_id", "target_id", "COUNTRY_CODE")
     .as[ContactPersonMatchingResult]
@@ -51,20 +49,14 @@ object ContactPersonMerging extends App {
     .joinWith(contactPersons, $"value" === $"CONTACT_PERSON_CONCAT_ID")
     .map(x => x._2 +: x._1._2)
 
-  println("groupedContactPersons " + groupedContactPersons.count())
-
   val matchedIds: Dataset[ContactPersonIdAndCountry] = groupedContactPersons
     .flatMap(_.map(x => ContactPersonIdAndCountry(x.CONTACT_PERSON_CONCAT_ID, x.COUNTRY_CODE.get)))
     .distinct()
-
-  println("matchedIds " + matchedIds.count())
 
   val singletonContactPersons: Dataset[Seq[ContactPersonRecord]] = contactPersons
     .join(matchedIds, Seq("CONTACT_PERSON_CONCAT_ID"), "leftanti")
     .as[ContactPersonRecord]
     .map(Seq(_))
-
-  println("singletonOperators " + singletonContactPersons.count())
 
   lazy val sourcePreference = {
     val filename = "/source_preference.tsv"

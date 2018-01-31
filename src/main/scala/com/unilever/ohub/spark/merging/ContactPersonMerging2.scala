@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.merging
 import org.apache.spark.sql.SaveMode.Overwrite
 import org.apache.spark.sql.{Dataset, SparkSession}
 
-case class OHubIdAndRefId(OHUB_OPERATOR_ID:String, REF_ID:String)
+case class OHubIdAndRefId(OHUB_ID:String, REF_ID:String)
 
 // The step that fixes the foreign key links between contact persons and operators
 // Temporarily in a 2nd file to make development easier, will end up in the first ContactPersonMerging job eventually.
@@ -49,7 +49,7 @@ object ContactPersonMerging2 extends App {
     .map(tuple => {
       val contactPerson:GoldenContactPersonRecord = tuple._1
       val operator:OHubIdAndRefId = Option(tuple._2).getOrElse(OHubIdAndRefId(s"REF_OPERATOR_UNKNOWN", "UNKNOWN"))
-      contactPerson.copy(CONTACT_PERSON = contactPerson.CONTACT_PERSON.copy(REF_OPERATOR_ID = Some(operator.OHUB_OPERATOR_ID)))
+      contactPerson.copy(CONTACT_PERSON = contactPerson.CONTACT_PERSON.copy(REF_OPERATOR_ID = Some(operator.OHUB_ID)))
     })
 
   joined.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
