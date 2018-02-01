@@ -2,16 +2,19 @@ package com.unilever.ohub.spark.generic
 
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.SparkSession
+import org.apache.hadoop.fs.{ Path => hadoopPath }
 
-object FileSystems extends App{
-  def removeFullDirectoryUsingHadoopFileSystem(spark:SparkSession, filePath:String):Boolean = {
-    import org.apache.hadoop.fs.{Path => hadoopPath}
-    try{
+object FileSystems {
+  def removeFullDirectoryUsingHadoopFileSystem(
+    spark: SparkSession,
+    filePath: String
+  ): Either[Exception, Boolean] = {
+    try {
       val fileSystem = FileSystem.get(spark.sparkContext.hadoopConfiguration)
-      fileSystem.delete(new hadoopPath(filePath), true)
+      val path = new hadoopPath(filePath)
+      Right(fileSystem.delete(path, true))
     } catch {
-      case _: Exception => false
+      case e: Exception => Left(e)
     }
-    true
   }
 }

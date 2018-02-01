@@ -1,20 +1,16 @@
 package com.unilever.ohub.spark.acm
-import com.unilever.ohub.spark.generic.FileSystems._
+
 import com.unilever.ohub.spark.generic.StringFunctions
+import org.apache.log4j.LogManager
 import org.apache.spark.sql.SaveMode.Overwrite
 import org.apache.spark.sql.SparkSession
 
-object OperatorAcmConverter extends App{
-  if (args.length != 2) {
-    println("specify INPUT_FILE OUTPUT_FILE")
-    sys.exit(1)
-  }
+object OperatorAcmConverter extends App with AcmConverterHelpers {
+  protected val log = LogManager.getLogger(getClass)
 
-  val inputFile = args(0)
-  val outputFile = args(1)
-  val outputParquetFile = if(outputFile.endsWith(".csv")) outputFile.replace(".csv",".parquet") else outputFile
+  val (inputFile, outputFile, outputParquetFile) = getFileNames(args)
 
-  println(s"Generating operator ACM csv file from [$inputFile] to [$outputFile]")
+  log.debug(s"Generating operator ACM csv file from [$inputFile] to [$outputFile]")
 
   val spark = SparkSession
     .builder()
@@ -30,7 +26,7 @@ object OperatorAcmConverter extends App{
   val channelReferencesDF = readJdbcTable(spark,dbTable = "channel_references")
   val allChannelMappingDF = channelMappingDF.join(channelReferencesDF,col("channel_reference_fk") === col("channel_reference_id"),"left")
 
-  spark.sqlContext.udf.register("CLEAN",(s1:String) => StringFunctions.removeGenericStrangeChars(s1 match {case null => null;case _ => s1}))
+  spark.sqlContext.udf.register("CLEAN",(s1:String) => StringFunctions.removeGenericStrangeChars(s1))
   val operatorsInputDF = spark.read.parquet(inputFile)
     .select("OHUB_OPERATOR_ID","OPERATOR.*")
   allChannelMappingDF.createOrReplaceTempView("CHANNEL_MAPPING")
@@ -75,12 +71,7 @@ object OperatorAcmConverter extends App{
 //  TODO remove country_code filter for production
   val ufsOperatorsDF = spark.read.parquet(outputParquetFile).select("OPR_ORIG_INTEGRATION_ID","OPR_LNKD_INTEGRATION_ID","GOLDEN_RECORD_FLAG","COUNTRY_CODE","NAME","CHANNEL","SUB_CHANNEL","ROUTE_TO_MARKET","REGION","OTM","PREFERRED_PARTNER","STREET","HOUSE_NUMBER","ZIPCODE","CITY","COUNTRY","AVERAGE_SELLING_PRICE","NUMBER_OF_COVERS","NUMBER_OF_WEEKS_OPEN","NUMBER_OF_DAYS_OPEN","CONVENIENCE_LEVEL","RESPONSIBLE_EMPLOYEE","NPS_POTENTIAL","CAM_KEY","CAM_TEXT","CHANNEL_KEY","CHANNEL_TEXT","CHAIN_KNOTEN","CHAIN_NAME","CUST_SUB_SEG_EXT","CUST_SEG_EXT","CUST_SEG_KEY_EXT","CUST_GRP_EXT","PARENT_SEGMENT","DATE_CREATED","DATE_UPDATED","DELETE_FLAG","WHOLESALER_OPERATOR_ID","PRIVATE_HOUSEHOLD","VAT","OPEN_ON_MONDAY","OPEN_ON_TUESDAY","OPEN_ON_WEDNESDAY","OPEN_ON_THURSDAY","OPEN_ON_FRIDAY","OPEN_ON_SATURDAY","OPEN_ON_SUNDAY","KITCHEN_TYPE","LOCAL_CHANNEL","CHANNEL_USAGE","SOCIAL_COMMERCIAL","STRATEGIC_CHANNEL","GLOBAL_CHANNEL","GLOBAL_SUBCHANNEL")
 
-  ufsOperatorsDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true")
-//    .option("delimiter","\u00B6")
-    .option("delimiter","\u003B")
-    .option("quote","\u0020")
-    .csv(outputFile)
+  writeDataFrameToCSV(ufsOperatorsDF, outputFile)
 
-  removeFullDirectoryUsingHadoopFileSystem(spark,outputParquetFile)
-  renameSparkCsvFileUsingHadoopFileSystem(spark,outputFile,"UFS_OPERATORS")
+  finish(spark, outputFile, outputParquetFile, outputFileNewName = "UFS_OPERATORS")
 }

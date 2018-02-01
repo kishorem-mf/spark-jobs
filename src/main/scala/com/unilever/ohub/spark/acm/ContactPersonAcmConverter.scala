@@ -1,34 +1,26 @@
 package com.unilever.ohub.spark.acm
 
-import com.unilever.ohub.spark.generic.FileSystems.removeFullDirectoryUsingHadoopFileSystem
 import com.unilever.ohub.spark.generic.StringFunctions
+import org.apache.log4j.LogManager
 import org.apache.spark.sql.SaveMode.Overwrite
 import org.apache.spark.sql.SparkSession
 
-object ContactPersonAcmConverter extends App{
-  if (args.length != 2) {
-    println("specify INPUT_FILE OUTPUT_FILE")
-    sys.exit(1)
-  }
+object ContactPersonAcmConverter extends App with AcmConverterHelpers {
+  protected val log = LogManager.getLogger(getClass)
 
-  val inputFile = args(0)
-  val outputFile = args(1)
-  val outputParquetFile = if(outputFile.endsWith(".csv")) outputFile.replace(".csv",".parquet") else outputFile
+  val (inputFile, outputFile, outputParquetFile) = getFileNames(args)
 
-  println(s"Generating contact person ACM csv file from [$inputFile] to [$outputFile]")
+  log.debug(s"Generating contact person ACM csv file from [$inputFile] to [$outputFile]")
 
   val spark = SparkSession
     .builder()
     .appName(this.getClass.getSimpleName)
     .getOrCreate()
 
-  import com.unilever.ohub.spark.generic.SparkFunctions._
-  import org.apache.spark.sql.functions._
-
   val startOfJob = System.currentTimeMillis()
 
-  spark.sqlContext.udf.register("CLEAN",(s1:String) => StringFunctions.removeGenericStrangeChars(s1 match {case null => null;case _ => s1}))
-  spark.sqlContext.udf.register("CLEAN_NAMES",(s1:String,s2:String,b1:Boolean) => StringFunctions.fillLastNameOnlyWhenFirstEqualsLastName(s1 match {case null => null;case _ => s1},s2 match {case null => null;case _ => s2},b1))
+  spark.sqlContext.udf.register("CLEAN", s1 => StringFunctions.removeGenericStrangeChars(s1))
+  spark.sqlContext.udf.register("CLEAN_NAMES", (s1, s2, b1) => StringFunctions.fillLastNameOnlyWhenFirstEqualsLastName(s1, s2, b1))
 
   val contactPersonsInputDF = spark.read.parquet(inputFile)
     .select("OHUB_CONTACT_PERSON_ID","CONTACT_PERSON.*")
@@ -75,12 +67,7 @@ object ContactPersonAcmConverter extends App{
   recipientsDF.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputParquetFile)
   val ufsRecipientsDF = spark.read.parquet(outputParquetFile).select("CP_ORIG_INTEGRATION_ID","CP_LNKD_INTEGRATION_ID","OPR_ORIG_INTEGRATION_ID","GOLDEN_RECORD_FLAG","WEB_CONTACT_ID","EMAIL_OPTOUT","PHONE_OPTOUT","FAX_OPTOUT","MOBILE_OPTOUT","DM_OPTOUT","LAST_NAME","FIRST_NAME","MIDDLE_NAME","TITLE","GENDER","LANGUAGE","EMAIL_ADDRESS","MOBILE_PHONE_NUMBER","PHONE_NUMBER","FAX_NUMBER","STREET","HOUSENUMBER","ZIPCODE","CITY","COUNTRY","DATE_CREATED","DATE_UPDATED","DATE_OF_BIRTH","PREFERRED","ROLE","COUNTRY_CODE","SCM","DELETE_FLAG","KEY_DECISION_MAKER","OPT_IN","OPT_IN_DATE","CONFIRMED_OPT_IN","CONFIRMED_OPT_IN_DATE","MOB_OPT_IN","MOB_OPT_IN_DATE","MOB_CONFIRMED_OPT_IN","MOB_CONFIRMED_OPT_IN_DATE","MOB_OPT_OUT_DATE","ORG_FIRST_NAME","ORG_LAST_NAME","ORG_EMAIL_ADDRESS","ORG_FIXED_PHONE_NUMBER","ORG_MOBILE_PHONE_NUMBER","ORG_FAX_NUMBER")
 
-  ufsRecipientsDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true")
-//    .option("delimiter","\u00B6")
-    .option("delimiter","\u003B")
-    .option("quote","\u0020")
-    .csv(outputFile)
+  writeDataFrameToCSV(ufsRecipientsDF, outputFile)
 
-  removeFullDirectoryUsingHadoopFileSystem(spark,outputParquetFile)
-  renameSparkCsvFileUsingHadoopFileSystem(spark,outputFile,"UFS_RECIPIENTS")
+  finish(spark, outputFile, outputParquetFile, outputFileNewName = "UFS_RECIPIENTS")
 }

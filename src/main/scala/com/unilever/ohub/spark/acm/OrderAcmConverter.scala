@@ -1,21 +1,15 @@
 package com.unilever.ohub.spark.acm
 
-import com.unilever.ohub.spark.generic.FileSystems.removeFullDirectoryUsingHadoopFileSystem
-import com.unilever.ohub.spark.generic.SparkFunctions.renameSparkCsvFileUsingHadoopFileSystem
+import org.apache.log4j.LogManager
 import org.apache.spark.sql.SaveMode.Overwrite
 import org.apache.spark.sql.SparkSession
 
-object OrderAcmConverter extends App{
-  if (args.length != 2) {
-    println("specify INPUT_FILE OUTPUT_FILE")
-    sys.exit(1)
-  }
+object OrderAcmConverter extends App with AcmConverterHelpers {
+  protected val log = LogManager.getLogger(getClass)
 
-  val inputFile = args(0)
-  val outputFile = args(1)
-  val outputParquetFile = if(outputFile.endsWith(".csv")) outputFile.replace(".csv",".parquet") else outputFile
+  val (inputFile, outputFile, outputParquetFile) = getFileNames(args)
 
-  println(s"Generating orders ACM csv file from [$inputFile] to [$outputFile]")
+  log.debug(s"Generating orders ACM csv file from [$inputFile] to [$outputFile]")
 
   val spark = SparkSession
     .builder()
@@ -40,12 +34,7 @@ object OrderAcmConverter extends App{
   ordersDF.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputParquetFile)
   val ufsOrdersDF = spark.read.parquet(outputParquetFile).select("ORDER_ID","COUNTRY_CODE","ORDER_TYPE","CP_LNKD_INTEGRATION_ID","OPR_LNKD_INTEGRATION_ID","CAMPAIGN_CODE","CAMPAIGN_NAME","WHOLESALER","ORDER_TOKEN","TRANSACTION_DATE","ORDER_AMOUNT","ORDER_AMOUNT_CURRENCY_CODE","DELIVERY_STREET","DELIVERY_HOUSENUMBER","DELIVERY_ZIPCODE","DELIVERY_CITY","DELIVERY_STATE","DELIVERY_COUNTRY","DELIVERY_PHONE")
 
-  ufsOrdersDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true")
-//    .option("delimiter","\u00B6")
-    .option("delimiter","\u003B")
-    .option("quote","\u0020")
-    .csv(outputFile)
+  writeDataFrameToCSV(ufsOrdersDF, outputFile)
 
-  removeFullDirectoryUsingHadoopFileSystem(spark,outputParquetFile)
-  renameSparkCsvFileUsingHadoopFileSystem(spark,outputFile,"UFS_ORDERS")
+  finish(spark, outputFile, outputParquetFile, outputFileNewName = "UFS_ORDERS")
 }

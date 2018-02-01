@@ -2,23 +2,17 @@ package com.unilever.ohub.spark.acm
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.generic.FileSystems.removeFullDirectoryUsingHadoopFileSystem
-import com.unilever.ohub.spark.generic.SparkFunctions.renameSparkCsvFileUsingHadoopFileSystem
 import com.unilever.ohub.spark.generic.StringFunctions
+import org.apache.log4j.LogManager
 import org.apache.spark.sql.SaveMode.Overwrite
 import org.apache.spark.sql.SparkSession
 
-object OrderLineAcmConverter extends App{
-  if (args.length != 2) {
-    println("specify INPUT_FILE OUTPUT_FILE")
-    sys.exit(1)
-  }
+object OrderLineAcmConverter extends App with AcmConverterHelpers {
+  protected val log = LogManager.getLogger(getClass)
 
-  val inputFile = args(0)
-  val outputFile = args(1)
-  val outputParquetFile = if(outputFile.endsWith(".csv")) outputFile.replace(".csv",".parquet") else outputFile
+  val (inputFile, outputFile, outputParquetFile) = getFileNames(args)
 
-  println(s"Generating orderlines ACM csv file from [$inputFile] to [$outputFile]")
+  log.debug(s"Generating orderlines ACM csv file from [$inputFile] to [$outputFile]")
 
   val spark = SparkSession
     .builder()
@@ -27,8 +21,8 @@ object OrderLineAcmConverter extends App{
 
   val startOfJob = System.currentTimeMillis()
 
-  spark.sqlContext.udf.register("CLEAN",(s1:String) => StringFunctions.removeGenericStrangeChars(s1 match {case null => null;case _ => s1}))
-  spark.sqlContext.udf.register("UUID",(s1:String) => s1 match {case null => null;case _ => UUID.randomUUID().toString})
+  spark.sqlContext.udf.register("CLEAN", s1 => StringFunctions.removeGenericStrangeChars(s1))
+  spark.sqlContext.udf.register("UUID", _ => UUID.randomUUID().toString)
 
   val ordersInputDF = spark.read.parquet(inputFile)
   ordersInputDF.createOrReplaceTempView("ORD_INPUT")
@@ -45,12 +39,7 @@ object OrderLineAcmConverter extends App{
   orderLinesDF.write.mode(Overwrite).format("parquet").save(outputParquetFile) /* COUNTRY is not an existing column, therefore no country partitioning */
   val ufsOrderLinesDF = spark.read.parquet(outputParquetFile).select("ORDERLINE_ID","ORDER_ID","QUANTITY","AMOUNT","PRD_INTEGRATION_ID","SAMPLE_ID")
 
-  ufsOrderLinesDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true")
-//    .option("delimiter","\u00B6")
-    .option("delimiter","\u003B")
-    .option("quote","\u0020")
-    .csv(outputFile)
+  writeDataFrameToCSV(ufsOrderLinesDF, outputFile)
 
-  removeFullDirectoryUsingHadoopFileSystem(spark,outputParquetFile)
-  renameSparkCsvFileUsingHadoopFileSystem(spark,outputFile,"UFS_ORDERLINES")
+  finish(spark, outputFile, outputParquetFile, outputFileNewName = "UFS_ORDERLINES")
 }

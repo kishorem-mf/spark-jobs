@@ -1,21 +1,15 @@
 package com.unilever.ohub.spark.acm
 
-import com.unilever.ohub.spark.generic.FileSystems.removeFullDirectoryUsingHadoopFileSystem
-import com.unilever.ohub.spark.generic.SparkFunctions.renameSparkCsvFileUsingHadoopFileSystem
+import org.apache.log4j.LogManager
 import org.apache.spark.sql.SaveMode.Overwrite
 import org.apache.spark.sql.SparkSession
 
-object ProductAcmConverter extends App{
-  if (args.length != 2) {
-    println("specify INPUT_FILE OUTPUT_FILE")
-    sys.exit(1)
-  }
+object ProductAcmConverter extends App with AcmConverterHelpers {
+  protected val log = LogManager.getLogger(getClass)
 
-  val inputFile = args(0)
-  val outputFile = args(1)
-  val outputParquetFile = if(outputFile.endsWith(".csv")) outputFile.replace(".csv",".parquet") else outputFile
+  val (inputFile, outputFile, outputParquetFile) = getFileNames(args)
 
-  println(s"Generating products ACM csv file from [$inputFile] to [$outputFile]")
+  log.debug(s"Generating products ACM csv file from [$inputFile] to [$outputFile]")
 
   val spark = SparkSession
     .builder()
@@ -41,12 +35,7 @@ object ProductAcmConverter extends App{
   productsDF.write.mode(Overwrite).partitionBy("COUNTY_CODE").format("parquet").save(outputParquetFile)
   val ufsProductsDF = spark.read.parquet(outputParquetFile).select("COUNTY_CODE","PRODUCT_NAME","PRD_INTEGRATION_ID","EAN_CODE","MRDR_CODE","CREATED_AT","UPDATED_AT","DELETE_FLAG")
 
-  ufsProductsDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true")
-//    .option("delimiter","\u00B6")
-    .option("delimiter","\u003B")
-    .option("quote","\u0020")
-    .csv(outputFile)
+  writeDataFrameToCSV(ufsProductsDF, outputFile)
 
-  removeFullDirectoryUsingHadoopFileSystem(spark,outputParquetFile)
-  renameSparkCsvFileUsingHadoopFileSystem(spark,outputFile,"UFS_PRODUCTS")
+  finish(spark, outputFile, outputParquetFile, outputFileNewName = "UFS_PRODUCTS")
 }
