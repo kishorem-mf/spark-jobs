@@ -41,7 +41,11 @@ object ProductAcmConverter extends App{
   productsDF.write.mode(Overwrite).partitionBy("COUNTY_CODE").format("parquet").save(outputParquetFile)
   val ufsProductsDF = spark.read.parquet(outputParquetFile).select("COUNTY_CODE","PRODUCT_NAME","PRD_INTEGRATION_ID","EAN_CODE","MRDR_CODE","CREATED_AT","UPDATED_AT","DELETE_FLAG")
 
-  ufsProductsDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true").option("delimiter","\u00B6").csv(outputFile)
+  ufsProductsDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true")
+//    .option("delimiter","\u00B6")
+    .option("delimiter","\u003B")
+    .option("quote","\u0020")
+    .csv(outputFile)
 
   removeFullDirectoryUsingHadoopFileSystem(spark,outputParquetFile)
   renameSparkCsvFileUsingHadoopFileSystem(spark,outputFile,"UFS_PRODUCTS")

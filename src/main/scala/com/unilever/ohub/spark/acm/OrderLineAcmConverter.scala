@@ -45,7 +45,11 @@ object OrderLineAcmConverter extends App{
   orderLinesDF.write.mode(Overwrite).format("parquet").save(outputParquetFile) /* COUNTRY is not an existing column, therefore no country partitioning */
   val ufsOrderLinesDF = spark.read.parquet(outputParquetFile).select("ORDERLINE_ID","ORDER_ID","QUANTITY","AMOUNT","PRD_INTEGRATION_ID","SAMPLE_ID")
 
-  ufsOrderLinesDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true").option("delimiter","\u00B6").csv(outputFile)
+  ufsOrderLinesDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true")
+//    .option("delimiter","\u00B6")
+    .option("delimiter","\u003B")
+    .option("quote","\u0020")
+    .csv(outputFile)
 
   removeFullDirectoryUsingHadoopFileSystem(spark,outputParquetFile)
   renameSparkCsvFileUsingHadoopFileSystem(spark,outputFile,"UFS_ORDERLINES")

@@ -75,7 +75,11 @@ object ContactPersonAcmConverter extends App{
   recipientsDF.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputParquetFile)
   val ufsRecipientsDF = spark.read.parquet(outputParquetFile).select("CP_ORIG_INTEGRATION_ID","CP_LNKD_INTEGRATION_ID","OPR_ORIG_INTEGRATION_ID","GOLDEN_RECORD_FLAG","WEB_CONTACT_ID","EMAIL_OPTOUT","PHONE_OPTOUT","FAX_OPTOUT","MOBILE_OPTOUT","DM_OPTOUT","LAST_NAME","FIRST_NAME","MIDDLE_NAME","TITLE","GENDER","LANGUAGE","EMAIL_ADDRESS","MOBILE_PHONE_NUMBER","PHONE_NUMBER","FAX_NUMBER","STREET","HOUSENUMBER","ZIPCODE","CITY","COUNTRY","DATE_CREATED","DATE_UPDATED","DATE_OF_BIRTH","PREFERRED","ROLE","COUNTRY_CODE","SCM","DELETE_FLAG","KEY_DECISION_MAKER","OPT_IN","OPT_IN_DATE","CONFIRMED_OPT_IN","CONFIRMED_OPT_IN_DATE","MOB_OPT_IN","MOB_OPT_IN_DATE","MOB_CONFIRMED_OPT_IN","MOB_CONFIRMED_OPT_IN_DATE","MOB_OPT_OUT_DATE","ORG_FIRST_NAME","ORG_LAST_NAME","ORG_EMAIL_ADDRESS","ORG_FIXED_PHONE_NUMBER","ORG_MOBILE_PHONE_NUMBER","ORG_FAX_NUMBER")
 
-  ufsRecipientsDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true").option("delimiter","\u00B6").csv(outputFile)
+  ufsRecipientsDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true")
+//    .option("delimiter","\u00B6")
+    .option("delimiter","\u003B")
+    .option("quote","\u0020")
+    .csv(outputFile)
 
   removeFullDirectoryUsingHadoopFileSystem(spark,outputParquetFile)
   renameSparkCsvFileUsingHadoopFileSystem(spark,outputFile,"UFS_RECIPIENTS")

@@ -75,7 +75,11 @@ object OperatorAcmConverter extends App{
 //  TODO remove country_code filter for production
   val ufsOperatorsDF = spark.read.parquet(outputParquetFile).select("OPR_ORIG_INTEGRATION_ID","OPR_LNKD_INTEGRATION_ID","GOLDEN_RECORD_FLAG","COUNTRY_CODE","NAME","CHANNEL","SUB_CHANNEL","ROUTE_TO_MARKET","REGION","OTM","PREFERRED_PARTNER","STREET","HOUSE_NUMBER","ZIPCODE","CITY","COUNTRY","AVERAGE_SELLING_PRICE","NUMBER_OF_COVERS","NUMBER_OF_WEEKS_OPEN","NUMBER_OF_DAYS_OPEN","CONVENIENCE_LEVEL","RESPONSIBLE_EMPLOYEE","NPS_POTENTIAL","CAM_KEY","CAM_TEXT","CHANNEL_KEY","CHANNEL_TEXT","CHAIN_KNOTEN","CHAIN_NAME","CUST_SUB_SEG_EXT","CUST_SEG_EXT","CUST_SEG_KEY_EXT","CUST_GRP_EXT","PARENT_SEGMENT","DATE_CREATED","DATE_UPDATED","DELETE_FLAG","WHOLESALER_OPERATOR_ID","PRIVATE_HOUSEHOLD","VAT","OPEN_ON_MONDAY","OPEN_ON_TUESDAY","OPEN_ON_WEDNESDAY","OPEN_ON_THURSDAY","OPEN_ON_FRIDAY","OPEN_ON_SATURDAY","OPEN_ON_SUNDAY","KITCHEN_TYPE","LOCAL_CHANNEL","CHANNEL_USAGE","SOCIAL_COMMERCIAL","STRATEGIC_CHANNEL","GLOBAL_CHANNEL","GLOBAL_SUBCHANNEL")
 
-  ufsOperatorsDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true").option("delimiter","\u00B6").csv(outputFile)
+  ufsOperatorsDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true")
+//    .option("delimiter","\u00B6")
+    .option("delimiter","\u003B")
+    .option("quote","\u0020")
+    .csv(outputFile)
 
   removeFullDirectoryUsingHadoopFileSystem(spark,outputParquetFile)
   renameSparkCsvFileUsingHadoopFileSystem(spark,outputFile,"UFS_OPERATORS")
