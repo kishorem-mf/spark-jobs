@@ -69,7 +69,7 @@ object OperatorAcmConverter extends App{
       | on OPR.CHANNEL = MPG.ORIGINAL_CHANNEL
       | and OPR.COUNTRY_CODE = MPG.COUNTRY_CODE
     """.stripMargin)
-    .where("country_code = 'DK'")
+    .where("country_code = 'AU'") //  TODO remove country_code filter for production
 
   operatorsDF.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputParquetFile)
 //  TODO remove country_code filter for production

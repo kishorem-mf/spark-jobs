@@ -33,7 +33,6 @@ object OrderLineAcmConverter extends App{
   val ordersInputDF = spark.read.parquet(inputFile)
   ordersInputDF.createOrReplaceTempView("ORD_INPUT")
 
-//  TODO remove country_code filter for production
   val orderLinesDF = spark.sql(
     s"""
       |select UUID('') ORDERLINE_ID,ORDER_CONCAT_ID ORDER_ID,QUANTITY,
@@ -41,10 +40,9 @@ object OrderLineAcmConverter extends App{
       | concat(COUNTRY_CODE,'~',SOURCE,'~',REF_PRODUCT_ID) PRD_INTEGRATION_ID,'' SAMPLE_ID
       |from ORD_INPUT
     """.stripMargin)
-  .where("country_code = 'DK'")
+  .where("country_code = 'AU'") //  TODO remove country_code filter for production
 
-  orderLinesDF.show(false)
-  orderLinesDF.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputParquetFile)
+  orderLinesDF.write.mode(Overwrite).format("parquet").save(outputParquetFile) /* COUNTRY is not an existing column, therefore no country partitioning */
   val ufsOrderLinesDF = spark.read.parquet(outputParquetFile).select("ORDERLINE_ID","ORDER_ID","QUANTITY","AMOUNT","PRD_INTEGRATION_ID","SAMPLE_ID")
 
   ufsOrderLinesDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true").option("delimiter","\u00B6").csv(outputFile)

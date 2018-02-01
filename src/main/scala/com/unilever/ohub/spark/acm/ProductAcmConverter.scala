@@ -35,9 +35,10 @@ object ProductAcmConverter extends App{
       | case when STATUS = true then 'N' else 'Y' end DELETE_FLAG
       |from PDT_INPUT
     """.stripMargin)
+      .where("county_code = 'AU'") //  TODO remove country_code filter for production
 
   productsDF.show(false)
-  productsDF.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputParquetFile)
+  productsDF.write.mode(Overwrite).partitionBy("COUNTY_CODE").format("parquet").save(outputParquetFile)
   val ufsProductsDF = spark.read.parquet(outputParquetFile).select("COUNTY_CODE","PRODUCT_NAME","PRD_INTEGRATION_ID","EAN_CODE","MRDR_CODE","CREATED_AT","UPDATED_AT","DELETE_FLAG")
 
   ufsProductsDF.coalesce(1).write.mode(Overwrite).option("encoding", "UTF-8").option("header", "true").option("delimiter","\u00B6").csv(outputFile)

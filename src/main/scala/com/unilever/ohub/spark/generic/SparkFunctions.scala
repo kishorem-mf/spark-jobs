@@ -61,6 +61,7 @@ object SparkFunctions extends App {
       val file = fileSystem.globStatus(originalPath)(0).getPath
       fileSystem.rename(new hadoopPath(s"${file.getParent}/${file.getName}"), new hadoopPath(s"${file.getParent.getParent}/${newFileName}_$getFileDateString.csv"))
       fileSystem.delete(new hadoopPath(s"${file.getParent}"), true)
+      fileSystem.delete(new hadoopPath(s"${file.getParent.getParent}/.${newFileName}_$getFileDateString.csv.crc"), true)
     } catch {
       case _: Exception => false
     }
