@@ -30,8 +30,8 @@ trait AcmConverterHelpers {
       .mode(SaveMode.Overwrite)
       .option("encoding", "UTF-8")
       .option("header", "true")
-      .option("delimiter", "\u003B")
-      .option("quote", "\u0020")
+      .option("delimiter","\u00B6")   /* If needed .option("quoteAll","true") can be used for putting values in quotes */
+      .option("quote", "\u0000")      /* This makes sure the when " is in a value it is not escaped like \" which is not accepted by ACM */
       .csv(outputFile)
   }
 
