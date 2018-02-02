@@ -21,8 +21,8 @@ object OrderLineAcmConverter extends App with AcmConverterHelpers {
 
   val startOfJob = System.currentTimeMillis()
 
-  spark.sqlContext.udf.register("CLEAN", s1 => StringFunctions.removeGenericStrangeChars(s1))
-  spark.sqlContext.udf.register("UUID", _ => UUID.randomUUID().toString)
+  spark.sqlContext.udf.register("CLEAN", (s1: String) => StringFunctions.removeGenericStrangeChars(s1))
+  spark.sqlContext.udf.register("UUID", (_: String) => UUID.randomUUID().toString)
 
   val ordersInputDF = spark.read.parquet(inputFile)
   ordersInputDF.createOrReplaceTempView("ORD_INPUT")

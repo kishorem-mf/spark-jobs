@@ -19,8 +19,13 @@ object ContactPersonAcmConverter extends App with AcmConverterHelpers {
 
   val startOfJob = System.currentTimeMillis()
 
-  spark.sqlContext.udf.register("CLEAN", s1 => StringFunctions.removeGenericStrangeChars(s1))
-  spark.sqlContext.udf.register("CLEAN_NAMES", (s1, s2, b1) => StringFunctions.fillLastNameOnlyWhenFirstEqualsLastName(s1, s2, b1))
+  spark.sqlContext.udf.register("CLEAN", (s1: String) => StringFunctions.removeGenericStrangeChars(s1))
+  spark.sqlContext.udf.register(
+    "CLEAN_NAMES",
+    (firstName: String, lastName: String, isFirstName: Boolean) => {
+      StringFunctions.fillLastNameOnlyWhenFirstEqualsLastName(firstName, lastName, isFirstName)
+    }
+  )
 
   val contactPersonsInputDF = spark.read.parquet(inputFile)
     .select("OHUB_CONTACT_PERSON_ID","CONTACT_PERSON.*")
