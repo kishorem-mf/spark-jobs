@@ -1,7 +1,9 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import java.sql.{Date, Timestamp}
+import java.sql.{ Date, Timestamp }
 import java.text.SimpleDateFormat
+
+import org.apache.log4j.Logger
 
 object CustomParsers {
 
@@ -11,7 +13,7 @@ object CustomParsers {
     override protected def initialValue = new SimpleDateFormat("yyyyMMdd HH:mm:ss")
   }
 
-  def parseStringOption(input:String):Option[String] = {
+  def parseStringOption(input: String): Option[String] = {
     input match {
       case "" => None
       case _ => Some(input)
@@ -93,9 +95,14 @@ object CustomParsers {
     }
   }
 
-  def checkLineLength(lineParts: Array[String], expectedPartCount:Int):Unit = {
-    if (lineParts.length != expectedPartCount)
-      throw new IllegalArgumentException(s"Found ${lineParts.length} parts, expected $expectedPartCount in line: ${lineParts.mkString("‰")}")
+  def hasValidLineLength(expectedPartCount: Int)(lineParts: Array[String])(implicit log: Logger): Boolean = {
+    if (lineParts.length != expectedPartCount) {
+      log.warn(
+        s"Found ${lineParts.length} parts, expected $expectedPartCount in line: ${lineParts.mkString("‰")}"
+      )
+      false
+    } else {
+      true
+    }
   }
-
 }

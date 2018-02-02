@@ -13,6 +13,7 @@ import scala.io.Source
 case class GoldenContactPersonRecord(OHUB_CONTACT_PERSON_ID: String, CONTACT_PERSON: ContactPersonRecord, REF_IDS: Seq[String], COUNTRY_CODE: String)
 case class ContactPersonMatchingResult(source_id: String, target_id: String, COUNTRY_CODE: String)
 case class ContactPersonIdAndCountry(CONTACT_PERSON_CONCAT_ID: String, COUNTRY_CODE: String)
+case class Foo(cpmr: ContactPersonMatchingResult)
 
 object ContactPersonMerging extends App {
 
@@ -67,8 +68,8 @@ object ContactPersonMerging extends App {
   def pickGoldenRecordAndGroupId(contactPersons: Seq[ContactPersonRecord]): GoldenContactPersonRecord = {
     val refIds = contactPersons.map(_.CONTACT_PERSON_CONCAT_ID)
     val goldenRecord = contactPersons.reduce((o1, o2) => {
-      val preference1 = sourcePreference.get(o1.SOURCE.getOrElse("UNKNOWN")).getOrElse(Int.MaxValue)
-      val preference2 = sourcePreference.get(o2.SOURCE.getOrElse("UNKNOWN")).getOrElse(Int.MaxValue)
+      val preference1 = sourcePreference.getOrElse(o1.SOURCE.getOrElse("UNKNOWN"), Int.MaxValue)
+      val preference2 = sourcePreference.getOrElse(o2.SOURCE.getOrElse("UNKNOWN"), Int.MaxValue)
       if (preference1 < preference2) o1
       else if (preference1 > preference2) o2
       else { // same source preference
@@ -83,7 +84,7 @@ object ContactPersonMerging extends App {
 
   val goldenRecords: Dataset[GoldenContactPersonRecord] = groupedContactPersons
     .union(singletonContactPersons)
-    .map(pickGoldenRecordAndGroupId(_))
+    .map(pickGoldenRecordAndGroupId)
 
   goldenRecords.repartition(60).write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
 

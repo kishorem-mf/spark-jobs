@@ -5,24 +5,6 @@ import org.apache.log4j.Logger
 import org.apache.spark.sql.{ DataFrame, SaveMode, SparkSession }
 
 trait AcmConverterHelpers {
-  protected def log: Logger
-
-  def getFileNames(args: Array[String]): (String, String, String) = {
-    if (args.length != 2) {
-      log.error("specify INPUT_FILE OUTPUT_FILE")
-      sys.exit(1)
-    }
-
-    val inputFile = args(0)
-    val outputFile = args(1)
-    val outputParquetFile = {
-      if (outputFile.endsWith(".csv")) outputFile.replace(".csv", ".parquet")
-      else outputFile
-    }
-
-    (inputFile, outputFile, outputParquetFile)
-  }
-
   def writeDataFrameToCSV(df: DataFrame, outputFile: String): Unit = {
     df
       .coalesce(1)
@@ -40,7 +22,7 @@ trait AcmConverterHelpers {
     outputFile: String,
     outputParquetFile: String,
     outputFileNewName: String
-  ): Unit = {
+  )(implicit log: Logger): Unit = {
     FileSystems.removeFullDirectoryUsingHadoopFileSystem(spark, outputParquetFile) match {
       case Left(e) => log.error(s"Could not remove directory [$outputParquetFile]", e)
       case _ =>
