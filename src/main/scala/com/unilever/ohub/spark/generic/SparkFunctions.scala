@@ -29,22 +29,6 @@ object SparkFunctions {
     spark.read.jdbc(dbFullConnectionString, dbTable, jdbcProperties)
   }
 
-  private def testGetUniqueChars(): Unit = {
-    val spark = SparkSession.builder().appName("SparkFunctions").getOrCreate()
-    val FILE_NAME = "C:\\out\\CONTACTPERSONS.parquet"
-    val FIELD_NAME = "LAST_NAME"
-    val inputDF = spark.read.parquet(FILE_NAME)
-    val outputDF = addIdFieldToDataFrameField(spark, inputDF, FIELD_NAME)
-    outputDF.printSchema()
-    val dataFrameSize = inputDF.count()
-    val PART = 200000
-    val partitions = List.range(PART, dataFrameSize, PART)
-    var uniqueCharSet = scala.collection.mutable.SortedSet[Char]()
-    partitions.foreach(part =>
-      uniqueCharSet ++= getSetOfUniqueCharsInDataFrameColumn(outputDF.where("id between " + (part - PART) + " and " + part).select(FIELD_NAME)))
-    println(uniqueCharSet)
-  }
-
   def addIdFieldToDataFrameField(
     spark: SparkSession,
     dataFrame: DataFrame,
@@ -82,9 +66,18 @@ object SparkFunctions {
       val originalPath = new hadoopPath(s"$filePath/part*")
       val file = fileSystem.globStatus(originalPath)(0).getPath
       Right {
-        fileSystem.rename(new hadoopPath(s"${file.getParent}/${file.getName}"), new hadoopPath(s"${file.getParent.getParent}/${newFileName}_$getFileDateString.csv"))
-        fileSystem.delete(new hadoopPath(s"${file.getParent}"), true)
-        fileSystem.delete(new hadoopPath(s"${file.getParent.getParent}/.${newFileName}_$getFileDateString.csv.crc"), true)
+        fileSystem.rename(
+          new hadoopPath(s"${file.getParent}/${file.getName}"),
+          new hadoopPath(s"${file.getParent.getParent}/${newFileName}_$getFileDateString.csv")
+        )
+        fileSystem.delete(
+          new hadoopPath(s"${file.getParent}"),
+          true
+        )
+        fileSystem.delete(
+          new hadoopPath(s"${file.getParent.getParent}/.${newFileName}_$getFileDateString.csv.crc"),
+          true
+        )
       }
     } catch {
       case e: Exception => Left(e)

@@ -2,17 +2,17 @@ package com.unilever.ohub.spark.acm
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.generic.StringFunctions
-import org.apache.log4j.LogManager
+import com.unilever.ohub.spark.generic.{ FileSystems, StringFunctions }
+import org.apache.log4j.{ LogManager, Logger }
 import org.apache.spark.sql.SaveMode.Overwrite
 import org.apache.spark.sql.SparkSession
 
 object OrderLineAcmConverter extends App with AcmConverterHelpers {
-  protected val log = LogManager.getLogger(getClass)
+  implicit private val log: Logger = LogManager.getLogger(getClass)
 
-  val (inputFile, outputFile, outputParquetFile) = getFileNames(args)
+  val (inputFile, outputFile, outputParquetFile) = FileSystems.getFileNames(args)
 
-  log.debug(s"Generating orderlines ACM csv file from [$inputFile] to [$outputFile]")
+  log.info(s"Generating orderlines ACM csv file from [$inputFile] to [$outputFile]")
 
   val spark = SparkSession
     .builder()

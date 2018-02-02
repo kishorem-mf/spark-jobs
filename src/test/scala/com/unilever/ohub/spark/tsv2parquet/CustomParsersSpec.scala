@@ -1,11 +1,9 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import java.math.BigInteger
-import java.text.ParseException
 import com.unilever.ohub.spark.generic.StringFunctions._
-
-import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.{ FunSpec, Matchers }
 import CustomParsers._
+import org.apache.log4j.{ LogManager, Logger }
 
 class CustomParsersSpec extends FunSpec with Matchers {
 
@@ -213,17 +211,15 @@ class CustomParsersSpec extends FunSpec with Matchers {
     }
   }
 
-  describe("checkLineLength") {
-    it("should do nothing when the line length matches") {
-      noException should be thrownBy {
-        checkLineLength(Array("1", "2"), 2)
-      }
+  describe("hasValidLineLength") {
+    implicit val log: Logger = LogManager.getLogger(getClass)
+
+    it("should return true when the line length matches") {
+      hasValidLineLength(2)(Array("1", "2")) shouldBe true
     }
 
-    it("should throw an exception when the line length doesn't match") {
-      assertThrows[IllegalArgumentException] {
-        checkLineLength(Array("1", "2"), 42)
-      }
+    it("should return false when the line length doesn't match") {
+      hasValidLineLength(42)(Array("1", "2")) shouldBe false
     }
   }
 
