@@ -43,9 +43,11 @@ trait AcmConverterHelpers {
   ): Unit = {
     FileSystems.removeFullDirectoryUsingHadoopFileSystem(spark, outputParquetFile) match {
       case Left(e) => log.error(s"Could not remove directory [$outputParquetFile]", e)
+      case _ =>
     }
     SparkFunctions.renameSparkCsvFileUsingHadoopFileSystem(spark, outputFile, outputFileNewName) match {
       case Left(e) => log.error(s"Could not rename file [$outputFile]", e)
+      case _ =>
     }
   }
 }
