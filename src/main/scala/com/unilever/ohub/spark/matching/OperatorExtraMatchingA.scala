@@ -1,41 +1,26 @@
 package com.unilever.ohub.spark.matching
 
-import java.io.File
-
-import com.unilever.ohub.spark.generic.StringFunctions
-import org.apache.spark.sql.{SaveMode, SparkSession}
+import com.unilever.ohub.spark.generic.{ FileSystems, StringFunctions }
+import org.apache.log4j.{ LogManager, Logger }
 import org.apache.spark.sql.SaveMode._
 
-import scala.reflect.io.Path
-
 object OperatorExtraMatchingA extends App {
+  implicit private val log: Logger = LogManager.getLogger(this.getClass)
 
-  if (args.length != 2) {
-    println("specify INPUT_FILE OUTPUT_FOLDER")
-    sys.exit(1)
-  }
-
-  val inputFile = args(0)
-  val outputFolder = args(1)
+  val (inputFile, outputFile) = FileSystems.getInputOutFileNames(args)
 
   import org.apache.spark.sql.SparkSession
   val spark = SparkSession.builder().appName("Operator matching").getOrCreate()
-  spark.sqlContext.udf.register("SIMILARITY",(s1:String,s2:String) => StringFunctions.getFastSimilarity(s1 match {case null => null;case _ => s1.toCharArray},s2 match {case null => null;case _ => s2.toCharArray}))
+  spark.sqlContext.udf.register("SIMILARITY", (s1: String, s2: String) => {
+    StringFunctions.getFastSimilarity(s1.toCharArray, s2.toCharArray)
+  })
+
   val operatorsDF1 = spark.read.parquet(inputFile)
-
   operatorsDF1.where("source = 'RFB' and country_code = 'NL'")
-
-  import spark.implicits._
   operatorsDF1.createOrReplaceTempView("operators1")
-  val countryList = Array("NL").toList
-//  TODO change to multiple countries again
-//    operatorsDF1.select("country_code").groupBy("country_code").count().orderBy("count").collect().map(row => row(0).toString).toList
-  createOperatorMatchGroupsPerCountry(outputFolder,countryList)
 
-  def createOperatorMatchGroupsPerCountry(outputFolder:String, countryList:List[String]): Unit = {
-    for(i <- countryList.indices) loopPerCountry(countryList(i))
-
-    def loopPerCountry(countryCode:String): Unit = {
+  def createOperatorMatchGroupsPerCountry(outputFolder: String, countryList: List[String]): Unit = {
+    def createOperatorMatchGroupForCountry(countryCode: String): Unit = {
       val operatorsDF2 = spark.sql(
         """
           |select distinct country_code,concat(country_code,'~',source,'~',ref_operator_id) id,name,name_cleansed,zip_code,zip_code_cleansed,street,street_cleansed,city,city_cleansed,substring(name_cleansed,1,3) name_block,substring(street_cleansed,1,3) street_block
@@ -156,8 +141,21 @@ object OperatorExtraMatchingA extends App {
         """.stripMargin)
       operatorsDF14.write.mode(Overwrite).format("parquet").save(s"$outputFolder/$countryCode.parquet")
     }
+
+    countryList.foreach(createOperatorMatchGroupForCountry)
   }
 
-  println("Done")
+  val countryList = Array("NL").toList
+  // TODO change to multiple countries again
+  // operatorsDF1
+  //  .select("country_code")
+  //  .groupBy("country_code")
+  //  .count()
+  //  .orderBy("count")
+  //  .collect()
+  //  .map(row => row(0).toString)
+  //  .toList
+  createOperatorMatchGroupsPerCountry(outputFile, countryList)
 
+  log.info("Done")
 }

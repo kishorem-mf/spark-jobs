@@ -1,11 +1,12 @@
 package com.unilever.ohub.spark.matching
 
 import com.unilever.ohub.spark.generic.StringFunctions
-import org.apache.spark.sql.Dataset
+import org.apache.log4j.{ LogManager, Logger }
 import org.apache.spark.sql.SaveMode._
 import org.apache.spark.sql.SparkSession
 
 object OperatorExtraMatchingB extends App {
+  implicit private val log: Logger = LogManager.getLogger(this.getClass)
 
   if (args.length != 3) {
     println("specify INPUT_FILE OUTPUT_FOLDER HELP_FILE")
@@ -23,13 +24,26 @@ object OperatorExtraMatchingB extends App {
     .appName("Operator matching")
     .getOrCreate()
 
-  import spark.implicits._
+  spark
+    .sqlContext
+    .udf
+    .register("SIMILARITY", (s1: String, s2: String) => {
+      StringFunctions.getFastSimilarity(s1.toCharArray, s2.toCharArray)
+    })
 
-  spark.sqlContext.udf.register("SIMILARITY", (s1: String, s2: String) => StringFunctions.getFastSimilarity(s1 match { case null => null; case _ => s1.toCharArray }, s2 match { case null => null; case _ => s2.toCharArray }))
-
-  val preMatchDF = spark.read.parquet(helpFile).toDF(Seq("matched_string","country_code","source_id","target_id","similarity","source_name","target_name"): _*)
+  val preMatchDF = spark
+    .read
+    .parquet(helpFile)
+    .toDF(
+      "matched_string",
+      "country_code",
+      "source_id",
+      "target_id",
+      "similarity",
+      "source_name",
+      "target_name"
+    )
   preMatchDF.createOrReplaceTempView("pre_match")
-  val optionalColumns = """,regexp_replace(lower(source_name),"unknown","") source_name,regexp_replace(lower(target_name),"unknown","") target_name,similarity(source_name,target_name) similarity"""
 
   val matchIdDF = spark.sql(
     s"""
@@ -54,5 +68,5 @@ object OperatorExtraMatchingB extends App {
     """.stripMargin)
   finalMatchDF.write.mode(Overwrite).parquet(s"$outputFolder.parquet")
 
-  println("Done")
+  log.info("Done")
 }
