@@ -8,7 +8,7 @@ import org.apache.spark.sql.SparkSession
 object ProductAcmConverter extends App with AcmConverterHelpers {
   implicit private val log: Logger = LogManager.getLogger(getClass)
 
-  val (inputFile, outputFile, outputParquetFile) = FileSystems.getFileNames(args)
+  val (inputFile, outputFile, outputParquetFile) = FileSystems.getInputOutputOutputParquetFileNames(args)
 
   log.info(s"Generating products ACM csv file from [$inputFile] to [$outputFile]")
 
