@@ -19,19 +19,36 @@ object FileSystems {
     }
   }
 
-  def getFileNames(args: Array[String])(implicit log: Logger): (String, String, String) = {
+  def getInputOutFileNames(args: Array[String])(implicit log: Logger): (String, String) = {
     if (args.length != 2) {
       log.error("specify INPUT_FILE OUTPUT_FILE")
       sys.exit(1)
     }
 
-    val inputFile = args(0)
-    val outputFile = args(1)
+    args(0) -> args(1)
+  }
+
+  def getInputOutputOutputParquetFileNames(
+    args: Array[String]
+  )(implicit log: Logger): (String, String, String) = {
+    val (inputFile, outputFile) = getInputOutFileNames(args)
+
     val outputParquetFile = {
       if (outputFile.endsWith(".csv")) outputFile.replace(".csv", ".parquet")
       else outputFile
     }
 
     (inputFile, outputFile, outputParquetFile)
+  }
+
+  def getInputMatchingInputOutputFileNames(
+    args: Array[String]
+  )(implicit log: Logger): (String, String, String) = {
+    if (args.length != 3) {
+      log.error("specify MATCHING_INPUT_FILE INPUT_FILE OUTPUT_FILE")
+      sys.exit(1)
+    }
+
+    (args(0), args(1), args(2))
   }
 }

@@ -3,29 +3,40 @@ package com.unilever.ohub.spark.merging
 import java.sql.Timestamp
 import java.util.UUID
 
+import com.unilever.ohub.spark.generic.FileSystems
 import com.unilever.ohub.spark.tsv2parquet.OperatorRecord
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.log4j.{ LogManager, Logger }
 import org.apache.spark.sql.SaveMode._
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
 import scala.io.Source
 
-case class GoldenOperatorRecord(OHUB_OPERATOR_ID: String, OPERATOR: OperatorRecord, REF_IDS: Seq[String], COUNTRY_CODE:String)
+case class GoldenOperatorRecord(
+  OHUB_OPERATOR_ID: String,
+  OPERATOR: OperatorRecord,
+  REF_IDS: Seq[String],
+  COUNTRY_CODE: String
+)
+
 case class MatchingResult(source_id: String, target_id: String, COUNTRY_CODE: String)
+
 case class IdAndCountry(OPERATOR_CONCAT_ID: String, COUNTRY_CODE: String)
 
+case class MatchingResultAndOperator(
+  matchingResult: MatchingResult,
+  operator: OperatorRecord
+) {
+  val sourceId: String = matchingResult.source_id
+}
+
 object OperatorMerging extends App {
+  implicit private val log: Logger = LogManager.getLogger(this.getClass)
 
-  if (args.length != 3) {
-    println("specify MATCHING_INPUT_FILE OPERATOR_INPUT_FILE OUTPUT_FILE")
-    sys.exit(1)
-  }
+  val (matchingInputFile, operatorInputFile, outputFile) =
+    FileSystems.getInputMatchingInputOutputFileNames(args)
 
-  val matchingInputFile = args(0)
-  val operatorInputFile = args(1)
-  val outputFile = args(2)
-
-  println(s"Merging operators from [$matchingInputFile] and [$operatorInputFile] to [$outputFile]")
+  log.info(s"Merging operators from [$matchingInputFile] and [$operatorInputFile] to [$outputFile]")
 
   val spark = SparkSession
     .builder()
@@ -36,39 +47,40 @@ object OperatorMerging extends App {
 
   val startOfJob = System.currentTimeMillis()
 
-  val operators: Dataset[OperatorRecord] = spark.read.parquet(operatorInputFile).as[OperatorRecord]
-
-//  println("operators " + operators.count())
+  val operators = spark.read.parquet(operatorInputFile).as[OperatorRecord]
 
   val matches = spark.read.parquet(matchingInputFile).select("source_id", "target_id","COUNTRY_CODE")
     .as[MatchingResult]
 
-  val groupedOperators: Dataset[Seq[OperatorRecord]] = matches
-    .joinWith(operators, matches("COUNTRY_CODE") === operators("COUNTRY_CODE") and $"target_id" === $"OPERATOR_CONCAT_ID")
-    .groupByKey(_._1.source_id)
-    .agg(collect_list("_2").alias("operators").as[Seq[OperatorRecord]])
+  val groupedOperators = matches
+    .joinWith(
+      operators,
+      matches("COUNTRY_CODE") === operators("COUNTRY_CODE") and $"target_id" === $"OPERATOR_CONCAT_ID"
+    )
+    .map(MatchingResultAndOperator.apply _.tupled)
+    .groupByKey(_.sourceId)
+    .agg(collect_list("operator").alias("operators").as[Seq[OperatorRecord]])
     .joinWith(operators, $"value" === $"OPERATOR_CONCAT_ID")
     .map(x => x._2 +: x._1._2)
 
-//  println("groupedOperators " + groupedOperators.count())
-
-  val matchedIds: Dataset[IdAndCountry] = groupedOperators
+  val matchedIds = groupedOperators
     .flatMap(_.map(x => IdAndCountry(x.OPERATOR_CONCAT_ID, x.COUNTRY_CODE.get)))
     .distinct()
 
-//  println("matchedIds " + matchedIds.count())
-
-  val singletonOperators: Dataset[Seq[OperatorRecord]] = operators
+  val singletonOperators = operators
     .join(matchedIds, Seq("OPERATOR_CONCAT_ID"), "leftanti")
     .as[OperatorRecord]
     .map(Seq(_))
 
-//  println("singletonOperators " + singletonOperators.cache().count())
-
   lazy val sourcePreference = {
     val filename = "/source_preference.tsv"
     val lines = Source.fromInputStream(getClass.getResourceAsStream(filename)).getLines().toSeq
-    lines.filterNot(line => line.isEmpty || line.equals("SOURCE\tPRIORITY")).map(_.split("\t")).map(x => (x(0), x(1).toInt)).toMap
+    lines
+      .filter(_.nonEmpty)
+      .filterNot(_.equals("SOURCE\tPRIORITY"))
+      .map(_.split("\t"))
+      .map(lineParts => lineParts(0) -> lineParts(1).toInt)
+      .toMap
   }
 
   def pickGoldenRecordAndGroupId(operators: Seq[OperatorRecord]): GoldenOperatorRecord = {
@@ -92,10 +104,16 @@ object OperatorMerging extends App {
     .union(singletonOperators)
     .map(pickGoldenRecordAndGroupId)
 
-//  goldenRecords.repartition(60).write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
-//  TODO out comment above line and remove below line
-  goldenRecords.select("OHUB_OPERATOR_ID","OPERATOR.*").repartition(60).write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
+  goldenRecords
+    // TODO remove select line
+    .select("OHUB_OPERATOR_ID", "OPERATOR.*")
+    .repartition(60)
+    .write
+    .mode(Overwrite)
+    .partitionBy("COUNTRY_CODE")
+    .format("parquet")
+    .save(outputFile)
 
-  println(s"Went from ${operators.count} to ${spark.read.parquet(outputFile).count} records")
-  println(s"Done in ${(System.currentTimeMillis - startOfJob) / 1000}s")
+  log.info(s"Went from ${operators.count} to ${spark.read.parquet(outputFile).count} records")
+  log.info(s"Done in ${(System.currentTimeMillis - startOfJob) / 1000}s")
 }
