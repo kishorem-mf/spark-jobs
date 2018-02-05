@@ -52,7 +52,7 @@ case class OperatorRecord(
 object OperatorConverter extends App {
   implicit private val log: Logger = LogManager.getLogger(getClass)
 
-  val (inputFile, outputFile) = FileSystems.getInputOutFileNames(args)
+  val (inputFile, outputFile) = FileSystems.getFileNames(args, "INPUT_FILE", "OUTPUT_FILE")
 
   log.info(s"Generating operator parquet from [$inputFile] to [$outputFile]")
 

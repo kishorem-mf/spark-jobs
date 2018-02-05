@@ -13,8 +13,10 @@ case class OHubIdAndRefId(OHUB_ID: String, REF_ID: String)
 object ContactPersonMerging2 extends App {
   implicit private val log: Logger = LogManager.getLogger(this.getClass)
 
-  val (contactPersonMatchingInputFile, operatorMatchingInputFile, outputFile) =
-    FileSystems.getInputMatchingInputOutputFileNames(args)
+  val (contactPersonMatchingInputFile, operatorMatchingInputFile, outputFile) = FileSystems.getFileNames(
+    args,
+    "CONTACT_PERSON_MATCHING_INPUT_FILE", "OPERATOR_MATCHING_INPUT_FILE", "OUTPUT_FILE"
+  )
 
   log.info(
     s"Merging contact persons from [$contactPersonMatchingInputFile] and [$operatorMatchingInputFile] " +

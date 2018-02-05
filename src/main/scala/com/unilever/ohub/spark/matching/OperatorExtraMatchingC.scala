@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.matching
 
-import com.unilever.ohub.spark.generic.StringFunctions
+import com.unilever.ohub.spark.generic.{ FileSystems, StringFunctions }
 import org.apache.log4j.{ LogManager, Logger }
 import org.apache.spark.sql.SaveMode._
 import org.apache.spark.sql.{ Dataset, SparkSession }
@@ -20,14 +20,10 @@ case class RodrigoSchema(
 object OperatorExtraMatchingC extends App {
   implicit private val log: Logger = LogManager.getLogger(this.getClass)
 
-  if (args.length != 3) {
-    println("specify INPUT_FILE OUTPUT_FOLDER HELP_FILE")
-    sys.exit(1)
-  }
-
-  val inputFile = args(0)
-  val outputFolder = args(1)
-  val rodrigoParquet = args(2)
+  val (inputFile, outputFolder, rodrigoParquet) = FileSystems.getFileNames(
+    args,
+    "INPUT_FILE", "OUTPUT_FOLDER", "HELP_FILE"
+  )
 
   val spark = SparkSession
     .builder()

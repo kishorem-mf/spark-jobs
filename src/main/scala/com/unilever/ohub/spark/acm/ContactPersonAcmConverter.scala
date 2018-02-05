@@ -8,7 +8,10 @@ import org.apache.spark.sql.SparkSession
 object ContactPersonAcmConverter extends App with AcmConverterHelpers {
   implicit private val log: Logger = LogManager.getLogger(getClass)
 
-  val (inputFile, outputFile, outputParquetFile) = FileSystems.getInputOutputOutputParquetFileNames(args)
+  val (inputFile, outputFile, outputParquetFile) = FileSystems.getFileNames(
+    args,
+    "INPUT_FILE", "OUTPUT_FILE", "OUTPUT_PARQUET_FILE"
+  )
 
   log.info(s"Generating contact person ACM csv file from [$inputFile] to [$outputFile]")
 

@@ -1,5 +1,6 @@
 package com.unilever.ohub.spark.merging
 
+import com.unilever.ohub.spark.generic.FileSystems
 import com.unilever.ohub.spark.tsv2parquet.OrderRecord
 import org.apache.log4j.{ LogManager, Logger }
 import org.apache.spark.sql.SaveMode.Overwrite
@@ -11,17 +12,11 @@ case class OHubIdRefIdAndCountry(OHUB_ID: String, COUNTRY_CODE: String, REF_ID: 
 object OrderMerging extends App {
   implicit private val log: Logger = LogManager.getLogger(this.getClass)
 
-  if (args.length != 4) {
-    log.error(
-      "specify CONTACT_PERSON_MERGING_INPUT_FILE OPERATOR_MERGING_INPUT_FILE ORDER_INPUT_FILE OUTPUT_FILE"
+  val (contactPersonMergingInputFile, operatorMergingInputFile, orderInputFile, outputFile) =
+    FileSystems.getFileNames(
+      args,
+      "CONTACT_PERSON_MERGING_INPUT_FILE", "OPERATOR_MERGING_INPUT_FILE", "ORDER_INPUT_FILE", "OUTPUT_FILE"
     )
-    sys.exit(1)
-  }
-
-  val contactPersonMergingInputFile = args(0)
-  val operatorMergingInputFile = args(1)
-  val orderInputFile = args(2)
-  val outputFile = args(3)
 
   log.info(
     s"Merging orders from [$contactPersonMergingInputFile], [$operatorMergingInputFile] " +
