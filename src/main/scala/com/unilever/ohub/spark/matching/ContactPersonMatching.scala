@@ -1,22 +1,21 @@
 package com.unilever.ohub.spark.matching
 
+import com.unilever.ohub.spark.generic.FileSystems
+import org.apache.log4j.{ LogManager, Logger }
 import org.apache.spark.sql.SaveMode.Overwrite
 import org.apache.spark.storage.StorageLevel
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._
 
 object ContactPersonMatching extends App {
-  if (args.length != 2) {
-    println("specify INPUT_FILE OUTPUT_FILE")
-    sys.exit(1)
-  }
+  implicit private val log: Logger = LogManager.getLogger(this.getClass)
 
-  val inputFile = args(0)
-  val outputFile = args(1)
+  val (inputFile, outputFile) = FileSystems.getInputOutFileNames(args)
 
-  println(s"Generating parquet from [$inputFile] to [$outputFile]")
+  log.info(s"Generating parquet from [$inputFile] to [$outputFile]")
 
-  import org.apache.spark.sql.SparkSession
   val spark = SparkSession.builder().appName("ContactPerson matching").getOrCreate()
-  import org.apache.spark.sql.functions._
+
   val startOfJob = System.currentTimeMillis()
 
   val cpn = spark.read.parquet(inputFile)
@@ -88,5 +87,5 @@ object ContactPersonMatching extends App {
 
   cpnMatches.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
 
-  println(s"Done in ${(System.currentTimeMillis - startOfJob) / 1000}s")
+  log.info(s"Done in ${(System.currentTimeMillis - startOfJob) / 1000}s")
 }
