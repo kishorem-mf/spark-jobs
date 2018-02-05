@@ -33,8 +33,10 @@ case class MatchingResultAndOperator(
 object OperatorMerging extends App {
   implicit private val log: Logger = LogManager.getLogger(this.getClass)
 
-  val (matchingInputFile, operatorInputFile, outputFile) =
-    FileSystems.getInputMatchingInputOutputFileNames(args)
+  val (matchingInputFile, operatorInputFile, outputFile) = FileSystems.getFileNames(
+    args,
+    "MATCHING_INPUT_FILE", "OPERATOR_INPUT_FILE", "OUTPUT_FILE"
+  )
 
   log.info(s"Merging operators from [$matchingInputFile] and [$operatorInputFile] to [$outputFile]")
 

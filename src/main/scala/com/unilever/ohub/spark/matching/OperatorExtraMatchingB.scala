@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.matching
 
-import com.unilever.ohub.spark.generic.StringFunctions
+import com.unilever.ohub.spark.generic.{ FileSystems, StringFunctions }
 import org.apache.log4j.{ LogManager, Logger }
 import org.apache.spark.sql.SaveMode._
 import org.apache.spark.sql.SparkSession
@@ -8,14 +8,10 @@ import org.apache.spark.sql.SparkSession
 object OperatorExtraMatchingB extends App {
   implicit private val log: Logger = LogManager.getLogger(this.getClass)
 
-  if (args.length != 3) {
-    println("specify INPUT_FILE OUTPUT_FOLDER HELP_FILE")
-    sys.exit(1)
-  }
-
-  val inputFile = args(0)
-  val outputFolder = args(1)
-  val helpFile = args(2)
+  val (inputFile, outputFolder, helpFile) = FileSystems.getFileNames(
+    args,
+    "INPUT_FILE", "OUTPUT_FOLDER", "HELP_FILE"
+  )
 
   val THRESHOLD = 0.86
 

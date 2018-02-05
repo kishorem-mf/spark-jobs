@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import java.sql.{ Date, Timestamp }
+import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
 import org.apache.log4j.Logger

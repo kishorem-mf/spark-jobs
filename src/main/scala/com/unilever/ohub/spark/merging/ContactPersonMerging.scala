@@ -33,8 +33,10 @@ case class MatchResultAndContactPerson(
 object ContactPersonMerging extends App {
   implicit private val log: Logger = LogManager.getLogger(getClass)
 
-  val (matchingInputFile, contactPersonInputFile, outputFile) =
-    FileSystems.getInputMatchingInputOutputFileNames(args)
+  val (matchingInputFile, contactPersonInputFile, outputFile) = FileSystems.getFileNames(
+    args,
+    "MATCHING_INPUT_FILE", "CONTACT_PERSON_INPUT_FILE", "OUTPUT_FILE"
+  )
 
   log.info(
     s"Merging contact persons from [$matchingInputFile] and [$contactPersonInputFile] to [$outputFile]"

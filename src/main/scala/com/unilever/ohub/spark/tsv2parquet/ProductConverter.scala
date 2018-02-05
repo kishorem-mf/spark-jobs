@@ -25,7 +25,7 @@ case class ProductRecord(
 object ProductConverter extends App {
   implicit private val log: Logger = LogManager.getLogger(getClass)
 
-  val (inputFile, outputFile) = FileSystems.getInputOutFileNames(args)
+  val (inputFile, outputFile) = FileSystems.getFileNames(args, "INPUT_FILE", "OUTPUT_FILE")
 
   log.info(s"Generating orders parquet from [$inputFile] to [$outputFile]")
 
