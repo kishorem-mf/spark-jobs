@@ -8,7 +8,7 @@ import org.apache.spark.sql.SparkSession
 object ProductAcmConverter extends App with AcmConverterHelpers {
   implicit private val log: Logger = LogManager.getLogger(getClass)
 
-  val (inputFile, outputFile, outputParquetFile) = FileSystems.getFileNames(
+  val (inputFile: String, outputFile: String, outputParquetFile: String) = FileSystems.getFileNames(
     args,
     "INPUT_FILE", "OUTPUT_FILE", "OUTPUT_PARQUET_FILE"
   )

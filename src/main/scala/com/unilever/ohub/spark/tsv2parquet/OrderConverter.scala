@@ -1,16 +1,11 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import java.io.InputStream
 import java.sql.Timestamp
 
-import com.unilever.ohub.spark.generic.FileSystems
+import com.unilever.ohub.spark.storage.{ CountryRecord, Storage }
+import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
-import org.apache.log4j.{ LogManager, Logger }
-import org.apache.spark.sql.SaveMode.Overwrite
-import org.apache.spark.sql.{ DataFrame, SparkSession }
-
-import scala.io.Source
-
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
 case class OrderRecord(
   ORDER_CONCAT_ID: String, REF_ORDER_ID: Option[String], SOURCE: Option[String],
@@ -26,35 +21,7 @@ case class OrderRecord(
   DATE_CREATED: Option[Timestamp], DATE_MODIFIED: Option[Timestamp]
 )
 
-object OrderConverter extends App {
-  implicit private val log: Logger = LogManager.getLogger(getClass)
-
-  val (inputFile, outputFile) = FileSystems.getFileNames(args, "INPUT_FILE", "OUTPUT_FILE")
-
-  log.info(s"Generating orders parquet from [$inputFile] to [$outputFile]")
-
-  val spark = SparkSession
-    .builder()
-    .appName(this.getClass.getSimpleName)
-    .getOrCreate()
-
-  import spark.implicits._
-
-  val inputStream: InputStream = getClass.getResourceAsStream("/country_codes.csv")
-  val readSeq: Seq[String] = Source.fromInputStream(inputStream).getLines().toSeq
-  val countryRecordsDF: DataFrame = spark.sparkContext.parallelize(readSeq)
-    .toDS()
-    .map(_.split(","))
-    .map(cells => (parseStringOption(cells(6)), parseStringOption(cells(2)), parseStringOption(cells(9))))
-    .filter(line => line != ("ISO3166_1_Alpha_2", "official_name_en", "ISO4217_currency_alphabetic_code"))
-    .toDF("COUNTRY_CODE", "COUNTRY", "CURRENCY_CODE")
-
-  val expectedPartCount = 19
-  val hasValidLineLength = CustomParsers.hasValidLineLength(expectedPartCount) _
-
-  val startOfJob = System.currentTimeMillis()
-  val lines = spark.read.textFile(inputFile)
-
+object OrderConverter extends SparkJob {
   def checkOrderType(orderType: String): Option[String] = {
     if (Seq(
       "", "SSD", "TRANSFER", "DIRECT", "UNKNOWN", "MERCHANDISE", "SAMPLE", "EVENT", "WEB", "BIN", "OTHER"
@@ -101,28 +68,47 @@ object OrderConverter extends App {
     }
   }
 
-  val recordsDF: DataFrame = lines
-    .filter(_.nonEmpty)
-    .filter(!_.startsWith("REF_ORDER_ID"))
-    .map(_.split("‰", -1))
-    .filter(hasValidLineLength)
-    .map(linePartsToOrderRecord)
-    .toDF()
+  def transform(
+    spark: SparkSession,
+    orderRecords: Dataset[OrderRecord],
+    countryRecords: Dataset[CountryRecord]
+  ): Dataset[OrderRecord] = {
+    import spark.implicits._
 
-  recordsDF.createOrReplaceTempView("ORDERS")
-  countryRecordsDF.createOrReplaceTempView("COUNTRIES")
-  val joinedRecordsDF: DataFrame = spark.sql(
-    """
-      |SELECT ORD.ORDER_CONCAT_ID,ORD.REF_ORDER_ID,ORD.SOURCE,ORD.COUNTRY_CODE,ORD.STATUS,ORD.STATUS_ORIGINAL,ORD.REF_OPERATOR_ID,ORD.REF_CONTACT_PERSON_ID,ORD.ORDER_TYPE,ORD.TRANSACTION_DATE,ORD.TRANSACTION_DATE_ORIGINAL,ORD.REF_PRODUCT_ID,ORD.QUANTITY,ORD.QUANTITY_ORIGINAL,ORD.ORDER_LINE_VALUE,ORD.ORDER_LINE_VALUE_ORIGINAL,ORD.ORDER_VALUE,ORD.ORDER_VALUE_ORIGINAL,ORD.WHOLESALER,ORD.CAMPAIGN_CODE,ORD.CAMPAIGN_NAME,ORD.UNIT_PRICE,ORD.UNIT_PRICE_ORIGINAL,CTR.CURRENCY_CODE,ORD.DATE_CREATED,ORD.DATE_MODIFIED
-      |FROM ORDERS ORD
-      |LEFT JOIN COUNTRIES CTR
-      | ON ORD.COUNTRY_CODE = CTR.COUNTRY_CODE
-      |WHERE CTR.CURRENCY_CODE IS NOT NULL
-    """.stripMargin
-  )
+    orderRecords
+      .joinWith(
+        countryRecords,
+        countryRecords("CURRENCY_CODE").isNotNull and
+          orderRecords("COUNTRY_CODE") === countryRecords("COUNTRY_CODE"),
+        "left"
+      )
+      .map {
+        case (orderRecord, countryRecord) => orderRecord.copy(
+          COUNTRY_CODE = Some(countryRecord.COUNTRY_CODE),
+          CURRENCY_CODE = Some(countryRecord.CURRENCY_CODE)
+        )
+      }
+  }
 
-  joinedRecordsDF.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
+  override val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
 
-  log.debug(joinedRecordsDF.schema.treeString)
-  log.info(s"Done in ${(System.currentTimeMillis - startOfJob) / 1000}s")
+  override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
+    import spark.implicits._
+
+    val (inputFile: String, outputFile: String) = filePaths
+
+    val hasValidLineLength = CustomParsers.hasValidLineLength(19) _
+
+    val orderRecords = storage
+      .readFromCSV[String](inputFile)
+      .map(_.split("‰", -1))
+      .filter(hasValidLineLength)
+      .map(linePartsToOrderRecord)
+
+    val countryRecords = storage.countries
+
+    val transformed = transform(spark, orderRecords, countryRecords)
+
+    storage.writeToParquet(transformed, outputFile, partitionBy = "COUNTRY_CODE")
+  }
 }

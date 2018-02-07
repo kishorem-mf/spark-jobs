@@ -10,7 +10,7 @@ import org.apache.spark.sql.functions._
 object ContactPersonMatching extends App {
   implicit private val log: Logger = LogManager.getLogger(this.getClass)
 
-  val (inputFile, outputFile) = FileSystems.getFileNames(args, "INPUT_FILE", "OUTPUT_FILE")
+  val (inputFile: String, outputFile: String) = FileSystems.getFileNames(args, "INPUT_FILE", "OUTPUT_FILE")
 
   log.info(s"Generating parquet from [$inputFile] to [$outputFile]")
 

@@ -12,8 +12,12 @@ case class OHubIdRefIdAndCountry(OHUB_ID: String, COUNTRY_CODE: String, REF_ID: 
 object OrderMerging extends App {
   implicit private val log: Logger = LogManager.getLogger(this.getClass)
 
-  val (contactPersonMergingInputFile, operatorMergingInputFile, orderInputFile, outputFile) =
-    FileSystems.getFileNames(
+  val (
+    contactPersonMergingInputFile: String,
+    operatorMergingInputFile: String,
+    orderInputFile: String,
+    outputFile: String
+  ) = FileSystems.getFileNames(
       args,
       "CONTACT_PERSON_MERGING_INPUT_FILE", "OPERATOR_MERGING_INPUT_FILE", "ORDER_INPUT_FILE", "OUTPUT_FILE"
     )

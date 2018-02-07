@@ -20,7 +20,7 @@ case class RodrigoSchema(
 object OperatorExtraMatchingC extends App {
   implicit private val log: Logger = LogManager.getLogger(this.getClass)
 
-  val (inputFile, outputFolder, rodrigoParquet) = FileSystems.getFileNames(
+  val (inputFile: String, outputFolder: String, rodrigoParquet: String) = FileSystems.getFileNames(
     args,
     "INPUT_FILE", "OUTPUT_FOLDER", "HELP_FILE"
   )

@@ -1,16 +1,12 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import java.io.InputStream
 import java.sql.Timestamp
 
-import com.unilever.ohub.spark.generic.FileSystems
+import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.generic.StringFunctions._
+import com.unilever.ohub.spark.storage.{ CountryRecord, Storage }
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
-import org.apache.log4j.{ LogManager, Logger }
-import org.apache.spark.sql.SaveMode._
-import org.apache.spark.sql.{ DataFrame, SparkSession }
-
-import scala.io.Source
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
 case class ContactPersonRecord(
   CONTACT_PERSON_CONCAT_ID: String, REF_CONTACT_PERSON_ID: Option[String], SOURCE: Option[String],
@@ -47,30 +43,8 @@ case class ContactPersonRecord(
   FAX_OPT_IN_ORIGINAL: Option[String], FAX_OPT_OUT: Option[Boolean], FAX_OPT_OUT_ORIGINAL: Option[String]
 )
 
-object ContactPersonConverter extends App {
-  implicit private val log: Logger = LogManager.getLogger(getClass)
-
-  val (inputFile, outputFile) = FileSystems.getFileNames(args, "INPUT_FILE", "OUTPUT_FILE")
-
-  log.info(s"Generating parquet from [$inputFile] to [$outputFile]")
-
-  val spark = SparkSession
-    .builder()
-    .appName(this.getClass.getSimpleName)
-    .getOrCreate()
-
-  import spark.implicits._
-
-  val inputStream: InputStream = getClass.getResourceAsStream("/country_codes.csv")
-  val readSeq: Seq[String] = Source.fromInputStream(inputStream).getLines().toSeq
-  val countryRecordsDF: DataFrame = spark.sparkContext.parallelize(readSeq)
-    .toDS()
-    .map(_.split(","))
-    .map(cells => (parseStringOption(cells(6)), parseStringOption(cells(2)), parseStringOption(cells(9))))
-    .filter(_ != ("ISO3166_1_Alpha_2", "official_name_en", "ISO4217_currency_alphabetic_code"))
-    .toDF("COUNTRY_CODE", "COUNTRY", "CURRENCY_CODE")
-
-  val countryList = Array("CU", "CX", "FI", "GS", "GY", "KE", "KY", "LV", "LY", "MM", "MP", "MS", "NC",
+object ContactPersonConverter extends SparkJob {
+  private val countryList = Array("CU", "CX", "FI", "GS", "GY", "KE", "KY", "LV", "LY", "MM", "MP", "MS", "NC",
     "NO", "NZ", "AO", "AS", "AW", "BH", "BN", "PY", "RU", "SO", "SZ", "TC", "TN", "VA", "VE", "WF", "CR",
     "DJ", "ES", "FM", "GH", "GT", "GU", "IL", "IO", "LI", "MH", "MR", "NA", "NG", "NP", "AI", "AR", "BA",
     "BI", "BZ", "PM", "PT", "PW", "TD", "TR", "TZ", "CH", "CI", "CK", "CN", "CY", "CZ", "EC", "GM", "IE",
@@ -85,7 +59,7 @@ object ContactPersonConverter extends App {
     "BJ", "BM", "BS", "CC", "RW", "SK", "TO", "US", "VN", "CG", "CV", "DK", "DZ", "ER", "FO", "GA", "GQ",
     "HK", "IR", "KN", "MD", "MK", "MO", "MW", "NI", "NU", "BQ", "BR", "BW", "BY", "CF", "SC", "SN", "SR",
     "SV", "SY", "TJ", "TL", "UY", "ZM")
-  val prefixList = Array("53", "61", "358", "500", "592", "254", "1", "371", "218", "95", "1", "1", "687",
+  private val prefixList = Array("53", "61", "358", "500", "592", "254", "1", "371", "218", "95", "1", "1", "687",
     "47", "64", "244", "1", "297", "973", "673", "595", "7", "252", "268", "1", "216", "39", "58", "681",
     "506", "253", "34", "691", "233", "502", "1", "972", "246", "423", "692", "222", "264", "234", "977",
     "1", "54", "387", "257", "501", "508", "351", "680", "235", "90", "255", "41", "225", "682", "86",
@@ -101,16 +75,9 @@ object ContactPersonConverter extends App {
     "93", "1", "229", "1", "1", "61", "250", "421", "676", "1", "84", "243", "238", "45", "213", "291",
     "298", "241", "240", "852", "98", "1", "373", "389", "853", "265", "505", "683", "599", "55", "267",
     "375", "236", "248", "221", "597", "503", "963", "992", "670", "598", "260")
-  val countryPrefixList = countryList zip prefixList.toList
+  private val countryPrefixList = countryList zip prefixList.toList
 
-  val expectedPartCount = 48
-  val hasValidLineLength = CustomParsers.hasValidLineLength(expectedPartCount) _
-
-  val startOfJob = System.currentTimeMillis()
-
-  val lines = spark.read.textFile(inputFile)
-
-  def linePartsToContactPersonRecord(lineParts: Array[String]): ContactPersonRecord = {
+  private def linePartsToContactPersonRecord(lineParts: Array[String]): ContactPersonRecord = {
     try {
       ContactPersonRecord(
         CONTACT_PERSON_CONCAT_ID = s"${lineParts(2)}~${lineParts(1)}~${lineParts(0)}",
@@ -209,28 +176,54 @@ object ContactPersonConverter extends App {
     }
   }
 
-  val recordsDF: DataFrame = lines
-    .filter(_.nonEmpty)
-    .filter(!_.startsWith("REF_CONTACT_PERSON_ID"))
-    .map(_.split("‰", -1))
-    .filter(hasValidLineLength)
-    .map(linePartsToContactPersonRecord)
-    .toDF()
+  def transform(
+    spark: SparkSession,
+    contactPersonRecords: Dataset[ContactPersonRecord],
+    countryRecords: Dataset[CountryRecord]
+  ): Dataset[ContactPersonRecord] = {
+    import spark.implicits._
 
-  recordsDF.createOrReplaceTempView("CONTACTPERSONS")
-  countryRecordsDF.createOrReplaceTempView("COUNTRIES")
-  val joinedRecordsDF: DataFrame = spark.sql(
-    """
-      |SELECT CPN.CONTACT_PERSON_CONCAT_ID,CPN.REF_CONTACT_PERSON_ID,CPN.SOURCE,CPN.COUNTRY_CODE,CPN.STATUS,CPN.STATUS_ORIGINAL,CPN.REF_OPERATOR_ID,CPN.CP_INTEGRATION_ID,CPN.DATE_CREATED,CPN.DATE_MODIFIED,CPN.FIRST_NAME,CPN.FIRST_NAME_CLEANSED,CPN.LAST_NAME,CPN.LAST_NAME_CLEANSED,CPN.BOTH_NAMES_CLEANSED,CPN.TITLE,CPN.GENDER,CPN.FUNCTION,CPN.LANGUAGE_KEY,CPN.BIRTH_DATE,CPN.STREET,CPN.STREET_CLEANSED,CPN.HOUSENUMBER,CPN.HOUSENUMBER_EXT,CPN.CITY,CPN.CITY_CLEANSED,CPN.ZIP_CODE,CPN.ZIP_CODE_CLEANSED,CPN.STATE,CTR.COUNTRY,CPN.PREFERRED_CONTACT,CPN.PREFERRED_CONTACT_ORIGINAL,CPN.KEY_DECISION_MAKER,CPN.KEY_DECISION_MAKER_ORIGINAL,CPN.SCM,CPN.EMAIL_ADDRESS,CPN.EMAIL_ADDRESS_ORIGINAL,CPN.PHONE_NUMBER,CPN.PHONE_NUMBER_ORIGINAL,CPN.MOBILE_PHONE_NUMBER,CPN.MOBILE_PHONE_NUMBER_ORIGINAL,CPN.FAX_NUMBER,CPN.OPT_OUT,CPN.OPT_OUT_ORIGINAL,CPN.REGISTRATION_CONFIRMED,CPN.REGISTRATION_CONFIRMED_ORIGINAL,CPN.REGISTRATION_CONFIRMED_DATE,CPN.REGISTRATION_CONFIRMED_DATE_ORIGINAL,CPN.EM_OPT_IN,CPN.EM_OPT_IN_ORIGINAL,CPN.EM_OPT_IN_DATE,CPN.EM_OPT_IN_DATE_ORIGINAL,CPN.EM_OPT_IN_CONFIRMED,CPN.EM_OPT_IN_CONFIRMED_ORIGINAL,CPN.EM_OPT_IN_CONFIRMED_DATE,CPN.EM_OPT_IN_CONFIRMED_DATE_ORIGINAL,CPN.EM_OPT_OUT,CPN.EM_OPT_OUT_ORIGINAL,CPN.DM_OPT_IN,CPN.DM_OPT_IN_ORIGINAL,CPN.DM_OPT_OUT,CPN.DM_OPT_OUT_ORIGINAL,CPN.TM_OPT_IN,CPN.TM_OPT_IN_ORIGINAL,CPN.TM_OPT_OUT,CPN.TM_OPT_OUT_ORIGINAL,CPN.MOB_OPT_IN,CPN.MOB_OPT_IN_ORIGINAL,CPN.MOB_OPT_IN_DATE,CPN.MOB_OPT_IN_DATE_ORIGINAL,CPN.MOB_OPT_IN_CONFIRMED,CPN.MOB_OPT_IN_CONFIRMED_ORIGINAL,CPN.MOB_OPT_IN_CONFIRMED_DATE,CPN.MOB_OPT_IN_CONFIRMED_DATE_ORIGINAL,CPN.MOB_OPT_OUT,CPN.MOB_OPT_OUT_ORIGINAL,CPN.FAX_OPT_IN,CPN.FAX_OPT_IN_ORIGINAL,CPN.FAX_OPT_OUT,CPN.FAX_OPT_OUT_ORIGINAL
-      |FROM CONTACTPERSONS CPN
-      |LEFT JOIN COUNTRIES CTR
-      | ON CPN.COUNTRY_CODE = CTR.COUNTRY_CODE
-      |WHERE CTR.COUNTRY IS NOT NULL
-    """.stripMargin
-  )
+    contactPersonRecords
+      .filter(_ != null)
+      .joinWith(
+        countryRecords,
+        countryRecords("COUNTRY").isNotNull and
+          contactPersonRecords("COUNTRY_CODE") === countryRecords("COUNTRY_CODE"),
+        "left"
+      )
+      .map {
+        case (contactPersonRecord, countryRecord) => Option(countryRecord).fold(contactPersonRecord) { cr =>
+          contactPersonRecord.copy(
+            COUNTRY = Option(cr.COUNTRY),
+            COUNTRY_CODE = Option(cr.COUNTRY_CODE)
+          )
+        }
+      }
+  }
 
-  joinedRecordsDF.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
+  override val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
 
-  log.debug(joinedRecordsDF.schema.treeString)
-  log.info(s"Done in ${(System.currentTimeMillis - startOfJob) / 1000}s")
+  override def run(
+    spark: SparkSession,
+    filePaths: Product,
+    storage: Storage
+  ): Unit = {
+    import spark.implicits._
+
+    val (inputFile: String, outputFile: String) = filePaths
+
+    val hasValidLineLength = CustomParsers.hasValidLineLength(48) _
+
+    val contactPersonRecords = storage
+      .readFromCSV[String](inputFile)
+      .map(_.split("‰", -1))
+      .filter(hasValidLineLength)
+      .map(linePartsToContactPersonRecord)
+
+    val countryRecords = storage.countries
+
+    val transformed = transform(spark, contactPersonRecords, countryRecords)
+
+    storage.writeToParquet(transformed, outputFile)
+  }
 }
