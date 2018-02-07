@@ -14,7 +14,8 @@ default_args = {
     'retries': 0
 }
 
-dag = DAG('ouniverse_update_metadata', default_args=default_args, schedule_interval="0 0 1 * *")
+dag = DAG('ouniverse_update_metadata', default_args=default_args,
+          schedule_interval="0 0 1 * *")
 
 remove_metadata_op = BashOperator(
     task_id="remove_metadata_operators",

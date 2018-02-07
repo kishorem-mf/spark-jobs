@@ -16,7 +16,8 @@ default_args = {
     'retries': 0
 }
 
-dag = DAG('new_leads', default_args=default_args, schedule_interval='0 0 1 * *')
+dag = DAG('new_leads', default_args=default_args,
+          schedule_interval='0 0 1 * *')
 
 phase_one = BashOperator(
     task_id="phase_one",
@@ -35,13 +36,14 @@ phase_two_ids = BashOperator(
 
 prioritize = SSHExecuteOperator(
     task_id="prioritise_leads",
-    bash_command=spark_cmd(jar='/ouniverse/universe-ingestion-spark-assembly-1.0.0-SNAPSHOT.jar',
-                           main_class='com.unilever.ouniverse.leads.PrioritizeLeads',
-                           args="--operators '*_output.avro' --places '*_details.avro' --leads 'cities.csv'\
-                            --priorities 'priorities.csv' --outputpath 'here'"),
+    bash_command=spark_cmd(
+        jar='/ouniverse/universe-ingestion-spark-assembly-1.0.0-SNAPSHOT.jar',
+        main_class='com.unilever.ouniverse.leads.PrioritizeLeads',
+        args="--operators '*_output.avro' --places '*_details.avro' \
+        --leads 'cities.csv'--priorities 'priorities.csv' \
+        --outputpath 'here'"),
     ssh_hook=ssh_hook,
     dag=dag)
-
 
 phase_one.set_downstream(prioritize)
 phase_two_grid.set_downstream(phase_two_ids)

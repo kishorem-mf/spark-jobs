@@ -14,6 +14,7 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-dag = DAG('update_dags', default_args=default_args, schedule_interval="0 * * * *")
+dag = DAG('update_dags', default_args=default_args,
+          schedule_interval="0 * * * *")
 
 t1 = DagsGitPuller(task_id="perform_git_pull", dag=dag)

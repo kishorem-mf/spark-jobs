@@ -91,7 +91,6 @@ products_deduplicate = BashOperator(
     bash_command='echo "products_deduplicate"',
     dag=dag)
 
-
 delete_spark_cluster = BashOperator(
     task_id='delete_spark_cluster',
     bash_command='echo "delete_spark_cluster"',
@@ -118,7 +117,6 @@ products_to_acm = BashOperator(
     task_id='products_to_acm',
     bash_command='echo "products_to_acm"',
     dag=dag)
-
 
 operators_to_datalake.set_upstream(start_fetch_data)
 operators_to_datalake.set_downstream(start_parquet_files)

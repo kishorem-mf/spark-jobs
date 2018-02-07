@@ -1,5 +1,6 @@
 from airflow.contrib.hooks.ssh_hook import SSHHook
 
+
 # Yes, this is ugly :)
 
 def spark_cmd(jar=None, main_class=None, egg=None, py_file=None, args=''):

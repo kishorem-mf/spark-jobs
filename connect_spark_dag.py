@@ -15,10 +15,12 @@ default_args = {
     'retries': 0
 }
 
-dag = DAG('spark_connect_dag', default_args=default_args, schedule_interval="0 0 * * *")
+dag = DAG('spark_connect_dag', default_args=default_args,
+          schedule_interval="0 0 * * *")
 
 t1 = SSHExecuteOperator(
     task_id="execute_bash_command",
-    bash_command=spark_cmd(py_file='/notebook-dir/infra/name-matching/spark_ssh_test.py'),
+    bash_command=spark_cmd(
+        py_file='/notebook-dir/infra/name-matching/spark_ssh_test.py'),
     ssh_hook=ssh_hook,
     dag=dag)
