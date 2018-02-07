@@ -39,8 +39,12 @@ object SifuConverter extends App{
   val spark = SparkSession.builder().appName("Get JSON and convert to Parquet").getOrCreate()
   import spark.implicits._
 
-  if(productsJsonFormat(0).nonEmpty) println("Products are found.") else {println("No products are found."); sys.exit(1)}
-  if(recipesJsonFormat(0).nonEmpty) println("Recipes are found.") else {println("No recipes are found"); sys.exit(1)}
+  try {
+    if (productsJsonFormat(0).nonEmpty) println("Products are found.")
+    if (recipesJsonFormat(0).nonEmpty) println("Recipes are found.")
+  } catch {
+    case _: Throwable => println("Not all data is found in SIFU. Job ends.") ; sys.exit(1)
+  }
 
   val productsDF = createDataFrameFromJsonString(spark,productsJsonFormat)
   val recipesDF = createDataFrameFromJsonString(spark,recipesJsonFormat)
