@@ -8,7 +8,7 @@ import org.apache.spark.sql.SparkSession
 object OperatorExtraMatchingB extends App {
   implicit private val log: Logger = LogManager.getLogger(this.getClass)
 
-  val (inputFile, outputFolder, helpFile) = FileSystems.getFileNames(
+  val (inputFile: String, outputFolder: String, helpFile: String) = FileSystems.getFileNames(
     args,
     "INPUT_FILE", "OUTPUT_FOLDER", "HELP_FILE"
   )

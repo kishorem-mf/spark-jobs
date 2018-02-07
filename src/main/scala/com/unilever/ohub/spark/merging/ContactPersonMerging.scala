@@ -3,10 +3,9 @@ package com.unilever.ohub.spark.merging
 import java.sql.Timestamp
 import java.util.UUID
 
-import com.unilever.ohub.spark.generic.FileSystems
+import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.ContactPersonRecord
-import org.apache.log4j.{ LogManager, Logger }
-import org.apache.spark.sql.SaveMode._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
@@ -21,7 +20,7 @@ case class GoldenContactPersonRecord(
 
 case class ContactPersonMatchingResult(source_id: String, target_id: String, COUNTRY_CODE: String)
 
-case class ContactPersonIdAndCountry(CONTACT_PERSON_CONCAT_ID: String, COUNTRY_CODE: String)
+case class ContactPersonIdAndCountry(CONTACT_PERSON_CONCAT_ID: String, COUNTRY_CODE: Option[String])
 
 case class MatchResultAndContactPerson(
   matchResult: ContactPersonMatchingResult,
@@ -30,64 +29,16 @@ case class MatchResultAndContactPerson(
   val sourceId: String = matchResult.source_id
 }
 
-object ContactPersonMerging extends App {
-  implicit private val log: Logger = LogManager.getLogger(getClass)
-
-  val (matchingInputFile, contactPersonInputFile, outputFile) = FileSystems.getFileNames(
-    args,
-    "MATCHING_INPUT_FILE", "CONTACT_PERSON_INPUT_FILE", "OUTPUT_FILE"
-  )
-
-  log.info(
-    s"Merging contact persons from [$matchingInputFile] and [$contactPersonInputFile] to [$outputFile]"
-  )
-
-  val spark = SparkSession
-    .builder()
-    .appName(this.getClass.getSimpleName)
-    .getOrCreate()
-
-  import spark.implicits._
-
-  val startOfJob = System.currentTimeMillis()
-
-  val contactPersons = spark.read.parquet(contactPersonInputFile).as[ContactPersonRecord]
-
-  val matches = spark.read.parquet(matchingInputFile)
-    .select("source_id", "target_id", "COUNTRY_CODE")
-    .as[ContactPersonMatchingResult]
-
-  val groupedContactPersons = matches
-    .joinWith(
-      contactPersons,
-      matches("COUNTRY_CODE") === contactPersons("COUNTRY_CODE")
-        and $"target_id" === $"CONTACT_PERSON_CONCAT_ID"
-    )
-    .map(MatchResultAndContactPerson.apply _.tupled)
-    .groupByKey(_.sourceId)
-    .agg(collect_list("contactPerson").alias("contactPersons").as[Seq[ContactPersonRecord]])
-    .joinWith(contactPersons, $"value" === $"CONTACT_PERSON_CONCAT_ID")
-    .map(x => x._2 +: x._1._2)
-
-  val matchedIds = groupedContactPersons
-    .flatMap(_.map(x => ContactPersonIdAndCountry(x.CONTACT_PERSON_CONCAT_ID, x.COUNTRY_CODE.get)))
-    .distinct()
-
-  val singletonContactPersons = contactPersons
-    .join(matchedIds, Seq("CONTACT_PERSON_CONCAT_ID"), "leftanti")
-    .as[ContactPersonRecord]
-    .map(Seq(_))
-
-  lazy val sourcePreference = {
-    val filename = "/source_preference.tsv"
-    val lines = Source.fromInputStream(getClass.getResourceAsStream(filename)).getLines().toSeq
-    lines
-      .filter(_.nonEmpty)
-      .filterNot(_.equals("SOURCE\tPRIORITY"))
-      .map(_.split("\t"))
-      .map(lineParts => lineParts(0) -> lineParts(1).toInt)
-      .toMap
-  }
+object ContactPersonMerging extends SparkJob {
+  lazy private val sourcePreference = Source
+    .fromInputStream(getClass.getResourceAsStream("/source_preference.tsv"))
+    .getLines()
+    .toSeq
+    .filter(_.nonEmpty)
+    .filterNot(_.equals("SOURCE\tPRIORITY"))
+    .map(_.split("\t"))
+    .map(lineParts => lineParts(0) -> lineParts(1).toInt)
+    .toMap
 
   def pickGoldenRecordAndGroupId(contactPersons: Seq[ContactPersonRecord]): GoldenContactPersonRecord = {
     val refIds = contactPersons.map(_.CONTACT_PERSON_CONCAT_ID)
@@ -106,18 +57,59 @@ object ContactPersonMerging extends App {
     GoldenContactPersonRecord(id, goldenRecord, refIds, goldenRecord.COUNTRY_CODE.get)
   }
 
-  val goldenRecords: Dataset[GoldenContactPersonRecord] = groupedContactPersons
-    .union(singletonContactPersons)
-    .map(pickGoldenRecordAndGroupId)
+  def transform(
+    spark: SparkSession,
+    contactPersons: Dataset[ContactPersonRecord],
+    matches: Dataset[ContactPersonMatchingResult]
+  ): Dataset[GoldenContactPersonRecord] = {
+    import spark.implicits._
 
-  goldenRecords
-    .repartition(60)
-    .write
-    .mode(Overwrite)
-    .partitionBy("COUNTRY_CODE")
-    .format("parquet")
-    .save(outputFile)
+    val groupedContactPersons = matches
+      .joinWith(
+        contactPersons,
+        matches("COUNTRY_CODE") === contactPersons("COUNTRY_CODE")
+          and $"target_id" === $"CONTACT_PERSON_CONCAT_ID"
+      )
+      .map((MatchResultAndContactPerson.apply _).tupled)
+      .groupByKey(_.sourceId)
+      .agg(collect_list("contactPerson").alias("contactPersons").as[Seq[ContactPersonRecord]])
+      .joinWith(contactPersons, $"value" === $"CONTACT_PERSON_CONCAT_ID")
+      .map(x => x._2 +: x._1._2)
 
-  log.info(s"Went from ${contactPersons.count} to ${spark.read.parquet(outputFile).count} records")
-  log.info(s"Done in ${(System.currentTimeMillis - startOfJob) / 1000}s")
+    val matchedIds = groupedContactPersons
+      .flatMap(_.map(contactPerson => {
+        ContactPersonIdAndCountry(contactPerson.CONTACT_PERSON_CONCAT_ID, contactPerson.COUNTRY_CODE)
+      }))
+      .distinct()
+
+    val singletonContactPersons = contactPersons
+      .join(matchedIds, Seq("CONTACT_PERSON_CONCAT_ID"), "leftanti")
+      .as[ContactPersonRecord]
+      .map(Seq(_))
+
+    groupedContactPersons.union(singletonContactPersons).map(pickGoldenRecordAndGroupId)
+  }
+
+  override val neededFilePaths: Array[String] = Array(
+    "MATCHING_INPUT_FILE",
+    "CONTACT_PERSON_INPUT_FILE",
+    "OUTPUT_FILE"
+  )
+
+  override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
+    import spark.implicits._
+
+    val (matchingInputFile: String, contactPersonInputFile: String, outputFile: String) = filePaths
+
+    val contactPersons = storage
+      .readFromParquet[ContactPersonRecord](contactPersonInputFile)
+
+    val matches = storage
+      .readFromParquet[ContactPersonMatchingResult](matchingInputFile)
+
+    val transformed = transform(spark, contactPersons, matches).repartition(60)
+
+    storage
+      .writeToParquet(transformed, outputFile, partitionBy = "COUNTRY_CODE")
+  }
 }

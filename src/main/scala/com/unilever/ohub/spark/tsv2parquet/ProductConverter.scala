@@ -1,15 +1,11 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import java.io.InputStream
 import java.sql.Timestamp
 
-import com.unilever.ohub.spark.generic.FileSystems
+import com.unilever.ohub.spark.storage.{ CountryRecord, Storage }
+import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
-import org.apache.log4j.{ LogManager, Logger }
-import org.apache.spark.sql.SaveMode.Overwrite
-import org.apache.spark.sql.{ DataFrame, SparkSession }
-
-import scala.io.Source
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
 case class ProductRecord(
   PRODUCT_CONCAT_ID: String, REF_PRODUCT_ID: Option[String], SOURCE: Option[String],
@@ -22,36 +18,8 @@ case class ProductRecord(
   UNIT_PRICE_ORIGINAL: Option[String], UNIT_PRICE_CURRENCY: Option[String]
 )
 
-object ProductConverter extends App {
-  implicit private val log: Logger = LogManager.getLogger(getClass)
-
-  val (inputFile, outputFile) = FileSystems.getFileNames(args, "INPUT_FILE", "OUTPUT_FILE")
-
-  log.info(s"Generating orders parquet from [$inputFile] to [$outputFile]")
-
-  val spark = SparkSession
-    .builder()
-    .appName(this.getClass.getSimpleName)
-    .getOrCreate()
-
-  import spark.implicits._
-
-  val inputStream: InputStream = getClass.getResourceAsStream("/country_codes.csv")
-  val readSeq: Seq[String] = Source.fromInputStream(inputStream).getLines().toSeq
-  val countryRecordsDF: DataFrame = spark.sparkContext.parallelize(readSeq)
-    .toDS()
-    .map(_.split(","))
-    .map(cells => (parseStringOption(cells(6)), parseStringOption(cells(2)), parseStringOption(cells(9))))
-    .filter(_ != ("ISO3166_1_Alpha_2", "official_name_en", "ISO4217_currency_alphabetic_code"))
-    .toDF("COUNTRY_CODE", "COUNTRY", "CURRENCY_CODE")
-
-  val expectedPartCount = 13
-  val hasValidLineLength = CustomParsers.hasValidLineLength(expectedPartCount) _
-
-  val startOfJob = System.currentTimeMillis()
-  val lines = spark.read.textFile(inputFile)
-
-  def linePartsToProductRecord(lineParts: Array[String]): ProductRecord = {
+object ProductConverter extends SparkJob {
+  private def linePartsToProductRecord(lineParts: Array[String]): ProductRecord = {
     try {
       ProductRecord(
         PRODUCT_CONCAT_ID = s"${lineParts(2)}~${lineParts(1)}~${lineParts(0)}",
@@ -79,27 +47,47 @@ object ProductConverter extends App {
     }
   }
 
-  val recordsDF: DataFrame = lines
-    .filter(_.nonEmpty)
-    .filter(!_.startsWith("REF_PRODUCT_ID"))
-    .map(_.split("‰", -1))
-    .filter(hasValidLineLength)
-    .map(linePartsToProductRecord)
-    .toDF()
+  def transform(
+    spark: SparkSession,
+    productRecords: Dataset[ProductRecord],
+    countryRecords: Dataset[CountryRecord]
+  ): Dataset[ProductRecord] = {
+    import spark.implicits._
 
-  recordsDF.createOrReplaceTempView("PRODUCTS")
-  countryRecordsDF.createOrReplaceTempView("COUNTRIES")
-  val joinedRecordsDF: DataFrame = spark.sql(
-    """
-      |SELECT PDT.PRODUCT_CONCAT_ID,PDT.REF_PRODUCT_ID,PDT.SOURCE,PDT.COUNTRY_CODE,PDT.STATUS,PDT.STATUS_ORIGINAL,PDT.DATE_CREATED,PDT.DATE_CREATED_ORIGINAL,PDT.DATE_MODIFIED,PDT.DATE_MODIFIED_ORIGINAL,PDT.PRODUCT_NAME,PDT.EAN_CU,PDT.EAN_DU,PDT.MRDR,PDT.UNIT,PDT.UNIT_PRICE,PDT.UNIT_PRICE_ORIGINAL,CTR.CURRENCY_CODE UNIT_PRICE_CURRENCY
-      |FROM PRODUCTS PDT
-      |LEFT JOIN COUNTRIES CTR
-      | ON PDT.COUNTRY_CODE = CTR.COUNTRY_CODE
-      |WHERE CTR.CURRENCY_CODE IS NOT NULL
-    """.stripMargin)
+    productRecords
+      .joinWith(
+        countryRecords,
+        countryRecords("CURRENCY_CODE").isNotNull and
+          productRecords("COUNTRY_CODE") === countryRecords("COUNTRY_CODE"),
+        "left"
+      )
+      .map {
+        case (productRecord, countryRecord) => productRecord.copy(
+          COUNTRY_CODE = Some(countryRecord.COUNTRY_CODE)
+        )
+      }
+  }
 
-  joinedRecordsDF.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
+  override val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
 
-  log.debug(joinedRecordsDF.schema.treeString)
-  log.info(s"Done in ${(System.currentTimeMillis - startOfJob) / 1000}s")
+  override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
+    import spark.implicits._
+
+    val (inputFile: String, outputFile: String) = filePaths
+
+    val expectedPartCount = 13
+    val hasValidLineLength = CustomParsers.hasValidLineLength(expectedPartCount) _
+
+    val productRecords = storage
+      .readFromCSV[String](inputFile)
+      .map(_.split("‰", -1))
+      .filter(hasValidLineLength)
+      .map(linePartsToProductRecord)
+
+    val countryRecords = storage.countries
+
+    val transformed = transform(spark, productRecords, countryRecords)
+
+    storage.writeToParquet(transformed, outputFile, partitionBy = "COUNTRY_CODE")
+  }
 }

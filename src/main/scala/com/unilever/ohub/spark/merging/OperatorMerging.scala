@@ -33,7 +33,7 @@ case class MatchingResultAndOperator(
 object OperatorMerging extends App {
   implicit private val log: Logger = LogManager.getLogger(this.getClass)
 
-  val (matchingInputFile, operatorInputFile, outputFile) = FileSystems.getFileNames(
+  val (matchingInputFile: String, operatorInputFile: String, outputFile: String) = FileSystems.getFileNames(
     args,
     "MATCHING_INPUT_FILE", "OPERATOR_INPUT_FILE", "OUTPUT_FILE"
   )
@@ -59,7 +59,7 @@ object OperatorMerging extends App {
       operators,
       matches("COUNTRY_CODE") === operators("COUNTRY_CODE") and $"target_id" === $"OPERATOR_CONCAT_ID"
     )
-    .map(MatchingResultAndOperator.apply _.tupled)
+    .map((MatchingResultAndOperator.apply _).tupled)
     .groupByKey(_.sourceId)
     .agg(collect_list("operator").alias("operators").as[Seq[OperatorRecord]])
     .joinWith(operators, $"value" === $"OPERATOR_CONCAT_ID")

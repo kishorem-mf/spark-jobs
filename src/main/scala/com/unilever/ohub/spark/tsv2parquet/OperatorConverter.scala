@@ -1,18 +1,12 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import java.io.InputStream
 import java.sql.Timestamp
 
-import com.unilever.ohub.spark.generic.FileSystems
-import com.unilever.ohub.spark.tsv2parquet.CustomParsers.{ parseBigDecimalRangeOption, parseBoolOption,
-  parseDateTimeStampOption, parseLongRangeOption, parseStringOption }
-import com.unilever.ohub.spark.generic.StringFunctions.{ removeStrangeCharsToLowerAndTrim,
-  removeSpacesStrangeCharsAndToLower }
-import org.apache.log4j.{ LogManager, Logger }
-import org.apache.spark.sql.SaveMode._
-import org.apache.spark.sql.{ DataFrame, Dataset, SparkSession }
-
-import scala.io.Source
+import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.tsv2parquet.CustomParsers.{ parseBigDecimalRangeOption, parseBoolOption, parseDateTimeStampOption, parseLongRangeOption, parseStringOption }
+import com.unilever.ohub.spark.generic.StringFunctions.{ removeSpacesStrangeCharsAndToLower, removeStrangeCharsToLowerAndTrim }
+import com.unilever.ohub.spark.storage.{ CountryRecord, Storage }
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
 case class OperatorRecord(
   OPERATOR_CONCAT_ID: String, REF_OPERATOR_ID: Option[String], SOURCE: Option[String],
@@ -49,37 +43,8 @@ case class OperatorRecord(
   CHAIN_ID: Option[String], KITCHEN_TYPE: Option[String]
 )
 
-object OperatorConverter extends App {
-  implicit private val log: Logger = LogManager.getLogger(getClass)
-
-  val (inputFile, outputFile) = FileSystems.getFileNames(args, "INPUT_FILE", "OUTPUT_FILE")
-
-  log.info(s"Generating operator parquet from [$inputFile] to [$outputFile]")
-
-  val spark = SparkSession
-    .builder()
-    .appName(this.getClass.getSimpleName)
-    .getOrCreate()
-
-  import spark.implicits._
-
-  val hasValidLineLength = CustomParsers.hasValidLineLength(expectedPartCount) _
-
-  val inputStream: InputStream = getClass.getResourceAsStream("/country_codes.csv")
-  val readSeq: Seq[String] = Source.fromInputStream(inputStream).getLines().toSeq
-  val countryRecordsDF: DataFrame = spark.sparkContext.parallelize(readSeq)
-    .toDS()
-    .map(_.split(","))
-    .map(cells => (parseStringOption(cells(6)), parseStringOption(cells(2)), parseStringOption(cells(9))))
-    .filter(_ != ("ISO3166_1_Alpha_2", "official_name_en", "ISO4217_currency_alphabetic_code"))
-    .toDF("COUNTRY_CODE", "COUNTRY", "CURRENCY_CODE")
-
-  lazy val expectedPartCount = 59
-
-  val startOfJob = System.currentTimeMillis()
-  val inputLines: Dataset[String] = spark.read.textFile(inputFile)
-
-  def linePartsToOperatorRecord(lineParts: Array[String]): OperatorRecord = {
+object OperatorConverter extends SparkJob  {
+  private def linePartsToOperatorRecord(lineParts: Array[String]): OperatorRecord = {
     try {
       OperatorRecord(
         OPERATOR_CONCAT_ID = s"${lineParts(2)}~${lineParts(1)}~${lineParts(0)}",
@@ -169,28 +134,47 @@ object OperatorConverter extends App {
     }
   }
 
-  val recordsDF: DataFrame = inputLines
-    .filter(_.nonEmpty)
-    .filter(!_.startsWith("REF_OPERATOR_ID"))
-    .map(_.split("‰", -1))
-    .filter(hasValidLineLength)
-    .map(linePartsToOperatorRecord)
-    .toDF()
+  def transform(
+    spark: SparkSession,
+    operatorRecords: Dataset[OperatorRecord],
+    countryRecords: Dataset[CountryRecord]
+  ): Dataset[OperatorRecord] = {
+    import spark.implicits._
 
-  recordsDF.createOrReplaceTempView("OPERATORS")
-  countryRecordsDF.createOrReplaceTempView("COUNTRIES")
-  val joinedRecordsDF: DataFrame = spark.sql(
-    """
-      |SELECT OPR.OPERATOR_CONCAT_ID,OPR.REF_OPERATOR_ID,OPR.SOURCE,OPR.COUNTRY_CODE,OPR.STATUS,OPR.STATUS_ORIGINAL,OPR.NAME,OPR.NAME_CLEANSED,OPR.OPR_INTEGRATION_ID,OPR.DATE_CREATED,OPR.DATE_MODIFIED,OPR.CHANNEL,OPR.SUB_CHANNEL,OPR.REGION,OPR.STREET,OPR.STREET_CLEANSED,OPR.HOUSENUMBER,OPR.HOUSENUMBER_EXT,OPR.CITY,OPR.CITY_CLEANSED,OPR.ZIP_CODE,OPR.ZIP_CODE_CLEANSED,OPR.STATE,CTR.COUNTRY,OPR.EMAIL_ADDRESS,OPR.PHONE_NUMBER,OPR.MOBILE_PHONE_NUMBER,OPR.FAX_NUMBER,OPR.OPT_OUT,OPR.EM_OPT_IN,OPR.EM_OPT_OUT,OPR.DM_OPT_IN,OPR.DM_OPT_OUT,OPR.TM_OPT_IN,OPR.TM_OPT_OUT,OPR.MOB_OPT_IN,OPR.MOB_OPT_OUT,OPR.FAX_OPT_IN,OPR.FAX_OPT_OUT,OPR.NR_OF_DISHES,OPR.NR_OF_DISHES_ORIGINAL,OPR.NR_OF_LOCATIONS,OPR.NR_OF_STAFF,OPR.AVG_PRICE,OPR.AVG_PRICE_ORIGINAL,OPR.DAYS_OPEN,OPR.DAYS_OPEN_ORIGINAL,OPR.WEEKS_CLOSED,OPR.WEEKS_CLOSED_ORIGINAL,OPR.DISTRIBUTOR_NAME,OPR.DISTRIBUTOR_CUSTOMER_NR,OPR.OTM,OPR.OTM_REASON,OPR.OTM_DNR,OPR.OTM_DNR_ORIGINAL,OPR.NPS_POTENTIAL,OPR.NPS_POTENTIAL_ORIGINAL,OPR.SALES_REP,OPR.CONVENIENCE_LEVEL,OPR.PRIVATE_HOUSEHOLD,OPR.PRIVATE_HOUSEHOLD_ORIGINAL,OPR.VAT_NUMBER,OPR.OPEN_ON_MONDAY,OPR.OPEN_ON_MONDAY_ORIGINAL,OPR.OPEN_ON_TUESDAY,OPR.OPEN_ON_TUESDAY_ORIGINAL,OPR.OPEN_ON_WEDNESDAY,OPR.OPEN_ON_WEDNESDAY_ORIGINAL,OPR.OPEN_ON_THURSDAY,OPR.OPEN_ON_THURSDAY_ORIGINAL,OPR.OPEN_ON_FRIDAY,OPR.OPEN_ON_FRIDAY_ORIGINAL,OPR.OPEN_ON_SATURDAY,OPR.OPEN_ON_SATURDAY_ORIGINAL,OPR.OPEN_ON_SUNDAY,OPR.OPEN_ON_SUNDAY_ORIGINAL,OPR.CHAIN_NAME,OPR.CHAIN_ID,OPR.KITCHEN_TYPE
-      |FROM OPERATORS OPR
-      |LEFT JOIN COUNTRIES CTR
-      | ON OPR.COUNTRY_CODE = CTR.COUNTRY_CODE
-      |WHERE CTR.COUNTRY IS NOT NULL
-    """.stripMargin
-  )
+    operatorRecords
+      .joinWith(
+        countryRecords,
+        countryRecords("COUNTRY").isNotNull and
+          operatorRecords("COUNTRY_CODE") === countryRecords("COUNTRY_CODE"),
+        "left"
+      )
+      .map {
+        case (operatorRecord, countryRecord) => operatorRecord.copy(
+          COUNTRY = Some(countryRecord.COUNTRY),
+          COUNTRY_CODE = Some(countryRecord.COUNTRY_CODE)
+        )
+      }
+  }
 
-  joinedRecordsDF.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
+  override val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
 
-  log.debug(joinedRecordsDF.schema.treeString)
-  log.info(s"Done in ${(System.currentTimeMillis - startOfJob) / 1000}s")
+  override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
+    import spark.implicits._
+
+    val (inputFile: String, outputFile: String) = filePaths
+
+    val hasValidLineLength = CustomParsers.hasValidLineLength(59) _
+
+    val operatorRecords = storage
+      .readFromCSV[String](inputFile)
+      .map(_.split("‰", -1))
+      .filter(hasValidLineLength)
+      .map(linePartsToOperatorRecord)
+
+    val countryRecords = storage.countries
+
+    val transformed = transform(spark, operatorRecords, countryRecords)
+
+    storage.writeToParquet(transformed, outputFile, partitionBy = "COUNTRY_CODE")
+  }
 }

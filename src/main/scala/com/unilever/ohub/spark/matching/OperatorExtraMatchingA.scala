@@ -7,7 +7,7 @@ import org.apache.spark.sql.SaveMode._
 object OperatorExtraMatchingA extends App {
   implicit private val log: Logger = LogManager.getLogger(this.getClass)
 
-  val (inputFile, outputFile) = FileSystems.getFileNames(args, "INPUT_FILE", "OUTPUT_FILE")
+  val (inputFile: String, outputFile: String) = FileSystems.getFileNames(args, "INPUT_FILE", "OUTPUT_FILE")
 
   import org.apache.spark.sql.SparkSession
   val spark = SparkSession.builder().appName("Operator matching").getOrCreate()
