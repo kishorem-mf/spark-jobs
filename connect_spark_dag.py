@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from airflow import DAG
 from airflow.contrib.operators.ssh_execute_operator import SSHExecuteOperator

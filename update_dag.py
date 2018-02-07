@@ -6,7 +6,7 @@ from custom_operators.dag_git_pull_operator import DagsGitPuller
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2017, 2, 8),
+    'start_date': datetime(2018, 2, 8),
     'email': ['airflow@airflow.com'],
     'email_on_failure': False,
     'email_on_retry': False,
