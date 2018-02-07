@@ -1,7 +1,7 @@
 from airflow import DAG
 from datetime import datetime, timedelta
 
-from custom_operators.dag_git_pull_operator import DagsGitPuller
+from airflow_dags.custom_operators.dag_git_pull_operator import DagsGitPuller
 
 default_args = {
     'owner': 'airflow',
