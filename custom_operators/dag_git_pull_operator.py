@@ -52,8 +52,7 @@ class DagsGitPuller(BaseOperator):
                 logging.info('Removing untracked files:\n%s', clean.strip())
             if self.pull:
                 pull = subprocess.check_output(['git', 'pull', 'origin',
-                                                'master', '--rebase',
-                                                '--force', '--prune'],
+                                                'master'],
                                                cwd=self.dags_folder)
                 logging.info('Pulling changes:\n%s', pull.strip())
             commit = subprocess.check_output(['git', 'log', '-1', '--oneline'],
