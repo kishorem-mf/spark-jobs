@@ -92,8 +92,8 @@ class ContactPersonConverterTest extends SparkJobSpec {
 
   import spark.implicits._
 
-  describe("The ContactPersonConverterJob") {
-    describe("transform") {
+  describe("The ContactPersonConverter job's") {
+    describe("transform function") {
       describe("when given a ContactPersonRecord with COUNTRY_CODE 'NL'") {
         val contactPersonRecord = defaultContactPersonRecord.copy(
           COUNTRY_CODE = Some("NL")
@@ -113,7 +113,7 @@ class ContactPersonConverterTest extends SparkJobSpec {
               countryRecord.toDataset
             ).head()
 
-            result.COUNTRY shouldEqual "Netherlands"
+            result.COUNTRY.get shouldEqual "Netherlands"
           }
         }
       }
