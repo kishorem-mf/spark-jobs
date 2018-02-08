@@ -5,8 +5,8 @@ import java.sql.Timestamp
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers.{ parseBigDecimalRangeOption, parseBoolOption, parseDateTimeStampOption, parseLongRangeOption, parseStringOption }
 import com.unilever.ohub.spark.generic.StringFunctions.{ removeSpacesStrangeCharsAndToLower, removeStrangeCharsToLowerAndTrim }
+import com.unilever.ohub.spark.sql.LeftOuter
 import com.unilever.ohub.spark.storage.{ CountryRecord, Storage }
-import org.apache.spark.sql.catalyst.plans.LeftOuter
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
 case class OperatorRecord(
@@ -147,7 +147,7 @@ object OperatorConverter extends SparkJob  {
         countryRecords,
         countryRecords("COUNTRY").isNotNull and
           operatorRecords("COUNTRY_CODE") === countryRecords("COUNTRY_CODE"),
-        LeftOuter.sql
+        LeftOuter
       )
       .map {
         case (operatorRecord, countryRecord) => operatorRecord.copy(
