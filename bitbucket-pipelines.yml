@@ -1,0 +1,10 @@
+image: continuumio/miniconda3
+
+pipelines:
+  default:
+    - step:
+        name: Test building EGG
+        script:
+          - conda env create -f environment.yml
+          - conda activate name-matching
+          - ./compile_library.sh
