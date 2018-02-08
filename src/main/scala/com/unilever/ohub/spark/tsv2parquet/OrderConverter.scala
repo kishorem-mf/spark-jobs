@@ -5,6 +5,7 @@ import java.sql.Timestamp
 import com.unilever.ohub.spark.storage.{ CountryRecord, Storage }
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
+import org.apache.spark.sql.catalyst.plans.LeftOuter
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
 case class OrderRecord(
@@ -80,7 +81,7 @@ object OrderConverter extends SparkJob {
         countryRecords,
         countryRecords("CURRENCY_CODE").isNotNull and
           orderRecords("COUNTRY_CODE") === countryRecords("COUNTRY_CODE"),
-        "left"
+        LeftOuter.sql
       )
       .map {
         case (orderRecord, countryRecord) => orderRecord.copy(
