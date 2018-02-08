@@ -6,5 +6,5 @@ pipelines:
         name: Test building EGG
         script:
           - conda env create -f environment.yml
-          - conda activate name-matching
+          - source activate name-matching
           - ./compile_library.sh
