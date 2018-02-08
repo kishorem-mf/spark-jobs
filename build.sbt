@@ -4,7 +4,7 @@ version := "0.1"
 
 scalaVersion := "2.11.11"
 
-val sparkVersion = "2.2.0" // 2.1.0 is the latest version supported by Azure as of 22/11/17
+val sparkVersion = "2.1.0" // 2.1.0 is the latest version supported by Azure as of 22/11/17
 val sparkDependencyType = sys.props.getOrElse("sparkDependencyType", "compile")
 lazy val depType = taskKey[Unit]("print sparkDependencyType")
 
@@ -13,8 +13,8 @@ depType := {
 }
 
 Defaults.itSettings
-testOptions in Test += Tests.Argument("-oD")
-testOptions in IntegrationTest += Tests.Argument("-oD")
+Test / testOptions += Tests.Argument("-oD")
+IntegrationTest / testOptions += Tests.Argument("-oD")
 
 libraryDependencies ++= Seq(
   "org.apache.spark"    %% "spark-core"     % sparkVersion  % sparkDependencyType excludeAll ExclusionRule(organization = "org.scalatest"),
