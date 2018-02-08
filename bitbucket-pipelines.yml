@@ -1,4 +1,4 @@
-image: continuumio/miniconda3
+image: timvancann/miniconda3-gcc
 
 pipelines:
   default:
