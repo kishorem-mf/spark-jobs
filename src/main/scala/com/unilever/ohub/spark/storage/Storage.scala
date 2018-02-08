@@ -7,6 +7,8 @@ import scala.io.Source
 trait Storage {
   def readFromCSV[T: Encoder](location: String, delimiter: String = ","): Dataset[T]
 
+  def writeToCSV(ds: Dataset[_], outputFile: String, partitionBy: String*): Unit
+
   def readFromParquet[T: Encoder](location: String, selectColumns: Column*): Dataset[T]
 
   def writeToParquet(ds: Dataset[_], location: String, partitionBy: String*): Unit
@@ -27,6 +29,21 @@ class DiskStorage(spark: SparkSession) extends Storage {
       .option("delimiter", delimiter)
       .csv(location)
       .as[T]
+  }
+
+  def writeToCSV(ds: Dataset[_], outputFile: String, partitionBy: String*): Unit = {
+    ds
+      .coalesce(1)
+      .write
+      .mode(SaveMode.Overwrite)
+      .option("encoding", "UTF-8")
+      .option("header", "true")
+      .option("delimiter","\u00B6")
+      // This makes sure the when " is in a value it is not escaped like \" which is not accepted by ACM
+      .option("quote", "\u0000")
+      //.option("quoteAll", if (quoteAll) "true" else "false")
+      .partitionBy(partitionBy: _*)
+      .csv(outputFile)
   }
 
   override def readFromParquet[T: Encoder](location: String, selectColumns: Column*): Dataset[T] = {

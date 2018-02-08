@@ -5,17 +5,17 @@ import org.apache.spark.sql.SparkSession
 import org.apache.hadoop.fs.{ Path => hadoopPath }
 import org.apache.log4j.Logger
 
+import scala.util.Try
+
 object FileSystems {
   def removeFullDirectoryUsingHadoopFileSystem(
     spark: SparkSession,
     filePath: String
-  ): Either[Exception, Boolean] = {
-    try {
+  ): Try[Boolean] = {
+    Try {
       val fileSystem = FileSystem.get(spark.sparkContext.hadoopConfiguration)
       val path = new hadoopPath(filePath)
-      Right(fileSystem.delete(path, true))
-    } catch {
-      case e: Exception => Left(e)
+      fileSystem.delete(path, true)
     }
   }
 

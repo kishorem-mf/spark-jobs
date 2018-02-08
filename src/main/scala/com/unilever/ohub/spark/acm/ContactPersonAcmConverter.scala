@@ -1,81 +1,202 @@
 package com.unilever.ohub.spark.acm
 
-import com.unilever.ohub.spark.generic.{ FileSystems, StringFunctions }
-import org.apache.log4j.{ LogManager, Logger }
-import org.apache.spark.sql.SaveMode.Overwrite
-import org.apache.spark.sql.SparkSession
+import java.sql.Timestamp
 
-object ContactPersonAcmConverter extends App with AcmConverterHelpers {
-  implicit private val log: Logger = LogManager.getLogger(getClass)
+import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.generic.StringFunctions
+import com.unilever.ohub.spark.storage.Storage
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
-  val (inputFile: String, outputFile: String, outputParquetFile: String) = FileSystems.getFileNames(
-    args,
-    "INPUT_FILE", "OUTPUT_FILE", "OUTPUT_PARQUET_FILE"
-  )
+case class Recipient(
+  CONTACT_PERSON_CONCAT_ID: String,
+  OHUB_CONTACT_PERSON_ID: String,
+  REF_OPERATOR_ID: String,
+  EM_OPT_OUT: Boolean,
+  TM_OPT_IN: Boolean,
+  FAX_OPT_OUT: Boolean,
+  MOB_OPT_OUT: Boolean,
+  DM_OPT_OUT: Boolean,
+  TITLE: String,
+  GENDER: String,
+  LANGUAGE_KEY: String,
+  EMAIL_ADDRESS: String,
+  MOBILE_PHONE_NUMBER: String,
+  PHONE_NUMBER: String,
+  FAX_NUMBER: String,
+  STREET: String,
+  HOUSENUMBER: String,
+  HOUSENUMBER_EXT: String,
+  ZIP_CODE: String,
+  CITY: String,
+  COUNTRY: String,
+  DATE_CREATED: Timestamp,
+  DATE_MODIFIED: Timestamp,
+  BIRTH_DATE: Timestamp,
+  PREFERRED_CONTACT: Boolean,
+  FUNCTION: String,
+  COUNTRY_CODE: String,
+  SCM: String,
+  STATUS: Boolean,
+  KEY_DECISION_MAKER: Boolean,
+  EM_OPT_IN: Boolean,
+  EM_OPT_IN_DATE: Timestamp,
+  EM_OPT_IN_CONFIRMED: Boolean,
+  EM_OPT_IN_CONFIRMED_DATE: Timestamp,
+  MOB_OPT_IN: Boolean,
+  MOB_OPT_IN_DATE: Timestamp,
+  MOB_OPT_IN_CONFIRMED: Boolean,
+  MOB_OPT_IN_CONFIRMED_DATE: Timestamp,
+  FIRST_NAME: String,
+  LAST_NAME: String,
+  EMAIL_ADDRESS_ORIGINAL: String,
+  PHONE_NUMBER_ORIGINAL: String
+)
 
-  log.info(s"Generating contact person ACM csv file from [$inputFile] to [$outputFile]")
+case class OHubContactPersonIdAndRecipients(OHUB_CONTACT_PERSON_ID: String, CONTACT_PERSON: Seq[Recipient])
 
-  val spark = SparkSession
-    .builder()
-    .appName(this.getClass.getSimpleName)
-    .getOrCreate()
+// Data Model: OPR_ORIG_INTEGRATION_ID can be misleading for Ohub 2.0
+// as this will contain the new OHUB_OPERATOR_ID and OPR_LNKD_INTEGRATION_ID will contain OPERATOR_CONCAT_ID
+case class UfsRecipient(
+  CP_ORIG_INTEGRATION_ID: String,
+  CP_LNKD_INTEGRATION_ID: String,
+  OPR_ORIG_INTEGRATION_ID: String,
+  GOLDEN_RECORD_FLAG: String,
+  WEB_CONTACT_ID: String,
+  EMAIL_OPTOUT: String,
+  PHONE_OPTOUT: String,
+  FAX_OPTOUT: String,
+  MOBILE_OPTOUT: String,
+  DM_OPTOUT: String,
+  LAST_NAME: String,
+  FIRST_NAME: String,
+  MIDDLE_NAME: String,
+  TITLE: String,
+  GENDER: String,
+  LANGUAGE: String,
+  EMAIL_ADDRESS: String,
+  MOBILE_PHONE_NUMBER: String,
+  PHONE_NUMBER: String,
+  FAX_NUMBER: String,
+  STREET: String,
+  HOUSENUMBER: String,
+  ZIPCODE: String,
+  CITY: String,
+  COUNTRY: String,
+  DATE_CREATED: String,
+  DATE_UPDATED: String,
+  DATE_OF_BIRTH: String,
+  PREFERRED: String,
+  ROLE: String,
+  COUNTRY_CODE: String,
+  SCM: String,
+  DELETE_FLAG: String,
+  KEY_DECISION_MAKER: String,
+  OPT_IN: String,
+  OPT_IN_DATE: String,
+  CONFIRMED_OPT_IN: String,
+  CONFIRMED_OPT_IN_DATE: String,
+  MOB_OPT_IN: String,
+  MOB_OPT_IN_DATE: String,
+  MOB_CONFIRMED_OPT_IN: String,
+  MOB_CONFIRMED_OPT_IN_DATE: String,
+  MOB_OPT_OUT_DATE: String,
+  ORG_FIRST_NAME: String,
+  ORG_LAST_NAME: String,
+  ORG_EMAIL_ADDRESS: String,
+  ORG_FIXED_PHONE_NUMBER: String,
+  ORG_MOBILE_PHONE_NUMBER: String,
+  ORG_FAX_NUMBER: String
+)
 
-  val startOfJob = System.currentTimeMillis()
+object ContactPersonAcmConverter extends SparkJob {
+  def transform(
+    spark: SparkSession,
+    contactPersonIdAndRecipients: Dataset[OHubContactPersonIdAndRecipients]
+  ): Dataset[UfsRecipient] = {
+    import spark.implicits._
 
-  spark.sqlContext.udf.register("CLEAN", (s1: String) => StringFunctions.removeGenericStrangeChars(s1))
-  spark.sqlContext.udf.register(
-    "CLEAN_NAMES",
-    (firstName: String, lastName: String, isFirstName: Boolean) => {
+    val boolAsString = (bool: Boolean) => if (bool) "Y" else "N"
+    val clean = (str: String) => StringFunctions.removeGenericStrangeChars(str)
+    val cleanNames = (firstName: String, lastName: String, isFirstName: Boolean) => {
       StringFunctions.fillLastNameOnlyWhenFirstEqualsLastName(firstName, lastName, isFirstName)
     }
-  )
+    val dateFormat = "yyyy-MM-dd HH:mm:ss"
 
-  val contactPersonsInputDF = spark.read.parquet(inputFile)
-    .select("OHUB_CONTACT_PERSON_ID","CONTACT_PERSON.*")
-  contactPersonsInputDF.createOrReplaceTempView("CPN_INPUT")
+    contactPersonIdAndRecipients.flatMap(_.CONTACT_PERSON.map(recipient => UfsRecipient(
+      CP_ORIG_INTEGRATION_ID = recipient.CONTACT_PERSON_CONCAT_ID,
+      CP_LNKD_INTEGRATION_ID = recipient.OHUB_CONTACT_PERSON_ID,
+      OPR_ORIG_INTEGRATION_ID = recipient.REF_OPERATOR_ID,
+      GOLDEN_RECORD_FLAG = "Y",
+      WEB_CONTACT_ID = "",
+      EMAIL_OPTOUT = boolAsString(recipient.EM_OPT_OUT),
+      PHONE_OPTOUT = if (recipient.TM_OPT_IN) "N" else "Y",
+      FAX_OPTOUT = boolAsString(recipient.FAX_OPT_OUT),
+      MOBILE_OPTOUT = boolAsString(recipient.MOB_OPT_OUT),
+      DM_OPTOUT = boolAsString(recipient.DM_OPT_OUT),
+      LAST_NAME = cleanNames(recipient.FIRST_NAME, recipient.LAST_NAME, false),
+      FIRST_NAME = cleanNames(recipient.FIRST_NAME, recipient.LAST_NAME, true),
+      MIDDLE_NAME = "",
+      TITLE = recipient.TITLE,
+      GENDER = recipient.GENDER match {
+        case "M" => "1"
+        case "F" => "2"
+        case _ => "0"
+      },
+      LANGUAGE = recipient.LANGUAGE_KEY,
+      EMAIL_ADDRESS = recipient.EMAIL_ADDRESS,
+      MOBILE_PHONE_NUMBER = recipient.MOBILE_PHONE_NUMBER,
+      PHONE_NUMBER = recipient.PHONE_NUMBER,
+      FAX_NUMBER = recipient.FAX_NUMBER,
+      STREET = clean(recipient.STREET),
+      HOUSENUMBER = clean(recipient.HOUSENUMBER) + " " + clean(recipient.HOUSENUMBER_EXT),
+      ZIPCODE = clean(recipient.ZIP_CODE),
+      CITY = clean(recipient.CITY),
+      COUNTRY = recipient.COUNTRY,
+      DATE_CREATED = recipient.DATE_CREATED.formatted(dateFormat),
+      DATE_UPDATED = recipient.DATE_MODIFIED.formatted(dateFormat),
+      DATE_OF_BIRTH = recipient.BIRTH_DATE.formatted(dateFormat),
+      PREFERRED = boolAsString(recipient.PREFERRED_CONTACT),
+      ROLE = recipient.FUNCTION,
+      COUNTRY_CODE = recipient.COUNTRY_CODE,
+      SCM = recipient.SCM,
+      DELETE_FLAG = if (recipient.STATUS) "0" else "1",
+      KEY_DECISION_MAKER = boolAsString(recipient.KEY_DECISION_MAKER),
+      OPT_IN = boolAsString(recipient.EM_OPT_IN),
+      OPT_IN_DATE = recipient.EM_OPT_IN_DATE.formatted(dateFormat),
+      CONFIRMED_OPT_IN = boolAsString(recipient.EM_OPT_IN_CONFIRMED),
+      CONFIRMED_OPT_IN_DATE = recipient.EM_OPT_IN_CONFIRMED_DATE.formatted(dateFormat),
+      MOB_OPT_IN = boolAsString(recipient.MOB_OPT_IN),
+      MOB_OPT_IN_DATE = recipient.MOB_OPT_IN_DATE.formatted(dateFormat),
+      MOB_CONFIRMED_OPT_IN = boolAsString(recipient.MOB_OPT_IN_CONFIRMED),
+      MOB_CONFIRMED_OPT_IN_DATE = recipient.MOB_OPT_IN_CONFIRMED_DATE.formatted(dateFormat),
+      MOB_OPT_OUT_DATE = "",
+      ORG_FIRST_NAME = recipient.FIRST_NAME,
+      ORG_LAST_NAME = recipient.LAST_NAME,
+      ORG_EMAIL_ADDRESS = recipient.EMAIL_ADDRESS_ORIGINAL,
+      ORG_FIXED_PHONE_NUMBER = recipient.PHONE_NUMBER_ORIGINAL,
+      ORG_MOBILE_PHONE_NUMBER = recipient.PHONE_NUMBER_ORIGINAL,
+      ORG_FAX_NUMBER = recipient.FAX_NUMBER
+    )))
+  }
 
-//  Data Model: OPR_ORIG_INTEGRATION_ID can be misleading for Ohub 2.0 as this will contain the new OHUB_OPERATOR_ID and OPR_LNKD_INTEGRATION_ID will contain OPERATOR_CONCAT_ID
-  val recipientsDF = spark.sql(
-    s"""
-      |select CONTACT_PERSON_CONCAT_ID CP_ORIG_INTEGRATION_ID,OHUB_CONTACT_PERSON_ID CP_LNKD_INTEGRATION_ID,REF_OPERATOR_ID OPR_ORIG_INTEGRATION_ID,'Y' GOLDEN_RECORD_FLAG,'' WEB_CONTACT_ID,
-      | case when EM_OPT_OUT = true then 'Y' when EM_OPT_OUT = false then 'N' else 'U' end EMAIL_OPTOUT,
-      | case when TM_OPT_IN = true then 'Y' when TM_OPT_IN = false then 'N' else 'U' end PHONE_OPTOUT,
-      | case when FAX_OPT_OUT = true then 'Y' when FAX_OPT_OUT = false then 'N' else 'U' end FAX_OPTOUT,
-      | case when MOB_OPT_OUT = true then 'Y' when MOB_OPT_OUT = false then 'N' else 'U' end MOBILE_OPTOUT,
-      | case when DM_OPT_OUT = true then 'Y' when DM_OPT_OUT = false then 'N' else 'U' end DM_OPTOUT,
-      | clean_names(FIRST_NAME,LAST_NAME,false) LAST_NAME,clean_names(FIRST_NAME,LAST_NAME,true) FIRST_NAME,'' MIDDLE_NAME,
-      | TITLE,
-      | case when GENDER = 'U' then '0' when GENDER = 'M' then '1' when GENDER = 'F' then '2' else '0' end GENDER,LANGUAGE_KEY LANGUAGE,EMAIL_ADDRESS,MOBILE_PHONE_NUMBER,PHONE_NUMBER,
-      | FAX_NUMBER,
-      | clean(STREET) STREET,
-      | concat(clean(HOUSENUMBER),' ',clean(HOUSENUMBER_EXT)) HOUSENUMBER,
-      | clean(ZIP_CODE) ZIPCODE,
-      | clean(CITY) CITY,COUNTRY,
-      | date_format(DATE_CREATED,"yyyy-MM-dd HH:mm:ss") DATE_CREATED,
-      | date_format(DATE_MODIFIED,"yyyy-MM-dd HH:mm:ss") DATE_UPDATED,
-      | date_format(BIRTH_DATE,"yyyy-MM-dd HH:mm:ss") DATE_OF_BIRTH,
-      | case when PREFERRED_CONTACT = true then 'Y' when PREFERRED_CONTACT = false then 'N' else 'U' end PREFERRED,
-      | FUNCTION ROLE,COUNTRY_CODE,SCM,
-      | case when STATUS = true then '0' else '1' end DELETE_FLAG,
-      | case when KEY_DECISION_MAKER = true then 'Y' when KEY_DECISION_MAKER = false then 'N' else 'U' end KEY_DECISION_MAKER,
-      | case when EM_OPT_IN = true then 'Y' when EM_OPT_IN = false then 'N' else 'U' end OPT_IN,
-      | date_format(EM_OPT_IN_DATE,"yyyy-MM-dd HH:mm:ss") OPT_IN_DATE,
-      | case when EM_OPT_IN_CONFIRMED = true then 'Y' when EM_OPT_IN_CONFIRMED = false then 'N' else 'U' end CONFIRMED_OPT_IN,
-      | date_format(EM_OPT_IN_CONFIRMED_DATE,"yyyy-MM-dd HH:mm:ss") CONFIRMED_OPT_IN_DATE,
-      | case when MOB_OPT_IN = true then 'Y' when MOB_OPT_IN = false then 'N' else 'U' end MOB_OPT_IN,
-      | date_format(MOB_OPT_IN_DATE,"yyyy-MM-dd HH:mm:ss") MOB_OPT_IN_DATE,
-      | case when MOB_OPT_IN_CONFIRMED = true then 'Y' when MOB_OPT_IN_CONFIRMED = false then 'N' else 'U' end MOB_CONFIRMED_OPT_IN,
-      | date_format(MOB_OPT_IN_CONFIRMED_DATE,"yyyy-MM-dd HH:mm:ss") MOB_CONFIRMED_OPT_IN_DATE,
-      | '' MOB_OPT_OUT_DATE,
-      | FIRST_NAME ORG_FIRST_NAME,LAST_NAME ORG_LAST_NAME,EMAIL_ADDRESS_ORIGINAL ORG_EMAIL_ADDRESS,PHONE_NUMBER_ORIGINAL ORG_FIXED_PHONE_NUMBER,PHONE_NUMBER_ORIGINAL ORG_MOBILE_PHONE_NUMBER,FAX_NUMBER ORG_FAX_NUMBER
-      |from CPN_INPUT
-    """.stripMargin)
-    .where("country_code = 'AU'") //  TODO remove country_code filter for production
+  override val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
 
-  recipientsDF.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputParquetFile)
-  val ufsRecipientsDF = spark.read.parquet(outputParquetFile).select("CP_ORIG_INTEGRATION_ID","CP_LNKD_INTEGRATION_ID","OPR_ORIG_INTEGRATION_ID","GOLDEN_RECORD_FLAG","WEB_CONTACT_ID","EMAIL_OPTOUT","PHONE_OPTOUT","FAX_OPTOUT","MOBILE_OPTOUT","DM_OPTOUT","LAST_NAME","FIRST_NAME","MIDDLE_NAME","TITLE","GENDER","LANGUAGE","EMAIL_ADDRESS","MOBILE_PHONE_NUMBER","PHONE_NUMBER","FAX_NUMBER","STREET","HOUSENUMBER","ZIPCODE","CITY","COUNTRY","DATE_CREATED","DATE_UPDATED","DATE_OF_BIRTH","PREFERRED","ROLE","COUNTRY_CODE","SCM","DELETE_FLAG","KEY_DECISION_MAKER","OPT_IN","OPT_IN_DATE","CONFIRMED_OPT_IN","CONFIRMED_OPT_IN_DATE","MOB_OPT_IN","MOB_OPT_IN_DATE","MOB_CONFIRMED_OPT_IN","MOB_CONFIRMED_OPT_IN_DATE","MOB_OPT_OUT_DATE","ORG_FIRST_NAME","ORG_LAST_NAME","ORG_EMAIL_ADDRESS","ORG_FIXED_PHONE_NUMBER","ORG_MOBILE_PHONE_NUMBER","ORG_FAX_NUMBER")
+  override def run(spark: SparkSession, filePaths: scala.Product, storage: Storage): Unit = {
+    import spark.implicits._
 
-  writeDataFrameToCSV(ufsRecipientsDF, outputFile)
+    val (inputFile: String, outputFile: String) = filePaths
 
-  finish(spark, outputFile, outputParquetFile, outputFileNewName = "UFS_RECIPIENTS")
+    log.info(s"Generating contact person ACM csv file from [$inputFile] to [$outputFile]")
+
+    val contactPersonIdAndRecipients = storage
+      .readFromParquet[OHubContactPersonIdAndRecipients](
+        inputFile,
+        selectColumns = $"OHUB_CONTACT_PERSON_ID", $"CONTACT_PERSON.*"
+      )
+
+    val transformed = transform(spark, contactPersonIdAndRecipients)
+
+    storage
+      .writeToCSV(transformed, outputFile, partitionBy = "COUNTRY_CODE")
+  }
 }

@@ -1,45 +1,80 @@
 package com.unilever.ohub.spark.acm
 
-import com.unilever.ohub.spark.generic.FileSystems
-import org.apache.log4j.{ LogManager, Logger }
-import org.apache.spark.sql.SaveMode.Overwrite
-import org.apache.spark.sql.SparkSession
+import java.sql.Timestamp
 
-object ProductAcmConverter extends App with AcmConverterHelpers {
-  implicit private val log: Logger = LogManager.getLogger(getClass)
+import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.storage.Storage
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
-  val (inputFile: String, outputFile: String, outputParquetFile: String) = FileSystems.getFileNames(
-    args,
-    "INPUT_FILE", "OUTPUT_FILE", "OUTPUT_PARQUET_FILE"
-  )
+case class Product(
+  COUNTRY_CODE: String,
+  PRODUCT_NAME: String,
+  PRODUCT_CONCAT_ID: String,
+  EAN_CU: String,
+  MRDR: String,
+  DATE_CREATED: Timestamp,
+  DATE_MODIFIED: Timestamp,
+  STATUS: Boolean
+)
 
-  log.info(s"Generating products ACM csv file from [$inputFile] to [$outputFile]")
+case class UfsProduct(
+  // Deliberate misspelling as the consuming system requires it :'(
+  COUNTY_CODE: String,
+  PRODUCT_NAME: String,
+  PRD_INTEGRATION_ID: String,
+  EAN_CODE: String,
+  MRDR_CODE: String,
+  CREATED_AT: String,
+  UPDATED_AT: String,
+  DELETE_FLAG: String
+)
 
-  val spark = SparkSession
-    .builder()
-    .appName(this.getClass.getSimpleName)
-    .getOrCreate()
+object ProductAcmConverter extends SparkJob {
+  def transform(spark: SparkSession, products: Dataset[Product]): Dataset[UfsProduct] = {
+    import spark.implicits._
 
-  val startOfJob = System.currentTimeMillis()
+    val dateFormat = "yyyy-MM-dd HH:mm:ss"
 
-  val productsInputDF = spark.read.parquet(inputFile)
-  productsInputDF.createOrReplaceTempView("PDT_INPUT")
+    products.map { product =>
+      UfsProduct(
+        COUNTY_CODE = product.COUNTRY_CODE,
+        PRODUCT_NAME = product.PRODUCT_NAME,
+        PRD_INTEGRATION_ID = product.PRODUCT_CONCAT_ID,
+        EAN_CODE = product.EAN_CU,
+        MRDR_CODE = product.MRDR,
+        CREATED_AT = product.DATE_CREATED.formatted(dateFormat),
+        UPDATED_AT = product.DATE_MODIFIED.formatted(dateFormat),
+        DELETE_FLAG = if (product.STATUS) "N" else "Y"
+      )
+    }
+  }
 
-  val productsDF = spark.sql(
-    s"""
-      |select COUNTRY_CODE COUNTY_CODE,PRODUCT_NAME,PRODUCT_CONCAT_ID PRD_INTEGRATION_ID,EAN_CU EAN_CODE,MRDR MRDR_CODE,
-      | date_format(DATE_CREATED,"yyyy-MM-dd HH:mm:ss") CREATED_AT,
-      | date_format(DATE_MODIFIED,"yyyy-MM-dd HH:mm:ss") UPDATED_AT,
-      | case when STATUS = true then 'N' else 'Y' end DELETE_FLAG
-      |from PDT_INPUT
-    """.stripMargin)
-      .where("county_code = 'AU'") //  TODO remove country_code filter for production
+  override val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
 
-  productsDF.show(false)
-  productsDF.write.mode(Overwrite).partitionBy("COUNTY_CODE").format("parquet").save(outputParquetFile)
-  val ufsProductsDF = spark.read.parquet(outputParquetFile).select("COUNTY_CODE","PRODUCT_NAME","PRD_INTEGRATION_ID","EAN_CODE","MRDR_CODE","CREATED_AT","UPDATED_AT","DELETE_FLAG")
+  override def run(spark: SparkSession, filePaths: scala.Product, storage: Storage): Unit = {
+    import spark.implicits._
 
-  writeDataFrameToCSV(ufsProductsDF, outputFile)
+    val (inputFile: String, outputFile: String) = filePaths
 
-  finish(spark, outputFile, outputParquetFile, outputFileNewName = "UFS_PRODUCTS")
+    log.info(s"Generating products ACM csv file from [$inputFile] to [$outputFile]")
+
+    val products = storage
+      .readFromParquet[Product](
+        inputFile,
+        selectColumns =
+          $"COUNTRY_CODE",
+          $"PRODUCT_NAME",
+          $"PRODUCT_CONCAT_ID",
+          $"EAN_CU",
+          $"MRDR",
+          $"DATE_CREATED",
+          $"DATE_MODIFIED",
+          $"STATUS"
+    )
+
+    val transformed = transform(spark, products)
+
+    storage
+      .writeToCSV(transformed, outputFile)
+  }
 }
