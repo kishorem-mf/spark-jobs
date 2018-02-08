@@ -10,13 +10,11 @@ import com.unilever.ohub.spark.tsv2parquet.ContactPersonRecord
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-import scala.io.Source
-
 case class GoldenContactPersonRecord(
   OHUB_CONTACT_PERSON_ID: String,
   CONTACT_PERSON: ContactPersonRecord,
   REF_IDS: Seq[String],
-  COUNTRY_CODE: String
+  COUNTRY_CODE: Option[String]
 )
 
 case class ContactPersonMatchingResult(source_id: String, target_id: String, COUNTRY_CODE: String)
@@ -31,17 +29,8 @@ case class MatchResultAndContactPerson(
 }
 
 object ContactPersonMerging extends SparkJob {
-  lazy private val sourcePreference = Source
-    .fromInputStream(getClass.getResourceAsStream("/source_preference.tsv"))
-    .getLines()
-    .toSeq
-    .filter(_.nonEmpty)
-    .filterNot(_.equals("SOURCE\tPRIORITY"))
-    .map(_.split("\t"))
-    .map(lineParts => lineParts(0) -> lineParts(1).toInt)
-    .toMap
-
-  def pickGoldenRecordAndGroupId(contactPersons: Seq[ContactPersonRecord]): GoldenContactPersonRecord = {
+  def pickGoldenRecordAndGroupId(sourcePreference: Map[String, Int])
+                                (contactPersons: Seq[ContactPersonRecord]): GoldenContactPersonRecord = {
     val refIds = contactPersons.map(_.CONTACT_PERSON_CONCAT_ID)
     val goldenRecord = contactPersons.reduce((o1, o2) => {
       val preference1 = sourcePreference.getOrElse(o1.SOURCE.getOrElse("UNKNOWN"), Int.MaxValue)
@@ -55,13 +44,14 @@ object ContactPersonMerging extends SparkJob {
       }
     })
     val id = UUID.randomUUID().toString
-    GoldenContactPersonRecord(id, goldenRecord, refIds, goldenRecord.COUNTRY_CODE.get)
+    GoldenContactPersonRecord(id, goldenRecord, refIds, goldenRecord.COUNTRY_CODE)
   }
 
   def transform(
     spark: SparkSession,
     contactPersons: Dataset[ContactPersonRecord],
-    matches: Dataset[ContactPersonMatchingResult]
+    matches: Dataset[ContactPersonMatchingResult],
+    sourcePreference: Map[String, Int]
   ): Dataset[GoldenContactPersonRecord] = {
     import spark.implicits._
 
@@ -75,7 +65,9 @@ object ContactPersonMerging extends SparkJob {
       .groupByKey(_.sourceId)
       .agg(collect_list("contactPerson").alias("contactPersons").as[Seq[ContactPersonRecord]])
       .joinWith(contactPersons, $"value" === $"CONTACT_PERSON_CONCAT_ID")
-      .map(x => x._2 +: x._1._2)
+      .map {
+        case ((_, contactPersonRecords), contactPersonRecord) => contactPersonRecord +: contactPersonRecords
+      }
 
     val matchedIds = groupedContactPersons
       .flatMap(_.map(contactPerson => {
@@ -88,9 +80,11 @@ object ContactPersonMerging extends SparkJob {
       .as[ContactPersonRecord]
       .map(Seq(_))
 
+    val pickGoldenRecordAndGroupIdFunc = pickGoldenRecordAndGroupId(sourcePreference) _
+
     groupedContactPersons
       .union(singletonContactPersons)
-      .map(pickGoldenRecordAndGroupId)
+      .map(pickGoldenRecordAndGroupIdFunc)
       .repartition(60)
   }
 
@@ -111,7 +105,7 @@ object ContactPersonMerging extends SparkJob {
     val matches = storage
       .readFromParquet[ContactPersonMatchingResult](matchingInputFile)
 
-    val transformed = transform(spark, contactPersons, matches)
+    val transformed = transform(spark, contactPersons, matches, storage.sourcePreference)
 
     storage
       .writeToParquet(transformed, outputFile, partitionBy = "COUNTRY_CODE")
