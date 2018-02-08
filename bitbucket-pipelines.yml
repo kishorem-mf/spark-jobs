@@ -22,4 +22,4 @@ pipelines:
         name: Deploy to cluster
         script:
           - ssh hdiuser@edgenodeappx.ulohubhddevne5-ssh.azurehdinsight.net 'mkdir -p ~/deployment/name-matching/'
-          - scp *.egg hdiuser@edgenodeappx.ulohubhddevne5-ssh.azurehdinsight.net:~/deployment/name-matching/
+          - scp dist/*.egg hdiuser@edgenodeappx.ulohubhddevne5-ssh.azurehdinsight.net:~/deployment/name-matching/
