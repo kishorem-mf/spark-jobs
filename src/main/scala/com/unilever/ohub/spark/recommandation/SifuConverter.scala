@@ -96,9 +96,8 @@ object SifuConverter extends App{
     }
   }
 
-  def createDataFrameFromJsonString(spark:SparkSession, jsonStrings:Array[String]):DataFrame = {
+  def createDataFrameFromJsonString(spark:SparkSession, jsonStrings:Array[String]): Dataset[String] = {
     val jsonString = jsonStrings.toSeq
-    val jsonDS = spark.sparkContext.parallelize(jsonString).toDS()
-    spark.sqlContext.read.json(jsonDS)
+    spark.sparkContext.parallelize(jsonString).toDS()
   }
 }
