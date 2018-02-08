@@ -3,22 +3,22 @@ image: timvancann/spark-sbt-ci:2.11-2.1.0
 pipelines:
   default:
     - step:
-      name: Build and Test
-      script:
-        - sbt compile test
+        name: Build and Test
+        script:
+          - sbt compile test
   branches:
     master:
       - step:
-        script:
-          - sbt test
+          script:
+            - sbt test
       - step:
-        name: Build assembly artifact
-        script:
-          - sbt -DsparkDependencyType=provided assembly
-        artifacts:
-          - target/scala-2.11/*.jar
+          name: Build assembly artifact
+          script:
+            - sbt -DsparkDependencyType=provided assembly
+          artifacts:
+            - target/scala-2.11/*.jar
       - step:
-        name: Deploy to cluster
-        script:
-          - ssh hdiuser@edgenodeappx.ulohubhddevne5-ssh.azurehdinsight.net 'cd ~ && mkdir -p deployment/ohub/'
-          - scp target/scala-2.11/*.jar hdiuser@edgenodeappx.ulohubhddevne5-ssh.azurehdinsight.net:~/deployment/ohub/'
+          name: Deploy to cluster
+          script:
+            - ssh hdiuser@edgenodeappx.ulohubhddevne5-ssh.azurehdinsight.net 'cd ~ && mkdir -p deployment/ohub/'
+            - scp target/scala-2.11/*.jar hdiuser@edgenodeappx.ulohubhddevne5-ssh.azurehdinsight.net:~/deployment/ohub/'
