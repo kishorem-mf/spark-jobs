@@ -17,3 +17,5 @@ libraryDependencies += "org.apache.spark" %% "spark-mllib" % sparkVersion % spar
 libraryDependencies += "org.scalatest"    %% "scalatest" % "3.0.4" % Test
 libraryDependencies += "org.postgresql"   %  "postgresql" % "42.1.4"
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.6"
+
+test in assembly := {}
