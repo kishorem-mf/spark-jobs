@@ -79,7 +79,9 @@ object ContactPersonMerging2 extends SparkJob {
         operatorMatchingInputFile,
         selectColumns = $"OHUB_OPERATOR_ID", $"REF_IDS"
       )
-      .flatMap(foo => foo.REF_IDS.map(OHubIdAndRefId(foo.OHUB_OPERATOR_ID, _)))
+      .flatMap { oHubOperatorIdAndRefIds =>
+        oHubOperatorIdAndRefIds.REF_IDS.map(OHubIdAndRefId(oHubOperatorIdAndRefIds.OHUB_OPERATOR_ID, _))
+      }
 
     val transformed = transform(spark, contactPersonMatching, operatorIdAndRefs)
 
