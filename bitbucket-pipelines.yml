@@ -11,7 +11,7 @@ pipelines:
   branches:
     master:
     - step:
-        name: Test building EGG
+        name: Build EGG
         script:
           - conda env create -f environment.yml
           - source activate name-matching
@@ -23,3 +23,4 @@ pipelines:
         script:
           - ssh hdiuser@edgenodeappx.ulohubhddevne5-ssh.azurehdinsight.net 'mkdir -p ~/deployment/name-matching/'
           - scp dist/*.egg hdiuser@edgenodeappx.ulohubhddevne5-ssh.azurehdinsight.net:~/deployment/name-matching/
+          - scp *.py hdiuser@edgenodeappx.ulohubhddevne5-ssh.azurehdinsight.net:~/deployment/name-matching/
