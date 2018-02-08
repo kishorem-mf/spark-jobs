@@ -94,7 +94,7 @@ object SifuConverter extends SparkJob {
   override val neededFilePaths = Array("PRODUCTS_FILE", "RECIPES_FILE")
 
   override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
-    val (productsFile, recipesFile) = filePaths
+    val (productsFile: String, recipesFile: String) = filePaths
 
     log.info(s"Generating SIFU_PRODUCTS parquet [$productsFile] and SIFU_RECIPES parquet [$recipesFile]")
 
