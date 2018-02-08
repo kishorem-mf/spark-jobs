@@ -78,6 +78,8 @@ object ContactPersonConverter extends SparkJob {
     "375", "236", "248", "221", "597", "503", "963", "992", "670", "598", "260")
   private val countryPrefixList = countryList zip prefixList.toList
 
+  private val csvColumnDelimiter = "‰"
+
   private def linePartsToContactPersonRecord(lineParts: Array[String]): ContactPersonRecord = {
     try {
       ContactPersonRecord(
@@ -217,7 +219,7 @@ object ContactPersonConverter extends SparkJob {
 
     val contactPersonRecords = storage
       .readFromCSV[String](inputFile)
-      .map(_.split("‰", -1))
+      .map(_.split(csvColumnDelimiter, -1))
       .filter(hasValidLineLength)
       .map(linePartsToContactPersonRecord)
 
