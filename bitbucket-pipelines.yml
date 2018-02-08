@@ -20,5 +20,5 @@ pipelines:
       - step:
           name: Deploy to cluster
           script:
-            - ssh hdiuser@edgenodeappx.ulohubhddevne5-ssh.azurehdinsight.net 'cd ~ && mkdir -p deployment/ohub/'
+            - ssh hdiuser@edgenodeappx.ulohubhddevne5-ssh.azurehdinsight.net 'mkdir -p ~/deployment/ohub/'
             - scp target/scala-2.11/*.jar hdiuser@edgenodeappx.ulohubhddevne5-ssh.azurehdinsight.net:~/deployment/ohub/'
