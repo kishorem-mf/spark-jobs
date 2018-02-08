@@ -4,9 +4,9 @@ import java.sql.Timestamp
 import java.util.UUID
 
 import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.sql.LeftAnti
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.ContactPersonRecord
-import org.apache.spark.sql.catalyst.plans.LeftAnti
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
@@ -84,7 +84,7 @@ object ContactPersonMerging extends SparkJob {
       .distinct()
 
     val singletonContactPersons = contactPersons
-      .join(matchedIds, Seq("CONTACT_PERSON_CONCAT_ID"), LeftAnti.sql)
+      .join(matchedIds, Seq("CONTACT_PERSON_CONCAT_ID"), LeftAnti)
       .as[ContactPersonRecord]
       .map(Seq(_))
 
