@@ -6,6 +6,7 @@ import java.util.UUID
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.ContactPersonRecord
+import org.apache.spark.sql.catalyst.plans.LeftAnti
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
@@ -83,11 +84,14 @@ object ContactPersonMerging extends SparkJob {
       .distinct()
 
     val singletonContactPersons = contactPersons
-      .join(matchedIds, Seq("CONTACT_PERSON_CONCAT_ID"), "leftanti")
+      .join(matchedIds, Seq("CONTACT_PERSON_CONCAT_ID"), LeftAnti.sql)
       .as[ContactPersonRecord]
       .map(Seq(_))
 
-    groupedContactPersons.union(singletonContactPersons).map(pickGoldenRecordAndGroupId)
+    groupedContactPersons
+      .union(singletonContactPersons)
+      .map(pickGoldenRecordAndGroupId)
+      .repartition(60)
   }
 
   override val neededFilePaths: Array[String] = Array(
@@ -107,7 +111,7 @@ object ContactPersonMerging extends SparkJob {
     val matches = storage
       .readFromParquet[ContactPersonMatchingResult](matchingInputFile)
 
-    val transformed = transform(spark, contactPersons, matches).repartition(60)
+    val transformed = transform(spark, contactPersons, matches)
 
     storage
       .writeToParquet(transformed, outputFile, partitionBy = "COUNTRY_CODE")

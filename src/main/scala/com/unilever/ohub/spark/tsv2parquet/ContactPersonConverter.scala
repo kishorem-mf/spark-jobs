@@ -6,6 +6,7 @@ import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.generic.StringFunctions._
 import com.unilever.ohub.spark.storage.{ CountryRecord, Storage }
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
+import org.apache.spark.sql.catalyst.plans.LeftOuter
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
 case class ContactPersonRecord(
@@ -189,7 +190,7 @@ object ContactPersonConverter extends SparkJob {
         countryRecords,
         countryRecords("COUNTRY").isNotNull and
           contactPersonRecords("COUNTRY_CODE") === countryRecords("COUNTRY_CODE"),
-        "left"
+        LeftOuter.sql
       )
       .map {
         case (contactPersonRecord, countryRecord) => Option(countryRecord).fold(contactPersonRecord) { cr =>
