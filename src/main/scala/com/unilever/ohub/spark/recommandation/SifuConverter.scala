@@ -46,8 +46,8 @@ object SifuConverter extends App{
     case _: Throwable => println("Not all data is found in SIFU. Job ends.") ; sys.exit(1)
   }
 
-  val productsDF = createDataFrameFromJsonString(spark,productsJsonFormat)
-  val recipesDF = createDataFrameFromJsonString(spark,recipesJsonFormat)
+  val productsDF = createDatasetFromJsonString(spark,productsJsonFormat)
+  val recipesDF = createDatasetFromJsonString(spark,recipesJsonFormat)
 
 //  TODO create selection "queries" based on raw parquet needed for REC-O
   productsDF.write.mode(Overwrite).format("parquet").save(productsFile)
@@ -87,7 +87,7 @@ object SifuConverter extends App{
     baseUri.resolve(s"/${sifuSelection.INFO_TYPE}/$countryCode/$languageKey/$startIndex/$endIndex?type=${sifuSelection.INFO_TYPE.toUpperCase().substring(0,sifuSelection.INFO_TYPE.length - 1)}").toString
   }
 
-  def createDataFrameFromJsonString(spark:SparkSession, jsonStrings:Array[String]):DataFrame = {
+  def createDatasetFromJsonString(spark:SparkSession, jsonStrings:Array[String]): Dataset[String] = {
     val jsonString = jsonStrings.toSeq
     spark.sparkContext.parallelize(jsonString).toDS()
   }
