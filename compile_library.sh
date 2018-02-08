@@ -14,5 +14,6 @@ rm -rf build
 python setup.py bdist_egg
 
 # copy to the main folder
-cp dist/*.egg ../sparse_dot_topn.egg
+mkdir -p ../dist
+cp dist/*.egg ../dist/sparse_dot_topn.egg
 
