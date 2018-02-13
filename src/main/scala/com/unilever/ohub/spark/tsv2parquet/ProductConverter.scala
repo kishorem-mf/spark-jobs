@@ -90,6 +90,7 @@ object ProductConverter extends SparkJob {
 
     val transformed = transform(spark, productRecords, countryRecords)
 
-    storage.writeToParquet(transformed, outputFile, partitionBy = "COUNTRY_CODE")
+    storage
+      .writeToParquet(transformed, outputFile, partitionBy = "COUNTRY_CODE")
   }
 }

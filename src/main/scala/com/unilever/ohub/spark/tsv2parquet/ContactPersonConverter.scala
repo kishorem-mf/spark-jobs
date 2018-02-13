@@ -231,6 +231,7 @@ object ContactPersonConverter extends SparkJob {
 
     val transformed = transform(spark, contactPersonRecords, countryRecords)
 
-    storage.writeToParquet(transformed, outputFile)
+    storage
+      .writeToParquet(transformed, outputFile, partitionBy = "COUNTRY_CODE")
   }
 }
