@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.storage.{ CountryRecord, Storage }
 import com.unilever.ohub.spark.SparkJob
-import com.unilever.ohub.spark.sql.LeftOuter
+import com.unilever.ohub.spark.sql.JoinType
 import CustomParsers.Implicits._
 import org.apache.spark.sql.{ Dataset, Row, SparkSession }
 
@@ -82,7 +82,7 @@ object OrderConverter extends SparkJob {
       .joinWith(
         countryRecords,
         orderRecords("COUNTRY_CODE") === countryRecords("COUNTRY_CODE"),
-        LeftOuter
+        JoinType.LeftOuter
       )
       .map {
         case (orderRecord, countryRecord) => Option(countryRecord).fold(orderRecord) { cr =>

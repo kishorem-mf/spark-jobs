@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.sql.Left
+import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.tsv2parquet.OrderRecord
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
@@ -66,7 +66,7 @@ object OrderMerging extends SparkJob {
         contactPersonIdAndRefs,
         contactPersonIdAndRefs("COUNTRY_CODE") === operatorsJoined("COUNTRY_CODE")
           and contactPersonIdAndRefs("REF_ID") === operatorsJoined("REF_CONTACT_PERSON_ID"),
-        Left
+        JoinType.Left
       )
       .map {
         case (order, oHubIdRefIdAndCountry) =>

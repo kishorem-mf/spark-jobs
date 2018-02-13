@@ -4,13 +4,11 @@ import java.sql.Timestamp
 import java.util.UUID
 
 import com.unilever.ohub.spark.SparkJob
-import com.unilever.ohub.spark.sql.LeftAnti
+import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.OperatorRecord
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{ Dataset, Row, SparkSession }
-
-import scala.io.Source
 
 case class GoldenOperatorRecord(
   OHUB_OPERATOR_ID: String,
@@ -73,7 +71,7 @@ object OperatorMerging extends SparkJob {
       .distinct()
 
     val singletonOperators = operators
-      .join(matchedIds, Seq("OPERATOR_CONCAT_ID"), LeftAnti)
+      .join(matchedIds, Seq("OPERATOR_CONCAT_ID"), JoinType.LeftAnti)
       .as[OperatorRecord]
       .map(Seq(_))
 

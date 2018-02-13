@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.acm
 
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.generic.{ SparkFunctions, StringFunctions }
-import com.unilever.ohub.spark.sql.Left
+import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{ Dataset, SparkSession }
@@ -185,7 +185,7 @@ object OperatorAcmConverter extends SparkJob {
         channelMappings,
         channelMappings("ORIGINAL_CHANNEL") === operators("CHANNEL") and
           channelMappings("COUNTRY_CODE") === operators("COUNTRY_CODE"),
-        Left
+        JoinType.Left
       )
       .map {
         case (operator, channelMapping) => operator.copy(
@@ -214,7 +214,7 @@ object OperatorAcmConverter extends SparkJob {
       .join(
         channelReferencesDF,
         col("channel_reference_fk") === col("channel_reference_id"),
-        Left
+        JoinType.Left
       )
       .select(
         $"LOCAL_CHANNEL",

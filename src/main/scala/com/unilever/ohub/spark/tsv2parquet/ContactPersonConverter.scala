@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.generic.StringFunctions._
-import com.unilever.ohub.spark.sql.LeftOuter
+import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.{ CountryRecord, Storage }
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers.Implicits._
 import org.apache.spark.sql.{ Dataset, Row, SparkSession }
@@ -197,7 +197,7 @@ object ContactPersonConverter extends SparkJob {
       .joinWith(
         countryRecords,
         contactPersonRecords("COUNTRY_CODE") === countryRecords("COUNTRY_CODE"),
-        LeftOuter
+        JoinType.LeftOuter
       )
       .map {
         case (contactPersonRecord, countryRecord) => Option(countryRecord).fold(contactPersonRecord) { cr =>

@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJob
-import com.unilever.ohub.spark.sql.LeftOuter
+import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
@@ -40,7 +40,7 @@ object ContactPersonMerging2 extends SparkJob {
       .joinWith(
         operatorIdAndRefs,
         operatorIdAndRefs("REF_ID") === contactPersonMatching("CONTACT_PERSON.REF_OPERATOR_ID"),
-        LeftOuter
+        JoinType.LeftOuter
       )
       .map(addRefOperatorIdToContactPerson)
   }
