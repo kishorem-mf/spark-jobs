@@ -9,7 +9,7 @@ import org.apache.spark.sql.{ Dataset, SparkSession }
 import scala.io.Source
 import scala.util.{ Failure, Success, Try }
 
-case class SifuSelection(INFO_TYPE: String)
+case class SifuSelection(infoType: String)
 
 object SifuConverter extends SparkJob {
   private val countryListEmakina = Array("AE", "AE", "AF", "AF", "AR", "AR", "AT", "AT", "AT", "AT", "AU", "AU",
@@ -54,9 +54,9 @@ object SifuConverter extends SparkJob {
     endIndex: Int
   ): Try[URL] = Try {
     val baseUri = new URI("https://sifu.unileversolutions.com:443")
-    val typeParam = sifuSelection.INFO_TYPE.toUpperCase().substring(0, sifuSelection.INFO_TYPE.length - 1)
+    val typeParam = sifuSelection.infoType.toUpperCase().substring(0, sifuSelection.infoType.length - 1)
     baseUri
-      .resolve(s"/${sifuSelection.INFO_TYPE}/$countryCode/$languageKey/$startIndex/$endIndex?type=$typeParam")
+      .resolve(s"/${sifuSelection.infoType}/$countryCode/$languageKey/$startIndex/$endIndex?type=$typeParam")
       .toURL
   }
 
