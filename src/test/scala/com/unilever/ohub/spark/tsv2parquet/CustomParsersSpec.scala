@@ -6,17 +6,6 @@ import CustomParsers._
 import org.apache.log4j.{ LogManager, Logger }
 
 class CustomParsersSpec extends FunSpec with Matchers {
-
-  describe("parseStringOption") {
-    it("should parse an empty string") {
-      assert(parseStringOption("").isEmpty)
-    }
-
-    it("should parse myTest as a string") {
-      assert(parseStringOption("myTest").get.toString == "myTest")
-    }
-  }
-
   describe("onlyFillLastNameWhenFirstEqualsLastName") {
     it("should return the first name if last name is empty and first not") {
       assert(fillLastNameOnlyWhenFirstEqualsLastName("hans","",isFirstName = true).equals("hans"))
@@ -208,18 +197,6 @@ class CustomParsersSpec extends FunSpec with Matchers {
     }
     it("""should return 0.25 when the first string is "Hotel California" and the second string is "California Hotel"""") {
       assert(calculateLevenshtein("Hotel California".toCharArray, "California Hotel".toCharArray) == 0.25)
-    }
-  }
-
-  describe("hasValidLineLength") {
-    implicit val log: Logger = LogManager.getLogger(getClass)
-
-    it("should return true when the line length matches") {
-      hasValidLineLength(2)(Array("1", "2")) shouldBe true
-    }
-
-    it("should return false when the line length doesn't match") {
-      hasValidLineLength(42)(Array("1", "2")) shouldBe false
     }
   }
 

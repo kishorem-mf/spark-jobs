@@ -1,11 +1,11 @@
 package com.unilever.ohub.spark.storage
 
-import org.apache.spark.sql.{ Column, Dataset, Encoder, SaveMode, SparkSession }
+import org.apache.spark.sql.{ Column, DataFrame, Dataset, Encoder, SaveMode, SparkSession }
 
 import scala.io.Source
 
 trait Storage {
-  def readFromCSV[T: Encoder](location: String, delimiter: String = ","): Dataset[T]
+  def readFromCSV(location: String, separator: String): DataFrame
 
   def writeToCSV(ds: Dataset[_], outputFile: String, partitionBy: String*): Unit
 
@@ -21,14 +21,16 @@ trait Storage {
 class DiskStorage(spark: SparkSession) extends Storage {
   import spark.implicits._
 
-  override def readFromCSV[T: Encoder](location: String, delimiter: String = ","): Dataset[T] = {
+  override def readFromCSV(
+    location: String,
+    separator: String
+  ): DataFrame = {
     spark
       .read
       .option("header", "true")
       .option("inferSchema", "true")
-      .option("delimiter", delimiter)
+      .option("sep", separator)
       .csv(location)
-      .as[T]
   }
 
   def writeToCSV(ds: Dataset[_], outputFile: String, partitionBy: String*): Unit = {
@@ -63,16 +65,26 @@ class DiskStorage(spark: SparkSession) extends Storage {
   }
 
   override def countries: Dataset[CountryRecord] = {
-    readFromCSV[CountryRecord]("/country_codes.csv")
+    val fileName = this.getClass.getResource("country_codes.csv").getFile
+    readFromCSV(fileName, separator = ",")
+      .select(
+        $"ISO3166_1_Alpha_2" as "COUNTRY_CODE",
+        $"official_name_en" as "COUNTRY",
+        $"ISO4217_currency_alphabetic_code" as "CURRENCY_CODE"
+      )
+      .where($"COUNTRY_CODE".isNotNull and $"COUNTRY".isNotNull and $"CURRENCY_CODE".isNotNull)
+      .as[CountryRecord]
   }
 
-  override def sourcePreference: Map[String, Int] = Source
-    .fromInputStream(this.getClass.getResourceAsStream("/source_preference.tsv"))
-    .getLines()
-    .toSeq
-    .filter(_.nonEmpty)
-    .filterNot(_.equals("SOURCE\tPRIORITY"))
-    .map(_.split("\t"))
-    .map(lineParts => lineParts(0) -> lineParts(1).toInt)
-    .toMap
+  override def sourcePreference: Map[String, Int] = {
+    Source
+      .fromInputStream(this.getClass.getResourceAsStream("source_preference.tsv"))
+      .getLines()
+      .toSeq
+      .filter(_.nonEmpty)
+      .filterNot(_.equals("SOURCE\tPRIORITY"))
+      .map(_.split("\t"))
+      .map(lineParts => lineParts(0) -> lineParts(1).toInt)
+      .toMap
+  }
 }

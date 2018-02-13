@@ -6,8 +6,8 @@ import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.generic.StringFunctions._
 import com.unilever.ohub.spark.sql.LeftOuter
 import com.unilever.ohub.spark.storage.{ CountryRecord, Storage }
-import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import com.unilever.ohub.spark.tsv2parquet.CustomParsers.Implicits._
+import org.apache.spark.sql.{ Dataset, Row, SparkSession }
 
 case class ContactPersonRecord(
   CONTACT_PERSON_CONCAT_ID: String, REF_CONTACT_PERSON_ID: Option[String], SOURCE: Option[String],
@@ -78,105 +78,111 @@ object ContactPersonConverter extends SparkJob {
     "375", "236", "248", "221", "597", "503", "963", "992", "670", "598", "260")
   private val countryPrefixList = countryList zip prefixList.toList
 
-  private val csvColumnDelimiter = "‰"
+  private val csvColumnSeparator = "‰"
 
-  private def linePartsToContactPersonRecord(lineParts: Array[String]): ContactPersonRecord = {
-    try {
-      ContactPersonRecord(
-        CONTACT_PERSON_CONCAT_ID = s"${lineParts(2)}~${lineParts(1)}~${lineParts(0)}",
-        REF_CONTACT_PERSON_ID = parseStringOption(lineParts(0)),
-        SOURCE = parseStringOption(lineParts(1)),
-        COUNTRY_CODE = parseStringOption(lineParts(2)),
-        STATUS = parseBoolOption(lineParts(3)),
-        STATUS_ORIGINAL = parseStringOption(lineParts(3)),
-        REF_OPERATOR_ID = parseStringOption(lineParts(4)),
-        CP_INTEGRATION_ID = parseStringOption(lineParts(5)),
-        DATE_CREATED = parseDateTimeStampOption(lineParts(6)),
-        DATE_MODIFIED = parseDateTimeStampOption(lineParts(7)),
-        FIRST_NAME = parseStringOption(lineParts(8)),
-        FIRST_NAME_CLEANSED = parseStringOption(removeStrangeCharsToLowerAndTrim(lineParts(8))),
-        LAST_NAME = parseStringOption(lineParts(9)),
-        LAST_NAME_CLEANSED = parseStringOption(removeStrangeCharsToLowerAndTrim(lineParts(9))),
-        BOTH_NAMES_CLEANSED = parseStringOption(
-          concatNames(
-            removeStrangeCharsToLowerAndTrim(lineParts(8)),
-            removeStrangeCharsToLowerAndTrim(lineParts(9)),
-            checkEmailValidity(lineParts(25))
-          )
-        ),
-        TITLE = parseStringOption(lineParts(10)),
-        GENDER = parseStringOption(lineParts(11)),
-        FUNCTION = parseStringOption(lineParts(12)),
-        LANGUAGE_KEY = parseStringOption(lineParts(13)),
-        BIRTH_DATE = parseDateTimeStampOption(lineParts(14)),
-        STREET = parseStringOption(lineParts(15)),
-        STREET_CLEANSED = parseStringOption(removeStrangeCharsToLowerAndTrim(lineParts(15).concat
-        (lineParts(16)))),
-        HOUSENUMBER = parseStringOption(lineParts(16)),
-        HOUSENUMBER_EXT = parseStringOption(lineParts(17)),
-        CITY = parseStringOption(lineParts(18)),
-        CITY_CLEANSED = parseStringOption(removeSpacesStrangeCharsAndToLower(lineParts(18))),
-        ZIP_CODE = parseStringOption(lineParts(19)),
-        ZIP_CODE_CLEANSED = parseStringOption(removeSpacesStrangeCharsAndToLower(lineParts(19))),
-        STATE = parseStringOption(lineParts(20)),
-        COUNTRY = parseStringOption(lineParts(21)),
-        PREFERRED_CONTACT = parseBoolOption(lineParts(22)),
-        PREFERRED_CONTACT_ORIGINAL = parseStringOption(lineParts(22)),
-        KEY_DECISION_MAKER = parseBoolOption(lineParts(23)),
-        KEY_DECISION_MAKER_ORIGINAL = parseStringOption(lineParts(23)),
-        SCM = parseStringOption(lineParts(24)),
-        EMAIL_ADDRESS = parseStringOption(checkEmailValidity(lineParts(25))),
-        EMAIL_ADDRESS_ORIGINAL = parseStringOption(lineParts(25)),
-        PHONE_NUMBER = parseStringOption(cleanPhoneNumber(lineParts(26), lineParts(2), countryPrefixList)),
-        PHONE_NUMBER_ORIGINAL = parseStringOption(lineParts(26)),
-        MOBILE_PHONE_NUMBER = parseStringOption(
-          cleanPhoneNumber(lineParts(27), lineParts(2), countryPrefixList)
-        ),
-        MOBILE_PHONE_NUMBER_ORIGINAL = parseStringOption(lineParts(27)),
-        FAX_NUMBER = parseStringOption(lineParts(28)),
-        OPT_OUT = parseBoolOption(lineParts(29)),
-        OPT_OUT_ORIGINAL = parseStringOption(lineParts(29)),
-        REGISTRATION_CONFIRMED = parseBoolOption(lineParts(30)),
-        REGISTRATION_CONFIRMED_ORIGINAL = parseStringOption(lineParts(30)),
-        REGISTRATION_CONFIRMED_DATE = parseDateTimeStampOption(lineParts(31)),
-        REGISTRATION_CONFIRMED_DATE_ORIGINAL = parseStringOption(lineParts(31)),
-        EM_OPT_IN = parseBoolOption(lineParts(32)),
-        EM_OPT_IN_ORIGINAL = parseStringOption(lineParts(32)),
-        EM_OPT_IN_DATE = parseDateTimeStampOption(lineParts(33)),
-        EM_OPT_IN_DATE_ORIGINAL = parseStringOption(lineParts(33)),
-        EM_OPT_IN_CONFIRMED = parseBoolOption(lineParts(34)),
-        EM_OPT_IN_CONFIRMED_ORIGINAL = parseStringOption(lineParts(34)),
-        EM_OPT_IN_CONFIRMED_DATE = parseDateTimeStampOption(lineParts(35)),
-        EM_OPT_IN_CONFIRMED_DATE_ORIGINAL = parseStringOption(lineParts(35)),
-        EM_OPT_OUT = parseBoolOption(lineParts(36)),
-        EM_OPT_OUT_ORIGINAL = parseStringOption(lineParts(36)),
-        DM_OPT_IN = parseBoolOption(lineParts(37)),
-        DM_OPT_IN_ORIGINAL = parseStringOption(lineParts(37)),
-        DM_OPT_OUT = parseBoolOption(lineParts(38)),
-        DM_OPT_OUT_ORIGINAL = parseStringOption(lineParts(38)),
-        TM_OPT_IN = parseBoolOption(lineParts(39)),
-        TM_OPT_IN_ORIGINAL = parseStringOption(lineParts(39)),
-        TM_OPT_OUT = parseBoolOption(lineParts(40)),
-        TM_OPT_OUT_ORIGINAL = parseStringOption(lineParts(40)),
-        MOB_OPT_IN = parseBoolOption(lineParts(41)),
-        MOB_OPT_IN_ORIGINAL = parseStringOption(lineParts(41)),
-        MOB_OPT_IN_DATE = parseDateTimeStampOption(lineParts(42)),
-        MOB_OPT_IN_DATE_ORIGINAL = parseStringOption(lineParts(42)),
-        MOB_OPT_IN_CONFIRMED = parseBoolOption(lineParts(43)),
-        MOB_OPT_IN_CONFIRMED_ORIGINAL = parseStringOption(lineParts(43)),
-        MOB_OPT_IN_CONFIRMED_DATE = parseDateTimeStampOption(lineParts(44)),
-        MOB_OPT_IN_CONFIRMED_DATE_ORIGINAL = parseStringOption(lineParts(44)),
-        MOB_OPT_OUT = parseBoolOption(lineParts(45)),
-        MOB_OPT_OUT_ORIGINAL = parseStringOption(lineParts(45)),
-        FAX_OPT_IN = parseBoolOption(lineParts(46)),
-        FAX_OPT_IN_ORIGINAL = parseStringOption(lineParts(46)),
-        FAX_OPT_OUT = parseBoolOption(lineParts(47)),
-        FAX_OPT_OUT_ORIGINAL = parseStringOption(lineParts(47))
-      )
-    } catch {
-      case e: Exception =>
-        throw new RuntimeException(s"Exception while parsing line: ${lineParts.mkString("‰")}", e)
-    }
+  private def rowToContactPersonRecord(row: Row): ContactPersonRecord = {
+    val refContactPersonId = row.parseStringOption(0)
+    val source = row.parseStringOption(1)
+    val countryCode = row.parseStringOption(2)
+    val concatId = s"${countryCode.getOrElse("")}~${source.getOrElse("")}~${refContactPersonId.getOrElse("")}"
+
+    val firstName = row.parseStringOption(9).map(removeStrangeCharsToLowerAndTrim)
+    val lastName = row.parseStringOption(9).map(removeStrangeCharsToLowerAndTrim)
+    val email = row.parseStringOption(25).map(checkEmailValidity)
+    
+    ContactPersonRecord(
+      CONTACT_PERSON_CONCAT_ID = concatId,
+      REF_CONTACT_PERSON_ID = refContactPersonId,
+      SOURCE = source,
+      COUNTRY_CODE = countryCode,
+      STATUS = row.parseBooleanOption(3),
+      STATUS_ORIGINAL = row.parseStringOption(3),
+      REF_OPERATOR_ID = row.parseStringOption(4),
+      CP_INTEGRATION_ID = row.parseStringOption(5),
+      DATE_CREATED = row.parseDateTimeStampOption(6),
+      DATE_MODIFIED = row.parseDateTimeStampOption(7),
+      FIRST_NAME = row.parseStringOption(8),
+      FIRST_NAME_CLEANSED = firstName,
+      LAST_NAME = row.parseStringOption(9),
+      LAST_NAME_CLEANSED = lastName,
+      BOTH_NAMES_CLEANSED = Some(concatNames(
+        firstName.getOrElse(""),
+        lastName.getOrElse(""),
+        email.getOrElse("")
+      )),
+      TITLE = row.parseStringOption(10),
+      GENDER = row.parseStringOption(11),
+      FUNCTION = row.parseStringOption(12),
+      LANGUAGE_KEY = row.parseStringOption(13),
+      BIRTH_DATE = row.parseDateTimeStampOption(14),
+      STREET = row.parseStringOption(15),
+      STREET_CLEANSED = row
+        .parseStringOption(15)
+        .map(removeStrangeCharsToLowerAndTrim)
+        .map(_ + row.parseStringOption(16).getOrElse("")),
+      HOUSENUMBER = row.parseStringOption(16),
+      HOUSENUMBER_EXT = row.parseStringOption(17),
+      CITY = row.parseStringOption(18),
+      CITY_CLEANSED = row.parseStringOption(18).map(removeSpacesStrangeCharsAndToLower),
+      ZIP_CODE = row.parseStringOption(19),
+      ZIP_CODE_CLEANSED = row.parseStringOption(19).map(removeSpacesStrangeCharsAndToLower),
+      STATE = row.parseStringOption(20),
+      COUNTRY = row.parseStringOption(21),
+      PREFERRED_CONTACT = row.parseBooleanOption(22),
+      PREFERRED_CONTACT_ORIGINAL = row.parseStringOption(22),
+      KEY_DECISION_MAKER = row.parseBooleanOption(23),
+      KEY_DECISION_MAKER_ORIGINAL = row.parseStringOption(23),
+      SCM = row.parseStringOption(24),
+      EMAIL_ADDRESS = email,
+      EMAIL_ADDRESS_ORIGINAL = row.parseStringOption(25),
+      PHONE_NUMBER = row
+        .parseStringOption(26)
+        .map(phoneNumber => cleanPhoneNumber(phoneNumber, countryCode.getOrElse(""), countryPrefixList)),
+      PHONE_NUMBER_ORIGINAL = row.parseStringOption(26),
+      MOBILE_PHONE_NUMBER = row
+        .parseStringOption(27)
+        .map(phoneNumber => cleanPhoneNumber(phoneNumber, countryCode.getOrElse(""), countryPrefixList)),
+      MOBILE_PHONE_NUMBER_ORIGINAL = row.parseStringOption(27),
+      FAX_NUMBER = row.parseStringOption(28),
+      OPT_OUT = row.parseBooleanOption(29),
+      OPT_OUT_ORIGINAL = row.parseStringOption(29),
+      REGISTRATION_CONFIRMED = row.parseBooleanOption(30),
+      REGISTRATION_CONFIRMED_ORIGINAL = row.parseStringOption(30),
+      REGISTRATION_CONFIRMED_DATE = row.parseDateTimeStampOption(31),
+      REGISTRATION_CONFIRMED_DATE_ORIGINAL = row.parseStringOption(31),
+      EM_OPT_IN = row.parseBooleanOption(32),
+      EM_OPT_IN_ORIGINAL = row.parseStringOption(32),
+      EM_OPT_IN_DATE = row.parseDateTimeStampOption(33),
+      EM_OPT_IN_DATE_ORIGINAL = row.parseStringOption(33),
+      EM_OPT_IN_CONFIRMED = row.parseBooleanOption(34),
+      EM_OPT_IN_CONFIRMED_ORIGINAL = row.parseStringOption(34),
+      EM_OPT_IN_CONFIRMED_DATE = row.parseDateTimeStampOption(35),
+      EM_OPT_IN_CONFIRMED_DATE_ORIGINAL = row.parseStringOption(35),
+      EM_OPT_OUT = row.parseBooleanOption(36),
+      EM_OPT_OUT_ORIGINAL = row.parseStringOption(36),
+      DM_OPT_IN = row.parseBooleanOption(37),
+      DM_OPT_IN_ORIGINAL = row.parseStringOption(37),
+      DM_OPT_OUT = row.parseBooleanOption(38),
+      DM_OPT_OUT_ORIGINAL = row.parseStringOption(38),
+      TM_OPT_IN = row.parseBooleanOption(39),
+      TM_OPT_IN_ORIGINAL = row.parseStringOption(39),
+      TM_OPT_OUT = row.parseBooleanOption(40),
+      TM_OPT_OUT_ORIGINAL = row.parseStringOption(40),
+      MOB_OPT_IN = row.parseBooleanOption(41),
+      MOB_OPT_IN_ORIGINAL = row.parseStringOption(41),
+      MOB_OPT_IN_DATE = row.parseDateTimeStampOption(42),
+      MOB_OPT_IN_DATE_ORIGINAL = row.parseStringOption(42),
+      MOB_OPT_IN_CONFIRMED = row.parseBooleanOption(43),
+      MOB_OPT_IN_CONFIRMED_ORIGINAL = row.parseStringOption(43),
+      MOB_OPT_IN_CONFIRMED_DATE = row.parseDateTimeStampOption(44),
+      MOB_OPT_IN_CONFIRMED_DATE_ORIGINAL = row.parseStringOption(44),
+      MOB_OPT_OUT = row.parseBooleanOption(45),
+      MOB_OPT_OUT_ORIGINAL = row.parseStringOption(45),
+      FAX_OPT_IN = row.parseBooleanOption(46),
+      FAX_OPT_IN_ORIGINAL = row.parseStringOption(46),
+      FAX_OPT_OUT = row.parseBooleanOption(47),
+      FAX_OPT_OUT_ORIGINAL = row.parseStringOption(47)
+    )
   }
 
   def transform(
@@ -190,8 +196,7 @@ object ContactPersonConverter extends SparkJob {
       .filter(_ != null)
       .joinWith(
         countryRecords,
-        countryRecords("COUNTRY").isNotNull and
-          contactPersonRecords("COUNTRY_CODE") === countryRecords("COUNTRY_CODE"),
+        contactPersonRecords("COUNTRY_CODE") === countryRecords("COUNTRY_CODE"),
         LeftOuter
       )
       .map {
@@ -215,13 +220,12 @@ object ContactPersonConverter extends SparkJob {
 
     val (inputFile: String, outputFile: String) = filePaths
 
-    val hasValidLineLength = CustomParsers.hasValidLineLength(48) _
+    log.info(s"Generating parquet from [$inputFile] to [$outputFile]")
 
     val contactPersonRecords = storage
-      .readFromCSV[String](inputFile)
-      .map(_.split(csvColumnDelimiter, -1))
-      .filter(hasValidLineLength)
-      .map(linePartsToContactPersonRecord)
+      .readFromCSV(inputFile, separator = csvColumnSeparator)
+      .filter(_.length == 48)
+      .map(rowToContactPersonRecord)
 
     val countryRecords = storage.countries
 

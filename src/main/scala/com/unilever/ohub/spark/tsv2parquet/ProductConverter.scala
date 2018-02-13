@@ -5,8 +5,8 @@ import java.sql.Timestamp
 import com.unilever.ohub.spark.storage.{ CountryRecord, Storage }
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.sql.LeftOuter
-import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import CustomParsers.Implicits._
+import org.apache.spark.sql.{ Dataset, Row, SparkSession }
 
 case class ProductRecord(
   PRODUCT_CONCAT_ID: String, REF_PRODUCT_ID: Option[String], SOURCE: Option[String],
@@ -20,32 +20,34 @@ case class ProductRecord(
 )
 
 object ProductConverter extends SparkJob {
-  private def linePartsToProductRecord(lineParts: Array[String]): ProductRecord = {
-    try {
-      ProductRecord(
-        PRODUCT_CONCAT_ID = s"${lineParts(2)}~${lineParts(1)}~${lineParts(0)}",
-        REF_PRODUCT_ID = parseStringOption(lineParts(0)),
-        SOURCE = parseStringOption(lineParts(1)),
-        COUNTRY_CODE = parseStringOption(lineParts(2)),
-        STATUS = parseBoolOption(lineParts(3)),
-        STATUS_ORIGINAL = parseStringOption(lineParts(3)),
-        DATE_CREATED = parseDateTimeStampOption(lineParts(4)),
-        DATE_CREATED_ORIGINAL = parseStringOption(lineParts(4)),
-        DATE_MODIFIED = parseDateTimeStampOption(lineParts(5)),
-        DATE_MODIFIED_ORIGINAL = parseStringOption(lineParts(5)),
-        PRODUCT_NAME = parseStringOption(lineParts(6)),
-        EAN_CU = parseStringOption(lineParts(7)),
-        EAN_DU = parseStringOption(lineParts(8)),
-        MRDR = parseStringOption(lineParts(9)),
-        UNIT = parseStringOption(lineParts(10)),
-        UNIT_PRICE = parseBigDecimalOption(lineParts(11)),
-        UNIT_PRICE_ORIGINAL = parseStringOption(lineParts(11)),
-        UNIT_PRICE_CURRENCY = parseStringOption(lineParts(12))
-      )
-    } catch {
-      case e: Exception =>
-        throw new RuntimeException(s"Exception while parsing line: ${lineParts.mkString("‰")}", e)
-    }
+  private val csvColumnSeparator = "‰"
+
+  private def rowToProductRecord(row: Row): ProductRecord = {
+    val refProductId = row.parseStringOption(0)
+    val source = row.parseStringOption(1)
+    val countryCode = row.parseStringOption(2)
+    val productConcatId = s"${countryCode.getOrElse("")}~${source.getOrElse("")}~${refProductId.getOrElse("")}"
+
+    ProductRecord(
+      PRODUCT_CONCAT_ID = productConcatId,
+      REF_PRODUCT_ID = refProductId,
+      SOURCE = source,
+      COUNTRY_CODE = countryCode,
+      STATUS = row.parseBooleanOption(3),
+      STATUS_ORIGINAL = row.parseStringOption(3),
+      DATE_CREATED = row.parseDateTimeStampOption(4),
+      DATE_CREATED_ORIGINAL = row.parseStringOption(4),
+      DATE_MODIFIED = row.parseDateTimeStampOption(5),
+      DATE_MODIFIED_ORIGINAL = row.parseStringOption(5),
+      PRODUCT_NAME = row.parseStringOption(6),
+      EAN_CU = row.parseStringOption(7),
+      EAN_DU = row.parseStringOption(8),
+      MRDR = row.parseStringOption(9),
+      UNIT = row.parseStringOption(10),
+      UNIT_PRICE = row.parseBigDecimalOption(11),
+      UNIT_PRICE_ORIGINAL = row.parseStringOption(11),
+      UNIT_PRICE_CURRENCY = row.parseStringOption(12)
+    )
   }
 
   def transform(
@@ -58,14 +60,15 @@ object ProductConverter extends SparkJob {
     productRecords
       .joinWith(
         countryRecords,
-        countryRecords("CURRENCY_CODE").isNotNull and
-          productRecords("COUNTRY_CODE") === countryRecords("COUNTRY_CODE"),
+        productRecords("COUNTRY_CODE") === countryRecords("COUNTRY_CODE"),
         LeftOuter
       )
       .map {
-        case (productRecord, countryRecord) => productRecord.copy(
-          COUNTRY_CODE = Some(countryRecord.COUNTRY_CODE)
-        )
+        case (productRecord, countryRecord) => Option(countryRecord).fold(productRecord) { cr =>
+          productRecord.copy(
+            COUNTRY_CODE = Option(cr.COUNTRY_CODE)
+          )
+        }
       }
   }
 
@@ -76,14 +79,12 @@ object ProductConverter extends SparkJob {
 
     val (inputFile: String, outputFile: String) = filePaths
 
-    val expectedPartCount = 13
-    val hasValidLineLength = CustomParsers.hasValidLineLength(expectedPartCount) _
+    log.info(s"Generating orders parquet from [$inputFile] to [$outputFile]")
 
     val productRecords = storage
-      .readFromCSV[String](inputFile)
-      .map(_.split("‰", -1))
-      .filter(hasValidLineLength)
-      .map(linePartsToProductRecord)
+      .readFromCSV(inputFile, separator = csvColumnSeparator)
+      .filter(_.length == 13)
+      .map(rowToProductRecord)
 
     val countryRecords = storage.countries
 
