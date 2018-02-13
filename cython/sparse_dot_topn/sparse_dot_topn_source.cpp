@@ -59,7 +59,8 @@ int sparse_dot_topn_source(int n_row,
                         int Ci[],
                         int Cj[],
                         double Cx[],
-                        int A_start_i)
+                        int A_start_i,
+                        int upper_triangular)
 {
     std::vector<int> next(n_col,-1);
     std::vector<double> sums(n_col, 0);
@@ -85,7 +86,7 @@ int sparse_dot_topn_source(int n_row,
             for(int kk = kk_start; kk < kk_end; kk++){
                 int k = Bj[kk]; //kth column of B in row j
 
-                if((i + A_start_i) < k){
+                if(((i + A_start_i) < k) || (upper_triangular == 0)){
                     sums[k] += v * Bx[kk]; //multiply with value of B in (j,k) and accumulate to the result for kth column of row i
 
                     if(next[k] == -1){
