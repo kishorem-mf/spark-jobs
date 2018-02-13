@@ -101,7 +101,7 @@ def start_spark():
 
     # the egg file should be in the same path as this script
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    sc.addPyFile(os.path.join(dir_path, EGG_NAME))
+    sc.addPyFile(os.path.join(dir_path, 'dist', EGG_NAME))
 
     log4j = sc._jvm.org.apache.log4j
     log4j.LogManager.getRootLogger().getLogger('org').setLevel(log4j.Level.WARN)
