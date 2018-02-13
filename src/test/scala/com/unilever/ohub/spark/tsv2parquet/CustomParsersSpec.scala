@@ -55,10 +55,8 @@ class CustomParsersSpec extends FunSpec with Matchers {
       assert(parseDateTimeStampOption("2017.12.15 12:13:14").get.toString == "2017-12-15 12:13:14.0")
     }
 
-    it("should throw exception on other input") {
-      the[MatchError] thrownBy {
-        parseDateTimeStampOption("Foo")
-      } should have message "Foo (of class java.lang.String)"
+    it("should return None on other input") {
+      assert(parseDateTimeStampOption("Foo").isEmpty)
     }
   }
 
