@@ -1,5 +1,6 @@
 package com.unilever.ohub.spark.storage
 
+import com.unilever.ohub.spark.data.CountryRecord
 import org.apache.spark.sql.{ Column, DataFrame, Dataset, Encoder, SaveMode, SparkSession }
 
 import scala.io.Source
@@ -49,11 +50,16 @@ class DiskStorage(spark: SparkSession) extends Storage {
   }
 
   override def readFromParquet[T: Encoder](location: String, selectColumns: Column*): Dataset[T] = {
-    spark
+    val parquetDF = spark
       .read
       .parquet(location)
-      .select(selectColumns: _*)
-      .as[T]
+
+    val parquetSelectDF = {
+      if (selectColumns.nonEmpty) parquetDF.select(selectColumns: _*)
+      else parquetDF
+    }
+
+    parquetSelectDF.as[T]
   }
 
   override def writeToParquet(ds: Dataset[_], location: String, partitionBy: String*): Unit = {
@@ -68,17 +74,17 @@ class DiskStorage(spark: SparkSession) extends Storage {
     val fileName = this.getClass.getResource("country_codes.csv").getFile
     readFromCSV(fileName, separator = ",")
       .select(
-        $"ISO3166_1_Alpha_2" as "COUNTRY_CODE",
-        $"official_name_en" as "COUNTRY",
-        $"ISO4217_currency_alphabetic_code" as "CURRENCY_CODE"
+        $"ISO3166_1_Alpha_2" as "countryCode",
+        $"official_name_en" as "countryName",
+        $"ISO4217_currency_alphabetic_code" as "currencyCode"
       )
-      .where($"COUNTRY_CODE".isNotNull and $"COUNTRY".isNotNull and $"CURRENCY_CODE".isNotNull)
+      .where($"countryCode".isNotNull and $"countryName".isNotNull and $"currencyCode".isNotNull)
       .as[CountryRecord]
   }
 
   override def sourcePreference: Map[String, Int] = {
     Source
-      .fromInputStream(this.getClass.getResourceAsStream("source_preference.tsv"))
+      .fromFile("/Users/dennis/Projects/unilever/spark-jobs/target/scala-2.11/classes/source_preference.tsv")
       .getLines()
       .toSeq
       .filter(_.nonEmpty)

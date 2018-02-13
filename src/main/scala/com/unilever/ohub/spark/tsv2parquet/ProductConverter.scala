@@ -1,23 +1,11 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import java.sql.Timestamp
-
-import com.unilever.ohub.spark.storage.{ CountryRecord, Storage }
+import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.sql.JoinType
 import CustomParsers.Implicits._
+import com.unilever.ohub.spark.data.{ CountryRecord, ProductRecord }
 import org.apache.spark.sql.{ Dataset, Row, SparkSession }
-
-case class ProductRecord(
-  PRODUCT_CONCAT_ID: String, REF_PRODUCT_ID: Option[String], SOURCE: Option[String],
-  COUNTRY_CODE: Option[String], STATUS: Option[Boolean], STATUS_ORIGINAL: Option[String],
-  DATE_CREATED: Option[Timestamp],
-  DATE_CREATED_ORIGINAL: Option[String], DATE_MODIFIED: Option[Timestamp],
-  DATE_MODIFIED_ORIGINAL: Option[String], PRODUCT_NAME: Option[String], EAN_CU: Option[String],
-  EAN_DU: Option[String],
-  MRDR: Option[String], UNIT: Option[String], UNIT_PRICE: Option[BigDecimal],
-  UNIT_PRICE_ORIGINAL: Option[String], UNIT_PRICE_CURRENCY: Option[String]
-)
 
 object ProductConverter extends SparkJob {
   private val csvColumnSeparator = "‰"
@@ -29,24 +17,24 @@ object ProductConverter extends SparkJob {
     val productConcatId = s"${countryCode.getOrElse("")}~${source.getOrElse("")}~${refProductId.getOrElse("")}"
 
     ProductRecord(
-      PRODUCT_CONCAT_ID = productConcatId,
-      REF_PRODUCT_ID = refProductId,
-      SOURCE = source,
-      COUNTRY_CODE = countryCode,
-      STATUS = row.parseBooleanOption(3),
-      STATUS_ORIGINAL = row.parseStringOption(3),
-      DATE_CREATED = row.parseDateTimeStampOption(4),
-      DATE_CREATED_ORIGINAL = row.parseStringOption(4),
-      DATE_MODIFIED = row.parseDateTimeStampOption(5),
-      DATE_MODIFIED_ORIGINAL = row.parseStringOption(5),
-      PRODUCT_NAME = row.parseStringOption(6),
-      EAN_CU = row.parseStringOption(7),
-      EAN_DU = row.parseStringOption(8),
-      MRDR = row.parseStringOption(9),
-      UNIT = row.parseStringOption(10),
-      UNIT_PRICE = row.parseBigDecimalOption(11),
-      UNIT_PRICE_ORIGINAL = row.parseStringOption(11),
-      UNIT_PRICE_CURRENCY = row.parseStringOption(12)
+      productConcatId = productConcatId,
+      refProductId = refProductId,
+      source = source,
+      countryCode = countryCode,
+      status = row.parseBooleanOption(3),
+      statusOriginal = row.parseStringOption(3),
+      dateCreated = row.parseDateTimeStampOption(4),
+      dateCreatedOriginal = row.parseStringOption(4),
+      dateModified = row.parseDateTimeStampOption(5),
+      dateModifiedOriginal = row.parseStringOption(5),
+      productName = row.parseStringOption(6),
+      eanCu = row.parseStringOption(7),
+      eanDu = row.parseStringOption(8),
+      mrdr = row.parseStringOption(9),
+      unit = row.parseStringOption(10),
+      unitPrice = row.parseBigDecimalOption(11),
+      unitPriceOriginal = row.parseStringOption(11),
+      unitPriceCurrency = row.parseStringOption(12)
     )
   }
 
@@ -60,13 +48,13 @@ object ProductConverter extends SparkJob {
     productRecords
       .joinWith(
         countryRecords,
-        productRecords("COUNTRY_CODE") === countryRecords("COUNTRY_CODE"),
+        productRecords("countryCode") === countryRecords("countryCode"),
         JoinType.LeftOuter
       )
       .map {
         case (productRecord, countryRecord) => Option(countryRecord).fold(productRecord) { cr =>
           productRecord.copy(
-            COUNTRY_CODE = Option(cr.COUNTRY_CODE)
+            countryCode = Option(cr.countryCode)
           )
         }
       }
@@ -91,6 +79,6 @@ object ProductConverter extends SparkJob {
     val transformed = transform(spark, productRecords, countryRecords)
 
     storage
-      .writeToParquet(transformed, outputFile, partitionBy = "COUNTRY_CODE")
+      .writeToParquet(transformed, outputFile, partitionBy = "countryCode")
   }
 }
