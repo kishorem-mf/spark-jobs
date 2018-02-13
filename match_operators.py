@@ -60,13 +60,6 @@ DROP_CHARS = "\\\\!#%&()*+-/:;<=>?@\\^|~\u00A8\u00A9\u00AA\u00AC\u00AD\u00AF\u00
              "\uEEA3\uEF61\uEFA2\uEFB0\uEFB5\uEFEA\uEFED\uFDAB\uFFB7\u007F\u24D2" \
              "\u2560\u2623\u263A\u2661\u2665\u266A\u2764\uE2B1\uFF0D"
 REGEX = "[{}]".format(DROP_CHARS)
-# some names which appear a lot of times (> 2000) and contain no
-# specific meaning
-DROP_NAMES = ['unknown',
-              'unknown companyad',
-              'not specified notspecified not specified0 00000',
-              '是否 54534',
-              'privat']
 
 ngram_schema = ArrayType(StructType([
     StructField("ngram_index", IntegerType(), False),
@@ -270,7 +263,6 @@ def preprocess_operators(ddf: DataFrame) -> DataFrame:
                                      sf.col('ZIP_CODE_CLEANSED')))
             .withColumn('name', sf.regexp_replace('name', REGEX, ''))
             .withColumn('name', sf.trim(sf.regexp_replace('name', '\s+', ' ')))
-            # .filter(~sf.col('name').isin(*DROP_NAMES))
             .withColumn('name_index', sf.row_number().over(w) - 1)
             .select('name_index', 'id', 'name', 'COUNTRY_CODE'))
 
