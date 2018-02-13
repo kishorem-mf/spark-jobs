@@ -3,6 +3,7 @@ package com.unilever.ohub.spark.tsv2parquet
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
+import org.apache.log4j.Logger
 import org.apache.spark.sql.Row
 
 import scala.util.Try
@@ -17,7 +18,7 @@ object CustomParsers {
           .filter(_.nonEmpty)    // turn empty strings into None
       }
 
-      def parseDateTimeStampOption(index: Int): Option[Timestamp] = {
+      def parseDateTimeStampOption(index: Int)(implicit log: Logger): Option[Timestamp] = {
         parseStringOption(index).flatMap(CustomParsers.parseDateTimeStampOption)
       }
 
@@ -43,15 +44,21 @@ object CustomParsers {
     override protected def initialValue = new SimpleDateFormat("yyyyMMdd HH:mm:ss")
   }
 
-  def parseDateTimeStampOption(input:String):Option[Timestamp] = {
+  def parseDateTimeStampOption(input: String)(implicit log: Logger): Option[Timestamp] = {
     input match {
-      case "" => None
-      case "0" => None
-      case inputString:String if inputString.matches("[ /:0-9]+") && inputString.length == 19 => Some(new Timestamp(timestampFormatter.get.parse(input.replace("/","")).getTime))
-      case inputString:String if inputString.matches("[ \\-:0-9]+") && inputString.length == 19 => Some(new Timestamp(timestampFormatter.get.parse(input.replace("-","")).getTime))
-      case inputString:String if inputString.matches("[ \\.:0-9]+") && inputString.length == 19 => Some(new Timestamp(timestampFormatter.get.parse(input.replace(".","")).getTime))
-      case inputString:String if inputString.matches("[ :0-9]+") && inputString.length == 17 => Some(new Timestamp(timestampFormatter.get.parse(input).getTime))
-      case inputString:String if inputString.matches("[0-9]+") && inputString.length == 8 => Some(new Timestamp(timestampFormatter.get.parse(input.concat(" 00:00:00")).getTime))
+      case inputString: String if inputString.matches("[ /:0-9]+") && inputString.length == 19   =>
+        Some(new Timestamp(timestampFormatter.get.parse(input.replace("/", "")).getTime))
+      case inputString: String if inputString.matches("[ \\-:0-9]+") && inputString.length == 19 =>
+        Some(new Timestamp(timestampFormatter.get.parse(input.replace("-", "")).getTime))
+      case inputString: String if inputString.matches("[ \\.:0-9]+") && inputString.length == 19 =>
+        Some(new Timestamp(timestampFormatter.get.parse(input.replace(".", "")).getTime))
+      case inputString: String if inputString.matches("[ :0-9]+") && inputString.length == 17    =>
+        Some(new Timestamp(timestampFormatter.get.parse(input).getTime))
+      case inputString: String if inputString.matches("[0-9]+") && inputString.length == 8       =>
+        Some(new Timestamp(timestampFormatter.get.parse(input.concat(" 00:00:00")).getTime))
+      case _                                                                                     =>
+        log.warn(s"Could not parse [$input] as DateTimeStampOption")
+        None
     }
   }
 

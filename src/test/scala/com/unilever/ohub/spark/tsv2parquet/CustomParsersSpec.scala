@@ -6,6 +6,8 @@ import CustomParsers._
 import org.apache.log4j.{ LogManager, Logger }
 
 class CustomParsersSpec extends FunSpec with Matchers {
+  implicit val testLogger: Logger = LogManager.getLogger(this.getClass)
+
   describe("onlyFillLastNameWhenFirstEqualsLastName") {
     it("should return the first name if last name is empty and first not") {
       assert(fillLastNameOnlyWhenFirstEqualsLastName("hans","",isFirstName = true).equals("hans"))
