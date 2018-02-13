@@ -112,7 +112,8 @@ def start_spark():
     return spark
 
 
-def chunk_dot_limit(A, B, ntop, threshold=0, start_row=0):
+def chunk_dot_limit(A, B, ntop,
+                    threshold=0, start_row=0, upper_triangular=False):
     """Calculate dot product of sparse matrices
 
     This function uses a C++ wrapped in Cython implementation. It
@@ -141,9 +142,12 @@ def chunk_dot_limit(A, B, ntop, threshold=0, start_row=0):
 
     idx_dtype = np.int32
 
-    # massive memory reduction
-    # max number of possible non-zero element in the upper triangular matrix
-    nnz_max = min(int(M * (2 * (N - start_row) - M - 1) / 2), M * ntop)
+    if upper_triangular:
+        # massive memory reduction
+        # max number of possible non-zero element
+        nnz_max = min(int(M * (2 * (N - start_row) - M - 1) / 2), M * ntop)
+    else:
+        nnz_max = M * ntop
 
     # arrays will be returned by reference
     rows = np.empty(nnz_max, dtype=idx_dtype)
@@ -163,7 +167,7 @@ def chunk_dot_limit(A, B, ntop, threshold=0, start_row=0):
         B.data,
         ntop,
         threshold,
-        rows, cols, data, start_row)
+        rows, cols, data, start_row, int(upper_triangular))
 
     return ((int(i), int(j), float(v)) for i, j, v in
             zip(rows[:nnz], cols[:nnz], data[:nnz]))
@@ -337,7 +341,8 @@ def calculate_similarity(chunks_rdd, csr_rdd_transpose) -> DataFrame:
         lambda x: chunk_dot_limit(x[0], csr_rdd_transpose.value,
                                   ntop=args.ntop,
                                   threshold=args.threshold,
-                                  start_row=x[1])
+                                  start_row=x[1],
+                                  upper_triangular=True)
     )
 
     return similarity.toDF(similarity_schema)
