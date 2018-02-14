@@ -84,8 +84,8 @@ object ContactPersonConverter extends SparkJob {
         .parseStringOption(15)
         .map(removeStrangeCharsToLowerAndTrim)
         .map(_ + row.parseStringOption(16).getOrElse("")),
-      housenumber = row.parseStringOption(16),
-      housenumberExt = row.parseStringOption(17),
+      houseNumber = row.parseStringOption(16),
+      houseNumberExt = row.parseStringOption(17),
       city = row.parseStringOption(18),
       cityCleansed = row.parseStringOption(18).map(removeSpacesStrangeCharsAndToLower),
       zipCode = row.parseStringOption(19),
@@ -191,7 +191,7 @@ object ContactPersonConverter extends SparkJob {
       .filter(_.length == 48)
       .map(rowToContactPersonRecord)
 
-    val countryRecords = storage.countries
+    val countryRecords = storage.createCountries
 
     val transformed = transform(spark, contactPersonRecords, countryRecords)
 

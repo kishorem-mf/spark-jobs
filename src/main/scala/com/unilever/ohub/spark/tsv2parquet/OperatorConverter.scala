@@ -140,7 +140,7 @@ object OperatorConverter extends SparkJob  {
       .filter(_.length == 59)
       .map(rowToOperatorRecord)
 
-    val countryRecords = storage.countries
+    val countryRecords = storage.createCountries
 
     val transformed = transform(spark, operatorRecords, countryRecords)
 

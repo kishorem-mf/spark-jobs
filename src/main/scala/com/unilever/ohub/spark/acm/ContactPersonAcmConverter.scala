@@ -59,9 +59,9 @@ object ContactPersonAcmConverter extends SparkJob {
         FAX_NUMBER = contactPerson.faxNumber,
         STREET = contactPerson.street.map(clean),
         HOUSENUMBER =
-          contactPerson.housenumber.map(clean).getOrElse("") +
+          contactPerson.houseNumber.map(clean).getOrElse("") +
             " " +
-            contactPerson.housenumberExt.map(clean).getOrElse(""),
+            contactPerson.houseNumberExt.map(clean).getOrElse(""),
         ZIPCODE = contactPerson.zipCode.map(clean),
         CITY = contactPerson.city.map(clean),
         COUNTRY = contactPerson.country,

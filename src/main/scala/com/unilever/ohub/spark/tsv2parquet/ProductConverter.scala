@@ -74,7 +74,7 @@ object ProductConverter extends SparkJob {
       .filter(_.length == 13)
       .map(rowToProductRecord)
 
-    val countryRecords = storage.countries
+    val countryRecords = storage.createCountries
 
     val transformed = transform(spark, productRecords, countryRecords)
 

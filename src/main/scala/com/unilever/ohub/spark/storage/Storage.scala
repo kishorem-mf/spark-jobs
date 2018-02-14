@@ -17,7 +17,7 @@ trait Storage {
 
   def writeToParquet(ds: Dataset[_], location: String, partitionBy: String*): Unit
 
-  def countries: Dataset[CountryRecord]
+  def createCountries: Dataset[CountryRecord]
 
   def sourcePreference: Map[String, Int]
 
@@ -75,7 +75,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .parquet(location)
   }
 
-  override def countries: Dataset[CountryRecord] = {
+  override def createCountries: Dataset[CountryRecord] = {
     val fileName = this.getClass.getResource("country_codes.csv").getFile
     readFromCSV(fileName, separator = ",")
       .select(
