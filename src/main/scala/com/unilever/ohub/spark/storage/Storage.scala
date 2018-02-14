@@ -109,12 +109,12 @@ class DefaultStorage(spark: SparkSession) extends Storage {
         JoinType.Left
       )
       .select(
-        $"LOCAL_CHANNEL",
-        $"CHANNEL_USAGE",
-        $"SOCIAL_COMMERCIAL",
-        $"STRATEGIC_CHANNEL",
-        $"GLOBAL_CHANNEL",
-        $"GLOBAL_SUBCHANNEL"
+        $"LOCAL_CHANNEL" as "localChannel",
+        $"CHANNEL_USAGE" as "channelUsage",
+        $"SOCIAL_COMMERCIAL" as "socialCommercial",
+        $"STRATEGIC_CHANNEL" as "strategicChannel",
+        $"GLOBAL_CHANNEL" as "globalChannel",
+        $"GLOBAL_SUBCHANNEL" as "globalSubChannel"
       )
       .as[ChannelMapping]
   }

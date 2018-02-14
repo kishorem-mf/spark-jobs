@@ -85,12 +85,12 @@ object OperatorAcmConverter extends SparkJob {
       )
       .map {
         case (operator, channelMapping) => operator.copy(
-          LOCAL_CHANNEL = Option(channelMapping.LOCAL_CHANNEL),
-          CHANNEL_USAGE = Option(channelMapping.CHANNEL_USAGE),
-          SOCIAL_COMMERCIAL = Option(channelMapping.SOCIAL_COMMERCIAL),
-          STRATEGIC_CHANNEL = Option(channelMapping.STRATEGIC_CHANNEL),
-          GLOBAL_CHANNEL = Option(channelMapping.GLOBAL_CHANNEL),
-          GLOBAL_SUBCHANNEL = Option(channelMapping.GLOBAL_SUBCHANNEL)
+          LOCAL_CHANNEL = Option(channelMapping.localChannel),
+          CHANNEL_USAGE = Option(channelMapping.channelUsage),
+          SOCIAL_COMMERCIAL = Option(channelMapping.socialCommercial),
+          STRATEGIC_CHANNEL = Option(channelMapping.strategicChannel),
+          GLOBAL_CHANNEL = Option(channelMapping.globalChannel),
+          GLOBAL_SUBCHANNEL = Option(channelMapping.globalSubChannel)
         )
       }
   }
