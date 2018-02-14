@@ -32,6 +32,7 @@ extern int sparse_dot_topn_source(
                       int Ci[],
 	                    int Cj[],
 	                    double Cx[],
-                      int A_start_i);
+                      int A_start_i,
+                      int upper_triangular);
 
 #endif //UTILS_CPPCLASS_H

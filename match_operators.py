@@ -60,13 +60,6 @@ DROP_CHARS = "\\\\!#%&()*+-/:;<=>?@\\^|~\u00A8\u00A9\u00AA\u00AC\u00AD\u00AF\u00
              "\uEEA3\uEF61\uEFA2\uEFB0\uEFB5\uEFEA\uEFED\uFDAB\uFFB7\u007F\u24D2" \
              "\u2560\u2623\u263A\u2661\u2665\u266A\u2764\uE2B1\uFF0D"
 REGEX = "[{}]".format(DROP_CHARS)
-# some names which appear a lot of times (> 2000) and contain no
-# specific meaning
-DROP_NAMES = ['unknown',
-              'unknown companyad',
-              'not specified notspecified not specified0 00000',
-              '是否 54534',
-              'privat']
 
 ngram_schema = ArrayType(StructType([
     StructField("ngram_index", IntegerType(), False),
@@ -112,7 +105,8 @@ def start_spark():
     return spark
 
 
-def chunk_dot_limit(A, B, ntop, threshold=0, start_row=0):
+def chunk_dot_limit(A, B, ntop,
+                    threshold=0, start_row=0, upper_triangular=False):
     """Calculate dot product of sparse matrices
 
     This function uses a C++ wrapped in Cython implementation. It
@@ -141,9 +135,12 @@ def chunk_dot_limit(A, B, ntop, threshold=0, start_row=0):
 
     idx_dtype = np.int32
 
-    # massive memory reduction
-    # max number of possible non-zero element in the upper triangular matrix
-    nnz_max = min(int(M * (2 * (N - start_row) - M - 1) / 2), M * ntop)
+    if upper_triangular:
+        # massive memory reduction
+        # max number of possible non-zero element
+        nnz_max = min(int(M * (2 * (N - start_row) - M - 1) / 2), M * ntop)
+    else:
+        nnz_max = M * ntop
 
     # arrays will be returned by reference
     rows = np.empty(nnz_max, dtype=idx_dtype)
@@ -163,7 +160,7 @@ def chunk_dot_limit(A, B, ntop, threshold=0, start_row=0):
         B.data,
         ntop,
         threshold,
-        rows, cols, data, start_row)
+        rows, cols, data, start_row, int(upper_triangular))
 
     return ((int(i), int(j), float(v)) for i, j, v in
             zip(rows[:nnz], cols[:nnz], data[:nnz]))
@@ -266,7 +263,6 @@ def preprocess_operators(ddf: DataFrame) -> DataFrame:
                                      sf.col('ZIP_CODE_CLEANSED')))
             .withColumn('name', sf.regexp_replace('name', REGEX, ''))
             .withColumn('name', sf.trim(sf.regexp_replace('name', '\s+', ' ')))
-            # .filter(~sf.col('name').isin(*DROP_NAMES))
             .withColumn('name_index', sf.row_number().over(w) - 1)
             .select('name_index', 'id', 'name', 'COUNTRY_CODE'))
 
@@ -337,7 +333,8 @@ def calculate_similarity(chunks_rdd, csr_rdd_transpose) -> DataFrame:
         lambda x: chunk_dot_limit(x[0], csr_rdd_transpose.value,
                                   ntop=args.ntop,
                                   threshold=args.threshold,
-                                  start_row=x[1])
+                                  start_row=x[1],
+                                  upper_triangular=True)
     )
 
     return similarity.toDF(similarity_schema)

@@ -36,7 +36,8 @@ cdef extern from "sparse_dot_topn_source.h":
                         int Ci[],
                         int Cj[],
                         double Cx[],
-                        int A_start_i);
+                        int A_start_i,
+                        int upper_triangular);
 
 cpdef sparse_dot_topn(
         int n_row,
@@ -52,7 +53,8 @@ cpdef sparse_dot_topn(
         np.ndarray[int, ndim=1] c_rows,
         np.ndarray[int, ndim=1] c_cols,
         np.ndarray[double, ndim=1] c_data,
-        int A_start_i
+        int A_start_i,
+        int upper_triangular
     ):
     """
     Cython glue function to call sparse_dot_topn C++ implementation
@@ -86,5 +88,5 @@ cpdef sparse_dot_topn(
     cdef int* Cj = &c_cols[0]
     cdef double* Cx = &c_data[0]
 
-    cdef int nnz = sparse_dot_topn_source(n_row, n_col, Ap, Aj, Ax, Bp, Bj, Bx, ntop, lower_bound, Ci, Cj, Cx, A_start_i)
+    cdef int nnz = sparse_dot_topn_source(n_row, n_col, Ap, Aj, Ax, Bp, Bj, Bx, ntop, lower_bound, Ci, Cj, Cx, A_start_i, upper_triangular)
     return nnz
