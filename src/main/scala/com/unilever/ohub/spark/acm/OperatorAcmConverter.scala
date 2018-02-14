@@ -1,22 +1,12 @@
 package com.unilever.ohub.spark.acm
 
 import com.unilever.ohub.spark.SparkJob
-import com.unilever.ohub.spark.data.GoldenOperatorRecord
+import com.unilever.ohub.spark.data.{ ChannelMapping, GoldenOperatorRecord }
 import com.unilever.ohub.spark.data.ufs.UFSOperator
-import com.unilever.ohub.spark.generic.{ SparkFunctions, StringFunctions }
+import com.unilever.ohub.spark.generic.StringFunctions
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{ Dataset, SparkSession }
-
-case class ChannelMapping(
-  LOCAL_CHANNEL: String,
-  CHANNEL_USAGE: String,
-  SOCIAL_COMMERCIAL: String,
-  STRATEGIC_CHANNEL: String,
-  GLOBAL_CHANNEL: String,
-  GLOBAL_SUBCHANNEL: String
-)
 
 object OperatorAcmConverter extends SparkJob {
   private val boolAsString = (bool: Boolean) => if (bool) "Y" else "N"
@@ -114,23 +104,7 @@ object OperatorAcmConverter extends SparkJob {
 
     log.info(s"Generating operator ACM csv file from [$inputFile] to [$outputFile]")
 
-    val channelMappingDF = SparkFunctions.readJdbcTable(spark, dbTable = "channel_mapping")
-    val channelReferencesDF = SparkFunctions.readJdbcTable(spark, dbTable = "channel_references")
-    val channelMappings = channelMappingDF
-      .join(
-        channelReferencesDF,
-        col("channel_reference_fk") === col("channel_reference_id"),
-        JoinType.Left
-      )
-      .select(
-        $"LOCAL_CHANNEL",
-        $"CHANNEL_USAGE",
-        $"SOCIAL_COMMERCIAL",
-        $"STRATEGIC_CHANNEL",
-        $"GLOBAL_CHANNEL",
-        $"GLOBAL_SUBCHANNEL"
-      )
-      .as[ChannelMapping]
+    val channelMappings = storage.channelMappings
 
     val operators = storage
       .readFromParquet[GoldenOperatorRecord](inputFile)

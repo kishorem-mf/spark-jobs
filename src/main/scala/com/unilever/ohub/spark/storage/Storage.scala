@@ -1,6 +1,9 @@
 package com.unilever.ohub.spark.storage
 
-import com.unilever.ohub.spark.data.CountryRecord
+import com.unilever.ohub.spark.data.{ ChannelMapping, CountryRecord }
+import com.unilever.ohub.spark.generic.SparkFunctions
+import com.unilever.ohub.spark.sql.JoinType
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{ Column, DataFrame, Dataset, Encoder, SaveMode, SparkSession }
 
 import scala.io.Source
@@ -17,9 +20,11 @@ trait Storage {
   def countries: Dataset[CountryRecord]
 
   def sourcePreference: Map[String, Int]
+
+  def channelMappings: Dataset[ChannelMapping]
 }
 
-class DiskStorage(spark: SparkSession) extends Storage {
+class DefaultStorage(spark: SparkSession) extends Storage {
   import spark.implicits._
 
   override def readFromCSV(
@@ -84,7 +89,7 @@ class DiskStorage(spark: SparkSession) extends Storage {
 
   override def sourcePreference: Map[String, Int] = {
     Source
-      .fromFile("/Users/dennis/Projects/unilever/spark-jobs/target/scala-2.11/classes/source_preference.tsv")
+      .fromInputStream(this.getClass.getResourceAsStream("source_preference.tsv"))
       .getLines()
       .toSeq
       .filter(_.nonEmpty)
@@ -92,5 +97,25 @@ class DiskStorage(spark: SparkSession) extends Storage {
       .map(_.split("\t"))
       .map(lineParts => lineParts(0) -> lineParts(1).toInt)
       .toMap
+  }
+
+  override def channelMappings: Dataset[ChannelMapping] = {
+    val channelMappingDF = SparkFunctions.readJdbcTable(spark, dbTable = "channel_mapping")
+    val channelReferencesDF = SparkFunctions.readJdbcTable(spark, dbTable = "channel_references")
+    channelMappingDF
+      .join(
+        channelReferencesDF,
+        col("channel_reference_fk") === col("channel_reference_id"),
+        JoinType.Left
+      )
+      .select(
+        $"LOCAL_CHANNEL",
+        $"CHANNEL_USAGE",
+        $"SOCIAL_COMMERCIAL",
+        $"STRATEGIC_CHANNEL",
+        $"GLOBAL_CHANNEL",
+        $"GLOBAL_SUBCHANNEL"
+      )
+      .as[ChannelMapping]
   }
 }
