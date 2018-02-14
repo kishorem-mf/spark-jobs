@@ -110,6 +110,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       )
       .select(
         $"COUNTRY_CODE" as "countryCode",
+        $"ORIGINAL_CHANNEL" as "originalChannel",
         $"LOCAL_CHANNEL" as "localChannel",
         $"CHANNEL_USAGE" as "channelUsage",
         $"SOCIAL_COMMERCIAL" as "socialCommercial",
