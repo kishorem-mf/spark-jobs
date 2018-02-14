@@ -3,37 +3,24 @@ package com.unilever.ohub.spark.acm
 import java.util.UUID
 
 import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.data.ufs.UFSOrderLine
+import com.unilever.ohub.spark.data.OrderRecord
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-case class OrderLine(
-  ORDER_CONCAT_ID: String,
-  QUANTITY: Int,
-  ORDER_LINE_VALUE: Double,
-  COUNTRY_CODE: String,
-  SOURCE: String,
-  REF_PRODUCT_ID: String
-)
-
-case class UfsOrderLine(
-  ORDERLINE_ID: String,
-  ORDER_ID: String,
-  QUANTITY: Int,
-  AMOUNT: Double,
-  PRD_INTEGRATION_ID: String,
-  SAMPLE_ID: String
-)
-
 object OrderLineAcmConverter extends SparkJob {
-  def transform(spark: SparkSession, orderLines: Dataset[OrderLine]): Dataset[UfsOrderLine] = {
+  def transform(spark: SparkSession, orders: Dataset[OrderRecord]): Dataset[UFSOrderLine] = {
     import spark.implicits._
 
-    orderLines.map(orderLine => UfsOrderLine(
+    orders.map(order => UFSOrderLine(
+      ORDER_ID = order.orderConcatId,
       ORDERLINE_ID = UUID.randomUUID().toString,
-      ORDER_ID = orderLine.ORDER_CONCAT_ID,
-      PRD_INTEGRATION_ID = orderLine.COUNTRY_CODE + '~' + orderLine.SOURCE + '~' + orderLine.REF_PRODUCT_ID,
-      QUANTITY = orderLine.QUANTITY,
-      AMOUNT = BigDecimal(orderLine.ORDER_LINE_VALUE).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble,
+      PRD_INTEGRATION_ID =
+        order.countryCode.getOrElse("") + '~'
+          + order.source.getOrElse("") + '~'
+          + order.refProductId.getOrElse(""),
+      QUANTITY = order.quantity,
+      AMOUNT = order.orderValue.map(_.setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble),
       SAMPLE_ID = ""
     ))
   }
@@ -48,19 +35,11 @@ object OrderLineAcmConverter extends SparkJob {
     log.info(s"Generating order lines ACM csv file from [$inputFile] to [$outputFile]")
 
     val orderLines = storage
-      .readFromParquet[OrderLine](
-      inputFile,
-      selectColumns =
-        $"ORDER_CONCAT_ID",
-        $"QUANTITY",
-        $"ORDER_LINE_VALUE",
-        $"COUNTRY_CODE",
-        $"SOURCE",
-        $"REF_PRODUCT_ID"
-    )
+      .readFromParquet[OrderRecord](inputFile)
 
     val transformed = transform(spark, orderLines)
 
+    // COUNTRY_CODE is not an existing column, therefore no country partitioning
     storage
       .writeToCSV(transformed, outputFile)
   }

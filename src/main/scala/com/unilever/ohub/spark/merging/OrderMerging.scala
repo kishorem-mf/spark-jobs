@@ -1,39 +1,20 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJob
-import com.unilever.ohub.spark.data.OrderRecord
+import com.unilever.ohub.spark.data.{ GoldenContactPersonRecord, GoldenOperatorRecord, OrderRecord }
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-case class OHubIdRefIdAndCountry(
-  ohubId: String,
-  countryCode: String,
-  refId: Option[String] = None
-)
-
-case class OHubOperatorIdRefIdsAndCountry(
-  ohubOperatorId: String,
-  countryCode: String,
-  refIds: Seq[String]
-)
-
-case class OHubContactPersonIdRefIdsAndCountry(
-  ohubContactPersonId: String,
-  countryCode: String,
-  refIds: Seq[String]
-)
-
 // Technically not really order MERGING, but we need to update foreign key IDs in the other records
 object OrderMerging extends SparkJob {
-  private val defaultContact = OHubIdRefIdAndCountry("REF_CONTACT_PERSON_UNKNOWN", "UNKNOWN", Some("UNKNOWN"))
-  private val defaultOperator = OHubIdRefIdAndCountry(s"REF_OPERATOR_UNKNOWN", "UNKNOWN", Some("UNKNOWN"))
+  private case class OHubIdRefIdAndCountry(ohubId: String, refId: String, countryCode: Option[String])
 
   def transform(
     spark: SparkSession,
     orderRecords: Dataset[OrderRecord],
-    operatorIdAndRefs: Dataset[OHubIdRefIdAndCountry],
-    contactPersonIdAndRefs: Dataset[OHubIdRefIdAndCountry]
+    operators: Dataset[OHubIdRefIdAndCountry],
+    contactPersons: Dataset[OHubIdRefIdAndCountry]
   ): Dataset[OrderRecord] = {
     import spark.implicits._
 
@@ -53,28 +34,30 @@ object OrderMerging extends SparkJob {
 
     val operatorsJoined = orders
       .joinWith(
-        operatorIdAndRefs,
-        operatorIdAndRefs("countryCode") === orders("countryCode")
-          and operatorIdAndRefs("REF_ID") === orders("REF_OPERATOR_ID"),
+        operators,
+        operators("countryCode") === orders("countryCode")
+          and operators("refId").contains(orders("refOperatorId")),
         JoinType.Left
       )
       .map {
-        case (order, opr) =>
-          val operator = Option(opr).getOrElse(defaultOperator)
+        case (order, maybeOperator) => Option(maybeOperator).fold(order) { operator =>
           order.copy(refOperatorId = order.refOperatorId.map(_ => operator.ohubId))
+        }
       }
 
     operatorsJoined
       .joinWith(
-        contactPersonIdAndRefs,
-        contactPersonIdAndRefs("countryCode") === operatorsJoined("countryCode")
-          and contactPersonIdAndRefs("REF_ID") === operatorsJoined("REF_CONTACT_PERSON_ID"),
+        contactPersons,
+        contactPersons("countryCode") === operatorsJoined("countryCode")
+          and contactPersons("refId").contains(operatorsJoined("refContactPersonId")),
         JoinType.Left
       )
       .map {
-        case (order, oHubIdRefIdAndCountry) =>
-          val contact = Option(oHubIdRefIdAndCountry).getOrElse(defaultContact)
-          order.copy(refContactPersonId = order.refContactPersonId.map(_ => contact.ohubId))
+        case (order, maybeContactPerson) => Option(maybeContactPerson).fold(order) { contactPerson =>
+          order.copy(
+            refContactPersonId = order.refContactPersonId.map(_ => contactPerson.ohubId)
+          )
+        }
       }
   }
 
@@ -103,29 +86,23 @@ object OrderMerging extends SparkJob {
     val orders = storage
       .readFromParquet[OrderRecord](orderInputFile)
 
-    val operatorIdAndRefs = storage
-      .readFromParquet[OHubOperatorIdRefIdsAndCountry](
-        operatorMergingInputFile,
-        selectColumns = $"ohubOperatorId", $"refIds", $"countryCode"
-      )
-      .flatMap { oHubOperatorIdRefIdsAndCountry =>
-        oHubOperatorIdRefIdsAndCountry.refIds.map { refId =>
-          OHubIdRefIdAndCountry(refId, oHubOperatorIdRefIdsAndCountry.countryCode)
+    val operators = storage
+      .readFromParquet[GoldenOperatorRecord](operatorMergingInputFile)
+      .flatMap { operator =>
+        operator.refIds.map { refId =>
+          OHubIdRefIdAndCountry(operator.ohubOperatorId, refId, operator.countryCode)
         }
       }
 
-    val contactPersonIdAndRefs = storage
-      .readFromParquet[OHubContactPersonIdRefIdsAndCountry](
-        contactPersonMergingInputFile,
-        selectColumns = $"ohubContactPersonId", $"refIds", $"countryCode"
-      )
-      .flatMap { oHubContactPersonIdRefIdsAndCountry =>
-        oHubContactPersonIdRefIdsAndCountry.refIds.map { refId =>
-          OHubIdRefIdAndCountry(refId, oHubContactPersonIdRefIdsAndCountry.countryCode)
+    val contactPersons = storage
+      .readFromParquet[GoldenContactPersonRecord](contactPersonMergingInputFile)
+      .flatMap { contactPerson =>
+        contactPerson.refIds.map { refId =>
+          OHubIdRefIdAndCountry(contactPerson.ohubContactPersonId, refId, contactPerson.countryCode)
         }
       }
 
-    val transformed = transform(spark, orders, operatorIdAndRefs, contactPersonIdAndRefs)
+    val transformed = transform(spark, orders, operators, contactPersons)
 
     storage
       .writeToParquet(transformed, outputFile, partitionBy = "countryCode")

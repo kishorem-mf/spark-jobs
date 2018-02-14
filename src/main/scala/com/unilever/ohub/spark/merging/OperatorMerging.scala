@@ -8,20 +8,20 @@ import com.unilever.ohub.spark.data.{ GoldenOperatorRecord, OperatorRecord }
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{ Dataset, Row, SparkSession }
-
-case class MatchingResult(sourceId: String, targetId: String, countryCode: String)
-
-case class IdAndCountry(operatorConcatId: String, countryCode: String)
-
-case class MatchingResultAndOperator(
-  matchingResult: MatchingResult,
-  operator: OperatorRecord
-) {
-  val sourceId: String = matchingResult.sourceId
-}
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
 object OperatorMerging extends SparkJob {
+  private case class MatchingResult(sourceId: String, targetId: String, countryCode: String)
+
+  private case class IdAndCountry(operatorConcatId: String, countryCode: Option[String])
+
+  private case class MatchingResultAndOperator(
+    matchingResult: MatchingResult,
+    operator: OperatorRecord
+  ) {
+    val sourceId: String = matchingResult.sourceId
+  }
+
   def pickGoldenRecordAndGroupId(sourcePreference: Map[String, Int])
                                 (operators: Seq[OperatorRecord]): GoldenOperatorRecord = {
     val refIds = operators.map(_.operatorConcatId)
@@ -37,7 +37,7 @@ object OperatorMerging extends SparkJob {
       }
     })
     val id = UUID.randomUUID().toString
-    GoldenOperatorRecord(id, goldenRecord, refIds, goldenRecord.countryCode.get)
+    GoldenOperatorRecord(id, goldenRecord, refIds, goldenRecord.countryCode)
   }
 
   def transform(
@@ -45,7 +45,7 @@ object OperatorMerging extends SparkJob {
     operators: Dataset[OperatorRecord],
     matches: Dataset[MatchingResult],
     sourcePreference: Map[String, Int]
-  ): Dataset[Row] = {
+  ): Dataset[GoldenOperatorRecord] = {
     import spark.implicits._
 
     val groupedOperators = matches
@@ -60,7 +60,7 @@ object OperatorMerging extends SparkJob {
       .map(x => x._2 +: x._1._2)
 
     val matchedIds = groupedOperators
-      .flatMap(_.map(x => IdAndCountry(x.operatorConcatId, x.countryCode.get)))
+      .flatMap(_.map(x => IdAndCountry(x.operatorConcatId, x.countryCode)))
       .distinct()
 
     val singletonOperators = operators
@@ -68,13 +68,9 @@ object OperatorMerging extends SparkJob {
       .as[OperatorRecord]
       .map(Seq(_))
 
-    val pickGoldenRecordAndGroupIdFunc = pickGoldenRecordAndGroupId(sourcePreference) _
-
     groupedOperators
       .union(singletonOperators)
-      .map(pickGoldenRecordAndGroupIdFunc)
-      // TODO remove select line
-      .select("ohubOperatorId", "operator.*")
+      .map(pickGoldenRecordAndGroupId(sourcePreference))
       .repartition(60)
   }
 

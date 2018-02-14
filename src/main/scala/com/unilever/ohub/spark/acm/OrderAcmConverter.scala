@@ -1,66 +1,30 @@
 package com.unilever.ohub.spark.acm
 
-import java.sql.Timestamp
-
 import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.data.ufs.UFSOrder
+import com.unilever.ohub.spark.data.OrderRecord
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-case class Order(
-  ORDER_CONCAT_ID: String,
-  COUNTRY_CODE: String,
-  ORDER_TYPE: String,
-  REF_CONTACT_PERSON_ID: String,
-  REF_OPERATOR_ID: String,
-  CAMPAIGN_CODE: String,
-  CAMPAIGN_NAME: String,
-  WHOLESALER: String,
-  TRANSACTION_DATE: Timestamp,
-  ORDER_VALUE: Double,
-  CURRENCY_CODE: String
-)
-
-case class UfsOrder(
-  ORDER_ID: String,
-  COUNTRY_CODE: String,
-  ORDER_TYPE: String,
-  CP_LNKD_INTEGRATION_ID: String,
-  OPR_LNKD_INTEGRATION_ID: String,
-  CAMPAIGN_CODE: String,
-  CAMPAIGN_NAME: String,
-  WHOLESALER: String,
-  ORDER_TOKEN: String,
-  TRANSACTION_DATE: String,
-  ORDER_AMOUNT: Double,
-  ORDER_AMOUNT_CURRENCY_CODE: String,
-  DELIVERY_STREET: String,
-  DELIVERY_HOUSENUMBER: String,
-  DELIVERY_ZIPCODE: String,
-  DELIVERY_CITY: String,
-  DELIVERY_STATE: String,
-  DELIVERY_COUNTRY: String,
-  DELIVERY_PHONE: String
-)
-
 object OrderAcmConverter extends SparkJob {
-  def transform(spark: SparkSession, orders: Dataset[Order]): Dataset[UfsOrder] = {
+  private val dateFormat = "yyyy-MM-dd HH:mm:ss"
+
+  def transform(spark: SparkSession, orders: Dataset[OrderRecord]): Dataset[UFSOrder] = {
     import spark.implicits._
 
-    val dateFormat = "yyyy-MM-dd HH:mm:ss"
-
-    orders.map(order => UfsOrder(
-      ORDER_ID = order.ORDER_CONCAT_ID,
-      COUNTRY_CODE = order.COUNTRY_CODE,
-      ORDER_TYPE = order.ORDER_TYPE,
-      CP_LNKD_INTEGRATION_ID = order.REF_CONTACT_PERSON_ID,
-      OPR_LNKD_INTEGRATION_ID = order.REF_OPERATOR_ID,
-      CAMPAIGN_CODE = order.CAMPAIGN_CODE,
-      CAMPAIGN_NAME = order.CAMPAIGN_NAME,
-      WHOLESALER = order.WHOLESALER,
+    orders.map(order => UFSOrder(
+      ORDER_ID = order.orderConcatId,
+      COUNTRY_CODE = order.countryCode,
+      ORDER_TYPE = order.orderType,
+      CP_LNKD_INTEGRATION_ID = order.refContactPersonId,
+      OPR_LNKD_INTEGRATION_ID = order.refOperatorId,
+      CAMPAIGN_CODE = order.campaignCode,
+      CAMPAIGN_NAME = order.campaignName,
+      WHOLESALER = order.wholesaler,
       ORDER_TOKEN = "",
-      TRANSACTION_DATE = order.TRANSACTION_DATE.formatted(dateFormat),
-      ORDER_AMOUNT = BigDecimal(order.ORDER_VALUE).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble,
-      ORDER_AMOUNT_CURRENCY_CODE = order.CURRENCY_CODE,
+      TRANSACTION_DATE = order.transactionDate.map(_.formatted(dateFormat)),
+      ORDER_AMOUNT = order.orderValue.map(_.setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble),
+      ORDER_AMOUNT_CURRENCY_CODE = order.currencyCode,
       DELIVERY_STREET = "",
       DELIVERY_HOUSENUMBER = "",
       DELIVERY_ZIPCODE = "",
@@ -81,21 +45,7 @@ object OrderAcmConverter extends SparkJob {
     log.info(s"Generating orders ACM csv file from [$inputFile] to [$outputFile]")
 
     val orders = storage
-      .readFromParquet[Order](
-        inputFile,
-        selectColumns =
-          $"ORDER_CONCAT_ID",
-          $"COUNTRY_CODE",
-          $"ORDER_TYPE",
-          $"REF_CONTACT_PERSON_ID",
-          $"REF_OPERATOR_ID",
-          $"CAMPAIGN_CODE",
-          $"CAMPAIGN_NAME",
-          $"WHOLESALER",
-          $"TRANSACTION_DATE",
-          $"ORDER_VALUE",
-          $"CURRENCY_CODE"
-      )
+      .readFromParquet[OrderRecord](inputFile)
 
     val transformed = transform(spark, orders)
 
