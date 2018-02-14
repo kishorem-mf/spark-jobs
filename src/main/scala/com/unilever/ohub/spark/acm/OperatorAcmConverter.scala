@@ -79,19 +79,21 @@ object OperatorAcmConverter extends SparkJob {
     ufsOperators
       .joinWith(
         channelMappings,
-        channelMappings("ORIGINAL_CHANNEL") === ufsOperators("CHANNEL") and
-          channelMappings("COUNTRY_CODE") === ufsOperators("COUNTRY_CODE"),
+        channelMappings("originalChannel") === ufsOperators("CHANNEL") and
+          channelMappings("countryCode") === ufsOperators("COUNTRY_CODE"),
         JoinType.Left
       )
       .map {
-        case (operator, channelMapping) => operator.copy(
-          LOCAL_CHANNEL = Option(channelMapping.localChannel),
-          CHANNEL_USAGE = Option(channelMapping.channelUsage),
-          SOCIAL_COMMERCIAL = Option(channelMapping.socialCommercial),
-          STRATEGIC_CHANNEL = Option(channelMapping.strategicChannel),
-          GLOBAL_CHANNEL = Option(channelMapping.globalChannel),
-          GLOBAL_SUBCHANNEL = Option(channelMapping.globalSubChannel)
-        )
+        case (operator, maybeChannelMapping) => Option(maybeChannelMapping).fold(operator) { channelMapping =>
+          operator.copy(
+            LOCAL_CHANNEL = Option(channelMapping.localChannel),
+            CHANNEL_USAGE = Option(channelMapping.channelUsage),
+            SOCIAL_COMMERCIAL = Option(channelMapping.socialCommercial),
+            STRATEGIC_CHANNEL = Option(channelMapping.strategicChannel),
+            GLOBAL_CHANNEL = Option(channelMapping.globalChannel),
+            GLOBAL_SUBCHANNEL = Option(channelMapping.globalSubChannel)
+          )
+        }
       }
   }
 
