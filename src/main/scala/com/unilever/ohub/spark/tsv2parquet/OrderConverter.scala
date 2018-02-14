@@ -9,14 +9,14 @@ import org.apache.spark.sql.{ Dataset, Row, SparkSession }
 
 object OrderConverter extends SparkJob {
   private val csvColumnSeparator = "‰"
+  private val knownOrderTypes =
+    Seq("", "SSD", "TRANSFER", "DIRECT", "UNKNOWN", "MERCHANDISE", "SAMPLE", "EVENT", "WEB", "BIN", "OTHER")
 
   def checkOrderType(orderType: String): Option[String] = {
-    if (Seq(
-      "", "SSD", "TRANSFER", "DIRECT", "UNKNOWN", "MERCHANDISE", "SAMPLE", "EVENT", "WEB", "BIN", "OTHER"
-    ).contains(orderType)) {
+    if (knownOrderTypes.contains(orderType)) {
       Some(orderType)
     } else {
-      throw new IllegalArgumentException("Unknown ORDER_TYPE: " + orderType)
+      throw new IllegalArgumentException("Unknown orderType: " + orderType)
     }
   }
 
@@ -46,7 +46,7 @@ object OrderConverter extends SparkJob {
       orderValue = row.parseBigDecimalOption(11),
       orderValueOriginal = row.parseStringOption(11),
       wholesaler = row.parseStringOption(12),
-      compaignCode = row.parseStringOption(13),
+      campaignCode = row.parseStringOption(13),
       campaignName = row.parseStringOption(14),
       unitPrice = row.parseBigDecimalOption(15),
       unitPriceOriginal = row.parseStringOption(15),

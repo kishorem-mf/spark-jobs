@@ -1,39 +1,19 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJob
-import com.unilever.ohub.spark.data.GoldenContactPersonRecord
+import com.unilever.ohub.spark.data.{ GoldenContactPersonRecord, GoldenOperatorRecord }
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
-
-case class OHubOperatorIdAndRefIds(ohubOperatorId: String, refIds: Seq[String])
-
-case class OHubIdAndRefId(ohubId: String, refId: String)
 
 // The step that fixes the foreign key links between contact persons and operators
 // Temporarily in a 2nd file to make development easier,
 // will end up in the first ContactPersonMerging job eventually.
 object ContactPersonMerging2 extends SparkJob {
-  private val defaultOperator = OHubIdAndRefId("REF_OPERATOR_UNKNOWN", "UNKNOWN")
-
-  def addRefOperatorIdToContactPerson(
-    contactPersonAndOHubIdAndRefId: (GoldenContactPersonRecord, OHubIdAndRefId)
-  ): GoldenContactPersonRecord = {
-    val (contactPersonRecord, oHubIdAndRefId) = contactPersonAndOHubIdAndRefId
-
-    val operator = Option(oHubIdAndRefId).getOrElse(defaultOperator)
-
-    contactPersonRecord.copy(
-      contactPerson = contactPersonRecord.contactPerson.copy(
-        refOperatorId = Some(operator.ohubId)
-      )
-    )
-  }
-
   def transform(
     spark: SparkSession,
     contactPersonMatching: Dataset[GoldenContactPersonRecord],
-    operatorIdAndRefs: Dataset[OHubIdAndRefId]
+    operatorIdAndRefs: Dataset[GoldenOperatorRecord]
   ): Dataset[GoldenContactPersonRecord] = {
     import spark.implicits._
 
@@ -43,7 +23,15 @@ object ContactPersonMerging2 extends SparkJob {
         operatorIdAndRefs("refId") === contactPersonMatching("contactPerson.refOperatorId"),
         JoinType.LeftOuter
       )
-      .map(addRefOperatorIdToContactPerson)
+      .map {
+        case (contactPerson, maybeOperator) => Option(maybeOperator).fold(contactPerson) { operator =>
+          contactPerson.copy(
+            contactPerson = contactPerson.contactPerson.copy(
+              refOperatorId = Option(operator.ohubOperatorId)
+            )
+          )
+        }
+      }
   }
 
   override val neededFilePaths = Array(
@@ -84,13 +72,7 @@ object ContactPersonMerging2 extends SparkJob {
       })
 
     val operatorIdAndRefs = storage
-      .readFromParquet[OHubOperatorIdAndRefIds](
-        operatorMergingInputFile,
-        selectColumns = $"ohubOperatorId", $"refIds"
-      )
-      .flatMap { oHubOperatorIdAndRefIds =>
-        oHubOperatorIdAndRefIds.refIds.map(OHubIdAndRefId(oHubOperatorIdAndRefIds.ohubOperatorId, _))
-      }
+      .readFromParquet[GoldenOperatorRecord](operatorMergingInputFile)
 
     val transformed = transform(spark, contactPersonMerging, operatorIdAndRefs)
 

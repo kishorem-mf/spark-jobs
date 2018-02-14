@@ -20,6 +20,7 @@ trait SparkJob { self =>
     args.length match {
       case 2 => (args(0), args(1))
       case 3 => (args(0), args(1), args(2))
+      case 4 => (args(0), args(1), args(2), args(3))
     }
   }
 
