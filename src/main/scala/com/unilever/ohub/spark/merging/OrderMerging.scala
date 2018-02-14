@@ -6,10 +6,10 @@ import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-case class OHubIdRefIdAndCountry(ohubId: String, refId: String, countryCode: Option[String])
-
 // Technically not really order MERGING, but we need to update foreign key IDs in the other records
 object OrderMerging extends SparkJob {
+  private case class OHubIdRefIdAndCountry(ohubId: String, refId: String, countryCode: Option[String])
+
   def transform(
     spark: SparkSession,
     orderRecords: Dataset[OrderRecord],

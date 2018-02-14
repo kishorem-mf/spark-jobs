@@ -10,18 +10,18 @@ import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-case class MatchingResult(sourceId: String, targetId: String, countryCode: String)
-
-case class IdAndCountry(operatorConcatId: String, countryCode: Option[String])
-
-case class MatchingResultAndOperator(
-  matchingResult: MatchingResult,
-  operator: OperatorRecord
-) {
-  val sourceId: String = matchingResult.sourceId
-}
-
 object OperatorMerging extends SparkJob {
+  private case class MatchingResult(sourceId: String, targetId: String, countryCode: String)
+
+  private case class IdAndCountry(operatorConcatId: String, countryCode: Option[String])
+
+  private case class MatchingResultAndOperator(
+    matchingResult: MatchingResult,
+    operator: OperatorRecord
+  ) {
+    val sourceId: String = matchingResult.sourceId
+  }
+
   def pickGoldenRecordAndGroupId(sourcePreference: Map[String, Int])
                                 (operators: Seq[OperatorRecord]): GoldenOperatorRecord = {
     val refIds = operators.map(_.operatorConcatId)

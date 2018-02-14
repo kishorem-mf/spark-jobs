@@ -9,9 +9,9 @@ import org.apache.spark.sql.{ Dataset, SparkSession }
 import scala.io.Source
 import scala.util.{ Failure, Success, Try }
 
-case class SifuSelection(infoType: String)
-
 object SifuConverter extends SparkJob {
+  private case class SifuSelection(infoType: String)
+
   private val countryListEmakina = Array("AE", "AE", "AF", "AF", "AR", "AR", "AT", "AT", "AT", "AT", "AU", "AU",
     "AU", "AU", "AU", "AU", "AU", "AU", "AU", "AZ", "AZ", "BE", "BE", "BG", "BH", "BH", "BR", "BR", "CA",
     "CA", "CH", "CH", "CL", "CN", "CN", "CN", "CN", "CN", "CN", "CN", "CN", "CN", "CN", "CN", "CN", "CN",
