@@ -5,6 +5,7 @@ import java.util.UUID
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.data.ufs.UFSOrderLine
 import com.unilever.ohub.spark.data.OrderRecord
+import com.unilever.ohub.spark.generic.StringFunctions
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
@@ -15,10 +16,11 @@ object OrderLineAcmConverter extends SparkJob {
     orders.map(order => UFSOrderLine(
       ORDER_ID = order.orderConcatId,
       ORDERLINE_ID = UUID.randomUUID().toString,
-      PRD_INTEGRATION_ID =
-        order.countryCode.getOrElse("") + '~'
-          + order.source.getOrElse("") + '~'
-          + order.refProductId.getOrElse(""),
+      PRD_INTEGRATION_ID = StringFunctions.createConcatId(
+        order.countryCode,
+        order.source,
+        order.refProductId
+      ),
       QUANTITY = order.quantity,
       AMOUNT = order.orderValue.map(_.setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble),
       SAMPLE_ID = ""

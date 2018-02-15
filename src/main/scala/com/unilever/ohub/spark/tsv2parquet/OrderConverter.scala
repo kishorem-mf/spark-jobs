@@ -5,6 +5,7 @@ import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.sql.JoinType
 import CustomParsers.Implicits._
 import com.unilever.ohub.spark.data.{ CountryRecord, OrderRecord }
+import com.unilever.ohub.spark.generic.StringFunctions
 import org.apache.spark.sql.{ Dataset, Row, SparkSession }
 
 object OrderConverter extends SparkJob {
@@ -24,7 +25,7 @@ object OrderConverter extends SparkJob {
     val refOrderId = row.parseStringOption(0)
     val source = row.parseStringOption(1)
     val countryCode = row.parseStringOption(2)
-    val orderConcatId = s"${countryCode.getOrElse("")}~${source.getOrElse("")}~${refOrderId.getOrElse("")}"
+    val orderConcatId = StringFunctions.createConcatId(countryCode, source, refOrderId)
 
     OrderRecord(
       orderConcatId = orderConcatId,

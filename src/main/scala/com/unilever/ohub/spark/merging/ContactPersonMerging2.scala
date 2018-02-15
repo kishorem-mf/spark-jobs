@@ -2,6 +2,7 @@ package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.data.{ GoldenContactPersonRecord, GoldenOperatorRecord }
+import com.unilever.ohub.spark.generic.StringFunctions
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
@@ -60,13 +61,15 @@ object ContactPersonMerging2 extends SparkJob {
       .readFromParquet[GoldenContactPersonRecord](contactPersonMergingInputFile)
       .map(line => { // need the operator ref to have the data of a concat id
         val contact = line.contactPerson
+        val concatId = StringFunctions.createConcatId(
+          contact.countryCode,
+          contact.source,
+          contact.refOperatorId
+        )
+
         line.copy(
           contactPerson = contact.copy(
-            refOperatorId = Some(
-              s"${contact.countryCode.getOrElse("")}~" +
-                s"${contact.source.getOrElse("")}~" +
-                s"${contact.refOperatorId.getOrElse("")}"
-            )
+            refOperatorId = Some(concatId)
           )
         )
       })

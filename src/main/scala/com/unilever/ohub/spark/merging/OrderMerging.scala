@@ -2,6 +2,7 @@ package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.data.{ GoldenContactPersonRecord, GoldenOperatorRecord, OrderRecord }
+import com.unilever.ohub.spark.generic.StringFunctions
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.{ Dataset, SparkSession }
@@ -21,10 +22,10 @@ object OrderMerging extends SparkJob {
     val orders = orderRecords
       .map(order => {
         val operatorRef = order.refOperatorId.map { refOperatorId =>
-          s"${order.countryCode.getOrElse("")}~${order.source.getOrElse("")}~$refOperatorId"
+          StringFunctions.createConcatId(order.countryCode, order.source, refOperatorId)
         }
         val contactRef = order.refContactPersonId.map { refContactPersonId =>
-          s"${order.countryCode.getOrElse("")}~${order.source.getOrElse("")}~$refContactPersonId"
+          StringFunctions.createConcatId(order.countryCode, order.source, refContactPersonId)
         }
         order.copy(
           refOperatorId = operatorRef,

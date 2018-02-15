@@ -6,6 +6,7 @@ import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import CustomParsers.Implicits._
 import com.unilever.ohub.spark.data.{ CountryRecord, OperatorRecord }
+import com.unilever.ohub.spark.generic.StringFunctions
 import org.apache.spark.sql.{ Dataset, Row, SparkSession }
 
 object OperatorConverter extends SparkJob  {
@@ -15,7 +16,7 @@ object OperatorConverter extends SparkJob  {
     val refOperatorId = row.parseStringOption(0)
     val source = row.parseStringOption(1)
     val countryCode = row.parseStringOption(2)
-    val concatId = s"${countryCode.getOrElse("")}~${source.getOrElse("")}~${refOperatorId.getOrElse("")}"
+    val concatId = StringFunctions.createConcatId(countryCode, source, refOperatorId)
 
     OperatorRecord(
       operatorConcatId = concatId,
