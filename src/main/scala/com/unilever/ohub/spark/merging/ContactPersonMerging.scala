@@ -37,7 +37,7 @@ object ContactPersonMerging extends SparkJob {
     import spark.implicits._
 
     contactPersons
-      .filter(cpn => cpn.emailAddress.nonEmpty || cpn.mobilePhoneNumber.nonEmpty)
+      .filter(cpn => cpn.emailAddress.isDefined || cpn.mobilePhoneNumber.isDefined)
       .groupByKey(cpn => cpn.emailAddress.getOrElse("") + cpn.mobilePhoneNumber.getOrElse(""))
       .mapGroups {
         case (_, contactPersonsIt) => pickGoldenRecordAndGroupId(sourcePreference, contactPersonsIt.toSet)
