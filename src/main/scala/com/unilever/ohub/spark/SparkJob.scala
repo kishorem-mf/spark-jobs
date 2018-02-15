@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark
 
-import com.unilever.ohub.spark.storage.{ DiskStorage, Storage }
+import com.unilever.ohub.spark.storage.{ DefaultStorage, Storage }
 import org.apache.log4j.{ LogManager, Logger }
 import org.apache.spark.sql.SparkSession
 
@@ -20,6 +20,7 @@ trait SparkJob { self =>
     args.length match {
       case 2 => (args(0), args(1))
       case 3 => (args(0), args(1), args(2))
+      case 4 => (args(0), args(1), args(2), args(3))
     }
   }
 
@@ -33,7 +34,7 @@ trait SparkJob { self =>
       .appName(jobName)
       .getOrCreate()
 
-    val storage = new DiskStorage(spark)
+    val storage = new DefaultStorage(spark)
 
     val startOfJob = System.currentTimeMillis()
 

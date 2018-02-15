@@ -1,48 +1,12 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import java.sql.Timestamp
-
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.generic.StringFunctions._
-import com.unilever.ohub.spark.sql.LeftOuter
-import com.unilever.ohub.spark.storage.{ CountryRecord, Storage }
-import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
-import org.apache.spark.sql.{ Dataset, SparkSession }
-
-case class ContactPersonRecord(
-  CONTACT_PERSON_CONCAT_ID: String, REF_CONTACT_PERSON_ID: Option[String], SOURCE: Option[String],
-  COUNTRY_CODE: Option[String], STATUS: Option[Boolean], STATUS_ORIGINAL: Option[String],
-  REF_OPERATOR_ID: Option[String], CP_INTEGRATION_ID: Option[String],
-  DATE_CREATED: Option[Timestamp], DATE_MODIFIED: Option[Timestamp], FIRST_NAME: Option[String],
-  FIRST_NAME_CLEANSED: Option[String], LAST_NAME: Option[String], LAST_NAME_CLEANSED: Option[String],
-  BOTH_NAMES_CLEANSED: Option[String], TITLE: Option[String],
-  GENDER: Option[String], FUNCTION: Option[String], LANGUAGE_KEY: Option[String],
-  BIRTH_DATE: Option[Timestamp], STREET: Option[String], STREET_CLEANSED: Option[String],
-  HOUSENUMBER: Option[String],
-  HOUSENUMBER_EXT: Option[String], CITY: Option[String], CITY_CLEANSED: Option[String],
-  ZIP_CODE: Option[String], ZIP_CODE_CLEANSED: Option[String], STATE: Option[String], COUNTRY: Option[String],
-  PREFERRED_CONTACT: Option[Boolean], PREFERRED_CONTACT_ORIGINAL: Option[String],
-  KEY_DECISION_MAKER: Option[Boolean], KEY_DECISION_MAKER_ORIGINAL: Option[String], SCM: Option[String],
-  EMAIL_ADDRESS: Option[String], EMAIL_ADDRESS_ORIGINAL: Option[String],
-  PHONE_NUMBER: Option[String], PHONE_NUMBER_ORIGINAL: Option[String], MOBILE_PHONE_NUMBER: Option[String],
-  MOBILE_PHONE_NUMBER_ORIGINAL: Option[String], FAX_NUMBER: Option[String], OPT_OUT: Option[Boolean],
-  OPT_OUT_ORIGINAL: Option[String],
-  REGISTRATION_CONFIRMED: Option[Boolean], REGISTRATION_CONFIRMED_ORIGINAL: Option[String],
-  REGISTRATION_CONFIRMED_DATE: Option[Timestamp], REGISTRATION_CONFIRMED_DATE_ORIGINAL: Option[String],
-  EM_OPT_IN: Option[Boolean], EM_OPT_IN_ORIGINAL: Option[String], EM_OPT_IN_DATE: Option[Timestamp],
-  EM_OPT_IN_DATE_ORIGINAL: Option[String], EM_OPT_IN_CONFIRMED: Option[Boolean],
-  EM_OPT_IN_CONFIRMED_ORIGINAL: Option[String], EM_OPT_IN_CONFIRMED_DATE: Option[Timestamp],
-  EM_OPT_IN_CONFIRMED_DATE_ORIGINAL: Option[String],
-  EM_OPT_OUT: Option[Boolean], EM_OPT_OUT_ORIGINAL: Option[String], DM_OPT_IN: Option[Boolean],
-  DM_OPT_IN_ORIGINAL: Option[String], DM_OPT_OUT: Option[Boolean], DM_OPT_OUT_ORIGINAL: Option[String],
-  TM_OPT_IN: Option[Boolean], TM_OPT_IN_ORIGINAL: Option[String], TM_OPT_OUT: Option[Boolean],
-  TM_OPT_OUT_ORIGINAL: Option[String], MOB_OPT_IN: Option[Boolean], MOB_OPT_IN_ORIGINAL: Option[String],
-  MOB_OPT_IN_DATE: Option[Timestamp], MOB_OPT_IN_DATE_ORIGINAL: Option[String],
-  MOB_OPT_IN_CONFIRMED: Option[Boolean], MOB_OPT_IN_CONFIRMED_ORIGINAL: Option[String],
-  MOB_OPT_IN_CONFIRMED_DATE: Option[Timestamp], MOB_OPT_IN_CONFIRMED_DATE_ORIGINAL: Option[String],
-  MOB_OPT_OUT: Option[Boolean], MOB_OPT_OUT_ORIGINAL: Option[String], FAX_OPT_IN: Option[Boolean],
-  FAX_OPT_IN_ORIGINAL: Option[String], FAX_OPT_OUT: Option[Boolean], FAX_OPT_OUT_ORIGINAL: Option[String]
-)
+import com.unilever.ohub.spark.sql.JoinType
+import com.unilever.ohub.spark.storage.Storage
+import com.unilever.ohub.spark.tsv2parquet.CustomParsers.Implicits._
+import com.unilever.ohub.spark.data.{ ContactPersonRecord, CountryRecord }
+import org.apache.spark.sql.{ Dataset, Row, SparkSession }
 
 object ContactPersonConverter extends SparkJob {
   private val countryList = Array("CU", "CX", "FI", "GS", "GY", "KE", "KY", "LV", "LY", "MM", "MP", "MS", "NC",
@@ -78,103 +42,111 @@ object ContactPersonConverter extends SparkJob {
     "375", "236", "248", "221", "597", "503", "963", "992", "670", "598", "260")
   private val countryPrefixList = countryList zip prefixList.toList
 
-  private def linePartsToContactPersonRecord(lineParts: Array[String]): ContactPersonRecord = {
-    try {
-      ContactPersonRecord(
-        CONTACT_PERSON_CONCAT_ID = s"${lineParts(2)}~${lineParts(1)}~${lineParts(0)}",
-        REF_CONTACT_PERSON_ID = parseStringOption(lineParts(0)),
-        SOURCE = parseStringOption(lineParts(1)),
-        COUNTRY_CODE = parseStringOption(lineParts(2)),
-        STATUS = parseBoolOption(lineParts(3)),
-        STATUS_ORIGINAL = parseStringOption(lineParts(3)),
-        REF_OPERATOR_ID = parseStringOption(lineParts(4)),
-        CP_INTEGRATION_ID = parseStringOption(lineParts(5)),
-        DATE_CREATED = parseDateTimeStampOption(lineParts(6)),
-        DATE_MODIFIED = parseDateTimeStampOption(lineParts(7)),
-        FIRST_NAME = parseStringOption(lineParts(8)),
-        FIRST_NAME_CLEANSED = parseStringOption(removeStrangeCharsToLowerAndTrim(lineParts(8))),
-        LAST_NAME = parseStringOption(lineParts(9)),
-        LAST_NAME_CLEANSED = parseStringOption(removeStrangeCharsToLowerAndTrim(lineParts(9))),
-        BOTH_NAMES_CLEANSED = parseStringOption(
-          concatNames(
-            removeStrangeCharsToLowerAndTrim(lineParts(8)),
-            removeStrangeCharsToLowerAndTrim(lineParts(9)),
-            checkEmailValidity(lineParts(25))
-          )
-        ),
-        TITLE = parseStringOption(lineParts(10)),
-        GENDER = parseStringOption(lineParts(11)),
-        FUNCTION = parseStringOption(lineParts(12)),
-        LANGUAGE_KEY = parseStringOption(lineParts(13)),
-        BIRTH_DATE = parseDateTimeStampOption(lineParts(14)),
-        STREET = parseStringOption(lineParts(15)),
-        STREET_CLEANSED = parseStringOption(removeStrangeCharsToLowerAndTrim(lineParts(15).concat
-        (lineParts(16)))),
-        HOUSENUMBER = parseStringOption(lineParts(16)),
-        HOUSENUMBER_EXT = parseStringOption(lineParts(17)),
-        CITY = parseStringOption(lineParts(18)),
-        CITY_CLEANSED = parseStringOption(removeSpacesStrangeCharsAndToLower(lineParts(18))),
-        ZIP_CODE = parseStringOption(lineParts(19)),
-        ZIP_CODE_CLEANSED = parseStringOption(removeSpacesStrangeCharsAndToLower(lineParts(19))),
-        STATE = parseStringOption(lineParts(20)),
-        COUNTRY = parseStringOption(lineParts(21)),
-        PREFERRED_CONTACT = parseBoolOption(lineParts(22)),
-        PREFERRED_CONTACT_ORIGINAL = parseStringOption(lineParts(22)),
-        KEY_DECISION_MAKER = parseBoolOption(lineParts(23)),
-        KEY_DECISION_MAKER_ORIGINAL = parseStringOption(lineParts(23)),
-        SCM = parseStringOption(lineParts(24)),
-        EMAIL_ADDRESS = parseStringOption(checkEmailValidity(lineParts(25))),
-        EMAIL_ADDRESS_ORIGINAL = parseStringOption(lineParts(25)),
-        PHONE_NUMBER = parseStringOption(cleanPhoneNumber(lineParts(26), lineParts(2), countryPrefixList)),
-        PHONE_NUMBER_ORIGINAL = parseStringOption(lineParts(26)),
-        MOBILE_PHONE_NUMBER = parseStringOption(
-          cleanPhoneNumber(lineParts(27), lineParts(2), countryPrefixList)
-        ),
-        MOBILE_PHONE_NUMBER_ORIGINAL = parseStringOption(lineParts(27)),
-        FAX_NUMBER = parseStringOption(lineParts(28)),
-        OPT_OUT = parseBoolOption(lineParts(29)),
-        OPT_OUT_ORIGINAL = parseStringOption(lineParts(29)),
-        REGISTRATION_CONFIRMED = parseBoolOption(lineParts(30)),
-        REGISTRATION_CONFIRMED_ORIGINAL = parseStringOption(lineParts(30)),
-        REGISTRATION_CONFIRMED_DATE = parseDateTimeStampOption(lineParts(31)),
-        REGISTRATION_CONFIRMED_DATE_ORIGINAL = parseStringOption(lineParts(31)),
-        EM_OPT_IN = parseBoolOption(lineParts(32)),
-        EM_OPT_IN_ORIGINAL = parseStringOption(lineParts(32)),
-        EM_OPT_IN_DATE = parseDateTimeStampOption(lineParts(33)),
-        EM_OPT_IN_DATE_ORIGINAL = parseStringOption(lineParts(33)),
-        EM_OPT_IN_CONFIRMED = parseBoolOption(lineParts(34)),
-        EM_OPT_IN_CONFIRMED_ORIGINAL = parseStringOption(lineParts(34)),
-        EM_OPT_IN_CONFIRMED_DATE = parseDateTimeStampOption(lineParts(35)),
-        EM_OPT_IN_CONFIRMED_DATE_ORIGINAL = parseStringOption(lineParts(35)),
-        EM_OPT_OUT = parseBoolOption(lineParts(36)),
-        EM_OPT_OUT_ORIGINAL = parseStringOption(lineParts(36)),
-        DM_OPT_IN = parseBoolOption(lineParts(37)),
-        DM_OPT_IN_ORIGINAL = parseStringOption(lineParts(37)),
-        DM_OPT_OUT = parseBoolOption(lineParts(38)),
-        DM_OPT_OUT_ORIGINAL = parseStringOption(lineParts(38)),
-        TM_OPT_IN = parseBoolOption(lineParts(39)),
-        TM_OPT_IN_ORIGINAL = parseStringOption(lineParts(39)),
-        TM_OPT_OUT = parseBoolOption(lineParts(40)),
-        TM_OPT_OUT_ORIGINAL = parseStringOption(lineParts(40)),
-        MOB_OPT_IN = parseBoolOption(lineParts(41)),
-        MOB_OPT_IN_ORIGINAL = parseStringOption(lineParts(41)),
-        MOB_OPT_IN_DATE = parseDateTimeStampOption(lineParts(42)),
-        MOB_OPT_IN_DATE_ORIGINAL = parseStringOption(lineParts(42)),
-        MOB_OPT_IN_CONFIRMED = parseBoolOption(lineParts(43)),
-        MOB_OPT_IN_CONFIRMED_ORIGINAL = parseStringOption(lineParts(43)),
-        MOB_OPT_IN_CONFIRMED_DATE = parseDateTimeStampOption(lineParts(44)),
-        MOB_OPT_IN_CONFIRMED_DATE_ORIGINAL = parseStringOption(lineParts(44)),
-        MOB_OPT_OUT = parseBoolOption(lineParts(45)),
-        MOB_OPT_OUT_ORIGINAL = parseStringOption(lineParts(45)),
-        FAX_OPT_IN = parseBoolOption(lineParts(46)),
-        FAX_OPT_IN_ORIGINAL = parseStringOption(lineParts(46)),
-        FAX_OPT_OUT = parseBoolOption(lineParts(47)),
-        FAX_OPT_OUT_ORIGINAL = parseStringOption(lineParts(47))
-      )
-    } catch {
-      case e: Exception =>
-        throw new RuntimeException(s"Exception while parsing line: ${lineParts.mkString("‰")}", e)
-    }
+  private val csvColumnSeparator = "‰"
+
+  private def rowToContactPersonRecord(row: Row): ContactPersonRecord = {
+    val refContactPersonId = row.parseStringOption(0)
+    val source = row.parseStringOption(1)
+    val countryCode = row.parseStringOption(2)
+    val concatId = s"${countryCode.getOrElse("")}~${source.getOrElse("")}~${refContactPersonId.getOrElse("")}"
+
+    val firstName = row.parseStringOption(9).map(removeStrangeCharsToLowerAndTrim)
+    val lastName = row.parseStringOption(9).map(removeStrangeCharsToLowerAndTrim)
+    val email = row.parseStringOption(25).map(checkEmailValidity)
+
+    ContactPersonRecord(
+      contactPersonConcatId = concatId,
+      refContactPersonId = refContactPersonId,
+      source = source,
+      countryCode = countryCode,
+      status = row.parseBooleanOption(3),
+      statusOriginal = row.parseStringOption(3),
+      refOperatorId = row.parseStringOption(4),
+      contactPersonIntegrationId = row.parseStringOption(5),
+      dateCreated = row.parseDateTimeStampOption(6),
+      dateModified = row.parseDateTimeStampOption(7),
+      firstName = row.parseStringOption(8),
+      firstNameCleansed = firstName,
+      lastName = row.parseStringOption(9),
+      lastNameCleansed = lastName,
+      bothNamesCleansed = Some(concatNames(
+        firstName.getOrElse(""),
+        lastName.getOrElse(""),
+        email.getOrElse("")
+      )),
+      title = row.parseStringOption(10),
+      gender = row.parseStringOption(11),
+      function = row.parseStringOption(12),
+      languageKey = row.parseStringOption(13),
+      birthDate = row.parseDateTimeStampOption(14),
+      street = row.parseStringOption(15),
+      streetCleansed = row
+        .parseStringOption(15)
+        .map(removeStrangeCharsToLowerAndTrim)
+        .map(_ + row.parseStringOption(16).getOrElse("")),
+      houseNumber = row.parseStringOption(16),
+      houseNumberExt = row.parseStringOption(17),
+      city = row.parseStringOption(18),
+      cityCleansed = row.parseStringOption(18).map(removeSpacesStrangeCharsAndToLower),
+      zipCode = row.parseStringOption(19),
+      zipCodeCleansed = row.parseStringOption(19).map(removeSpacesStrangeCharsAndToLower),
+      state = row.parseStringOption(20),
+      country = row.parseStringOption(21),
+      preferredContact = row.parseBooleanOption(22),
+      preferredContactOriginal = row.parseStringOption(22),
+      keyDecisionMaker = row.parseBooleanOption(23),
+      keyDecisionMakerOriginal = row.parseStringOption(23),
+      scm = row.parseStringOption(24),
+      emailAddress = email,
+      emailAddressOriginal = row.parseStringOption(25),
+      phoneNumber = row
+        .parseStringOption(26)
+        .map(phoneNumber => cleanPhoneNumber(phoneNumber, countryCode.getOrElse(""), countryPrefixList)),
+      phoneNumberOriginal = row.parseStringOption(26),
+      mobilePhoneNumber = row
+        .parseStringOption(27)
+        .map(phoneNumber => cleanPhoneNumber(phoneNumber, countryCode.getOrElse(""), countryPrefixList)),
+      mobilePhoneNumberOriginal = row.parseStringOption(27),
+      faxNumber = row.parseStringOption(28),
+      optOut = row.parseBooleanOption(29),
+      optOutOriginal = row.parseStringOption(29),
+      registrationConfirmed = row.parseBooleanOption(30),
+      registrationConfirmedOriginal = row.parseStringOption(30),
+      registrationConfirmedDate = row.parseDateTimeStampOption(31),
+      registrationConfirmedDateOriginal = row.parseStringOption(31),
+      emailOptIn = row.parseBooleanOption(32),
+      emailOptInOriginal = row.parseStringOption(32),
+      emailOptInDate = row.parseDateTimeStampOption(33),
+      emailOptInDateOriginal = row.parseStringOption(33),
+      emailOptInConfirmed = row.parseBooleanOption(34),
+      emailOptInConfirmedOriginal = row.parseStringOption(34),
+      emailOptInConfirmedDate = row.parseDateTimeStampOption(35),
+      emailOptInConfirmedDateOriginal = row.parseStringOption(35),
+      emailOptOut = row.parseBooleanOption(36),
+      emailOptOutOriginal = row.parseStringOption(36),
+      directMailOptIn = row.parseBooleanOption(37),
+      directMailOptInOriginal = row.parseStringOption(37),
+      directMailOptOut = row.parseBooleanOption(38),
+      directMailOptOutOriginal = row.parseStringOption(38),
+      telemarketingOptIn = row.parseBooleanOption(39),
+      telemarketingOptInOriginal = row.parseStringOption(39),
+      telemarketingOptOut = row.parseBooleanOption(40),
+      telemarketingOptOutOriginal = row.parseStringOption(40),
+      mobileOptIn = row.parseBooleanOption(41),
+      mobileOptInOriginal = row.parseStringOption(41),
+      mobileOptInDate = row.parseDateTimeStampOption(42),
+      mobileOptInDateOriginal = row.parseStringOption(42),
+      mobileOptInConfirmed = row.parseBooleanOption(43),
+      mobileOptInConfirmedOriginal = row.parseStringOption(43),
+      mobileOptInConfirmedDate = row.parseDateTimeStampOption(44),
+      mobileOptInConfirmedDateOriginal = row.parseStringOption(44),
+      mobileOptOut = row.parseBooleanOption(45),
+      mobileOptOutOriginal = row.parseStringOption(45),
+      faxOptIn = row.parseBooleanOption(46),
+      faxOptInOriginal = row.parseStringOption(46),
+      faxOptOut = row.parseBooleanOption(47),
+      faxOptOutOriginal = row.parseStringOption(47)
+    )
   }
 
   def transform(
@@ -188,15 +160,14 @@ object ContactPersonConverter extends SparkJob {
       .filter(_ != null)
       .joinWith(
         countryRecords,
-        countryRecords("COUNTRY").isNotNull and
-          contactPersonRecords("COUNTRY_CODE") === countryRecords("COUNTRY_CODE"),
-        LeftOuter
+        contactPersonRecords("countryCode") === countryRecords("countryCode"),
+        JoinType.LeftOuter
       )
       .map {
         case (contactPersonRecord, countryRecord) => Option(countryRecord).fold(contactPersonRecord) { cr =>
           contactPersonRecord.copy(
-            COUNTRY = Option(cr.COUNTRY),
-            COUNTRY_CODE = Option(cr.COUNTRY_CODE)
+            country = Option(cr.countryName),
+            countryCode = Option(cr.countryCode)
           )
         }
       }
@@ -213,18 +184,18 @@ object ContactPersonConverter extends SparkJob {
 
     val (inputFile: String, outputFile: String) = filePaths
 
-    val hasValidLineLength = CustomParsers.hasValidLineLength(48) _
+    log.info(s"Generating parquet from [$inputFile] to [$outputFile]")
 
     val contactPersonRecords = storage
-      .readFromCSV[String](inputFile)
-      .map(_.split("‰", -1))
-      .filter(hasValidLineLength)
-      .map(linePartsToContactPersonRecord)
+      .readFromCSV(inputFile, separator = csvColumnSeparator)
+      .filter(_.length == 48)
+      .map(rowToContactPersonRecord)
 
-    val countryRecords = storage.countries
+    val countryRecords = storage.createCountries
 
     val transformed = transform(spark, contactPersonRecords, countryRecords)
 
-    storage.writeToParquet(transformed, outputFile)
+    storage
+      .writeToParquet(transformed, outputFile, partitionBy = "countryCode")
   }
 }

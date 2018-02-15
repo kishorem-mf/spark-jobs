@@ -8,6 +8,8 @@ import StringFunctions._
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.{ Path => hadoopPath }
 
+import scala.util.Try
+
 object SparkFunctions {
   def readJdbcTable(
     spark: SparkSession,
@@ -60,27 +62,23 @@ object SparkFunctions {
     spark: SparkSession,
     filePath: String,
     newFileName: String
-  ): Either[Exception, Boolean] = {
-    try {
+  ): Try[Boolean] = {
+    Try {
       val fileSystem = FileSystem.get(spark.sparkContext.hadoopConfiguration)
       val originalPath = new hadoopPath(s"$filePath/part*")
       val file = fileSystem.globStatus(originalPath)(0).getPath
-      Right {
-        fileSystem.rename(
-          new hadoopPath(s"${file.getParent}/${file.getName}"),
-          new hadoopPath(s"${file.getParent.getParent}/${newFileName}_$getFileDateString.csv")
-        )
-        fileSystem.delete(
-          new hadoopPath(s"${file.getParent}"),
-          true
-        )
-        fileSystem.delete(
-          new hadoopPath(s"${file.getParent.getParent}/.${newFileName}_$getFileDateString.csv.crc"),
-          true
-        )
-      }
-    } catch {
-      case e: Exception => Left(e)
+      fileSystem.rename(
+        new hadoopPath(s"${file.getParent}/${file.getName}"),
+        new hadoopPath(s"${file.getParent.getParent}/${newFileName}_$getFileDateString.csv")
+      )
+      fileSystem.delete(
+        new hadoopPath(s"${file.getParent}"),
+        true
+      )
+      fileSystem.delete(
+        new hadoopPath(s"${file.getParent.getParent}/.${newFileName}_$getFileDateString.csv.crc"),
+        true
+      )
     }
   }
 }

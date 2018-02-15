@@ -2,47 +2,45 @@ package com.unilever.ohub.spark.acm
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.generic.{ FileSystems, StringFunctions }
-import org.apache.log4j.{ LogManager, Logger }
-import org.apache.spark.sql.SaveMode.Overwrite
-import org.apache.spark.sql.SparkSession
+import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.data.ufs.UFSOrderLine
+import com.unilever.ohub.spark.data.OrderRecord
+import com.unilever.ohub.spark.storage.Storage
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
-object OrderLineAcmConverter extends App with AcmConverterHelpers {
-  implicit private val log: Logger = LogManager.getLogger(getClass)
+object OrderLineAcmConverter extends SparkJob {
+  def transform(spark: SparkSession, orders: Dataset[OrderRecord]): Dataset[UFSOrderLine] = {
+    import spark.implicits._
 
-  val (inputFile: String, outputFile: String, outputParquetFile: String) = FileSystems.getFileNames(
-    args,
-    "INPUT_FILE", "OUTPUT_FILE", "OUTPUT_PARQUET_FILE"
-  )
+    orders.map(order => UFSOrderLine(
+      ORDER_ID = order.orderConcatId,
+      ORDERLINE_ID = UUID.randomUUID().toString,
+      PRD_INTEGRATION_ID =
+        order.countryCode.getOrElse("") + '~'
+          + order.source.getOrElse("") + '~'
+          + order.refProductId.getOrElse(""),
+      QUANTITY = order.quantity,
+      AMOUNT = order.orderValue.map(_.setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble),
+      SAMPLE_ID = ""
+    ))
+  }
 
-  log.info(s"Generating orderlines ACM csv file from [$inputFile] to [$outputFile]")
+  override val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
 
-  val spark = SparkSession
-    .builder()
-    .appName(this.getClass.getSimpleName)
-    .getOrCreate()
+  override def run(spark: SparkSession, filePaths: scala.Product, storage: Storage): Unit = {
+    import spark.implicits._
 
-  val startOfJob = System.currentTimeMillis()
+    val (inputFile: String, outputFile: String) = filePaths
 
-  spark.sqlContext.udf.register("CLEAN", (s1: String) => StringFunctions.removeGenericStrangeChars(s1))
-  spark.sqlContext.udf.register("UUID", (_: String) => UUID.randomUUID().toString)
+    log.info(s"Generating order lines ACM csv file from [$inputFile] to [$outputFile]")
 
-  val ordersInputDF = spark.read.parquet(inputFile)
-  ordersInputDF.createOrReplaceTempView("ORD_INPUT")
+    val orderLines = storage
+      .readFromParquet[OrderRecord](inputFile)
 
-  val orderLinesDF = spark.sql(
-    s"""
-      |select UUID('') ORDERLINE_ID,ORDER_CONCAT_ID ORDER_ID,QUANTITY,
-      | round(ORDER_LINE_VALUE,2) AMOUNT,
-      | concat(COUNTRY_CODE,'~',SOURCE,'~',REF_PRODUCT_ID) PRD_INTEGRATION_ID,'' SAMPLE_ID
-      |from ORD_INPUT
-    """.stripMargin)
-  .where("country_code = 'AU'") //  TODO remove country_code filter for production
+    val transformed = transform(spark, orderLines)
 
-  orderLinesDF.write.mode(Overwrite).format("parquet").save(outputParquetFile) /* COUNTRY is not an existing column, therefore no country partitioning */
-  val ufsOrderLinesDF = spark.read.parquet(outputParquetFile).select("ORDERLINE_ID","ORDER_ID","QUANTITY","AMOUNT","PRD_INTEGRATION_ID","SAMPLE_ID")
-
-  writeDataFrameToCSV(ufsOrderLinesDF, outputFile)
-
-  finish(spark, outputFile, outputParquetFile, outputFileNewName = "UFS_ORDERLINES")
+    // COUNTRY_CODE is not an existing column, therefore no country partitioning
+    storage
+      .writeToCSV(transformed, outputFile)
+  }
 }

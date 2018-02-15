@@ -1,72 +1,59 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import java.sql.Timestamp
-
-import com.unilever.ohub.spark.storage.{ CountryRecord, Storage }
+import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.SparkJob
-import com.unilever.ohub.spark.sql.LeftOuter
-import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
-import org.apache.spark.sql.{ Dataset, SparkSession }
-
-case class OrderRecord(
-  ORDER_CONCAT_ID: String, REF_ORDER_ID: Option[String], SOURCE: Option[String],
-  COUNTRY_CODE: Option[String], STATUS: Option[Boolean], STATUS_ORIGINAL: Option[String],
-  REF_OPERATOR_ID: Option[String],
-  REF_CONTACT_PERSON_ID: Option[String], ORDER_TYPE: Option[String], TRANSACTION_DATE: Option[Timestamp],
-  TRANSACTION_DATE_ORIGINAL: Option[String], REF_PRODUCT_ID: Option[String], QUANTITY: Option[Long],
-  QUANTITY_ORIGINAL: Option[String],
-  ORDER_LINE_VALUE: Option[BigDecimal], ORDER_LINE_VALUE_ORIGINAL: Option[String],
-  ORDER_VALUE: Option[BigDecimal], ORDER_VALUE_ORIGINAL: Option[String], WHOLESALER: Option[String],
-  CAMPAIGN_CODE: Option[String], CAMPAIGN_NAME: Option[String],
-  UNIT_PRICE: Option[BigDecimal], UNIT_PRICE_ORIGINAL: Option[String], CURRENCY_CODE: Option[String],
-  DATE_CREATED: Option[Timestamp], DATE_MODIFIED: Option[Timestamp]
-)
+import com.unilever.ohub.spark.sql.JoinType
+import CustomParsers.Implicits._
+import com.unilever.ohub.spark.data.{ CountryRecord, OrderRecord }
+import org.apache.spark.sql.{ Dataset, Row, SparkSession }
 
 object OrderConverter extends SparkJob {
+  private val csvColumnSeparator = "‰"
+  private val knownOrderTypes =
+    Seq("", "SSD", "TRANSFER", "DIRECT", "UNKNOWN", "MERCHANDISE", "SAMPLE", "EVENT", "WEB", "BIN", "OTHER")
+
   def checkOrderType(orderType: String): Option[String] = {
-    if (Seq(
-      "", "SSD", "TRANSFER", "DIRECT", "UNKNOWN", "MERCHANDISE", "SAMPLE", "EVENT", "WEB", "BIN", "OTHER"
-    ).contains(orderType)) {
+    if (knownOrderTypes.contains(orderType)) {
       Some(orderType)
     } else {
-      throw new IllegalArgumentException("Unknown ORDER_TYPE: " + orderType)
+      throw new IllegalArgumentException("Unknown orderType: " + orderType)
     }
   }
 
-  def linePartsToOrderRecord(lineParts: Array[String]): OrderRecord = {
-    try {
-      OrderRecord(
-        ORDER_CONCAT_ID = s"${lineParts(2)}~${lineParts(1)}~${lineParts(0)}",
-        REF_ORDER_ID = parseStringOption(lineParts(0)),
-        SOURCE = parseStringOption(lineParts(1)),
-        COUNTRY_CODE = parseStringOption(lineParts(2)),
-        STATUS = parseBoolOption(lineParts(3)),
-        STATUS_ORIGINAL = parseStringOption(lineParts(3)),
-        REF_OPERATOR_ID = parseStringOption(lineParts(4)),
-        REF_CONTACT_PERSON_ID = parseStringOption(lineParts(5)),
-        ORDER_TYPE = checkOrderType(lineParts(6)),
-        TRANSACTION_DATE = parseDateTimeStampOption(lineParts(7)),
-        TRANSACTION_DATE_ORIGINAL = parseStringOption(lineParts(7)),
-        REF_PRODUCT_ID = parseStringOption(lineParts(8)),
-        QUANTITY = parseLongRangeOption(lineParts(9)),
-        QUANTITY_ORIGINAL = parseStringOption(lineParts(9)),
-        ORDER_LINE_VALUE = parseBigDecimalOption(lineParts(10)),
-        ORDER_LINE_VALUE_ORIGINAL = parseStringOption(lineParts(10)),
-        ORDER_VALUE = parseBigDecimalOption(lineParts(11)),
-        ORDER_VALUE_ORIGINAL = parseStringOption(lineParts(11)),
-        WHOLESALER = parseStringOption(lineParts(12)),
-        CAMPAIGN_CODE = parseStringOption(lineParts(13)),
-        CAMPAIGN_NAME = parseStringOption(lineParts(14)),
-        UNIT_PRICE = parseBigDecimalOption(lineParts(15)),
-        UNIT_PRICE_ORIGINAL = parseStringOption(lineParts(15)),
-        CURRENCY_CODE = parseStringOption(lineParts(16)),
-        DATE_CREATED = parseDateTimeStampOption(lineParts(17)),
-        DATE_MODIFIED = parseDateTimeStampOption(lineParts(18))
-      )
-    } catch {
-      case e: Exception =>
-        throw new RuntimeException(s"Exception while parsing line: ${lineParts.mkString("‰")}", e)
-    }
+  def rowToOrderRecord(row: Row): OrderRecord = {
+    val refOrderId = row.parseStringOption(0)
+    val source = row.parseStringOption(1)
+    val countryCode = row.parseStringOption(2)
+    val orderConcatId = s"${countryCode.getOrElse("")}~${source.getOrElse("")}~${refOrderId.getOrElse("")}"
+
+    OrderRecord(
+      orderConcatId = orderConcatId,
+      refOrderId = refOrderId,
+      source = source,
+      countryCode = countryCode,
+      status = row.parseBooleanOption(3),
+      statusOriginal = row.parseStringOption(3),
+      refOperatorId = row.parseStringOption(4),
+      refContactPersonId = row.parseStringOption(5),
+      orderType = row.parseStringOption(6).flatMap(checkOrderType),
+      transactionDate = row.parseDateTimeStampOption(7),
+      transactionDateOriginal = row.parseStringOption(7),
+      refProductId = row.parseStringOption(8),
+      quantity = row.parseLongRangeOption(9),
+      quantityOriginal = row.parseStringOption(9),
+      orderLineValue = row.parseBigDecimalOption(10),
+      orderLineValueOriginal = row.parseStringOption(10),
+      orderValue = row.parseBigDecimalOption(11),
+      orderValueOriginal = row.parseStringOption(11),
+      wholesaler = row.parseStringOption(12),
+      campaignCode = row.parseStringOption(13),
+      campaignName = row.parseStringOption(14),
+      unitPrice = row.parseBigDecimalOption(15),
+      unitPriceOriginal = row.parseStringOption(15),
+      currencyCode = row.parseStringOption(16),
+      dateCreated = row.parseDateTimeStampOption(17),
+      dateModified = row.parseDateTimeStampOption(18)
+    )
   }
 
   def transform(
@@ -79,15 +66,16 @@ object OrderConverter extends SparkJob {
     orderRecords
       .joinWith(
         countryRecords,
-        countryRecords("CURRENCY_CODE").isNotNull and
-          orderRecords("COUNTRY_CODE") === countryRecords("COUNTRY_CODE"),
-        LeftOuter
+        orderRecords("countryCode") === countryRecords("countryCode"),
+        JoinType.LeftOuter
       )
       .map {
-        case (orderRecord, countryRecord) => orderRecord.copy(
-          COUNTRY_CODE = Some(countryRecord.COUNTRY_CODE),
-          CURRENCY_CODE = Some(countryRecord.CURRENCY_CODE)
-        )
+        case (orderRecord, countryRecord) => Option(countryRecord).fold(orderRecord) { cr =>
+          orderRecord.copy(
+            countryCode = Option(cr.countryCode),
+            currencyCode = Option(cr.currencyCode)
+          )
+        }
       }
   }
 
@@ -98,18 +86,17 @@ object OrderConverter extends SparkJob {
 
     val (inputFile: String, outputFile: String) = filePaths
 
-    val hasValidLineLength = CustomParsers.hasValidLineLength(19) _
+    log.info(s"Generating orders parquet from [$inputFile] to [$outputFile]")
 
     val orderRecords = storage
-      .readFromCSV[String](inputFile)
-      .map(_.split("‰", -1))
-      .filter(hasValidLineLength)
-      .map(linePartsToOrderRecord)
+      .readFromCSV(inputFile, separator = csvColumnSeparator)
+      .filter(_.length == 19)
+      .map(rowToOrderRecord)
 
-    val countryRecords = storage.countries
+    val countryRecords = storage.createCountries
 
     val transformed = transform(spark, orderRecords, countryRecords)
 
-    storage.writeToParquet(transformed, outputFile, partitionBy = "COUNTRY_CODE")
+    storage.writeToParquet(transformed, outputFile, partitionBy = "countryCode")
   }
 }

@@ -4,36 +4,62 @@ import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
 import org.apache.log4j.Logger
+import org.apache.spark.sql.Row
+
+import scala.util.Try
 
 object CustomParsers {
+  object Implicits {
+    implicit class RowOps(row: Row) {
+      def parseStringOption(index: Int): Option[String] = {
+        Try(row.getString(index))
+          .toOption
+          .flatMap(Option.apply) // turn null values into None
+          .filter(_.nonEmpty)    // turn empty strings into None
+      }
 
-//  TODO Complete tests in CustomParsersSpec for new parsers
+      def parseDateTimeStampOption(index: Int)(implicit log: Logger): Option[Timestamp] = {
+        parseStringOption(index).flatMap(CustomParsers.parseDateTimeStampOption)
+      }
+
+      def parseBigDecimalOption(index: Int): Option[BigDecimal] = {
+        parseStringOption(index).flatMap(CustomParsers.parseBigDecimalOption)
+      }
+
+      def parseBigDecimalRangeOption(index: Int): Option[BigDecimal] = {
+        parseStringOption(index).flatMap(CustomParsers.parseBigDecimalRangeOption)
+      }
+
+      def parseLongRangeOption(index: Int): Option[Long] = {
+        parseStringOption(index).flatMap(CustomParsers.parseLongRangeOption)
+      }
+
+      def parseBooleanOption(index: Int): Option[Boolean] = {
+        parseStringOption(index).flatMap(CustomParsers.parseBoolOption)
+      }
+    }
+  }
 
   private val timestampFormatter = new ThreadLocal[SimpleDateFormat]() {
     override protected def initialValue = new SimpleDateFormat("yyyyMMdd HH:mm:ss")
   }
 
-  def parseStringOption(input: String): Option[String] = {
+  def parseDateTimeStampOption(input: String)(implicit log: Logger): Option[Timestamp] = {
     input match {
-      case "" => None
-      case _ => Some(input)
+      case inputString: String if inputString.matches("[ /:0-9]+") && inputString.length == 19   =>
+        Some(new Timestamp(timestampFormatter.get.parse(input.replace("/", "")).getTime))
+      case inputString: String if inputString.matches("[ \\-:0-9]+") && inputString.length == 19 =>
+        Some(new Timestamp(timestampFormatter.get.parse(input.replace("-", "")).getTime))
+      case inputString: String if inputString.matches("[ \\.:0-9]+") && inputString.length == 19 =>
+        Some(new Timestamp(timestampFormatter.get.parse(input.replace(".", "")).getTime))
+      case inputString: String if inputString.matches("[ :0-9]+") && inputString.length == 17    =>
+        Some(new Timestamp(timestampFormatter.get.parse(input).getTime))
+      case inputString: String if inputString.matches("[0-9]+") && inputString.length == 8       =>
+        Some(new Timestamp(timestampFormatter.get.parse(input.concat(" 00:00:00")).getTime))
+      case _                                                                                     =>
+        log.warn(s"Could not parse [$input] as DateTimeStampOption")
+        None
     }
-  }
-
-  def parseDateTimeStampOption(input:String):Option[Timestamp] = {
-    input match {
-      case "" => None
-      case "0" => None
-      case inputString:String if inputString.matches("[ /:0-9]+") && inputString.length == 19 => Some(new Timestamp(timestampFormatter.get.parse(input.replace("/","")).getTime))
-      case inputString:String if inputString.matches("[ \\-:0-9]+") && inputString.length == 19 => Some(new Timestamp(timestampFormatter.get.parse(input.replace("-","")).getTime))
-      case inputString:String if inputString.matches("[ \\.:0-9]+") && inputString.length == 19 => Some(new Timestamp(timestampFormatter.get.parse(input.replace(".","")).getTime))
-      case inputString:String if inputString.matches("[ :0-9]+") && inputString.length == 17 => Some(new Timestamp(timestampFormatter.get.parse(input).getTime))
-      case inputString:String if inputString.matches("[0-9]+") && inputString.length == 8 => Some(new Timestamp(timestampFormatter.get.parse(input.concat(" 00:00:00")).getTime))
-    }
-  }
-
-  private val dateFormatter = new ThreadLocal[SimpleDateFormat]() {
-    override protected def initialValue = new SimpleDateFormat("yyyyMMdd")
   }
 
   def parseBigDecimalOption(input:String):Option[BigDecimal] = {
@@ -61,18 +87,19 @@ object CustomParsers {
   private val doubleRegex = s"[$currencies]?([0-9.]+)".r
   private val doubleRangeRegex = s"[$currencies]?([0-9.]+)-[$currencies]?([0-9.]+)".r
 
-  def parseBigDecimalRangeOption(input:String): Option[BigDecimal] = {
+  def parseBigDecimalRangeOption(input: String): Option[BigDecimal] = {
     input match {
-      case "" => None
-      case doubleRegex(bigDecimalString) => Some(BigDecimal(bigDecimalString))
-      case doubleRangeRegex(bigDecimalString1,bigDecimalString2) => Some((BigDecimal(bigDecimalString1) + BigDecimal(bigDecimalString2))/2)
-      case _ => None
+      case doubleRegex(bigDecimalString)                          =>
+        Some(BigDecimal(bigDecimalString))
+      case doubleRangeRegex(bigDecimalString1, bigDecimalString2) =>
+        Some((BigDecimal(bigDecimalString1) + BigDecimal(bigDecimalString2)) / 2)
+      case _                                                      =>
+        None
     }
   }
 
-  def parseBoolOption(input:String):Option[Boolean] = {
+  def parseBoolOption(input: String): Option[Boolean] = {
     input.toUpperCase match {
-      case "" => None
       case "Y" => Some(true)
       case "N" => Some(false)
       case "A" => Some(true)
@@ -85,24 +112,13 @@ object CustomParsers {
       case "YES" => Some(true)
       case "NO" => Some(false)
       /* Capturing strange cases from data source DEX begin*/
-        case "DIRECTOR COMPRAS" => Some(true)
-        case "RESPONSIBLE FOOD" => Some(true)
-        case "RESPONSIBLE TEA" => Some(true)
-        case "RESPONSIBLE GENERAL" => Some(true)
-        case "OTHER" => Some(true)
-        case _ => None
+      case "DIRECTOR COMPRAS" => Some(true)
+      case "RESPONSIBLE FOOD" => Some(true)
+      case "RESPONSIBLE TEA" => Some(true)
+      case "RESPONSIBLE GENERAL" => Some(true)
+      case "OTHER" => Some(true)
+      case _ => None
       /* Capturing strange cases from data source DEX end*/
-    }
-  }
-
-  def hasValidLineLength(expectedPartCount: Int)(lineParts: Array[String])(implicit log: Logger): Boolean = {
-    if (lineParts.length != expectedPartCount) {
-      log.warn(
-        s"Found ${lineParts.length} parts, expected $expectedPartCount in line: ${lineParts.mkString("‰")}"
-      )
-      false
-    } else {
-      true
     }
   }
 }

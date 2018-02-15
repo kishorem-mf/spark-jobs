@@ -26,3 +26,5 @@ libraryDependencies ++= Seq(
 )
 
 lazy val root = project.in(file(".")).configs(IntegrationTest)
+
+test in assembly := {}
