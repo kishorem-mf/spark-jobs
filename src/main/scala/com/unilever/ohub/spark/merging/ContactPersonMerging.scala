@@ -9,24 +9,40 @@ import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
 object ContactPersonMerging extends SparkJob {
+  private val unknownSource = "UNKNOWN"
+  private val defaultSourcePreference = Int.MaxValue
+
   def pickGoldenRecordAndGroupId(
     sourcePreference: Map[String, Int],
     contactPersons: Set[ContactPersonRecord]
   ): GoldenContactPersonRecord = {
     val refIds = contactPersons.map(_.contactPersonConcatId)
-    val goldenRecord = contactPersons.reduce((o1, o2) => {
-      val preference1 = sourcePreference.getOrElse(o1.source.getOrElse("UNKNOWN"), Int.MaxValue)
-      val preference2 = sourcePreference.getOrElse(o2.source.getOrElse("UNKNOWN"), Int.MaxValue)
-      if (preference1 < preference2) o1
-      else if (preference1 > preference2) o2
-      else { // same source preference
-        val created1 = o1.dateCreated.getOrElse(new Timestamp(System.currentTimeMillis))
-        val created2 = o1.dateCreated.getOrElse(new Timestamp(System.currentTimeMillis))
-        if (created1.before(created2)) o1 else o2
+
+    val goldenRecord = contactPersons.reduce { (cp1, cp2) =>
+      val source1 = cp1.source.getOrElse(unknownSource)
+      val preference1 = sourcePreference.getOrElse(source1, defaultSourcePreference)
+
+      val source2 = cp2.source.getOrElse(unknownSource)
+      val preference2 = sourcePreference.getOrElse(source2, defaultSourcePreference)
+
+      if (preference1 < preference2) {
+        cp1
+      } else if (preference1 > preference2) {
+        cp2
+      } else { // same source preference
+        val created1 = cp1.dateCreated.getOrElse(new Timestamp(System.currentTimeMillis))
+        val created2 = cp1.dateCreated.getOrElse(new Timestamp(System.currentTimeMillis))
+
+        if (created1.before(created2)) cp1 else cp2
       }
-    })
-    val id = UUID.randomUUID().toString
-    GoldenContactPersonRecord(id, goldenRecord, refIds.toSeq, goldenRecord.countryCode)
+    }
+
+    GoldenContactPersonRecord(
+      UUID.randomUUID().toString,
+      goldenRecord,
+      refIds.toSeq,
+      goldenRecord.countryCode
+    )
   }
 
   def transform(
