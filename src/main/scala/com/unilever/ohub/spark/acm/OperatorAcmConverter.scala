@@ -35,7 +35,7 @@ object OperatorAcmConverter extends SparkJob {
         OTM = operator.otm,
         PREFERRED_PARTNER = operator.distributorName.map(clean),
         STREET = operator.street,
-        HOUSE_NUMBER = operator.housenumber,
+        HOUSE_NUMBER = operator.houseNumber,
         ZIPCODE = operator.zipCode,
         CITY = operator.city.map(clean),
         COUNTRY = operator.country,

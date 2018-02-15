@@ -38,8 +38,8 @@ object OperatorConverter extends SparkJob  {
         .parseStringOption(11)
         .map(removeStrangeCharsToLowerAndTrim)
         .map(_ + row.parseStringOption(12).getOrElse("")),
-      housenumber = row.parseStringOption(12),
-      housenumberExt = row.parseStringOption(123),
+      houseNumber = row.parseStringOption(12),
+      houseNumberExt = row.parseStringOption(123),
       city = row.parseStringOption(14),
       cityCleansed = row.parseStringOption(14).map(removeSpacesStrangeCharsAndToLower),
       zipCode = row.parseStringOption(15),
@@ -93,7 +93,7 @@ object OperatorConverter extends SparkJob  {
       openOnThursday = row.parseBooleanOption(52),
       openOnThursdayOriginal = row.parseStringOption(52),
       openOnFriday = row.parseBooleanOption(53),
-      openOnFirdayOriginal = row.parseStringOption(53),
+      openOnFridayOriginal = row.parseStringOption(53),
       openOnSaturday = row.parseBooleanOption(54),
       openOnSaturdayOriginal = row.parseStringOption(54),
       openOnSunday = row.parseBooleanOption(55),
