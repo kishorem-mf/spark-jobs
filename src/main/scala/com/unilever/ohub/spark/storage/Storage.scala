@@ -1,5 +1,7 @@
 package com.unilever.ohub.spark.storage
 
+import java.util.Properties
+
 import com.unilever.ohub.spark.data.{ ChannelMapping, CountryRecord }
 import com.unilever.ohub.spark.generic.SparkFunctions
 import com.unilever.ohub.spark.sql.JoinType
@@ -99,9 +101,29 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .toMap
   }
 
+  private def readJdbcTable(
+    spark: SparkSession,
+    dbConnectionString: String = "jdbc:postgresql://localhost:5432/",
+    dbName: String = "ufs_example",
+    dbTable: String,
+    userName: String = "ufs_example",
+    userPassword: String = "ufs_example"
+  ): DataFrame = {
+    val dbFullConnectionString = {
+      if (dbConnectionString.endsWith("/")) s"$dbConnectionString$dbName"
+      else s"$dbConnectionString/$dbName"
+    }
+
+    val jdbcProperties = new Properties
+    jdbcProperties.put("user", userName)
+    jdbcProperties.put("password", userPassword)
+
+    spark.read.jdbc(dbFullConnectionString, dbTable, jdbcProperties)
+  }
+
   override def channelMappings: Dataset[ChannelMapping] = {
-    val channelMappingDF = SparkFunctions.readJdbcTable(spark, dbTable = "channel_mapping")
-    val channelReferencesDF = SparkFunctions.readJdbcTable(spark, dbTable = "channel_references")
+    val channelMappingDF = readJdbcTable(spark, dbTable = "channel_mapping")
+    val channelReferencesDF = readJdbcTable(spark, dbTable = "channel_references")
     channelMappingDF
       .join(
         channelReferencesDF,
