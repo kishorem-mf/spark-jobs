@@ -3,13 +3,24 @@
 # Only use spaces to indent your .yml configuration.
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
-image: python:3.5.1
 
 pipelines:
   default:
     - step:
+        name: Check PEP8 codestyle
+        image: python:3.5.1
         caches:
           - pip
         script: # Modify the commands below to build your repository.
           - pip install pycodestyle
           - pycodestyle --show-source .
+  branches:
+    master:
+      - step:
+        name: Deploy DAGs to airflow
+        image: microsoft/azure-cli
+        script:
+          - az login --service-principal -u $AZ_USER_ID -p $AZ_PASSWORD --tenant $AZ_TENANT_ID
+          - az storage file delete-batch --source https://ulohub2sadevne.file.core.windows.net/airflowdags  --account-name $AZ_STORAGE_ACCOUNT
+          - az storage file upload-batch --destination https://ulohub2sadevne.file.core.windows.net/airflowdags --source ./ --account-name $AZ_STORAGE_ACCOUNT
+
