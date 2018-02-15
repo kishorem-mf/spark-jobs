@@ -93,7 +93,7 @@ object OrderConverter extends SparkJob {
       .filter(_.length == 19)
       .map(rowToOrderRecord)
 
-    val countryRecords = storage.countries
+    val countryRecords = storage.createCountries
 
     val transformed = transform(spark, orderRecords, countryRecords)
 

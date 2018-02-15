@@ -69,16 +69,16 @@ object SifuConverter extends SparkJob {
     range: Int,
     maxIterations: Int
   ): String = {
-    def inner(index: Int, acc: String = ""): String = {
-      if (index >= maxIterations) acc
+    def inner(index: Int, accumulatingBody: String = ""): String = {
+      if (index >= maxIterations) accumulatingBody
       else {
         createSifuURL(countryCode, languageKey, sifuSelection, index, index + range) match {
           case Failure(e)   => log.error("Failed to create SIFU URL", e); ""
           case Success(url) =>
             val body = getResponseBodyString(url)
 
-            if (body.nonEmpty) inner(index + 1, acc + body)
-            else acc
+            if (body.nonEmpty) inner(index + 1, accumulatingBody + body)
+            else accumulatingBody
         }
       }
     }
