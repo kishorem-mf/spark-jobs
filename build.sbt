@@ -22,7 +22,8 @@ libraryDependencies ++= Seq(
   "org.apache.spark"    %% "spark-mllib"    % sparkVersion  % sparkDependencyType,
   "org.postgresql"      %  "postgresql"     % "42.1.4",
   "org.apache.commons"  %  "commons-lang3"  % "3.6",
-  "org.scalatest"       %% "scalatest"      % "3.0.4"       % "test,it"
+  "org.scalatest"       %% "scalatest"      % "3.0.4"       % "test,it",
+  "org.scalamock"       %% "scalamock"      % "4.0.0"       % "test,it"
 )
 
 lazy val root = project.in(file(".")).configs(IntegrationTest)
