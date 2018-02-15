@@ -51,7 +51,8 @@ object OperatorMerging extends SparkJob {
     val groupedOperators = matches
       .joinWith(
         operators,
-        matches("countryCode") === operators("countryCode") and $"targetId" === $"operatorConcatId"
+        matches("countryCode") === operators("countryCode")
+          and $"targetId" === $"operatorConcatId"
       )
       .map((MatchingResultAndOperator.apply _).tupled)
       .groupByKey(_.sourceId)
