@@ -16,7 +16,7 @@ pipelines:
           - pycodestyle --show-source .
   branches:
     master:
-      - step:
+    - step:
         name: Deploy DAGs to airflow
         image: microsoft/azure-cli
         script:
