@@ -1,7 +1,9 @@
 from airflow import DAG
 from datetime import datetime, timedelta
 
-from custom_operators.dag_git_pull_operator import DagsGitPuller
+from airflow import settings
+from airflow.contrib.operators.gcs_download_operator import GoogleCloudStorageDownloadOperator
+from airflow.operators.bash_operator import BashOperator
 
 default_args = {
     'owner': 'airflow',
@@ -14,7 +16,17 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-dag = DAG('update_dags', default_args=default_args,
-          schedule_interval="0 * * * *")
+with DAG('update_dags', default_args=default_args,
+         schedule_interval="0 * * * *") as dag:
 
-t1 = DagsGitPuller(task_id="perform_git_pull", dag=dag)
+    t1 = GoogleCloudStorageDownloadOperator(
+        bucket='gs://ufs-prod/airflow-dags/',
+        object='dags.tar',
+        filename=f'{settings.DAGS_FOLDER}/dags.tar',
+        google_cloud_storage_conn_id='',
+        task_id="download_dag_tar")
+    t2 = BashOperator(
+        bash_command=f'tar -xf {settings.DAGS_FOLDER}/dags.tar {settings.DAGS_FOLDER}/'
+    )
+
+    t1 >> t2
