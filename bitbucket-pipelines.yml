@@ -14,13 +14,3 @@ pipelines:
         script: # Modify the commands below to build your repository.
           - pip install pycodestyle
           - pycodestyle --show-source .
-  branches:
-    master:
-    - step:
-        name: Deploy DAGs to airflow
-        image: microsoft/azure-cli
-        script:
-          - az login --service-principal -u $AZ_USER_ID -p $AZ_PASSWORD --tenant $AZ_TENANT_ID
-          - az storage file delete-batch --source https://ulohub2sadevne.file.core.windows.net/airflowdags  --account-name $AZ_STORAGE_ACCOUNT
-          - az storage file upload-batch --destination https://ulohub2sadevne.file.core.windows.net/airflowdags --source ./ --account-name $AZ_STORAGE_ACCOUNT
-
