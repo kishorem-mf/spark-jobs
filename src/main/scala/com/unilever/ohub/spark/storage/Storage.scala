@@ -77,7 +77,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   }
 
   override def createCountries: Dataset[CountryRecord] = {
-    val fileName = this.getClass.getResource("country_codes.csv").getFile
+    val fileName = this.getClass.getResource("/country_codes.csv").getFile
     readFromCSV(fileName, separator = ",")
       .select(
         $"ISO3166_1_Alpha_2" as "countryCode",
@@ -90,7 +90,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
 
   override def sourcePreference: Map[String, Int] = {
     Source
-      .fromInputStream(this.getClass.getResourceAsStream("source_preference.tsv"))
+      .fromInputStream(this.getClass.getResourceAsStream("/source_preference.tsv"))
       .getLines()
       .toSeq
       .filter(_.nonEmpty)
