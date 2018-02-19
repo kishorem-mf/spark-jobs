@@ -14,8 +14,8 @@ object OrderMerging extends SparkJob {
   def transform(
     spark: SparkSession,
     orderRecords: Dataset[OrderRecord],
-    operators: Dataset[OHubIdRefIdAndCountry],
-    contactPersons: Dataset[OHubIdRefIdAndCountry]
+    operatorRecords: Dataset[GoldenOperatorRecord],
+    contactPersonRecords: Dataset[GoldenContactPersonRecord]
   ): Dataset[OrderRecord] = {
     import spark.implicits._
 
@@ -33,6 +33,20 @@ object OrderMerging extends SparkJob {
         )
       })
 
+    val operators = operatorRecords
+      .flatMap { operator =>
+        operator.refIds.map { refId =>
+          OHubIdRefIdAndCountry(operator.ohubOperatorId, refId, operator.countryCode)
+        }
+      }
+
+    val contactPersons = contactPersonRecords
+      .flatMap { contactPerson =>
+        contactPerson.refIds.map { refId =>
+          OHubIdRefIdAndCountry(contactPerson.ohubContactPersonId, refId, contactPerson.countryCode)
+        }
+      }
+
     val operatorsJoined = orders
       .joinWith(
         operators,
@@ -41,9 +55,9 @@ object OrderMerging extends SparkJob {
         JoinType.Left
       )
       .map {
-        case (order, maybeOperator) => Option(maybeOperator).fold(order) { operator =>
-          order.copy(refOperatorId = order.refOperatorId.map(_ => operator.ohubId))
-        }
+        case (order, maybeOperator) =>
+          val refOperatorId = Option(maybeOperator).map(_.ohubId).getOrElse("REF_OPERATOR_UNKNOWN")
+          order.copy(refOperatorId = Some(refOperatorId))
       }
 
     operatorsJoined
@@ -54,11 +68,11 @@ object OrderMerging extends SparkJob {
         JoinType.Left
       )
       .map {
-        case (order, maybeContactPerson) => Option(maybeContactPerson).fold(order) { contactPerson =>
-          order.copy(
-            refContactPersonId = order.refContactPersonId.map(_ => contactPerson.ohubId)
-          )
-        }
+        case (order, maybeContactPerson) =>
+          val refContactPersonId = Option(maybeContactPerson)
+            .map(_.ohubId)
+            .getOrElse("REF_CONTACT_PERSON_UNKNOWN")
+          order.copy(refContactPersonId = Some(refContactPersonId))
       }
   }
 
@@ -84,26 +98,16 @@ object OrderMerging extends SparkJob {
         s"and [$orderInputFile] to [$outputFile]"
     )
 
-    val orders = storage
+    val orderRecords = storage
       .readFromParquet[OrderRecord](orderInputFile)
 
-    val operators = storage
+    val operatorRecords = storage
       .readFromParquet[GoldenOperatorRecord](operatorMergingInputFile)
-      .flatMap { operator =>
-        operator.refIds.map { refId =>
-          OHubIdRefIdAndCountry(operator.ohubOperatorId, refId, operator.countryCode)
-        }
-      }
 
-    val contactPersons = storage
+    val contactPersonRecords = storage
       .readFromParquet[GoldenContactPersonRecord](contactPersonMergingInputFile)
-      .flatMap { contactPerson =>
-        contactPerson.refIds.map { refId =>
-          OHubIdRefIdAndCountry(contactPerson.ohubContactPersonId, refId, contactPerson.countryCode)
-        }
-      }
 
-    val transformed = transform(spark, orders, operators, contactPersons)
+    val transformed = transform(spark, orderRecords, operatorRecords, contactPersonRecords)
 
     storage
       .writeToParquet(transformed, outputFile, partitionBy = "countryCode")

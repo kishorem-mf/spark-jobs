@@ -25,13 +25,13 @@ object ContactPersonMerging2 extends SparkJob {
         JoinType.LeftOuter
       )
       .map {
-        case (contactPerson, maybeOperator) => Option(maybeOperator).fold(contactPerson) { operator =>
+        case (contactPerson, maybeOperator) =>
+          val refOperatorId = Option(maybeOperator).map(_.ohubOperatorId).getOrElse("REF_OPERATOR_UNKNOWN")
           contactPerson.copy(
             contactPerson = contactPerson.contactPerson.copy(
-              refOperatorId = Option(operator.ohubOperatorId)
+              refOperatorId = Some(refOperatorId)
             )
           )
-        }
       }
   }
 
