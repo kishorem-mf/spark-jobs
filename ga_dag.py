@@ -11,8 +11,9 @@ default_args = {
     'email_on_retry': False,
     'retries': 5,
     'retry_delay': timedelta(minutes=2),
-    'start_date': datetime.now().__format__('YYYYMMDD'),
-    'end_date': datetime.now().__format__('YYYYMMDD'),
+    'start_date': datetime.now(),
+    'date_from': datetime.now().strftime('%Y%m%d'),
+    'date_to': datetime.now().strftime('%Y%m%d'),
     'bigquery_conn_id': 'bigquery_default',
     'destination_folder': 'gs://digitaldataufs/ga_dump',
     'country_codes': [
@@ -74,9 +75,18 @@ default_args = {
 dag = DAG('ga_dags', default_args=default_args)
 
 t1 = GAFetchOperator(task_id="perform_ga_fetch",
+<<<<<<< HEAD
                     dag=dag,
                     bigquery_conn_id=default_args.get('bigquery_conn_id'),
                     country_codes=default_args.get('coutry_codes'),
                     start_date=default_args.get('start_date'),
                     end_date=default_args.get('end_date'),
                     destination_folder=default_args.get('destination_folder'))
+=======
+                     dag=dag,
+                     bigquery_conn_id=default_args.get('bigquery_conn_id'),
+                     country_codes=default_args.get('coutry_codes'),
+                     date_from=default_args.get('date_from'),
+                     date_to=default_args.get('date_to'),
+                     destination_folder=default_args.get('destination_folder'))
+>>>>>>> Corrected dates naming and formatting
