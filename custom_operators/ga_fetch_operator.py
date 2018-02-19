@@ -93,32 +93,67 @@ class GAFetchOperator(BaseOperator):
         self.end_date = self.to_datetime(end_date)
         self.destination_folder = destination_folder
 
+    @staticmethod
+    def fetch_for_date(context,
+                       bigquery_conn_id,
+                       country_code,
+                       ga_country_code,
+                       working_date,
+                       destination_folder):
+        working_date_fmt = working_date.__format__('YYYYMMDD')
+        working_date_iso = working_date.isoformat()
+
+        ga_dataset = """{ga_code}.ga_sessions_{date}""".format(
+            ga_code=ga_country_code,
+            date=working_date_fmt)
+        to_fmt = """{folder}/DATE={date}/COUNTRY={country}/ga_sessions.avro"""
+        destination_uri = to_fmt.format(
+            folder=destination_folder,
+            date=working_date_iso,
+            country=country_code
+        )
+
+        bq_operator = BigQueryToCloudStorageOperator(
+            source_project_dataset_table=ga_dataset,
+            destination_cloud_storage_uris=destination_uri,
+            compression='NONE',
+            export_format='AVRO',
+            field_delimiter=',',
+            print_header=True,
+            bigquery_conn_id=bigquery_conn_id,
+            delegate_to=None)
+
+        bq_operator.execute(context)
+
+    @staticmethod
+    def fetch_for_country(context,
+                          bigquery_conn_id,
+                          country_code,
+                          start_date,
+                          end_date,
+                          destination_folder):
+        try:
+            ga_country_code = GAFetchOperator.country_codes.get(country_code)
+        except Exception as e:
+            logging.error(
+                'No GA code available for country code: ' + country_code, e)
+            return
+
+        date_delta = end_date - start_date
+        for i in range(date_delta.days + 1):
+            working_date = start_date + timedelta(days=i)
+            GAFetchOperator.fetch_for_date(context,
+                                           bigquery_conn_id,
+                                           country_code,
+                                           ga_country_code,
+                                           working_date,
+                                           destination_folder)
+
     def execute(self, context):
         for country_code in self.country_codes:
-            try :
-                ga_coutry_code = GAFetchOperator.country_codes.get(country_code)
-            except:
-                logging.error('No GA code available for country code: ' + country_code)
-                return
-
-            date_delta = self.end_date - self.start_date
-            for i in range(date_delta.days + 1):
-                working_date = self.start_date + timedelta(days=i)
-                working_date_fmt = working_date.__format__('YYYYMMDD')
-                working_date_iso = working_date.isoformat()
-
-                ga_dataset = ga_coutry_code + '.ga_sessions_' + working_date_fmt
-                destination_uri = self.destination_folder + '/DATE=' + working_date_iso + '/COUNTRY=' + country_code + '/ga_sessions.avro'
-
-                bq_operator = BigQueryToCloudStorageOperator(
-                    source_project_dataset_table=ga_dataset,
-                    destination_cloud_storage_uris=destination_uri,
-                    compression='NONE',
-                    export_format='AVRO',
-                    field_delimiter=',',
-                    print_header=True,
-                    bigquery_conn_id=self.bigquery_conn_id,
-                    delegate_to=None)
-
-                bq_operator.execute(context)
-
+            GAFetchOperator.fetch_for_country(context,
+                                              self.bigquery_conn_id,
+                                              country_code,
+                                              self.start_date,
+                                              self.end_date,
+                                              self.destination_folder)
