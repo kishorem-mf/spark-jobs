@@ -1,5 +1,7 @@
 package com.unilever.ohub.spark.tsv2parquet
 
+import java.util.InputMismatchException
+
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.generic.StringFunctions.{ removeSpacesStrangeCharsAndToLower, removeStrangeCharsToLowerAndTrim }
 import com.unilever.ohub.spark.sql.JoinType
@@ -136,9 +138,18 @@ object OperatorConverter extends SparkJob  {
 
     log.info(s"Generating operator parquet from [$inputFile] to [$outputFile]")
 
+    val requiredNrOfColumns = 59
     val operatorRecords = storage
       .readFromCSV(inputFile, separator = csvColumnSeparator)
-      .filter(_.length == 59)
+      .map { row =>
+        if (row.length != requiredNrOfColumns) {
+          throw new InputMismatchException(
+            s"An input CSV row did not have the required $requiredNrOfColumns columns\n${row.toString()}"
+          )
+        } else {
+          row
+        }
+      }
       .map(rowToOperatorRecord)
 
     val countryRecords = storage.createCountries

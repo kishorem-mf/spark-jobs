@@ -1,5 +1,7 @@
 package com.unilever.ohub.spark.tsv2parquet
 
+import java.util.InputMismatchException
+
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.sql.JoinType
@@ -89,9 +91,18 @@ object OrderConverter extends SparkJob {
 
     log.info(s"Generating orders parquet from [$inputFile] to [$outputFile]")
 
+    val requiredNrOfColumns = 19
     val orderRecords = storage
       .readFromCSV(inputFile, separator = csvColumnSeparator)
-      .filter(_.length == 19)
+      .map { row =>
+        if (row.length != requiredNrOfColumns) {
+          throw new InputMismatchException(
+            s"An input CSV row did not have the required $requiredNrOfColumns columns\n${row.toString()}"
+          )
+        } else {
+          row
+        }
+      }
       .map(rowToOrderRecord)
 
     val countryRecords = storage.createCountries

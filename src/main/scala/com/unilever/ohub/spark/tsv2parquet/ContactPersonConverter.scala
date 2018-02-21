@@ -1,5 +1,7 @@
 package com.unilever.ohub.spark.tsv2parquet
 
+import java.util.InputMismatchException
+
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.generic.StringFunctions._
 import com.unilever.ohub.spark.sql.JoinType
@@ -187,9 +189,18 @@ object ContactPersonConverter extends SparkJob {
 
     log.info(s"Generating parquet from [$inputFile] to [$outputFile]")
 
+    val requiredNrOfColumns = 48
     val contactPersonRecords = storage
       .readFromCSV(inputFile, separator = csvColumnSeparator)
-      .filter(_.length == 48)
+      .map { row =>
+        if (row.length != requiredNrOfColumns) {
+          throw new InputMismatchException(
+            s"An input CSV row did not have the required $requiredNrOfColumns columns\n${row.toString()}"
+          )
+        } else {
+          row
+        }
+      }
       .map(rowToContactPersonRecord)
 
     val countryRecords = storage.createCountries
