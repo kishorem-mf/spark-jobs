@@ -141,13 +141,14 @@ object OperatorConverter extends SparkJob  {
     val requiredNrOfColumns = 59
     val operatorRecords = storage
       .readFromCSV(inputFile, separator = csvColumnSeparator)
-      .map { row =>
+      .filter { row =>
         if (row.length != requiredNrOfColumns) {
           throw new InputMismatchException(
             s"An input CSV row did not have the required $requiredNrOfColumns columns\n${row.toString()}"
           )
+          false
         } else {
-          row
+          true
         }
       }
       .map(rowToOperatorRecord)

@@ -75,13 +75,14 @@ object ProductConverter extends SparkJob {
     val requiredNrOfColumns = 13
     val productRecords = storage
       .readFromCSV(inputFile, separator = csvColumnSeparator)
-      .map { row =>
+      .filter { row =>
         if (row.length != requiredNrOfColumns) {
           throw new InputMismatchException(
             s"An input CSV row did not have the required $requiredNrOfColumns columns\n${row.toString()}"
           )
+          false
         } else {
-          row
+          true
         }
       }
       .map(rowToProductRecord)
