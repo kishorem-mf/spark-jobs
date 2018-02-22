@@ -76,8 +76,10 @@ dag = DAG('gcp_ga', default_args=default_args)
 
 ga_to_avro = GAFetchOperator(task_id="perform_ga_fetch",
                              dag=dag,
-                             bigquery_conn_id=default_args.get('bigquery_conn_id'),
+                             bigquery_conn_id=default_args.get(
+                                 'bigquery_conn_id'),
                              country_codes=default_args.get('coutry_codes'),
                              date_from=default_args.get('date_from'),
                              date_to=default_args.get('date_to'),
-                             destination_folder=default_args.get('destination_folder'))
+                             destination_folder=default_args.get(
+                                 'destination_folder'))
