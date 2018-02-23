@@ -22,6 +22,6 @@ pipelines:
         script:
           - echo $G_SECRET > key.json
           - gcloud auth activate-service-account bitbucket@ufs-prod.iam.gserviceaccount.com --key-file=key.json
-          - pwd
+          - ls -la
           - tar -cvf dags.tar **/*.py
 #          - gsutil cp dags.tar gs://ufs-prod/airflow-dags/dags.tar
