@@ -25,4 +25,4 @@ pipelines:
           - tar -cvf dags.tar **/*.py
           - tar --append --file=dags.tar *.py
           - tar -tf dags.tar
-#          - gsutil cp dags.tar gs://ufs-prod/airflow-dags/dags.tar
+          - gsutil cp dags.tar gs://ufs-prod/airflow-dags/dags.tar
