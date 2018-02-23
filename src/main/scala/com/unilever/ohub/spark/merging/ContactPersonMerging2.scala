@@ -7,6 +7,8 @@ import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
+case class OHubIdAndRefId(ohubId:String, refId:String)
+
 // The step that fixes the foreign key links between contact persons and operators
 // Temporarily in a 2nd file to make development easier,
 // will end up in the first ContactPersonMerging job eventually.
@@ -14,7 +16,7 @@ object ContactPersonMerging2 extends SparkJob {
   def transform(
     spark: SparkSession,
     contactPersonMatching: Dataset[GoldenContactPersonRecord],
-    operatorIdAndRefs: Dataset[GoldenOperatorRecord]
+    operatorIdAndRefs: Dataset[OHubIdAndRefId]
   ): Dataset[GoldenContactPersonRecord] = {
     import spark.implicits._
 
@@ -26,7 +28,7 @@ object ContactPersonMerging2 extends SparkJob {
       )
       .map {
         case (contactPerson, maybeOperator) =>
-          val refOperatorId = Option(maybeOperator).map(_.ohubOperatorId).getOrElse("REF_OPERATOR_UNKNOWN")
+          val refOperatorId = Option(maybeOperator).map(_.ohubId).getOrElse("REF_OPERATOR_UNKNOWN")
           contactPerson.copy(
             contactPerson = contactPerson.contactPerson.copy(
               refOperatorId = Some(refOperatorId)
@@ -76,6 +78,8 @@ object ContactPersonMerging2 extends SparkJob {
 
     val operatorIdAndRefs = storage
       .readFromParquet[GoldenOperatorRecord](operatorMergingInputFile)
+      .select($"ohubOperatorId", $"refIds")
+      .flatMap(row => row.getSeq[String](1).map(OHubIdAndRefId(row.getString(0),_)))
 
     val transformed = transform(spark, contactPersonMerging, operatorIdAndRefs)
 
