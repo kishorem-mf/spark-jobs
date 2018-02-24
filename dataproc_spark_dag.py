@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from airflow import DAG
-from airflow.contrib.operators.dataproc_operator import DataprocClusterCreateOperator
+from airflow.contrib.operators.dataproc_operator import DataprocClusterCreateOperator, DataprocClusterDeleteOperator
 
 default_args = {
     'owner': 'airflow',
@@ -14,12 +14,20 @@ default_args = {
 }
 
 with DAG('spark_connect_dag', default_args=default_args,
-         schedule_interval="0 0 * * *") as dag:
+         schedule_interval="@once") as dag:
 
-    create_dataproc = DataprocClusterCreateOperator(
+    create_cluster = DataprocClusterCreateOperator(
+        task_id='create_cluster',
         cluster_name='dummy',
         project_id='ufs-prod',
         num_workers=2,
+        region='europe-west4',
         zone='europe-west4-c',
-        gcp_conn_id='',
-        service_account='airflow@ufs-prod.iam.gserviceaccount.com')
+        gcp_conn_id='airflow-sp')
+
+    delete_cluster = DataprocClusterDeleteOperator(
+        task_id='delete_cluster',
+        cluster_name='dummy',
+        project_id='ufs-prod',
+        region='europe-west4',
+        gcp_conn_id='airflow-sp')
