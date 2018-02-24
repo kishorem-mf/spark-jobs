@@ -13,7 +13,7 @@ default_args = {
     'retries': 0
 }
 
-with DAG('spark_connect_dag', default_args=default_args,
+with DAG('dataproc_test', default_args=default_args,
          schedule_interval="@once") as dag:
 
     create_cluster = DataprocClusterCreateOperator(
@@ -31,3 +31,5 @@ with DAG('spark_connect_dag', default_args=default_args,
         project_id='ufs-prod',
         region='europe-west4',
         gcp_conn_id='airflow-sp')
+
+create_cluster >> delete_cluster
