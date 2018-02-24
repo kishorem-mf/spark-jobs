@@ -2,9 +2,6 @@ from datetime import datetime
 
 from airflow import DAG
 from airflow.contrib.operators.dataproc_operator import DataprocClusterCreateOperator
-from airflow.contrib.operators.ssh_operator import SSHOperator
-
-from spark_job_config import ssh_hook, spark_cmd
 
 default_args = {
     'owner': 'airflow',

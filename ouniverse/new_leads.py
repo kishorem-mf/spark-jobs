@@ -28,11 +28,11 @@ with DAG('new_leads', default_args=default_args,
         bash_command='echo "execute ouniverse phase II id metadata"')
 
     create_dataproc = BashOperator(
-        task_id="prioritise_leads",
+        task_id="create_cluster",
         bash_command='echo "Start dataproc cluster"')
 
     delete_dataproc = BashOperator(
-        task_id="prioritise_leads",
+        task_id="delete_cluster",
         bash_command='echo "remove dataproc cluster"')
 
     prioritize = BashOperator(
