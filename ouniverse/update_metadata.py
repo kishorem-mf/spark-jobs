@@ -37,5 +37,5 @@ update_metadata_grid = BashOperator(
     bash_command='echo "Update metadata for gridsearch"',
     dag=dag)
 
-remove_metadata_op.set_downstream(update_metadata_op)
-remove_metadata_grid.set_downstream(update_metadata_grid)
+remove_metadata_op >> update_metadata_op
+remove_metadata_grid >> update_metadata_grid
