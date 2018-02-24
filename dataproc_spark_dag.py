@@ -15,7 +15,6 @@ default_args = {
 
 with DAG('dataproc_test', default_args=default_args,
          schedule_interval="@once") as dag:
-
     create_cluster = DataprocClusterCreateOperator(
         task_id='create_cluster',
         cluster_name='dummy',
