@@ -1,7 +1,8 @@
 from datetime import datetime
 
 from airflow import DAG
-from airflow.contrib.operators.dataproc_operator import DataprocClusterCreateOperator, DataprocClusterDeleteOperator
+from airflow.contrib.operators.dataproc_operator import \
+    DataprocClusterCreateOperator, DataprocClusterDeleteOperator
 
 default_args = {
     'owner': 'airflow',
