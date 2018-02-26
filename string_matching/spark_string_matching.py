@@ -1,3 +1,4 @@
+import math
 import numpy as np
 
 import pyspark.sql.functions as sf
@@ -203,13 +204,29 @@ def sparse_to_csr_matrix(ddf, row_number_column):
     return csr_names_vs_ngrams
 
 
-def match_strings(df,
+def split_into_chunks(csr_names_vs_ngrams, matrix_chunks_rows):
+    n_chunks = max(
+        1, math.floor(csr_names_vs_ngrams.shape[0] / matrix_chunks_rows)
+    )
+    chunk_size = math.ceil(csr_names_vs_ngrams.shape[0] / n_chunks)
+    n_chunks = math.ceil(csr_names_vs_ngrams.shape[0] / chunk_size)
+    chunks = [
+        (csr_names_vs_ngrams[
+            (i * chunk_size):
+            min((i + 1) * chunk_size, csr_names_vs_ngrams.shape[0])
+        ], i * chunk_size)
+        for i in range(n_chunks)]
+    return chunks
+
+
+def match_strings(spark, df,
                   *,
                   string_column,
                   row_number_column,
                   n_gram,
                   min_document_frequency,
-                  max_vocabulary_size):
+                  max_vocabulary_size,
+                  matrix_chunks_rows=500):
 
     str_vectorizer = StringVectorizer(input_col=string_column,
                                       n_gram=n_gram,
@@ -225,4 +242,12 @@ def match_strings(df,
     csr_names_vs_ngrams = sparse_to_csr_matrix(names_vs_ngrams,
                                                row_number_column)
 
-    return csr_names_vs_ngrams
+    csr_rdd_transpose = spark.sparkContext.broadcast(
+        csr_names_vs_ngrams.transpose()
+    )
+
+    chunks = split_into_chunks(csr_names_vs_ngrams, matrix_chunks_rows)
+    chunks_rdd = spark.sparkContext.parallelize(chunks, numSlices=len(chunks))
+    del csr_names_vs_ngrams
+
+    return csr_rdd_transpose, chunks_rdd
