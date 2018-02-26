@@ -15,8 +15,10 @@ General Flow:
 - Write parquet file partition by country code
 """
 
-import os
 import argparse
+import os
+import sys
+
 from typing import List
 from time import perf_counter as timer
 
@@ -25,7 +27,6 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
-from string_matching.spark_string_matching import match_strings
 
 __author__ = "Rodrigo Agundez"
 __version__ = "0.1"
@@ -77,6 +78,7 @@ def start_spark():
 
     # the egg file should be in the same path as this script
     dir_path = os.path.dirname(os.path.realpath(__file__))
+    sys.path.append(os.path.join(dir_path, 'dist', EGG_NAME))
     sc.addPyFile(os.path.join(dir_path, 'dist', EGG_NAME))
 
     log4j = sc._jvm.org.apache.log4j
@@ -218,6 +220,8 @@ def name_match_country_operators(spark: SparkSession, country_code: str, all_ope
     operators = select_and_repartition_country(all_operators, country_code)
 
     LOGGER.info("Calculating similarities")
+
+    from string_matching.spark_string_matching import match_strings
     similarity = match_strings(
         spark, operators,
         string_column='name',
