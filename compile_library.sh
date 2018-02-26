@@ -13,3 +13,6 @@ rm -rf build
 # compile the library and build the egg file containing the module
 python setup.py bdist_egg
 
+
+# rename to persistent name
+cp dist/*.egg dist/string_matching.egg
