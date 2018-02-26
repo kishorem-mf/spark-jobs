@@ -22,14 +22,14 @@ from .sparse_dot_topn import sparse_dot_topn
 VECTORIZE_STRING_COLUMN_NAME = 'vectorized_string'
 
 
-def matrix_dot_limit(A, B, ntop,
+def matrix_dot_limit(A, B, n_top,
                      threshold=0., start_row=0, upper_triangular=False):
     """Calculate dot product of sparse matrices
 
     This function uses a C++ wrapped in Cython implementation. It
     performs A x B and returns the row indices, column indices and
     value if value > `threshold` with a maximum of number of
-    `ntop` matches.
+    `n_top` matches.
 
     Since the function is optimized for speed it does not perform any
     type of checks on the input (like matrix dimensions).
@@ -37,7 +37,7 @@ def matrix_dot_limit(A, B, ntop,
     Args:
         A (Scipy csr Matrix): Left matrix of dimensions M x K
         B (Scipy csr Matrix): Right matrix of dimensions K x N
-        ntop (int): Maximum number of matches to return
+        n_top (int): Maximum number of matches to return
         threshold (float): Keep resulting values bigger then this value.
             [Default 0.0]
         start_row (int): First row index of matrix A. Useful when
@@ -61,9 +61,9 @@ def matrix_dot_limit(A, B, ntop,
     if upper_triangular:
         # massive memory reduction
         # max number of possible non-zero element
-        nnz_max = min(int(M * (2 * (N - start_row) - M - 1) / 2), M * ntop)
+        nnz_max = min(int(M * (2 * (N - start_row) - M - 1) / 2), M * n_top)
     else:
-        nnz_max = M * ntop
+        nnz_max = M * n_top
 
     # arrays will be returned by reference
     rows = np.empty(nnz_max, dtype=idx_dtype)
@@ -81,7 +81,7 @@ def matrix_dot_limit(A, B, ntop,
         np.asarray(B.indptr, dtype=idx_dtype),
         np.asarray(B.indices, dtype=idx_dtype),
         B.data,
-        ntop,
+        n_top,
         threshold,
         rows, cols, data, start_row, int(upper_triangular))
 
@@ -219,10 +219,32 @@ def split_into_chunks(csr_names_vs_ngrams, matrix_chunks_rows):
     return chunks
 
 
+similarity_schema = StructType([
+    StructField("i", IntegerType(), False),
+    StructField("j", IntegerType(), False),
+    StructField("SIMILARITY", FloatType(), False)
+])
+
+
+def calculate_similarity(chunks_rdd, csr_rdd_transpose, n_top, threshold):
+    """ Similarity is calculated in chunks
+    """
+    similarity = chunks_rdd.flatMap(
+        lambda x: matrix_dot_limit(x[0], csr_rdd_transpose.value,
+                                   n_top=n_top,
+                                   threshold=threshold,
+                                   start_row=x[1],
+                                   upper_triangular=True)
+    )
+    return similarity.toDF(similarity_schema)
+
+
 def match_strings(spark, df,
                   *,
                   string_column,
                   row_number_column,
+                  n_top,
+                  threshold,
                   n_gram,
                   min_document_frequency,
                   max_vocabulary_size,
@@ -250,4 +272,7 @@ def match_strings(spark, df,
     chunks_rdd = spark.sparkContext.parallelize(chunks, numSlices=len(chunks))
     del csr_names_vs_ngrams
 
-    return csr_rdd_transpose, chunks_rdd
+    similarity = calculate_similarity(chunks_rdd, csr_rdd_transpose,
+                                      n_top, threshold)
+
+    return similarity
