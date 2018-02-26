@@ -144,18 +144,20 @@ class StringVectorizer(object):
                     l2_normalizer]
         )
 
-    def fit_transform(self, df1, df2=None):
-        """Fit transformers and apply all estimators.
+    def fit(self, df1, df2=None):
+        """Fit transformers
 
         If two dataframes are sent then the vocabulary and document
         frequency are calculated usng the union.
         """
         df = df1.union(df2) if df2 else df1
         self.pipeline = self.pipeline.fit(df)
-        if df2:
-            return self.pipeline.transform(df1), self.pipeline.transform(df2)
-        else:
-            return self.pipeline.transform(df1)
+        return self
+
+    def transform(self, df):
+        """Apply all estimators.
+        """
+        return self.pipeline.transform(df)
 
 
 def unpack_vector(sparse):
@@ -248,19 +250,23 @@ def match_strings(spark, df,
                   n_gram,
                   min_document_frequency,
                   max_vocabulary_size,
-                  matrix_chunks_rows=500):
+                  matrix_chunks_rows=500,
+                  df2=None):
 
-    str_vectorizer = StringVectorizer(input_col=string_column,
-                                      n_gram=n_gram,
-                                      min_df=min_document_frequency,
-                                      vocab_size=max_vocabulary_size)
+    str_vectorizer = (
+        StringVectorizer(input_col=string_column,
+                         n_gram=n_gram,
+                         min_df=min_document_frequency,
+                         vocab_size=max_vocabulary_size).fit(df, df2)
+    )
     vectorized_strings = (
         str_vectorizer
-        .fit_transform(df)
+        .transform(df)
         .select([row_number_column, VECTORIZE_STRING_COLUMN_NAME]))
 
     names_vs_ngrams = dense_to_sparse_ddf(vectorized_strings,
                                           row_number_column)
+
     csr_names_vs_ngrams = sparse_to_csr_matrix(names_vs_ngrams,
                                                row_number_column)
 
