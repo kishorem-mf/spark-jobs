@@ -1,5 +1,12 @@
 import numpy as np
 
+from pyspark.ml import Pipeline
+from pyspark.ml.feature import CountVectorizer
+from pyspark.ml.feature import IDF
+from pyspark.ml.feature import NGram
+from pyspark.ml.feature import Normalizer
+from pyspark.ml.feature import RegexTokenizer
+
 from .sparse_dot_topn import sparse_dot_topn
 
 
@@ -68,3 +75,48 @@ def matrix_dot_limit(A, B, ntop,
 
     return ((int(i), int(j), float(v)) for i, j, v in
             zip(rows[:nnz], cols[:nnz], data[:nnz]))
+
+
+class StringVectorizer(object):
+    def __init__(self, input_col, output_col, *, n_gram, min_df, vocab_size):
+        self.input_col = input_col
+        self.output_col = output_col
+        self.n_gram = n_gram
+        self.min_df = min_df
+        self.vocab_size = vocab_size
+        self.__create_pipeline()
+
+    def __create_pipeline(self):
+        regexTokenizer = RegexTokenizer(inputCol=self.input_col,
+                                        outputCol="tokens",
+                                        pattern="")
+        ngram_creator = NGram(inputCol="tokens",
+                              outputCol="n_grams",
+                              n=self.n_gram)
+        tf_counter = CountVectorizer(inputCol='n_grams',
+                                     outputCol='term_frequency',
+                                     minTF=1.0,
+                                     minDF=self.min_df,
+                                     vocabSize=self.vocab_size,
+                                     binary=False)
+        idf_counter = IDF(inputCol="term_frequency",
+                          outputCol="tfidf_vector")
+        l2_normalizer = Normalizer(inputCol="tfidf_vector",
+                                   outputCol=self.output_col,
+                                   p=2)
+
+        self.pipeline = Pipeline(
+            stages=[regexTokenizer,
+                    ngram_creator,
+                    tf_counter,
+                    idf_counter,
+                    l2_normalizer]
+        )
+
+    def fit_transform(self, df1, df2=None):
+        df = df1.union(df2) if df2 else df1
+        self.pipeline = self.pipeline.fit(df)
+        if df2:
+            return self.pipeline.transform(df1), self.pipeline.transform(df2)
+        else:
+            return self.pipeline.transform(df1)
