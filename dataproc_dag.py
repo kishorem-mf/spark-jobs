@@ -14,22 +14,23 @@ default_args = {
     'retries': 0
 }
 
+cluster_defaults = {
+    'gcp_conn_id': 'airflow-sp',
+    'cluster_name': 'dummy',
+    'project_id': 'ufs-prod',
+    'region': 'europe-west4',
+}
+
 with DAG('dataproc_test', default_args=default_args,
          schedule_interval="@once") as dag:
     create_cluster = DataprocClusterCreateOperator(
         task_id='create_cluster',
-        cluster_name='dummy',
-        project_id='ufs-prod',
         num_workers=2,
-        region='europe-west4',
         zone='europe-west4-c',
-        gcp_conn_id='airflow-sp')
+        **cluster_defaults)
 
     delete_cluster = DataprocClusterDeleteOperator(
         task_id='delete_cluster',
-        cluster_name='dummy',
-        project_id='ufs-prod',
-        region='europe-west4',
-        gcp_conn_id='airflow-sp')
+        **cluster_defaults)
 
 create_cluster >> delete_cluster
