@@ -78,15 +78,34 @@ def matrix_dot_limit(A, B, ntop,
 
 
 class StringVectorizer(object):
-    def __init__(self, input_col, output_col, *, n_gram, min_df, vocab_size):
+    """Pipeline to vectorize the strings in a column
+
+    Uses different transformers and estimators
+    """
+
+    def __init__(self, input_col, *, n_gram, min_df, vocab_size):
+        """Create vectorizer pipeline
+
+        Args:
+            n_gram: Granularity of n-grams to use e.g. 2 or 3
+            min_dif: Minimum number of times a n-gram should appear
+            vocab_size: Maximum number of n-grams to use
+        """
         self.input_col = input_col
-        self.output_col = output_col
         self.n_gram = n_gram
         self.min_df = min_df
         self.vocab_size = vocab_size
         self.__create_pipeline()
 
     def __create_pipeline(self):
+        """Initialize components and add them to a Pipeline object
+
+        - RegexTokenizer separates each string into a list of characters
+        - NGram creates n-grams from the list of characters
+        - CountVectorizer calculates n-gram frequency on the strings
+        - IDF calculates inverse n-gram frequency on the corpus
+        - Normalizer 2-norm normalized the resulting vector of each string
+        """
         regexTokenizer = RegexTokenizer(inputCol=self.input_col,
                                         outputCol="tokens",
                                         pattern="")
@@ -102,7 +121,7 @@ class StringVectorizer(object):
         idf_counter = IDF(inputCol="term_frequency",
                           outputCol="tfidf_vector")
         l2_normalizer = Normalizer(inputCol="tfidf_vector",
-                                   outputCol=self.output_col,
+                                   outputCol='vectorized_string',
                                    p=2)
 
         self.pipeline = Pipeline(
@@ -114,9 +133,34 @@ class StringVectorizer(object):
         )
 
     def fit_transform(self, df1, df2=None):
+        """Fit transformers and apply all estimators.
+
+        If two dataframes are sent then the vocabulary and document
+        frequency are calculated usng the union.
+        """
         df = df1.union(df2) if df2 else df1
         self.pipeline = self.pipeline.fit(df)
         if df2:
             return self.pipeline.transform(df1), self.pipeline.transform(df2)
         else:
             return self.pipeline.transform(df1)
+
+
+def match_strings(df,
+                  *,
+                  string_column,
+                  row_number_column,
+                  n_gram,
+                  min_document_frequency,
+                  max_vocabulary_size):
+
+    str_vectorizer = StringVectorizer(input_col=string_column,
+                                      n_gram=n_gram,
+                                      min_df=min_document_frequency,
+                                      vocab_size=max_vocabulary_size)
+    vectorized_strings = (
+        str_vectorizer
+        .fit_transform(df)
+        .select([row_number_column, 'vectorized_string']))
+
+    return vectorized_strings
