@@ -1,13 +1,24 @@
 import numpy as np
 
+import pyspark.sql.functions as sf
+
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import CountVectorizer
 from pyspark.ml.feature import IDF
 from pyspark.ml.feature import NGram
 from pyspark.ml.feature import Normalizer
 from pyspark.ml.feature import RegexTokenizer
+from pyspark.sql.types import ArrayType
+from pyspark.sql.types import FloatType
+from pyspark.sql.types import IntegerType
+from pyspark.sql.types import StructField
+from pyspark.sql.types import StructType
+from scipy.sparse import csr_matrix
 
 from .sparse_dot_topn import sparse_dot_topn
+
+
+VECTORIZE_STRING_COLUMN_NAME = 'vectorized_string'
 
 
 def matrix_dot_limit(A, B, ntop,
@@ -121,7 +132,7 @@ class StringVectorizer(object):
         idf_counter = IDF(inputCol="term_frequency",
                           outputCol="tfidf_vector")
         l2_normalizer = Normalizer(inputCol="tfidf_vector",
-                                   outputCol='vectorized_string',
+                                   outputCol=VECTORIZE_STRING_COLUMN_NAME,
                                    p=2)
 
         self.pipeline = Pipeline(
@@ -146,6 +157,52 @@ class StringVectorizer(object):
             return self.pipeline.transform(df1)
 
 
+def unpack_vector(sparse):
+    """Combine indices and values into a tuples.
+
+    For each value below 0.01 in the sparse vector we create a tuple and
+    then add these tuples into a single list. The tuple contains the
+    index and the value.
+    """
+    return ((int(index), float(value)) for index, value in
+            zip(sparse.indices, sparse.values) if value > 0.01)
+
+
+ngram_schema = ArrayType(StructType([
+    StructField("ngram_index", IntegerType(), False),
+    StructField("value", FloatType(), False)
+]))
+
+
+def dense_to_sparse_ddf(ddf, row_number_column):
+    udf_unpack_vector = sf.udf(unpack_vector, ngram_schema)
+    return (
+        ddf
+        .withColumn(
+            'explode',
+            sf.explode(udf_unpack_vector(sf.col(VECTORIZE_STRING_COLUMN_NAME)))
+        )
+        .withColumn('ngram_index', sf.col('explode').getItem('ngram_index'))
+        .withColumn('value', sf.col('explode').getItem('value'))
+        .select(row_number_column, 'ngram_index', 'value')
+    )
+
+
+def sparse_to_csr_matrix(ddf, row_number_column):
+    df = ddf.toPandas()
+    df[row_number_column] = df[row_number_column].astype(np.int32)
+    df.ngram_index = df.ngram_index.astype(np.int32)
+    df.value = df.value.astype(np.float64)
+
+    csr_names_vs_ngrams = csr_matrix(
+        (df.value.values,
+         (df[row_number_column].values, df.ngram_index.values)),
+        shape=(df[row_number_column].max() + 1, df.ngram_index.max() + 1),
+        dtype=np.float64)
+    del df
+    return csr_names_vs_ngrams
+
+
 def match_strings(df,
                   *,
                   string_column,
@@ -161,6 +218,11 @@ def match_strings(df,
     vectorized_strings = (
         str_vectorizer
         .fit_transform(df)
-        .select([row_number_column, 'vectorized_string']))
+        .select([row_number_column, VECTORIZE_STRING_COLUMN_NAME]))
 
-    return vectorized_strings
+    names_vs_ngrams = dense_to_sparse_ddf(vectorized_strings,
+                                          row_number_column)
+    csr_names_vs_ngrams = sparse_to_csr_matrix(names_vs_ngrams,
+                                               row_number_column)
+
+    return csr_names_vs_ngrams
