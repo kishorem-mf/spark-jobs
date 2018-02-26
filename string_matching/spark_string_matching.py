@@ -1,3 +1,26 @@
+""" Fuzzy matching of strings using Spark
+
+General Flow:
+
+- Read parquet file
+- Pre-process dataframe to form a string column `name` which will
+    contain the strings to be matched.
+- Get countries with more than 100 entries
+- Loop over each of these countries
+- Strings are first tokenized using n-grams from the total corpus.
+- Tokenized vector is normalized.
+- Cosine similarity is calculated by absolute squaring the matrix.
+- Collect N number of matches above a threshold
+- Group matches and assing a group ID
+- Write parquet file partition by country code
+"""
+
+__author__ = "Rodrigo Agundez"
+__version__ = "0.1"
+__maintainer__ = "Rodrigo Agundez"
+__email__ = "rodrigo.agundez@godatadriven.com"
+__status__ = "Development"
+
 import math
 import numpy as np
 
