@@ -20,18 +20,12 @@ import argparse
 from typing import List
 from time import perf_counter as timer
 
-import math
-import numpy as np
-
-from pyspark.ml import Pipeline
-from pyspark.ml.feature import CountVectorizer, IDF, NGram, \
-    Normalizer, RegexTokenizer
-from pyspark.sql import SparkSession, DataFrame, functions as sf
-from pyspark.sql.types import ArrayType, FloatType, IntegerType, \
-    LongType, StructField, StructType, StringType
+from pyspark.sql import DataFrame
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
-from scipy.sparse import csr_matrix
+from string_matching.spark_string_matching import match_strings
 
 __author__ = "Rodrigo Agundez"
 __version__ = "0.1"
@@ -39,7 +33,7 @@ __maintainer__ = "Rodrigo Agundez"
 __email__ = "rodrigo.agundez@godatadriven.com"
 __status__ = "Development"
 
-EGG_NAME = 'sparse_dot_topn.egg'
+EGG_NAME = 'string_matching.egg'
 MININUM_OPERATORS_PER_COUNTRY = 100
 MATRIX_CHUNK_ROWS = 500
 N_GRAMS = 2
@@ -60,17 +54,6 @@ DROP_CHARS = "\\\\!#%&()*+-/:;<=>?@\\^|~\u00A8\u00A9\u00AA\u00AC\u00AD\u00AF\u00
              "\uEEA3\uEF61\uEFA2\uEFB0\uEFB5\uEFEA\uEFED\uFDAB\uFFB7\u007F\u24D2" \
              "\u2560\u2623\u263A\u2661\u2665\u266A\u2764\uE2B1\uFF0D"
 REGEX = "[{}]".format(DROP_CHARS)
-
-ngram_schema = ArrayType(StructType([
-    StructField("ngram_index", IntegerType(), False),
-    StructField("value", FloatType(), False)
-]))
-
-similarity_schema = StructType([
-    StructField("i", IntegerType(), False),
-    StructField("j", IntegerType(), False),
-    StructField("SIMILARITY", FloatType(), False)
-])
 
 
 def start_spark():
@@ -103,138 +86,6 @@ def start_spark():
     global LOGGER
     LOGGER = log4j.LogManager.getLogger('Name Matching')
     return spark
-
-
-def chunk_dot_limit(A, B, ntop,
-                    threshold=0, start_row=0, upper_triangular=False):
-    """Calculate dot product of sparse matrices
-
-    This function uses a C++ wrapped in Cython implementation. It
-    performs A x B and returns the row, column indices and value if the
-    value `threshold` with a maximum of matches of `ntop`.
-
-    It will return the upper triangular matrix.
-
-    Args:
-        A (Scipy csr Matrix): Right matrix of dimensions M x K
-        B (Scipy csr Matrix): Let matrix of dimensions K x M
-        ntop (int): Maximum number of matches to return
-        threshold (float): Minimum value of any cell positions to return.
-        start_row (int): Assign the first row number of the matrix to
-            this value.
-
-    Returns:
-        Generator[(int, int, float)]: Generator of tuples with
-            (row_index, column_index, value).
-    """
-    import sparse_dot_topn.sparse_dot_topn as ct
-    B = B.tocsr()
-
-    M = A.shape[0]
-    N = B.shape[1]
-
-    idx_dtype = np.int32
-
-    if upper_triangular:
-        # massive memory reduction
-        # max number of possible non-zero element
-        nnz_max = min(int(M * (2 * (N - start_row) - M - 1) / 2), M * ntop)
-    else:
-        nnz_max = M * ntop
-
-    # arrays will be returned by reference
-    rows = np.empty(nnz_max, dtype=idx_dtype)
-    cols = np.empty(nnz_max, dtype=idx_dtype)
-    data = np.empty(nnz_max, dtype=A.dtype)
-
-    # C++ wrapped with Cython implementation
-    # number of found non-zero entries in the upper triangular matrix
-    # I'll use this value to slice the returning numpy array
-    nnz = ct.sparse_dot_topn(
-        M, N,
-        np.asarray(A.indptr, dtype=idx_dtype),
-        np.asarray(A.indices, dtype=idx_dtype),
-        A.data,
-        np.asarray(B.indptr, dtype=idx_dtype),
-        np.asarray(B.indices, dtype=idx_dtype),
-        B.data,
-        ntop,
-        threshold,
-        rows, cols, data, start_row, int(upper_triangular))
-
-    return ((int(i), int(j), float(v)) for i, j, v in
-            zip(rows[:nnz], cols[:nnz], data[:nnz]))
-
-
-class NameVectorizer(object):
-    """Pipeline to vectorize the strings in a column
-
-    Uses different transformers and estimators
-    """
-
-    def __init__(self, n_gram, min_df, vocab_size):
-        """Create vectorizer pipeline
-
-        Args:
-            n_gram: Granularity of n-grams to use e.g. 2 or 3
-            min_dif: Minimum number of times a n-gram should appear
-            vocab_size: Maximum number of n-grams to use
-        """
-        self.n_gram = n_gram
-        self.min_df = min_df
-        self.vocab_size = vocab_size
-        self.__create_pipeline()
-
-    def __create_pipeline(self):
-        """Initialize components and add them to a Pipeline object
-
-        - RegexTokenizer separates each string into a list of characters
-        - NGram creates n-grams from the list of characters
-        - CountVectorizer calculates n-gram frequency on the strings
-        - IDF calculates inverse n-gram frequency on the corpus
-        - Normalizer 2-norm normalized the resulting vector of each string
-        """
-        regexTokenizer = RegexTokenizer(inputCol="name",
-                                        outputCol="tokens",
-                                        pattern="")
-        ngram_creator = NGram(inputCol="tokens",
-                              outputCol="n_grams",
-                              n=self.n_gram)
-        tf_counter = CountVectorizer(inputCol='n_grams',
-                                     outputCol='term_frequency',
-                                     minTF=1.0,
-                                     minDF=self.min_df,
-                                     vocabSize=self.vocab_size,
-                                     binary=False)
-        idf_counter = IDF(inputCol="term_frequency",
-                          outputCol="tfidf_vector")
-        l2_normalizer = Normalizer(inputCol="tfidf_vector",
-                                   outputCol="name_vector",
-                                   p=2)
-
-        self.pipeline = Pipeline(
-            stages=[regexTokenizer,
-                    ngram_creator,
-                    tf_counter,
-                    idf_counter,
-                    l2_normalizer]
-        )
-
-    def fit_transform(self, df):
-        """Fit transformers and apply all estimators.
-        """
-        return self.pipeline.fit(df).transform(df)
-
-
-def unpack_vector(sparse):
-    """Combine indices and values into a tuples.
-
-    For each value below 0.1 in the sparse vector we create a tuple and
-    then add these tuples into a single list. The tuple contains the
-    index and the value.
-    """
-    return ((int(index), float(value)) for index, value in
-            zip(sparse.indices, sparse.values) if value > 0.05)
 
 
 def read_operators(spark: SparkSession, fn: str, fraction: float) -> DataFrame:
@@ -288,56 +139,6 @@ def select_and_repartition_country(ddf: DataFrame, country_code: str) -> DataFra
             .drop('COUNTRY_CODE')
             .repartition('id')
             .sort('id', ascending=True))
-
-
-def dense_to_sparse_ddf(ddf: DataFrame) -> DataFrame:
-    udf_unpack_vector = sf.udf(unpack_vector, ngram_schema)
-    return (ddf
-            .withColumn('explode', sf.explode(udf_unpack_vector(sf.col('name_vector'))))
-            .withColumn('ngram_index', sf.col('explode').getItem('ngram_index'))
-            .withColumn('value', sf.col('explode').getItem('value'))
-            .select('name_index', 'ngram_index', 'value'))
-
-
-def sparse_to_csr_matrix(ddf: DataFrame) -> csr_matrix:
-    LOGGER.info('Load names vs ngrams value to Pandas')
-    df = ddf.toPandas()
-    df.name_index = df.name_index.astype(np.int32)
-    df.ngram_index = df.ngram_index.astype(np.int32)
-    df.value = df.value.astype(np.float64)
-
-    csr_names_vs_ngrams = csr_matrix(
-        (df.value.values, (df.name_index.values, df.ngram_index.values)),
-        shape=(df.name_index.max() + 1, df.ngram_index.max() + 1),
-        dtype=np.float64)
-    del df
-    return csr_names_vs_ngrams
-
-
-def split_into_chunks(csr_names_vs_ngrams: csr_matrix):
-    n_chunks = max(1, math.floor(csr_names_vs_ngrams.shape[0] / MATRIX_CHUNK_ROWS))
-    chunk_size = math.ceil(csr_names_vs_ngrams.shape[0] / n_chunks)
-    LOGGER.info("Matrix chunk size is " + str(chunk_size))
-    n_chunks = math.ceil(csr_names_vs_ngrams.shape[0] / chunk_size)
-    chunks = [(csr_names_vs_ngrams[
-               (i * chunk_size): min((i + 1) * chunk_size, csr_names_vs_ngrams.shape[0])], i * chunk_size)
-              for i in range(n_chunks)]
-    return chunks
-
-
-def calculate_similarity(chunks_rdd, csr_rdd_transpose) -> DataFrame:
-    """
-    Similarity is calculated in chunks
-    """
-    similarity = chunks_rdd.flatMap(
-        lambda x: chunk_dot_limit(x[0], csr_rdd_transpose.value,
-                                  ntop=args.ntop,
-                                  threshold=args.threshold,
-                                  start_row=x[1],
-                                  upper_triangular=True)
-    )
-
-    return similarity.toDF(similarity_schema)
 
 
 def group_similarities(similarity: DataFrame) -> DataFrame:
@@ -416,27 +217,19 @@ def name_match_country_operators(spark: SparkSession, country_code: str, all_ope
     # get country data and add row number column
     operators = select_and_repartition_country(all_operators, country_code)
 
-    name_vectorizer = NameVectorizer(n_gram=N_GRAMS,
-                                     min_df=MINIMUM_DOCUMENT_FREQUENCY,
-                                     vocab_size=VOCABULARY_SIZE)
-    encoded_names = (
-        name_vectorizer
-        .fit_transform(operators)
-        .select(['name_index', 'name_vector']))
+    LOGGER.info("Calculating similarities")
+    similarity = match_strings(
+        spark, operators,
+        string_column='name',
+        row_number_column='name_index',
+        n_top=args.ntop,
+        threshold=args.threshold,
+        n_gram=N_GRAMS,
+        min_document_frequency=MINIMUM_DOCUMENT_FREQUENCY,
+        max_vocabulary_size=VOCABULARY_SIZE,
+        matrix_chunks_rows=MATRIX_CHUNK_ROWS
+    )
 
-    names_vs_ngrams = dense_to_sparse_ddf(encoded_names)
-    csr_names_vs_ngrams = sparse_to_csr_matrix(names_vs_ngrams)
-
-    LOGGER.info("Broadcasting sparse matrix")
-    csr_rdd_transpose = spark.sparkContext.broadcast(csr_names_vs_ngrams.transpose())
-
-    chunks = split_into_chunks(csr_names_vs_ngrams)
-    LOGGER.info("Parallelizing matrix in " + str(len(chunks)) + " chunks")
-    chunks_rdd = spark.sparkContext.parallelize(chunks, numSlices=len(chunks))
-
-    del csr_names_vs_ngrams
-
-    similarity = calculate_similarity(chunks_rdd, csr_rdd_transpose)
     grouped_similarity = group_similarities(similarity)
     matches = find_matches(grouped_similarity, operators, country_code)
 
@@ -457,11 +250,13 @@ def main(args):
     preprocessed_operators.persist()
     t.end_and_log()
 
-    country_codes = get_country_codes(args.country_code, preprocessed_operators)
+    country_codes = get_country_codes(args.country_code,
+                                      preprocessed_operators)
 
     for country_code in country_codes:
         t = Timer('Running for country {}'.format(country_code), LOGGER)
-        name_match_country_operators(spark, country_code, preprocessed_operators)
+        name_match_country_operators(spark,
+                                     country_code, preprocessed_operators)
         t.end_and_log()
 
 
