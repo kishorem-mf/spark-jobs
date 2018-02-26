@@ -1,58 +1,89 @@
 package com.unilever.ohub.spark.merging
 
-import org.apache.spark.sql.SaveMode.Overwrite
-import org.apache.spark.sql.{Dataset, SparkSession}
+import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.data.{ GoldenContactPersonRecord, GoldenOperatorRecord }
+import com.unilever.ohub.spark.generic.StringFunctions
+import com.unilever.ohub.spark.sql.JoinType
+import com.unilever.ohub.spark.storage.Storage
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
-case class OHubIdAndRefId(OHUB_ID:String, REF_ID:String)
+case class OHubIdAndRefId(ohubId:String, refId:String)
 
 // The step that fixes the foreign key links between contact persons and operators
-// Temporarily in a 2nd file to make development easier, will end up in the first ContactPersonMerging job eventually.
-object ContactPersonMerging2 extends App {
+// Temporarily in a 2nd file to make development easier,
+// will end up in the first ContactPersonMerging job eventually.
+object ContactPersonMerging2 extends SparkJob {
+  def transform(
+    spark: SparkSession,
+    contactPersonMatching: Dataset[GoldenContactPersonRecord],
+    operatorIdAndRefs: Dataset[OHubIdAndRefId]
+  ): Dataset[GoldenContactPersonRecord] = {
+    import spark.implicits._
 
-  if (args.length != 3) {
-    println("specify CONTACT_PERSON_MATCHING_INPUT_FILE OPERATOR_MATCHING_INPUT_FILE OUTPUT_FILE")
-    sys.exit(1)
+    contactPersonMatching
+      .joinWith(
+        operatorIdAndRefs,
+        operatorIdAndRefs("refId") === contactPersonMatching("contactPerson.refOperatorId"),
+        JoinType.LeftOuter
+      )
+      .map {
+        case (contactPerson, maybeOperator) =>
+          val refOperatorId = Option(maybeOperator).map(_.ohubId).getOrElse("REF_OPERATOR_UNKNOWN")
+          contactPerson.copy(
+            contactPerson = contactPerson.contactPerson.copy(
+              refOperatorId = Some(refOperatorId)
+            )
+          )
+      }
   }
 
-  val contactPersonMatchingInputFile = args(0)
-  val operatorMatchingInputFile = args(1)
-  val outputFile = args(2)
+  override val neededFilePaths = Array(
+    "CONTACT_PERSON_MERGING_INPUT_FILE",
+    "OPERATOR_MERGING_INPUT_FILE",
+    "OUTPUT_FILE"
+  )
 
-  println(s"Merging contact persons from [$contactPersonMatchingInputFile] and [$operatorMatchingInputFile] to [$outputFile]")
+  override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
+    import spark.implicits._
 
-  val spark = SparkSession.
-    builder().
-    appName(this.getClass.getSimpleName).
-    getOrCreate()
+    val (contactPersonMergingInputFile: String, operatorMergingInputFile: String, outputFile: String) =
+      filePaths
 
-  import spark.implicits._
+    log.info(
+      s"Merging contact persons from [$contactPersonMergingInputFile] " +
+        s"and [$operatorMergingInputFile] " +
+        s"to [$outputFile]"
+    )
 
-  // TODO run some performance tests on how this runs on a cluster VS forced repartition
-  spark.sql("SET spark.sql.shuffle.partitions=20").collect()
-  spark.sql("SET spark.default.parallelism=20").collect()
+    // TODO run some performance tests on how this runs on a cluster VS forced repartition
+    spark.sql("SET spark.sql.shuffle.partitions=20").collect()
+    spark.sql("SET spark.default.parallelism=20").collect()
 
-  val startOfJob = System.currentTimeMillis()
+    val contactPersonMerging = storage
+      .readFromParquet[GoldenContactPersonRecord](contactPersonMergingInputFile)
+      .map(line => { // need the operator ref to have the data of a concat id
+        val contact = line.contactPerson
+        val concatId = StringFunctions.createConcatId(
+          contact.countryCode,
+          contact.source,
+          contact.refOperatorId
+        )
 
-  val contactPersonMatching: Dataset[GoldenContactPersonRecord] = spark.read.parquet(contactPersonMatchingInputFile)
-    .as[GoldenContactPersonRecord]
-    .map(line => { // need the operator ref to have the data of a concat id
-      val contact = line.CONTACT_PERSON
-      line.copy(CONTACT_PERSON = contact.copy(REF_OPERATOR_ID = Some(s"${contact.COUNTRY_CODE.get}~${contact.SOURCE.get}~${contact.REF_OPERATOR_ID.get}")))
-    })
+        line.copy(
+          contactPerson = contact.copy(
+            refOperatorId = Some(concatId)
+          )
+        )
+      })
 
-  val operatorIdAndRefs:Dataset[OHubIdAndRefId] = spark.read.parquet(operatorMatchingInputFile)
-    .select($"OHUB_OPERATOR_ID", $"REF_IDS")
-    .flatMap(row => row.getSeq[String](1).map(OHubIdAndRefId(row.getString(0),_)))
+    val operatorIdAndRefs = storage
+      .readFromParquet[GoldenOperatorRecord](operatorMergingInputFile)
+      .select($"ohubOperatorId", $"refIds")
+      .flatMap(row => row.getSeq[String](1).map(OHubIdAndRefId(row.getString(0),_)))
 
-  val joined:Dataset[GoldenContactPersonRecord] = contactPersonMatching
-    .joinWith(operatorIdAndRefs, operatorIdAndRefs("REF_ID") === contactPersonMatching("CONTACT_PERSON.REF_OPERATOR_ID"), "left")
-    .map(tuple => {
-      val contactPerson:GoldenContactPersonRecord = tuple._1
-      val operator:OHubIdAndRefId = Option(tuple._2).getOrElse(OHubIdAndRefId(s"REF_OPERATOR_UNKNOWN", "UNKNOWN"))
-      contactPerson.copy(CONTACT_PERSON = contactPerson.CONTACT_PERSON.copy(REF_OPERATOR_ID = Some(operator.OHUB_ID)))
-    })
+    val transformed = transform(spark, contactPersonMerging, operatorIdAndRefs)
 
-  joined.write.mode(Overwrite).partitionBy("COUNTRY_CODE").format("parquet").save(outputFile)
-
-  println(s"Done in ${(System.currentTimeMillis - startOfJob) / 1000}s")
+    storage
+      .writeToParquet(transformed, outputFile, partitionBy = "countryCode")
+  }
 }

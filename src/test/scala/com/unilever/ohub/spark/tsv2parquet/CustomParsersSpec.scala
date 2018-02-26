@@ -1,23 +1,12 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import java.math.BigInteger
-import java.text.ParseException
 import com.unilever.ohub.spark.generic.StringFunctions._
-
-import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.{ FunSpec, Matchers }
 import CustomParsers._
+import org.apache.log4j.{ LogManager, Logger }
 
 class CustomParsersSpec extends FunSpec with Matchers {
-
-  describe("parseStringOption") {
-    it("should parse an empty string") {
-      assert(parseStringOption("").isEmpty)
-    }
-
-    it("should parse myTest as a string") {
-      assert(parseStringOption("myTest").get.toString == "myTest")
-    }
-  }
+  implicit val testLogger: Logger = LogManager.getLogger(this.getClass)
 
   describe("onlyFillLastNameWhenFirstEqualsLastName") {
     it("should return the first name if last name is empty and first not") {
@@ -66,10 +55,8 @@ class CustomParsersSpec extends FunSpec with Matchers {
       assert(parseDateTimeStampOption("2017.12.15 12:13:14").get.toString == "2017-12-15 12:13:14.0")
     }
 
-    it("should throw exception on other input") {
-      the[MatchError] thrownBy {
-        parseDateTimeStampOption("Foo")
-      } should have message "Foo (of class java.lang.String)"
+    it("should return None on other input") {
+      assert(parseDateTimeStampOption("Foo").isEmpty)
     }
   }
 
@@ -210,20 +197,6 @@ class CustomParsersSpec extends FunSpec with Matchers {
     }
     it("""should return 0.25 when the first string is "Hotel California" and the second string is "California Hotel"""") {
       assert(calculateLevenshtein("Hotel California".toCharArray, "California Hotel".toCharArray) == 0.25)
-    }
-  }
-
-  describe("checkLineLength") {
-    it("should do nothing when the line length matches") {
-      noException should be thrownBy {
-        checkLineLength(Array("1", "2"), 2)
-      }
-    }
-
-    it("should throw an exception when the line length doesn't match") {
-      assertThrows[IllegalArgumentException] {
-        checkLineLength(Array("1", "2"), 42)
-      }
     }
   }
 
