@@ -228,7 +228,8 @@ similarity_schema = StructType([
 ])
 
 
-def calculate_similarity(chunks_rdd, csr_rdd_transpose, n_top, threshold):
+def calculate_similarity(chunks_rdd, csr_rdd_transpose,
+                         n_top, threshold, upper_triangular=False):
     """ Similarity is calculated in chunks
     """
     similarity = chunks_rdd.flatMap(
@@ -236,7 +237,7 @@ def calculate_similarity(chunks_rdd, csr_rdd_transpose, n_top, threshold):
                                    n_top=n_top,
                                    threshold=threshold,
                                    start_row=x[1],
-                                   upper_triangular=True)
+                                   upper_triangular=upper_triangular)
     )
     return similarity.toDF(similarity_schema)
 
@@ -262,23 +263,40 @@ def match_strings(spark, df,
     vectorized_strings = (
         str_vectorizer
         .transform(df)
-        .select([row_number_column, VECTORIZE_STRING_COLUMN_NAME]))
+        .select([row_number_column, VECTORIZE_STRING_COLUMN_NAME])
+    )
 
     names_vs_ngrams = dense_to_sparse_ddf(vectorized_strings,
                                           row_number_column)
-
     csr_names_vs_ngrams = sparse_to_csr_matrix(names_vs_ngrams,
                                                row_number_column)
 
-    csr_rdd_transpose = spark.sparkContext.broadcast(
-        csr_names_vs_ngrams.transpose()
-    )
+    if df2:
+        upper_triangular = False
+        vectorized_strings_2 = (
+            str_vectorizer
+            .transform(df2)
+            .select([row_number_column, VECTORIZE_STRING_COLUMN_NAME])
+        )
+
+        names_vs_ngrams_2 = dense_to_sparse_ddf(vectorized_strings_2,
+                                                row_number_column)
+        csr_names_vs_ngrams_2 = sparse_to_csr_matrix(names_vs_ngrams_2,
+                                                     row_number_column)
+        csr_rdd_transpose = spark.sparkContext.broadcast(
+            csr_names_vs_ngrams_2.transpose()
+        )
+    else:
+        upper_triangular = True
+        csr_rdd_transpose = spark.sparkContext.broadcast(
+            csr_names_vs_ngrams.transpose()
+        )
 
     chunks = split_into_chunks(csr_names_vs_ngrams, matrix_chunks_rows)
     chunks_rdd = spark.sparkContext.parallelize(chunks, numSlices=len(chunks))
     del csr_names_vs_ngrams
 
     similarity = calculate_similarity(chunks_rdd, csr_rdd_transpose,
-                                      n_top, threshold)
+                                      n_top, threshold, upper_triangular)
 
     return similarity
