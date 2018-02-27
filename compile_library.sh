@@ -4,7 +4,7 @@ set -e
 # Compile c++ library using the Cython wrapper
 
 # move to root folder
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/string_matching_package"
 cd $DIR
 
 rm -rf dist
@@ -15,4 +15,5 @@ python setup.py bdist_egg
 
 
 # rename to persistent name
-cp dist/*.egg dist/string_matching.egg
+mkdir ../dist
+cp dist/*.egg ../dist/string_matching.egg
