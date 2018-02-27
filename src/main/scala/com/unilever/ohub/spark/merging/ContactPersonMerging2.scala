@@ -7,12 +7,12 @@ import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-case class OHubIdAndRefId(ohubId:String, refId:String)
-
 // The step that fixes the foreign key links between contact persons and operators
 // Temporarily in a 2nd file to make development easier,
 // will end up in the first ContactPersonMerging job eventually.
 object ContactPersonMerging2 extends SparkJob {
+  private case class OHubIdAndRefId(ohubId: String, refId: String)
+
   def transform(
     spark: SparkSession,
     contactPersonMatching: Dataset[GoldenContactPersonRecord],
