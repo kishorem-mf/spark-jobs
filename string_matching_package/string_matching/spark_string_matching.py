@@ -11,8 +11,7 @@ General Flow:
 - Tokenized vector is normalized.
 - Cosine similarity is calculated by absolute squaring the matrix.
 - Collect N number of matches above a threshold
-- Group matches and assing a group ID
-- Write parquet file partition by country code
+- Return dataframe with row numbers pairs and their similarity value
 """
 
 __author__ = "Rodrigo Agundez"

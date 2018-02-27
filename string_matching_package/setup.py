@@ -3,8 +3,6 @@ from Cython.Build import cythonize
 from Cython.Distutils import build_ext
 from setuptools import setup, Extension
 
-from string_matching import __version__
-
 ext_utils = Extension(
     'string_matching.sparse_dot_topn',
     sources=['./string_matching/sparse_dot_topn.pyx',
@@ -16,7 +14,6 @@ ext_utils = Extension(
 
 setup(
     name='string_matching',
-    version=__version__,
     setup_requires=[
         # Setuptools 18.0 properly handles Cython extensions.
         'setuptools>=18.0',
