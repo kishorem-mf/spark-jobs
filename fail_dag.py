@@ -7,7 +7,7 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime(2018, 2, 6),
-    'email': ['timvancann@godatadriven.com'],
+    'email': ['ufs-devs@googlegroups.com'],
     'email_on_failure': True,
     'email_on_retry': True,
     'retries': 1,
