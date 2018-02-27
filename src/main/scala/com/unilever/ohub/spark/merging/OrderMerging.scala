@@ -51,7 +51,7 @@ object OrderMerging extends SparkJob {
       .joinWith(
         operators,
         operators("countryCode") === orders("countryCode")
-          and operators("refId").contains(orders("refOperatorId")),
+          and operators("refId") === orders("refOperatorId"),
         JoinType.Left
       )
       .map {
@@ -64,7 +64,7 @@ object OrderMerging extends SparkJob {
       .joinWith(
         contactPersons,
         contactPersons("countryCode") === operatorsJoined("countryCode")
-          and contactPersons("refId").contains(operatorsJoined("refContactPersonId")),
+          and contactPersons("refId") === operatorsJoined("refContactPersonId"),
         JoinType.Left
       )
       .map {
