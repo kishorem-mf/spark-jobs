@@ -10,8 +10,8 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime(2018, 2, 6),
-    'email': ['airflow@airflow.com'],
-    'email_on_failure': False,
+    'email': ['timvancann@godatadriven.com'],
+    'email_on_failure': True,
     'email_on_retry': False,
     'retries': 0
 }
@@ -20,7 +20,7 @@ cluster_defaults = {
     'gcp_conn_id': 'airflow-sp',
     'cluster_name': 'ouniverse-new-leads',
     'project_id': 'ufs-prod',
-    'region': 'global', # has to be global due to bug in airflow dataproc code
+    'region': 'global',  # has to be global due to bug in airflow dataproc code
 }
 
 gs_jar_bucket = 'gs://ufs-prod/deployment/ouniverse'
@@ -70,9 +70,17 @@ with DAG('new_leads', default_args=default_args,
                    '--outputpath', f'{gs_data_bucket}/output/phaseIIb_output',
                    '--apiKey', Variable.get('google_api_key')])
 
-    prioritize = BashOperator(
+    prioritize = DataProcSparkOperator(
         task_id="prioritise_leads",
-        bash_command='echo "execute spark job"')
+        main_class='com.unilever.ouniverse.prioritisation.PrioritizeLeads',
+        dataproc_spark_jars=[f'{gs_jar_bucket}/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'],
+        cluster_name=cluster_defaults['cluster_name'],
+        gcp_conn_id=cluster_defaults['gcp_conn_id'],
+        arguments=['--operators', f'{gs_data_bucket}/output/phaseI_output',
+                   '--places', f'{gs_data_bucket}/output/phaseIIb_output',
+                   '--leads', f'{gs_data_bucket}/input/cities.csv',
+                   '--priorities', f'{gs_data_bucket}/input/priorities.csv',
+                   '--outputpath', f'{gs_data_bucket}/output/phaseIII_output'])
 
 create_cluster >> phase_one >> prioritize
 create_cluster >> phase_two_grid >> phase_two_ids >> prioritize
