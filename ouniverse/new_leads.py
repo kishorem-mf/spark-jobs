@@ -17,7 +17,7 @@ default_args = {
 
 cluster_defaults = {
     'gcp_conn_id': 'airflow-sp',
-    'cluster_name': 'ouniverse_new_leads',
+    'cluster_name': 'ouniverse-new-leads',
     'project_id': 'ufs-prod',
     'region': 'europe-west4',
 }
@@ -61,5 +61,5 @@ with DAG('new_leads', default_args=default_args,
         task_id="prioritise_leads",
         bash_command='echo "execute spark job"')
 
-create_cluster >> phase_one >> delete_cluster
-create_cluster >> phase_two_grid >> phase_two_ids >> delete_cluster
+create_cluster >> phase_one >> prioritize >> delete_cluster
+create_cluster >> phase_two_grid >> phase_two_ids >> prioritize >> delete_cluster
