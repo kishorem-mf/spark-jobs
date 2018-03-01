@@ -39,15 +39,13 @@ with DAG('new_leads', default_args=default_args,
 
     phase_one = DataProcSparkOperator(
         task_id="phase_one",
-        # main_jar=f'{gs_jar_bucket}/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar',
         main_class='com.unilever.ouniverse.leads.OperatorMapsSearcher',
+        dataproc_spark_jars=[f'{gs_jar_bucket}/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'],
         cluster_name=cluster_defaults['cluster_name'],
         gcp_conn_id=cluster_defaults['gcp_conn_id'],
         arguments=[f'--operators {gs_data_bucket}/input/phase_I_NZ_sample.csv',
                    f'--outputpath {gs_data_bucket}/output/phaseI_output',
-                   '--apiKey {{ google_api_key}}']
-
-    )
+                   '--apiKey {{ google_api_key}}'])
 
     phase_two_grid = BashOperator(
         task_id="phase_two_grid",
