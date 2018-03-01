@@ -24,6 +24,7 @@ cluster_defaults = {
 
 gs_jar_bucket = 'gs://ufs-prod/deployment/ouniverse'
 gs_data_bucket = 'gs://ufs-prod/data/raw/ouniverse'
+api_key = 'AIzaSyAYWgbn_awfrpfH4QrYQbUWQU0MAU1EbKI' # ugly ouch
 
 with DAG('new_leads', default_args=default_args,
          schedule_interval='@once') as dag:
@@ -43,17 +44,31 @@ with DAG('new_leads', default_args=default_args,
         dataproc_spark_jars=[f'{gs_jar_bucket}/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'],
         cluster_name=cluster_defaults['cluster_name'],
         gcp_conn_id=cluster_defaults['gcp_conn_id'],
-        arguments=[f'--operators {gs_data_bucket}/input/phase_I_NZ_sample.csv',
-                   f'--outputpath {gs_data_bucket}/output/phaseI_output',
-                   '--apiKey {{ google_api_key}}'])
+        arguments=['--operators', f'{gs_data_bucket}/input/phase_I_NZ_sample.csv',
+                   '--outputpath', f'{gs_data_bucket}/output/phaseI_output',
+                   '--apiKey', api_key])
 
-    phase_two_grid = BashOperator(
+    phase_two_grid = DataProcSparkOperator(
         task_id="phase_two_grid",
-        bash_command='echo "execute ouniverse phase II grid search"')
+        main_class='com.unilever.ouniverse.leads.GridSearcher',
+        dataproc_spark_jars=[f'{gs_jar_bucket}/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'],
+        cluster_name=cluster_defaults['cluster_name'],
+        gcp_conn_id=cluster_defaults['gcp_conn_id'],
+        arguments=['--leads', f'{gs_data_bucket}/input/Phase_II_input_NZ_sample.csv',
+                   '--outputpath', f'{gs_data_bucket}/output/phaseIIa_output',
+                   '--apiKey', api_key])
 
-    phase_two_ids = BashOperator(
+    phase_two_ids = DataProcSparkOperator(
         task_id="phase_two_ids",
-        bash_command='echo "execute ouniverse phase II id metadata"')
+        main_class='com.unilever.ouniverse.leads.PlaceIdSearcher',
+        dataproc_spark_jars=[f'{gs_jar_bucket}/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'],
+        cluster_name=cluster_defaults['cluster_name'],
+        gcp_conn_id=cluster_defaults['gcp_conn_id'],
+        arguments=['--places', f'{gs_data_bucket}/output/phaseIIa_output',
+                   '--idColumn', 'placeId',
+                   '--fileType', 'parquet',
+                   '--outputpath', f'{gs_data_bucket}/output/phaseIIb_output',
+                   '--apiKey', api_key])
 
     prioritize = BashOperator(
         task_id="prioritise_leads",
