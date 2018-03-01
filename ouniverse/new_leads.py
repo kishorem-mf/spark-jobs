@@ -39,7 +39,7 @@ with DAG('new_leads', default_args=default_args,
 
     phase_one = DataProcSparkOperator(
         task_id="phase_one",
-        main_jar=f'{gs_jar_bucket}/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar',
+        # main_jar=f'{gs_jar_bucket}/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar',
         main_class='com.unilever.ouniverse.leads.OperatorMapsSearcher',
         cluster_name=cluster_defaults['cluster_name'],
         gcp_conn_id=cluster_defaults['gcp_conn_id'],
