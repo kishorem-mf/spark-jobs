@@ -61,5 +61,6 @@ with DAG('new_leads', default_args=default_args,
         task_id="prioritise_leads",
         bash_command='echo "execute spark job"')
 
-create_cluster >> phase_one >> prioritize >> delete_cluster
-create_cluster >> phase_two_grid >> phase_two_ids >> prioritize >> delete_cluster
+create_cluster >> phase_one >> prioritize
+create_cluster >> phase_two_grid >> phase_two_ids >> prioritize
+prioritize >> delete_cluster
