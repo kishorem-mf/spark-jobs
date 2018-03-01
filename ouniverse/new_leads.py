@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from airflow import DAG
+from airflow.contrib.operators.dataproc_operator import DataprocClusterCreateOperator, DataprocClusterDeleteOperator, \
+    DataProcSparkOperator
 from airflow.operators.bash_operator import BashOperator
 
 default_args = {
@@ -13,11 +15,39 @@ default_args = {
     'retries': 0
 }
 
+cluster_defaults = {
+    'gcp_conn_id': 'airflow-sp',
+    'cluster_name': 'ouniverse_new_leads',
+    'project_id': 'ufs-prod',
+    'region': 'europe-west4',
+}
+
+gs_jar_bucket = 'gs://ufs-prod/deployment/ouniverse'
+gs_data_bucket = 'gs://ufs-prod/data/raw/ouniverse'
+
 with DAG('new_leads', default_args=default_args,
-         schedule_interval='0 0 1 * *') as dag:
-    phase_one = BashOperator(
+         schedule_interval='@once') as dag:
+    create_cluster = DataprocClusterCreateOperator(
+        task_id='create_cluster',
+        num_workers=2,
+        zone='europe-west4-c',
+        **cluster_defaults)
+
+    delete_cluster = DataprocClusterDeleteOperator(
+        task_id='delete_cluster',
+        **cluster_defaults)
+
+    phase_one = DataProcSparkOperator(
         task_id="phase_one",
-        bash_command='echo "execute ouniverse phase I"')
+        main_jar=f'{gs_jar_bucket}/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar',
+        main_class='com.unilever.ouniverse.leads.OperatorMapsSearcher',
+        cluster_name=cluster_defaults['cluster_name'],
+        gcp_conn_id=cluster_defaults['gcp_conn_id'],
+        arguments=[f'--operators {gs_data_bucket}/input/phase_I_NZ_sample.csv',
+                   f'--outputpath {gs_data_bucket}/output/phaseI_output',
+                   '--apiKey {{ google_api_key}}']
+
+    )
 
     phase_two_grid = BashOperator(
         task_id="phase_two_grid",
@@ -27,18 +57,9 @@ with DAG('new_leads', default_args=default_args,
         task_id="phase_two_ids",
         bash_command='echo "execute ouniverse phase II id metadata"')
 
-    create_dataproc = BashOperator(
-        task_id="create_cluster",
-        bash_command='echo "Start dataproc cluster"')
-
-    delete_dataproc = BashOperator(
-        task_id="delete_cluster",
-        bash_command='echo "remove dataproc cluster"')
-
     prioritize = BashOperator(
         task_id="prioritise_leads",
         bash_command='echo "execute spark job"')
 
-phase_one >> create_dataproc
-phase_two_grid >> phase_two_ids >> create_dataproc
-create_dataproc >> prioritize >> delete_dataproc
+create_cluster >> phase_one >> delete_cluster
+create_cluster >> phase_two_grid >> phase_two_grid >> delete_cluster
