@@ -19,7 +19,7 @@ cluster_defaults = {
     'gcp_conn_id': 'airflow-sp',
     'cluster_name': 'ouniverse-new-leads',
     'project_id': 'ufs-prod',
-    'region': 'europe-west4',
+    'region': 'global', # has to be global due to bug in airflow dataproc code
 }
 
 gs_jar_bucket = 'gs://ufs-prod/deployment/ouniverse'
