@@ -28,4 +28,4 @@ t1 = SFTPOperator(
     ssh_hook=acm_ssh_hook,
     remote_host='unilever-sftp.neolane.net',
     remote_folder='/incoming/OHUB_2_testing/quoted_semi_colon_delimited',
-    destination_folder={'acm_destination_folder': 'The folder to store files from the ACM SFTP server in'})
+    destination_folder='/tmp/acm')

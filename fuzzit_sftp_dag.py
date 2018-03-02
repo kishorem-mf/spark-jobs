@@ -27,4 +27,4 @@ t1 = SFTPOperator(
     dag=dag,
     ssh_hook=fuzzit_ssh_hook,
     remote_host='apps.systrion.eu',
-    destination_folder={'fuzzit_destination_folder': 'The folder to store files from the Fuzzit SFTP server in'})
+    destination_folder='/tmp/fuzzit')
