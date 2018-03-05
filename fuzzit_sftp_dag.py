@@ -2,7 +2,7 @@ from datetime import datetime
 
 from airflow import DAG
 from airflow.contrib.hooks.ssh_hook import SSHHook
-from custom_operators.sftp_operator import SFTPOperator
+from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 
 
 default_args = {
@@ -20,10 +20,14 @@ fuzzit_ssh_hook = SSHHook(ssh_conn_id='fuzzit_sftp_ssh')
 dag = DAG('fuzzit_sftp_dag', default_args=default_args,
           schedule_interval="0 0 * * *")
 
+templated_local_filepath = "/tmp/fuzzit/{{ds}}/UFS_Fuzzit_OHUB20_1400.zip"
+templated_remote_filepath = "./UFS_Fuzzit_OHUB20_{{macros.ds_format(ds, '%Y%m%d')}}_1400.zip"
+
 t1 = SFTPOperator(
-    task_id='Fetch all Fuzzit files',
+    task_id='Fetch Fuzzit files for date',
     dag=dag,
     ssh_hook=fuzzit_ssh_hook,
-    remote_host={'fuzzit_remote_host'},
-    remote_folder={'fuzzit_remote_folder'},
-    destination_folder={'fuzzit_destination_folder'})
+    remote_host='apps.systrion.eu',
+    local_filepath=templated_local_filepath,
+    remote_filepath=templated_remote_filepath,
+    operation=SFTPOperation.GET)

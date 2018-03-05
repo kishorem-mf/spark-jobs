@@ -61,13 +61,6 @@ class GAFetchOperator(BaseOperator):
         GB=136489308,
     )
 
-    @staticmethod
-    def to_datetime(date_string):
-        return date(
-            int(date_string[0:4]),
-            int(date_string[5:6]),
-            int(date_string[7:8]))
-
     """
     Fetches Google Analytics data from BigQuery for given country codes and given timeframe and stores it as AVRO
 
@@ -75,28 +68,23 @@ class GAFetchOperator(BaseOperator):
     :type bigquery_conn_id: string
     :param country_codes: am array of country codes to fetch for.
     :type country_codes: [string]
-    :param date_from: the first date to fetch for in string form,
+    :param date: the first date to fetch for in string form,
                        formatted as YYYMMDD.
-    :type date_from: string
-    :param date_to: the last date to fetch for in string form,
-                     formatted as YYYMMDD.
-    :type date_to: string
+    :type date: date
     :param destination_folder: destination folder to write the AVRO files into
     :type destination_folder: string
     """
     def __init__(self,
                  bigquery_conn_id,
                  country_codes,
-                 date_from,
-                 date_to,
+                 date,
                  destination_folder,
                  *args,
                  **kwargs):
         super(GAFetchOperator, self).__init__(*args, **kwargs)
         self.bigquery_conn_id = bigquery_conn_id
         self.country_codes = country_codes
-        self.date_from = GAFetchOperator.to_datetime(date_from)
-        self.date_to = GAFetchOperator.to_datetime(date_to)
+        self.date = date
         self.destination_folder = destination_folder
 
     @staticmethod
@@ -134,8 +122,7 @@ class GAFetchOperator(BaseOperator):
     def fetch_for_country(context,
                           bigquery_conn_id,
                           country_code,
-                          date_from,
-                          date_to,
+                          date,
                           destination_folder):
         try:
             ga_country_code = GAFetchOperator.country_codes.get(country_code)
@@ -144,21 +131,17 @@ class GAFetchOperator(BaseOperator):
                 'No GA code available for country code: ' + country_code, e)
             return
 
-        date_delta = date_to - date_from
-        for i in range(date_delta.days + 1):
-            working_date = date_from + timedelta(days=i)
-            GAFetchOperator.fetch_for_date(context,
-                                           bigquery_conn_id,
-                                           country_code,
-                                           ga_country_code,
-                                           working_date,
-                                           destination_folder)
+        GAFetchOperator.fetch_for_date(context,
+                                       bigquery_conn_id,
+                                       country_code,
+                                       ga_country_code,
+                                       date,
+                                       destination_folder)
 
     def execute(self, context):
         for country_code in self.country_codes:
             GAFetchOperator.fetch_for_country(context,
                                               self.bigquery_conn_id,
                                               country_code,
-                                              self.date_from,
-                                              self.date_to,
+                                              self.date,
                                               self.destination_folder)
