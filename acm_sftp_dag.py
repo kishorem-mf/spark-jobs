@@ -17,17 +17,18 @@ default_args = {
 
 acm_ssh_hook = SSHHook(ssh_conn_id='acm_sftp_ssh')
 
-remote_filepath = "/incoming/OHUB_2_testing/quoted_semi_colon_delimited/"
+rfp = "/incoming/OHUB_2_testing/quoted_semi_colon_delimited/"
+fds = "{{macros.ds_format(ds, '%Y%m%d')}}"
 local_filepath = "/tmp/acm/{{ds}}/"
 templated_local_orderlines_filepath = local_filepath + "ORDERLINES.csv"
-templated_remote_orderlines_filepath = remote_filepath + "UFS_ORDERLINES_{{macros.ds_format(ds, '%Y%m%d')}}*.csv"
+templated_remote_orderlines_filepath = rfp + "UFS_ORDERLINES_" + fds + "*.csv"
 templated_local_orders_filepath = local_filepath + "ORDERS.csv"
-templated_remote_orders_filepath = remote_filepath + "UFS_ORDERS_{{macros.ds_format(ds, '%Y%m%d')}}*.csv"
+templated_remote_orders_filepath = rfp + "UFS_ORDERS_" + fds + "*.csv"
 templated_local_products_filepath = local_filepath + "PRODUCTS.csv"
-templated_remote_products_filepath = remote_filepath + "UFS_PRODUCTS_{{macros.ds_format(ds, '%Y%m%d')}}*.csv"
+templated_remote_products_filepath = rfp + "UFS_PRODUCTS_" + fds + "*.csv"
 
 with DAG('acm_sftp_dag', default_args=default_args,
-          schedule_interval="0 0 * * *") as dag:
+         schedule_interval="0 0 * * *") as dag:
     t1 = SFTPOperator(
         task_id='Fetch ACM order lines for date',
         dag=dag,

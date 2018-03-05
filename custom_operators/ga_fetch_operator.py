@@ -3,7 +3,9 @@ import logging
 from datetime import date, timedelta
 
 from airflow.models import BaseOperator
-from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
+from airflow.contrib.operators.bigquery_to_gcs import (
+    BigQueryToCloudStorageOperator)
+
 
 class GAFetchOperator(BaseOperator):
     country_codes = dict(
@@ -62,7 +64,8 @@ class GAFetchOperator(BaseOperator):
     )
 
     """
-    Fetches Google Analytics data from BigQuery for given country codes and given timeframe and stores it as AVRO
+    Fetches Google Analytics data from BigQuery for given country
+     codes and date and stores it as AVRO.
 
     :param bigquery_conn_id: reference to a specific BigQuery hook.
     :type bigquery_conn_id: string
@@ -71,7 +74,8 @@ class GAFetchOperator(BaseOperator):
     :param date: the first date to fetch for in string form,
                        formatted as YYYMMDD.
     :type date: date
-    :param destination_folder: destination folder to write the AVRO files into
+    :param destination_folder: destination folder to write the
+     AVRO files into
     :type destination_folder: string
     """
     def __init__(self,
