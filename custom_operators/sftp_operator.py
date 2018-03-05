@@ -6,9 +6,10 @@ from airflow.utils.decorators import apply_defaults
 
 class SFTPOperator(BaseOperator):
     """
-    SFTPOperator for transferring all files from a remote host to a destination folder.
-    This operator uses ssh_hook to open sftp trasport channel that serve as basis
-    for file transfer.
+    SFTPOperator for transferring all files from a remote host to a destination
+     folder.
+    This operator uses ssh_hook to open sftp trasport channel that serve as
+     basis for file transfer.
 
     :param ssh_hook: predefined ssh_hook to use for remote execution
     :type ssh_hook: :class:`SSHHook`
@@ -16,7 +17,8 @@ class SFTPOperator(BaseOperator):
     :type ssh_conn_id: str
     :param remote_host: remote host to connect
     :type remote_host: str
-    :param destination_folder: file path to copy all files found on the server to
+    :param destination_folder: file path to copy all files found on the server
+     to
     :type local_filepath: str
     """
     template_fields = ('local_filepath', 'remote_filepath')
@@ -44,7 +46,8 @@ class SFTPOperator(BaseOperator):
                 self.ssh_hook = SSHHook(ssh_conn_id=self.ssh_conn_id)
 
             if not self.ssh_hook:
-                raise AirflowException("can not operate without ssh_hook or ssh_conn_id")
+                raise AirflowException(
+                    "can not operate without ssh_hook or ssh_conn_id")
 
             if self.remote_host is not None:
                 self.ssh_hook.remote_host = self.remote_host
