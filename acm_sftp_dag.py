@@ -4,8 +4,6 @@ from airflow import DAG
 from airflow.contrib.hooks.ssh_hook import SSHHook
 from custom_operators.sftp_operator import SFTPOperator
 
-from spark_job_config import ssh_hook, spark_cmd
-
 
 default_args = {
     'owner': 'airflow',
@@ -26,6 +24,6 @@ t1 = SFTPOperator(
     task_id='Fetch all ACM files',
     dag=dag,
     ssh_hook=acm_ssh_hook,
-    remote_host='unilever-sftp.neolane.net',
-    remote_folder='/incoming/OHUB_2_testing/quoted_semi_colon_delimited',
-    destination_folder='/tmp/acm')
+    remote_host={'acm_remote_host'},
+    remote_folder={'acm_remote_folder'},
+    destination_folder={'acm_remote_host'})

@@ -4,8 +4,6 @@ from airflow import DAG
 from airflow.contrib.hooks.ssh_hook import SSHHook
 from custom_operators.sftp_operator import SFTPOperator
 
-from spark_job_config import ssh_hook, spark_cmd
-
 
 default_args = {
     'owner': 'airflow',
@@ -26,5 +24,6 @@ t1 = SFTPOperator(
     task_id='Fetch all Fuzzit files',
     dag=dag,
     ssh_hook=fuzzit_ssh_hook,
-    remote_host='apps.systrion.eu',
-    destination_folder='/tmp/fuzzit')
+    remote_host={'fuzzit_remote_host'},
+    remote_folder={'fuzzit_remote_folder'},
+    destination_folder={'fuzzit_destination_folder'})
