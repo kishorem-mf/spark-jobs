@@ -29,3 +29,8 @@ libraryDependencies ++= Seq(
 lazy val root = project.in(file(".")).configs(IntegrationTest)
 
 test in assembly := {}
+
+// Scoverage settings
+coverageExcludedPackages := "<empty>;.*storage.*"
+coverageMinimum := 28.65
+coverageFailOnMinimum := true
