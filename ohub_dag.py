@@ -1,109 +1,87 @@
 from airflow import DAG
+from airflow.contrib.operators.dataproc_operator import DataprocClusterCreateOperator, DataprocClusterDeleteOperator, \
+    DataProcSparkOperator
 from airflow.operators.bash_operator import BashOperator
-from airflow.operators.dummy_operator import DummyOperator
 from datetime import datetime, timedelta
 
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2017, 12, 1),
+    'start_date': datetime(2018, 3, 20),
     'email': ['airflow@airflow.com'],
-    'email_on_failure': False,
+    'email_on_failure': True,
     'email_on_retry': False,
     'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    'retry_delay': timedelta(minutes=1),
     'pool': 'ohub-pool',
-    # 'queue': 'bash_queue',
-    # 'pool': 'backfill',
-    # 'priority_weight': 10,
-    # 'end_date': datetime(2016, 1, 1),
 }
 
+gs_jar_bucket = 'gs://ufs-prod/deployment/ohub2.0'
+gs_data_input_bucket = 'gs://ufs-prod/data/raw/{}/**/*.csv'
+gs_data_output_bucket = 'gs://ufs-prod/data/parquet/{}.parquet'
+
+cluster_defaults = {
+    'gcp_conn_id': 'airflow-sp',
+    'cluster_name': 'ouniverse-new-leads',
+    'project_id': 'ufs-prod',
+    'region': 'global',  # has to be global due to bug in airflow dataproc code
+    'jars': [f'{gs_jar_bucket}/spark-jobs-assembly-0.1.jar'],
+}
+
+csv_to_parquet = [
+    {'class': 'OperatorConverter',
+     'input': 'OPERATORS'},
+    {'class': 'OrderConverter',
+     'input': 'ORDERS'},
+    {'class': 'ContactPersonConverter',
+     'input': 'CONTACTPERSONS'},
+    {'class': 'ProductConverter',
+     'input': 'PRODUCTS'},
+]
+
+to_acm = [
+    {'class': 'OperatorConverter',
+     'input': 'OPERATORS'},
+    {'class': 'OrderConverter',
+     'input': 'ORDERS'},
+    {'class': 'ContactPersonConverter',
+     'input': 'CONTACTPERSONS'},
+    {'class': 'ProductConverter',
+     'input': 'PRODUCTS'},
+]
 with DAG('ohub_dag', default_args=default_args,
-         schedule_interval="0 * * * *") as dag:
-    operators_to_datalake = BashOperator(
-        task_id='operators_to_datalake',
-        bash_command='echo "operators_to_datalake"')
+         schedule_interval="0 0 * * *") as dag:
+    create_cluster = DataprocClusterCreateOperator(
+        task_id='create_cluster',
+        num_workers=5,
+        worker_machine_type='n1-standard-16',
+        zone='europe-west4-c',
+        **cluster_defaults)
 
-    contactpersons_to_datalake = BashOperator(
-        task_id='contactpersons_to_datalake',
-        bash_command='echo "contactpersons_to_datalake"')
+    delete_cluster = DataprocClusterDeleteOperator(
+        task_id='delete_cluster',
+        **cluster_defaults)
 
-    orders_to_datalake = BashOperator(
-        task_id='orders_to_datalake',
-        bash_command='echo "orders_to_datalake"')
+    for task in csv_to_parquet:
+        task_name = f"{task['input'].lower()}_to_csv"
+        globals()[task_name] = DataProcSparkOperator(
+            task_id=task_name,
+            main_class=f"com.unilever.ohub.spark.tsv2parquet/{task['class']}",
+            dataproc_spark_jars=cluster_defaults['jars'],
+            cluster_name=cluster_defaults['cluster_name'],
+            gcp_conn_id=cluster_defaults['gcp_conn_id'],
+            arguments=[gs_data_input_bucket.format(task['input']),
+                       gs_data_output_bucket.format(task['input'].lower())])
+        create_cluster >> globals()[task_name]
 
-    products_to_datalake = BashOperator(
-        task_id='products_to_datalake',
-        bash_command='echo "products_to_datalake"')
-
-    create_spark_cluster = BashOperator(
-        task_id='create_spark_cluster',
-        bash_command='echo "create_spark_cluster"')
-
-    operators_to_parquet = BashOperator(
-        task_id='operators_to_parquet',
-        bash_command='echo "operators_to_parquet"')
-
-    contactpersons_to_parquet = BashOperator(
-        task_id='contactpersons_to_parquet',
-        bash_command='echo "contactpersons_to_parquet"')
-
-    orders_to_parquet = BashOperator(
-        task_id='orders_to_parquet',
-        bash_command='echo "orders_to_parquet"')
-
-    products_to_parquet = BashOperator(
-        task_id='products_to_parquet',
-        bash_command='echo "products_to_parquet"')
-
-    operators_deduplicate = BashOperator(
-        task_id='operators_deduplicate',
-        bash_command='echo "operators_deduplicate"')
-
-    contactpersons_deduplicate = BashOperator(
-        task_id='contactpersons_deduplicate',
-        bash_command='echo "contactpersons_deduplicate"')
-
-    orders_deduplicate = BashOperator(
-        task_id='orders_deduplicate',
-        bash_command='echo "orders_deduplicate"')
-
-    products_deduplicate = BashOperator(
-        task_id='products_deduplicate',
-        bash_command='echo "products_deduplicate"')
-
-    delete_spark_cluster = BashOperator(
-        task_id='delete_spark_cluster',
-        bash_command='echo "delete_spark_cluster"')
-
-    operators_to_acm = BashOperator(
-        task_id='operators_to_acm',
-        bash_command='echo "operators_to_acm"')
-
-    contactpersons_to_acm = BashOperator(
-        task_id='contactpersons_to_acm',
-        bash_command='echo "contactpersons_to_acm"')
-
-    orders_to_acm = BashOperator(
-        task_id='orders_to_acm',
-        bash_command='echo "orders_to_acm"')
-
-    products_to_acm = BashOperator(
-        task_id='products_to_acm',
-        bash_command='echo "products_to_acm"')
-
-operators_to_datalake >> create_spark_cluster
-contactpersons_to_datalake >> create_spark_cluster
-orders_to_datalake >> create_spark_cluster
-products_to_datalake >> create_spark_cluster
-
-create_spark_cluster >> operators_to_parquet >> operators_deduplicate >> delete_spark_cluster
-create_spark_cluster >> contactpersons_to_parquet >> contactpersons_deduplicate >> delete_spark_cluster
-create_spark_cluster >> orders_to_parquet >> orders_deduplicate >> delete_spark_cluster
-create_spark_cluster >> products_to_parquet >> products_deduplicate >> delete_spark_cluster
-
-operators_deduplicate >> operators_to_acm
-contactpersons_deduplicate >> contactpersons_to_acm
-orders_deduplicate >> orders_to_acm
-products_deduplicate >> products_to_acm
+    for task in to_acm:
+        task_name = f"{task['input'].lower()}_to_acm"
+        globals()[task_name] = DataProcSparkOperator(
+            task_id=task_name,
+            main_class=f"com.unilever.ohub.spark.acm/{task['class']}",
+            dataproc_spark_jars=cluster_defaults['jars'],
+            cluster_name=cluster_defaults['cluster_name'],
+            gcp_conn_id=cluster_defaults['gcp_conn_id'],
+            arguments=[gs_data_input_bucket.format(task['input']),
+                       gs_data_output_bucket.format(task['input'].lower())])
+        globals()[task_name] >> delete_cluster
