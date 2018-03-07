@@ -98,10 +98,14 @@ contactpersons_to_datalake >> create_spark_cluster
 orders_to_datalake >> create_spark_cluster
 products_to_datalake >> create_spark_cluster
 
-create_spark_cluster >> operators_to_parquet >> operators_deduplicate >> delete_spark_cluster
-create_spark_cluster >> contactpersons_to_parquet >> contactpersons_deduplicate >> delete_spark_cluster
-create_spark_cluster >> orders_to_parquet >> orders_deduplicate >> delete_spark_cluster
-create_spark_cluster >> products_to_parquet >> products_deduplicate >> delete_spark_cluster
+create_spark_cluster >> operators_to_parquet >> \
+ operators_deduplicate >> delete_spark_cluster
+create_spark_cluster >> contactpersons_to_parquet >> \
+ contactpersons_deduplicate >> delete_spark_cluster
+create_spark_cluster >> orders_to_parquet >> \
+ orders_deduplicate >> delete_spark_cluster
+create_spark_cluster >> products_to_parquet >> \
+ products_deduplicate >> delete_spark_cluster
 
 operators_deduplicate >> operators_to_acm
 contactpersons_deduplicate >> contactpersons_to_acm
