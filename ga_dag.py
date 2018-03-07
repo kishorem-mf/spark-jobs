@@ -1,6 +1,7 @@
 from airflow import DAG
 from datetime import datetime, timedelta
 
+from config import country_codes
 from custom_operators.ga_fetch_operator import GAFetchOperator
 
 
@@ -20,61 +21,7 @@ templeted_destination_folder = "/tmp/ga/{{ds}}"
 with DAG('gcp_ga', default_args=default_args) as dag:
     t1 = GAFetchOperator(
         task_id="Fetch Google Analytics from Google BigQuery for date",
-        dag=dag,
         bigquery_conn_id='gcp_ga_conn_id',
         destination_folder=templeted_destination_folder,
         date={'ds'},
-        country_codes=[
-            'AU',
-            'NZ',
-            'BE',
-            'FR',
-            'NL',
-            # CN,
-            'AT',
-            'DE',
-            'CH',
-            # IN,
-            'IL',
-            'GR',
-            'IT',
-            'MQ',
-            'LK',
-            'PK',
-            'SA',
-            'HK',
-            'TW',
-            # KR,
-            'CA',
-            'US',
-            'CZ',
-            'SK',
-            'EE',
-            'PL',
-            'CO',
-            'MX',
-            # LA,
-            # DK,
-            'FI',
-            'NO',
-            # SE,
-            'PT',
-            'RU',
-            'ZA',
-            'ID',
-            'MY',
-            # PH,
-            'SG',
-            'TH',
-            'VN',
-            'BG',
-            'HU',
-            'RO',
-            'AR',
-            'BR',
-            'CL',
-            'ES',
-            'TR',
-            'IE',
-            'GB',
-        ])
+        country_codes=country_codes)

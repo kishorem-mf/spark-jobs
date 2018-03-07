@@ -8,69 +8,15 @@ from airflow.contrib.operators.bigquery_to_gcs import (
 
 
 class GAFetchOperator(BaseOperator):
-    country_codes = dict(
-        AU=149299102,
-        NZ=149386192,
-        BE=136496201,
-        FR=136417566,
-        NL=136443158,
-        # CN=,
-        AT=136478148,
-        DE=136487004,
-        CH=136472077,
-        # IN=,
-        IL=149664234,
-        GR=149621988,
-        IT=149555300,
-        MQ=155123886,
-        LK=159477256,
-        PK=159465213,
-        SA=149449826,
-        HK=149656154,
-        TW=149647289,
-        # KR=,
-        CA=136493502,
-        US=136408293,
-        CZ=149431770,
-        SK=155336641,
-        EE=163567408,
-        PL=149439115,
-        CO=149633268,
-        MX=149602702,
-        # LA=,
-        # DK=,
-        FI=161738564,
-        NO=161745261,
-        # SE=,
-        PT=149305761,
-        RU=149644884,
-        ZA=136119346,
-        ID=142974636,
-        MY=149419183,
-        # PH=,
-        SG=149358335,
-        TH=149424309,
-        VN=152930457,
-        BG=159483761,
-        HU=155330595,
-        RO=155294811,
-        AR=162357462,
-        BR=142986451,
-        CL=161669630,
-        ES=136477925,
-        TR=149299194,
-        IE=162648003,
-        GB=136489308,
-    )
-
     """
     Fetches Google Analytics data from BigQuery for given country
      codes and date and stores it as AVRO.
 
     :param bigquery_conn_id: reference to a specific BigQuery hook.
     :type bigquery_conn_id: string
-    :param country_codes: am array of country codes to fetch for.
-    :type country_codes: [string]
+    :param country_codes: a map from country codes to fetch for 
+     to their corresponding GA code.
+    :type country_codes: [dict]
     :param date: the first date to fetch for in string form,
                        formatted as YYYMMDD.
     :type date: date
@@ -91,8 +37,8 @@ class GAFetchOperator(BaseOperator):
         self.date = date
         self.destination_folder = destination_folder
 
-    @staticmethod
-    def fetch_for_date(context,
+    def fetch_for_date(self,
+                       context,
                        bigquery_conn_id,
                        country_code,
                        ga_country_code,
@@ -122,20 +68,20 @@ class GAFetchOperator(BaseOperator):
 
         bq_operator.execute(context)
 
-    @staticmethod
-    def fetch_for_country(context,
+    def fetch_for_country(self,
+                          context,
                           bigquery_conn_id,
                           country_code,
                           date,
                           destination_folder):
         try:
-            ga_country_code = GAFetchOperator.country_codes.get(country_code)
+            ga_country_code = self.country_codes.get(country_code)
         except Exception as e:
             logging.error(
                 'No GA code available for country code: ' + country_code, e)
             return
 
-        GAFetchOperator.fetch_for_date(context,
+        self.fetch_for_date(context,
                                        bigquery_conn_id,
                                        country_code,
                                        ga_country_code,
@@ -144,8 +90,8 @@ class GAFetchOperator(BaseOperator):
 
     def execute(self, context):
         for country_code in self.country_codes:
-            GAFetchOperator.fetch_for_country(context,
-                                              self.bigquery_conn_id,
-                                              country_code,
-                                              self.date,
-                                              self.destination_folder)
+            self.fetch_for_country(context,
+                                   self.bigquery_conn_id,
+                                   country_code,
+                                   self.date,
+                                   self.destination_folder)
