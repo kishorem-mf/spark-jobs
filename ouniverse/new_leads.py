@@ -1,9 +1,9 @@
 from datetime import datetime
 
 from airflow import DAG
-from airflow.contrib.operators.dataproc_operator import DataprocClusterCreateOperator, DataprocClusterDeleteOperator, \
+from airflow.contrib.operators.dataproc_operator import DataprocClusterCreateOperator, \
+    DataprocClusterDeleteOperator, \
     DataProcSparkOperator
-from airflow.operators.bash_operator import BashOperator
 from airflow.models import Variable
 
 default_args = {
