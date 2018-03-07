@@ -65,7 +65,7 @@ class GAFetchOperator(BaseOperator):
                           date,
                           destination_folder):
         try:
-            ga_country_code = self.country_codes.get(country_code)
+            ga_country_code = self.country_codes[country_code]
         except Exception as e:
             logging.error(
                 'No GA code available for country code: ' + country_code, e)
