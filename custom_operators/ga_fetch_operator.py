@@ -79,7 +79,7 @@ class GAFetchOperator(BaseOperator):
                             destination_folder)
 
     def execute(self, context):
-        for country_code in self.country_codes:
+        for country_code in self.country_codes.keys():
             self.fetch_for_country(context,
                                    self.bigquery_conn_id,
                                    country_code,
