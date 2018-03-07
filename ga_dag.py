@@ -16,12 +16,10 @@ default_args = {
     'start_date': datetime.now(),
 }
 
-templeted_destination_folder = "/tmp/ga/{{ds}}"
-
 with DAG('gcp_ga', default_args=default_args) as dag:
     t1 = GAFetchOperator(
         task_id="Fetch Google Analytics from Google BigQuery for date",
         bigquery_conn_id='gcp_ga_conn_id',
-        destination_folder=templeted_destination_folder,
+        destination_folder="/tmp/ga/{{ds}}",
         date={'ds'},
         country_codes=country_codes)

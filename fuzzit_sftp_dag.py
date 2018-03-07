@@ -24,7 +24,6 @@ with DAG('fuzzit_sftp_dag', default_args=default_args,
          schedule_interval="0 0 * * *") as dag:
     t1 = SFTPOperator(
         task_id='Fetch Fuzzit files for date',
-        dag=dag,
         ssh_hook=fuzzit_ssh_hook,
         remote_host='apps.systrion.eu',
         local_filepath=templated_local_filepath,
