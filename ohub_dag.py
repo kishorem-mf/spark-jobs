@@ -58,6 +58,12 @@ to_acm = [
      'output': 'products',
      'input': 'products'},
 ]
+
+spark_task_defaults = {
+    'dataproc_spark_jars': jars,
+    'cluster_name': cluster_defaults['cluster_name'],
+    'gcp_conn_id': cluster_defaults['gcp_conn_id'],
+}
 with DAG('ohub_dag', default_args=default_args,
          schedule_interval="@once") as dag:
     create_cluster = DataprocClusterCreateOperator(
@@ -77,9 +83,7 @@ with DAG('ohub_dag', default_args=default_args,
         globals()[task_name] = DataProcSparkOperator(
             task_id=task_name,
             main_class=f"com.unilever.ohub.spark.tsv2parquet.{task['class']}",
-            dataproc_spark_jars=jars,
-            cluster_name=cluster_defaults['cluster_name'],
-            gcp_conn_id=cluster_defaults['gcp_conn_id'],
+            **spark_task_defaults,
             arguments=[gs_data_input_bucket.format(task['input']),
                        gs_data_output_bucket.format(task['input'].lower())])
         create_cluster >> globals()[task_name]
@@ -89,9 +93,7 @@ with DAG('ohub_dag', default_args=default_args,
         globals()[task_name] = DataProcSparkOperator(
             task_id=task_name,
             main_class=f"com.unilever.ohub.spark.acm.{task['class']}",
-            dataproc_spark_jars=jars,
-            cluster_name=cluster_defaults['cluster_name'],
-            gcp_conn_id=cluster_defaults['gcp_conn_id'],
+            **spark_task_defaults,
             arguments=[gs_data_input_bucket.format(task['input']),
                        gs_data_output_bucket.format(task['output']) + '_acm'])
         globals()[task_name] >> delete_cluster
@@ -108,9 +110,7 @@ with DAG('ohub_dag', default_args=default_args,
     merge_operators = DataProcSparkOperator(
         task_id='merge_operators',
         main_class='com.unilever.ohub.spark.merging.OperatorMerging',
-        dataproc_spark_jars=jars,
-        cluster_name=cluster_defaults['cluster_name'],
-        gcp_conn_id=cluster_defaults['gcp_conn_id'],
+        **spark_task_defaults,
         arguments=[gs_data_output_bucket.format('operators_matched'),
                    gs_data_input_bucket.format('OPERATORS'),
                    gs_data_output_bucket.format('operators_merged')])
@@ -120,9 +120,7 @@ with DAG('ohub_dag', default_args=default_args,
     merge_contactpersons1 = DataProcSparkOperator(
         task_id='merge_contactpersons_1',
         main_class='com.unilever.ohub.spark.merging.ContactPersonMerging1',
-        dataproc_spark_jars=jars,
-        cluster_name=cluster_defaults['cluster_name'],
-        gcp_conn_id=cluster_defaults['gcp_conn_id'],
+        **spark_task_defaults,
         arguments=[gs_data_output_bucket.format('contactpersons'),
                    gs_data_output_bucket.format('contactpersons_merged_1')])
 
@@ -132,9 +130,7 @@ with DAG('ohub_dag', default_args=default_args,
     merge_contactpersons2 = DataProcSparkOperator(
         task_id='merge_contactpersons_2',
         main_class='com.unilever.ohub.spark.merging.ContactPersonMerging2',
-        dataproc_spark_jars=jars,
-        cluster_name=cluster_defaults['cluster_name'],
-        gcp_conn_id=cluster_defaults['gcp_conn_id'],
+        **spark_task_defaults,
         arguments=[gs_data_output_bucket.format('contactpersons_merged_1'),
                    gs_data_output_bucket.format('operators_merged'),
                    gs_data_output_bucket.format('contactpersons_merged_2')])
@@ -144,9 +140,7 @@ with DAG('ohub_dag', default_args=default_args,
     merge_orders = DataProcSparkOperator(
         task_id='merge_orders',
         main_class='com.unilever.ohub.spark.merging.OrderMerging',
-        dataproc_spark_jars=jars,
-        cluster_name=cluster_defaults['cluster_name'],
-        gcp_conn_id=cluster_defaults['gcp_conn_id'],
+        **spark_task_defaults,
         arguments=[gs_data_output_bucket.format('contactpersons_merged_2'),
                    gs_data_output_bucket.format('operators_merged'),
                    gs_data_output_bucket.format('orders'),
