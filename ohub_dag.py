@@ -1,8 +1,8 @@
+from datetime import datetime, timedelta
+
 from airflow import DAG
 from airflow.contrib.operators.dataproc_operator import DataprocClusterCreateOperator, DataprocClusterDeleteOperator, \
     DataProcSparkOperator, DataProcPySparkOperator
-from airflow.operators.bash_operator import BashOperator
-from datetime import datetime, timedelta
 
 default_args = {
     'owner': 'airflow',
@@ -60,7 +60,7 @@ with DAG('ohub_dag', default_args=default_args,
          schedule_interval="@once") as dag:
     create_cluster = DataprocClusterCreateOperator(
         task_id='create_cluster',
-        num_workers=5,
+        num_workers=8,
         worker_machine_type='n1-standard-16',
         zone='europe-west4-c',
         init_actions_uris=[f'{gs_init_scripts_bucket}/ufs-conda.sh'],

@@ -9,6 +9,7 @@ To start writing a DAG for airflow have a look at the existing DAGs or the [airf
 
 ## Viewing the UI
 The UI has been shielded behind local port forwarding. To access the UI:
+
 - Install the gcloud cli tools: https://cloud.google.com/sdk/downloads
 - Login with your user using `gcloud auth` (if you have not been added to the project, ask @Constantijn): https://cloud.google.com/sdk/gcloud/reference/auth/
 - Install kubectl cli: https://kubernetes.io/docs/tasks/tools/install-kubectl/#download-as-part-of-the-google-cloud-sdk
