@@ -113,7 +113,7 @@ with DAG('ohub_dag', default_args=default_args,
                    gs_data_input_bucket.format('OPERATORS'),
                    gs_data_output_bucket.format('operators_merged')])
 
-    globals()['operators_to_parquet'] >> match_operators >> merge_operators >> globals()['operators_to_acm']
+    operators_to_parquet >> match_operators >> merge_operators >> operators_to_acm
 
     merge_contactpersons1 = DataProcSparkOperator(
         task_id='merge_contactpersons_1',
@@ -125,7 +125,7 @@ with DAG('ohub_dag', default_args=default_args,
                    gs_data_output_bucket.format('contactpersons_merged_1')])
 
     merge_operators >> merge_contactpersons1
-    globals()['contactpersons_to_parquet'] >> merge_contactpersons1
+    contactpersons_to_parquet >> merge_contactpersons1
 
     merge_contactpersons2 = DataProcSparkOperator(
         task_id='merge_contactpersons_2',
@@ -137,7 +137,7 @@ with DAG('ohub_dag', default_args=default_args,
                    gs_data_output_bucket.format('operators_merged'),
                    gs_data_output_bucket.format('contactpersons_merged_2')])
 
-    merge_contactpersons1 >> merge_contactpersons2 >> globals()['contactpersons_to_acm']
+    merge_contactpersons1 >> merge_contactpersons2 >> contactpersons_to_acm
 
     merge_orders = DataProcSparkOperator(
         task_id='merge_orders',
@@ -151,6 +151,6 @@ with DAG('ohub_dag', default_args=default_args,
 
     merge_operators >> merge_orders >> globals()['orders_to_acm']
     merge_contactpersons2 >> merge_orders
-    globals()['orders_to_parquet'] >> merge_orders
+    orders_to_parquet >> merge_orders
 
-    globals()['products_to_parquet'] >> globals()['products_to_acm']
+    products_to_parquet >> products_to_acm
