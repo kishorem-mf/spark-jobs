@@ -8,7 +8,7 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime(2018, 3, 7),
-    'email': ['airflow@airflow.com'],
+    'email': ['timvancann@godatadriven.com'],
     'email_on_failure': True,
     'email_on_retry': False,
     'retries': 1,
@@ -26,7 +26,7 @@ gs_init_scripts_bucket = 'gs://ufs-prod/jobs/dataproc-init'
 
 cluster_defaults = {
     'gcp_conn_id': 'airflow-sp',
-    'cluster_name': 'ouniverse-new-leads',
+    'cluster_name': 'ohub',
     'project_id': 'ufs-prod',
     'region': 'global',  # has to be global due to bug in airflow dataproc code
 }
