@@ -22,6 +22,7 @@ gs_py_bucket = f'{gs_deployment}/name-matching'
 gs_data_input_bucket = 'gs://ufs-prod/data/raw/{}/**/*.csv'
 gs_data_output_bucket = 'gs://ufs-prod/data/parquet/{}.parquet'
 jars = [f'{gs_jar_bucket}/spark-jobs-assembly-0.1.jar']
+gs_init_scripts_bucket = 'gs://ufs-prod/jobs/dataproc-init'
 
 cluster_defaults = {
     'gcp_conn_id': 'airflow-sp',
@@ -62,6 +63,7 @@ with DAG('ohub_dag', default_args=default_args,
         num_workers=5,
         worker_machine_type='n1-standard-16',
         zone='europe-west4-c',
+        init_actions_uris=[f'{gs_init_scripts_bucket}/ufs-conda.sh'],
         **cluster_defaults)
 
     delete_cluster = DataprocClusterDeleteOperator(
