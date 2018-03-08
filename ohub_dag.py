@@ -4,11 +4,13 @@ from airflow import DAG
 from airflow.contrib.operators.dataproc_operator import DataprocClusterCreateOperator, DataprocClusterDeleteOperator, \
     DataProcSparkOperator, DataProcPySparkOperator
 
+from config import email_addresses
+
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime(2018, 3, 7),
-    'email': ['timvancann@godatadriven.com'],
+    'email': email_addresses,
     'email_on_failure': True,
     'email_on_retry': False,
     'retries': 1,
