@@ -19,8 +19,9 @@ pipelines:
         artifacts:
           - dist/*.egg
     - step:
-        name: Deploy to cluster
+        name: Deploy to gcloud bucket
         script:
-          - ssh hdiuser@edgenodeappx.ulohubhddevne5-ssh.azurehdinsight.net 'mkdir -p ~/deployment/name-matching/dist'
-          - scp dist/*.egg hdiuser@edgenodeappx.ulohubhddevne5-ssh.azurehdinsight.net:~/deployment/name-matching/dist/
-          - scp *.py hdiuser@edgenodeappx.ulohubhddevne5-ssh.azurehdinsight.net:~/deployment/name-matching/
+          - echo $G_SECRET > key.json
+          - gcloud auth activate-service-account bitbucket@ufs-prod.iam.gserviceaccount.com --key-file=key.json
+          - gsutil cp dist/*.egg gs://ufs-prod/deployment/name-matching/dist/
+          - gsutil cp *.py gs://ufs-prod/deployment/name-matching/
