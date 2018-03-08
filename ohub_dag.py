@@ -147,9 +147,10 @@ with DAG('ohub_dag', default_args=default_args,
         dataproc_spark_jars=jars,
         cluster_name=cluster_defaults['cluster_name'],
         gcp_conn_id=cluster_defaults['gcp_conn_id'],
-        arguments=[gs_data_output_bucket.format('contactpersons_merged'),
+        arguments=[gs_data_output_bucket.format('contactpersons_merged_2'),
                    gs_data_output_bucket.format('operators_merged'),
-                   gs_data_output_bucket.format('contactpersons_merged')])
+                   gs_data_output_bucket.format('orders'),
+                   gs_data_output_bucket.format('orders_merged')])
 
     merge_operators >> merge_orders >> globals()['orders_to_acm']
     merge_contactpersons2 >> merge_orders
