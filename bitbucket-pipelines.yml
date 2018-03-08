@@ -1,9 +1,9 @@
-image: timvancann/miniconda3-gcc
 
 pipelines:
   default:
     - step:
         name: Test building EGG
+        image: timvancann/miniconda3-gcc
         script:
           - conda env create -f environment.yml
           - source activate name-matching
@@ -12,6 +12,7 @@ pipelines:
     master:
     - step:
         name: Build EGG
+        image: timvancann/miniconda3-gcc
         script:
           - conda env create -f environment.yml
           - source activate name-matching
@@ -20,6 +21,7 @@ pipelines:
           - dist/*.egg
     - step:
         name: Deploy to gcloud bucket
+        image: google/cloud-sdk:latest
         script:
           - echo $G_SECRET > key.json
           - gcloud auth activate-service-account bitbucket@ufs-prod.iam.gserviceaccount.com --key-file=key.json
