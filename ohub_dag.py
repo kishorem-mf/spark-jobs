@@ -102,8 +102,7 @@ with DAG('ohub_dag', default_args=default_args,
         task_id='match_operators',
         main=f'{gs_py_bucket}/match_operators.py',
         pyfiles=[f'{gs_py_bucket}/dist/string_matching.egg'],
-        cluster_name=cluster_defaults['cluster_name'],
-        gcp_conn_id=cluster_defaults['gcp_conn_id'],
+        **spark_task_defaults,
         arguments=['--input_file', gs_data_output_bucket.format('operators'),
                    '--output_path', gs_data_output_bucket.format('operators_matched')])
 
