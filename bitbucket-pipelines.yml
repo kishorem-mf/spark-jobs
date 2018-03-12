@@ -21,12 +21,14 @@ pipelines:
             - sbt -DsparkDependencyType=provided assembly
           artifacts:
             - target/scala-2.11/*.jar
+
       - step:
           name: Deploy to azure datalake
           image: microsoft/azure-cli
           script:
             - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
-            - az dls fs upload --account ulohub2dldevne --source-path "target/scala-2.11/*.jar" --destination-path "/deployment/ohub2.0/spark-jobs/spark-jobs.jar" --overwrite
+            - fn="$(ls target/scala-2.11/*.jar | cut -d'/' -f3)"
+            - az storage blob upload -f target/scala-2.11/${fn} -c prod -n deployment/spark-jobs/${fn} --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_ACCOUNT}
 
       - step:
           name: Deploy to gcloud bucket
@@ -35,3 +37,27 @@ pipelines:
             - echo $G_SECRET > key.json
             - gcloud auth activate-service-account bitbucket@ufs-prod.iam.gserviceaccount.com --key-file=key.json
             - gsutil cp target/scala-2.11/*.jar gs://ufs-prod/deployment/ohub2.0/
+
+  branches:
+    dev:
+      - step:
+          name: Run tests
+          image: timvancann/spark-sbt-ci:2.11-2.1.0
+          script:
+            - sbt coverage test coverageReport
+      - step:
+          name: Build assembly artifact
+          image: timvancann/spark-sbt-ci:2.11-2.1.0
+          script:
+          script:
+            - sbt -DsparkDependencyType=provided assembly
+          artifacts:
+            - target/scala-2.11/*.jar
+
+      - step:
+          name: Deploy to azure datalake
+          image: microsoft/azure-cli
+          script:
+            - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
+            - fn="$(ls target/scala-2.11/*.jar | cut -d'/' -f3)"
+            - az storage blob upload -f target/scala-2.11/${fn} -c dev -n deployment/spark-jobs/${fn} --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_ACCOUNT}
