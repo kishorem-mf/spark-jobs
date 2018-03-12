@@ -32,4 +32,4 @@ pipelines:
           - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
           - tar -cvf dags.tar **/*.py
           - tar --append --file=dags.tar *.py
-          - az dls fs upload --account ulohub2dldevne --source-path "dags.tar" --destination-path "/deployment/airflow/dags/dags.tar" --overwrite
+          - az storage blob upload -f dags.tar -c airflow -n dags.tar --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_NAME}
