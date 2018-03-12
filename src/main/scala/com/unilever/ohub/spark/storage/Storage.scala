@@ -6,6 +6,7 @@ import com.unilever.ohub.spark.data.{ ChannelMapping, CountryRecord }
 import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{ Column, DataFrame, Dataset, Encoder, SaveMode, SparkSession }
+import java.io.{ File, FileOutputStream }
 
 import scala.io.Source
 
@@ -76,9 +77,20 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .parquet(location)
   }
 
-  override def createCountries: Dataset[CountryRecord] = {
-    val fileName = this.getClass.getResource("/country_codes.csv").getFile
-    readFromCSV(fileName, separator = ",")
+  override val createCountries: Dataset[CountryRecord] = {
+    val file = "country_codes.csv"
+    val in = this.getClass.getResourceAsStream(s"/$file")
+    val out = new FileOutputStream(new File(file))
+
+    Iterator
+      .continually(in.read)
+      .takeWhile(_ != -1)
+      .foreach(b => out.write(b))
+
+    out.close()
+    in.close()
+
+    readFromCSV(file, separator = ",")
       .select(
         $"ISO3166_1_Alpha_2" as "countryCode",
         $"official_name_en" as "countryName",
