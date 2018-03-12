@@ -26,7 +26,7 @@ pipelines:
           image: microsoft/azure-cli
           script:
             - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
-            - az dls fs upload --account ulohub2dldevne --source-path "target/scala-2.11/*.jar" --destination-path "/deployment/ohub2.0/spark-jobs/spark-jobs.jar"
+            - az dls fs upload --account ulohub2dldevne --source-path "target/scala-2.11/*.jar" --destination-path "/deployment/ohub2.0/spark-jobs/spark-jobs.jar" --overwrite
 
       - step:
           name: Deploy to gcloud bucket
