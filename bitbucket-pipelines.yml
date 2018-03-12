@@ -22,6 +22,14 @@ pipelines:
           artifacts:
             - target/scala-2.11/*.jar
       - step:
+          name: Deploy to azure datalake
+          image: microsoft/azure-cli
+          script:
+            - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
+            - az dls fs create --account ulohub2dldevne --path /deployment/ohub2.0/spark-jobs/ --folder
+            - az dls fs upload --account ulohub2dldevne --source-path "target/scala-2.11/*.jar" --destination-path "/deployment/ohub2.0/spark-jobs/spark-jobs.jar"
+
+      - step:
           name: Deploy to gcloud bucket
           image: google/cloud-sdk:latest
           script:
