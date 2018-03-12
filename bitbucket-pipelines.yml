@@ -38,7 +38,6 @@ pipelines:
             - gcloud auth activate-service-account bitbucket@ufs-prod.iam.gserviceaccount.com --key-file=key.json
             - gsutil cp target/scala-2.11/*.jar gs://ufs-prod/deployment/ohub2.0/
 
-  branches:
     dev:
       - step:
           name: Run tests
