@@ -1,3 +1,10 @@
+email_addresses = ['timvancann@godatadriven.com',
+                   'Dennis.Vis@unilever.com',
+                   'constantijnvisinescu@binx.io',
+                   'Tycho.Grouwstra@unilever.com',
+                   'Roderik-von.Maltzahn@unilever.com',
+                   'Gerard.Glind@unilever.com']
+
 country_codes = dict(
     AU=149299102,
     NZ=149386192,
