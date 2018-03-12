@@ -30,6 +30,6 @@ pipelines:
         image: microsoft/azure-cli
         script:
           - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
-          - tar -cvf dags.tar **/*.py
-          - tar --append --file=dags.tar *.py
+          - rm -rf README.md bitbucket-pipelines.yml .gitignore setup.cfg
+          - tar -cvf dags.tar .
           - az storage blob upload -f dags.tar -c airflow -n dags.tar --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_NAME}
