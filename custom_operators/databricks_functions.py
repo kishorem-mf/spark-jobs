@@ -97,7 +97,7 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
     API endpoint.
 
     """
-    template_fields = ('spark_jar_task', 'notebook_task', 'spark_python_task', )
+    template_fields = ('spark_jar_task', 'notebook_task', 'spark_python_task',)
     template_ext = ('.j2', '.jinja2',)
 
     def __init__(
@@ -116,9 +116,9 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
             **kwargs):
 
         super(DatabricksSubmitRunOperator, self).__init__(databricks_conn_id,
-                                                              polling_period_seconds,
-                                                              databricks_retry_limit,
-                                                              **kwargs)
+                                                          polling_period_seconds,
+                                                          databricks_retry_limit,
+                                                          **kwargs)
         if cluster_name is not None and existing_cluster_id is not None:
             raise AirflowException('Cannot specify both cluster name and cluster id, choose one but choose wisely')
         self.cluster_name = cluster_name
@@ -201,9 +201,9 @@ class DatabricksCreateClusterOperator(BaseDatabricksOperator):
                  databricks_retry_limit: int = 3,
                  **kwargs):
         super(DatabricksCreateClusterOperator, self).__init__(databricks_conn_id,
-                                                                  polling_period_seconds,
-                                                                  databricks_retry_limit,
-                                                                  **kwargs)
+                                                              polling_period_seconds,
+                                                              databricks_retry_limit,
+                                                              **kwargs)
         self.cluster_config = cluster_config
         self.cluster_id = None
 
@@ -247,9 +247,9 @@ class DatabricksDeleteClusterOperator(BaseDatabricksOperator):
                  databricks_retry_limit: int = 3,
                  **kwargs):
         super(DatabricksDeleteClusterOperator, self).__init__(databricks_conn_id,
-                                                                  polling_period_seconds,
-                                                                  databricks_retry_limit,
-                                                                  **kwargs)
+                                                              polling_period_seconds,
+                                                              databricks_retry_limit,
+                                                              **kwargs)
         self.cluster_name = cluster_name
         self.cluster_id = None
 
