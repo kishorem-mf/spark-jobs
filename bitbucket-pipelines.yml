@@ -32,4 +32,14 @@ pipelines:
           - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
           - rm -rf README.md bitbucket-pipelines.yml .gitignore setup.cfg
           - tar -cvf dags.tar .
-          - az storage blob upload -f dags.tar -c airflow -n dags.tar --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_ACCOUNT}
+          - az storage blob upload -f dags.tar -c prod -n deployment/airflow/dags/dags.tar --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_ACCOUNT}
+
+    dev:
+    - step:
+        name: Deploy to azure datalake
+        image: microsoft/azure-cli
+        script:
+          - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
+          - rm -rf README.md bitbucket-pipelines.yml .gitignore setup.cfg
+          - tar -cvf dags.tar .
+          - az storage blob upload -f dags.tar -c dev -n deployment/airflow/dags/dags.tar --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_ACCOUNT}
