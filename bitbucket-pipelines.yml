@@ -7,26 +7,28 @@
 pipelines:
   default:
     - step:
-        name: Check PEP8 codestyle
-        image: python:3.5.1
+        name: Check PEP8 codestyle and run tests
+        image: python:3.6.4
         caches:
           - pip
-        script: # Modify the commands below to build your repository.
-          - pip install pycodestyle
+        script:
+          - pip install pycodestyle pytest requests_mock apache-airflow==1.9.0
+          - pytest tests
           - pycodestyle --show-source .
+
   branches:
     master:
     - step:
-        name: Deploy DAGs to google bucket
-        image: google/cloud-sdk:latest
+        name: Check PEP8 codestyle and run tests
+        image: python:3.6.4
+        caches:
+          - pip
         script:
-          - echo $G_SECRET > key.json
-          - gcloud auth activate-service-account bitbucket@ufs-prod.iam.gserviceaccount.com --key-file=key.json
-          - tar -cvf dags.tar **/*.py
-          - tar --append --file=dags.tar *.py
-          - gsutil cp dags.tar gs://ufs-prod/airflow-dags/dags.tar
+          - pip install pycodestyle pytest requests_mock
+          - pytest tests
+          - pycodestyle --show-source .
     - step:
-        name: Deploy to azure datalake
+        name: Deploy to azure blob store
         image: microsoft/azure-cli
         script:
           - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
@@ -36,7 +38,16 @@ pipelines:
 
     dev:
     - step:
-        name: Deploy to azure datalake
+        name: Check PEP8 codestyle and run tests
+        image: python:3.6.4
+        caches:
+          - pip
+        script:
+          - pip install pycodestyle pytest requests_mock
+          - pytest tests
+          - pycodestyle --show-source .
+    - step:
+        name: Deploy to azure blob store
         image: microsoft/azure-cli
         script:
           - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
