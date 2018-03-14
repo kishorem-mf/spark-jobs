@@ -37,7 +37,7 @@ cluster_config = {
     "num_workers": 16
 }
 
-with DAG('ohub_dag', default_args=default_args,
+with DAG('ohub_basic', default_args=default_args,
          schedule_interval="@once") as dag:
     create_cluster = DatabricksCreateClusterOperator(
         task_id='create_cluster',
