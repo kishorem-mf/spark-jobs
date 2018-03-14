@@ -20,12 +20,12 @@ default_args = {
     'pool': 'ohub-pool',
 }
 
-#az_deployment = '??/prod/deployment/'
-#az_jar_bucket = f'{az_deployment}/ohub2.0'
-#az_py_bucket = f'{az_deployment}/name-matching'
-#az_data_input_bucket = '??/prod/data/raw/{}/**/*.csv'
-#az_data_output_bucket = '??/prod/data/parquet/{}.parquet'
-#jars = [f'{az_jar_bucket}/spark-jobs-assembly-0.1.jar']
+# az_deployment = '??/prod/deployment/'
+# az_jar_bucket = f'{az_deployment}/ohub2.0'
+# az_py_bucket = f'{az_deployment}/name-matching'
+# az_data_input_bucket = '??/prod/data/raw/{}/**/*.csv'
+# az_data_output_bucket = '??/prod/data/parquet/{}.parquet'
+# jars = [f'{az_jar_bucket}/spark-jobs-assembly-0.1.jar']
 
 cluster_name = 'ohub_basic'
 databricks_conn_id = 'databricks_azure'
@@ -50,10 +50,10 @@ with DAG('ohub_dag', default_args=default_args,
         databricks_conn_id=databricks_conn_id
     )
 
-    #operators_to_csv = DatabricksSubmitRunOperator( )
+    # operators_to_csv = DatabricksSubmitRunOperator( )
 
-    #operator_matching = DatabricksSubmitRunOperator( )
+    # operator_matching = DatabricksSubmitRunOperator( )
 
-    #operator_merging = DatabricksSubmitRunOperator( )
+    # operator_merging = DatabricksSubmitRunOperator( )
 
     create_cluster >> delete_cluster
