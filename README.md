@@ -10,12 +10,12 @@ To start writing a DAG for airflow have a look at the existing DAGs or the [airf
 ## Viewing the UI
 The UI has been shielded behind local port forwarding. To access the UI:
 
-- Install the gcloud cli tools: https://cloud.google.com/sdk/downloads
-- Login with your user using `gcloud auth` (if you have not been added to the project, ask @Constantijn): https://cloud.google.com/sdk/gcloud/reference/auth/
-- Install kubectl cli: https://kubernetes.io/docs/tasks/tools/install-kubectl/#download-as-part-of-the-google-cloud-sdk
-- Get the credentials for the Kubernetes cluster: https://cloud.google.com/sdk/gcloud/reference/container/clusters/get-credentials, using: 
+- Install the az cli tools: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest
+- Login with your user using `az login` 
+- Install kubectl cli: https://kubernetes.io/docs/tasks/tools/install-kubectl/
+- Get the credentials for the Kubernetes cluster: 
 ```
-gcloud container clusters get-credentials cluster-1 --zone europe-west4-c
+az aks get-credentials -g bieno-da-s-60072-containers-rg -n ul-ohub2-aks-dev-we
 ```
 
 All these steps have to be done (unless you logout) only once. Next:
