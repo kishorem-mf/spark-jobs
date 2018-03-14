@@ -40,12 +40,14 @@ cluster_config = {
 with DAG('ohub_dag', default_args=default_args,
          schedule_interval="@once") as dag:
     create_cluster = DatabricksCreateClusterOperator(
+        task_id='create_cluster',
         cluster_config=cluster_config,
         databricks_conn_id=databricks_conn_id,
         polling_period_seconds=10
     )
 
     delete_cluster = DatabricksDeleteClusterOperator(
+        task_id='destroy_cluster',
         cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id
     )
