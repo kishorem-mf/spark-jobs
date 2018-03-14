@@ -27,3 +27,11 @@ pipelines:
           - gcloud auth activate-service-account bitbucket@ufs-prod.iam.gserviceaccount.com --key-file=key.json
           - gsutil cp dist/*.egg gs://ufs-prod/deployment/name-matching/dist/
           - gsutil cp *.py gs://ufs-prod/deployment/name-matching/
+    - step:
+        name: Deploy to azure blob store
+        image: microsoft/azure-cli
+        script:
+          - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
+          - az storage blob upload -f dist/string_matching.egg -c prod -n deployment/name-matching/dist/string_matching.egg --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_ACCOUNT}
+          - az storage blob upload -f match_operators.py -c prod -n deployment/name-matching/match_operators.py --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_ACCOUNT}
+
