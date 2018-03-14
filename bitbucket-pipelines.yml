@@ -8,7 +8,7 @@ pipelines:
   default:
     - step:
         name: Check PEP8 codestyle and run tests
-        image: python:3.5.1
+        image: python:3.6.4
         caches:
           - pip
         script:
@@ -20,7 +20,7 @@ pipelines:
     master:
     - step:
         name: Check PEP8 codestyle and run tests
-        image: python:3.5.1
+        image: python:3.6.4
         caches:
           - pip
         script:
@@ -39,7 +39,7 @@ pipelines:
     dev:
     - step:
         name: Check PEP8 codestyle and run tests
-        image: python:3.5.1
+        image: python:3.6.4
         caches:
           - pip
         script:

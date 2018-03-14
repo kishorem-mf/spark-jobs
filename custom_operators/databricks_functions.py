@@ -41,7 +41,7 @@ def find_cluster_id(cluster_name: str,
     clusters = find_running_clusters_by_name(cluster_name, databricks_conn_id, databricks_hook)
 
     if len(clusters) == 0:
-        raise AirflowException(f'Found no running Databricks cluster named "{cluster_name}".')
+        raise AirflowException(f'Found no running Databricks cluster named {cluster_name}.')
     elif len(clusters) > 1:
         logging.warning('Found more than one running Databricks cluster named "%s", using first match.', cluster_name)
 
