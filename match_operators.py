@@ -189,7 +189,7 @@ def save_to_parquet(matches: DataFrame, fn):
     (matches
         .coalesce(20)
         .write
-        .partitionBy('country_code')
+        .partitionBy('countryCode')
         .parquet(fn, mode=mode))
 
 
