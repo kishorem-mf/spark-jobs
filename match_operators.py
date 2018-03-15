@@ -77,9 +77,9 @@ def start_spark():
     sc.setLogLevel("INFO")
 
     # the egg file should be in the same path as this script
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    sys.path.append(os.path.join(dir_path, 'dist', EGG_NAME))
-    sc.addPyFile(os.path.join(dir_path, 'dist', EGG_NAME))
+    # dir_path = os.path.dirname(os.path.realpath(__file__))
+    # sys.path.append(os.path.join(dir_path, 'dist', EGG_NAME))
+    # sc.addPyFile(os.path.join(dir_path, 'dist', EGG_NAME))
 
     log4j = sc._jvm.org.apache.log4j
     log4j.LogManager.getRootLogger().getLogger('org').setLevel(log4j.Level.WARN)
@@ -98,35 +98,35 @@ def read_operators(spark: SparkSession, fn: str, fraction: float) -> DataFrame:
 
 
 def preprocess_operators(ddf: DataFrame) -> DataFrame:
-    w = Window.partitionBy('COUNTRY_CODE').orderBy(sf.asc('id'))
+    w = Window.partitionBy('countryCode').orderBy(sf.asc('id'))
     return (ddf
-            .na.drop(subset=['NAME_CLEANSED'])
+            .na.drop(subset=['nameCleansed'])
             # create unique ID
             .withColumn('id', sf.concat_ws('~',
-                                           sf.col('COUNTRY_CODE'),
-                                           sf.col('SOURCE'),
-                                           sf.col('REF_OPERATOR_ID')))
+                                           sf.col('countryCode'),
+                                           sf.col('source'),
+                                           sf.col('refOperatorId')))
             .fillna('')
             # create string columns to matched
             .withColumn('name',
                         sf.concat_ws(' ',
-                                     sf.col('NAME_CLEANSED'),
-                                     sf.col('CITY_CLEANSED'),
-                                     sf.col('STREET_CLEANSED'),
-                                     sf.col('ZIP_CODE_CLEANSED')))
+                                     sf.col('nameCleansed'),
+                                     sf.col('cityCleansed'),
+                                     sf.col('streetCleansed'),
+                                     sf.col('zipCodeCleansed')))
             .withColumn('name', sf.regexp_replace('name', REGEX, ''))
             .withColumn('name', sf.trim(sf.regexp_replace('name', '\s+', ' ')))
             .withColumn('name_index', sf.row_number().over(w) - 1)
-            .select('name_index', 'id', 'name', 'COUNTRY_CODE'))
+            .select('name_index', 'id', 'name', 'countryCode'))
 
 
 def get_country_codes(country_code_arg: str, operators: DataFrame) -> List[str]:
     if country_code_arg == 'all':
-        opr_count = operators.groupby('COUNTRY_CODE').count()
+        opr_count = operators.groupby('countryCode').count()
         LOGGER.info("Selecting countries with more than " + str(MININUM_OPERATORS_PER_COUNTRY) + " entries")
         codes = (
             opr_count[opr_count['count'] > MININUM_OPERATORS_PER_COUNTRY]
-            .select('COUNTRY_CODE')
+            .select('countryCode')
             .distinct()
             .rdd.map(lambda r: r[0]).collect())
     else:
@@ -137,8 +137,8 @@ def get_country_codes(country_code_arg: str, operators: DataFrame) -> List[str]:
 
 def select_and_repartition_country(ddf: DataFrame, country_code: str) -> DataFrame:
     return (ddf
-            .filter(sf.col('COUNTRY_CODE') == country_code)
-            .drop('COUNTRY_CODE')
+            .filter(sf.col('countryCode') == country_code)
+            .drop('countryCode')
             .repartition('id')
             .sort('id', ascending=True))
 
@@ -172,13 +172,13 @@ def find_matches(grouped_similarity: DataFrame, operators: DataFrame, country_co
     return (grouped_similarity
             .join(operators, grouped_similarity['i'] == operators['name_index'],
                   how='left').drop('name_index')
-            .selectExpr('i', 'j', 'id as SOURCE_ID',
-                        'SIMILARITY', 'name as SOURCE_NAME')
+            .selectExpr('i', 'j', 'id as sourceId',
+                        'similarity', 'name as sourceName')
             .join(operators, grouped_similarity['j'] == operators['name_index'],
                   how='left').drop('name_index')
-            .withColumn('COUNTRY_CODE', sf.lit(country_code))
-            .selectExpr('COUNTRY_CODE', 'SOURCE_ID', 'id as TARGET_ID',
-                        'SIMILARITY', 'SOURCE_NAME', 'name as TARGET_NAME'))
+            .withColumn('countryCode', sf.lit(country_code))
+            .selectExpr('countryCode', 'sourceId', 'id as targetId',
+                        'similarity', 'sourceName', 'name as targetName'))
 
 
 def save_to_parquet(matches: DataFrame, fn):
@@ -201,17 +201,17 @@ def print_stats(matches: DataFrame):
     print('Threshold:\t', args.threshold)
     print('NTop:\t', args.ntop)
     (matches
-        .select('SOURCE_ID', 'TARGET_ID',
-                'SIMILARITY', 'SOURCE_NAME', 'TARGET_NAME')
-        .sort('SIMILARITY', ascending=True)
+        .select('sourceId', 'targetId',
+                'similarity', 'sourceName', 'targetName')
+        .sort('similarity', ascending=True)
         .show(50, truncate=False))
 
     (matches
-        .groupBy(['SOURCE_ID', 'SOURCE_NAME'])
+        .groupBy(['sourceId', 'sourceName'])
         .count()
         .sort('count', ascending=False).show(50, truncate=False))
 
-    matches.describe('SIMILARITY').show()
+    matches.describe('similarity').show()
 
 
 def name_match_country_operators(spark: SparkSession, country_code: str, all_operators: DataFrame):
