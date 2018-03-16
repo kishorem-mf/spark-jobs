@@ -3,18 +3,12 @@ from datetime import datetime
 from airflow import DAG
 from airflow.contrib.hooks.ssh_hook import SSHHook
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
-
+from config import shared_default
 
 acm_ssh_hook = SSHHook(ssh_conn_id='acm_sftp_ssh')
 
 default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'start_date': datetime(2018, 3, 2),
-    'email': ['airflow@airflow.com'],
-    'email_on_failure': False,
-    'email_on_retry': False,
-    'retries': 0
+    **shared_default,
 }
 
 rfp = "/incoming/OHUB_2_testing/quoted_semi_colon_delimited/"
@@ -35,19 +29,19 @@ task_defaults = {
 
 with DAG('acm_sftp_dag', default_args=default_args,
          schedule_interval="0 0 * * *") as dag:
-    t1 = SFTPOperator(
+    fetch_order_lines = SFTPOperator(
         task_id='Fetch ACM order lines for date',
         local_filepath=templated_local_orderlines_filepath,
         remote_filepath=templated_remote_orderlines_filepath,
         **task_defaults)
 
-    t2 = SFTPOperator(
+    fetch_orders = SFTPOperator(
         task_id='Fetch ACM orders for date',
         local_filepath=templated_local_orders_filepath,
         remote_filepath=templated_remote_orders_filepath,
         **task_defaults)
 
-    t3 = SFTPOperator(
+    fetch_products = SFTPOperator(
         task_id='Fetch ACM products for date',
         local_filepath=templated_local_products_filepath,
         remote_filepath=templated_remote_products_filepath,

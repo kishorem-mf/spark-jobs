@@ -3,15 +3,10 @@ from datetime import datetime
 
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
+from config import shared_default
 
 default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'start_date': datetime(2018, 2, 6),
-    'email': ['airflow@airflow.com'],
-    'email_on_failure': False,
-    'email_on_retry': False,
-    'retries': 0
+    **shared_default,
 }
 
 dag = DAG('ouniverse_update_metadata', default_args=default_args,

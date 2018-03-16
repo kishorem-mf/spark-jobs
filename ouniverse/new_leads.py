@@ -5,15 +5,10 @@ from airflow.contrib.operators.dataproc_operator import DataprocClusterCreateOpe
     DataprocClusterDeleteOperator, \
     DataProcSparkOperator
 from airflow.models import Variable
+from config import shared_default
 
 default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'start_date': datetime(2018, 2, 6),
-    'email': ['timvancann@godatadriven.com'],
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 0
+    **shared_default,
 }
 
 cluster_defaults = {
