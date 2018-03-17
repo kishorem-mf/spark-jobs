@@ -38,10 +38,11 @@ pipelines:
         name: Deploy to databricks fs
         image: timvancann/databricks-cli
         script:
-          - touch .databrickscfg
-          - echo "[DEFAULT]" >> .databrickscfg
-          - echo "host = ${DB_HOST}" >> .databrickscfg
-          - echo "token = ${DB_TOKEN}" >> .databrickscfg
+          - touch ~/.databrickscfg
+          - echo "[DEFAULT]" >> ~/.databrickscfg
+          - echo "host = ${DB_HOST}" >> ~/.databrickscfg
+          - echo "token = ${DB_TOKEN}" >> ~/.databrickscfg
+          - cat ~/.databrickscfg
           - databricks fs rm dbfs:/libraries/string_matching.egg
           - databricks fs rm dbfs:/libraries/match_operators.py
           - databricks fs cp dist/string_matching.egg dbfs:/libraries/string_matching.egg
