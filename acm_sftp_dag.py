@@ -36,19 +36,19 @@ task_defaults = {
 with DAG('acm_sftp_dag', default_args=default_args,
          schedule_interval="0 0 * * *") as dag:
     t1 = SFTPOperator(
-        task_id='Fetch ACM order lines for date',
+        task_id='fetch_ACM_order_lines_for_date',
         local_filepath=templated_local_orderlines_filepath,
         remote_filepath=templated_remote_orderlines_filepath,
         **task_defaults)
 
     t2 = SFTPOperator(
-        task_id='Fetch ACM orders for date',
+        task_id='fetch_ACM_orders_for_date',
         local_filepath=templated_local_orders_filepath,
         remote_filepath=templated_remote_orders_filepath,
         **task_defaults)
 
     t3 = SFTPOperator(
-        task_id='Fetch ACM products for date',
+        task_id='fetch_ACM_products_for_date',
         local_filepath=templated_local_products_filepath,
         remote_filepath=templated_remote_products_filepath,
         **task_defaults)
