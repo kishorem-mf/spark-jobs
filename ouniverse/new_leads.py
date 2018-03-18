@@ -1,10 +1,12 @@
 from datetime import datetime
 
 from airflow import DAG
-from airflow.contrib.operators.dataproc_operator import DataprocClusterCreateOperator, \
-    DataprocClusterDeleteOperator, \
-    DataProcSparkOperator
 from airflow.models import Variable
+
+from custom_operators.databricks_functions import \
+    DatabricksCreateClusterOperator, \
+    DatabricksDeleteClusterOperator, \
+    DatabricksSubmitRunOperator
 
 default_args = {
     'owner': 'airflow',
@@ -16,72 +18,98 @@ default_args = {
     'retries': 0
 }
 
-cluster_defaults = {
-    'gcp_conn_id': 'airflow-sp',
-    'cluster_name': 'ouniverse-new-leads',
-    'project_id': 'ufs-prod',
-    'region': 'global',  # has to be global due to bug in airflow dataproc code
-}
+wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'
+data_bucket = wasb_root_bucket + 'ouniverse'
 
-gs_jar_bucket = 'gs://ufs-prod/deployment/ouniverse'
-gs_data_bucket = 'gs://ufs-prod/data/raw/ouniverse'
+cluster_name = 'ouniverse_new_leads'
+databricks_conn_id = 'databricks_azure'
+
+cluster_config = {
+    'cluster_name': cluster_name,
+    "spark_version": "3.5.x-scala2.11",
+    "node_type_id": "Standard_DS3_v2",
+    "num_workers": 16
+}
 
 with DAG('new_leads', default_args=default_args,
          schedule_interval='@once') as dag:
-    create_cluster = DataprocClusterCreateOperator(
+    create_cluster = DatabricksCreateClusterOperator(
         task_id='create_cluster',
-        num_workers=2,
-        zone='europe-west4-c',
-        **cluster_defaults)
+        cluster_config=cluster_config,
+        databricks_conn_id=databricks_conn_id,
+        polling_period_seconds=10
+    )
 
-    delete_cluster = DataprocClusterDeleteOperator(
-        task_id='delete_cluster',
-        **cluster_defaults)
+    delete_cluster = DatabricksDeleteClusterOperator(
+        task_id='destroy_cluster',
+        cluster_name=cluster_name,
+        databricks_conn_id=databricks_conn_id
+    )
 
-    phase_one = DataProcSparkOperator(
+    phase_one = DatabricksSubmitRunOperator(
         task_id="phase_one",
-        main_class='com.unilever.ouniverse.leads.OperatorMapsSearcher',
-        dataproc_spark_jars=[f'{gs_jar_bucket}/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'],
-        cluster_name=cluster_defaults['cluster_name'],
-        gcp_conn_id=cluster_defaults['gcp_conn_id'],
-        arguments=['--operators', f'{gs_data_bucket}/input/phase_I_NZ_sample.csv',
-                   '--outputpath', f'{gs_data_bucket}/output/phaseI_output',
-                   '--apiKey', Variable.get('google_api_key')])
+        cluster_name=cluster_name,
+        databricks_conn_id=databricks_conn_id,
+        libraries=[
+            {'jar': 'dbfs:/libraries/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'}
+        ],
+        spark_jar_task={
+            'main_class_name': f"com.unilever.ouniverse.leads.OperatorMapsSearcher",
+            'parameters': ['--operators', f'{data_bucket}/input/phase_I_NZ_sample.csv',
+                           '--outputpath', f'{data_bucket}/output/phaseI_output',
+                           '--apiKey', Variable.get('google_api_key')]
+        }
+    )
 
-    phase_two_grid = DataProcSparkOperator(
+    phase_two_grid = DatabricksSubmitRunOperator(
         task_id="phase_two_grid",
-        main_class='com.unilever.ouniverse.leads.GridSearcher',
-        dataproc_spark_jars=[f'{gs_jar_bucket}/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'],
-        cluster_name=cluster_defaults['cluster_name'],
-        gcp_conn_id=cluster_defaults['gcp_conn_id'],
-        arguments=['--leads', f'{gs_data_bucket}/input/Phase_II_Input_NZ_sample.csv',
-                   '--outputpath', f'{gs_data_bucket}/output/phaseIIa_output',
-                   '--apiKey', Variable.get('google_api_key')])
+        cluster_name=cluster_name,
+        databricks_conn_id=databricks_conn_id,
+        libraries=[
+            {'jar': 'dbfs:/libraries/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'}
+        ],
+        spark_jar_task={
+            'main_class_name': f"com.unilever.ouniverse.leads.GridSearcher",
+            'parameters': ['--leads', f'{data_bucket}/input/Phase_II_Input_NZ_sample.csv',
+                           '--outputpath', f'{data_bucket}/output/phaseIIa_output',
+                           '--apiKey', Variable.get('google_api_key')]
+        }
+    )
 
-    phase_two_ids = DataProcSparkOperator(
+    phase_two_ids = DatabricksSubmitRunOperator(
         task_id="phase_two_ids",
-        main_class='com.unilever.ouniverse.leads.PlaceIdSearcher',
-        dataproc_spark_jars=[f'{gs_jar_bucket}/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'],
-        cluster_name=cluster_defaults['cluster_name'],
-        gcp_conn_id=cluster_defaults['gcp_conn_id'],
-        arguments=['--places', f'{gs_data_bucket}/output/phaseIIa_output',
-                   '--idColumn', 'placeId',
-                   '--fileType', 'parquet',
-                   '--outputpath', f'{gs_data_bucket}/output/phaseIIb_output',
-                   '--apiKey', Variable.get('google_api_key')])
+        cluster_name=cluster_name,
+        databricks_conn_id=databricks_conn_id,
+        libraries=[
+            {'jar': 'dbfs:/libraries/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'}
+        ],
+        spark_jar_task={
+            'main_class_name': f"com.unilever.ouniverse.leads.PlaceIdSearcher",
+            'parameters': ['--places', f'{data_bucket}/output/phaseIIa_output',
+                           '--idColumn', 'placeId',
+                           '--fileType', 'parquet',
+                           '--outputpath', f'{data_bucket}/output/phaseIIb_output',
+                           '--apiKey', Variable.get('google_api_key')]
+        }
+    )
 
-    prioritize = DataProcSparkOperator(
+    prioritize = DatabricksSubmitRunOperator(
         task_id="prioritise_leads",
-        main_class='com.unilever.ouniverse.prioritisation.PrioritizeLeads',
-        dataproc_spark_jars=[f'{gs_jar_bucket}/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'],
-        cluster_name=cluster_defaults['cluster_name'],
-        gcp_conn_id=cluster_defaults['gcp_conn_id'],
-        arguments=['--operators', f'{gs_data_bucket}/output/phaseI_output',
-                   '--places', f'{gs_data_bucket}/output/phaseIIb_output',
-                   '--leads', f'{gs_data_bucket}/input/cities.csv',
-                   '--priorities', f'{gs_data_bucket}/input/priorities.csv',
-                   '--outputpath', f'{gs_data_bucket}/output/phaseIII_output'])
+        cluster_name=cluster_name,
+        databricks_conn_id=databricks_conn_id,
+        libraries=[
+            {'jar': 'dbfs:/libraries/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'}
+        ],
+        spark_jar_task={
+            'main_class_name': f"com.unilever.ouniverse.prioritisation.PrioritizeLeads",
+            'parameters': ['--operators', f'{data_bucket}/output/phaseI_output',
+                           '--places', f'{data_bucket}/output/phaseIIb_output',
+                           '--leads', f'{data_bucket}/input/cities.csv',
+                           '--priorities', f'{data_bucket}/input/priorities.csv',
+                           '--outputpath', f'{data_bucket}/output/phaseIII_output']
+        }
+    )
 
-create_cluster >> phase_one >> prioritize
-create_cluster >> phase_two_grid >> phase_two_ids >> prioritize
-prioritize >> delete_cluster
+    create_cluster >> phase_one >> prioritize
+    create_cluster >> phase_two_grid >> phase_two_ids >> prioritize
+    prioritize >> delete_cluster
