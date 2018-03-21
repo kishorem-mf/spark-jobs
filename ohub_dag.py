@@ -5,8 +5,8 @@ from airflow import DAG
 from config import email_addresses
 from custom_operators.databricks_functions import \
     DatabricksCreateClusterOperator, \
-    DatabricksDeleteClusterOperator, \
-    DatabricksSubmitRunOperator
+    DatabricksTerminateClusterOperator, \
+    DatabricksSubmitRunOperator, DatabricksStartClusterOperator
 
 default_args = {
     'owner': 'airflow',
@@ -51,6 +51,8 @@ to_acm = [
 ]
 
 cluster_name = 'ohub_basic'
+cluster_id = '0314-131901-shalt605'
+
 databricks_conn_id = 'databricks_azure'
 
 cluster_config = {
@@ -61,15 +63,15 @@ cluster_config = {
 }
 with DAG('ohub_dag', default_args=default_args,
          schedule_interval="@once") as dag:
-    create_cluster = DatabricksCreateClusterOperator(
-        task_id='create_cluster',
-        cluster_config=cluster_config,
+    create_cluster = DatabricksStartClusterOperator(
+        task_id='start_cluster',
+        cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         polling_period_seconds=10
     )
 
-    delete_cluster = DatabricksDeleteClusterOperator(
-        task_id='destroy_cluster',
+    delete_cluster = DatabricksTerminateClusterOperator(
+        task_id='terminate_cluster',
         cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id
     )

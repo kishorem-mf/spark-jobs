@@ -5,7 +5,7 @@ from airflow.models import Variable
 
 from custom_operators.databricks_functions import \
     DatabricksCreateClusterOperator, \
-    DatabricksDeleteClusterOperator, \
+    DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator
 
 default_args = {
@@ -40,7 +40,7 @@ with DAG('new_leads', default_args=default_args,
         polling_period_seconds=10
     )
 
-    delete_cluster = DatabricksDeleteClusterOperator(
+    delete_cluster = DatabricksTerminateClusterOperator(
         task_id='destroy_cluster',
         cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id

@@ -236,7 +236,51 @@ class DatabricksCreateClusterOperator(BaseDatabricksOperator):
         logging.info('Cluster creation with id: {c} was requested to be cancelled.'.format(c=self.cluster_id))
 
 
-class DatabricksDeleteClusterOperator(BaseDatabricksOperator):
+class DatabricksStartClusterOperator(BaseDatabricksOperator):
+    ui_color = '#d5ebc2'
+    ui_fgcolor = '#000'
+
+    def __init__(self,
+                 cluster_id: str,
+                 databricks_conn_id: str = 'databricks_default',
+                 polling_period_seconds: int = 30,
+                 databricks_retry_limit: int = 3,
+                 **kwargs):
+        super(DatabricksStartClusterOperator, self).__init__(databricks_conn_id,
+                                                             polling_period_seconds,
+                                                             databricks_retry_limit,
+                                                             **kwargs)
+        self.cluster_id = cluster_id
+
+    def execute(self, context):
+        hook = self.get_hook()
+        logging.info('Starting Databricks cluster with id %s"', self.cluster_id)
+
+        hook._do_api_call(('POST', 'api/2.0/clusters/start'), self.cluster_config)
+
+        while True:
+            run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
+            if run_state == 'RUNNING':
+                logging.info('{} completed successfully.'.format(
+                    self.task_id))
+                return
+            elif run_state == 'TERMINATED':
+                error_message = 'Cluster start failed with terminal state: {s}'.format(
+                    s=run_state)
+                raise AirflowException(error_message)
+            else:
+                logging.info('Cluster starting, currently in state: {s}'.format(s=run_state))
+                logging.info('Sleeping for {} seconds.'.format(
+                    self.polling_period_seconds))
+                time.sleep(self.polling_period_seconds)
+
+    def on_kill(self):
+        hook = self.get_hook()
+        hook._do_api_call(('POST', 'api/2.0/clusters/delete'), {'cluster_id': self.cluster_id})
+        logging.info('Cluster start with id: {c} was requested to be cancelled.'.format(c=self.cluster_id))
+
+
+class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
     ui_color = '#ffc3bb'
     ui_fgcolor = '#000'
 
@@ -246,10 +290,10 @@ class DatabricksDeleteClusterOperator(BaseDatabricksOperator):
                  polling_period_seconds: int = 30,
                  databricks_retry_limit: int = 3,
                  **kwargs):
-        super(DatabricksDeleteClusterOperator, self).__init__(databricks_conn_id,
-                                                              polling_period_seconds,
-                                                              databricks_retry_limit,
-                                                              **kwargs)
+        super(DatabricksTerminateClusterOperator, self).__init__(databricks_conn_id,
+                                                                 polling_period_seconds,
+                                                                 databricks_retry_limit,
+                                                                 **kwargs)
         self.cluster_name = cluster_name
         self.cluster_id = None
 
