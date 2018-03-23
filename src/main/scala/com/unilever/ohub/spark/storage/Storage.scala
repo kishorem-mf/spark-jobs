@@ -5,19 +5,33 @@ import java.util.Properties
 import com.unilever.ohub.spark.data.{ ChannelMapping, CountryRecord }
 import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.{ Column, DataFrame, Dataset, Encoder, SaveMode, SparkSession }
+import org.apache.spark.sql.{ Column, DataFrame, Dataset, Encoder, Row, SaveMode, SparkSession }
+import org.apache.spark.sql.types.StructType
 import java.io.{ File, FileOutputStream }
 
 import scala.io.Source
 
 trait Storage {
-  def readFromCSV(location: String, separator: String): DataFrame
+  def readFromCsv(
+                   location: String,
+                   fieldSeparator: String,
+                   structType: Option[StructType] = None,
+                   hasHeaders: Boolean = true
+                 ): Dataset[Row]
 
-  def writeToCSV(ds: Dataset[_], outputFile: String, partitionBy: String*): Unit
+  def writeToCsv(
+                  ds: Dataset[_],
+                  outputFile: String,
+                  partitionBy: Seq[String] = Seq(),
+                  delim: String = ";",
+                  quote: String = "\""
+                ): Unit
 
-  def readFromParquet[T: Encoder](location: String, selectColumns: Column*): Dataset[T]
+  def writeToCsvAcm(ds: Dataset[_], outputFile: String, partitionBy: Seq[String] = Seq()): Unit
 
-  def writeToParquet(ds: Dataset[_], location: String, partitionBy: String*): Unit
+  def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
+
+  def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq()): Unit
 
   def createCountries: Dataset[CountryRecord]
 
@@ -29,34 +43,54 @@ trait Storage {
 class DefaultStorage(spark: SparkSession) extends Storage {
   import spark.implicits._
 
-  override def readFromCSV(
-    location: String,
-    separator: String
-  ): DataFrame = {
-    spark
+  override def readFromCsv(
+                            location: String,
+                            fieldSeparator: String,
+                            structType: Option[StructType] = None,
+                            hasHeaders: Boolean = true
+                          ): Dataset[Row] = {
+    val reader = spark
       .read
-      .option("header", "true")
-      .option("inferSchema", "true")
-      .option("sep", separator)
+      .option("header", if (hasHeaders) "true" else "false")
+      .option("sep", fieldSeparator)
+      .option("mode", "FAILFAST") // let's fail fast for now
+
+    structType.fold {
+      reader.option("inferSchema", "true")
+    } { tp =>
+      reader
+        .option("inferSchema", "false")
+        .schema(tp)
+    }
       .csv(location)
   }
 
-  def writeToCSV(ds: Dataset[_], outputFile: String, partitionBy: String*): Unit = {
+  def writeToCsv(
+                  ds: Dataset[_],
+                  outputFile: String,
+                  partitionBy: Seq[String] = Seq(),
+                  delim: String = ";",
+                  quote: String = "\""
+                ): Unit = {
     ds
       .coalesce(1)
       .write
       .mode(SaveMode.Overwrite)
       .option("encoding", "UTF-8")
       .option("header", "true")
-      .option("delimiter","\u00B6")
-      // This makes sure the when " is in a value it is not escaped like \" which is not accepted by ACM
-      .option("quote", "\u0000")
-      //.option("quoteAll", if (quoteAll) "true" else "false")
+      .option("quoteAll", "true")
+      .option("delimiter", delim)
+      .option("quote", quote)
       .partitionBy(partitionBy: _*)
       .csv(outputFile)
   }
 
-  override def readFromParquet[T: Encoder](location: String, selectColumns: Column*): Dataset[T] = {
+  def writeToCsvAcm(ds: Dataset[_], outputFile: String, partitionBy: Seq[String] = Seq()): Unit = {
+    // This makes sure the when " is in a value it is not escaped like \" which is not accepted by ACM
+    writeToCsv(ds, outputFile, partitionBy, "\u00B6", "\u0000")
+  }
+
+  override def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T] = {
     val parquetDF = spark
       .read
       .parquet(location)
@@ -69,7 +103,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
     parquetSelectDF.as[T]
   }
 
-  override def writeToParquet(ds: Dataset[_], location: String, partitionBy: String*): Unit = {
+  override def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq()): Unit = {
     ds
       .write
       .mode(SaveMode.Overwrite)
@@ -90,7 +124,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
     out.close()
     in.close()
 
-    readFromCSV(file, separator = ",")
+    readFromCsv(file, fieldSeparator = ",")
       .select(
         $"ISO3166_1_Alpha_2" as "countryCode",
         $"official_name_en" as "countryName",
@@ -113,13 +147,13 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   }
 
   private def readJdbcTable(
-    spark: SparkSession,
-    dbConnectionString: String = "jdbc:postgresql://localhost:5432/",
-    dbName: String = "ufs_example",
-    dbTable: String,
-    userName: String = "ufs_example",
-    userPassword: String = "ufs_example"
-  ): DataFrame = {
+                             spark: SparkSession,
+                             dbConnectionString: String = "jdbc:postgresql://localhost:5432/",
+                             dbName: String = "ufs_example",
+                             dbTable: String,
+                             userName: String = "ufs_example",
+                             userPassword: String = "ufs_example"
+                           ): DataFrame = {
     val dbFullConnectionString = {
       if (dbConnectionString.endsWith("/")) s"$dbConnectionString$dbName"
       else s"$dbConnectionString/$dbName"
