@@ -41,6 +41,6 @@ object ProductAcmConverter extends SparkJob {
     val transformed = transform(spark, products)
 
     storage
-      .writeToCSV(transformed, outputFile, partitionBy = "COUNTY_CODE")
+      .writeToCsv(transformed, outputFile, partitionBy = Seq("COUNTY_CODE"))
   }
 }

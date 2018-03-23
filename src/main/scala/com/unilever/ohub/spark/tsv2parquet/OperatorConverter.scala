@@ -140,7 +140,7 @@ object OperatorConverter extends SparkJob  {
 
     val requiredNrOfColumns = 59
     val operatorRecords = storage
-      .readFromCSV(inputFile, separator = csvColumnSeparator)
+      .readFromCsv(inputFile, fieldSeparator = csvColumnSeparator)
       .filter { row =>
         if (row.length != requiredNrOfColumns) {
           throw new InputMismatchException(
@@ -158,6 +158,6 @@ object OperatorConverter extends SparkJob  {
     val transformed = transform(spark, operatorRecords, countryRecords)
 
     storage
-      .writeToParquet(transformed, outputFile, partitionBy = "countryCode")
+      .writeToParquet(transformed, outputFile, partitionBy = Seq("countryCode"))
   }
 }

@@ -50,6 +50,6 @@ object OrderAcmConverter extends SparkJob {
     val transformed = transform(spark, orders)
 
     storage
-      .writeToCSV(transformed, outputFile)
+      .writeToCsv(transformed, outputFile)
   }
 }

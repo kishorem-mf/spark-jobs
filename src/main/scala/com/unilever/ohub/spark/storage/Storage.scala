@@ -6,7 +6,6 @@ import com.unilever.ohub.spark.data.{ ChannelMapping, CountryRecord }
 import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{ Column, DataFrame, Dataset, Encoder, Row, SaveMode, SparkSession }
-import org.apache.spark.sql.types.StructType
 import java.io.{ File, FileOutputStream }
 
 import scala.io.Source
@@ -15,7 +14,6 @@ trait Storage {
   def readFromCsv(
                    location: String,
                    fieldSeparator: String,
-                   structType: Option[StructType] = None,
                    hasHeaders: Boolean = true
                  ): Dataset[Row]
 
@@ -46,22 +44,13 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   override def readFromCsv(
                             location: String,
                             fieldSeparator: String,
-                            structType: Option[StructType] = None,
                             hasHeaders: Boolean = true
                           ): Dataset[Row] = {
-    val reader = spark
+    spark
       .read
       .option("header", if (hasHeaders) "true" else "false")
       .option("sep", fieldSeparator)
       .option("mode", "FAILFAST") // let's fail fast for now
-
-    structType.fold {
-      reader.option("inferSchema", "true")
-    } { tp =>
-      reader
-        .option("inferSchema", "false")
-        .schema(tp)
-    }
       .csv(location)
   }
 

@@ -114,6 +114,6 @@ object OperatorAcmConverter extends SparkJob {
     val transformed = transform(spark, channelMappings, operators)
 
     storage
-      .writeToCSV(transformed, outputFile, partitionBy = "COUNTRY_CODE")
+      .writeToCsv(transformed, outputFile, partitionBy = Seq("COUNTRY_CODE"))
   }
 }

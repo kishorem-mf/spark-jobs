@@ -90,15 +90,16 @@ object OperatorMerging extends SparkJob {
     val matches = storage
       .readFromParquet[MatchingResult](
         matchingInputFile,
-        selectColumns =
+        selectColumns = Seq(
           $"source_id" as "sourceId",
           $"target_id" as "targetId",
           $"COUNTRY_CODE" as "countryCode"
+        )
       )
 
     val transformed = transform(spark, operators, matches, storage.sourcePreference)
 
     storage
-      .writeToParquet(transformed, outputFile, partitionBy = "countryCode")
+      .writeToParquet(transformed, outputFile, partitionBy = Seq("countryCode"))
   }
 }
