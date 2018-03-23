@@ -14,7 +14,7 @@ object DomainGateKeeper {
 
     implicit val errorMessageEncoder: Encoder[String] = Encoders.STRING
 
-    implicit def toTypeEncoder[T <: Product : TypeTag]: Encoder[T] =
+    implicit def domainEntityEncoder[T <: DomainEntity : TypeTag]: Encoder[T] =
       Encoders.product[T]
 
     implicit def eitherEncoder[T1, T2]: Encoder[Either[T1, T2]] =
