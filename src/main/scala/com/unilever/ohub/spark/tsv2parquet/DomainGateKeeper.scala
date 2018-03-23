@@ -6,12 +6,18 @@ import org.apache.spark.sql._
 
 import scala.reflect.runtime.universe._
 
+object DomainGateKeeper {
+  type ErrorMessage = String
+}
+
 abstract class DomainGateKeeper[ToType <: Product : TypeTag] extends SparkJob {
+  import DomainGateKeeper._
+
   protected def fieldSeparator: String
   protected def hasHeaders: Boolean
   protected def partitionByValue: Seq[String]
 
-  protected def transform: Row => ToType
+  protected def transform: Row => Either[(Row, ErrorMessage), ToType]
 
   override final val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
 
@@ -20,13 +26,20 @@ abstract class DomainGateKeeper[ToType <: Product : TypeTag] extends SparkJob {
   override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
     val (inputFile: String, outputFile: String) = filePaths
 
-    val result = storage
+    val result: Dataset[ToType] = storage
       .readFromCsv(
         location = inputFile,
         fieldSeparator = fieldSeparator,
         hasHeaders = hasHeaders
       )
       .map(transform)
+      // we could do something else with the errors here
+      .filter(_.isRight)
+      .map {
+        case Right(result) => result
+      }
+
+    // only the correct results are written to parquet
 
     storage.writeToParquet(result, outputFile, partitionByValue)
   }
