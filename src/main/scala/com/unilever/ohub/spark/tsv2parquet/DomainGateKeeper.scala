@@ -1,6 +1,7 @@
 package com.unilever.ohub.spark.tsv2parquet
 
 import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql._
 
@@ -21,20 +22,30 @@ object DomainGateKeeper {
   }
 }
 
-abstract class DomainGateKeeper[ToType <: Product : TypeTag] extends SparkJob {
+abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag] extends SparkJob {
   import DomainGateKeeper._
   import DomainGateKeeper.implicits._
 
   protected def fieldSeparator: String
-  protected def hasHeaders: Boolean
-  protected def partitionByValue: Seq[String]
 
-  protected def transform: Row => Either[ErrorMessage, ToType]
+  protected def hasHeaders: Boolean
+
+  protected def partitionByValue: Seq[String]
 
   override final val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
 
-  override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
+  def transform(toDomainEntity: Row => DomainType): Row => Either[ErrorMessage, DomainType] =
+    row =>
+      try
+        Right(toDomainEntity(row))
+      catch {
+        case e: Exception =>
+          Left(s"Error parsing row: '$e', row = '$row'")
+      }
 
+  def toDomainEntity: Row => DomainType
+
+  override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
     val (inputFile: String, outputFile: String) = filePaths
 
     val result = storage
@@ -43,15 +54,12 @@ abstract class DomainGateKeeper[ToType <: Product : TypeTag] extends SparkJob {
         fieldSeparator = fieldSeparator,
         hasHeaders = hasHeaders
       )
-      .map(transform)
-//      .persist(StorageLevel.MEMORY_AND_DISK) // we could persist the result to improve performance (now the result DS will be evaluated twice)
+      .map(transform(toDomainEntity))
 
-    val errors = result.filter(_.isLeft).map(_.left.get)
-    // do something with the errors here
-    errors.show(numRows = 100, truncate = false)
+    val errors: Dataset[ErrorMessage] = result.filter(_.isLeft).map(_.left.get)
+    errors.toDF("ERROR").show(numRows = 100, truncate = false) // do something with the errors here
 
-    // only the correct results are written to parquet
-    val validEntities: Dataset[ToType] = result.filter(_.isRight).map(_.right.get)
-    storage.writeToParquet(validEntities, outputFile, partitionByValue)
+    val domainEntities: Dataset[DomainType] = result.filter(_.isRight).map(_.right.get)
+    storage.writeToParquet(domainEntities, outputFile, partitionByValue)
   }
 }

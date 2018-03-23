@@ -8,4 +8,4 @@ case class Operator(
                      countryCode: String,
                      name : String,
                      street: Option[String]
-                   )
+                   ) extends DomainEntity
