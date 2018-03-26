@@ -12,11 +12,6 @@ object DomainGateKeeper {
 
   object implicits {
 
-    implicit val errorMessageEncoder: Encoder[String] = Encoders.STRING
-
-    implicit def domainEntityEncoder[T <: DomainEntity : TypeTag]: Encoder[T] =
-      Encoders.product[T]
-
     implicit def eitherEncoder[T1, T2]: Encoder[Either[T1, T2]] =
       Encoders.kryo[Either[T1, T2]]
   }
@@ -46,6 +41,8 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag] extends Sp
   def toDomainEntity: Row => DomainType
 
   override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
+    import spark.implicits._
+
     val (inputFile: String, outputFile: String) = filePaths
 
     val result = storage
@@ -55,6 +52,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag] extends Sp
         hasHeaders = hasHeaders
       )
       .map(transform(toDomainEntity))
+    // consider to persist the result here
 
     val errors: Dataset[ErrorMessage] = result.filter(_.isLeft).map(_.left.get)
     val numberOfErrors = errors.count()
