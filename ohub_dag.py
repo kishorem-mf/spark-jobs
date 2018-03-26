@@ -4,7 +4,6 @@ from airflow import DAG
 
 from config import email_addresses
 from custom_operators.databricks_functions import \
-    DatabricksCreateClusterOperator, \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, DatabricksStartClusterOperator
 
