@@ -57,9 +57,14 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag] extends Sp
       .map(transform(toDomainEntity))
 
     val errors: Dataset[ErrorMessage] = result.filter(_.isLeft).map(_.left.get)
-    errors.toDF("ERROR").show(numRows = 100, truncate = false) // do something with the errors here
+    val numberOfErrors = errors.count()
 
-    val domainEntities: Dataset[DomainType] = result.filter(_.isRight).map(_.right.get)
-    storage.writeToParquet(domainEntities, outputFile, partitionByValue)
+    if (numberOfErrors > 0) { // do something with the errors here
+      log.error(s"No parquet file written, number of errors found is '$numberOfErrors'")
+      errors.toDF("ERROR").show(numRows = 100, truncate = false)
+    } else {
+      val domainEntities: Dataset[DomainType] = result.filter(_.isRight ).map(_.right.get)
+      storage.writeToParquet(domainEntities, outputFile, partitionByValue)
+    }
   }
 }
