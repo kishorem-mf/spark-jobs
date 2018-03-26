@@ -128,7 +128,8 @@ def save_to_parquet(ddf: DataFrame, fn):
         .coalesce(20)
         .write
         .partitionBy('countryCode')
-        .parquet(fn, mode=mode))
+        .parquet(fn, mode=mode)
+     )
 
 
 def print_stats(ddf: DataFrame, n_top, threshold):
