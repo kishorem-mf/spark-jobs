@@ -1,31 +1,14 @@
-""" Matching of contact persons based on name and location.
-
-Only match contacts without e-mail AND without mobile phone number,
-because contacts are already matched on this info.
+""" Join new operator data with current operator data, keeping persisten group id's
 
 The following steps are performed:
-- keep only contacts without e-mail AND without mobile phone number
-- remove contacts without first AND without last name (cleansed)
-- remove contacts without a street (cleansed)
-- create a unique ID as COUNTRY_CODE~SOURCE~REF_CONTACT_PERSON_ID
-- per country
-    - match on concatenation of first name and last name
-    - keep only the matches with similarity above threshold (0.7)
-    - keep only the matches with exactly matching zip code
-        - if no zip code is present: keep match if cities (cleansed) matches exactly
-    - keep only the matches where Levenshtein distance between streets (cleansed) is lower than threshold (5)
-    - to generate a final list of matches, in the form of (i, j), i.e. contact i matches with contact j,
-      we do the following:
-        - make sure each j only matches with one i (the 'group leader')
-            - note: of course we can have multiple matches per group leader, e.g. (i, j) and (i, k)
-        - make sure that each i (group leader) is not matched with another 'group leader',
-        e.g. if we have (i, j) we remove all (k, i)
-- write parquet file partitioned by country code
+-
+- write parquet file ....
 """
 
 import argparse
 import os
 import sys
+import hashlib
 
 from typing import List
 from time import perf_counter as timer
@@ -34,6 +17,8 @@ from pyspark.sql import DataFrame
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
+
+from string_matching.spark_string_matching import match_strings
 
 
 __author__ = "Roel Bertens"
@@ -47,7 +32,7 @@ MININUM_CONTACTS_PER_COUNTRY = 100
 MATRIX_CHUNK_ROWS = 500
 N_GRAMS = 2
 MINIMUM_DOCUMENT_FREQUENCY = 2
-VOCABULARY_SIZE = 1500
+VOCABULARY_SIZE = 2000
 MIN_LEVENSHTEIN_DISTANCE = 5
 
 LOGGER = None
@@ -74,7 +59,7 @@ def start_spark():
     """
     spark = (SparkSession
              .builder
-             .appName("MatchingContacts")
+             .appName("JoinOperatorsPersistentUUID")
              .config('spark.dynamicAllocation.enabled', False)
              .config('spark.executorEnv.PYTHON_EGG_CACHE', '/tmp')
              .config('spark.executor.instances', 4)
@@ -95,213 +80,73 @@ def start_spark():
     log4j.LogManager.getRootLogger().getLogger('akka').setLevel(log4j.Level.ERROR)
 
     global LOGGER
-    LOGGER = log4j.LogManager.getLogger('Matching Contacts')
+    LOGGER = log4j.LogManager.getLogger('Join operators with persistent UUID')
     return spark
 
 
-def read_contacts(spark: SparkSession, fn: str, fraction: float) -> DataFrame:
-    return (
-        spark
-        .read
-        .parquet(fn)
-        .sample(False, fraction)
-    )
-
-
-def preprocess_contacts(ddf: DataFrame) -> DataFrame:
-    w = Window.partitionBy('countryCode').orderBy(sf.asc('id'))
-    return (
-        ddf
-        # keep only if no email nor phone
-        .filter(sf.isnull(sf.col('EMAIL_ADDRESS')) & sf.isnull(sf.col('MOBILE_PHONE_NUMBER')))
-        # drop if no first name and no last name
-        .na.drop(subset=['FIRST_NAME_CLEANSED', 'LAST_NAME_CLEANSED'], how='all')
-        # drop if no street
-        .na.drop(subset=['STREET_CLEANSED'], how='any')
-        # same logic but for an empty string
-        .filter((sf.trim(sf.col('STREET_CLEANSED')) != '') &
-                ((sf.trim(sf.col('FIRST_NAME_CLEANSED')) != '') | (sf.trim(sf.col('LAST_NAME_CLEANSED')) != '')))
-        # create unique ID
-        .withColumn('id', sf.concat_ws('~',
-                                       sf.col('COUNTRY_CODE'),
-                                       sf.col('SOURCE'),
-                                       sf.col('REF_CONTACT_PERSON_ID')))
-        .fillna('')
-        # create string columns to matched
-        .withColumn('name',
-                    sf.concat_ws(' ',
-                                 sf.col('FIRST_NAME_CLEANSED'),
-                                 sf.col('LAST_NAME_CLEANSED')))
-        .withColumn('name', sf.regexp_replace('name', REGEX, ''))
-        .withColumn('name', sf.trim(sf.regexp_replace('name', '\s+', ' ')))
-        .withColumn('name_index', sf.row_number().over(w) - 1)
-        .select('name_index', 'id', 'name', 'COUNTRY_CODE', 'FIRST_NAME_CLEANSED', 'LAST_NAME_CLEANSED',
-                'STREET_CLEANSED', 'HOUSENUMBER', 'ZIP_CODE_CLEANSED', 'CITY_CLEANSED')
-    )
-
-
-def get_country_codes(country_code_arg: str, ddf: DataFrame) -> List[str]:
-    if country_code_arg == 'all':
-        count_per_country = ddf.groupby('countryCode').count()
-        LOGGER.info("Selecting countries with more than " + str(MININUM_CONTACTS_PER_COUNTRY) + " entries")
-        codes = (
-            count_per_country[count_per_country['count'] > MININUM_CONTACTS_PER_COUNTRY]
-            .select('countryCode')
-            .distinct()
-            .rdd.map(lambda r: r[0]).collect())
-    else:
-        LOGGER.info("Selecting only country: " + country_code_arg)
-        codes = [country_code_arg]
-    return codes
-
-
-def select_and_repartition_country(preprocessed_contacts: DataFrame, country_code: str) -> DataFrame:
-    return (
-        preprocessed_contacts
-        .filter(sf.col('countryCode') == country_code)
-        .drop('countryCode')
-        .repartition('id')
-        .sort('id', ascending=True)
-    )
-
-
-def find_matches(similarity: DataFrame, contacts: DataFrame, country_code: str) -> DataFrame:
-    return (
-        similarity
-        .join(contacts, similarity['i'] == contacts['name_index'],
-              how='left').drop('name_index')
-        .selectExpr('i', 'j', 'id as SOURCE_ID',
-                    'SIMILARITY', 'name as SOURCE_NAME',
-                    'STREET_CLEANSED as SOURCE_STREET',
-                    'ZIP_CODE_CLEANSED as SOURCE_ZIP_CODE',
-                    'CITY_CLEANSED as SOURCE_CITY')
-        .join(contacts, similarity['j'] == contacts['name_index'],
-              how='left').drop('name_index')
-        .withColumn('COUNTRY_CODE', sf.lit(country_code))
-        .selectExpr('i', 'j', 'COUNTRY_CODE', 'SOURCE_ID',
-                    'id as TARGET_ID', 'SIMILARITY',
-                    'SOURCE_NAME', 'STREET_CLEANSED as TARGET_STREET',
-                    'SOURCE_STREET', 'name as TARGET_NAME',
-                    'SOURCE_ZIP_CODE', 'ZIP_CODE_CLEANSED as TARGET_ZIP_CODE',
-                    'SOURCE_CITY', 'CITY_CLEANSED as TARGET_CITY')
-        .filter(
-            (sf.col('SOURCE_ZIP_CODE') == sf.col('TARGET_ZIP_CODE')) |
-            (
-                sf.isnull('SOURCE_ZIP_CODE') &
-                sf.isnull('TARGET_ZIP_CODE') &
-                (sf.col('SOURCE_CITY') == sf.col('TARGET_CITY'))
+def get_all_operators(spark: SparkSession, fn: str) -> DataFrame:
+    return (spark
+            .read
+            .parquet(fn)
+            .withColumn('refId', sf.explode('refIds'))
+            .drop('refIds')
+            .withColumnRenamed('ohubOperatorId', 'ohubOperatorId_old')
             )
-        )
-        .withColumn('street_lev_distance', sf.levenshtein(sf.col('SOURCE_STREET'), sf.col('TARGET_STREET')))
-        .filter(sf.col('street_lev_distance') < MIN_LEVENSHTEIN_DISTANCE)
-    )
 
 
-def group_matches(matches: DataFrame) -> DataFrame:
-    """ group matches with column i being the group id """
-    grouping_window = (
-        Window
-        .partitionBy('j')
-        .orderBy(sf.asc('i')))
+def get_old_operators_for_matching(spark: SparkSession, fn: str) -> DataFrame:
+    # Create string name used originally for the matching
+    w = Window.partitionBy('countryCode').orderBy(sf.asc('ohubOperatorId'))
 
-    # keep only the first entry sorted alphabetically
-    grp_sim = (
-        matches
-        .withColumn("rn", sf.row_number().over(grouping_window))
-        .filter(sf.col("rn") == 1)
-        .drop('rn')
-    )
-
-    # remove group ID from column j
-    return grp_sim.join(
-        grp_sim.select('j').subtract(grp_sim.select('i')),
-        on='j', how='inner'
-    )
-
-
-def save_to_parquet(matches: DataFrame, fn):
-    mode = 'append'
-    LOGGER.info("Writing to: " + fn)
-    LOGGER.info("Mode: " + mode)
-
-    (matches
-        .coalesce(20)
-        .write
-        .partitionBy('countryCode')
-        .parquet(fn, mode=mode))
+    return (spark
+            .read
+            .parquet(fn)
+            .withColumn('matching_string',
+                        sf.concat_ws(' ',
+                                     sf.col('operator.nameCleansed'),
+                                     sf.col('operator.cityCleansed'),
+                                     sf.col('operator.streetCleansed'),
+                                     sf.col('operator.zipCodeCleansed')
+                                     )
+                        )
+            .withColumn('matching_string', sf.regexp_replace('matching_string', REGEX, ''))
+            .withColumn('matching_string', sf.lower(sf.trim(sf.regexp_replace(sf.col('matching_string'), '\s+', ' '))))
+            .withColumn('string_index', sf.row_number().over(w) - 1)
+            .select('countryCode', 'string_index', 'ohubOperatorId', 'matching_string')
+            )
 
 
-def print_stats(matches: DataFrame, n_top, threshold):
-    matches.persist()
-    n_matches = matches.count()
-
-    print('\n\nNr. Similarities:\t', n_matches)
-    print('Threshold:\t', threshold)
-    print('N_top:\t', n_top)
-    (matches
-        .select('sourceId', 'targetId',
-                'similarity', 'sourceName', 'targetName')
-        .sort('similarity', ascending=True)
-        .show(50, truncate=False))
-
-    (matches
-        .groupBy(['sourceId', 'sourceName'])
-        .count()
-        .sort('count', ascending=False).show(50, truncate=False))
-
-    matches.describe('similarity').show()
-
-
-def name_match_country_contacts(spark: SparkSession, country_code: str, preprocessed_contacts: DataFrame,
-                                n_top, threshold):
-    LOGGER.info("Creating row id for country: " + country_code)
-    # get country data and add row number column
-    contacts = select_and_repartition_country(preprocessed_contacts, country_code)
-
-    LOGGER.info("Calculating similarities")
-
-    from string_matching.spark_string_matching import match_strings
-    similarity = match_strings(
-        spark, contacts,
-        string_column='name',
-        row_number_column='name_index',
-        n_top=n_top,
-        threshold=threshold,
-        n_gram=N_GRAMS,
-        min_document_frequency=MINIMUM_DOCUMENT_FREQUENCY,
-        max_vocabulary_size=VOCABULARY_SIZE,
-        matrix_chunks_rows=MATRIX_CHUNK_ROWS
-    )
-
-    matches = find_matches(similarity, contacts, country_code)
-    return group_matches(matches)
+def preprocess_new_operators(spark: SparkSession, fn: str) -> DataFrame:
+    w = Window.partitionBy('COUNTRY_CODE').orderBy(sf.asc('refId'))
+    return (spark
+            .read
+            .parquet(fn)
+            .na.drop(subset=['NAME_CLEANSED'])
+            .withColumn('refId', sf.concat_ws('~',
+                                   sf.col('COUNTRY_CODE'),
+                                   sf.col('SOURCE'),
+                                   sf.col('REF_OPERATOR_ID')))
+            .fillna('')
+            # create string columns to matched
+            .withColumn('matching_string',
+                        sf.concat_ws(' ',
+                                     sf.col('NAME_CLEANSED'),
+                                     sf.col('CITY_CLEANSED'),
+                                     sf.col('STREET_CLEANSED'),
+                                     sf.col('ZIP_CODE_CLEANSED')))
+            .withColumn('matching_string', sf.regexp_replace('matching_string', REGEX, ''))
+            .withColumn('matching_string', sf.lower(sf.trim(sf.regexp_replace('matching_string', '\s+', ' '))))
+            .withColumn('string_index', sf.row_number().over(w) - 1)
+            .select('COUNTRY_CODE', 'string_index', 'refId', 'matching_string', 'record_type')
+            )
 
 
-def main(args):
-    spark = start_spark()
+def create_32_char_hash(string):
+    hash_id = hashlib.md5(string.encode(encoding='utf-8')).hexdigest()
+    return '-'.join([hash_id[:8], hash_id[8:12], hash_id[12:16], hash_id[16:]])
 
-    t = Timer('Preprocessing contacts', LOGGER)
-    all_contacts= read_contacts(spark, args.input_file, args.fraction)
-    preprocessed_contacts = preprocess_contacts(all_contacts)
-
-    LOGGER.info("Parsing and persisting contacts data")
-    preprocessed_contacts.persist()
-    t.end_and_log()
-
-    country_codes = get_country_codes(args.country_code,
-                                      preprocessed_contacts)
-
-    for country_code in country_codes:
-        t = Timer('Running for country {}'.format(country_code), LOGGER)
-        grouped_matches = name_match_country_contacts(spark, country_code, preprocessed_contacts,
-                                                      args.n_top, args.threshold)
-        t.end_and_log()
-
-        if args.output_path:
-            save_to_parquet(grouped_matches, args.output_path)
-        else:
-            print_stats(grouped_matches, args.n_top, args.threshold)
-
+# create udf for use in spark later
+udf_create_32_char_hash = sf.udf(create_32_char_hash)
 
 
 class Timer(object):
@@ -315,16 +160,100 @@ class Timer(object):
         self.logger.info('{} took {} s'.format(self.name, str(end - self.start)))
 
 
+def get_country_codes(new_operators: DataFrame):
+    return (new_operators
+            .select('COUNTRY_CODE')
+            .distinct()
+            .rdd.map(lambda r: r[0]).collect()
+            )
+
+def magic_per_country(spark, new_operators, old_operators_for_matching, all_operators, country_code, n_top, threshold):
+    input_oprs_ctr = new_operators.filter(sf.col('COUNTRY_CODE') == country_code).repartition('refId')
+    oprs_old_ctr = old_operators_for_matching.filter(sf.col('countryCode') == country_code).repartition('ohubOperatorId')
+
+    similarity = match_strings(
+        spark,
+        input_oprs_ctr.select('string_index', 'matching_string'),
+        df2=oprs_old_ctr.select('string_index', 'matching_string'),
+        string_column='matching_string',
+        row_number_column='string_index',
+        n_top=n_top,
+        threshold=threshold,
+        n_gram=N_GRAMS,
+        min_document_frequency=MINIMUM_DOCUMENT_FREQUENCY,
+        max_vocabulary_size=VOCABULARY_SIZE
+    )
+
+    # Join to original refId and ohubOperatorId
+    matches = (
+        input_oprs_ctr
+            .join(similarity, input_oprs_ctr['string_index'] == similarity['i'], how='left')
+            .drop('string_index')
+            .selectExpr('j', 'SIMILARITY',
+                        'matching_string as matching_string_input', 'refId', 'record_type')
+            .join(oprs_old_ctr, sf.col('j') == oprs_old_ctr['string_index'], how='left')
+            .drop('string_index')
+            .withColumn('countryCode', sf.lit(country_code))
+            .selectExpr('SIMILARITY',
+                        'countryCode',
+                        'matching_string_input',
+                        'matching_string as matching_string_old',
+                        'refId',
+                        'ohubOperatorId as ohubOperatorId_matched',
+                        'record_type')
+    )
+
+    # Updating UUID
+    return (matches
+            .join(all_operators.filter(sf.col('countryCode') == country_code),
+                  on=['refId', 'countryCode'], how='outer')
+            .withColumn('ohubOperatorId_new',
+                        sf.when(sf.col('ohubOperatorId_matched').isNotNull(),
+                                sf.col('ohubOperatorId_matched'))
+                        .when(sf.col('ohubOperatorId_old').isNotNull(),
+                              sf.col('ohubOperatorId_old'))
+                        .otherwise(udf_create_32_char_hash(sf.col('refId')))
+                        )
+            )
+
+
+def save_to_parquet(joined_operators: DataFrame, fn):
+    mode = 'append'
+    LOGGER.info("Writing to: " + fn)
+    LOGGER.info("Mode: " + mode)
+    (
+        joined_operators
+        .coalesce(20)
+        .write
+        .partitionBy('countryCode')
+        .parquet(fn, mode=mode)
+    )
+
+
+def main(args):
+    spark = start_spark()
+    all_operators = get_all_operators(spark, args.input_path)
+    old_operators_for_matching = get_old_operators_for_matching(spark, args.input_path)
+    new_operators = preprocess_new_operators(spark, args.output_path)
+    country_codes = get_country_codes()
+
+    for country_code in country_codes:
+        joined_operators = magic_per_country(spark, new_operators, old_operators_for_matching, all_operators,
+                                             country_code, args.n_top, args.threshold)
+        if args.output_path:
+            save_to_parquet(joined_operators, args.output_path)
+        else:
+            print_stats(joined_operators, args.n_top, args.threshold)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('-f', '--input_file',
-                        help='fullpath or location of the input parquet file')
+    parser.add_argument('-f', '--input_path',
+                        help='full path or location of the parquet file with current operators')
     parser.add_argument('-p', '--output_path', default=None,
-                        help='write results in a parquet file to this fullpath or location directory')
+                        help='write results in a parquet file to this full path or location directory')
     parser.add_argument('-c', '--country_code', default='all',
                         help='country code to use (e.g. US). Default all countries.')
-    parser.add_argument('-frac', '--fraction', default=1.0, type=float,
-                        help='use this fraction of records.')
     parser.add_argument('-t', '--threshold', default=0.75, type=float,
                         help='drop similarities below this value [0-1].')
     parser.add_argument('-n', '--n_top', default=1500, type=int,

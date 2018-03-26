@@ -122,7 +122,7 @@ class StringVectorizer(object):
 
         Args:
             n_gram: Granularity of n-grams to use e.g. 2 or 3
-            min_dif: Minimum number of times a n-gram should appear
+            min_df: Minimum number of times a n-gram should appear
             vocab_size: Maximum number of n-grams to use
         """
         self.input_col = input_col
@@ -170,7 +170,7 @@ class StringVectorizer(object):
         """Fit transformers
 
         If two dataframes are sent then the vocabulary and document
-        frequency are calculated usng the union.
+        frequency are calculated using the union.
         """
         df = df1.union(df2) if df2 else df1
         self.pipeline = self.pipeline.fit(df)
