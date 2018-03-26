@@ -1,5 +1,7 @@
 from typing import List
 from time import perf_counter as timer
+import os
+import sys
 
 from pyspark.sql import functions as sf
 from pyspark.sql import DataFrame
@@ -9,7 +11,7 @@ from pyspark.sql.window import Window
 import findspark
 findspark.init()
 
-
+EGG_NAME = 'string_matching.egg'
 MINIMUM_ENTRIES_PER_COUNTRY = 100
 
 # characters to be dropped from strings to be compared
@@ -46,10 +48,9 @@ def start_spark(name):
     sc.setLogLevel("INFO")
 
     # the egg file should be in the same path as this script
-    # EGG_NAME = 'string_matching.egg'
-    # dir_path = os.path.dirname(os.path.realpath(__file__))
-    # sys.path.append(os.path.join(dir_path, 'dist', EGG_NAME))
-    # sc.addPyFile(os.path.join(dir_path, 'dist', EGG_NAME))
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    sys.path.append(os.path.join(dir_path, 'dist', EGG_NAME))
+    sc.addPyFile(os.path.join(dir_path, 'dist', EGG_NAME))
 
     log4j = sc._jvm.org.apache.log4j
     log4j.LogManager.getRootLogger().getLogger('org').setLevel(log4j.Level.WARN)
