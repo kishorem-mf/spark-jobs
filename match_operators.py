@@ -22,8 +22,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
+import utils
 from string_matching.spark_string_matching import match_strings
-from string_matching import utils
 
 
 __author__ = "Rodrigo Agundez"
@@ -98,31 +98,31 @@ def name_match_country_operators(spark: SparkSession, country_code: str, all_ope
     return join_original_columns_on_match_ids(grouped_similarity, operators, country_code)
 
 
-def main(args):
+def main(arguments):
     spark = utils.start_spark('Match operators')
 
     t = utils.Timer('Preprocessing operators', LOGGER)
-    all_operators = utils.read_parquet(spark, args.input_file, args.fraction)
+    all_operators = utils.read_parquet(spark, arguments.input_file, arguments.fraction)
     preprocessed_operators = preprocess_operators(all_operators)
 
     LOGGER.info("Parsing and persisting operator data")
     preprocessed_operators.persist()
     t.end_and_log()
 
-    country_codes = utils.get_country_codes(args.country_code, preprocessed_operators)
+    country_codes = utils.get_country_codes(arguments.country_code, preprocessed_operators)
 
     for country_code in country_codes:
         t = utils.Timer('Running for country {}'.format(country_code), LOGGER)
         grouped_matches = name_match_country_operators(spark,
                                                        country_code,
                                                        preprocessed_operators,
-                                                       args.n_top,
-                                                       args.threshold)
+                                                       arguments.n_top,
+                                                       arguments.threshold)
         t.end_and_log()
-        if args.output_path:
-            utils.save_to_parquet(grouped_matches, args.output_path)
+        if arguments.output_path:
+            utils.save_to_parquet(grouped_matches, arguments.output_path)
         else:
-            utils.print_stats(grouped_matches, args.n_top, args.threshold)
+            utils.print_stats(grouped_matches, arguments.n_top, arguments.threshold)
     preprocessed_operators.unpersist()
 
 

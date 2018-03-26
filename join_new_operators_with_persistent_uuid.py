@@ -18,8 +18,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
+import utils
 from string_matching.spark_string_matching import match_strings
-from string_matching import utils
 
 
 __author__ = "Roel Bertens"
@@ -170,20 +170,20 @@ def join_new_with_all_current_operators(spark, new_operators, all_operators_for_
             )
 
 
-def main(args):
+def main(arguments):
     spark = utils.start_spark('Join new operators with persistent UUID')
-    all_operators = get_all_current_operators(spark, args.current_operators_path)
-    all_operators_for_matching = preprocess_current_operators_for_matching(spark, args.current_operators_path)
-    new_operators = preprocess_new_operators_for_matching(spark, args.new_operators_path)
+    all_operators = get_all_current_operators(spark, arguments.current_operators_path)
+    all_operators_for_matching = preprocess_current_operators_for_matching(spark, arguments.current_operators_path)
+    new_operators = preprocess_new_operators_for_matching(spark, arguments.new_operators_path)
     country_codes = get_country_codes(new_operators)
 
     for country_code in country_codes:
         joined_operators = join_new_with_all_current_operators(spark, new_operators, all_operators_for_matching,
-                                                               all_operators, country_code, args.n_top, args.threshold)
-        if args.output_path:
-            utils.save_to_parquet(joined_operators, args.output_path)
+                                                               all_operators, country_code, arguments.n_top, arguments.threshold)
+        if arguments.output_path:
+            utils.save_to_parquet(joined_operators, arguments.output_path)
         else:
-            utils.print_stats(joined_operators, args.n_top, args.threshold)
+            utils.print_stats(joined_operators, arguments.n_top, arguments.threshold)
 
 
 if __name__ == '__main__':

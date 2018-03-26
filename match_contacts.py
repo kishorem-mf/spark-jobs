@@ -30,8 +30,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
+import utils
 from string_matching.spark_string_matching import match_strings
-from string_matching import utils
 
 
 __author__ = "Roel Bertens"
