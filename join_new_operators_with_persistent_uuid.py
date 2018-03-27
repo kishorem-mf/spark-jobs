@@ -179,7 +179,8 @@ def main(arguments):
 
     for country_code in country_codes:
         joined_operators = join_new_with_all_current_operators(spark, new_operators, all_operators_for_matching,
-                                                               all_operators, country_code, arguments.n_top, arguments.threshold)
+                                                               all_operators, country_code,
+                                                               arguments.n_top, arguments.threshold)
         if arguments.output_path:
             utils.save_to_parquet(joined_operators, arguments.output_path)
         else:

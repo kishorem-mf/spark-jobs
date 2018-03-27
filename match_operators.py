@@ -41,6 +41,7 @@ LOGGER = None
 
 
 def preprocess_operators(ddf: DataFrame) -> DataFrame:
+    """Create a unique ID and the string that is used for matching and select only necessary columns"""
     w = Window.partitionBy('countryCode').orderBy(sf.asc('id'))
     return (ddf
             .na.drop(subset=['nameCleansed'])
@@ -50,7 +51,7 @@ def preprocess_operators(ddf: DataFrame) -> DataFrame:
                                            sf.col('source'),
                                            sf.col('refOperatorId')))
             .fillna('')
-            # create string columns to matched
+            # create matching-string
             .withColumn('name',
                         sf.concat_ws(' ',
                                      sf.col('nameCleansed'),
@@ -63,7 +64,8 @@ def preprocess_operators(ddf: DataFrame) -> DataFrame:
             .select('name_index', 'id', 'name', 'countryCode'))
 
 
-def join_original_columns_on_match_ids(grouped_similarity: DataFrame, operators: DataFrame, country_code: str) -> DataFrame:
+def join_original_columns(grouped_similarity: DataFrame, operators: DataFrame, country_code: str) -> DataFrame:
+    """Join back the original name and ID columns after matching"""
     return (grouped_similarity
             .join(operators, grouped_similarity['i'] == operators['name_index'],
                   how='left').drop('name_index')
@@ -76,12 +78,11 @@ def join_original_columns_on_match_ids(grouped_similarity: DataFrame, operators:
                         'similarity', 'sourceName', 'name as targetName'))
 
 
-def name_match_country_operators(spark: SparkSession, country_code: str, all_operators: DataFrame,
-                                 n_top: int, threshold: float):
-    LOGGER.info("Creating row id for country: " + country_code)
-    # get country data and add row number column
+def match_operators_for_country(spark: SparkSession, country_code: str, all_operators: DataFrame,
+                                n_top: int, threshold: float):
+    """Match operators for a single country"""
+    LOGGER.info("Matching operators for country: " + country_code)
     operators = utils.select_and_repartition_country(all_operators, country_code)
-
     LOGGER.info("Calculating similarities")
     similarity = match_strings(
         spark, operators,
@@ -94,8 +95,10 @@ def name_match_country_operators(spark: SparkSession, country_code: str, all_ope
         max_vocabulary_size=VOCABULARY_SIZE,
         matrix_chunks_rows=MATRIX_CHUNK_ROWS
     )
+    LOGGER.info("Group matches")
     grouped_similarity = utils.group_matches(similarity)
-    return join_original_columns_on_match_ids(grouped_similarity, operators, country_code)
+    LOGGER.info("Join matches with original columns and return result")
+    return join_original_columns(grouped_similarity, operators, country_code)
 
 
 def main(arguments):
@@ -104,20 +107,18 @@ def main(arguments):
     t = utils.Timer('Preprocessing operators', LOGGER)
     all_operators = utils.read_parquet(spark, arguments.input_file, arguments.fraction)
     preprocessed_operators = preprocess_operators(all_operators)
-
     LOGGER.info("Parsing and persisting operator data")
     preprocessed_operators.persist()
     t.end_and_log()
 
     country_codes = utils.get_country_codes(arguments.country_code, preprocessed_operators)
-
     for country_code in country_codes:
         t = utils.Timer('Running for country {}'.format(country_code), LOGGER)
-        grouped_matches = name_match_country_operators(spark,
-                                                       country_code,
-                                                       preprocessed_operators,
-                                                       arguments.n_top,
-                                                       arguments.threshold)
+        grouped_matches = match_operators_for_country(spark,
+                                                      country_code,
+                                                      preprocessed_operators,
+                                                      arguments.n_top,
+                                                      arguments.threshold)
         t.end_and_log()
         if arguments.output_path:
             utils.save_to_parquet(grouped_matches, arguments.output_path)

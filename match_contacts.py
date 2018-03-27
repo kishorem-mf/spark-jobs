@@ -8,8 +8,9 @@ The following steps are performed:
 - remove contacts without first AND without last name (cleansed)
 - remove contacts without a street (cleansed)
 - create a unique ID as COUNTRY_CODE~SOURCE~REF_CONTACT_PERSON_ID
+- create a matching-string: concatenation of first name and last name
 - per country
-    - match on concatenation of first name and last name
+    - match on matching-string
     - keep only the matches with similarity above threshold (0.7)
     - keep only the matches with exactly matching zip code
         - if no zip code is present: keep match if cities (cleansed) match exactly
@@ -50,7 +51,15 @@ LOGGER = None
 
 
 def preprocess_contacts(ddf: DataFrame) -> DataFrame:
-    w = Window.partitionBy('countryCode').orderBy(sf.asc('id'))
+    """Some pre-processing
+        - keep only contacts without e-mail AND without mobile phone number
+        - remove contacts without first AND without last name (cleansed)
+        - remove contacts without a street (cleansed)
+        - create a unique ID
+        - create matching-string
+        - select only necessary columns
+    """
+    w = Window.partitionBy('COUNTRY_CODE').orderBy(sf.asc('id'))
     return (
         ddf
         # keep only if no email nor phone
@@ -81,7 +90,12 @@ def preprocess_contacts(ddf: DataFrame) -> DataFrame:
     )
 
 
-def join_original_columns_on_match_ids(similarity: DataFrame, contacts: DataFrame, country_code: str) -> DataFrame:
+def join_columns_and_filter(similarity: DataFrame, contacts: DataFrame, country_code: str) -> DataFrame:
+    """Join back the original columns (street, zip, etc.) after matching and filter matches as follows:
+        - keep only the matches with exactly matching zip code
+            - if no zip code is present: keep match if cities (cleansed) match exactly
+        - keep only the matches where Levenshtein distance between streets (cleansed) is lower than threshold (5)
+    """
     return (
         similarity
         .join(contacts, similarity['i'] == contacts['name_index'],
@@ -113,12 +127,11 @@ def join_original_columns_on_match_ids(similarity: DataFrame, contacts: DataFram
     )
 
 
-def name_match_country_contacts(spark: SparkSession, country_code: str, preprocessed_contacts: DataFrame,
-                                n_top: int, threshold: float):
-    LOGGER.info("Creating row id for country: " + country_code)
-    # get country data and add row number column
+def match_contacts_for_country(spark: SparkSession, country_code: str, preprocessed_contacts: DataFrame,
+                               n_top: int, threshold: float):
+    """Match contacts for a single country"""
+    LOGGER.info("Matching contacts for country: " + country_code)
     contacts = utils.select_and_repartition_country(preprocessed_contacts, country_code)
-
     LOGGER.info("Calculating similarities")
     similarity = match_strings(
         spark, contacts,
@@ -131,35 +144,35 @@ def name_match_country_contacts(spark: SparkSession, country_code: str, preproce
         max_vocabulary_size=VOCABULARY_SIZE,
         matrix_chunks_rows=MATRIX_CHUNK_ROWS
     )
+    LOGGER.info("Group matches")
     grouped_similarity = utils.group_matches(similarity)
-    return join_original_columns_on_match_ids(grouped_similarity, contacts, country_code)
+    LOGGER.info("Join matches with original columns, filter, and return result")
+    return join_columns_and_filter(grouped_similarity, contacts, country_code)
 
 
-def main(args):
+def main(arguments):
     spark = utils.start_spark('Match contacts')
 
     t = utils.Timer('Preprocessing contacts', LOGGER)
-    all_contacts = utils.read_parquet(spark, args.input_file, args.fraction)
+    all_contacts = utils.read_parquet(spark, arguments.input_file, arguments.fraction)
     preprocessed_contacts = preprocess_contacts(all_contacts)
-
     LOGGER.info("Parsing and persisting contacts data")
     preprocessed_contacts.persist()
     t.end_and_log()
 
-    country_codes = utils.get_country_codes(args.country_code, preprocessed_contacts)
-
+    country_codes = utils.get_country_codes(arguments.country_code, preprocessed_contacts)
     for country_code in country_codes:
         t = utils.Timer('Running for country {}'.format(country_code), LOGGER)
-        grouped_matches = name_match_country_contacts(spark,
-                                                      country_code,
-                                                      preprocessed_contacts,
-                                                      args.n_top,
-                                                      args.threshold)
+        grouped_matches = match_contacts_for_country(spark,
+                                                     country_code,
+                                                     preprocessed_contacts,
+                                                     arguments.n_top,
+                                                     arguments.threshold)
         t.end_and_log()
-        if args.output_path:
-            utils.save_to_parquet(grouped_matches, args.output_path)
+        if arguments.output_path:
+            utils.save_to_parquet(grouped_matches, arguments.output_path)
         else:
-            utils.print_stats(grouped_matches, args.n_top, args.threshold)
+            utils.print_stats(grouped_matches, arguments.n_top, arguments.threshold)
     preprocessed_contacts.unpersist()
 
 
