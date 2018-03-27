@@ -3,6 +3,7 @@ package com.unilever.ohub.spark.tsv2parquet
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
+import org.apache.spark.api.java.StorageLevels
 import org.apache.spark.sql._
 
 import scala.reflect.runtime.universe._
@@ -11,7 +12,7 @@ object DomainGateKeeper {
   type ErrorMessage = String
 
   object implicits {
-
+    // if we upgrade our scala version, we can probably get rid of this encoder too (because Either has become a Product in scala 2.12)
     implicit def eitherEncoder[T1, T2]: Encoder[Either[T1, T2]] =
       Encoders.kryo[Either[T1, T2]]
   }
@@ -29,16 +30,16 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag] extends Sp
 
   override final val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
 
-  def transform(toDomainEntity: Row => DomainType): Row => Either[ErrorMessage, DomainType] =
+  def toDomainEntity: Row => DomainType
+
+  def transform(transformFn: Row => DomainType): Row => Either[ErrorMessage, DomainType] =
     row =>
       try
-        Right(toDomainEntity(row))
+        Right(transformFn(row))
       catch {
         case e: Exception =>
           Left(s"Error parsing row: '$e', row = '$row'")
       }
-
-  def toDomainEntity: Row => DomainType
 
   override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
     import spark.implicits._
@@ -52,7 +53,8 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag] extends Sp
         hasHeaders = hasHeaders
       )
       .map(transform(toDomainEntity))
-    // consider to persist the result here
+      // persist the result here (result is evaluated multiple times, since spark transformations are lazy)
+      .persist(StorageLevels.MEMORY_AND_DISK)
 
     val errors: Dataset[ErrorMessage] = result.filter(_.isLeft).map(_.left.get)
     val numberOfErrors = errors.count()
