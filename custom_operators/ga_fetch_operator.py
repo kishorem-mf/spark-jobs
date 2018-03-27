@@ -22,6 +22,7 @@ class GAFetchOperator(BaseOperator):
      AVRO files into
     :type destination_folder: string
     """
+
     def __init__(self,
                  bigquery_conn_id,
                  country_codes,
@@ -42,8 +43,11 @@ class GAFetchOperator(BaseOperator):
                        ga_country_code,
                        working_date,
                        destination_folder):
-        ga_dataset = f'{ga_country_code}.ga_sessions_{working_date:%Y%m%d}'
-        destination = f'{destination_folder}/DATE={working_date.isoformat()}/COUNTRY={country_code}/ga_sessions.avro'
+        ga_dataset = '{country_code}.ga_sessions_{working_date}'.format(country_code=ga_country_code,
+                                                                        working_date=working_date)
+        destination = '{dest}/DATE={date}/COUNTRY={country}/ga_sessions.avro'.format(dest=destination_folder,
+                                                                                     date=working_date.isoformat(),
+                                                                                     country=country_code)
 
         bq_operator = BigQueryToCloudStorageOperator(
             source_project_dataset_table=ga_dataset,
@@ -67,7 +71,7 @@ class GAFetchOperator(BaseOperator):
             ga_country_code = self.country_codes[country_code]
         except Exception as e:
             logging.error(
-                'No GA code available for country code: ' + country_code, e)
+                'No GA code available for country code: {}'.format(country_code), e)
             return
 
         self.fetch_for_date(context,
