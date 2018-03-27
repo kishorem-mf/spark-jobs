@@ -58,7 +58,7 @@ with DAG('ohub_operators', default_args=default_args,
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
         ],
         spark_jar_task={
-            'main_class_name': f"com.unilever.ohub.spark.tsv2parquet.OperatorConverter",
+            'main_class_name': "com.unilever.ohub.spark.tsv2parquet.OperatorConverter",
             'parameters': [data_input_bucket.format('OPERATORS'),
                            data_output_bucket.format('OPERATORS'.lower())]
         }
@@ -86,7 +86,7 @@ with DAG('ohub_operators', default_args=default_args,
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
         ],
         spark_jar_task={
-            'main_class_name': f"com.unilever.ohub.spark.merging.OperatorMerging",
+            'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
             'parameters': [data_output_bucket.format('operators_matched'),
                            data_input_bucket.format('OPERATORS'),
                            data_output_bucket.format('operators_merged')]
@@ -100,7 +100,7 @@ with DAG('ohub_operators', default_args=default_args,
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
         ],
         spark_jar_task={
-            'main_class_name': f"com.unilever.ohub.spark.tsv2parquet.OperatorAcmConverter",
+            'main_class_name': "com.unilever.ohub.spark.tsv2parquet.OperatorAcmConverter",
             'parameters': [data_output_bucket.format('operators_merged.parquet'),
                            data_output_bucket.format('operators_acm.csv')]
         }

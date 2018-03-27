@@ -76,7 +76,7 @@ with DAG('ohub_dag', default_args=default_args,
     )
 
     for task in csv_to_parquet:
-        task_name = f"{task['input'].lower()}_to_parquet"
+        task_name = "{}_to_parquet".format(task['input'].lower())
         globals()[task_name] = DatabricksSubmitRunOperator(
             task_id=task_name,
             cluster_name=cluster_name,
@@ -85,7 +85,7 @@ with DAG('ohub_dag', default_args=default_args,
                 {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
             ],
             spark_jar_task={
-                'main_class_name': f"com.unilever.ohub.spark.tsv2parquet.{task['class']}",
+                'main_class_name': "com.unilever.ohub.spark.tsv2parquet.{}".format(task['class']),
                 'parameters': [data_input_bucket.format(task['input']),
                                data_output_bucket.format(task['input'].lower())]
             }
@@ -94,7 +94,7 @@ with DAG('ohub_dag', default_args=default_args,
         create_cluster >> globals()[task_name]
 
     for task in to_acm:
-        task_name = f"{task['output'].lower()}_to_acm"
+        task_name = "{}_to_acm".format(task['output'].lower())
         globals()[task_name] = DatabricksSubmitRunOperator(
             task_id=task_name,
             cluster_name=cluster_name,
@@ -103,7 +103,7 @@ with DAG('ohub_dag', default_args=default_args,
                 {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
             ],
             spark_jar_task={
-                'main_class_name': f"com.unilever.ohub.spark.tsv2parquet.{task['class']}",
+                'main_class_name': "com.unilever.ohub.spark.tsv2parquet.{}".format(task['class']),
                 'parameters': [data_input_bucket.format(task['input']),
                                data_output_bucket.format(task['output']) + '_acm']
             })
@@ -131,7 +131,7 @@ with DAG('ohub_dag', default_args=default_args,
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
         ],
         spark_jar_task={
-            'main_class_name': f"com.unilever.ohub.spark.merging.OperatorMerging",
+            'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
             'parameters': [data_output_bucket.format('operators_matched'),
                            data_input_bucket.format('OPERATORS'),
                            data_output_bucket.format('operators_merged')]
@@ -147,7 +147,7 @@ with DAG('ohub_dag', default_args=default_args,
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
         ],
         spark_jar_task={
-            'main_class_name': f"com.unilever.ohub.spark.merging.ContactPersonMerging1",
+            'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonMerging1",
             'parameters': [data_output_bucket.format('contactpersons'),
                            data_output_bucket.format('contactpersons_merged_1')]
         })
@@ -163,7 +163,7 @@ with DAG('ohub_dag', default_args=default_args,
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
         ],
         spark_jar_task={
-            'main_class_name': f"com.unilever.ohub.spark.merging.ContactPersonMerging2",
+            'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonMerging2",
             'parameters': [data_output_bucket.format('contactpersons_merged_1'),
                            data_output_bucket.format('operators_merged'),
                            data_output_bucket.format('contactpersons_merged_2')]
@@ -179,7 +179,7 @@ with DAG('ohub_dag', default_args=default_args,
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
         ],
         spark_jar_task={
-            'main_class_name': f"com.unilever.ohub.spark.merging.OrderMerging",
+            'main_class_name': "com.unilever.ohub.spark.merging.OrderMerging",
             'parameters': [data_output_bucket.format('contactpersons_merged_2'),
                            data_output_bucket.format('operators_merged'),
                            data_output_bucket.format('orders'),

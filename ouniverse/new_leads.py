@@ -55,8 +55,8 @@ with DAG('new_leads', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': f"com.unilever.ouniverse.leads.OperatorMapsSearcher",
-            'parameters': ['--operators', f'{data_bucket}/input/phase_I_NZ_sample.csv',
-                           '--outputpath', f'{data_bucket}/output/phaseI_output',
+            'parameters': ['--operators', '{}/input/phase_I_NZ_sample.csv'.format(data_bucket),
+                           '--outputpath', '{}/output/phaseI_output'.format(data_bucket),
                            '--apiKey', Variable.get('google_api_key')]
         }
     )
@@ -70,8 +70,8 @@ with DAG('new_leads', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': f"com.unilever.ouniverse.leads.GridSearcher",
-            'parameters': ['--leads', f'{data_bucket}/input/Phase_II_Input_NZ_sample.csv',
-                           '--outputpath', f'{data_bucket}/output/phaseIIa_output',
+            'parameters': ['--leads', '{}/input/Phase_II_Input_NZ_sample.csv'.format(data_bucket),
+                           '--outputpath', '{}/output/phaseIIa_output'.format(data_bucket),
                            '--apiKey', Variable.get('google_api_key')]
         }
     )
@@ -85,10 +85,10 @@ with DAG('new_leads', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': f"com.unilever.ouniverse.leads.PlaceIdSearcher",
-            'parameters': ['--places', f'{data_bucket}/output/phaseIIa_output',
+            'parameters': ['--places', '{}/output/phaseIIa_output'.format(data_bucket),
                            '--idColumn', 'placeId',
                            '--fileType', 'parquet',
-                           '--outputpath', f'{data_bucket}/output/phaseIIb_output',
+                           '--outputpath', '{}/output/phaseIIb_output'.format(data_bucket),
                            '--apiKey', Variable.get('google_api_key')]
         }
     )
@@ -102,11 +102,11 @@ with DAG('new_leads', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': f"com.unilever.ouniverse.prioritisation.PrioritizeLeads",
-            'parameters': ['--operators', f'{data_bucket}/output/phaseI_output',
-                           '--places', f'{data_bucket}/output/phaseIIb_output',
-                           '--leads', f'{data_bucket}/input/cities.csv',
-                           '--priorities', f'{data_bucket}/input/priorities.csv',
-                           '--outputpath', f'{data_bucket}/output/phaseIII_output']
+            'parameters': ['--operators', '{}/output/phaseI_output'.format(data_bucket),
+                           '--places', '{}/output/phaseIIb_output'.format(data_bucket),
+                           '--leads', '{}/input/cities.csv'.format(data_bucket),
+                           '--priorities', '{}/input/priorities.csv'.format(data_bucket),
+                           '--outputpath', '{}/output/phaseIII_output'.format(data_bucket)]
         }
     )
 

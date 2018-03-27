@@ -41,7 +41,7 @@ def find_cluster_id(cluster_name: str,
     clusters = find_running_clusters_by_name(cluster_name, databricks_conn_id, databricks_hook)
 
     if len(clusters) == 0:
-        raise AirflowException(f'Found no running Databricks cluster named {cluster_name}.')
+        raise AirflowException('Found no running Databricks cluster named "%s".'.format(cluster_name))
     elif len(clusters) > 1:
         logging.warning('Found more than one running Databricks cluster named "%s", using first match.', cluster_name)
 
@@ -62,7 +62,7 @@ def get_cluster_status(cluster_id: str, databricks_conn_id: str = 'databricks_de
     """
 
     hook = databricks_hook or DatabricksHook(databricks_conn_id=databricks_conn_id)
-    body = hook._do_api_call(('GET', f'api/2.0/clusters/get?cluster_id={cluster_id}'), {})
+    body = hook._do_api_call(('GET', 'api/2.0/clusters/get?cluster_id=%s'.format(cluster_id)), {})
     return body['state']
 
 
@@ -308,7 +308,8 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
             run_state = get_cluster_status(self.cluster_id, self.databricks_conn_id)
             if run_state == 'TERMINATED':
                 logging.info(
-                    f'Termination of cluster {self.cluster_name} with id {self.cluster_id} completed successfully.')
+                    'Termination of cluster %s with id %s completed successfully.' .format(self.cluster_name,
+                                                                                           self.cluster_id))
                 return
             else:
                 logging.info('Cluster terminating, currently in state: {s}'.format(s=run_state))
