@@ -25,8 +25,6 @@ trait Storage {
                   quote: String = "\""
                 ): Unit
 
-  def writeToCsvAcm(ds: Dataset[_], outputFile: String, partitionBy: Seq[String] = Seq()): Unit
-
   def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
 
   def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq()): Unit
@@ -48,8 +46,9 @@ class DefaultStorage(spark: SparkSession) extends Storage {
                           ): Dataset[Row] = {
     spark
       .read
-      .option("header", if (hasHeaders) "true" else "false")
+      .option("header", hasHeaders)
       .option("sep", fieldSeparator)
+      .option("inferSchema", value = false)
       .option("mode", "FAILFAST") // let's fail fast for now
       .csv(location)
   }
@@ -72,11 +71,6 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .option("quote", quote)
       .partitionBy(partitionBy: _*)
       .csv(outputFile)
-  }
-
-  def writeToCsvAcm(ds: Dataset[_], outputFile: String, partitionBy: Seq[String] = Seq()): Unit = {
-    // This makes sure the when " is in a value it is not escaped like \" which is not accepted by ACM
-    writeToCsv(ds, outputFile, partitionBy, "\u00B6", "\u0000")
   }
 
   override def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T] = {
