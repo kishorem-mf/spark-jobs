@@ -32,25 +32,5 @@ pipelines:
         image: microsoft/azure-cli
         script:
           - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
-          - rm -rf README.md bitbucket-pipelines.yml .gitignore setup.cfg .git/
-          - tar -cvf dags.tar .
-          - az storage blob upload -f dags.tar -c prod -n deployment/airflow/dags/dags.tar --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_ACCOUNT}
-
-    dev:
-    - step:
-        name: Check PEP8 codestyle and run tests
-        image: python:3.6.4
-        caches:
-          - pip
-        script:
-          - pip install pycodestyle pytest requests_mock apache-airflow==1.9.0
-          - pytest tests
-          - pycodestyle --show-source .
-    - step:
-        name: Deploy to azure blob store
-        image: microsoft/azure-cli
-        script:
-          - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
-          - rm -rf README.md bitbucket-pipelines.yml .gitignore setup.cfg .git/
-          - tar -cvf dags.tar .
-          - az storage blob upload -f dags.tar -c dev -n deployment/airflow/dags/dags.tar --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_ACCOUNT}
+          - rm -rf README.md bitbucket-pipelines.yml .gitignore setup.cfg .git .cache .pytest* tests
+          - az storage file upload-batch --source . --destination airflow-dags --account-key ${AZ_AIRFLOW_STORAGE_KEY} --account-name ${AZ_AIRFLOW_STORAGE_ACCOUNT}

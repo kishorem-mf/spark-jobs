@@ -1,9 +1,8 @@
 import logging
+from datetime import date
 
-from datetime import date, timedelta
-
-from airflow.models import BaseOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
+from airflow.models import BaseOperator
 
 
 class GAFetchOperator(BaseOperator):

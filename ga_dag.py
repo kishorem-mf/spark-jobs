@@ -12,8 +12,8 @@ default_args = {
 
 with DAG('gcp_ga', default_args=default_args) as dag:
     t1 = GAFetchOperator(
-        task_id="Fetch Google Analytics from Google BigQuery for date",
+        task_id="fetch_GA_from_BQ_for_date",
         bigquery_conn_id='gcp_ga_conn_id',
         destination_folder="/tmp/ga/{{ds}}",
-        date={'ds'},
+        date='{{ ds }}',
         country_codes=country_codes)
