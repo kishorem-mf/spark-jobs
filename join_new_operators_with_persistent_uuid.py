@@ -193,7 +193,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('-f', '--current_operators_path',
                         help='full path or location of the parquet file with current operators')
-    parser.add_argument('-f', '--new_operators_path',
+    parser.add_argument('-g', '--new_operators_path',
                         help='full path or location of the parquet file with new operators which we want to add')
     parser.add_argument('-p', '--output_path', default=None,
                         help='write results in a parquet file to this full path or location directory')
