@@ -54,7 +54,7 @@ with DAG('new_leads', default_args=default_args,
             {'jar': 'dbfs:/libraries/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'}
         ],
         spark_jar_task={
-            'main_class_name': f"com.unilever.ouniverse.leads.OperatorMapsSearcher",
+            'main_class_name': "com.unilever.ouniverse.leads.OperatorMapsSearcher",
             'parameters': ['--operators', '{}/input/phase_I_NZ_sample.csv'.format(data_bucket),
                            '--outputpath', '{}/output/phaseI_output'.format(data_bucket),
                            '--apiKey', Variable.get('google_api_key')]
@@ -69,7 +69,7 @@ with DAG('new_leads', default_args=default_args,
             {'jar': 'dbfs:/libraries/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'}
         ],
         spark_jar_task={
-            'main_class_name': f"com.unilever.ouniverse.leads.GridSearcher",
+            'main_class_name': "com.unilever.ouniverse.leads.GridSearcher",
             'parameters': ['--leads', '{}/input/Phase_II_Input_NZ_sample.csv'.format(data_bucket),
                            '--outputpath', '{}/output/phaseIIa_output'.format(data_bucket),
                            '--apiKey', Variable.get('google_api_key')]
@@ -84,7 +84,7 @@ with DAG('new_leads', default_args=default_args,
             {'jar': 'dbfs:/libraries/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'}
         ],
         spark_jar_task={
-            'main_class_name': f"com.unilever.ouniverse.leads.PlaceIdSearcher",
+            'main_class_name': "com.unilever.ouniverse.leads.PlaceIdSearcher",
             'parameters': ['--places', '{}/output/phaseIIa_output'.format(data_bucket),
                            '--idColumn', 'placeId',
                            '--fileType', 'parquet',
@@ -101,7 +101,7 @@ with DAG('new_leads', default_args=default_args,
             {'jar': 'dbfs:/libraries/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'}
         ],
         spark_jar_task={
-            'main_class_name': f"com.unilever.ouniverse.prioritisation.PrioritizeLeads",
+            'main_class_name': "com.unilever.ouniverse.prioritisation.PrioritizeLeads",
             'parameters': ['--operators', '{}/output/phaseI_output'.format(data_bucket),
                            '--places', '{}/output/phaseIIb_output'.format(data_bucket),
                            '--leads', '{}/input/cities.csv'.format(data_bucket),
