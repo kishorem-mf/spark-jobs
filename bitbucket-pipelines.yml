@@ -2,6 +2,15 @@
 pipelines:
   default:
     - step:
+        name: Check PEP8 codestyle and run tests
+        image: python:3.5.2
+        caches:
+          - pip
+        script:
+          - pip install pytest pycodestyle
+          - pytest tests
+          - pycodestyle --show-source .
+    - step:
         name: Test building EGG
         image: timvancann/miniconda3-gcc
         script:
@@ -11,6 +20,14 @@ pipelines:
   branches:
     master:
     - step:
+        name: Check PEP8 codestyle and run tests
+        image: python:3.5.2
+        caches:
+        script:
+          - pip install pytest pycodestyle
+          - pytest tests
+          - pycodestyle --show-source .
+    - step:
         name: Build EGG
         image: timvancann/miniconda3-gcc
         script:
@@ -19,14 +36,6 @@ pipelines:
           - ./compile_library.sh
         artifacts:
           - dist/*.egg
-    - step:
-        name: Deploy to gcloud bucket
-        image: google/cloud-sdk:latest
-        script:
-          - echo $G_SECRET > key.json
-          - gcloud auth activate-service-account bitbucket@ufs-prod.iam.gserviceaccount.com --key-file=key.json
-          - gsutil cp dist/*.egg gs://ufs-prod/deployment/name-matching/dist/
-          - gsutil cp *.py gs://ufs-prod/deployment/name-matching/
     - step:
         name: Deploy to azure blob store
         image: microsoft/azure-cli
