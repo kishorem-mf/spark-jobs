@@ -123,6 +123,25 @@ with DAG('ohub_dag', default_args=default_args,
         }
     )
 
+    uuid_operators = DatabricksSubmitRunOperator(
+        task_id='uuid_operators',
+        cluster_name=cluster_name,
+        databricks_conn_id=databricks_conn_id,
+        libraries=[
+            {'egg': 'dbfs:/libraries/string_matching.egg'}
+        ],
+        spark_python_task={
+            'python_file': 'dbfs:/libraries/join_new_operators_with_persistent_uuid.py',
+            'parameters': [
+                '--current_operators_path', data_output_bucket.format('current_operators'),
+                '--new_operators_path', data_output_bucket.format('new_operators'),
+                '--output_path', data_output_bucket.format('deduped'),
+                # '--country_code', 'all',
+                # '--threshold', 0.8,
+                # '--n_top', default=1,
+        }
+    )
+
     merge_operators = DatabricksSubmitRunOperator(
         task_id='merge_operators',
         cluster_name=cluster_name,
