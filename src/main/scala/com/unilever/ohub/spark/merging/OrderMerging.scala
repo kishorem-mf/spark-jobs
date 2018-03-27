@@ -110,6 +110,6 @@ object OrderMerging extends SparkJob {
     val transformed = transform(spark, orderRecords, operatorRecords, contactPersonRecords)
 
     storage
-      .writeToParquet(transformed, outputFile, partitionBy = "countryCode")
+      .writeToParquet(transformed, outputFile, partitionBy = Seq("countryCode"))
   }
 }

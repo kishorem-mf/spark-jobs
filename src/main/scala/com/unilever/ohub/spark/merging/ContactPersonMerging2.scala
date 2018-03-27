@@ -84,6 +84,6 @@ object ContactPersonMerging2 extends SparkJob {
     val transformed = transform(spark, contactPersonMerging, operatorIdAndRefs)
 
     storage
-      .writeToParquet(transformed, outputFile, partitionBy = "countryCode")
+      .writeToParquet(transformed, outputFile, partitionBy = Seq("countryCode"))
   }
 }

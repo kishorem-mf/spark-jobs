@@ -43,6 +43,6 @@ object OrderLineAcmConverter extends SparkJob {
 
     // COUNTRY_CODE is not an existing column, therefore no country partitioning
     storage
-      .writeToCSV(transformed, outputFile)
+      .writeToCsv(transformed, outputFile)
   }
 }

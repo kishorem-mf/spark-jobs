@@ -108,6 +108,6 @@ object ContactPersonAcmConverter extends SparkJob {
     val transformed = transform(spark, goldenContactPersonRecords)
 
     storage
-      .writeToCSV(transformed, outputFile, partitionBy = "COUNTRY_CODE")
+      .writeToCsv(transformed, outputFile, partitionBy = Seq("COUNTRY_CODE"))
   }
 }
