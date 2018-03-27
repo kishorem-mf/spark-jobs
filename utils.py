@@ -13,6 +13,7 @@ findspark.init()
 
 EGG_NAME = 'string_matching.egg'
 MINIMUM_ENTRIES_PER_COUNTRY = 100
+LOGGER = None
 
 # characters to be dropped from strings to be compared
 # list provided by Roderik von Maltzahn
@@ -55,10 +56,9 @@ def start_spark(name):
     log4j = sc._jvm.org.apache.log4j
     log4j.LogManager.getRootLogger().getLogger('org').setLevel(log4j.Level.WARN)
     log4j.LogManager.getRootLogger().getLogger('akka').setLevel(log4j.Level.ERROR)
-
     global LOGGER
     LOGGER = log4j.LogManager.getLogger(name)
-    return spark
+    return spark, LOGGER
 
 
 def read_parquet(spark: SparkSession, fn: str, fraction: float) -> DataFrame:
@@ -83,10 +83,10 @@ def get_country_codes(country_code_arg: str, ddf: DataFrame) -> List[str]:
     return codes
 
 
-def select_and_repartition_country(ddf: DataFrame, country_code: str) -> DataFrame:
+def select_and_repartition_country(ddf: DataFrame, column_name: str, country_code: str) -> DataFrame:
     return (ddf
-            .filter(sf.col('countryCode') == country_code)
-            .drop('countryCode')
+            .filter(sf.col(column_name) == country_code)
+            .drop(column_name)
             .repartition('id')
             .sort('id', ascending=True))
 
@@ -133,7 +133,7 @@ def save_to_parquet(ddf: DataFrame, fn):
      )
 
 
-def print_stats(ddf: DataFrame, n_top, threshold):
+def print_stats_operators(ddf: DataFrame, n_top, threshold):
     ddf.persist()
     n_matches = ddf.count()
 
@@ -152,6 +152,31 @@ def print_stats(ddf: DataFrame, n_top, threshold):
         .sort('count', ascending=False).show(50, truncate=False))
 
     ddf.describe('similarity').show()
+    ddf.unpersist()
+
+
+def print_stats_contacts(ddf: DataFrame, n_top, threshold):
+    ddf.persist()
+    n_matches = ddf.count()
+
+    print('\n\nNr. Similarities:\t', n_matches)
+    print('Threshold:\t', threshold)
+    print('N_top:\t', n_top)
+    (ddf
+     .select('SIMILARITY',
+             'SOURCE_NAME', 'TARGET_NAME',
+             'SOURCE_STREET', 'TARGET_STREET',
+             'SOURCE_ZIP_CODE', 'TARGET_ZIP_CODE',
+             'SOURCE_CITY', 'TARGET_CITY')
+     .sort('SIMILARITY', ascending=True)
+     .show(50, truncate=False))
+
+    (ddf
+     .groupBy(['SOURCE_ID', 'SOURCE_NAME'])
+     .count()
+     .sort('count', ascending=False).show(50, truncate=False))
+
+    ddf.describe('SIMILARITY').show()
     ddf.unpersist()
 
 

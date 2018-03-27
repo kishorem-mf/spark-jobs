@@ -131,7 +131,7 @@ def match_contacts_for_country(spark: SparkSession, country_code: str, preproces
                                n_top: int, threshold: float):
     """Match contacts for a single country"""
     LOGGER.info("Matching contacts for country: " + country_code)
-    contacts = utils.select_and_repartition_country(preprocessed_contacts, country_code)
+    contacts = utils.select_and_repartition_country(preprocessed_contacts, 'COUNTRY_CODE', country_code)
     LOGGER.info("Calculating similarities")
     similarity = match_strings(
         spark, contacts,
@@ -151,7 +151,8 @@ def match_contacts_for_country(spark: SparkSession, country_code: str, preproces
 
 
 def main(arguments):
-    spark = utils.start_spark('Match contacts')
+    global LOGGER
+    spark, LOGGER = utils.start_spark('Match contacts')
 
     t = utils.Timer('Preprocessing contacts', LOGGER)
     all_contacts = utils.read_parquet(spark, arguments.input_file, arguments.fraction)
@@ -172,7 +173,7 @@ def main(arguments):
         if arguments.output_path:
             utils.save_to_parquet(grouped_matches, arguments.output_path)
         else:
-            utils.print_stats(grouped_matches, arguments.n_top, arguments.threshold)
+            utils.print_stats_contacts(grouped_matches, arguments.n_top, arguments.threshold)
     preprocessed_contacts.unpersist()
 
 

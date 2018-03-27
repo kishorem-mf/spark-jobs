@@ -184,7 +184,9 @@ def main(arguments):
         if arguments.output_path:
             utils.save_to_parquet(joined_operators, arguments.output_path)
         else:
-            utils.print_stats(joined_operators, arguments.n_top, arguments.threshold)
+            print('Number of groups:', all_operators.count(), '-->', joined_operators.count())
+            (joined_operators
+             .show(50, truncate=False))
 
 
 if __name__ == '__main__':
