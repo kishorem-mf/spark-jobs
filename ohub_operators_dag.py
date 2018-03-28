@@ -46,7 +46,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     terminate_cluster = DatabricksTerminateClusterOperator(
         task_id='terminate_cluster',
-        cluster_name=cluster_name,
+        cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id
     )
 

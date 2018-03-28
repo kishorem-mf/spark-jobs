@@ -256,7 +256,7 @@ class DatabricksStartClusterOperator(BaseDatabricksOperator):
         hook = self.get_hook()
         logging.info('Starting Databricks cluster with id %s"', self.cluster_id)
 
-        hook._do_api_call(('POST', 'api/2.0/clusters/start'), self.cluster_config)
+        hook._do_api_call(('POST', 'api/2.0/clusters/start'), {'cluster_id': self.cluster_id})
 
         while True:
             run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
@@ -286,6 +286,7 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
 
     def __init__(self,
                  cluster_name,
+                 cluster_id=None,
                  databricks_conn_id='databricks_default',
                  polling_period_seconds=30,
                  databricks_retry_limit=3,
@@ -295,13 +296,14 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
                                                                  databricks_retry_limit,
                                                                  **kwargs)
         self.cluster_name = cluster_name
-        self.cluster_id = None
+        self.cluster_id = cluster_id
 
     def execute(self, context):
         hook = self.get_hook()
         logging.info('Deleting Databricks cluster with name "%s"', self.cluster_name)
 
-        self.cluster_id = find_cluster_id(self.cluster_name, databricks_hook=hook)
+        if not self.cluster_id:
+            self.cluster_id = find_cluster_id(self.cluster_name, databricks_hook=hook)
         hook._do_api_call(('POST', 'api/2.0/clusters/delete'), {'cluster_id': self.cluster_id})
 
         while True:
