@@ -1,18 +1,13 @@
-from typing import List
 from time import perf_counter as timer
-import os
-import sys
+from typing import List
 
-from pyspark.sql import functions as sf
 from pyspark.sql import DataFrame
 from pyspark.sql import SparkSession
+from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
-import findspark
-findspark.init()
-
-EGG_NAME = 'string_matching.egg'
 MINIMUM_ENTRIES_PER_COUNTRY = 100
+LOGGER = None
 
 # characters to be dropped from strings to be compared
 # list provided by Roderik von Maltzahn
@@ -29,16 +24,10 @@ REGEX = "[{}]".format(DROP_CHARS)
 
 
 def start_spark(name):
-    """
-    # assigning at least 4GB to each core
-    # NOTE: HDInsight by default allocates a single core per executor
-    # regardless of what we set in here. The truth is in Yarn UI not in Spark UI.
-    """
     spark = (SparkSession
              .builder
              .appName("NameMatching")
              .config('spark.dynamicAllocation.enabled', False)
-             .config('spark.executorEnv.PYTHON_EGG_CACHE', '/tmp')
              .config('spark.executor.instances', 4)
              .config('spark.executor.cores', 13)
              .config('spark.executor.memory', '14g')
@@ -47,18 +36,12 @@ def start_spark(name):
     sc = spark.sparkContext
     sc.setLogLevel("INFO")
 
-    # the egg file should be in the same path as this script
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    sys.path.append(os.path.join(dir_path, 'dist', EGG_NAME))
-    sc.addPyFile(os.path.join(dir_path, 'dist', EGG_NAME))
-
     log4j = sc._jvm.org.apache.log4j
     log4j.LogManager.getRootLogger().getLogger('org').setLevel(log4j.Level.WARN)
     log4j.LogManager.getRootLogger().getLogger('akka').setLevel(log4j.Level.ERROR)
-
     global LOGGER
     LOGGER = log4j.LogManager.getLogger(name)
-    return spark
+    return spark, LOGGER
 
 
 def read_parquet(spark: SparkSession, fn: str, fraction: float) -> DataFrame:
@@ -83,10 +66,10 @@ def get_country_codes(country_code_arg: str, ddf: DataFrame) -> List[str]:
     return codes
 
 
-def select_and_repartition_country(ddf: DataFrame, country_code: str) -> DataFrame:
+def select_and_repartition_country(ddf: DataFrame, column_name: str, country_code: str) -> DataFrame:
     return (ddf
-            .filter(sf.col('countryCode') == country_code)
-            .drop('countryCode')
+            .filter(sf.col(column_name) == country_code)
+            .drop(column_name)
             .repartition('id')
             .sort('id', ascending=True))
 
@@ -133,7 +116,7 @@ def save_to_parquet(ddf: DataFrame, fn):
      )
 
 
-def print_stats(ddf: DataFrame, n_top, threshold):
+def print_stats_operators(ddf: DataFrame, n_top, threshold):
     ddf.persist()
     n_matches = ddf.count()
 
@@ -152,6 +135,31 @@ def print_stats(ddf: DataFrame, n_top, threshold):
         .sort('count', ascending=False).show(50, truncate=False))
 
     ddf.describe('similarity').show()
+    ddf.unpersist()
+
+
+def print_stats_contacts(ddf: DataFrame, n_top, threshold):
+    ddf.persist()
+    n_matches = ddf.count()
+
+    print('\n\nNr. Similarities:\t', n_matches)
+    print('Threshold:\t', threshold)
+    print('N_top:\t', n_top)
+    (ddf
+     .select('SIMILARITY',
+             'SOURCE_NAME', 'TARGET_NAME',
+             'SOURCE_STREET', 'TARGET_STREET',
+             'SOURCE_ZIP_CODE', 'TARGET_ZIP_CODE',
+             'SOURCE_CITY', 'TARGET_CITY')
+     .sort('SIMILARITY', ascending=True)
+     .show(50, truncate=False))
+
+    (ddf
+     .groupBy(['SOURCE_ID', 'SOURCE_NAME'])
+     .count()
+     .sort('count', ascending=False).show(50, truncate=False))
+
+    ddf.describe('SIMILARITY').show()
     ddf.unpersist()
 
 

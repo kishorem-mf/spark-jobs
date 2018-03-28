@@ -18,16 +18,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
-import utils
+from string_matching import utils
 from string_matching.spark_string_matching import match_strings
-
-
-__author__ = "Roel Bertens"
-__version__ = "0.1"
-__maintainer__ = "Roel Bertens"
-__email__ = "roelbertens@godatadriven.com"
-__status__ = "Development"
-
 
 N_GRAMS = 2
 MINIMUM_DOCUMENT_FREQUENCY = 2
@@ -184,7 +176,9 @@ def main(arguments):
         if arguments.output_path:
             utils.save_to_parquet(joined_operators, arguments.output_path)
         else:
-            utils.print_stats(joined_operators, arguments.n_top, arguments.threshold)
+            print('Number of groups:', all_operators.count(), '-->', joined_operators.count())
+            (joined_operators
+             .show(50, truncate=False))
 
 
 if __name__ == '__main__':

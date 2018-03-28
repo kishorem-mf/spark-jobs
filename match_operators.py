@@ -22,16 +22,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
-import utils
+from string_matching import utils
 from string_matching.spark_string_matching import match_strings
-
-
-__author__ = "Rodrigo Agundez"
-__version__ = "0.2"
-__maintainer__ = "Roel Bertens"
-__email__ = "rodrigo.agundez@godatadriven.com"
-__status__ = "Development"
-
 
 MATRIX_CHUNK_ROWS = 500
 N_GRAMS = 2
@@ -42,26 +34,26 @@ LOGGER = None
 
 def preprocess_operators(ddf: DataFrame) -> DataFrame:
     """Create a unique ID and the string that is used for matching and select only necessary columns"""
-    w = Window.partitionBy('countryCode').orderBy(sf.asc('id'))
+    w = Window.partitionBy('COUNTRY_CODE').orderBy(sf.asc('id'))
     return (ddf
-            .na.drop(subset=['nameCleansed'])
+            .na.drop(subset=['NAME_CLEANSED'])
             # create unique ID
             .withColumn('id', sf.concat_ws('~',
-                                           sf.col('countryCode'),
-                                           sf.col('source'),
-                                           sf.col('refOperatorId')))
+                                           sf.col('COUNTRY_CODE'),
+                                           sf.col('SOURCE'),
+                                           sf.col('REF_OPERATOR_ID')))
             .fillna('')
             # create matching-string
             .withColumn('name',
                         sf.concat_ws(' ',
-                                     sf.col('nameCleansed'),
-                                     sf.col('cityCleansed'),
-                                     sf.col('streetCleansed'),
-                                     sf.col('zipCodeCleansed')))
+                                     sf.col('NAME_CLEANSED'),
+                                     sf.col('CITY_CLEANSED'),
+                                     sf.col('STREET_CLEANSED'),
+                                     sf.col('ZIP_CODE_CLEANSED')))
             .withColumn('name', sf.regexp_replace('name', utils.REGEX, ''))
             .withColumn('name', sf.trim(sf.regexp_replace('name', '\s+', ' ')))
             .withColumn('name_index', sf.row_number().over(w) - 1)
-            .select('name_index', 'id', 'name', 'countryCode'))
+            .select('name_index', 'id', 'name', 'COUNTRY_CODE'))
 
 
 def join_original_columns(grouped_similarity: DataFrame, operators: DataFrame, country_code: str) -> DataFrame:
@@ -73,8 +65,8 @@ def join_original_columns(grouped_similarity: DataFrame, operators: DataFrame, c
                         'similarity', 'name as sourceName')
             .join(operators, grouped_similarity['j'] == operators['name_index'],
                   how='left').drop('name_index')
-            .withColumn('countryCode', sf.lit(country_code))
-            .selectExpr('countryCode', 'sourceId', 'id as targetId',
+            .withColumn('COUNTRY_CODE', sf.lit(country_code))
+            .selectExpr('COUNTRY_CODE', 'sourceId', 'id as targetId',
                         'similarity', 'sourceName', 'name as targetName'))
 
 
@@ -82,7 +74,7 @@ def match_operators_for_country(spark: SparkSession, country_code: str, all_oper
                                 n_top: int, threshold: float):
     """Match operators for a single country"""
     LOGGER.info("Matching operators for country: " + country_code)
-    operators = utils.select_and_repartition_country(all_operators, country_code)
+    operators = utils.select_and_repartition_country(all_operators, 'COUNTRY_CODE', country_code)
     LOGGER.info("Calculating similarities")
     similarity = match_strings(
         spark, operators,
@@ -102,7 +94,8 @@ def match_operators_for_country(spark: SparkSession, country_code: str, all_oper
 
 
 def main(arguments):
-    spark = utils.start_spark('Match operators')
+    global LOGGER
+    spark, LOGGER = utils.start_spark('Match operators')
 
     t = utils.Timer('Preprocessing operators', LOGGER)
     all_operators = utils.read_parquet(spark, arguments.input_file, arguments.fraction)
@@ -123,7 +116,7 @@ def main(arguments):
         if arguments.output_path:
             utils.save_to_parquet(grouped_matches, arguments.output_path)
         else:
-            utils.print_stats(grouped_matches, arguments.n_top, arguments.threshold)
+            utils.print_stats_operators(grouped_matches, arguments.n_top, arguments.threshold)
     preprocessed_operators.unpersist()
 
 

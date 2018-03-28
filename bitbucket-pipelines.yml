@@ -8,7 +8,7 @@ pipelines:
           - pip
         script:
           - pip install pytest pycodestyle
-          - pytest tests
+#          - pytest tests
           - pycodestyle --show-source .
     - step:
         name: Test building EGG
@@ -25,7 +25,7 @@ pipelines:
         caches:
         script:
           - pip install pytest pycodestyle
-          - pytest tests
+#          - pytest tests
           - pycodestyle --show-source .
     - step:
         name: Build EGG
@@ -36,13 +36,13 @@ pipelines:
           - ./compile_library.sh
         artifacts:
           - dist/*.egg
-    - step:
-        name: Deploy to azure blob store
-        image: microsoft/azure-cli
-        script:
-          - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
-          - az storage blob upload -f dist/string_matching.egg -c prod -n deployment/name-matching/dist/string_matching.egg --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_ACCOUNT}
-          - az storage blob upload -f match_operators.py -c prod -n deployment/name-matching/match_operators.py --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_ACCOUNT}
+#    - step:
+#        name: Deploy to azure blob store
+#        image: microsoft/azure-cli
+#        script:
+#          - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
+#          - az storage blob upload -f dist/string_matching.egg -c prod -n deployment/name-matching/dist/string_matching.egg --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_ACCOUNT}
+#          - az storage blob upload -f match_operators.py -c prod -n deployment/name-matching/match_operators.py --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_ACCOUNT}
     - step:
         name: Deploy to databricks fs
         image: timvancann/databricks-cli
@@ -52,8 +52,13 @@ pipelines:
           - echo "host = ${DB_HOST}" >> ~/.databrickscfg
           - echo "token = ${DB_TOKEN}" >> ~/.databrickscfg
           - cat ~/.databrickscfg
-          - databricks fs rm dbfs:/libraries/string_matching.egg
-          - databricks fs rm dbfs:/libraries/match_operators.py
-          - databricks fs cp dist/string_matching.egg dbfs:/libraries/string_matching.egg
-          - databricks fs cp match_operators.py dbfs:/libraries/match_operators.py
+          - databricks fs rm dbfs:/libraries/name_matching/string_matching.egg
+          - databricks fs rm dbfs:/libraries/name_matching/match_operators.py
+          - databricks fs rm dbfs:/libraries/name_matching/match_contacts.py
+          - databricks fs rm dbfs:/libraries/name_matching/join_new_operators_with_persistent_uuid.py
+
+          - databricks fs cp dist/string_matching.egg dbfs:/libraries/name_matching/string_matching.egg
+          - databricks fs cp match_operators.py dbfs:/libraries/name_matching/match_operators.py
+          - databricks fs cp match_contacts_operators.py dbfs:/libraries/name_matching/match_contacts_operators.py
+          - databricks fs cp join_new_operators_with_persistent_uuid.py dbfs:/libraries/name_matching/join_new_operators_with_persistent_uuid.py
 
