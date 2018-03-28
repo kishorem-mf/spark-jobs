@@ -39,17 +39,17 @@ def preprocess_operators(ddf: DataFrame) -> DataFrame:
             .na.drop(subset=['NAME_CLEANSED'])
             # create unique ID
             .withColumn('id', sf.concat_ws('~',
-                                           sf.col('COUNTRY_CODE'),
-                                           sf.col('SOURCE'),
-                                           sf.col('REF_OPERATOR_ID')))
+                                           sf.col('countryCode'),
+                                           sf.col('source'),
+                                           sf.col('refOperatorId')))
             .fillna('')
             # create matching-string
             .withColumn('name',
                         sf.concat_ws(' ',
-                                     sf.col('NAME_CLEANSED'),
-                                     sf.col('CITY_CLEANSED'),
-                                     sf.col('STREET_CLEANSED'),
-                                     sf.col('ZIP_CODE_CLEANSED')))
+                                     sf.col('nameCleansed'),
+                                     sf.col('cityCleansed'),
+                                     sf.col('streetCleansed'),
+                                     sf.col('zipCodeCleansed')))
             .withColumn('name', sf.regexp_replace('name', utils.REGEX, ''))
             .withColumn('name', sf.trim(sf.regexp_replace('name', '\s+', ' ')))
             .withColumn('name_index', sf.row_number().over(w) - 1)
@@ -65,8 +65,8 @@ def join_original_columns(grouped_similarity: DataFrame, operators: DataFrame, c
                         'similarity', 'name as sourceName')
             .join(operators, grouped_similarity['j'] == operators['name_index'],
                   how='left').drop('name_index')
-            .withColumn('COUNTRY_CODE', sf.lit(country_code))
-            .selectExpr('COUNTRY_CODE', 'sourceId', 'id as targetId',
+            .withColumn('countryCode', sf.lit(country_code))
+            .selectExpr('countryCode', 'sourceId', 'id as targetId',
                         'similarity', 'sourceName', 'name as targetName'))
 
 
@@ -74,7 +74,7 @@ def match_operators_for_country(spark: SparkSession, country_code: str, all_oper
                                 n_top: int, threshold: float):
     """Match operators for a single country"""
     LOGGER.info("Matching operators for country: " + country_code)
-    operators = utils.select_and_repartition_country(all_operators, 'COUNTRY_CODE', country_code)
+    operators = utils.select_and_repartition_country(all_operators, 'countryCode', country_code)
     LOGGER.info("Calculating similarities")
     similarity = match_strings(
         spark, operators,
