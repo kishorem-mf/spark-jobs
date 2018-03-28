@@ -15,6 +15,7 @@ Documentation References:
  - https://pymotw.com/2/zipfile/
 """
 
+
 class ZipOperator(BaseOperator):
     """
     An operator which takes in a path to a file and zips the contents to a location you define.
@@ -41,8 +42,8 @@ class ZipOperator(BaseOperator):
     def execute(self, context):
         logging.info("Executing ZipOperator.execute(context)")
 
-        logging.info("Path to the File to Zip provided by the User (path_to_file_to_zip): " + str(self.path_to_file_to_zip))
-        logging.info("Path to save the Zip File provided by the User (path_to_save_zip) : " + str(self.path_to_save_zip))
+        logging.info("Path to the File to Zip (path_to_file_to_zip): " + str(self.path_to_file_to_zip))
+        logging.info("Path to save the Zip File (path_to_save_zip) : " + str(self.path_to_save_zip))
 
         dir_path_to_file_to_zip = os.path.dirname(os.path.abspath(self.path_to_file_to_zip))
         logging.info("Absolute path to the File to Zip: " + str(dir_path_to_file_to_zip))
@@ -112,9 +113,10 @@ class UnzipOperator(BaseOperator):
         logging.info("path_to_zip_file: " + str(self.path_to_zip_file))
         logging.info("path_to_unzip_contents: " + str(self.path_to_unzip_contents))
 
-        # No check is done if the zip file is valid so that the operator fails when expected so that airflow can properly mark the task as failed and schedule retries as needed
+        # No check is done if the zip file is valid so that the operator fails when expected
+        # so that airflow can properly mark the task as failed and schedule retries as needed
         with ZipFile(self.path_to_zip_file, 'r') as zip_file:
-            logging.info("Created zip file object '" + str(zip_file) + "' from path '" + str(self.path_to_zip_file) + "'")
+            logging.info("Created zip file '" + str(zip_file) + "' from path '" + str(self.path_to_zip_file) + "'")
             logging.info("Extracting all the contents to '" + str(self.path_to_unzip_contents) + "'")
             zip_file.extractall(self.path_to_unzip_contents)
             logging.info("Closing Zip File Object")
