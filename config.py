@@ -10,7 +10,7 @@ email_addresses = ['timvancann@godatadriven.com',
 shared_default = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2018, 1, 1),
+    'start_date': datetime(2018, 3, 28),
     'email': email_addresses,
     'email_on_failure': True,
     'email_on_retry': False,
