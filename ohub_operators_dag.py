@@ -52,7 +52,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     operators_to_parquet = DatabricksSubmitRunOperator(
         task_id="operators_to_parquet",
-        cluster_name=cluster_name,
+        existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
@@ -66,7 +66,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     match_operators = DatabricksSubmitRunOperator(
         task_id='match_operators',
-        cluster_name=cluster_name,
+        existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'egg': 'dbfs:/libraries/string_matching.egg'}
@@ -80,7 +80,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     merge_operators = DatabricksSubmitRunOperator(
         task_id='merge_operators',
-        cluster_name=cluster_name,
+        existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
@@ -94,7 +94,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     operators_to_acm = DatabricksSubmitRunOperator(
         task_id="operators_to_acm",
-        cluster_name=cluster_name,
+        existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
