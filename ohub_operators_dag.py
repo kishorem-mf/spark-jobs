@@ -44,7 +44,7 @@ with DAG('ohub_operators', default_args=default_args,
         polling_period_seconds=10
     )
 
-    delete_cluster = DatabricksTerminateClusterOperator(
+    terminate_cluster = DatabricksTerminateClusterOperator(
         task_id='terminate_cluster',
         cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id
@@ -106,4 +106,4 @@ with DAG('ohub_operators', default_args=default_args,
         }
     )
 
-    start_cluster >> operators_to_parquet >> match_operators >> merge_operators >> operators_to_acm
+    start_cluster >> operators_to_parquet >> match_operators >> merge_operators >> operators_to_acm >> terminate_cluster
