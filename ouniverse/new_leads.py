@@ -43,7 +43,7 @@ with DAG('new_leads', default_args=default_args,
 
     phase_one = DatabricksSubmitRunOperator(
         task_id="phase_one",
-        cluster_id=cluster_id,
+        existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': 'dbfs:/libraries/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'}
@@ -58,7 +58,7 @@ with DAG('new_leads', default_args=default_args,
 
     phase_two_grid = DatabricksSubmitRunOperator(
         task_id="phase_two_grid",
-        cluster_id=cluster_id,
+        existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': 'dbfs:/libraries/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'}
@@ -73,7 +73,7 @@ with DAG('new_leads', default_args=default_args,
 
     phase_two_ids = DatabricksSubmitRunOperator(
         task_id="phase_two_ids",
-        cluster_id=cluster_id,
+        existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': 'dbfs:/libraries/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'}
@@ -90,7 +90,7 @@ with DAG('new_leads', default_args=default_args,
 
     prioritize = DatabricksSubmitRunOperator(
         task_id="prioritise_leads",
-        cluster_id=cluster_id,
+        existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': 'dbfs:/libraries/ouniverse-prioritisation-assembly-1.0.0-SNAPSHOT.jar'}
