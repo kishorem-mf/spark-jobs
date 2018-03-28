@@ -50,8 +50,8 @@ with DAG('new_leads', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ouniverse.leads.OperatorMapsSearcher",
-            'parameters': ['--operators', '{}/operators/{{ds}}/*.csv'.format(data_input_bucket),
-                           '--outputpath', '{}/operators/{{ds}}/operators.parquet'.format(data_output_bucket),
+            'parameters': ['--operators', data_input_bucket + '/operators/{{ds}}/*.csv',
+                           '--outputpath', data_output_bucket + '/operators/{{ds}}/operators.parquet',
                            '--apiKey', Variable.get('google_api_key')]
         }
     )
@@ -65,8 +65,8 @@ with DAG('new_leads', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ouniverse.leads.GridSearcher",
-            'parameters': ['--leads', '{}/grid/{{ds}}/*.csv'.format(data_input_bucket),
-                           '--outputpath', '{}/grid/{{ds}}/grid.parquet'.format(data_output_bucket),
+            'parameters': ['--leads', data_input_bucket + '/grid/{{ds}}/*.csv',
+                           '--outputpath', data_output_bucket + '/grid/{{ds}}/grid.parquet',
                            '--apiKey', Variable.get('google_api_key')]
         }
     )
@@ -80,10 +80,10 @@ with DAG('new_leads', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ouniverse.leads.PlaceIdSearcher",
-            'parameters': ['--places', '{}/grid/{{ds}}/*'.format(data_output_bucket),
+            'parameters': ['--places', data_output_bucket + '/grid/{{ds}}/*',
                            '--idColumn', 'placeId',
                            '--fileType', 'parquet',
-                           '--outputpath', '{}/place_details/{{ds}}/details.parquet'.format(data_output_bucket),
+                           '--outputpath', data_output_bucket + '/place_details/{{ds}}/details.parquet',
                            '--apiKey', Variable.get('google_api_key')]
         }
     )
@@ -97,11 +97,11 @@ with DAG('new_leads', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ouniverse.prioritisation.PrioritizeLeads",
-            'parameters': ['--operators', '{}/operators/{{ds}}/*'.format(data_output_bucket),
-                           '--places', '{}/place_detail/{{ds}}/*'.format(data_output_bucket),
-                           '--leads', '{}/cities.csv'.format(data_output_bucket),
-                           '--priorities', '{}/priorities.csv'.format(data_output_bucket),
-                           '--outputpath', '{}/leads/{{ds}}/leads.parquet'.format(data_output_bucket)]
+            'parameters': ['--operators', data_output_bucket + '/operators/{{ds}}/*',
+                           '--places', data_output_bucket + '/place_detail/{{ds}}/*',
+                           '--leads', data_output_bucket + '/cities.csv',
+                           '--priorities', data_output_bucket + '/priorities.csv',
+                           '--outputpath', data_output_bucket + '/leads/{{ds}}/leads.parquet']
         }
     )
 
