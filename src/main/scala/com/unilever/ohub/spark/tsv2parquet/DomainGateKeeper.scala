@@ -30,12 +30,12 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag] extends Sp
 
   override final val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
 
-  def toDomainEntity: Row => DomainType
+  def toDomainEntity: (Row, DomainTransformer) => DomainType
 
-  def transform(transformFn: Row => DomainType): Row => Either[ErrorMessage, DomainType] =
+  def transform(transformFn: (Row, DomainTransformer) => DomainType): Row => Either[ErrorMessage, DomainType] =
     row =>
       try
-        Right(transformFn(row))
+        Right(transformFn(row, DomainTransformer()))
       catch {
         case e: Exception =>
           Left(s"Error parsing row: '$e', row = '$row'")

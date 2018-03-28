@@ -1,11 +1,80 @@
 package com.unilever.ohub.spark.domain
 
+import java.sql.Timestamp
 
-// TODO not the actual domain entity (this needs to be specified, see OHUB-215)
+import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
+
+// TODO check order, names, types & formats, probably some of the fields can be pulled up to the domain entity
+// TODO add domain entity validation
+// TODO add ingestionErrors, additionalFields, etc.
+
 case class Operator(
-                     id: Long,
-                     source: String,
-                     countryCode: String,
-                     name : String,
-                     street: Option[String]
+                     sourceOperatorId: String,
+                     sourceName: Option[String],
+                     countryCode: Option[String],
+                     isActive: Option[Boolean],
+                     name: Option[String],
+                     oldIntegrationId: Option[String],
+                     customerConcatId: Option[String],
+                     webUpdaterId: Option[String],
+                     customerType: Option[String],
+                     dateCreated: Option[Timestamp],
+                     dateUpdated: Option[Timestamp],
+                     ohubCreated: Option[Timestamp],
+                     ohubUpdated: Option[Timestamp],
+                     channel: Option[String],
+                     subChannel: Option[String],
+                     region: Option[String],
+                     street: Option[String],
+                     houseNumber: Option[String],
+                     houseNumberExtension: Option[String],
+                     city: Option[String],
+                     zipCode: Option[String],
+                     state: Option[String],
+                     countryName: Option[String],
+                     emailAddress: Option[String],
+                     phoneNumber: Option[String],
+                     mobileNumber: Option[String],
+                     faxNumber: Option[String],
+                     generalOptOut: Option[Boolean],
+                     emailOptIn: Option[Boolean],
+                     emailOptOut: Option[Boolean],
+                     directMailOptIn: Option[Boolean],
+                     directMailOptOut: Option[Boolean],
+                     telemarketingOptIn: Option[Boolean],
+                     telemarketingOptOut: Option[Boolean],
+                     mobileOptIn: Option[Boolean],
+                     mobileOptOut: Option[Boolean],
+                     faxOptIn: Option[Boolean],
+                     faxOptOut: Option[Boolean],
+                     totalDishes: Option[Long],
+                     totalLocations: Option[Long],
+                     totalStaff: Option[Long],
+                     averagePrice: Option[BigDecimal],
+                     daysOpen: Option[Long],
+                     weeksClosed: Option[Long],
+                     distributorName: Option[String],
+                     distributorCustomerNumber: Option[String],
+                     distributorOperatorId: Option[String],
+                     otm: Option[String],
+                     otmEnteredBy: Option[String],
+                     isNotRecalculatingOtm: Option[String],
+                     netPromoterScore: Option[String],
+                     salesRepresentative: Option[String],
+                     kookingConvenienceLevel: Option[String], // kooking as in cooking? then change k -> c?
+                     isPrivateHousehold: Option[String],
+                     vat: Option[String],
+                     isOpenOnMonday: Option[Boolean],
+                     isOpenOnTuesday: Option[Boolean],
+                     isOpenOnWednesday: Option[Boolean],
+                     isOpenOnThursday: Option[Boolean],
+                     isOpenOnFriday: Option[Boolean],
+                     isOpenOnSaturday: Option[Boolean],
+                     isOpenOnSunday: Option[Boolean],
+                     chainName: Option[String],
+                     chainId: Option[String],
+                     germanChainId: Option[String], // why do we have a german chain id & name, what's the difference?
+                     germanChainName: Option[String],
+                     kitchenType: Option[String],
+                     ingestionErrors: Map[String, IngestionError]
                    ) extends DomainEntity

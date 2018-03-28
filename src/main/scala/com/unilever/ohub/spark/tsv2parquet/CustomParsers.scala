@@ -19,11 +19,11 @@ object CustomParsers {
       }
 
       def parseDateTimeStampOption(index: Int)(implicit log: Logger): Option[Timestamp] = {
-        parseStringOption(index).flatMap(CustomParsers.parseDateTimeStampOption)
+        parseStringOption(index).map(CustomParsers.parseDateTimeStampUnsafe)
       }
 
       def parseBigDecimalOption(index: Int): Option[BigDecimal] = {
-        parseStringOption(index).flatMap(CustomParsers.parseBigDecimalOption)
+        parseStringOption(index).map(CustomParsers.parseBigDecimalUnsafe)
       }
 
       def parseBigDecimalRangeOption(index: Int): Option[BigDecimal] = {
@@ -35,7 +35,7 @@ object CustomParsers {
       }
 
       def parseBooleanOption(index: Int): Option[Boolean] = {
-        parseStringOption(index).flatMap(CustomParsers.parseBoolOption)
+        parseStringOption(index).map(CustomParsers.parseBoolUnsafe)
       }
     }
   }
@@ -44,31 +44,25 @@ object CustomParsers {
     override protected def initialValue = new SimpleDateFormat("yyyyMMdd HH:mm:ss")
   }
 
-  def parseDateTimeStampOption(input: String)(implicit log: Logger): Option[Timestamp] = {
+  def parseDateTimeStampUnsafe(input: String)(implicit log: Logger): Timestamp =
     input match {
       case inputString: String if inputString.matches("[ /:0-9]+") && inputString.length == 19   =>
-        Some(new Timestamp(timestampFormatter.get.parse(input.replace("/", "")).getTime))
+        new Timestamp(timestampFormatter.get.parse(input.replace("/", "")).getTime)
       case inputString: String if inputString.matches("[ \\-:0-9]+") && inputString.length == 19 =>
-        Some(new Timestamp(timestampFormatter.get.parse(input.replace("-", "")).getTime))
+        new Timestamp(timestampFormatter.get.parse(input.replace("-", "")).getTime)
       case inputString: String if inputString.matches("[ \\.:0-9]+") && inputString.length == 19 =>
-        Some(new Timestamp(timestampFormatter.get.parse(input.replace(".", "")).getTime))
+        new Timestamp(timestampFormatter.get.parse(input.replace(".", "")).getTime)
       case inputString: String if inputString.matches("[ :0-9]+") && inputString.length == 17    =>
-        Some(new Timestamp(timestampFormatter.get.parse(input).getTime))
+        new Timestamp(timestampFormatter.get.parse(input).getTime)
       case inputString: String if inputString.matches("[0-9]+") && inputString.length == 8       =>
-        Some(new Timestamp(timestampFormatter.get.parse(input.concat(" 00:00:00")).getTime))
+        new Timestamp(timestampFormatter.get.parse(input.concat(" 00:00:00")).getTime)
       case _                                                                                     =>
-        log.warn(s"Could not parse [$input] as DateTimeStampOption")
-        None
+        throw new IllegalArgumentException(s"Could not parse [$input] as DateTimeStampOption")
     }
-  }
 
-  def parseBigDecimalOption(input:String):Option[BigDecimal] = {
-    input match {
-      case "" => None
-      case inputString:String if inputString.matches("[-,0-9]+") => Some(BigDecimal(inputString.replace(",",".")))
-      case inputString:String if inputString.matches("[-.0-9]+") => Some(BigDecimal(input))
-      case _ => Some(BigDecimal(0))
-    }
+  def parseBigDecimalUnsafe(input:String): BigDecimal = input match {
+    case inputString:String if inputString.matches("[-,0-9]+") => BigDecimal(inputString.replace(",","."))
+    case inputString:String if inputString.matches("[-.0-9]+") => BigDecimal(input)
   }
 
   private val longRegex = "(-?[0-9]+)[\\.,]?[0-9]*".r
@@ -98,27 +92,32 @@ object CustomParsers {
     }
   }
 
-  def parseBoolOption(input: String): Option[Boolean] = {
+  def parseBoolUnsafe(input: String): Boolean = {
     input.toUpperCase match {
-      case "Y" => Some(true)
-      case "N" => Some(false)
-      case "A" => Some(true)
-      case "D" => Some(false)
-      case "X" => Some(true)
-      case "1" => Some(true)
-      case "0" => Some(false)
-      case "TRUE" => Some(true)
-      case "FALSE" => Some(false)
-      case "YES" => Some(true)
-      case "NO" => Some(false)
+      case "Y" => true
+      case "N" => false
+      case "A" => true
+      case "D" => false
+      case "X" => true
+      case "1" => true
+      case "0" => false
+      case "TRUE" => true
+      case "FALSE" => false
+      case "YES" => true
+      case "NO" => false
       /* Capturing strange cases from data source DEX begin*/
-      case "DIRECTOR COMPRAS" => Some(true)
-      case "RESPONSIBLE FOOD" => Some(true)
-      case "RESPONSIBLE TEA" => Some(true)
-      case "RESPONSIBLE GENERAL" => Some(true)
-      case "OTHER" => Some(true)
-      case _ => None
+      case "DIRECTOR COMPRAS" => true
+      case "RESPONSIBLE FOOD" => true
+      case "RESPONSIBLE TEA" => true
+      case "RESPONSIBLE GENERAL" => true
+      case "OTHER" => true
       /* Capturing strange cases from data source DEX end*/
+      case s: String => {
+        throw new Exception(s"Could not parse [$s] as Boolean")
+        false
+      }
     }
   }
+
+  def toLong(input: String): Long = input.toLong
 }
