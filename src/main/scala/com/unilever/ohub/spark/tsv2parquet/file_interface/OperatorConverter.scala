@@ -16,7 +16,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
       // @formatter:off             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
 
                                                                               // ↓ not so happy with this column (it should be the same as the fieldName), macro?
-      val v  = Operator(
+      Operator(
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)           implicit vs explicit row arg passing, what to prefer?
         sourceOperatorId            = mandatory ( "﻿REF_OPERATOR_ID",         "sourceOperatorId"                                                        ),      // implicit
         sourceName                  = optional  ( "SOURCE",                   "sourceName"                                                              )(row), // explicit
@@ -88,9 +88,5 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         ingestionErrors             = errors
       )
       // @formatter:on
-
-      println(v)
-
-      v
   }
 }
