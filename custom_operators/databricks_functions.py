@@ -285,7 +285,7 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
     ui_fgcolor = '#000'
 
     def __init__(self,
-                 cluster_name,
+                 cluster_name=None,
                  cluster_id=None,
                  databricks_conn_id='databricks_default',
                  polling_period_seconds=30,
