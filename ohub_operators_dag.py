@@ -54,7 +54,7 @@ with DAG('ohub_operators', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.OperatorConverter",
             'parameters': [data_input_bucket.format('OPERATORS'),
-                           data_output_bucket.format('OPERATORS'.lower())]
+                           data_output_bucket.format('operators')]
         }
     )
 
