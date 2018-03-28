@@ -11,7 +11,7 @@ shared_default = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime.now(),
-    'email': ['ufs-devs@googlegroups.com'],
+    'email': email_addresses,
     'email_on_failure': True,
     'email_on_retry': False,
     'retries': 1,

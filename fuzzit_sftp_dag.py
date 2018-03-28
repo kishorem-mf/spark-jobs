@@ -19,7 +19,7 @@ templated_path_to_unzip_contents = "./"
 with DAG('fuzzit_sftp_dag', default_args=default_args,
          schedule_interval="0 0 * * *") as dag:
     fetch = SFTPOperator(
-        task_id='Fetch Fuzzit files for date',
+        task_id='fetch_fuzzit_files_for_date',
         ssh_hook=fuzzit_ssh_hook,
         remote_host='apps.systrion.eu',
         local_filepath=templated_local_filepath,
@@ -27,7 +27,7 @@ with DAG('fuzzit_sftp_dag', default_args=default_args,
         operation=SFTPOperation.GET)
 
     unzip = UnzipOperator(
-        task_id='Unzip fuzzit file',
+        task_id='unzip_fuzzit_file',
         path_to_save_zip=templated_local_filepath,
         path_to_unzip_contents=templated_path_to_unzip_contents,
         dag=dag)

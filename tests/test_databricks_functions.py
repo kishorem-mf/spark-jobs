@@ -3,7 +3,7 @@ import pytest
 import requests_mock
 from airflow import AirflowException
 
-from ..custom_operators import databricks_functions
+from custom_operators import databricks_functions
 
 API_URL = 'https://unittest.example.com'
 CONN_ID = 'unittest-databricks'

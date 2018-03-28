@@ -1,6 +1,5 @@
 import logging
 import time
-from typing import List, Dict
 
 from airflow.contrib.hooks.databricks_hook import DatabricksHook
 from airflow.exceptions import AirflowException
@@ -9,9 +8,9 @@ from airflow.models import BaseOperator
 LINE_BREAK = ('-' * 80)
 
 
-def find_running_clusters_by_name(cluster_name: str,
-                                  databricks_conn_id: str = 'databricks_default',
-                                  databricks_hook: DatabricksHook = None) -> List[Dict]:
+def find_running_clusters_by_name(cluster_name,
+                                  databricks_conn_id='databricks_default',
+                                  databricks_hook=None):
     """
     Queries the Databricks API to find all running clusters with the given cluster name.
     :param cluster_name: the cluster name to look for.
@@ -27,9 +26,9 @@ def find_running_clusters_by_name(cluster_name: str,
             if cluster_name == cluster['cluster_name'] and cluster['state'] in non_terminated_states]
 
 
-def find_cluster_id(cluster_name: str,
-                    databricks_conn_id: str = 'databricks_default',
-                    databricks_hook: DatabricksHook = None) -> str:
+def find_cluster_id(cluster_name,
+                    databricks_conn_id='databricks_default',
+                    databricks_hook=None):
     """
     Finds the `cluster_id` for a running cluster named `cluster_name`.
     :param cluster_name: the cluster name to look for.
@@ -41,16 +40,17 @@ def find_cluster_id(cluster_name: str,
     clusters = find_running_clusters_by_name(cluster_name, databricks_conn_id, databricks_hook)
 
     if len(clusters) == 0:
-        raise AirflowException(f'Found no running Databricks cluster named {cluster_name}.')
+        raise AirflowException('Found no running Databricks cluster named "{}".'.format(cluster_name))
     elif len(clusters) > 1:
-        logging.warning('Found more than one running Databricks cluster named "%s", using first match.', cluster_name)
+        logging.warning('Found more than one running Databricks cluster named "{}", using first match.', cluster_name)
 
     cluster_id = clusters[0]['cluster_id']
     return cluster_id
 
 
-def get_cluster_status(cluster_id: str, databricks_conn_id: str = 'databricks_default',
-                       databricks_hook: DatabricksHook = None) -> dict:
+def get_cluster_status(cluster_id,
+                       databricks_conn_id='databricks_default',
+                       databricks_hook=None):
     """
     Requests databricks for the status of the cluster. For full specification of the return json,
     see https://docs.databricks.com/api/latest/clusters.html#get
@@ -62,7 +62,7 @@ def get_cluster_status(cluster_id: str, databricks_conn_id: str = 'databricks_de
     """
 
     hook = databricks_hook or DatabricksHook(databricks_conn_id=databricks_conn_id)
-    body = hook._do_api_call(('GET', f'api/2.0/clusters/get?cluster_id={cluster_id}'), {})
+    body = hook._do_api_call(('GET', 'api/2.0/clusters/get?cluster_id={}'.format(cluster_id)), {})
     return body['state']
 
 
@@ -78,7 +78,7 @@ class BaseDatabricksOperator(BaseOperator):
         self.polling_period_seconds = polling_period_seconds
         self.databricks_retry_limit = databricks_retry_limit
 
-    def get_hook(self) -> DatabricksHook:
+    def get_hook(self):
         return DatabricksHook(
             self.databricks_conn_id,
             retry_limit=self.databricks_retry_limit)
@@ -195,10 +195,10 @@ class DatabricksCreateClusterOperator(BaseDatabricksOperator):
     ui_fgcolor = '#000'
 
     def __init__(self,
-                 cluster_config: dict,
-                 databricks_conn_id: str = 'databricks_default',
-                 polling_period_seconds: int = 30,
-                 databricks_retry_limit: int = 3,
+                 cluster_config,
+                 databricks_conn_id='databricks_default',
+                 polling_period_seconds=30,
+                 databricks_retry_limit=3,
                  **kwargs):
         super(DatabricksCreateClusterOperator, self).__init__(databricks_conn_id,
                                                               polling_period_seconds,
@@ -241,10 +241,10 @@ class DatabricksStartClusterOperator(BaseDatabricksOperator):
     ui_fgcolor = '#000'
 
     def __init__(self,
-                 cluster_id: str,
-                 databricks_conn_id: str = 'databricks_default',
-                 polling_period_seconds: int = 30,
-                 databricks_retry_limit: int = 3,
+                 cluster_id,
+                 databricks_conn_id='databricks_default',
+                 polling_period_seconds=30,
+                 databricks_retry_limit=3,
                  **kwargs):
         super(DatabricksStartClusterOperator, self).__init__(databricks_conn_id,
                                                              polling_period_seconds,
@@ -256,7 +256,7 @@ class DatabricksStartClusterOperator(BaseDatabricksOperator):
         hook = self.get_hook()
         logging.info('Starting Databricks cluster with id %s"', self.cluster_id)
 
-        hook._do_api_call(('POST', 'api/2.0/clusters/start'), self.cluster_config)
+        hook._do_api_call(('POST', 'api/2.0/clusters/start'), {'cluster_id': self.cluster_id})
 
         while True:
             run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
@@ -285,30 +285,33 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
     ui_fgcolor = '#000'
 
     def __init__(self,
-                 cluster_name: str,
-                 databricks_conn_id: str = 'databricks_default',
-                 polling_period_seconds: int = 30,
-                 databricks_retry_limit: int = 3,
+                 cluster_name=None,
+                 cluster_id=None,
+                 databricks_conn_id='databricks_default',
+                 polling_period_seconds=30,
+                 databricks_retry_limit=3,
                  **kwargs):
         super(DatabricksTerminateClusterOperator, self).__init__(databricks_conn_id,
                                                                  polling_period_seconds,
                                                                  databricks_retry_limit,
                                                                  **kwargs)
         self.cluster_name = cluster_name
-        self.cluster_id = None
+        self.cluster_id = cluster_id
 
     def execute(self, context):
         hook = self.get_hook()
         logging.info('Deleting Databricks cluster with name "%s"', self.cluster_name)
 
-        self.cluster_id = find_cluster_id(self.cluster_name, databricks_hook=hook)
+        if not self.cluster_id:
+            self.cluster_id = find_cluster_id(self.cluster_name, databricks_hook=hook)
         hook._do_api_call(('POST', 'api/2.0/clusters/delete'), {'cluster_id': self.cluster_id})
 
         while True:
             run_state = get_cluster_status(self.cluster_id, self.databricks_conn_id)
             if run_state == 'TERMINATED':
                 logging.info(
-                    f'Termination of cluster {self.cluster_name} with id {self.cluster_id} completed successfully.')
+                    'Termination of cluster {} with id {} completed successfully.'.format(self.cluster_name,
+                                                                                          self.cluster_id))
                 return
             else:
                 logging.info('Cluster terminating, currently in state: {s}'.format(s=run_state))
