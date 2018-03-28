@@ -59,6 +59,6 @@ pipelines:
 
           - databricks fs cp dist/string_matching.egg dbfs:/libraries/name_matching/string_matching.egg
           - databricks fs cp match_operators.py dbfs:/libraries/name_matching/match_operators.py
-          - databricks fs cp match_contacts_operators.py dbfs:/libraries/name_matching/match_contacts_operators.py
+          - databricks fs cp match_contacts.py dbfs:/libraries/name_matching/match_contacts.py
           - databricks fs cp join_new_operators_with_persistent_uuid.py dbfs:/libraries/name_matching/join_new_operators_with_persistent_uuid.py
 
