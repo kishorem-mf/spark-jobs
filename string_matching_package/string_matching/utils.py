@@ -1,17 +1,11 @@
-from typing import List
 from time import perf_counter as timer
-import os
-import sys
+from typing import List
 
-from pyspark.sql import functions as sf
 from pyspark.sql import DataFrame
 from pyspark.sql import SparkSession
+from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
-import findspark
-findspark.init()
-
-EGG_NAME = 'string_matching.egg'
 MINIMUM_ENTRIES_PER_COUNTRY = 100
 LOGGER = None
 
@@ -30,16 +24,10 @@ REGEX = "[{}]".format(DROP_CHARS)
 
 
 def start_spark(name):
-    """
-    # assigning at least 4GB to each core
-    # NOTE: HDInsight by default allocates a single core per executor
-    # regardless of what we set in here. The truth is in Yarn UI not in Spark UI.
-    """
     spark = (SparkSession
              .builder
              .appName("NameMatching")
              .config('spark.dynamicAllocation.enabled', False)
-             .config('spark.executorEnv.PYTHON_EGG_CACHE', '/tmp')
              .config('spark.executor.instances', 4)
              .config('spark.executor.cores', 13)
              .config('spark.executor.memory', '14g')
@@ -47,11 +35,6 @@ def start_spark(name):
              .getOrCreate())
     sc = spark.sparkContext
     sc.setLogLevel("INFO")
-
-    # the egg file should be in the same path as this script
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    sys.path.append(os.path.join(dir_path, 'dist', EGG_NAME))
-    sc.addPyFile(os.path.join(dir_path, 'dist', EGG_NAME))
 
     log4j = sc._jvm.org.apache.log4j
     log4j.LogManager.getRootLogger().getLogger('org').setLevel(log4j.Level.WARN)
