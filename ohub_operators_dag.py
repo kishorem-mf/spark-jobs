@@ -15,7 +15,7 @@ default_args = {
     'email': email_addresses,
     'email_on_failure': True,
     'email_on_retry': False,
-    'retries': 1,
+    'retries': 0,
     'retry_delay': timedelta(minutes=1),
 }
 
@@ -69,10 +69,10 @@ with DAG('ohub_operators', default_args=default_args,
         existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
-            {'egg': 'dbfs:/libraries/string_matching.egg'}
+            {'egg': 'dbfs:/libraries/name_matching/string_matching.egg'}
         ],
         spark_python_task={
-            'python_file': 'dbfs:/libraries/match_operators.py',
+            'python_file': 'dbfs:/libraries/name_matching/match_operators.py',
             'parameters': ['--input_file', data_output_bucket.format('operators'),
                            '--output_path', data_output_bucket.format('operators_matched')]
         }
