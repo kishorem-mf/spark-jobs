@@ -31,16 +31,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
-import utils
+from string_matching import utils
 from string_matching.spark_string_matching import match_strings
-
-
-__author__ = "Roel Bertens"
-__version__ = "0.1"
-__maintainer__ = "Roel Bertens"
-__email__ = "roelbertens@godatadriven.com"
-__status__ = "Development"
-
 
 MATRIX_CHUNK_ROWS = 500
 N_GRAMS = 2
