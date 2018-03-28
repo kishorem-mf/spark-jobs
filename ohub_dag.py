@@ -71,7 +71,7 @@ with DAG('ohub_dag', default_args=default_args,
 
     delete_cluster = DatabricksTerminateClusterOperator(
         task_id='terminate_cluster',
-        cluster_name=cluster_name,
+        cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id
     )
 
@@ -79,7 +79,7 @@ with DAG('ohub_dag', default_args=default_args,
         task_name = "{}_to_parquet".format(task['input'].lower())
         globals()[task_name] = DatabricksSubmitRunOperator(
             task_id=task_name,
-            cluster_name=cluster_name,
+            existing_cluster_id=cluster_id,
             databricks_conn_id=databricks_conn_id,
             libraries=[
                 {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
@@ -97,7 +97,7 @@ with DAG('ohub_dag', default_args=default_args,
         task_name = "{}_to_acm".format(task['output'].lower())
         globals()[task_name] = DatabricksSubmitRunOperator(
             task_id=task_name,
-            cluster_name=cluster_name,
+            existing_cluster_id=cluster_id,
             databricks_conn_id=databricks_conn_id,
             libraries=[
                 {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
@@ -111,7 +111,7 @@ with DAG('ohub_dag', default_args=default_args,
 
     match_operators = DatabricksSubmitRunOperator(
         task_id='match_operators',
-        cluster_name=cluster_name,
+        existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'egg': 'dbfs:/libraries/string_matching.egg'}
@@ -125,7 +125,7 @@ with DAG('ohub_dag', default_args=default_args,
 
     merge_operators = DatabricksSubmitRunOperator(
         task_id='merge_operators',
-        cluster_name=cluster_name,
+        existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
@@ -141,7 +141,7 @@ with DAG('ohub_dag', default_args=default_args,
 
     merge_contactpersons1 = DatabricksSubmitRunOperator(
         task_id='merge_contactpersons_1',
-        cluster_name=cluster_name,
+        existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
@@ -157,7 +157,7 @@ with DAG('ohub_dag', default_args=default_args,
 
     merge_contactpersons2 = DatabricksSubmitRunOperator(
         task_id='merge_contactpersons_2',
-        cluster_name=cluster_name,
+        existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
@@ -173,7 +173,7 @@ with DAG('ohub_dag', default_args=default_args,
 
     merge_orders = DatabricksSubmitRunOperator(
         task_id='merge_orders',
-        cluster_name=cluster_name,
+        existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
