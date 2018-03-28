@@ -2,7 +2,6 @@ from datetime import datetime
 
 from airflow import DAG
 from airflow.models import Variable
-from config import shared_default
 
 from custom_operators.databricks_functions import \
     DatabricksCreateClusterOperator, \
@@ -10,7 +9,13 @@ from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
 
 default_args = {
-    **shared_default,
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2018, 2, 6),
+    'email': ['timvancann@godatadriven.com'],
+    'email_on_failure': True,
+    'email_on_retry': False,
+    'retries': 0
 }
 
 wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'

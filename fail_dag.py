@@ -2,10 +2,17 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
-from config import shared_default
+from config import email_addresses
 
 default_args = {
-    **shared_default,
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2018, 2, 6),
+    'email': email_addresses,
+    'email_on_failure': True,
+    'email_on_retry': True,
+    'retries': 1,
+    'retry_delay': timedelta(seconds=30)
 }
 
 with DAG('fail_test', default_args=default_args,

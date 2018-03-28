@@ -7,17 +7,6 @@ email_addresses = ['timvancann@godatadriven.com',
                    'Roderik-von.Maltzahn@unilever.com',
                    'Gerard.Glind@unilever.com']
 
-shared_default = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'start_date': datetime(2018, 3, 28),
-    'email': email_addresses,
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=1),
-}
-
 country_codes = dict(
     AU=149299102,
     NZ=149386192,

@@ -3,12 +3,18 @@ from datetime import datetime
 from airflow import DAG
 from airflow.contrib.hooks.ssh_hook import SSHHook
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
-from config import shared_default
+
 
 acm_ssh_hook = SSHHook(ssh_conn_id='acm_sftp_ssh')
 
 default_args = {
-    **shared_default,
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2018, 3, 2),
+    'email': ['airflow@airflow.com'],
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 0
 }
 
 rfp = "/incoming/OHUB_2_testing/quoted_semi_colon_delimited/"

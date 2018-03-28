@@ -2,15 +2,21 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 
-from config import shared_default
+from config import email_addresses
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
     DatabricksStartClusterOperator
 
 default_args = {
-    **shared_default,
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2018, 3, 7),
+    'email': email_addresses,
+    'email_on_failure': True,
+    'email_on_retry': False,
     'retries': 0,
+    'retry_delay': timedelta(minutes=1),
 }
 
 wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'

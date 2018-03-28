@@ -1,13 +1,18 @@
 from airflow import DAG
 from datetime import datetime, timedelta
 
-from config import country_codes, shared_default
+from config import country_codes
 from custom_operators.ga_fetch_operator import GAFetchOperator
 
 default_args = {
-    **shared_default,
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'email': ['airflow@airflow.com'],
+    'email_on_failure': False,
+    'email_on_retry': False,
     'retries': 5,
     'retry_delay': timedelta(minutes=2),
+    'start_date': datetime(2018, 3, 28),
 }
 
 with DAG('gcp_ga', default_args=default_args) as dag:
