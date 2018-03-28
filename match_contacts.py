@@ -55,30 +55,30 @@ def preprocess_contacts(ddf: DataFrame) -> DataFrame:
     return (
         ddf
         # keep only if no email nor phone
-        .filter(sf.isnull(sf.col('EMAIL_ADDRESS')) & sf.isnull(sf.col('MOBILE_PHONE_NUMBER')))
+        .filter(sf.isnull(sf.col('emailAddress')) & sf.isnull(sf.col('mobilePhoneNumber')))
         # drop if no first name and no last name
-        .na.drop(subset=['FIRST_NAME_CLEANSED', 'LAST_NAME_CLEANSED'], how='all')
+        .na.drop(subset=['firstNameCleansed', 'lastNameCleansed'], how='all')
         # drop if no street
-        .na.drop(subset=['STREET_CLEANSED'], how='any')
+        .na.drop(subset=['streetCleansed'], how='any')
         # same logic but for an empty string
-        .filter((sf.trim(sf.col('STREET_CLEANSED')) != '') &
-                ((sf.trim(sf.col('FIRST_NAME_CLEANSED')) != '') | (sf.trim(sf.col('LAST_NAME_CLEANSED')) != '')))
+        .filter((sf.trim(sf.col('streetCleansed')) != '') &
+                ((sf.trim(sf.col('firstNameCleansed')) != '') | (sf.trim(sf.col('lastNameCleansed')) != '')))
         # create unique ID
         .withColumn('id', sf.concat_ws('~',
-                                       sf.col('COUNTRY_CODE'),
-                                       sf.col('SOURCE'),
-                                       sf.col('REF_CONTACT_PERSON_ID')))
+                                       sf.col('countryCode'),
+                                       sf.col('source'),
+                                       sf.col('refContactPersonId')))
         .fillna('')
         # create string columns to matched
         .withColumn('name',
                     sf.concat_ws(' ',
-                                 sf.col('FIRST_NAME_CLEANSED'),
-                                 sf.col('LAST_NAME_CLEANSED')))
+                                 sf.col('firstNameCleansed'),
+                                 sf.col('lastNameCleansed')))
         .withColumn('name', sf.regexp_replace('name', utils.REGEX, ''))
         .withColumn('name', sf.trim(sf.regexp_replace('name', '\s+', ' ')))
         .withColumn('name_index', sf.row_number().over(w) - 1)
-        .select('name_index', 'id', 'name', 'COUNTRY_CODE', 'FIRST_NAME_CLEANSED', 'LAST_NAME_CLEANSED',
-                'STREET_CLEANSED', 'HOUSENUMBER', 'ZIP_CODE_CLEANSED', 'CITY_CLEANSED')
+        .select('name_index', 'id', 'name', 'countryCode', 'firstNameCleansed', 'lastNameCleansed',
+                'streetCleansed', 'housenumber', 'zipCodeCleansed', 'cityCleansed')
     )
 
 
@@ -92,29 +92,29 @@ def join_columns_and_filter(similarity: DataFrame, contacts: DataFrame, country_
         similarity
         .join(contacts, similarity['i'] == contacts['name_index'],
               how='left').drop('name_index')
-        .selectExpr('i', 'j', 'id as SOURCE_ID',
-                    'SIMILARITY', 'name as SOURCE_NAME',
-                    'STREET_CLEANSED as SOURCE_STREET',
-                    'ZIP_CODE_CLEANSED as SOURCE_ZIP_CODE',
-                    'CITY_CLEANSED as SOURCE_CITY')
+        .selectExpr('i', 'j', 'id as sourceId',
+                    'similarity', 'name as sourceName',
+                    'streetCleansed as sourceStreet',
+                    'zipCodeCleansed as sourceZipCode',
+                    'cityCleansed as sourceCity')
         .join(contacts, similarity['j'] == contacts['name_index'],
               how='left').drop('name_index')
-        .withColumn('COUNTRY_CODE', sf.lit(country_code))
-        .selectExpr('i', 'j', 'COUNTRY_CODE', 'SOURCE_ID',
-                    'id as TARGET_ID', 'SIMILARITY',
-                    'SOURCE_NAME', 'STREET_CLEANSED as TARGET_STREET',
-                    'SOURCE_STREET', 'name as TARGET_NAME',
-                    'SOURCE_ZIP_CODE', 'ZIP_CODE_CLEANSED as TARGET_ZIP_CODE',
-                    'SOURCE_CITY', 'CITY_CLEANSED as TARGET_CITY')
+        .withColumn('countryCode', sf.lit(country_code))
+        .selectExpr('i', 'j', 'countryCode', 'sourceId',
+                    'id as targetId', 'similarity',
+                    'sourceName', 'streetCleansed as targetStreet',
+                    'sourceStreet', 'name as targetName',
+                    'sourceZipCode', 'zipCodeCleansed as targetZipCode',
+                    'sourceCity', 'cityCleansed as targetCity')
         .filter(
-            (sf.col('SOURCE_ZIP_CODE') == sf.col('TARGET_ZIP_CODE')) |
+            (sf.col('sourceZipCode') == sf.col('targetZipCode')) |
             (
-                sf.isnull('SOURCE_ZIP_CODE') &
-                sf.isnull('TARGET_ZIP_CODE') &
-                (sf.col('SOURCE_CITY') == sf.col('TARGET_CITY'))
+                sf.isnull('sourceZipCode') &
+                sf.isnull('targetZipCode') &
+                (sf.col('sourceCity') == sf.col('targetCity'))
             )
         )
-        .withColumn('street_lev_distance', sf.levenshtein(sf.col('SOURCE_STREET'), sf.col('TARGET_STREET')))
+        .withColumn('street_lev_distance', sf.levenshtein(sf.col('sourceStreet'), sf.col('targetStreet')))
         .filter(sf.col('street_lev_distance') < MIN_LEVENSHTEIN_DISTANCE)
     )
 
@@ -123,7 +123,7 @@ def match_contacts_for_country(spark: SparkSession, country_code: str, preproces
                                n_top: int, threshold: float):
     """Match contacts for a single country"""
     LOGGER.info("Matching contacts for country: " + country_code)
-    contacts = utils.select_and_repartition_country(preprocessed_contacts, 'COUNTRY_CODE', country_code)
+    contacts = utils.select_and_repartition_country(preprocessed_contacts, 'countryCode', country_code)
     LOGGER.info("Calculating similarities")
     similarity = match_strings(
         spark, contacts,

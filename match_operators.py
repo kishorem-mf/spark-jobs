@@ -34,9 +34,9 @@ LOGGER = None
 
 def preprocess_operators(ddf: DataFrame) -> DataFrame:
     """Create a unique ID and the string that is used for matching and select only necessary columns"""
-    w = Window.partitionBy('COUNTRY_CODE').orderBy(sf.asc('id'))
+    w = Window.partitionBy('countryCode').orderBy(sf.asc('id'))
     return (ddf
-            .na.drop(subset=['NAME_CLEANSED'])
+            .na.drop(subset=['nameCleansed'])
             # create unique ID
             .withColumn('id', sf.concat_ws('~',
                                            sf.col('countryCode'),
@@ -53,7 +53,7 @@ def preprocess_operators(ddf: DataFrame) -> DataFrame:
             .withColumn('name', sf.regexp_replace('name', utils.REGEX, ''))
             .withColumn('name', sf.trim(sf.regexp_replace('name', '\s+', ' ')))
             .withColumn('name_index', sf.row_number().over(w) - 1)
-            .select('name_index', 'id', 'name', 'COUNTRY_CODE'))
+            .select('name_index', 'id', 'name', 'countryCode'))
 
 
 def join_original_columns(grouped_similarity: DataFrame, operators: DataFrame, country_code: str) -> DataFrame:
