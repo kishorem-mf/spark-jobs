@@ -53,7 +53,6 @@ with DAG('ohub_operators', default_args=default_args,
         task_id="operators_to_parquet",
         existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
-        polling_period_seconds=10,
         libraries=[
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
         ],
@@ -68,7 +67,6 @@ with DAG('ohub_operators', default_args=default_args,
         task_id='match_operators',
         existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
-        polling_period_seconds=60,
         libraries=[
             {'egg': 'dbfs:/libraries/name_matching/string_matching.egg'}
         ],
@@ -98,7 +96,6 @@ with DAG('ohub_operators', default_args=default_args,
         task_id="operators_to_acm",
         existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
-        polling_period_seconds=10,
         libraries=[
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
         ],
