@@ -136,9 +136,8 @@ with DAG('ohub_dag', default_args=default_args,
                 '--current_operators_path', data_output_bucket.format('current_operators'),
                 '--new_operators_path', data_output_bucket.format('new_operators'),
                 '--output_path', data_output_bucket.format('deduped'),
-                # '--country_code', 'all',
-                # '--threshold', 0.8,
-                # '--n_top', default=1,
+                '--country_code', 'all',
+                '--threshold', 0.8,
         }
     )
 

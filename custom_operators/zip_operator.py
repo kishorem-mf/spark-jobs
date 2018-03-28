@@ -121,14 +121,3 @@ class UnzipOperator(BaseOperator):
             zip_file.close()
 
         logging.info("Finished executing UnzipOperator.execute(context)")
-
-
-# Defining the plugin class
-class ZipOperatorPlugin(AirflowPlugin):
-    name = "zip_operator_plugin"
-    operators = [ZipOperator, UnzipOperator]
-    flask_blueprints = []
-    hooks = []
-    executors = []
-    admin_views = []
-    menu_links = []
