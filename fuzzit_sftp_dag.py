@@ -14,7 +14,8 @@ fds = "{{macros.ds_format(ds, '%Y%m%d')}}"
 fuzzit_ssh_hook = SSHHook(ssh_conn_id='fuzzit_sftp_ssh')
 templated_local_filepath = "/tmp/fuzzit/{{ds}}/UFS_Fuzzit_OHUB20_1400.zip"
 templated_remote_filepath = "./UFS_Fuzzit_OHUB20_" + fds + "_1400.zip"
-templated_path_to_unzip_contents = "./"
+wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'
+templated_path_to_unzip_contents = wasb_root_bucket + 'fuzzit/{{ds}}/'
 
 with DAG('fuzzit_sftp_dag', default_args=default_args,
          schedule_interval="0 0 * * *") as dag:
@@ -28,7 +29,7 @@ with DAG('fuzzit_sftp_dag', default_args=default_args,
 
     unzip = UnzipOperator(
         task_id='unzip_fuzzit_file',
-        path_to_save_zip=templated_local_filepath,
+        path_to_zip_file=templated_local_filepath,
         path_to_unzip_contents=templated_path_to_unzip_contents,
         dag=dag)
 
