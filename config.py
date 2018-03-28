@@ -16,7 +16,6 @@ shared_default = {
     'email_on_retry': False,
     'retries': 1,
     'retry_delay': timedelta(minutes=1),
-    'pool': 'ohub-pool',
 }
 
 country_codes = dict(
