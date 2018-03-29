@@ -11,45 +11,54 @@ object DomainTransformer {
 class DomainTransformer extends Serializable {
   var errors: Map[String, IngestionError] = Map()
 
-  def mandatory[T](originalColumnName: String, domainFieldName: String)(implicit row: Row): T =
-    try {
-      row.getAs[T](originalColumnName)
-    } catch {
-      case e: Exception => throw new MandatoryFieldException(s"Mandatory field constraint for '$domainFieldName' not met", e)
-    }
+  def mandatory(originalColumnName: String, domainFieldName: String)(implicit row: Row): String =
+    mandatory(originalColumnName, domainFieldName, identity)(row)
+
+  def mandatory[T](originalColumnName: String, domainFieldName: String, transformFn: String => T)(implicit row: Row): T = {
+    val originalValueFn: Row => Option[String] = originalValue(originalColumnName, domainFieldName)
+
+    readAndTransform[T](originalColumnName, domainFieldName, mandatory = true, originalValueFn, transformFn)(row).get
+  }
 
   def optional(originalColumnName: String, domainFieldName: String)(row: Row): Option[String] = {
-    val originalValueFn: Row => Option[String] = originalValue(originalColumnName)
-    val transformFn: String => String = result => result
+    val originalValueFn: Row => Option[String] = originalValue(originalColumnName, domainFieldName)
 
-    optional(originalColumnName, domainFieldName, originalValueFn, transformFn)(row)
+    readAndTransform(originalColumnName, domainFieldName, mandatory = false, originalValueFn, identity)(row)
   }
 
   def optional[T](originalColumnName: String, domainFieldName: String, transformFn: String => T)(row: Row): Option[T] = {
-    val originalValueFn: Row => Option[String] = originalValue(originalColumnName)
-    optional(originalColumnName, domainFieldName, originalValueFn, transformFn)(row)
+    val originalValueFn: Row => Option[String] = originalValue(originalColumnName, domainFieldName)
+
+    readAndTransform(originalColumnName, domainFieldName, mandatory = false, originalValueFn, transformFn)(row)
   }
 
-  def optional[T](originalColumnName: String, domainFieldName: String, originalValueFn: Row => Option[String], transformFn: String => T)(row: Row): Option[T] = {
-    // needs to be outside try, will bubble up in errors when original value function has programming errors.
+  private def readAndTransform[T](originalColumnName: String, domainFieldName: String, mandatory: Boolean, originalValueFn: Row => Option[String], transformFn: String => T)(row: Row): Option[T] = {
     val valueOpt: Option[String] = originalValueFn(row)
 
+    if (mandatory && valueOpt.isEmpty) {
+      throw MandatoryFieldException(domainFieldName, s"No value found for '$originalColumnName'")
+    }
+
     try {
-      valueOpt.map(transformFn) // invoking actual transform function is inside try (since when the value can't be transformed it's an error result)
+      valueOpt.map(transformFn)
     } catch {
-      case e: Exception => // can only reach catch block when transformation function throws exception
-        val ingestionError = IngestionError(
-          originalColumnName = originalColumnName,
-          inputValue = valueOpt.get,
-          exceptionMessage = s"${e.getClass.getName}:${e.getMessage}"
-        )
-        errors = errors.updated(domainFieldName, ingestionError)
+      case e: Exception =>
+        if (mandatory) {
+          throw MandatoryFieldException(domainFieldName, s"Couldn't apply transformation function on value '$valueOpt'")
+        } else {
+          val ingestionError = IngestionError(
+            originalColumnName = originalColumnName,
+            inputValue = valueOpt,
+            exceptionMessage = s"${e.getClass.getName}:${e.getMessage}"
+          )
+          errors = errors.updated(domainFieldName, ingestionError)
+        }
         None
     }
   }
 
-  private def originalValue(columnName: String)(row: Row): Option[String] =
-      Option(row.getAs[String](columnName)).filterNot(_.trim.isEmpty) // treat empty strings as None
-
-  // we could treat additional fields differently by creating an 'additional' method here
+  private def originalValue(columnName: String, domainFieldName: String)(row: Row): Option[String] = {
+    val fieldIndex = row.fieldIndex(columnName)
+    Option(row.getString(fieldIndex)).filterNot(_.trim.isEmpty) // treat empty strings as None
+  }
 }

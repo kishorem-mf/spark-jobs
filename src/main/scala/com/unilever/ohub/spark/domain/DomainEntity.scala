@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.domain
 
 object DomainEntity {
-  case class IngestionError(originalColumnName: String, inputValue: String, exceptionMessage: String)
+  case class IngestionError(originalColumnName: String, inputValue: Option[String], exceptionMessage: String)
 }
 
 // marker trait for all domain entities (press ctrl + h in IntelliJ to see all)
