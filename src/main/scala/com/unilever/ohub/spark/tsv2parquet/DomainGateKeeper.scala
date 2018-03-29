@@ -37,7 +37,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag] extends Sp
       try
         Right(transformFn(row, DomainTransformer()))
       catch {
-        case e: Exception =>
+        case e: Throwable =>
           Left(s"Error parsing row: '$e', row = '$row'")
       }
 

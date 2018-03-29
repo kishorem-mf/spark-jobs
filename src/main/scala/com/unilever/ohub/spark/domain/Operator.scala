@@ -12,13 +12,13 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 // all strings are UTF-8 strings, except country code?
 
 case class Operator(
-                     sourceOperatorId: String,
+                     sourceOperatorId: String,                                // TODO rename to sourceId
                      sourceName: String,                                      // UFT-8 characters: existing OHUB source name
                      countryCode: String,                                     // Existing country code in OHUB using: Iso 3166-1 alpha 2
                      isActive: Boolean,                                       // A | D
                      name: String,
                      oldIntegrationId: Option[String],                        // Must be a known operator integration id withing OHUB
-                     customerConcatId: Option[String],                        // TODO how to concat?
+                     customerConcatId: Option[String],                        // TODO rename to concatId? samenstelling van mandatory fields: countrycode ~ source ~ sourceOperaterId => thus mandatory itself,
                      webUpdaterId: Option[String],
                      customerType: Option[String],
                      dateCreated: Option[Timestamp],                          // YYYYMMDD HH24:MI:SS
@@ -76,7 +76,7 @@ case class Operator(
                      isOpenOnSunday: Option[Boolean],
                      chainName: Option[String],
                      chainId: Option[String],
-                     germanChainId: Option[String],
+                     germanChainId: Option[String],                           // TODO move to additional fields
                      germanChainName: Option[String],
                      kitchenType: Option[String],
                      ingestionErrors: Map[String, IngestionError]
