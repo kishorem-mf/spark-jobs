@@ -19,18 +19,18 @@ local_path = '/tmp/gs_export/'
 remote_bucket = 'digitaldataufs'
 path_in_bucket = 'ga_data'
 
-with DAG('gcp_ga', default_args=default_args, schedule_interval='@once') as dag:
+with DAG('gcp_ga', default_args=default_args, schedule_interval='0 4 * * *') as dag:
     ga_to_gs = GAToGSOperator(
         task_id="fetch_GA_from_BQ_for_date",
         bigquery_conn_id='gcp_storage',
         destination='gs://' + remote_bucket + path_in_bucket,
-        date='{{ ds }}',
+        date='{{ macros.ds_add(ds, -1) }}',
         country_codes=country_codes)
 
     gs_to_local = GSToLocalOperator(
         task_id='gcp_bucket_to_local',
         path=local_path,
-        date='{{ds}}',
+        date='{{ macros.ds_add(ds, -1) }}',
         bucket=remote_bucket,
         path_in_bucket=path_in_bucket,
         gcp_conn_id='gcp_storage',
@@ -41,7 +41,7 @@ with DAG('gcp_ga', default_args=default_args, schedule_interval='@once') as dag:
         task_id='local_to_azure',
         wasb_conn_id='azure_blob',
         path=local_path,
-        date='{{ds}}',
+        date='{{ macros.ds_add(ds, -1) }}',
         country_codes=country_codes,
         container_name='prod',
         blob_path='data/raw/gaData/'
