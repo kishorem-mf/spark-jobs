@@ -19,10 +19,10 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
       Operator(
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)           implicit vs explicit row arg passing, what to prefer?
         sourceOperatorId            = mandatory ( "﻿REF_OPERATOR_ID",         "sourceOperatorId"                                                        ),      // implicit
-        sourceName                  = optional  ( "SOURCE",                   "sourceName"                                                              )(row), // explicit
-        countryCode                 = optional  ( "COUNTRY_CODE",             "countryCode"                                                             )(row),
-        isActive                    = optional  ( "STATUS",                   "isActive",                     parseBoolUnsafe _                         )(row),
-        name                        = optional  ( "NAME",                     "name"                                                                    )(row),
+        sourceName                  = mandatory ( "SOURCE",                   "sourceName"                                                              )(row), // explicit
+        countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             )(row),
+        isActive                    = mandatory ( "STATUS",                   "isActive",                     parseBoolUnsafe _                         )(row),
+        name                        = mandatory ( "NAME",                     "name"                                                                    )(row),
         oldIntegrationId            = optional  ( "OPR_INTEGRATION_ID",       "oldIntegrationId"                                                        )(row),
         customerConcatId            = None                                                                                                                    , // TODO
         webUpdaterId                = None                                                                                                                    , // TODO

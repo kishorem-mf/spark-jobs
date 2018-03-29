@@ -10,10 +10,10 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 
 case class Operator(
                      sourceOperatorId: String,
-                     sourceName: Option[String],
-                     countryCode: Option[String],
-                     isActive: Option[Boolean],
-                     name: Option[String],
+                     sourceName: String,
+                     countryCode: String,
+                     isActive: Boolean,
+                     name: String,
                      oldIntegrationId: Option[String],
                      customerConcatId: Option[String],
                      webUpdaterId: Option[String],
