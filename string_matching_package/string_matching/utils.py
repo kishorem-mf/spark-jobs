@@ -1,3 +1,4 @@
+import re
 from time import perf_counter as timer
 from typing import List
 
@@ -57,9 +58,9 @@ def get_country_codes(country_code_arg: str, ddf: DataFrame) -> List[str]:
         LOGGER.info("Selecting countries with more than " + str(MINIMUM_ENTRIES_PER_COUNTRY) + " entries")
         codes = (
             count_per_country[count_per_country['count'] > MINIMUM_ENTRIES_PER_COUNTRY]
-            .select('countryCode')
-            .distinct()
-            .rdd.map(lambda r: r[0]).collect())
+                .select('countryCode')
+                .distinct()
+                .rdd.map(lambda r: r[0]).collect())
     else:
         LOGGER.info("Selecting only country: " + country_code_arg)
         codes = [country_code_arg]
@@ -85,15 +86,15 @@ def group_matches(ddf: DataFrame) -> DataFrame:
     """
     grouping_window = (
         Window
-        .partitionBy('j')
-        .orderBy(sf.asc('i')))
+            .partitionBy('j')
+            .orderBy(sf.asc('i')))
 
     # keep only the first entry sorted alphabetically
     grp_sim = (
         ddf
-        .withColumn("rn", sf.row_number().over(grouping_window))
-        .filter(sf.col("rn") == 1)
-        .drop('rn')
+            .withColumn("rn", sf.row_number().over(grouping_window))
+            .filter(sf.col("rn") == 1)
+            .drop('rn')
     )
 
     # remove group ID from column j
@@ -109,10 +110,10 @@ def save_to_parquet(ddf: DataFrame, fn):
     LOGGER.info("Mode: " + mode)
 
     (ddf
-        .coalesce(20)
-        .write
-        .partitionBy('countryCode')
-        .parquet(fn, mode=mode)
+     .coalesce(20)
+     .write
+     .partitionBy('countryCode')
+     .parquet(fn, mode=mode)
      )
 
 
@@ -124,15 +125,15 @@ def print_stats_operators(ddf: DataFrame, n_top, threshold):
     print('Threshold:\t', threshold)
     print('N_top:\t', n_top)
     (ddf
-        .select('sourceId', 'targetId',
-                'similarity', 'sourceName', 'targetName')
-        .sort('similarity', ascending=True)
-        .show(50, truncate=False))
+     .select('sourceId', 'targetId',
+             'similarity', 'sourceName', 'targetName')
+     .sort('similarity', ascending=True)
+     .show(50, truncate=False))
 
     (ddf
-        .groupBy(['sourceId', 'sourceName'])
-        .count()
-        .sort('count', ascending=False).show(50, truncate=False))
+     .groupBy(['sourceId', 'sourceName'])
+     .count()
+     .sort('count', ascending=False).show(50, truncate=False))
 
     ddf.describe('similarity').show()
     ddf.unpersist()
@@ -172,3 +173,25 @@ class Timer(object):
     def end_and_log(self):
         end = timer()
         self.logger.info('{} took {} s'.format(self.name, str(end - self.start)))
+
+
+def remove_strange_chars_to_lower_and_trim(input: str):
+    p = re.compile(
+        "(^\\s+)|(\\s+$)|[\u0024\u00A2\u00A3\u00A4\u00A5\u058F\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0"
+        "\u20A1\u20A2\u20A3\u20A4\u20A5\u20A6\u20A7\u20A8\u20A9\u20AA\u20AB\u20AC\u20AD\u20AE\u20AF\u20B0\u20B1\u20B2"
+        "\u20B3\u20B4\u20B5\u20B6\u20B7\u20B8\u20B9\u20BA\u20BB\u20BC\u20BD\u20BE\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1"
+        "\uFFE5\uFFE6\u0081°”\\\\_\\'\\~`!@#%()={}|:;\\?/<>,\\.\\[\\]\\+\\-\\*\\^&:]+")
+
+    input = p.sub('', input.lower())
+    return input.strip()
+
+
+def remove_spaces_strange_chars_and_to_lower(input: str):
+    p = re.compile(
+        "[ \u0024\u00A2\u00A3\u00A4\u00A5\u058F\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0\u20A1\u20A2"
+        "\u20A3\u20A4\u20A5\u20A6\u20A7\u20A8\u20A9\u20AA\u20AB\u20AC\u20AD\u20AE\u20AF\u20B0\u20B1\u20B2\u20B3\u20B4"
+        "\u20B5\u20B6\u20B7\u20B8\u20B9\u20BA\u20BB\u20BC\u20BD\u20BE\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1\uFFE5\uFFE6"
+        "\u0081°”\\\\_\\'\\~`!@#$%()={}|:;\\?/<>,\\.\\[\\]\\+\\-\\*\\^&:]+")
+
+    input = p.sub('', input.lower())
+    return input

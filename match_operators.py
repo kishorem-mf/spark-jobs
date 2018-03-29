@@ -24,7 +24,6 @@ from pyspark.sql.window import Window
 
 from string_matching import utils
 from string_matching.spark_string_matching import match_strings
-import re
 
 MATRIX_CHUNK_ROWS = 500
 N_GRAMS = 2
@@ -32,32 +31,9 @@ MINIMUM_DOCUMENT_FREQUENCY = 2
 VOCABULARY_SIZE = 1500
 LOGGER = None
 
-
-def remove_strange_chars_to_lower_and_trim(input: str):
-    p = re.compile(
-        "(^\\s+)|(\\s+$)|[\u0024\u00A2\u00A3\u00A4\u00A5\u058F\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0"
-        "\u20A1\u20A2\u20A3\u20A4\u20A5\u20A6\u20A7\u20A8\u20A9\u20AA\u20AB\u20AC\u20AD\u20AE\u20AF\u20B0\u20B1\u20B2"
-        "\u20B3\u20B4\u20B5\u20B6\u20B7\u20B8\u20B9\u20BA\u20BB\u20BC\u20BD\u20BE\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1"
-        "\uFFE5\uFFE6\u0081°”\\\\_\\'\\~`!@#%()={}|:;\\?/<>,\\.\\[\\]\\+\\-\\*\\^&:]+")
-
-    input = p.sub('', input.lower())
-    return input.strip()
-
-
-def remove_spaces_strange_chars_and_to_lower(input: str):
-    p = re.compile(
-        "[ \u0024\u00A2\u00A3\u00A4\u00A5\u058F\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0\u20A1\u20A2"
-        "\u20A3\u20A4\u20A5\u20A6\u20A7\u20A8\u20A9\u20AA\u20AB\u20AC\u20AD\u20AE\u20AF\u20B0\u20B1\u20B2\u20B3\u20B4"
-        "\u20B5\u20B6\u20B7\u20B8\u20B9\u20BA\u20BB\u20BC\u20BD\u20BE\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1\uFFE5\uFFE6"
-        "\u0081°”\\\\_\\'\\~`!@#$%()={}|:;\\?/<>,\\.\\[\\]\\+\\-\\*\\^&:]+")
-
-    input = p.sub('', input.lower())
-    return input
-
-
 # create udf for use in spark later
-udf_remove_strange_chars_to_lower_and_trim = sf.udf(remove_strange_chars_to_lower_and_trim)
-udf_remove_spaces_strange_chars_and_to_lower = sf.udf(remove_strange_chars_to_lower_and_trim)
+udf_remove_strange_chars_to_lower_and_trim = sf.udf(utils.remove_strange_chars_to_lower_and_trim)
+udf_remove_spaces_strange_chars_and_to_lower = sf.udf(utils.remove_strange_chars_to_lower_and_trim)
 
 
 def clean_fields(ddf: DataFrame) -> DataFrame:
