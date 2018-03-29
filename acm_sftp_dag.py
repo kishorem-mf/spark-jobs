@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import os
 from airflow import DAG
 from airflow.contrib.hooks.ssh_hook import SSHHook
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
@@ -20,6 +21,7 @@ default_args = {
 rfp = "/incoming/OHUB_2_testing/quoted_semi_colon_delimited/"
 fds = "{{macros.ds_format(ds, '%Y%m%d')}}"
 local_filepath = "/tmp/acm/{{ds}}/"
+os.makedirs(local_filepath, exist_ok=true)
 templated_local_orderlines_filepath = local_filepath + "ORDERLINES.csv"
 templated_remote_orderlines_filepath = rfp + "UFS_ORDERLINES_" + fds + "*.csv"
 templated_local_orders_filepath = local_filepath + "ORDERS.csv"
