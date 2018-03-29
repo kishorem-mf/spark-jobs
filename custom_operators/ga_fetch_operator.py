@@ -51,7 +51,7 @@ class GAToGSOperator(BaseOperator):
                        working_date,
                        destination_folder):
         ga_dataset = '{country_code}.ga_sessions_{working_date}'.format(country_code=ga_country_code,
-                                                                        working_date=working_date)
+                                                                        working_date=working_date.replace('-', ''))
         destination = '{dest}/DATE={date}/COUNTRY={country}/{fn}'.format(dest=destination_folder,
                                                                          date=working_date,
                                                                          country=country_code,
