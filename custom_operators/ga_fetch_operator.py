@@ -3,11 +3,11 @@ import logging
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
 
 from airflow.contrib.hooks.wasb_hook import WasbHook
+from airflow.contrib.operators.gcs_download_operator import GoogleCloudStorageDownloadOperator
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
-LOCAL_FILE_NAME = 'ga_sessions.avro'
-
+FILE_NAME = 'ga_sessions.avro'
 
 class GAToGSOperator(BaseOperator):
     """
@@ -27,20 +27,20 @@ class GAToGSOperator(BaseOperator):
     :type destination_folder: string
     """
 
-    template_fields = ('date', 'destination_folder')
+    template_fields = ('date', 'destination')
 
     def __init__(self,
                  bigquery_conn_id,
                  country_codes,
                  date,
-                 destination_folder,
+                 destination,
                  *args,
                  **kwargs):
         super(GAToGSOperator, self).__init__(*args, **kwargs)
         self.bigquery_conn_id = bigquery_conn_id
         self.country_codes = country_codes
         self.date = date
-        self.destination_folder = destination_folder
+        self.destination = destination
 
     def fetch_for_date(self,
                        context,
@@ -54,17 +54,16 @@ class GAToGSOperator(BaseOperator):
         destination = '{dest}/DATE={date}/COUNTRY={country}/{fn}'.format(dest=destination_folder,
                                                                          date=working_date,
                                                                          country=country_code,
-                                                                         fn=LOCAL_FILE_NAME)
+                                                                         fn=FILE_NAME)
 
         bq_operator = BigQueryToCloudStorageOperator(
             source_project_dataset_table=ga_dataset,
-            destination_cloud_storage_uris=destination,
+            destination_cloud_storage_uris=[destination],
             compression='NONE',
             export_format='AVRO',
             field_delimiter=',',
             print_header=True,
-            bigquery_conn_id=bigquery_conn_id,
-            delegate_to=None)
+            bigquery_conn_id=bigquery_conn_id)
 
         bq_operator.execute(context)
 
@@ -97,9 +96,47 @@ class GAToGSOperator(BaseOperator):
                                    self.destination_folder)
 
 
+class GSToLocalOperator(BaseOperator):
+    template_fields = ('date',)
+
+    @apply_defaults
+    def __init__(self,
+                 path,
+                 date,
+                 bucket,
+                 gcp_conn_id,
+                 country_codes,
+                 *args,
+                 **kwargs):
+        super(GSToLocalOperator, self).__init__(*args, **kwargs)
+        self.path = path
+        self.date = date
+        self.country_codes = country_codes
+        self.bucket = bucket
+        self.gcp_conn_id = gcp_conn_id
+
+    def download_file(self,
+                      context,
+                      connection_id,
+                      fn,
+                      bucket,
+                      object):
+        operator = GoogleCloudStorageDownloadOperator(bucket=bucket,
+                                                      object=object,
+                                                      filename=fn,
+                                                      google_cloud_storage_conn_id=connection_id)
+        operator.execute(context)
+
+    def execute(self, context):
+        """Upload a file to Azure Blob Storage."""
+        for country_code in self.country_codes.keys():
+            object =  '/DATE={}/COUNTRY={}/{}'.format(self.date, country_code, FILE_NAME)
+            file_path = self.path + '/DATE={}/COUNTRY={}/{}'.format(self.date, country_code, FILE_NAME)
+            self.download_file(context, self.gcp_conn_id, file_path, self.bucket, object)
+
 
 class LocalGAToWasbOperator(BaseOperator):
-    template_fields = ('path', 'date')
+    template_fields = ('date', )
 
     @apply_defaults
     def __init__(self,
@@ -112,6 +149,7 @@ class LocalGAToWasbOperator(BaseOperator):
                  load_options=None,
                  *args,
                  **kwargs):
+        super(LocalGAToWasbOperator, self).__init__(*args, **kwargs)
         if load_options is None:
             load_options = {}
         self.path = path
@@ -134,6 +172,6 @@ class LocalGAToWasbOperator(BaseOperator):
         """Upload a file to Azure Blob Storage."""
         hook = WasbHook(wasb_conn_id=self.wasb_conn_id)
         for country_code in self.country_codes.keys():
-            blob_name = self.blob_path + '/DATE={}/COUNTRY={}/{}'.format(self.date, country_code, LOCAL_FILE_NAME)
-            file_path = self.path + '/DATE={}/COUNTRY={}/{}'.format(self.date, country_code, LOCAL_FILE_NAME)
+            blob_name = self.blob_path + '/DATE={}/COUNTRY={}/{}'.format(self.date, country_code, FILE_NAME)
+            file_path = self.path + '/DATE={}/COUNTRY={}/{}'.format(self.date, country_code, FILE_NAME)
             self.upload_file(hook, blob_name, self.container_name, file_path)
