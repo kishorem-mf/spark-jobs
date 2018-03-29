@@ -65,8 +65,7 @@ with DAG('ohub_dag', default_args=default_args,
     create_cluster = DatabricksStartClusterOperator(
         task_id='start_cluster',
         cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
-        polling_period_seconds=10
+        databricks_conn_id=databricks_conn_id
     )
 
     delete_cluster = DatabricksTerminateClusterOperator(
@@ -81,6 +80,7 @@ with DAG('ohub_dag', default_args=default_args,
             task_id=task_name,
             existing_cluster_id=cluster_id,
             databricks_conn_id=databricks_conn_id,
+            polling_period_seconds=10,
             libraries=[
                 {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
             ],
@@ -99,6 +99,7 @@ with DAG('ohub_dag', default_args=default_args,
             task_id=task_name,
             existing_cluster_id=cluster_id,
             databricks_conn_id=databricks_conn_id,
+            polling_period_seconds=10,
             libraries=[
                 {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
             ],
@@ -113,6 +114,7 @@ with DAG('ohub_dag', default_args=default_args,
         task_id='match_operators',
         existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
+        polling_period_seconds=60,
         libraries=[
             {'egg': 'dbfs:/libraries/string_matching.egg'}
         ],
