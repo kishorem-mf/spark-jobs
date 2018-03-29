@@ -41,6 +41,8 @@ with DAG('gcp_ga', default_args=default_args) as dag:
         task_id='local_to_azure',
         wasb_conn_id='azure_blob',
         path=local_path + '{{ds}}/',
+        date='{{ds}}',
+        country_codes=country_codes,
         container_name='prod',
         blob_path='data/raw/gaData/'
     )
