@@ -134,7 +134,7 @@ class GSToLocalOperator(BaseOperator):
             object=obj,
             filename=fn,
             google_cloud_storage_conn_id=connection_id)
-        dir = '/'.join(fn.split['/'][:-1])
+        dir = '/'.join(fn.split('/')[:-1])
         os.makedirs(dir, exist_ok=True)
         operator.execute(context)
 
