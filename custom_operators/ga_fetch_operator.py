@@ -54,9 +54,9 @@ class GAToGSOperator(BaseOperator):
         ga_dataset = '{country_code}.ga_sessions_{working_date}'.format(country_code=ga_country_code,
                                                                         working_date=working_date.replace('-', ''))
         destination = '{dest}/PARTITION_DATE={date}/COUNTRY={country}/{fn}'.format(dest=destination,
-                                                                         date=working_date,
-                                                                         country=country_code,
-                                                                         fn=FILE_NAME)
+                                                                                   date=working_date,
+                                                                                   country=country_code,
+                                                                                   fn=FILE_NAME)
 
         bq_operator = BigQueryToCloudStorageOperator(
             task_id='to_gs',
