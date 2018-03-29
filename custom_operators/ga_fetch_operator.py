@@ -157,7 +157,7 @@ class LocalGAToWasbOperator(BaseOperator):
         if load_options is None:
             load_options = {}
         self.path = path
-        self.data = date
+        self.date = date
         self.country_codes = country_codes
         self.container_name = container_name
         self.blob_path = blob_path
