@@ -16,8 +16,8 @@ default_args = {
 }
 
 local_path = '/tmp/gs_export/'
-remote_bucket = 'ufs-accept'
-path_in_bucket = '/ga_data'
+remote_bucket = 'digitaldataufs'
+path_in_bucket = 'ga_data'
 
 with DAG('gcp_ga', default_args=default_args, schedule_interval='@once') as dag:
     ga_to_gs = GAToGSOperator(
@@ -29,7 +29,7 @@ with DAG('gcp_ga', default_args=default_args, schedule_interval='@once') as dag:
 
     gs_to_local = GSToLocalOperator(
         task_id='gcp_bucket_to_local',
-        path=local_path + '{{gs}}',
+        path=local_path + '{{ds}}',
         date='{{ds}}',
         bucket=remote_bucket,
         path_in_bucket=path_in_bucket,

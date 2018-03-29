@@ -1,5 +1,6 @@
 import logging
 
+import os
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
 
 from airflow.contrib.hooks.wasb_hook import WasbHook
@@ -58,6 +59,7 @@ class GAToGSOperator(BaseOperator):
                                                                          fn=FILE_NAME)
 
         bq_operator = BigQueryToCloudStorageOperator(
+            task_id='to_gs',
             source_project_dataset_table=ga_dataset,
             destination_cloud_storage_uris=[destination],
             compression='NONE',
@@ -126,10 +128,14 @@ class GSToLocalOperator(BaseOperator):
                       obj):
         """Download a file to local storage"""
         self.log.info('Downloading {obj} to {fn}'.format(**locals()))
-        operator = GoogleCloudStorageDownloadOperator(bucket=bucket,
-                                                      object=obj,
-                                                      filename=fn,
-                                                      google_cloud_storage_conn_id=connection_id)
+        operator = GoogleCloudStorageDownloadOperator(
+            task_id='download',
+            bucket=bucket,
+            object=obj,
+            filename=fn,
+            google_cloud_storage_conn_id=connection_id)
+        dir = '/'.join(fn.split('/')[:-1])
+        os.makedirs(dir, exist_ok=True)
         operator.execute(context)
 
     def execute(self, context):
