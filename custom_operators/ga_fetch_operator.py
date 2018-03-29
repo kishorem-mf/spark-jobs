@@ -23,9 +23,9 @@ class GAToGSOperator(BaseOperator):
     :param date: the first date to fetch for in string form,
                        formatted as YYYMMDD.
     :type date: str
-    :param destination_folder: destination folder to write the
+    :param destination: destination folder to write the
      AVRO files into
-    :type destination_folder: string
+    :type destination: string
     """
 
     template_fields = ('date', 'destination')
@@ -49,10 +49,10 @@ class GAToGSOperator(BaseOperator):
                        country_code,
                        ga_country_code,
                        working_date,
-                       destination_folder):
+                       destination):
         ga_dataset = '{country_code}.ga_sessions_{working_date}'.format(country_code=ga_country_code,
                                                                         working_date=working_date.replace('-', ''))
-        destination = '{dest}/DATE={date}/COUNTRY={country}/{fn}'.format(dest=destination_folder,
+        destination = '{dest}/DATE={date}/COUNTRY={country}/{fn}'.format(dest=destination,
                                                                          date=working_date,
                                                                          country=country_code,
                                                                          fn=FILE_NAME)
@@ -73,7 +73,7 @@ class GAToGSOperator(BaseOperator):
                           bigquery_conn_id,
                           country_code,
                           date,
-                          destination_folder):
+                          destination):
         try:
             ga_country_code = self.country_codes[country_code]
         except Exception as e:
@@ -86,7 +86,7 @@ class GAToGSOperator(BaseOperator):
                             country_code,
                             ga_country_code,
                             date,
-                            destination_folder)
+                            destination)
 
     def execute(self, context):
         for country_code in self.country_codes.keys():
@@ -94,7 +94,7 @@ class GAToGSOperator(BaseOperator):
                                    self.bigquery_conn_id,
                                    country_code,
                                    self.date,
-                                   self.destination_folder)
+                                   self.destination)
 
 
 class GSToLocalOperator(BaseOperator):
