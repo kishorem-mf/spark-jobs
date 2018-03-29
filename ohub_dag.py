@@ -125,6 +125,25 @@ with DAG('ohub_dag', default_args=default_args,
         }
     )
 
+    persistent_uuid = DatabricksSubmitRunOperator(
+        task_id='persistent_uuid',
+        cluster_name=cluster_name,
+        databricks_conn_id=databricks_conn_id,
+        libraries=[
+            {'egg': 'dbfs:/libraries/string_matching.egg'}
+        ],
+        spark_python_task={
+            'python_file': 'dbfs:/libraries/join_new_operators_with_persistent_uuid.py',
+            'parameters': [
+                '--current_operators_path', data_output_bucket.format('OPERATORS'),
+                '--new_operators_path', data_output_bucket.format('operators_matched'),
+                '--output_path', data_output_bucket.format('operators_uuid'),
+                '--country_code', 'all',
+                '--threshold', '0.8',
+            ]
+        }
+    )
+
     merge_operators = DatabricksSubmitRunOperator(
         task_id='merge_operators',
         existing_cluster_id=cluster_id,
@@ -134,12 +153,12 @@ with DAG('ohub_dag', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
-            'parameters': [data_output_bucket.format('operators_matched'),
+            'parameters': [data_output_bucket.format('operators_uuid'),
                            data_input_bucket.format('OPERATORS'),
                            data_output_bucket.format('operators_merged')]
         })
 
-    operators_to_parquet >> match_operators >> merge_operators >> operators_to_acm
+    operators_to_parquet >> match_operators >> persistent_uuid >> merge_operators >> operators_to_acm
 
     merge_contactpersons1 = DatabricksSubmitRunOperator(
         task_id='merge_contactpersons_1',
