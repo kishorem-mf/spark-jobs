@@ -23,7 +23,7 @@ with DAG('gcp_ga', default_args=default_args, schedule_interval='0 4 * * *') as 
     ga_to_gs = GAToGSOperator(
         task_id="fetch_GA_from_BQ_for_date",
         bigquery_conn_id='gcp_storage',
-        destination='gs://' + remote_bucket + path_in_bucket,
+        destination='gs://' + remote_bucket + '/' + path_in_bucket,
         date='{{ macros.ds_add(ds, -1) }}',
         country_codes=country_codes)
 
