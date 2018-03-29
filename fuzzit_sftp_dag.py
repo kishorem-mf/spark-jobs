@@ -4,6 +4,7 @@ from airflow import DAG
 from airflow.contrib.hooks.ssh_hook import SSHHook
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 from custom_operators.zip_operator import UnzipOperator
+from custom_operators.folder_to_wasb import FolderToWasbOperator
 from config import country_codes
 
 default_args = {
@@ -18,10 +19,10 @@ default_args = {
 
 fds = "{{macros.ds_format(ds, '%Y%m%d')}}"
 fuzzit_ssh_hook = SSHHook(ssh_conn_id='fuzzit_sftp_ssh')
-templated_local_filepath = "/tmp/fuzzit/{{ds}}/UFS_Fuzzit_OHUB20_1400.zip"
 templated_remote_filepath = "./UFS_Fuzzit_OHUB20_" + fds + "_1400.zip"
+templated_local_filepath = "/tmp/fuzzit/{{ds}}/UFS_Fuzzit_OHUB20_1400.zip"
+templated_path_to_unzip_contents = '/tmp/fuzzit/{{ds}}/csv/'
 wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'
-templated_path_to_unzip_contents = wasb_root_bucket + 'fuzzit/{{ds}}/'
 
 with DAG('fuzzit_sftp_dag', default_args=default_args,
          schedule_interval="0 0 * * *") as dag:
@@ -39,4 +40,10 @@ with DAG('fuzzit_sftp_dag', default_args=default_args,
         path_to_unzip_contents=templated_path_to_unzip_contents,
         dag=dag)
 
-    fetch >> unzip
+    wasb = FolderToWasbOperator(
+        folder_path=templated_path_to_unzip_contents,
+        container_name='prod',
+        blob_name='ulohub2storedevne',
+    )
+
+    fetch >> unzip >> wasb
