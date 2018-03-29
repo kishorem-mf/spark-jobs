@@ -16,7 +16,7 @@ default_args = {
 }
 
 local_path = '/tmp/gs_export/'
-remote_bucket = 'ufs-accept'
+remote_bucket = 'digitaldataufs'
 path_in_bucket = '/ga_data'
 
 with DAG('gcp_ga', default_args=default_args, schedule_interval='@once') as dag:
