@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 email_addresses = ['timvancann@godatadriven.com',
                    'Dennis.Vis@unilever.com',
                    'constantijnvisinescu@binx.io',
