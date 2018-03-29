@@ -18,17 +18,17 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
                                                                               // ↓ not so happy with this column (it should be the same as the fieldName), macro?
       Operator(
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)           implicit vs explicit row arg passing, what to prefer?
-        sourceOperatorId            = mandatory ( "﻿REF_OPERATOR_ID",         "sourceOperatorId"                                                        ),      // implicit
+        sourceEntityId              = mandatory ( "﻿REF_OPERATOR_ID",         "sourceEntityId"                                                          ),      // implicit
         sourceName                  = mandatory ( "SOURCE",                   "sourceName"                                                              )(row), // explicit
         countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             )(row),
         isActive                    = mandatory ( "STATUS",                   "isActive",                     parseBoolUnsafe _                         )(row),
         name                        = mandatory ( "NAME",                     "name"                                                                    )(row),
         oldIntegrationId            = optional  ( "OPR_INTEGRATION_ID",       "oldIntegrationId"                                                        )(row),
-        customerConcatId            = None                                                                                                                    , // TODO
+        concatId                    = "TODO"                                                                                                                  , // TODO
         webUpdaterId                = None                                                                                                                    , // TODO
         customerType                = None                                                                                                                    , // TODO
         dateCreated                 = optional  ( "DATE_CREATED",             "dateCreated",                  parseDateTimeStampUnsafe _                )(row),
-        dateUpdated                 = optional  ( "DATE_MODIFIED",            "dateModified",                 parseDateTimeStampUnsafe _                )(row),
+        dateUpdated                 = optional  ( "DATE_MODIFIED",            "dateUpdated",                  parseDateTimeStampUnsafe _                )(row),
         ohubCreated                 = None                                                                                                                    , // TODO
         ohubUpdated                 = None                                                                                                                    , // TODO
         channel                     = optional  ( "CHANNEL",                  "channel"                                                                 )(row),
@@ -45,17 +45,17 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         phoneNumber                 = optional  ( "PHONE_NUMBER",             "phoneNumber"                                                             )(row),
         mobileNumber                = optional  ( "MOBILE_PHONE_NUMBER",      "mobilePhoneNumber"                                                       )(row),
         faxNumber                   = optional  ( "FAX_NUMBER",               "faxNumber"                                                               )(row),
-        generalOptOut               = optional  ( "OPT_OUT",                  "generalOptOut",                parseBoolUnsafe _                         )(row),
-        emailOptIn                  = optional  ( "EM_OPT_IN",                "emailOptIn",                   parseBoolUnsafe _                         )(row),
-        emailOptOut                 = optional  ( "EM_OPT_OUT",               "emailOptOut",                  parseBoolUnsafe _                         )(row),
-        directMailOptIn             = optional  ( "DM_OPT_IN",                "directMailOptIn",              parseBoolUnsafe _                         )(row),
-        directMailOptOut            = optional  ( "DM_OPT_OUT",               "directMailOptOut",             parseBoolUnsafe _                         )(row),
-        telemarketingOptIn          = optional  ( "TM_OPT_IN",                "telemarketingOptIn",           parseBoolUnsafe _                         )(row),
-        telemarketingOptOut         = optional  ( "TM_OPT_OUT",               "telemarketingOptOut",          parseBoolUnsafe _                         )(row),
-        mobileOptIn                 = optional  ( "MOB_OPT_IN",               "mobileOptIn",                  parseBoolUnsafe _                         )(row),
-        mobileOptOut                = optional  ( "MOB_OPT_OUT",              "mobileOptOut",                 parseBoolUnsafe _                         )(row),
-        faxOptIn                    = optional  ( "FAX_OPT_IN",               "faxOptIn",                     parseBoolUnsafe _                         )(row),
-        faxOptOut                   = optional  ( "FAX_OPT_OUT",              "faxOptOut",                    parseBoolUnsafe _                         )(row),
+        hasGeneralOptOut            = optional  ( "OPT_OUT",                  "generalOptOut",                parseBoolUnsafe _                         )(row),
+        hasEmailOptIn               = optional  ( "EM_OPT_IN",                "emailOptIn",                   parseBoolUnsafe _                         )(row),
+        hasEmailOptOut              = optional  ( "EM_OPT_OUT",               "emailOptOut",                  parseBoolUnsafe _                         )(row),
+        hasDirectMailOptIn          = optional  ( "DM_OPT_IN",                "directMailOptIn",              parseBoolUnsafe _                         )(row),
+        hasDirectMailOptOut         = optional  ( "DM_OPT_OUT",               "directMailOptOut",             parseBoolUnsafe _                         )(row),
+        hasTelemarketingOptIn       = optional  ( "TM_OPT_IN",                "telemarketingOptIn",           parseBoolUnsafe _                         )(row),
+        hasTelemarketingOptOut      = optional  ( "TM_OPT_OUT",               "telemarketingOptOut",          parseBoolUnsafe _                         )(row),
+        hasMobileOptIn              = optional  ( "MOB_OPT_IN",               "mobileOptIn",                  parseBoolUnsafe _                         )(row),
+        hasMobileOptOut             = optional  ( "MOB_OPT_OUT",              "mobileOptOut",                 parseBoolUnsafe _                         )(row),
+        hasFaxOptIn                 = optional  ( "FAX_OPT_IN",               "faxOptIn",                     parseBoolUnsafe _                         )(row),
+        hasFaxOptOut                = optional  ( "FAX_OPT_OUT",              "faxOptOut",                    parseBoolUnsafe _                         )(row),
         totalDishes                 = optional  ( "NR_OF_DISHES",             "totalDishes",                  toInt _                                   )(row),
         totalLocations              = optional  ( "NR_OF_LOCATIONS",          "totalLocations",               toInt _                                   )(row),
         totalStaff                  = optional  ( "NR_OF_STAFF",              "totalStaff",                   toInt _                                   )(row),

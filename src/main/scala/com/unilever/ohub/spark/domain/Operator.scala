@@ -12,13 +12,13 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 // all strings are UTF-8 strings, except country code?
 
 case class Operator(
-                     sourceOperatorId: String,                                // TODO rename to sourceId
+                     sourceEntityId: String,
                      sourceName: String,                                      // UFT-8 characters: existing OHUB source name
                      countryCode: String,                                     // Existing country code in OHUB using: Iso 3166-1 alpha 2
                      isActive: Boolean,                                       // A | D
                      name: String,
+                     concatId: String,                                        // samenstelling van mandatory fields: countrycode ~ source ~ sourceEntityId => thus mandatory itself,
                      oldIntegrationId: Option[String],                        // Must be a known operator integration id withing OHUB
-                     customerConcatId: Option[String],                        // TODO rename to concatId? samenstelling van mandatory fields: countrycode ~ source ~ sourceOperaterId => thus mandatory itself,
                      webUpdaterId: Option[String],
                      customerType: Option[String],
                      dateCreated: Option[Timestamp],                          // YYYYMMDD HH24:MI:SS
@@ -39,23 +39,23 @@ case class Operator(
                      phoneNumber: Option[String],                             // International format: +xx x xxxx xxxx
                      mobileNumber: Option[String],                            // International format: +xx x xxxx xxxx
                      faxNumber: Option[String],                               // International format: +xx x xxxx xxxx
-                     generalOptOut: Option[Boolean],                          // TODO these opts done follow our naming convention ('every boolean start with isXXX')
-                     emailOptIn: Option[Boolean],
-                     emailOptOut: Option[Boolean],
-                     directMailOptIn: Option[Boolean],
-                     directMailOptOut: Option[Boolean],
-                     telemarketingOptIn: Option[Boolean],
-                     telemarketingOptOut: Option[Boolean],
-                     mobileOptIn: Option[Boolean],
-                     mobileOptOut: Option[Boolean],
-                     faxOptIn: Option[Boolean],
-                     faxOptOut: Option[Boolean],
+                     hasGeneralOptOut: Option[Boolean],
+                     hasEmailOptIn: Option[Boolean],
+                     hasEmailOptOut: Option[Boolean],
+                     hasDirectMailOptIn: Option[Boolean],
+                     hasDirectMailOptOut: Option[Boolean],
+                     hasTelemarketingOptIn: Option[Boolean],
+                     hasTelemarketingOptOut: Option[Boolean],
+                     hasMobileOptIn: Option[Boolean],
+                     hasMobileOptOut: Option[Boolean],
+                     hasFaxOptIn: Option[Boolean],
+                     hasFaxOptOut: Option[Boolean],
                      totalDishes: Option[Int],                                // Integer | Range of integers ("100-150") // TODO how to handle range
                      totalLocations: Option[Int],                             // Integer
                      totalStaff: Option[Int],                                 // Integer | Range of integers ("100-150") TODO how to handle range
                      averagePrice: Option[BigDecimal],                        // Decimal (decimal separator: ".") | Range of decimals ("29.95-39.95")
-                     daysOpen: Option[Int],                                   // [0 - 7]
-                     weeksClosed: Option[Int],                                // [0 - 52]
+                     daysOpen: Option[Int],                                   // [0 - 7] => ingestion error
+                     weeksClosed: Option[Int],                                // [0 - 52] => ingestion error
                      distributorName: Option[String],
                      distributorCustomerNumber: Option[String],
                      distributorOperatorId: Option[String],
