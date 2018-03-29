@@ -56,11 +56,10 @@ def get_country_codes(country_code_arg: str, ddf: DataFrame) -> List[str]:
     if country_code_arg == 'all':
         count_per_country = ddf.groupby('countryCode').count()
         LOGGER.info("Selecting countries with more than " + str(MINIMUM_ENTRIES_PER_COUNTRY) + " entries")
-        codes = (
-            count_per_country[count_per_country['count'] > MINIMUM_ENTRIES_PER_COUNTRY]
-                .select('countryCode')
-                .distinct()
-                .rdd.map(lambda r: r[0]).collect())
+        codes = (count_per_country[count_per_country['count'] > MINIMUM_ENTRIES_PER_COUNTRY]
+                 .select('countryCode')
+                 .distinct()
+                 .rdd.map(lambda r: r[0]).collect())
     else:
         LOGGER.info("Selecting only country: " + country_code_arg)
         codes = [country_code_arg]
@@ -84,18 +83,16 @@ def group_matches(ddf: DataFrame) -> DataFrame:
     - make sure that each i (group leader) is not matched with another 'group leader',
       e.g. if we have (i, j) we remove (k, i) for all k
     """
-    grouping_window = (
-        Window
-            .partitionBy('j')
-            .orderBy(sf.asc('i')))
+    grouping_window = (Window
+                       .partitionBy('j')
+                       .orderBy(sf.asc('i')))
 
     # keep only the first entry sorted alphabetically
-    grp_sim = (
-        ddf
-            .withColumn("rn", sf.row_number().over(grouping_window))
-            .filter(sf.col("rn") == 1)
-            .drop('rn')
-    )
+    grp_sim = (ddf
+               .withColumn("rn", sf.row_number().over(grouping_window))
+               .filter(sf.col("rn") == 1)
+               .drop('rn')
+               )
 
     # remove group ID from column j
     return grp_sim.join(
