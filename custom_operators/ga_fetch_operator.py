@@ -175,7 +175,7 @@ class LocalGAToWasbOperator(BaseOperator):
                     blob_name,
                     container_name,
                     file_path):
-        self.log.info('Uploading {file} to wasb://{container_name} as {blob_name}'.format(**locals()))
+        self.log.info('Uploading {file_path} to wasb://{container_name} as {blob_name}'.format(**locals()))
         hook.load_file(file_path, self.container_name, self.blob_name, **self.load_options)
 
     def execute(self, context):
