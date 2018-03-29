@@ -8,7 +8,7 @@ from airflow.contrib.operators.gcs_download_operator import GoogleCloudStorageDo
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
-FILE_NAME = 'ga_sessions.avro'
+FILE_NAME = 'ga_data.avro'
 
 
 class GAToGSOperator(BaseOperator):
@@ -53,7 +53,7 @@ class GAToGSOperator(BaseOperator):
                        destination):
         ga_dataset = '{country_code}.ga_sessions_{working_date}'.format(country_code=ga_country_code,
                                                                         working_date=working_date.replace('-', ''))
-        destination = '{dest}/DATE={date}/COUNTRY={country}/{fn}'.format(dest=destination,
+        destination = '{dest}/PARTITION_DATE={date}/COUNTRY={country}/{fn}'.format(dest=destination,
                                                                          date=working_date,
                                                                          country=country_code,
                                                                          fn=FILE_NAME)
@@ -140,8 +140,8 @@ class GSToLocalOperator(BaseOperator):
 
     def execute(self, context):
         for country_code in self.country_codes.keys():
-            obj = '{}/DATE={}/COUNTRY={}/{}'.format(self.path_in_bucket, self.date, country_code, FILE_NAME)
-            file_path = self.path + '/DATE={}/COUNTRY={}/{}'.format(self.date, country_code, FILE_NAME)
+            obj = '{}/PARTITION_DATE={}/COUNTRY={}/{}'.format(self.path_in_bucket, self.date, country_code, FILE_NAME)
+            file_path = self.path + '/PARTITION_DATE={}/COUNTRY={}/{}'.format(self.date, country_code, FILE_NAME)
             self.download_file(context, self.gcp_conn_id, file_path, self.bucket, obj)
 
 
@@ -182,6 +182,6 @@ class LocalGAToWasbOperator(BaseOperator):
         """Upload a file to Azure Blob Storage."""
         hook = WasbHook(wasb_conn_id=self.wasb_conn_id)
         for country_code in self.country_codes.keys():
-            blob_name = self.blob_path + '/DATE={}/COUNTRY={}/{}'.format(self.date, country_code, FILE_NAME)
-            file_path = self.path + '/DATE={}/COUNTRY={}/{}'.format(self.date, country_code, FILE_NAME)
+            blob_name = self.blob_path + 'PARTITION_DATE={}/COUNTRY={}/{}'.format(self.date, country_code, FILE_NAME)
+            file_path = self.path + '/PARTITION_DATE={}/COUNTRY={}/{}'.format(self.date, country_code, FILE_NAME)
             self.upload_file(hook, blob_name, self.container_name, file_path)

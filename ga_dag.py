@@ -29,7 +29,7 @@ with DAG('gcp_ga', default_args=default_args, schedule_interval='@once') as dag:
 
     gs_to_local = GSToLocalOperator(
         task_id='gcp_bucket_to_local',
-        path=local_path + '{{ds}}',
+        path=local_path,
         date='{{ds}}',
         bucket=remote_bucket,
         path_in_bucket=path_in_bucket,
@@ -40,7 +40,7 @@ with DAG('gcp_ga', default_args=default_args, schedule_interval='@once') as dag:
     local_to_wasb = LocalGAToWasbOperator(
         task_id='local_to_azure',
         wasb_conn_id='azure_blob',
-        path=local_path + '{{ds}}/',
+        path=local_path,
         date='{{ds}}',
         country_codes=country_codes,
         container_name='prod',
