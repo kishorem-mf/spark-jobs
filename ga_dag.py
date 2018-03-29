@@ -31,6 +31,7 @@ with DAG('gcp_ga', default_args=default_args) as dag:
         path=local_path + '{{gs}}',
         date='{{ds}}',
         bucket=remote_bucket,
+        path_in_bucket='/ga_data',
         gcp_conn_id='gcp_storage',
         country_codes=country_codes
     )

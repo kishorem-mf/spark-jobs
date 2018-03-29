@@ -9,6 +9,7 @@ from airflow.utils.decorators import apply_defaults
 
 FILE_NAME = 'ga_sessions.avro'
 
+
 class GAToGSOperator(BaseOperator):
     """
     Fetches Google Analytics data from BigQuery for given country
@@ -104,6 +105,7 @@ class GSToLocalOperator(BaseOperator):
                  path,
                  date,
                  bucket,
+                 path_in_bucket,
                  gcp_conn_id,
                  country_codes,
                  *args,
@@ -113,6 +115,7 @@ class GSToLocalOperator(BaseOperator):
         self.date = date
         self.country_codes = country_codes
         self.bucket = bucket
+        self.path_in_bucket = path_in_bucket
         self.gcp_conn_id = gcp_conn_id
 
     def download_file(self,
@@ -120,9 +123,10 @@ class GSToLocalOperator(BaseOperator):
                       connection_id,
                       fn,
                       bucket,
-                      object):
+                      obj):
+        self.log.info('Downloading {obj} to {fn}'.format(**locals()))
         operator = GoogleCloudStorageDownloadOperator(bucket=bucket,
-                                                      object=object,
+                                                      object=obj,
                                                       filename=fn,
                                                       google_cloud_storage_conn_id=connection_id)
         operator.execute(context)
@@ -130,13 +134,13 @@ class GSToLocalOperator(BaseOperator):
     def execute(self, context):
         """Upload a file to Azure Blob Storage."""
         for country_code in self.country_codes.keys():
-            object =  '/DATE={}/COUNTRY={}/{}'.format(self.date, country_code, FILE_NAME)
+            obj = '{}/DATE={}/COUNTRY={}/{}'.format(self.path_in_bucket, self.date, country_code, FILE_NAME)
             file_path = self.path + '/DATE={}/COUNTRY={}/{}'.format(self.date, country_code, FILE_NAME)
-            self.download_file(context, self.gcp_conn_id, file_path, self.bucket, object)
+            self.download_file(context, self.gcp_conn_id, file_path, self.bucket, obj)
 
 
 class LocalGAToWasbOperator(BaseOperator):
-    template_fields = ('date', )
+    template_fields = ('date',)
 
     @apply_defaults
     def __init__(self,
