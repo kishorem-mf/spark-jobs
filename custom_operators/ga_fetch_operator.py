@@ -1,5 +1,6 @@
 import logging
 
+import os
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
 
 from airflow.contrib.hooks.wasb_hook import WasbHook
@@ -133,6 +134,8 @@ class GSToLocalOperator(BaseOperator):
             object=obj,
             filename=fn,
             google_cloud_storage_conn_id=connection_id)
+        dir = '/'.join(fn.split['/'][:-1])
+        os.makedirs(dir)
         operator.execute(context)
 
     def execute(self, context):
