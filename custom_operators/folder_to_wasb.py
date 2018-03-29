@@ -40,7 +40,7 @@ class FolderToWasbOperator(BaseOperator):
         """Upload a file to Azure Blob Storage."""
         hook = WasbHook(wasb_conn_id=self.wasb_conn_id)
         for file in os.listdir(self.folder_path):
-            file_path = self.folder_path + file
+            file_path = os.path.join(self.folder_path, file)
             self.log.info(
                 'Uploading {file_path} to wasb://{self.container_name} as {self.blob_name}'.format(**locals())
             )
