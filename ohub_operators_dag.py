@@ -78,24 +78,24 @@ with DAG('ohub_operators', default_args=default_args,
         }
     )
 
-    persistent_uuid = DatabricksSubmitRunOperator(
-        task_id='persistent_uuid',
-        cluster_name=cluster_name,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'egg': 'dbfs:/libraries/string_matching.egg'}
-        ],
-        spark_python_task={
-            'python_file': 'dbfs:/libraries/join_new_operators_with_persistent_uuid.py',
-            'parameters': [
-                '--current_operators_path', data_output_bucket.format('OPERATORS'),
-                '--new_operators_path', data_output_bucket.format('operators_matched'),
-                '--output_path', data_output_bucket.format('operators_uuid'),
-                '--country_code', 'all',
-                '--threshold', '0.8',
-            ]
-        }
-    )
+    # persistent_uuid = DatabricksSubmitRunOperator(
+    #     task_id='persistent_uuid',
+    #     cluster_name=cluster_name,
+    #     databricks_conn_id=databricks_conn_id,
+    #     libraries=[
+    #         {'egg': 'dbfs:/libraries/string_matching.egg'}
+    #     ],
+    #     spark_python_task={
+    #         'python_file': 'dbfs:/libraries/join_new_operators_with_persistent_uuid.py',
+    #         'parameters': [
+    #             '--current_operators_path', data_output_bucket.format('OPERATORS'),
+    #             '--new_operators_path', data_output_bucket.format('operators_matched'),
+    #             '--output_path', data_output_bucket.format('operators_uuid'),
+    #             '--country_code', 'all',
+    #             '--threshold', '0.8',
+    #         ]
+    #     }
+    # )
 
     merge_operators = DatabricksSubmitRunOperator(
         task_id='merge_operators',
@@ -125,5 +125,4 @@ with DAG('ohub_operators', default_args=default_args,
         }
     )
 
-    start_cluster >> operators_to_parquet >> match_operators >> persistent_uuid \
-        >> merge_operators >> operators_to_acm >> terminate_cluster
+    start_cluster >> operators_to_parquet >> match_operators >> merge_operators >> operators_to_acm >> terminate_cluster
