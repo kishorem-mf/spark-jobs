@@ -8,7 +8,7 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 // TODO add domain entity validation
 // TODO add additionalFields, etc.
 
-// all booleans have: Y | N
+// all booleans have: Y | N, except isActive
 // all strings are UTF-8 strings, except country code?
 
 case class Operator(
@@ -17,7 +17,6 @@ case class Operator(
                      countryCode: String,                                     // Existing country code in OHUB using: Iso 3166-1 alpha 2
                      isActive: Boolean,                                       // A | D
                      name: String,
-                     concatId: String,                                        // samenstelling van mandatory fields: countrycode ~ source ~ sourceEntityId => thus mandatory itself,
                      oldIntegrationId: Option[String],                        // Must be a known operator integration id withing OHUB
                      webUpdaterId: Option[String],
                      customerType: Option[String],

@@ -13,9 +13,10 @@ trait DomainEntity extends Product {
   val countryCode: String      // Existing country code in OHUB using: Iso 3166-1 alpha 2
   val isActive: Boolean        // A | D
   val name: String
-  val concatId: String         // concatenation van mandatory fields: countryCode ~ source ~ sourceEntityId => thus mandatory itself,
+
+  val concatId: String = s"$countryCode~$sourceName~$sourceEntityId" // derived from mandatory fields
 
   val ingestionErrors: Map[String, IngestionError]
 
-  assert(ingestionErrors.isEmpty, s"can't create domain entity due to '${ingestionErrors.size}' ingestion errors: '$ingestionErrors'")
+  assert(ingestionErrors.isEmpty, s"can't create domain entity due to '${ingestionErrors.size}' ingestion error(s): '$ingestionErrors'")
 }
