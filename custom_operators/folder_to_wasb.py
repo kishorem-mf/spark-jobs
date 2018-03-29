@@ -27,7 +27,7 @@ class FolderToWasbOperator(BaseOperator):
     def __init__(self, folder_path, container_name, blob_name,
                  wasb_conn_id='wasb_default', load_options=None, *args,
                  **kwargs):
-        super(FileToWasbOperator, self).__init__(*args, **kwargs)
+        super(FolderToWasbOperator, self).__init__(*args, **kwargs)
         if load_options is None:
             load_options = {}
         self.folder_path = folder_path
@@ -39,8 +39,9 @@ class FolderToWasbOperator(BaseOperator):
     def execute(self, context):
         """Upload a file to Azure Blob Storage."""
         hook = WasbHook(wasb_conn_id=self.wasb_conn_id)
-        self.log.info(
-            'Uploading {self.folder_path} to wasb://{self.container_name} as {self.blob_name}'.format(**locals())
-        )
-        for file_path in os.listdir(self.folder_path):
+        for file in os.listdir(self.folder_path):
+            file_path = self.folder_path + file
+            self.log.info(
+                'Uploading {file_path} to wasb://{self.container_name} as {self.blob_name}'.format(**locals())
+            )
             hook.load_file(file_path, self.container_name, self.blob_name, **self.load_options)
