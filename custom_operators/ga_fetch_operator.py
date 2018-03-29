@@ -124,6 +124,7 @@ class GSToLocalOperator(BaseOperator):
                       fn,
                       bucket,
                       obj):
+        """Download a file to local storage"""
         self.log.info('Downloading {obj} to {fn}'.format(**locals()))
         operator = GoogleCloudStorageDownloadOperator(bucket=bucket,
                                                       object=obj,
@@ -132,7 +133,6 @@ class GSToLocalOperator(BaseOperator):
         operator.execute(context)
 
     def execute(self, context):
-        """Upload a file to Azure Blob Storage."""
         for country_code in self.country_codes.keys():
             obj = '{}/DATE={}/COUNTRY={}/{}'.format(self.path_in_bucket, self.date, country_code, FILE_NAME)
             file_path = self.path + '/DATE={}/COUNTRY={}/{}'.format(self.date, country_code, FILE_NAME)
