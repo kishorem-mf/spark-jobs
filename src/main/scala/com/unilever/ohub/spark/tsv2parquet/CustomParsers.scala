@@ -112,12 +112,11 @@ object CustomParsers {
       case "RESPONSIBLE GENERAL" => true
       case "OTHER" => true
       /* Capturing strange cases from data source DEX end*/
-      case s: String => {
+      case s: String =>
         throw new Exception(s"Could not parse [$s] as Boolean")
         false
-      }
     }
   }
 
-  def toLong(input: String): Long = input.toLong
+  def toInt(input: String): Int = input.toInt
 }

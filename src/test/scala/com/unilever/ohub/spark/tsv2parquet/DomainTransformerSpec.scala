@@ -36,11 +36,11 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
         assertMandatoryFieldException(domainFieldName, s"No value found for '$originalColumnName'", actualException)
       }
 
-      "an original column has an invalid Long value" in {
+      "an original column has an invalid Int value" in {
         val row = new GenericRowWithSchema(List("abc").toArray, StructType(List(StructField(originalColumnName, DataTypes.LongType, nullable = true))))
 
         val actualException = intercept[MandatoryFieldException] {
-          domainTransformer.mandatory[Long](originalColumnName, domainFieldName, toLong _)(row)
+          domainTransformer.mandatory[Long](originalColumnName, domainFieldName, toInt _)(row)
         }
 
         assertMandatoryFieldException(domainFieldName, s"Couldn't apply transformation function on value 'Some(abc)'", actualException)

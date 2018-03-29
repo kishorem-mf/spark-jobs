@@ -4,24 +4,27 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 
-// TODO check order, names, types & formats, probably some of the fields can be pulled up to the domain entity
+// TODO check order, formats, probably some of the fields can be pulled up to the domain entity
 // TODO add domain entity validation
-// TODO add ingestionErrors, additionalFields, etc.
+// TODO add additionalFields, etc.
+
+// all booleans have: Y | N
+// all strings are UTF-8 strings, except country code?
 
 case class Operator(
                      sourceOperatorId: String,
-                     sourceName: String,
-                     countryCode: String,
-                     isActive: Boolean,
+                     sourceName: String,                                      // UFT-8 characters: existing OHUB source name
+                     countryCode: String,                                     // Existing country code in OHUB using: Iso 3166-1 alpha 2
+                     isActive: Boolean,                                       // A | D
                      name: String,
-                     oldIntegrationId: Option[String],
-                     customerConcatId: Option[String],
+                     oldIntegrationId: Option[String],                        // Must be a known operator integration id withing OHUB
+                     customerConcatId: Option[String],                        // TODO how to concat?
                      webUpdaterId: Option[String],
                      customerType: Option[String],
-                     dateCreated: Option[Timestamp],
-                     dateUpdated: Option[Timestamp],
-                     ohubCreated: Option[Timestamp],
-                     ohubUpdated: Option[Timestamp],
+                     dateCreated: Option[Timestamp],                          // YYYYMMDD HH24:MI:SS
+                     dateUpdated: Option[Timestamp],                          // YYYYMMDD HH24:MI:SS
+                     ohubCreated: Option[Timestamp],                          // YYYYMMDD HH24:MI:SS
+                     ohubUpdated: Option[Timestamp],                          // YYYYMMDD HH24:MI:SS
                      channel: Option[String],
                      subChannel: Option[String],
                      region: Option[String],
@@ -32,11 +35,11 @@ case class Operator(
                      zipCode: Option[String],
                      state: Option[String],
                      countryName: Option[String],
-                     emailAddress: Option[String],
-                     phoneNumber: Option[String],
-                     mobileNumber: Option[String],
-                     faxNumber: Option[String],
-                     generalOptOut: Option[Boolean],
+                     emailAddress: Option[String],                            // Valid email adress format: xxxx@xxx.xxx
+                     phoneNumber: Option[String],                             // International format: +xx x xxxx xxxx
+                     mobileNumber: Option[String],                            // International format: +xx x xxxx xxxx
+                     faxNumber: Option[String],                               // International format: +xx x xxxx xxxx
+                     generalOptOut: Option[Boolean],                          // TODO these opts done follow our naming convention ('every boolean start with isXXX')
                      emailOptIn: Option[Boolean],
                      emailOptOut: Option[Boolean],
                      directMailOptIn: Option[Boolean],
@@ -47,22 +50,22 @@ case class Operator(
                      mobileOptOut: Option[Boolean],
                      faxOptIn: Option[Boolean],
                      faxOptOut: Option[Boolean],
-                     totalDishes: Option[Long],
-                     totalLocations: Option[Long],
-                     totalStaff: Option[Long],
-                     averagePrice: Option[BigDecimal],
-                     daysOpen: Option[Long],
-                     weeksClosed: Option[Long],
+                     totalDishes: Option[Int],                                // Integer | Range of integers ("100-150") // TODO how to handle range
+                     totalLocations: Option[Int],                             // Integer
+                     totalStaff: Option[Int],                                 // Integer | Range of integers ("100-150") TODO how to handle range
+                     averagePrice: Option[BigDecimal],                        // Decimal (decimal separator: ".") | Range of decimals ("29.95-39.95")
+                     daysOpen: Option[Int],                                   // [0 - 7]
+                     weeksClosed: Option[Int],                                // [0 - 52]
                      distributorName: Option[String],
                      distributorCustomerNumber: Option[String],
                      distributorOperatorId: Option[String],
-                     otm: Option[String],
+                     otm: Option[String],                                     // Options: A | B | C | D | E | F
                      otmEnteredBy: Option[String],
-                     isNotRecalculatingOtm: Option[String],
+                     isNotRecalculatingOtm: Option[Boolean],
                      netPromoterScore: Option[String],
                      salesRepresentative: Option[String],
-                     kookingConvenienceLevel: Option[String], // kooking as in cooking? then change k -> c?
-                     isPrivateHousehold: Option[String],
+                     cookingConvenienceLevel: Option[String],
+                     isPrivateHousehold: Option[Boolean],
                      vat: Option[String],
                      isOpenOnMonday: Option[Boolean],
                      isOpenOnTuesday: Option[Boolean],
@@ -73,7 +76,7 @@ case class Operator(
                      isOpenOnSunday: Option[Boolean],
                      chainName: Option[String],
                      chainId: Option[String],
-                     germanChainId: Option[String], // why do we have a german chain id & name, what's the difference?
+                     germanChainId: Option[String],
                      germanChainName: Option[String],
                      kitchenType: Option[String],
                      ingestionErrors: Map[String, IngestionError]
