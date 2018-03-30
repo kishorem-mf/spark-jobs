@@ -32,5 +32,5 @@ test in assembly := {}
 
 // Scoverage settings
 coverageExcludedPackages := "<empty>;.*storage.*"
-coverageMinimum := 28.55
+coverageMinimum := 26.48
 coverageFailOnMinimum := true
