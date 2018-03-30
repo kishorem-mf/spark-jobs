@@ -53,23 +53,20 @@ def preprocess_operators(ddf: DataFrame) -> DataFrame:
     ddf = clean_fields(ddf)
     return (ddf
             .na.drop(subset=['nameCleansed'])
-            # create unique ID
-            .withColumn('id', sf.concat_ws('~',
-                                           sf.col('countryCode'),
-                                           sf.col('source'),
-                                           sf.col('refOperatorId')))
+            .withColumnRenamed('concatId', 'id')
             .fillna('')
             # create matching-string
-            .withColumn('name',
+            .withColumn('match_name',
                         sf.concat_ws(' ',
                                      sf.col('nameCleansed'),
                                      sf.col('cityCleansed'),
                                      sf.col('streetCleansed'),
                                      sf.col('zipCodeCleansed')))
-            .withColumn('name', sf.regexp_replace('name', utils.REGEX, ''))
-            .withColumn('name', sf.trim(sf.regexp_replace('name', '\s+', ' ')))
+            .withColumn('match_name', sf.regexp_replace('name', utils.REGEX, ''))
+            .withColumn('match_name', sf.trim(sf.regexp_replace('name', '\s+', ' ')))
             .withColumn('name_index', sf.row_number().over(w) - 1)
-            .select('name_index', 'id', 'name', 'countryCode'))
+            .select('name_index', 'id', 'match_name', 'countryCode')
+            .withColumnRenamed('match_name', 'name'))
 
 
 def join_original_columns(grouped_similarity: DataFrame, operators: DataFrame, country_code: str) -> DataFrame:
