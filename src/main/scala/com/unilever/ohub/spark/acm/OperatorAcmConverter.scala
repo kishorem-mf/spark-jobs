@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.acm
 
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.data.ChannelMapping
-import com.unilever.ohub.spark.data.ufs.UFSOperator
+import com.unilever.ohub.spark.data.ufs.AcmOperator
 import com.unilever.ohub.spark.domain.Operator
 import com.unilever.ohub.spark.generic.StringFunctions
 import com.unilever.ohub.spark.sql.JoinType
@@ -17,14 +17,14 @@ object OperatorAcmConverter extends SparkJob {
                  spark: SparkSession,
                  channelMappings: Dataset[ChannelMapping],
                  operators: Dataset[Operator]
-               ): Dataset[UFSOperator] = {
+               ): Dataset[AcmOperator] = {
     import spark.implicits._
 
     val ufsOperators = operators
       .filter(_.isGoldenRecord)
       .map(operator =>
 
-        UFSOperator(
+        AcmOperator(
           OPR_ORIG_INTEGRATION_ID = operator.groupId.getOrElse("UNKNOWN"),
           OPR_LNKD_INTEGRATION_ID = operator.concatId,
           GOLDEN_RECORD_FLAG = boolAsString(operator.isGoldenRecord),
