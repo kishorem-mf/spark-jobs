@@ -6,11 +6,12 @@
 # This also assumes the cluster is already running :)
 
 echo '------------------ building assembly jar --------------------'
+sbt clean
 sbt -DsparkDependencyType=provided assembly
 
 echo '------------------ uploading to databricks --------------------'
 databricks fs rm dbfs:/libraries/ohub/spark-jobs-assembly-WIP.jar
-databricks fs cp target/scala-2.11/spark-jobs-assembly-0.1.jar dbfs:/libraries/ohub/spark-jobs-assembly-WIP.jar
+databricks fs cp target/scala-2.11/spark-jobs-assembly-0.2.jar dbfs:/libraries/ohub/spark-jobs-assembly-WIP.jar
 databricks fs ls dbfs:/libraries/ohub
 
 echo '------------------ removing old libary from cluster --------------------'
