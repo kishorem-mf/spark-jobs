@@ -37,10 +37,7 @@ object OperatorMerging extends SparkJob {
       }
     })
     val groupId = UUID.randomUUID().toString
-    operators.map(o => {
-      val withId = o.copy(groupId = Some(groupId))
-      if (o equals goldenRecord) withId.copy(isGoldenRecord = true) else withId
-    })
+    operators.map(o => o.copy(groupId = Some(groupId), isGoldenRecord = (o == goldenRecord)))
   }
 
   def transform(
