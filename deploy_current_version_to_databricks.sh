@@ -12,10 +12,12 @@ sbt -DsparkDependencyType=provided assembly
 
 echo '------------------ uploading to databricks --------------------'
 fn="$(ls target/scala-2.11/*.jar | cut -d'/' -f3)"
-echo ${fn}
-databricks fs rm dbfs:/libraries/ohub/spark-jobs-assembly-WIP.jar
-databricks fs cp target/scala-2.11/${fn} dbfs:/libraries/ohub/spark-jobs-assembly-WIP.jar
-databricks fs ls dbfs:/libraries/ohub
+targetFn="spark-jobs-assembly-WIP.jar"
+path="dbfs:/libraries/ohub"
+
+echo "uploading: ${fn} as ${targetFn} to ${path}"
+databricks fs rm ${path}/${targetFn}
+databricks fs cp target/scala-2.11/${fn} ${path}/${targetFn}
 
 echo '------------------ removing old libary from cluster --------------------'
 curl -i -d '{"cluster_id": "0314-131901-shalt605","libraries": [{"jar": "dbfs:/libraries/ohub/spark-jobs-assembly-WIP.jar"}, {"egg": "dbfs:/libraries/name_matching/string_matching.egg"}]}' \
