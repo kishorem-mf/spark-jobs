@@ -20,8 +20,10 @@ default_args = {
 }
 
 wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'
-data_input_bucket = wasb_root_bucket + 'raw/{}/**/*.csv'
-data_output_bucket = wasb_root_bucket + 'parquet/{}.parquet'
+raw_bucket = wasb_root_bucket + 'raw/{}/**/*.csv'
+intermediate_bucket = wasb_root_bucket + 'intermediate/{}.parquet'
+integrated_bucket = wasb_root_bucket + 'integrated/{}.parquet'
+export_bucket = wasb_root_bucket + 'export/{}.parquet'
 
 cluster_name = 'ohub_basic'
 cluster_id = '0314-131901-shalt605'
@@ -34,6 +36,8 @@ cluster_config = {
     "node_type_id": "Standard_DS3_v2",
     "num_workers": 16
 }
+
+jar = 'dbfs:/libraries/ohub/spark-jobs-assembly-WIP.jar'
 
 with DAG('ohub_operators', default_args=default_args,
          schedule_interval="@once") as dag:
@@ -54,12 +58,12 @@ with DAG('ohub_operators', default_args=default_args,
         existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
-            {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
+            {'jar': jar}
         ],
         spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.tsv2parquet.OperatorConverter",
-            'parameters': [data_input_bucket.format('OPERATORS'),
-                           data_output_bucket.format('operators')]
+            'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
+            'parameters': [raw_bucket.format('OPERATORS'),
+                           intermediate_bucket.format('operators')]
         }
     )
 
@@ -72,8 +76,8 @@ with DAG('ohub_operators', default_args=default_args,
         ],
         spark_python_task={
             'python_file': 'dbfs:/libraries/name_matching/match_operators.py',
-            'parameters': ['--input_file', data_output_bucket.format('operators'),
-                           '--output_path', data_output_bucket.format('operators_matched'),
+            'parameters': ['--input_file', intermediate_bucket.format('operators'),
+                           '--output_path', intermediate_bucket.format('operators_matched'),
                            '--country_code', 'DK']
         }
     )
@@ -102,13 +106,13 @@ with DAG('ohub_operators', default_args=default_args,
         existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
-            {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
+            {'jar': jar}
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
-            'parameters': [data_output_bucket.format('operators_uuid'),
-                           data_input_bucket.format('OPERATORS'),
-                           data_output_bucket.format('operators_merged')]
+            'parameters': [intermediate_bucket.format('operators_matched'),
+                           raw_bucket.format('OPERATORS'),
+                           integrated_bucket.format('operators_merged')]
         })
 
     operators_to_acm = DatabricksSubmitRunOperator(
@@ -116,12 +120,12 @@ with DAG('ohub_operators', default_args=default_args,
         existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
-            {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
+            {'jar': jar}
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.OperatorAcmConverter",
-            'parameters': [data_output_bucket.format('operators_merged.parquet'),
-                           data_output_bucket.format('operators_acm.csv')]
+            'parameters': [intermediate_bucket.format('operators_merged.parquet'),
+                           export_bucket.format('acm/operators.csv')]
         }
     )
 
