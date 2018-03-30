@@ -8,14 +8,21 @@ object DomainEntity {
 
 // marker trait for all domain entities (press ctrl + h in IntelliJ to see all)
 trait DomainEntity extends Product {
+  // mandatory fields
   val sourceEntityId: String
-  val sourceName: String       // UFT-8 characters: existing OHUB source name
-  val countryCode: String      // Existing country code in OHUB using: Iso 3166-1 alpha 2
-  val isActive: Boolean        // A | D
+  val sourceName: String
+  val countryCode: String
+  val isActive: Boolean
   val name: String
 
-  val concatId: String = s"$countryCode~$sourceName~$sourceEntityId" // derived from mandatory fields
+  // used for grouping and marking the golden record within the group
+  val groupId: Option[String] = None
+  val isGoldenRecord: Boolean = false
 
+  // derived fields
+  val concatId: String = s"$countryCode~$sourceName~$sourceEntityId"
+
+  // aggregated fields
   val ingestionErrors: Map[String, IngestionError]
 
   assert(ingestionErrors.isEmpty, s"can't create domain entity due to '${ingestionErrors.size}' ingestion error(s): '$ingestionErrors'")
