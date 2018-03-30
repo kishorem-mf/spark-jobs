@@ -1,6 +1,5 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import com.unilever.ohub.spark.domain.MandatoryFieldException
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.sql.types.{ DataTypes, StructField, StructType }

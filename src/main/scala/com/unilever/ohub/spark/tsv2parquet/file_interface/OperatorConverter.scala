@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.tsv2parquet.file_interface
 
-import com.unilever.ohub.spark.domain.Operator
+import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 import com.unilever.ohub.spark.generic.StringFunctions._
 import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
@@ -20,72 +20,72 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
                                                                               // ↓ not so happy with this column (it should be the same as the fieldName), macro?
       Operator(
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
-        sourceEntityId              = mandatory ( "﻿REF_OPERATOR_ID",         "sourceEntityId"                                                          ),
-        sourceName                  = mandatory ( "SOURCE",                   "sourceName"                                                              ),
         countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ),
         isActive                    = mandatory ( "STATUS",                   "isActive",                     parseBoolUnsafe _                         ),
         name                        = mandatory ( "NAME",                     "name"                                                                    ),
-        oldIntegrationId            = optional  ( "OPR_INTEGRATION_ID",       "oldIntegrationId"                                                        ),
-        webUpdaterId                = None                                                                                                               , // TODO
+        sourceEntityId              = mandatory ( "﻿REF_OPERATOR_ID",         "sourceEntityId"                                                          ),
+        sourceName                  = mandatory ( "SOURCE",                   "sourceName"                                                              ),
+        averagePrice                = optional  ( "AVG_PRICE",                "averagePrice",                 parseBigDecimalOrAverageFromRange _       ),
+        chainId                     = optional  ( "CHAIN_ID",                 "chainId"                                                                 ),
+        chainName                   = optional  ( "CHAIN_NAME",               "chainName"                                                               ),
+        channel                     = optional  ( "CHANNEL",                  "channel"                                                                 ),
+        city                        = optional  ( "CITY",                     "city",                         removeSpacesStrangeCharsAndToLower _      ),
+        cookingConvenienceLevel     = optional  ( "CONVENIENCE_LEVEL",        "cookingConvenienceLevel"                                                 ),
+        countryName                 = optional  ( "COUNTRY",                  "countryName"                                                             ),
         customerType                = None                                                                                                               , // TODO
         dateCreated                 = optional  ( "DATE_CREATED",             "dateCreated",                  parseDateTimeStampUnsafe _                ),
         dateUpdated                 = optional  ( "DATE_MODIFIED",            "dateUpdated",                  parseDateTimeStampUnsafe _                ),
-        ohubCreated                 = None                                                                                                               , // TODO
-        ohubUpdated                 = None                                                                                                               , // TODO
-        channel                     = optional  ( "CHANNEL",                  "channel"                                                                 ),
-        subChannel                  = optional  ( "SUB_CHANNEL",              "subChannel"                                                              ),
-        region                      = optional  ( "REGION",                   "region"                                                                  ),
-        street                      = optional  ( "STREET",                   "street",                       removeSpacesStrangeCharsAndToLower _      ),
+        daysOpen                    = optional  ( "DAYS_OPEN",                "daysOpen",                     toInt _                                   ),
+        distributorCustomerNumber   = optional  ( "DISTRIBUTOR_CUSTOMER_NR",  "distributorCustomerNumber"                                               ),
+        distributorName             = optional  ( "DISTRIBUTOR_NAME",         "distributorName"                                                         ),
+        distributorOperatorId       = None                                                                                                               , // TODO not in row input, is this correct?
+        emailAddress                = optional  ( "EMAIL_ADDRESS",            "emailAddress"                                                            ),
+        faxNumber                   = optional  ( "FAX_NUMBER",               "faxNumber",                    cleanPhone(countryCode) _                 ),
+        germanChainId               = None                                                                                                               ,
+        germanChainName             = None                                                                                                               ,
+        hasDirectMailOptIn          = optional  ( "DM_OPT_IN",                "hasDirectMailOptIn",           parseBoolUnsafe _                         ),
+        hasDirectMailOptOut         = optional  ( "DM_OPT_OUT",               "hasDirectMailOptOut",          parseBoolUnsafe _                         ),
+        hasEmailOptIn               = optional  ( "EM_OPT_IN",                "hasEmailOptIn",                parseBoolUnsafe _                         ),
+        hasEmailOptOut              = optional  ( "EM_OPT_OUT",               "hasEmailOptOut",               parseBoolUnsafe _                         ),
+        hasFaxOptIn                 = optional  ( "FAX_OPT_IN",               "hasFaxOptIn",                  parseBoolUnsafe _                         ),
+        hasFaxOptOut                = optional  ( "FAX_OPT_OUT",              "hasFaxOptOut",                 parseBoolUnsafe _                         ),
+        hasGeneralOptOut            = optional  ( "OPT_OUT",                  "hasGeneralOptOut",             parseBoolUnsafe _                         ),
+        hasMobileOptIn              = optional  ( "MOB_OPT_IN",               "hasMobileOptIn",               parseBoolUnsafe _                         ),
+        hasMobileOptOut             = optional  ( "MOB_OPT_OUT",              "hasMobileOptOut",              parseBoolUnsafe _                         ),
+        hasTelemarketingOptIn       = optional  ( "TM_OPT_IN",                "hasTelemarketingOptIn",        parseBoolUnsafe _                         ),
+        hasTelemarketingOptOut      = optional  ( "TM_OPT_OUT",               "hasTelemarketingOptOut",       parseBoolUnsafe _                         ),
         houseNumber                 = optional  ( "HOUSENUMBER",              "houseNumber"                                                             ),
         houseNumberExtension        = optional  ( "HOUSENUMBER_EXT",          "houseNumberExtension"                                                    ),
-        city                        = optional  ( "CITY",                     "city",                         removeSpacesStrangeCharsAndToLower _      ),
-        zipCode                     = optional  ( "ZIP_CODE",                 "zipCode",                      removeSpacesStrangeCharsAndToLower _      ),
-        state                       = optional  ( "STATE",                    "state"                                                                   ),
-        countryName                 = optional  ( "COUNTRY",                  "countryName"                                                             ),
-        emailAddress                = optional  ( "EMAIL_ADDRESS",            "emailAddress"                                                            ),
-        phoneNumber                 = optional  ( "PHONE_NUMBER",             "phoneNumber",                  cleanPhone(countryCode) _                 ),
+        isNotRecalculatingOtm       = optional  ( "OTM_DNR",                  "isNotRecalculatingOtm",        parseBoolUnsafe _                         ),
+        isOpenOnFriday              = optional  ( "OPEN_ON_FRIDAY",           "isOpenOnFriday",               parseBoolUnsafe _                         ),
+        isOpenOnMonday              = optional  ( "OPEN_ON_MONDAY",           "isOpenOnMonday",               parseBoolUnsafe _                         ),
+        isOpenOnSaturday            = optional  ( "OPEN_ON_SATURDAY",         "isOpenOnSaturday",             parseBoolUnsafe _                         ),
+        isOpenOnSunday              = optional  ( "OPEN_ON_SUNDAY",           "isOpenOnSunday",               parseBoolUnsafe _                         ),
+        isOpenOnThursday            = optional  ( "OPEN_ON_THURSDAY",         "isOpenOnThursday",             parseBoolUnsafe _                         ),
+        isOpenOnTuesday             = optional  ( "OPEN_ON_TUESDAY",          "isOpenOnTuesday",              parseBoolUnsafe _                         ),
+        isOpenOnWednesday           = optional  ( "OPEN_ON_WEDNESDAY",        "isOpenOnWednesday",            parseBoolUnsafe _                         ),
+        isPrivateHousehold          = optional  ( "PRIVATE_HOUSEHOLD",        "isPrivateHousehold",           parseBoolUnsafe _                         ),
+        kitchenType                 = optional  ( "KITCHEN_TYPE",             "kitchenType"                                                             ),
         mobileNumber                = optional  ( "MOBILE_PHONE_NUMBER",      "mobilePhoneNumber",            cleanPhone(countryCode) _                 ),
-        faxNumber                   = optional  ( "FAX_NUMBER",               "faxNumber",                    cleanPhone(countryCode) _                 ),
-        hasGeneralOptOut            = optional  ( "OPT_OUT",                  "generalOptOut",                parseBoolUnsafe _                         ),
-        hasEmailOptIn               = optional  ( "EM_OPT_IN",                "emailOptIn",                   parseBoolUnsafe _                         ),
-        hasEmailOptOut              = optional  ( "EM_OPT_OUT",               "emailOptOut",                  parseBoolUnsafe _                         ),
-        hasDirectMailOptIn          = optional  ( "DM_OPT_IN",                "directMailOptIn",              parseBoolUnsafe _                         ),
-        hasDirectMailOptOut         = optional  ( "DM_OPT_OUT",               "directMailOptOut",             parseBoolUnsafe _                         ),
-        hasTelemarketingOptIn       = optional  ( "TM_OPT_IN",                "telemarketingOptIn",           parseBoolUnsafe _                         ),
-        hasTelemarketingOptOut      = optional  ( "TM_OPT_OUT",               "telemarketingOptOut",          parseBoolUnsafe _                         ),
-        hasMobileOptIn              = optional  ( "MOB_OPT_IN",               "mobileOptIn",                  parseBoolUnsafe _                         ),
-        hasMobileOptOut             = optional  ( "MOB_OPT_OUT",              "mobileOptOut",                 parseBoolUnsafe _                         ),
-        hasFaxOptIn                 = optional  ( "FAX_OPT_IN",               "faxOptIn",                     parseBoolUnsafe _                         ),
-        hasFaxOptOut                = optional  ( "FAX_OPT_OUT",              "faxOptOut",                    parseBoolUnsafe _                         ),
+        netPromoterScore            = optional  ( "NPS_POTENTIAL",            "netPromoterScore",             parseBigDecimalOrAverageFromRange _       ),
+        ohubCreated                 = None                                                                                                               , // TODO
+        ohubUpdated                 = None                                                                                                               , // TODO
+        oldIntegrationId            = optional  ( "OPR_INTEGRATION_ID",       "oldIntegrationId"                                                        ),
+        otm                         = optional  ( "OTM",                      "otm"                                                                     ),
+        otmEnteredBy                = optional  ( "OTM_REASON",               "otmEnteredBy"                                                            ), // TODO verify
+        phoneNumber                 = optional  ( "PHONE_NUMBER",             "phoneNumber",                  cleanPhone(countryCode) _                 ),
+        region                      = optional  ( "REGION",                   "region"                                                                  ),
+        salesRepresentative         = optional  ( "SALES_REP",                "salesRepresentative"                                                     ),
+        state                       = optional  ( "STATE",                    "state"                                                                   ),
+        street                      = optional  ( "STREET",                   "street",                       removeSpacesStrangeCharsAndToLower _      ),
+        subChannel                  = optional  ( "SUB_CHANNEL",              "subChannel"                                                              ),
         totalDishes                 = optional  ( "NR_OF_DISHES",             "totalDishes",                  parseNumberOrAverageFromRange _           ),
         totalLocations              = optional  ( "NR_OF_LOCATIONS",          "totalLocations",               parseNumberOrAverageFromRange _           ),
         totalStaff                  = optional  ( "NR_OF_STAFF",              "totalStaff",                   parseNumberOrAverageFromRange _           ),
-        averagePrice                = optional  ( "AVG_PRICE",                "averagePrice",                 parseBigDecimalOrAverageFromRange _       ),
-        daysOpen                    = optional  ( "DAYS_OPEN",                "daysOpen",                     toInt _                                   ),
-        weeksClosed                 = optional  ( "WEEKS_CLOSED",             "weeksClosed",                  toInt _                                   ),
-        distributorName             = optional  ( "DISTRIBUTOR_NAME",         "distributorName"                                                         ),
-        distributorCustomerNumber   = optional  ( "DISTRIBUTOR_CUSTOMER_NR",  "distributorCustomerNumber"                                               ),
-        distributorOperatorId       = None                                                                                                               , // TODO not in row input, is this correct?
-        otm                         = optional  ( "OTM",                      "otm"                                                                     ),
-        otmEnteredBy                = optional  ( "OTM_REASON",               "otmEnteredBy"                                                            ), // TODO verify
-        isNotRecalculatingOtm       = optional  ( "OTM_DNR",                  "isNotRecalculatingOtm",        parseBoolUnsafe _                         ),
-        netPromoterScore            = optional  ( "NPS_POTENTIAL",            "netPromoterScore"                                                        ),
-        salesRepresentative         = optional  ( "SALES_REP",                "salesRepresentative"                                                     ),
-        cookingConvenienceLevel     = optional  ( "CONVENIENCE_LEVEL",        "cookingConvenienceLevel"                                                 ),
-        isPrivateHousehold          = optional  ( "PRIVATE_HOUSEHOLD",        "isPrivateHousehold",           parseBoolUnsafe _                         ),
         vat                         = optional  ( "VAT_NUMBER",               "vat"                                                                     ),
-        isOpenOnMonday              = optional  ( "OPEN_ON_MONDAY",           "isOpenOnMonday",               parseBoolUnsafe _                         ),
-        isOpenOnTuesday             = optional  ( "OPEN_ON_TUESDAY",          "isOpenOnTuesday",              parseBoolUnsafe _                         ),
-        isOpenOnWednesday           = optional  ( "OPEN_ON_WEDNESDAY",        "isOpenOnWednesday",            parseBoolUnsafe _                         ),
-        isOpenOnThursday            = optional  ( "OPEN_ON_THURSDAY",         "isOpenOnThursday",             parseBoolUnsafe _                         ),
-        isOpenOnFriday              = optional  ( "OPEN_ON_FRIDAY",           "isOpenOnFriday",               parseBoolUnsafe _                         ),
-        isOpenOnSaturday            = optional  ( "OPEN_ON_SATURDAY",         "isOpenOnSaturday",             parseBoolUnsafe _                         ),
-        isOpenOnSunday              = optional  ( "OPEN_ON_SUNDAY",           "isOpenOnSunday",               parseBoolUnsafe _                         ),
-        chainName                   = optional  ( "CHAIN_NAME",               "chainName"                                                               ),
-        chainId                     = optional  ( "CHAIN_ID",                 "chainId"                                                                 ),
-        germanChainId               = None                                                                                                               ,
-        germanChainName             = None                                                                                                               ,
-        kitchenType                 = optional  ( "KITCHEN_TYPE",             "kitchenType"                                                             ),
+        webUpdaterId                = None                                                                                                               , // TODO
+        weeksClosed                 = optional  ( "WEEKS_CLOSED",             "weeksClosed",                  toInt _                                   ),
+        zipCode                     = optional  ( "ZIP_CODE",                 "zipCode",                      removeSpacesStrangeCharsAndToLower _      ),
         ingestionErrors             = errors
       )
       // @formatter:on

@@ -1,7 +1,6 @@
 package com.unilever.ohub.spark.tsv2parquet
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
-import com.unilever.ohub.spark.domain.MandatoryFieldException
 import org.apache.spark.sql.Row
 
 object DomainTransformer {
@@ -62,3 +61,10 @@ class DomainTransformer extends Serializable {
     Option(row.getString(fieldIndex)).filterNot(_.trim.isEmpty) // treat empty strings as None
   }
 }
+
+object MandatoryFieldException {
+  def apply(domainFieldName: String, errorMessage: String): MandatoryFieldException =
+    new MandatoryFieldException(s"Mandatory field constraint for '$domainFieldName' not met: $errorMessage")
+}
+
+class MandatoryFieldException(message: String) extends IllegalArgumentException(message)
