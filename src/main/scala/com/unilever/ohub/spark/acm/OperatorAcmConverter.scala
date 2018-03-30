@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.acm
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.data.ufs.AcmOperator
-import com.unilever.ohub.spark.domain.Operator
+import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.generic.StringFunctions
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage

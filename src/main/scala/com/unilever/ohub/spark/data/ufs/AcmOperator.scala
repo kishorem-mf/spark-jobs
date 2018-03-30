@@ -27,7 +27,7 @@ case class AcmOperator(
   NUMBER_OF_DAYS_OPEN: Option[Int],
   CONVENIENCE_LEVEL: Option[String],
   RESPONSIBLE_EMPLOYEE: Option[String],
-  NPS_POTENTIAL: Option[String],
+  NPS_POTENTIAL: Option[BigDecimal],
   CAM_KEY: String,
   CAM_TEXT: String,
   CHANNEL_KEY: String,
