@@ -6,15 +6,15 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.constraint._
 
-// TODO check formats
-
-case class Operator( // mandatory fields
+case class Operator(
                      countryCode: String, // Existing country code in OHUB using: Iso 3166-1 alpha 2
                      isActive: Boolean,
                      name: String,
                      sourceEntityId: String,
                      sourceName: String,
-                     // optional fields
+                     isGoldenRecord: Boolean,
+                     groupId: Option[String],
+                     // specific fields
                      averagePrice: Option[BigDecimal],
                      chainId: Option[String],
                      chainName: Option[String],
