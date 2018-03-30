@@ -15,7 +15,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
 
       val countryCode: String = originalValue("COUNTRY_CODE")(row).getOrElse("")
 
-      // @formatter:off             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
+      // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
 
                                                                               // ↓ not so happy with this column (it should be the same as the fieldName), macro?
       Operator(
@@ -25,7 +25,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         isGoldenRecord              = false                                                                                                              ,
         groupId                     = Option.empty                                                                                                       ,
         name                        = mandatory ( "NAME",                     "name"                                                                    ),
-        sourceEntityId              = mandatory ( "﻿REF_OPERATOR_ID",         "sourceEntityId"                                                          ),
+        sourceEntityId              = mandatory ( "REF_OPERATOR_ID",          "sourceEntityId"                                                          ),
         sourceName                  = mandatory ( "SOURCE",                   "sourceName"                                                              ),
         averagePrice                = optional  ( "AVG_PRICE",                "averagePrice",                 parseBigDecimalOrAverageFromRange _       ),
         chainId                     = optional  ( "CHAIN_ID",                 "chainId"                                                                 ),
@@ -90,6 +90,6 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         zipCode                     = optional  ( "ZIP_CODE",                 "zipCode",                      removeSpacesStrangeCharsAndToLower _      ),
         ingestionErrors             = errors
       )
-      // @formatter:on
+    // format: ON
   }
 }

@@ -5,9 +5,13 @@ import org.apache.spark.sql.Row
 
 object DomainTransformer {
   def apply(): DomainTransformer = new DomainTransformer()
+
+  val ZERO_WIDTH_NO_BREAK_SPACE = "\uFEFF" // see also: http://www.fileformat.info/info/unicode/char/FEFF/index.htm
 }
 
 class DomainTransformer extends Serializable {
+  import DomainTransformer._
+
   var errors: Map[String, IngestionError] = Map()
 
   def mandatory(originalColumnName: String, domainFieldName: String)(implicit row: Row): String =
@@ -57,9 +61,16 @@ class DomainTransformer extends Serializable {
   }
 
   def originalValue(columnName: String)(row: Row): Option[String] = {
-    val fieldIndex = row.fieldIndex(columnName)
+    val fieldIndex = getFieldIndex(columnName)(row)
     Option(row.getString(fieldIndex)).filterNot(_.trim.isEmpty) // treat empty strings as None
   }
+
+  private def getFieldIndex(columnName: String)(row: Row): Int =
+    try {
+      row.fieldIndex(columnName)
+    } catch {
+      case _ => row.fieldIndex(s"$ZERO_WIDTH_NO_BREAK_SPACE$columnName") // maybe there is a BOM char in front of the column name, otherwise let's fail.
+    }
 }
 
 object MandatoryFieldException {
