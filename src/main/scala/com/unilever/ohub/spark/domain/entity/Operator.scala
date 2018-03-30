@@ -79,7 +79,7 @@ case class Operator( // generic fields
                      // other fields
                      ingestionErrors: Map[String, IngestionError]
                    ) extends DomainEntity {
-  emailAddress.foreach(EmailAddressConstraint.validate)
+  //  emailAddress.foreach(EmailAddressConstraint.validate) // disable now, since seems to invalidate valid email addresses
   daysOpen.foreach(NumberOfDaysConstraint.validate)
   weeksClosed.foreach(NumberOfWeeksConstraint.validate)
 }
