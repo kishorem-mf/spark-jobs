@@ -13,6 +13,8 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
       import transformer._
       implicit val source: Row = row
 
+      val countryCode: String = originalValue("COUNTRY_CODE")(row).getOrElse("")
+
       // @formatter:off             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
 
                                                                               // ↓ not so happy with this column (it should be the same as the fieldName), macro?
@@ -41,9 +43,9 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         state                       = optional  ( "STATE",                    "state"                                                                   ),
         countryName                 = optional  ( "COUNTRY",                  "countryName"                                                             ),
         emailAddress                = optional  ( "EMAIL_ADDRESS",            "emailAddress"                                                            ),
-        phoneNumber                 = optional  ( "PHONE_NUMBER",             "phoneNumber"                                                             ),
-        mobileNumber                = optional  ( "MOBILE_PHONE_NUMBER",      "mobilePhoneNumber"                                                       ),
-        faxNumber                   = optional  ( "FAX_NUMBER",               "faxNumber"                                                               ),
+        phoneNumber                 = optional  ( "PHONE_NUMBER",             "phoneNumber",                  cleanPhone(countryCode) _                 ),
+        mobileNumber                = optional  ( "MOBILE_PHONE_NUMBER",      "mobilePhoneNumber",            cleanPhone(countryCode) _                 ),
+        faxNumber                   = optional  ( "FAX_NUMBER",               "faxNumber",                    cleanPhone(countryCode) _                 ),
         hasGeneralOptOut            = optional  ( "OPT_OUT",                  "generalOptOut",                parseBoolUnsafe _                         ),
         hasEmailOptIn               = optional  ( "EM_OPT_IN",                "emailOptIn",                   parseBoolUnsafe _                         ),
         hasEmailOptOut              = optional  ( "EM_OPT_OUT",               "emailOptOut",                  parseBoolUnsafe _                         ),
@@ -55,10 +57,10 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         hasMobileOptOut             = optional  ( "MOB_OPT_OUT",              "mobileOptOut",                 parseBoolUnsafe _                         ),
         hasFaxOptIn                 = optional  ( "FAX_OPT_IN",               "faxOptIn",                     parseBoolUnsafe _                         ),
         hasFaxOptOut                = optional  ( "FAX_OPT_OUT",              "faxOptOut",                    parseBoolUnsafe _                         ),
-        totalDishes                 = optional  ( "NR_OF_DISHES",             "totalDishes",                  toInt _                                   ),
-        totalLocations              = optional  ( "NR_OF_LOCATIONS",          "totalLocations",               toInt _                                   ),
-        totalStaff                  = optional  ( "NR_OF_STAFF",              "totalStaff",                   toInt _                                   ),
-        averagePrice                = optional  ( "AVG_PRICE",                "averagePrice",                 parseBigDecimalUnsafe _                   ),
+        totalDishes                 = optional  ( "NR_OF_DISHES",             "totalDishes",                  parseNumberOrAverageFromRange _           ),
+        totalLocations              = optional  ( "NR_OF_LOCATIONS",          "totalLocations",               parseNumberOrAverageFromRange _           ),
+        totalStaff                  = optional  ( "NR_OF_STAFF",              "totalStaff",                   parseNumberOrAverageFromRange _           ),
+        averagePrice                = optional  ( "AVG_PRICE",                "averagePrice",                 parseBigDecimalOrAverageFromRange _       ),
         daysOpen                    = optional  ( "DAYS_OPEN",                "daysOpen",                     toInt _                                   ),
         weeksClosed                 = optional  ( "WEEKS_CLOSED",             "weeksClosed",                  toInt _                                   ),
         distributorName             = optional  ( "DISTRIBUTOR_NAME",         "distributorName"                                                         ),

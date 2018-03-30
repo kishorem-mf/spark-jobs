@@ -65,21 +65,21 @@ object CustomParsers {
     case inputString:String if inputString.matches("[-.0-9]+") => BigDecimal(input)
   }
 
-  private val longRegex = "(-?[0-9]+)[\\.,]?[0-9]*".r
-  private val longRangeRegex = "([0-9]+)-([0-9]+)".r
+  private val numberRegex = "(-?\\d+)[\\.,]?\\d*".r
+  private val numberRangeRegex = "(\\d+)-(\\d+)".r
 
   def parseLongRangeOption(input:String): Option[Long] = {
     input match {
       case "" => None
-      case longRegex(longString) => Some(longString.toLong)
-      case longRangeRegex(longString1,longString2) => Some((longString1.toLong + longString2.toLong)/2)
+      case numberRegex(longString) => Some(longString.toLong)
+      case numberRangeRegex(longString1,longString2) => Some((longString1.toLong + longString2.toLong)/2)
       case _ => None
     }
   }
 
   private val currencies = "\u0024\u00A2\u00A3\u00A4\u00A5\u058F\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0\u20A1\u20A2\u20A3\u20A4\u20A5\u20A6\u20A7\u20A8\u20A9\u20AA\u20AB\u20AC\u20AD\u20AE\u20AF\u20B0\u20B1\u20B2\u20B3\u20B4\u20B5\u20B6\u20B7\u20B8\u20B9\u20BA\u20BB\u20BC\u20BD\u20BE\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1\uFFE5\uFFE6\u0081"
-  private val doubleRegex = s"[$currencies]?([0-9.]+)".r
-  private val doubleRangeRegex = s"[$currencies]?([0-9.]+)-[$currencies]?([0-9.]+)".r
+  private val doubleRegex = s"[$currencies]?([\\d.]+)".r
+  private val doubleRangeRegex = s"[$currencies]?([\\d.]+)-[$currencies]?([\\d.]+)".r
 
   def parseBigDecimalRangeOption(input: String): Option[BigDecimal] = {
     input match {
@@ -119,4 +119,16 @@ object CustomParsers {
   }
 
   def toInt(input: String): Int = input.toInt
+
+  def parseNumberOrAverageFromRange(input: String): Int =
+    input match {
+      case numberRegex(number)            =>  number.toInt
+      case numberRangeRegex(start, end)   =>  Math.round(start.toInt + end.toInt / 2)
+    }
+
+  def parseBigDecimalOrAverageFromRange(input: String): BigDecimal =
+    input match {
+      case doubleRegex(bigDecimalString)                          => BigDecimal(bigDecimalString)
+      case doubleRangeRegex(bigDecimalString1, bigDecimalString2) => (BigDecimal(bigDecimalString1) + BigDecimal(bigDecimalString2)) / 2
+    }
 }
