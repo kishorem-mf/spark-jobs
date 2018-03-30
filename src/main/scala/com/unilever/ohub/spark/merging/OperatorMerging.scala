@@ -4,7 +4,6 @@ import java.sql.Timestamp
 import java.util.UUID
 
 import com.unilever.ohub.spark.SparkJob
-import com.unilever.ohub.spark.data.{GoldenOperatorRecord, OperatorRecord}
 import com.unilever.ohub.spark.domain.Operator
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
