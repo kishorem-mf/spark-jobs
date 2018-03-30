@@ -1,12 +1,13 @@
 package com.unilever.ohub.spark.acm
 
 import com.unilever.ohub.spark.SparkJob
-import com.unilever.ohub.spark.data.{ ChannelMapping, GoldenOperatorRecord }
+import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.data.ufs.UFSOperator
+import com.unilever.ohub.spark.domain.Operator
 import com.unilever.ohub.spark.generic.StringFunctions
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import org.apache.spark.sql.{Dataset, SparkSession}
 
 object OperatorAcmConverter extends SparkJob {
   private val boolAsString = (bool: Boolean) => if (bool) "Y" else "N"
@@ -15,19 +16,18 @@ object OperatorAcmConverter extends SparkJob {
   def transform(
     spark: SparkSession,
     channelMappings: Dataset[ChannelMapping],
-    oHubIdAndOperators: Dataset[GoldenOperatorRecord]
+    operators: Dataset[Operator]
   ): Dataset[UFSOperator] = {
     import spark.implicits._
 
-    val ufsOperators = oHubIdAndOperators.map { goldenOperator =>
-      val operator = goldenOperator.operator
+    val ufsOperators = operators.map ( operator =>
 
       UFSOperator(
-        OPR_ORIG_INTEGRATION_ID = goldenOperator.ohubOperatorId,
-        OPR_LNKD_INTEGRATION_ID = operator.operatorConcatId,
-        GOLDEN_RECORD_FLAG = "Y",
+        OPR_ORIG_INTEGRATION_ID = operator.groupId.getOrElse("UNKNOWN"),
+        OPR_LNKD_INTEGRATION_ID = operator.concatId,
+        GOLDEN_RECORD_FLAG = boolAsString(operator.isGoldenRecord),
         COUNTRY_CODE = operator.countryCode,
-        NAME = operator.name.map(clean),
+        NAME = clean(operator.name),
         CHANNEL = operator.channel,
         SUB_CHANNEL = operator.subChannel,
         ROUTE_TO_MARKET = "",
@@ -38,16 +38,16 @@ object OperatorAcmConverter extends SparkJob {
         HOUSE_NUMBER = operator.houseNumber,
         ZIPCODE = operator.zipCode,
         CITY = operator.city.map(clean),
-        COUNTRY = operator.country,
-        AVERAGE_SELLING_PRICE = operator.avgPrice.map(_.setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble),
-        NUMBER_OF_COVERS = operator.nrOfDishes,
+        COUNTRY = operator.countryName,
+        AVERAGE_SELLING_PRICE = operator.averagePrice.map(_.setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble),
+        NUMBER_OF_COVERS = operator.totalDishes,
         NUMBER_OF_WEEKS_OPEN = operator.weeksClosed.map { weeksClosed =>
           if (52 - weeksClosed < 0) 0 else 52 - weeksClosed
         },
         NUMBER_OF_DAYS_OPEN = operator.daysOpen,
-        CONVENIENCE_LEVEL = operator.convenienceLevel,
-        RESPONSIBLE_EMPLOYEE = operator.salesRep,
-        NPS_POTENTIAL = operator.npsPotential,
+        CONVENIENCE_LEVEL = operator.cookingConvenienceLevel,
+        RESPONSIBLE_EMPLOYEE = operator.salesRepresentative,
+        NPS_POTENTIAL = operator.netPromoterScore,
         CAM_KEY = "",
         CAM_TEXT = "",
         CHANNEL_KEY = "",
@@ -60,21 +60,21 @@ object OperatorAcmConverter extends SparkJob {
         CUST_GRP_EXT = "",
         PARENT_SEGMENT = "",
         DATE_CREATED = operator.dateCreated,
-        DATE_UPDATED = operator.dateModified,
-        DELETE_FLAG = operator.status.map(status => if (status) "N" else "Y"),
-        WHOLESALER_OPERATOR_ID = operator.distributorCustomerNr,
-        PRIVATE_HOUSEHOLD = operator.privateHousehold.map(boolAsString),
-        VAT = operator.vatNumber,
-        OPEN_ON_MONDAY = operator.openOnMonday.map(boolAsString),
-        OPEN_ON_TUESDAY = operator.openOnTuesday.map(boolAsString),
-        OPEN_ON_WEDNESDAY = operator.openOnWednesday.map(boolAsString),
-        OPEN_ON_THURSDAY = operator.openOnThursday.map(boolAsString),
-        OPEN_ON_FRIDAY = operator.openOnFriday.map(boolAsString),
-        OPEN_ON_SATURDAY = operator.openOnSaturday.map(boolAsString),
-        OPEN_ON_SUNDAY = operator.openOnSunday.map(boolAsString),
+        DATE_UPDATED = operator.dateUpdated,
+        DELETE_FLAG = if (operator.isActive) "N" else "Y",
+        WHOLESALER_OPERATOR_ID = operator.distributorCustomerNumber,
+        PRIVATE_HOUSEHOLD = operator.isPrivateHousehold.map(boolAsString),
+        VAT = operator.vat,
+        OPEN_ON_MONDAY = operator.isOpenOnMonday.map(boolAsString),
+        OPEN_ON_TUESDAY = operator.isOpenOnTuesday.map(boolAsString),
+        OPEN_ON_WEDNESDAY = operator.isOpenOnWednesday.map(boolAsString),
+        OPEN_ON_THURSDAY = operator.isOpenOnThursday.map(boolAsString),
+        OPEN_ON_FRIDAY = operator.isOpenOnFriday.map(boolAsString),
+        OPEN_ON_SATURDAY = operator.isOpenOnSaturday.map(boolAsString),
+        OPEN_ON_SUNDAY = operator.isOpenOnSunday.map(boolAsString),
         KITCHEN_TYPE = operator.kitchenType.map(clean)
       )
-    }
+    )
 
     ufsOperators
       .joinWith(
@@ -109,7 +109,7 @@ object OperatorAcmConverter extends SparkJob {
     val channelMappings = storage.channelMappings
 
     val operators = storage
-      .readFromParquet[GoldenOperatorRecord](inputFile)
+      .readFromParquet[Operator](inputFile)
 
     val transformed = transform(spark, channelMappings, operators)
 
