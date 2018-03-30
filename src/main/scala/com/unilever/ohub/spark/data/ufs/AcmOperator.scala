@@ -4,12 +4,12 @@ import java.sql.Timestamp
 
 // Data Model: OPR_ORIG_INTEGRATION_ID can be misleading for Ohub 2.0 as this will contain the new
 // OHUB_OPERATOR_ID and OPR_LNKD_INTEGRATION_ID will contain OPERATOR_CONCAT_ID
-case class UFSOperator(
+case class AcmOperator(
   OPR_ORIG_INTEGRATION_ID: String,
   OPR_LNKD_INTEGRATION_ID: String,
   GOLDEN_RECORD_FLAG: String,
-  COUNTRY_CODE: Option[String],
-  NAME: Option[String],
+  COUNTRY_CODE: String,
+  NAME: String,
   CHANNEL: Option[String],
   SUB_CHANNEL: Option[String],
   ROUTE_TO_MARKET: String,
@@ -22,9 +22,9 @@ case class UFSOperator(
   CITY: Option[String],
   COUNTRY: Option[String],
   AVERAGE_SELLING_PRICE: Option[Double],
-  NUMBER_OF_COVERS: Option[Long],
-  NUMBER_OF_WEEKS_OPEN: Option[Long],
-  NUMBER_OF_DAYS_OPEN: Option[Long],
+  NUMBER_OF_COVERS: Option[Int],
+  NUMBER_OF_WEEKS_OPEN: Option[Int],
+  NUMBER_OF_DAYS_OPEN: Option[Int],
   CONVENIENCE_LEVEL: Option[String],
   RESPONSIBLE_EMPLOYEE: Option[String],
   NPS_POTENTIAL: Option[BigDecimal],
@@ -41,7 +41,7 @@ case class UFSOperator(
   PARENT_SEGMENT: String,
   DATE_CREATED: Option[Timestamp],
   DATE_UPDATED: Option[Timestamp],
-  DELETE_FLAG: Option[String],
+  DELETE_FLAG: String,
   WHOLESALER_OPERATOR_ID: Option[String],
   PRIVATE_HOUSEHOLD: Option[String],
   VAT: Option[String],
