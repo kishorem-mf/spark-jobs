@@ -53,6 +53,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag] extends Sp
         hasHeaders = hasHeaders
       )
       .map(transform(toDomainEntity))
+      .distinct()
       // persist the result here (result is evaluated multiple times, since spark transformations are lazy)
       .persist(StorageLevels.MEMORY_AND_DISK)
 
