@@ -6,14 +6,14 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.constraint._
 
-case class Operator(
+case class Operator( // generic fields
                      countryCode: String, // Existing country code in OHUB using: Iso 3166-1 alpha 2
                      isActive: Boolean,
+                     isGoldenRecord: Boolean,
+                     groupId: Option[String],
                      name: String,
                      sourceEntityId: String,
                      sourceName: String,
-                     isGoldenRecord: Boolean,
-                     groupId: Option[String],
                      // specific fields
                      averagePrice: Option[BigDecimal],
                      chainId: Option[String],

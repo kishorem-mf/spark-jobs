@@ -22,6 +22,8 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
         countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ),
         isActive                    = mandatory ( "STATUS",                   "isActive",                     parseBoolUnsafe _                         ),
+        isGoldenRecord              = false                                                                                                              ,
+        groupId                     = Option.empty                                                                                                       ,
         name                        = mandatory ( "NAME",                     "name"                                                                    ),
         sourceEntityId              = mandatory ( "﻿REF_OPERATOR_ID",         "sourceEntityId"                                                          ),
         sourceName                  = mandatory ( "SOURCE",                   "sourceName"                                                              ),
@@ -66,9 +68,6 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         isOpenOnWednesday           = optional  ( "OPEN_ON_WEDNESDAY",        "isOpenOnWednesday",            parseBoolUnsafe _                         ),
         isPrivateHousehold          = optional  ( "PRIVATE_HOUSEHOLD",        "isPrivateHousehold",           parseBoolUnsafe _                         ),
         kitchenType                 = optional  ( "KITCHEN_TYPE",             "kitchenType"                                                             ),
-        ingestionErrors             = errors,
-        groupId                     = Option.empty,
-        isGoldenRecord              = false
         mobileNumber                = optional  ( "MOBILE_PHONE_NUMBER",      "mobilePhoneNumber",            cleanPhone(countryCode) _                 ),
         netPromoterScore            = optional  ( "NPS_POTENTIAL",            "netPromoterScore",             parseBigDecimalOrAverageFromRange _       ),
         ohubCreated                 = None                                                                                                               , // TODO
@@ -89,9 +88,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         webUpdaterId                = None                                                                                                               , // TODO
         weeksClosed                 = optional  ( "WEEKS_CLOSED",             "weeksClosed",                  toInt _                                   ),
         zipCode                     = optional  ( "ZIP_CODE",                 "zipCode",                      removeSpacesStrangeCharsAndToLower _      ),
-        ingestionErrors             = errors,
-        groupId                     = Option.empty,
-        isGoldenRecord              = false
+        ingestionErrors             = errors
       )
       // @formatter:on
   }
