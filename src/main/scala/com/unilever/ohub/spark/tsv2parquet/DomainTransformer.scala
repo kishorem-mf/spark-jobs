@@ -69,7 +69,8 @@ class DomainTransformer extends Serializable {
     try {
       row.fieldIndex(columnName)
     } catch {
-      case _ => row.fieldIndex(s"$ZERO_WIDTH_NO_BREAK_SPACE$columnName") // maybe there is a BOM char in front of the column name, otherwise let's fail.
+      // maybe there is a BOM char in front of the column name, otherwise let's fail.
+      case _: Throwable => row.fieldIndex(s"$ZERO_WIDTH_NO_BREAK_SPACE$columnName")
     }
 }
 

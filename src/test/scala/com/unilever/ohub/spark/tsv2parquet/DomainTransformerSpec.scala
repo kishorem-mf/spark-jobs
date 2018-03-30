@@ -19,6 +19,7 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
         val row = mock[Row]
 
         (row.fieldIndex(_: String)).expects(originalColumnName).throwing(new IllegalArgumentException(s"Fieldname '$originalColumnName' does not exist."))
+        (row.fieldIndex(_: String)).expects(s"${DomainTransformer.ZERO_WIDTH_NO_BREAK_SPACE}$originalColumnName").throwing(new IllegalArgumentException(s"Fieldname '$originalColumnName' does not exist."))
 
         intercept[IllegalArgumentException] {
           domainTransformer.mandatory(originalColumnName , domainFieldName)(row)
