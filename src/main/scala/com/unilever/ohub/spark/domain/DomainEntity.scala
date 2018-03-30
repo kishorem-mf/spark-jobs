@@ -16,8 +16,8 @@ trait DomainEntity extends Product {
   val name: String
 
   // used for grouping and marking the golden record within the group
-  val groupId: Option[String] = None
-  val isGoldenRecord: Boolean = false
+  val groupId: Option[String]
+  val isGoldenRecord: Boolean
 
   // derived fields
   val concatId: String = s"$countryCode~$sourceName~$sourceEntityId"

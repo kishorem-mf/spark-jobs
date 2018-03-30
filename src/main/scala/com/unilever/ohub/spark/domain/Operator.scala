@@ -74,7 +74,9 @@ case class Operator(
                      germanChainId: Option[String],                           // TODO move to additional fields (later)
                      germanChainName: Option[String],
                      kitchenType: Option[String],
-                     ingestionErrors: Map[String, IngestionError]
+                     ingestionErrors: Map[String, IngestionError],
+                     groupId: Option[String],
+                     isGoldenRecord: Boolean
                    ) extends DomainEntity {
   emailAddress.foreach( EmailAddressConstraint.validate )
   daysOpen.foreach( NumberOfDaysConstraint.validate )
