@@ -24,25 +24,28 @@ from string_matching.spark_string_matching import match_strings
 N_GRAMS = 2
 MINIMUM_DOCUMENT_FREQUENCY = 2
 VOCABULARY_SIZE = 2000
+LOGGER = None
 
 
-def get_all_current_operators(spark: SparkSession, fn: str) -> DataFrame:
+def get_all_current_operators(spark: SparkSession, fn: str, fraction: float) -> DataFrame:
     return (spark
             .read
             .parquet(fn)
+            .sample(False, fraction)
             .withColumn('refId', sf.explode('refIds'))
             .drop('refIds')
             .withColumnRenamed('ohubOperatorId', 'ohubOperatorId_old')
             )
 
 
-def preprocess_current_operators_for_matching(spark: SparkSession, fn: str) -> DataFrame:
+def preprocess_current_operators_for_matching(spark: SparkSession, fn: str, fraction: float) -> DataFrame:
     """Create column 'matching_string' used originally for the matching"""
     w = Window.partitionBy('countryCode').orderBy(sf.asc('ohubOperatorId'))
 
     return (spark
             .read
             .parquet(fn)
+            .sample(False, fraction)
             .withColumn('matching_string',
                         sf.concat_ws(' ',
                                      sf.col('operator.nameCleansed'),
@@ -58,12 +61,13 @@ def preprocess_current_operators_for_matching(spark: SparkSession, fn: str) -> D
             )
 
 
-def preprocess_new_operators_for_matching(spark: SparkSession, fn: str) -> DataFrame:
+def preprocess_new_operators_for_matching(spark: SparkSession, fn: str, fraction: float) -> DataFrame:
     """Create unique 'refID' and 'matching_string' for new input data"""
     w = Window.partitionBy('COUNTRY_CODE').orderBy(sf.asc('refId'))
     return (spark
             .read
             .parquet(fn)
+            .sample(False, fraction)
             .na.drop(subset=['NAME_CLEANSED'])
             .withColumn('refId',
                         sf.concat_ws('~',
@@ -163,18 +167,24 @@ def join_new_with_all_current_operators(spark, new_operators, all_operators_for_
 
 
 def main(arguments):
-    spark = utils.start_spark('Join new operators with persistent UUID')
-    all_operators = get_all_current_operators(spark, arguments.current_operators_path)
-    all_operators_for_matching = preprocess_current_operators_for_matching(spark, arguments.current_operators_path)
-    new_operators = preprocess_new_operators_for_matching(spark, arguments.new_operators_path)
+    global LOGGER
+    spark, LOGGER = utils.start_spark('Join new operators with persistent UUID')
+    all_operators = get_all_current_operators(spark, arguments.current_operators_path, arguments.fraction)
+    all_operators_for_matching = preprocess_current_operators_for_matching(spark,
+                                                                           arguments.current_operators_path,
+                                                                           arguments.fraction)
+    new_operators = preprocess_new_operators_for_matching(spark, arguments.new_operators_path, arguments.fraction)
     country_codes = get_country_codes(new_operators)
 
-    for country_code in country_codes:
+    mode = 'overwrite'
+    for i, country_code in enumerate(country_codes):
+        if i == 1:
+            mode = 'append'
         joined_operators = join_new_with_all_current_operators(spark, new_operators, all_operators_for_matching,
                                                                all_operators, country_code,
                                                                arguments.n_top, arguments.threshold)
         if arguments.output_path:
-            utils.save_to_parquet(joined_operators, arguments.output_path)
+            utils.save_to_parquet(joined_operators, arguments.output_path, mode)
         else:
             print('Number of groups:', all_operators.count(), '-->', joined_operators.count())
             (joined_operators
@@ -195,6 +205,8 @@ if __name__ == '__main__':
                         help='drop similarities below this value [0-1].')
     parser.add_argument('-n', '--n_top', default=1, type=int,
                         help='keep N top similarities for each record.')
+    parser.add_argument('-frac', '--fraction', default=1.0, type=float,
+                        help='use this fraction of records.')
     args = parser.parse_args()
 
     main(args)

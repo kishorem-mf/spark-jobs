@@ -101,11 +101,9 @@ def group_matches(ddf: DataFrame) -> DataFrame:
     )
 
 
-def save_to_parquet(ddf: DataFrame, fn):
-    mode = 'append'
+def save_to_parquet(ddf: DataFrame, fn: str, mode: str):
     LOGGER.info("Writing to: " + fn)
     LOGGER.info("Mode: " + mode)
-
     (ddf
      .coalesce(20)
      .write
