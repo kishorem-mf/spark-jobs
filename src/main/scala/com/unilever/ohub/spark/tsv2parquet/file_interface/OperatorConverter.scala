@@ -86,7 +86,9 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         germanChainId               = None                                                                                                               ,
         germanChainName             = None                                                                                                               ,
         kitchenType                 = optional  ( "KITCHEN_TYPE",             "kitchenType"                                                             ),
-        ingestionErrors             = errors
+        ingestionErrors             = errors,
+        groupId                     = Option.empty,
+        isGoldenRecord              = false
       )
       // @formatter:on
   }
