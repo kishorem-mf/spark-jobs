@@ -49,7 +49,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .option("header", hasHeaders)
       .option("sep", fieldSeparator)
       .option("inferSchema", value = false)
-      .option("mode", "FAILFAST") // let's fail fast for now
+//      .option("mode", "FAILFAST") // let's fail fast for now
       .csv(location)
   }
 
