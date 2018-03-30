@@ -111,7 +111,7 @@ with DAG('ohub_operators', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
             'parameters': [intermediate_bucket.format('operators_matched'),
-                           raw_bucket.format('OPERATORS'),
+                           intermediate_bucket.format('operators'),
                            integrated_bucket.format('operators_merged')]
         })
 
