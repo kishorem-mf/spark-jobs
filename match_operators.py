@@ -53,7 +53,10 @@ def preprocess_operators(ddf: DataFrame) -> DataFrame:
     ddf = clean_fields(ddf)
     return (ddf
             .na.drop(subset=['nameCleansed'])
-            .withColumnRenamed('concatId', 'id')
+            .withColumn('id', sf.concat_ws('~',
+                                           sf.col('countryCode'),
+                                           sf.col('sourceName'),
+                                           sf.col('sourceEntityId')))
             .fillna('')
             # create matching-string
             .withColumn('match_name',
