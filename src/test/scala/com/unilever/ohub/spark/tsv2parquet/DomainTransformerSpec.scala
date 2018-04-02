@@ -10,7 +10,7 @@ import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 
 class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
 
-  val domainTransformer = new DomainTransformer()
+  val domainTransformer = DomainTransformer()
   val domainFieldName = "domain-field-name"
   val originalColumnName = "original"
 
@@ -93,7 +93,7 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
       }
     }
 
-    "register an exception" when {
+    "register an error" when {
       "an original column has an invalid Int value" in {
         val row = new GenericRowWithSchema(List("abc").toArray, StructType(List(StructField(originalColumnName, DataTypes.LongType, nullable = true))))
 
