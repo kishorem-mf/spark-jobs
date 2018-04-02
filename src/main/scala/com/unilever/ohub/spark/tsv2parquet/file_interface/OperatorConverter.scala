@@ -68,7 +68,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         isOpenOnWednesday           = optional  ( "OPEN_ON_WEDNESDAY",        "isOpenOnWednesday",            parseBoolUnsafe _                         ),
         isPrivateHousehold          = optional  ( "PRIVATE_HOUSEHOLD",        "isPrivateHousehold",           parseBoolUnsafe _                         ),
         kitchenType                 = optional  ( "KITCHEN_TYPE",             "kitchenType"                                                             ),
-        mobileNumber                = optional  ( "MOBILE_PHONE_NUMBER",      "mobilePhoneNumber",            cleanPhone(countryCode) _                 ),
+        mobileNumber                = optional  ( "MOBILE_PHONE_NUMBER",      "mobileNumber",                 cleanPhone(countryCode) _                 ),
         netPromoterScore            = optional  ( "NPS_POTENTIAL",            "netPromoterScore",             parseBigDecimalOrAverageFromRange _       ),
         ohubCreated                 = None                                                                                                               , // TODO
         ohubUpdated                 = None                                                                                                               , // TODO
