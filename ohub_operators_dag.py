@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 
 from airflow import DAG
-from airflow.models import Variable
 from airflow.hooks.base_hook import BaseHook
 
 from config import email_addresses
@@ -9,7 +8,6 @@ from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
     DatabricksStartClusterOperator
-
 
 default_args = {
     'owner': 'airflow',
@@ -23,10 +21,10 @@ default_args = {
 }
 
 wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'
-raw_bucket = wasb_root_bucket + 'raw/{}/**/*.csv'
-intermediate_bucket = wasb_root_bucket + 'intermediate/{}.parquet'
-integrated_bucket = wasb_root_bucket + 'integrated/{}.parquet'
-export_bucket = wasb_root_bucket + 'export/{}.parquet'
+raw_bucket = wasb_root_bucket + 'raw/{date}/{schema}/**/*.csv'
+intermediate_bucket = wasb_root_bucket + 'intermediate/{date}/{fn}.parquet'
+integrated_bucket = wasb_root_bucket + 'integrated/{date}/{fn}.parquet'
+export_bucket = wasb_root_bucket + 'export/{date}/{fn}.parquet'
 
 cluster_name = 'ohub_basic'
 cluster_id = '0314-131901-shalt605'
@@ -65,8 +63,8 @@ with DAG('ohub_operators', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
-            'parameters': [raw_bucket.format('OPERATORS'),
-                           intermediate_bucket.format('operators')]
+            'parameters': [raw_bucket.format(date='2017-07-12', schema='operators'),
+                           intermediate_bucket.format(date='2017-07-12', fn='operators')]
         }
     )
 
@@ -79,8 +77,8 @@ with DAG('ohub_operators', default_args=default_args,
         ],
         spark_python_task={
             'python_file': 'dbfs:/libraries/name_matching/match_operators.py',
-            'parameters': ['--input_file', intermediate_bucket.format('operators'),
-                           '--output_path', intermediate_bucket.format('operators_matched'),
+            'parameters': ['--input_file', intermediate_bucket.format(date='2017-07-12', fn='operators'),
+                           '--output_path', intermediate_bucket.format(date='2017-07-12', fn='operators_matched'),
                            '--country_code', 'DK']
         }
     )
@@ -113,9 +111,9 @@ with DAG('ohub_operators', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
-            'parameters': [intermediate_bucket.format('operators_matched'),
-                           intermediate_bucket.format('operators'),
-                           integrated_bucket.format('operators_merged')]
+            'parameters': [intermediate_bucket.format(date='2017-07-12', fn='operators_matched'),
+                           intermediate_bucket.format(date='2017-07-12', fn='operators'),
+                           integrated_bucket.format(date='2017-07-12', fn='operators_merged')]
         })
 
     postgres_connection = BaseHook.get_connection('postgres_channels')
@@ -128,8 +126,8 @@ with DAG('ohub_operators', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmConverter",
-            'parameters': [integrated_bucket.format('operators_merged.parquet'),
-                           export_bucket.format('acm/operators.csv'),
+            'parameters': [integrated_bucket.format(date='2017-07-12', fn='operators_merged.parquet'),
+                           export_bucket.format(date='2017-07-12', fn='acm/operators.csv'),
                            postgres_connection.host,
                            postgres_connection.login,
                            postgres_connection.password,
