@@ -114,7 +114,6 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
             polling_period_seconds=30,
             databricks_retry_limit=3,
             **kwargs):
-        # type: (object, object, object, object, object, object, object, object, object, object, object, object) -> object
 
         super(DatabricksSubmitRunOperator, self).__init__(databricks_conn_id,
                                                           polling_period_seconds,
