@@ -99,16 +99,29 @@ object OperatorAcmConverter extends SparkJob {
       }
   }
 
-  override val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
+  override val neededFilePaths = Array(
+    "INPUT_FILE",
+    "OUTPUT_FILE",
+    "POSTGRESS_URL",
+    "POSTGRESS_USERNAME",
+    "POSTGRESS_PASSWORD",
+    "POSTGRESS_DB")
 
   override def run(spark: SparkSession, filePaths: scala.Product, storage: Storage): Unit = {
     import spark.implicits._
 
-    val (inputFile: String, outputFile: String) = filePaths
+    val (
+      inputFile: String,
+      outputFile: String,
+      postgressUrl: String,
+      postgressUsername: String,
+      postgressPassword: String,
+      postgressDb: String
+      ) = filePaths
 
     log.info(s"Generating operator ACM csv file from [$inputFile] to [$outputFile]")
 
-    val channelMappings = storage.channelMappings
+    val channelMappings = storage.channelMappings(postgressUrl, postgressDb, postgressUsername, postgressPassword)
 
     val operators = storage
       .readFromParquet[Operator](inputFile)
