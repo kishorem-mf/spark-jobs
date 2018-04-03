@@ -7,8 +7,6 @@ import org.apache.spark.sql.{Dataset, SparkSession}
 
 object OperatorDeduplication extends SparkJob {
 
-  private val csvColumnSeparator = "‰"
-
   def transform(
                  spark: SparkSession,
                  integratedOperators: Dataset[Operator],
@@ -16,6 +14,30 @@ object OperatorDeduplication extends SparkJob {
                ): (Dataset[Operator], Dataset[Operator]) = {
     import spark.implicits._
 
+    val dailyNew = newOperators
+      .joinWith(integratedOperators, newOperators("concatId") === integratedOperators("concatId"), "left_anti")
+      .filter(_._2 == null)
+      .map(_._1)
+
+    val dailyDupe = newOperators
+      .joinWith(dailyNew, newOperators("concatId") === dailyNew("concatId"), "left_anti")
+      .filter(_._2 == null)
+      .map(_._1)
+
+    val deduped = integratedOperators
+      .union(dailyDupe)
+      .groupByKey(_.concatId)
+      .reduceGroups((a, b) => {
+        if (a.dateUpdated.isDefined && b.dateUpdated.isDefined) {
+          if (a.dateUpdated.get.after(b.dateUpdated.get)) a else b
+        }
+        else {
+          a
+        }
+      })
+      .map(_._2)
+
+    (deduped, dailyNew)
   }
 
   override val neededFilePaths = Array("INTEGRATED_INPUT", "DAILY_INPUT", "INTEGRATED_OUTPUT", "DAILY_NEW_OUTPUT")
