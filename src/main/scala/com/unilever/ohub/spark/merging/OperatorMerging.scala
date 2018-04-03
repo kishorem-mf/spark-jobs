@@ -14,7 +14,7 @@ object OperatorMerging extends SparkJob {
 
   private case class MatchingResult(sourceId: String, targetId: String, countryCode: String)
 
-  private case class IdAndCountry(operatorConcatId: String, countryCode: String)
+  private case class IdAndCountry(concatId: String, countryCode: String)
 
   private case class MatchingResultAndOperator(
                                                 matchingResult: MatchingResult,
@@ -65,7 +65,7 @@ object OperatorMerging extends SparkJob {
       .distinct()
 
     val singletonOperators = operators
-      .join(matchedIds, Seq("operatorConcatId"), JoinType.LeftAnti)
+      .join(matchedIds, Seq("concatId"), JoinType.LeftAnti)
       .as[Operator]
       .map(Seq(_))
 
