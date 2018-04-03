@@ -1,5 +1,7 @@
 package com.unilever.ohub.spark.tsv2parquet.file_interface
 
+import java.sql.Timestamp
+
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 import com.unilever.ohub.spark.generic.StringFunctions._
@@ -18,6 +20,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
       val sourceEntityId: String = originalValue("REF_OPERATOR_ID")(row).getOrElse("")
 
       val concatId: String = s"$countryCode~$sourceName~$sourceEntityId"
+      val ohubCreated = new Timestamp(System.currentTimeMillis())
 
       // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
 
@@ -32,6 +35,8 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         name                        = mandatory ( "NAME",                     "name"                                                                    ),
         sourceEntityId              = mandatory ( "REF_OPERATOR_ID",          "sourceEntityId"                                                          ),
         sourceName                  = mandatory ( "SOURCE",                   "sourceName"                                                              ),
+        ohubCreated                 = ohubCreated                                                                                                        ,
+        ohubUpdated                 = ohubCreated                                                                                                        ,
         averagePrice                = optional  ( "AVG_PRICE",                "averagePrice",                 parseBigDecimalOrAverageFromRange _       ),
         chainId                     = optional  ( "CHAIN_ID",                 "chainId"                                                                 ),
         chainName                   = optional  ( "CHAIN_NAME",               "chainName"                                                               ),
@@ -39,13 +44,13 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         city                        = optional  ( "CITY",                     "city",                         removeSpacesStrangeCharsAndToLower _      ),
         cookingConvenienceLevel     = optional  ( "CONVENIENCE_LEVEL",        "cookingConvenienceLevel"                                                 ),
         countryName                 = optional  ( "COUNTRY",                  "countryName"                                                             ),
-        customerType                = None                                                                                                               , // TODO
+        customerType                = None                                                                                                               , // TODO introduce when enum is available
         dateCreated                 = optional  ( "DATE_CREATED",             "dateCreated",                  parseDateTimeStampUnsafe _                ),
         dateUpdated                 = optional  ( "DATE_MODIFIED",            "dateUpdated",                  parseDateTimeStampUnsafe _                ),
         daysOpen                    = optional  ( "DAYS_OPEN",                "daysOpen",                     toInt _                                   ),
         distributorCustomerNumber   = optional  ( "DISTRIBUTOR_CUSTOMER_NR",  "distributorCustomerNumber"                                               ),
         distributorName             = optional  ( "DISTRIBUTOR_NAME",         "distributorName"                                                         ),
-        distributorOperatorId       = None                                                                                                               , // TODO not in row input, is this correct?
+        distributorOperatorId       = None                                                                                                               ,
         emailAddress                = optional  ( "EMAIL_ADDRESS",            "emailAddress"                                                            ),
         faxNumber                   = optional  ( "FAX_NUMBER",               "faxNumber",                    cleanPhone(countryCode) _                 ),
         germanChainId               = None                                                                                                               ,
@@ -75,11 +80,9 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         kitchenType                 = optional  ( "KITCHEN_TYPE",             "kitchenType"                                                             ),
         mobileNumber                = optional  ( "MOBILE_PHONE_NUMBER",      "mobileNumber",                 cleanPhone(countryCode) _                 ),
         netPromoterScore            = optional  ( "NPS_POTENTIAL",            "netPromoterScore",             parseBigDecimalOrAverageFromRange _       ),
-        ohubCreated                 = None                                                                                                               , // TODO
-        ohubUpdated                 = None                                                                                                               , // TODO
         oldIntegrationId            = optional  ( "OPR_INTEGRATION_ID",       "oldIntegrationId"                                                        ),
         otm                         = optional  ( "OTM",                      "otm"                                                                     ),
-        otmEnteredBy                = optional  ( "OTM_REASON",               "otmEnteredBy"                                                            ), // TODO verify
+        otmEnteredBy                = optional  ( "OTM_REASON",               "otmEnteredBy"                                                            ),
         phoneNumber                 = optional  ( "PHONE_NUMBER",             "phoneNumber",                  cleanPhone(countryCode) _                 ),
         region                      = optional  ( "REGION",                   "region"                                                                  ),
         salesRepresentative         = optional  ( "SALES_REP",                "salesRepresentative"                                                     ),
@@ -90,7 +93,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         totalLocations              = optional  ( "NR_OF_LOCATIONS",          "totalLocations",               parseNumberOrAverageFromRange _           ),
         totalStaff                  = optional  ( "NR_OF_STAFF",              "totalStaff",                   parseNumberOrAverageFromRange _           ),
         vat                         = optional  ( "VAT_NUMBER",               "vat"                                                                     ),
-        webUpdaterId                = None                                                                                                               , // TODO
+        webUpdaterId                = None                                                                                                               ,
         weeksClosed                 = optional  ( "WEEKS_CLOSED",             "weeksClosed",                  toInt _                                   ),
         zipCode                     = optional  ( "ZIP_CODE",                 "zipCode",                      removeSpacesStrangeCharsAndToLower _      ),
         ingestionErrors             = errors

@@ -15,6 +15,8 @@ case class Operator( // generic fields
                      name: String,
                      sourceEntityId: String,
                      sourceName: String,
+                     ohubCreated: Timestamp,
+                     ohubUpdated: Timestamp,
                      // specific fields
                      averagePrice: Option[BigDecimal],
                      chainId: Option[String],
@@ -34,7 +36,7 @@ case class Operator( // generic fields
                      faxNumber: Option[String],
                      germanChainId: Option[String], // TODO move to additional fields (later)
                      germanChainName: Option[String], // TODO move to additional fields (later)
-                     hasDirectMailOptIn: Option[Boolean], // TODO can these opt ins & opt outs be merged?
+                     hasDirectMailOptIn: Option[Boolean],
                      hasDirectMailOptOut: Option[Boolean],
                      hasEmailOptIn: Option[Boolean],
                      hasEmailOptOut: Option[Boolean],
@@ -59,8 +61,6 @@ case class Operator( // generic fields
                      kitchenType: Option[String],
                      mobileNumber: Option[String],
                      netPromoterScore: Option[BigDecimal],
-                     ohubCreated: Option[Timestamp],
-                     ohubUpdated: Option[Timestamp],
                      oldIntegrationId: Option[String],
                      otm: Option[String], // Options: A | B | C | D | E | F
                      otmEnteredBy: Option[String],

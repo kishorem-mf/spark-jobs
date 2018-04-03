@@ -1,5 +1,7 @@
 package com.unilever.ohub.spark.domain
 
+import java.sql.Timestamp
+
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 
 object DomainEntity {
@@ -15,6 +17,8 @@ trait DomainEntity extends Product {
   val countryCode: String
   val isActive: Boolean
   val name: String
+  val ohubCreated: Timestamp
+  val ohubUpdated: Timestamp
 
   // used for grouping and marking the golden record within the group
   val groupId: Option[String]
