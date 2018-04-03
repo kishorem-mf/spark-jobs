@@ -33,7 +33,7 @@ case class Operator( // generic fields
                      faxNumber: Option[String],
                      germanChainId: Option[String], // TODO move to additional fields (later)
                      germanChainName: Option[String], // TODO move to additional fields (later)
-                     hasDirectMailOptIn: Option[Boolean],
+                     hasDirectMailOptIn: Option[Boolean], // TODO can these opt ins & opt outs be merged?
                      hasDirectMailOptOut: Option[Boolean],
                      hasEmailOptIn: Option[Boolean],
                      hasEmailOptOut: Option[Boolean],
@@ -79,7 +79,7 @@ case class Operator( // generic fields
                      // other fields
                      ingestionErrors: Map[String, IngestionError]
                    ) extends DomainEntity {
-  //  emailAddress.foreach(EmailAddressConstraint.validate) // disable now, since seems to invalidate valid email addresses
+  emailAddress.foreach(EmailAddressConstraint.validate)
   daysOpen.foreach(NumberOfDaysConstraint.validate)
   weeksClosed.foreach(NumberOfWeeksConstraint.validate)
 }

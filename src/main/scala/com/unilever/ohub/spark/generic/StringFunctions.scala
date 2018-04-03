@@ -1,5 +1,7 @@
 package com.unilever.ohub.spark.generic
 
+import java.util.regex.Pattern
+
 object StringFunctions extends App {
 
   // Using General Email Regex (RFC 5322 Official Standard)
@@ -54,7 +56,11 @@ object StringFunctions extends App {
     if (isValidEmail) emailAddress else null
   }
 
-  def isValidEmailAddress(emailAddress: String): Boolean = emailAddress.matches(EMAIL_ADDRESS_REGEX)
+  def isValidEmailAddress(emailAddress: String): Boolean = {
+    val pattern = Pattern.compile(EMAIL_ADDRESS_REGEX, Pattern.CASE_INSENSITIVE)
+    val matcher = pattern.matcher(emailAddress)
+    return matcher.matches
+  }
 
   def fillLastNameOnlyWhenFirstEqualsLastName(firstName: String, lastName: String, isFirstName:Boolean): String = {
     val firstNameWithoutNull = if (firstName == null) "" else firstName
