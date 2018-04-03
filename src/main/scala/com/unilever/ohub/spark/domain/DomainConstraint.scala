@@ -9,7 +9,7 @@ class DomainConstraintViolationException(message: String) extends IllegalArgumen
 object DomainConstraint {
 
   @throws(classOf[DomainConstraintViolationException])
-  def check[T](isValid: T => Boolean, value: T, errorMessage: String) =
+  def check[T](isValid: T => Boolean, value: T, errorMessage: String): Unit =
     if (!isValid(value)) throw DomainConstraintViolationException(errorMessage)
 }
 
