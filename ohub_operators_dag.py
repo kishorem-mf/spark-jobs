@@ -123,8 +123,8 @@ with DAG('ohub_operators', default_args=default_args,
             {'jar': jar}
         ],
         spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.tsv2parquet.OperatorAcmConverter",
-            'parameters': [intermediate_bucket.format('operators_merged.parquet'),
+            'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmConverter",
+            'parameters': [integrated_bucket.format('operators_merged.parquet'),
                            export_bucket.format('acm/operators.csv')]
         }
     )
