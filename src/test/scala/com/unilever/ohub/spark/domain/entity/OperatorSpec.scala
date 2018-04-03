@@ -37,8 +37,6 @@ class OperatorSpec extends WordSpec with Matchers {
           distributorOperatorId       = None,
           emailAddress                = Some("email-address@some-server.com"),
           faxNumber                   = Some("+31123456789"),
-          germanChainId               = None,
-          germanChainName             = None,
           hasDirectMailOptIn          = Some(true),
           hasDirectMailOptOut         = Some(false),
           hasEmailOptIn               = Some(true),

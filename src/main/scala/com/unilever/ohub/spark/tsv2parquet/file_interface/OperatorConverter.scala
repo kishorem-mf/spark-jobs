@@ -28,7 +28,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
       Operator(
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
         concatId                    = concatId                                                                                                           ,
-        countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ),
+        countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ), // TODO lookup country code
         isActive                    = mandatory ( "STATUS",                   "isActive",                     parseBoolUnsafe _                         ),
         isGoldenRecord              = false                                                                                                              ,
         groupId                     = Option.empty                                                                                                       ,
@@ -53,8 +53,6 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         distributorOperatorId       = None                                                                                                               ,
         emailAddress                = optional  ( "EMAIL_ADDRESS",            "emailAddress"                                                            ),
         faxNumber                   = optional  ( "FAX_NUMBER",               "faxNumber",                    cleanPhone(countryCode) _                 ),
-        germanChainId               = None                                                                                                               ,
-        germanChainName             = None                                                                                                               ,
         hasDirectMailOptIn          = optional  ( "DM_OPT_IN",                "hasDirectMailOptIn",           parseBoolUnsafe _                         ),
         hasDirectMailOptOut         = optional  ( "DM_OPT_OUT",               "hasDirectMailOptOut",          parseBoolUnsafe _                         ),
         hasEmailOptIn               = optional  ( "EM_OPT_IN",                "hasEmailOptIn",                parseBoolUnsafe _                         ),

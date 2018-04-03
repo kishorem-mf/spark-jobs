@@ -8,7 +8,7 @@ import com.unilever.ohub.spark.domain.constraint._
 
 case class Operator( // generic fields
                      concatId: String,
-                     countryCode: String, // Existing country code in OHUB using: Iso 3166-1 alpha 2
+                     countryCode: String, // TODO Existing country code in OHUB using: Iso 3166-1 alpha 2
                      isActive: Boolean,
                      isGoldenRecord: Boolean,
                      groupId: Option[String],
@@ -34,8 +34,6 @@ case class Operator( // generic fields
                      distributorOperatorId: Option[String],
                      emailAddress: Option[String],
                      faxNumber: Option[String],
-                     germanChainId: Option[String], // TODO move to additional fields (later)
-                     germanChainName: Option[String], // TODO move to additional fields (later)
                      hasDirectMailOptIn: Option[Boolean],
                      hasDirectMailOptOut: Option[Boolean],
                      hasEmailOptIn: Option[Boolean],
