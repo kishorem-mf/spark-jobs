@@ -1,12 +1,15 @@
 from datetime import datetime, timedelta
 
 from airflow import DAG
+from airflow.models import Variable
+from airflow.hooks.base_hook import BaseHook
 
 from config import email_addresses
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
     DatabricksStartClusterOperator
+
 
 default_args = {
     'owner': 'airflow',
@@ -115,6 +118,7 @@ with DAG('ohub_operators', default_args=default_args,
                            integrated_bucket.format('operators_merged')]
         })
 
+    postgres_connection = BaseHook.get_connection('postgres_channels')
     operators_to_acm = DatabricksSubmitRunOperator(
         task_id="operators_to_acm",
         existing_cluster_id=cluster_id,
@@ -125,7 +129,11 @@ with DAG('ohub_operators', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmConverter",
             'parameters': [integrated_bucket.format('operators_merged.parquet'),
-                           export_bucket.format('acm/operators.csv')]
+                           export_bucket.format('acm/operators.csv'),
+                           postgres_connection.host,
+                           postgres_connection.login,
+                           postgres_connection.password,
+                           postgres_connection.schema]
         }
     )
 
