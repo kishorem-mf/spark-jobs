@@ -9,6 +9,7 @@ object DomainEntity {
 // marker trait for all domain entities (press ctrl + h in IntelliJ to see all)
 trait DomainEntity extends Product {
   // mandatory fields
+  val concatId: String
   val sourceEntityId: String
   val sourceName: String
   val countryCode: String
@@ -19,8 +20,6 @@ trait DomainEntity extends Product {
   val groupId: Option[String]
   val isGoldenRecord: Boolean
 
-  // derived fields
-  val concatId: String = s"$countryCode~$sourceName~$sourceEntityId"
 
   // aggregated fields
   val ingestionErrors: Map[String, IngestionError]

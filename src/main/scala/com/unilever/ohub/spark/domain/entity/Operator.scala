@@ -7,6 +7,7 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.constraint._
 
 case class Operator( // generic fields
+                     concatId: String,
                      countryCode: String, // Existing country code in OHUB using: Iso 3166-1 alpha 2
                      isActive: Boolean,
                      isGoldenRecord: Boolean,

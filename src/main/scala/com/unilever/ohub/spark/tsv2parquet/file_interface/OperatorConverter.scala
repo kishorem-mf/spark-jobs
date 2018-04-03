@@ -14,12 +14,17 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
       implicit val source: Row = row
 
       val countryCode: String = originalValue("COUNTRY_CODE")(row).getOrElse("")
+      val sourceName: String = originalValue("SOURCE")(row).getOrElse("")
+      val sourceEntityId: String = originalValue("REF_OPERATOR_ID")(row).getOrElse("")
+
+      val concatId: String = s"$countryCode~$sourceName~$sourceEntityId"
 
       // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
 
                                                                               // ↓ not so happy with this column (it should be the same as the fieldName), macro?
       Operator(
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
+        concatId                    = concatId                                                                                                           ,
         countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ),
         isActive                    = mandatory ( "STATUS",                   "isActive",                     parseBoolUnsafe _                         ),
         isGoldenRecord              = false                                                                                                              ,

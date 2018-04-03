@@ -11,6 +11,7 @@ class OperatorSpec extends WordSpec with Matchers {
     "be created correctly (no exception is thrown)" when {
       "only valid data is provided" in {
         val operator = Operator(
+          concatId                    = "concat-id",
           countryCode                 = "country-code",
           isActive                    = true,
           isGoldenRecord              = false,
@@ -83,7 +84,6 @@ class OperatorSpec extends WordSpec with Matchers {
         )
 
         operator.name shouldBe "operator-name"
-        operator.concatId shouldBe "country-code~source-name~source-entity-id"
       }
     }
   }
