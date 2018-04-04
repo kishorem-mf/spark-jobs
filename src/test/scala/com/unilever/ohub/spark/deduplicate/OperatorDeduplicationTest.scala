@@ -115,7 +115,7 @@ class OperatorDeduplicationTest extends SparkJobSpec {
       assert(updated.length === 2)
       assert(dailyNew.length === 1)
 
-      assert(updated.sortBy(_.concatId).map(_.concatId) === Seq("a", "b"))
+      updated.map(_.concatId) should contain theSameElementsAs Seq("a", "b")
       assert(dailyNew.head.concatId === "c")
     }
 
