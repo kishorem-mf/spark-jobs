@@ -68,6 +68,23 @@ with DAG('ohub_operators', default_args=default_args,
         }
     )
 
+    deduplicate_daily = DatabricksSubmitRunOperator(
+        task_id="deduplicate_daily",
+        existing_cluster_id=cluster_id,
+        databricks_conn_id=databricks_conn_id,
+        libraries=[
+            {'jar': jar}
+        ],
+        spark_jar_task={
+            'main_class_name': "com.unilever.ohub.spark.deduplicate.OperatorDeduplication",
+            'parameters': [integrated_bucket.format(date='2017-07-12', fn='operators'),
+                           intermediate_bucket.format(date='2017-07-12', fn='operators'),
+                           intermediate_bucket.format(date='2018-04-04', fn='operators_integrated'),
+                           intermediate_bucket.format(date='2018-04-04', fn='operators_daily')]
+        }
+
+    )
+
     match_operators = DatabricksSubmitRunOperator(
         task_id='match_operators',
         existing_cluster_id=cluster_id,
@@ -135,4 +152,5 @@ with DAG('ohub_operators', default_args=default_args,
         }
     )
 
-    start_cluster >> operators_to_parquet >> match_operators >> merge_operators >> operators_to_acm >> terminate_cluster
+    start_cluster >> operators_to_parquet >> deduplicate_daily >> match_operators >> merge_operators >> \
+    operators_to_acm >> terminate_cluster
