@@ -48,8 +48,8 @@ class OperatorUpdateGoldenRecordSpec extends SparkJobSpec {
         "sourceB" -> 1
       )
 
-      val a = defaultOperatorRecord.copy(sourceName = "sourceA")
-      val b = defaultOperatorRecord.copy(sourceName = "sourceB", isGoldenRecord = true)
+      val a = defaultOperatorRecord.copy(sourceName = "sourceA", ohubId = Some("a"))
+      val b = defaultOperatorRecord.copy(sourceName = "sourceB", isGoldenRecord = true, ohubId = Some("a"))
 
       val operators = Seq(a,b).toDataset
 
@@ -65,8 +65,8 @@ class OperatorUpdateGoldenRecordSpec extends SparkJobSpec {
         "sourceB" -> 2
       )
 
-      val a = defaultOperatorRecord.copy(sourceName = "sourceA")
-      val b = defaultOperatorRecord.copy(sourceName = "sourceB", isGoldenRecord = true)
+      val a = defaultOperatorRecord.copy(sourceName = "sourceA", ohubId = Some("a"))
+      val b = defaultOperatorRecord.copy(sourceName = "sourceB", isGoldenRecord = true, ohubId = Some("a"))
 
       val operators = Seq(a,b).toDataset
 

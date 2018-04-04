@@ -1,17 +1,15 @@
 package com.unilever.ohub.spark.merging
 
-import java.sql.Timestamp
-import java.util.UUID
-
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.domain.entity.Operator
-import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{Dataset, SparkSession}
-import org.apache.spark.sql.functions.collect_list
+import org.apache.spark.sql.functions._
 
 object OperatorUpdateGoldenRecord extends SparkJob with OperatorGoldenRecord {
 
+
+  case class oHubIdsAndRecord(ohubId: String, operator: Operator)
 
   def markGoldenRecord(sourcePreference: Map[String, Int])
                       (operators: Seq[Operator]): Seq[Operator] = {
@@ -28,8 +26,9 @@ object OperatorUpdateGoldenRecord extends SparkJob with OperatorGoldenRecord {
     import spark.implicits._
 
     operators
-      .groupByKey(_.ohubId.get)
-      .agg(collect_list("operator").alias("operators").as[Seq[Operator]])
+      .map(x => oHubIdsAndRecord(x.ohubId.get, x))
+      .groupByKey(_.ohubId)
+      .agg(collect_list("operator").as("operator").as[Seq[Operator]])
       .map(_._2)
       .flatMap(markGoldenRecord(sourcePreference))
       .repartition(60)
