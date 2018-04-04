@@ -25,7 +25,7 @@ object OperatorAcmConverter extends SparkJob {
       .map(operator =>
 
         AcmOperator(
-          OPR_ORIG_INTEGRATION_ID = operator.groupId.getOrElse("UNKNOWN"),
+          OPR_ORIG_INTEGRATION_ID = operator.ohubId.getOrElse("UNKNOWN"),
           OPR_LNKD_INTEGRATION_ID = operator.concatId,
           GOLDEN_RECORD_FLAG = boolAsString(operator.isGoldenRecord),
           COUNTRY_CODE = operator.countryCode,

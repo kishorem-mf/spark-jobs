@@ -15,7 +15,7 @@ class OperatorSpec extends WordSpec with Matchers {
           countryCode                 = "country-code",
           isActive                    = true,
           isGoldenRecord              = false,
-          groupId                     = Some(UUID.randomUUID().toString),
+          ohubId                     = Some(UUID.randomUUID().toString),
           name                        = "operator-name",
           sourceEntityId              = "source-entity-id",
           sourceName                  = "source-name",
