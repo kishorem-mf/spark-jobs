@@ -7,8 +7,8 @@ class OperatorUpdateGoldenRecordSpec extends SparkJobSpec {
   describe("picking golden record") {
     it("should pick the operator with highest sourcePreference") {
       val sourcePreferences = Map(
-        "sourceA" -> 1,
-        "sourceB" -> 2
+        "sourceA" -> 2,
+        "sourceB" -> 1
       )
       val operators = Seq(
         defaultOperatorRecord.copy(sourceName = "sourceA"),
