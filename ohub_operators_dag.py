@@ -22,6 +22,7 @@ default_args = {
 
 wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'
 raw_bucket = wasb_root_bucket + 'raw/{date}/{schema}/**/*.csv'
+ingested_bucket = wasb_root_bucket + 'ingested/{date}/{fn}.parquet'
 intermediate_bucket = wasb_root_bucket + 'intermediate/{date}/{fn}.parquet'
 integrated_bucket = wasb_root_bucket + 'integrated/{date}/{fn}.parquet'
 export_bucket = wasb_root_bucket + 'export/{date}/{fn}.parquet'
@@ -64,7 +65,7 @@ with DAG('ohub_operators', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
             'parameters': [raw_bucket.format(date='2017-07-12', schema='operators'),
-                           intermediate_bucket.format(date='2017-07-12', fn='operators')]
+                           ingested_bucket.format(date='2017-07-12', fn='operators')]
         }
     )
 
@@ -129,7 +130,7 @@ with DAG('ohub_operators', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
             'parameters': [intermediate_bucket.format(date='2017-07-12', fn='operators_matched'),
-                           intermediate_bucket.format(date='2017-07-12', fn='operators'),
+                           ingested_bucket.format(date='2017-07-12', fn='operators'),
                            integrated_bucket.format(date='2017-07-12', fn='operators_merged')]
         })
 
