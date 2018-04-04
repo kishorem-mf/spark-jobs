@@ -10,23 +10,13 @@ import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{Dataset, SparkSession}
 import org.apache.spark.sql.functions.collect_list
 
-object OperatorUpdateGoldenRecord extends SparkJob {
+object OperatorUpdateGoldenRecord extends SparkJob with OperatorGoldenRecord {
 
 
-  def pickGoldenRecord(sourcePreference: Map[String, Int])
-                                (operators: Seq[Operator]): Seq[Operator] = {
-    val ohubId = operators.head.ohubId
-    val goldenRecord = operators.reduce((o1, o2) => {
-      val preference1 = sourcePreference.getOrElse(o1.sourceName, Int.MaxValue)
-      val preference2 = sourcePreference.getOrElse(o2.sourceName, Int.MaxValue)
-      if (preference1 < preference2) o1
-      else if (preference1 > preference2) o2
-      else { // same source preference
-        val created1 = o1.dateCreated.getOrElse(new Timestamp(System.currentTimeMillis))
-        val created2 = o1.dateCreated.getOrElse(new Timestamp(System.currentTimeMillis))
-        if (created1.before(created2)) o1 else o2
-      }
-    })
+  def markGoldenRecord(sourcePreference: Map[String, Int])
+                      (operators: Seq[Operator]): Seq[Operator] = {
+
+    val goldenRecord = pickGoldenRecord(sourcePreference, operators)
     operators.map(o => o.copy(isGoldenRecord = (o == goldenRecord)))
   }
 
@@ -40,8 +30,8 @@ object OperatorUpdateGoldenRecord extends SparkJob {
     operators
       .groupByKey(_.ohubId.get)
       .agg(collect_list("operator").alias("operators").as[Seq[Operator]])
-      .map( _._2)
-      .flatMap(pickGoldenRecord(sourcePreference))
+      .map(_._2)
+      .flatMap(markGoldenRecord(sourcePreference))
       .repartition(60)
   }
 
