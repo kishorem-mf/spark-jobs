@@ -9,7 +9,7 @@ import org.apache.spark.sql.functions._
 object OperatorUpdateGoldenRecord extends SparkJob with OperatorGoldenRecord {
 
 
-  case class oHubIdsAndRecord(ohubId: String, operator: Operator)
+  case class oHubIdAndRecord(ohubId: String, operator: Operator)
 
   def markGoldenRecord(sourcePreference: Map[String, Int])
                       (operators: Seq[Operator]): Seq[Operator] = {
@@ -26,7 +26,7 @@ object OperatorUpdateGoldenRecord extends SparkJob with OperatorGoldenRecord {
     import spark.implicits._
 
     operators
-      .map(x => oHubIdsAndRecord(x.ohubId.get, x))
+      .map(x => oHubIdAndRecord(x.ohubId.get, x))
       .groupByKey(_.ohubId)
       .agg(collect_list("operator").as("operator").as[Seq[Operator]])
       .map(_._2)
