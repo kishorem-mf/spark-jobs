@@ -104,11 +104,11 @@ object ContactPersonConverter extends SparkJob {
       emailAddressOriginal = row.parseStringOption(25),
       phoneNumber = row
         .parseStringOption(26)
-        .map(phoneNumber => cleanPhoneNumber(phoneNumber, countryCode.getOrElse(""), countryPrefixList)),
+        .map(phoneNumber ⇒ cleanPhoneNumber(phoneNumber, countryCode.getOrElse(""), countryPrefixList)),
       phoneNumberOriginal = row.parseStringOption(26),
       mobilePhoneNumber = row
         .parseStringOption(27)
-        .map(phoneNumber => cleanPhoneNumber(phoneNumber, countryCode.getOrElse(""), countryPrefixList)),
+        .map(phoneNumber ⇒ cleanPhoneNumber(phoneNumber, countryCode.getOrElse(""), countryPrefixList)),
       mobilePhoneNumberOriginal = row.parseStringOption(27),
       faxNumber = row.parseStringOption(28),
       optOut = row.parseBooleanOption(29),
@@ -167,7 +167,7 @@ object ContactPersonConverter extends SparkJob {
         JoinType.LeftOuter
       )
       .map {
-        case (contactPersonRecord, countryRecord) => Option(countryRecord).fold(contactPersonRecord) { cr =>
+        case (contactPersonRecord, countryRecord) ⇒ Option(countryRecord).fold(contactPersonRecord) { cr ⇒
           contactPersonRecord.copy(
             country = Option(cr.countryName),
             countryCode = Option(cr.countryCode)
@@ -192,7 +192,7 @@ object ContactPersonConverter extends SparkJob {
     val requiredNrOfColumns = 48
     val contactPersonRecords = storage
       .readFromCsv(inputFile, fieldSeparator = csvColumnSeparator)
-      .filter { row =>
+      .filter { row ⇒
         if (row.length != requiredNrOfColumns) {
           throw new InputMismatchException(
             s"An input CSV row did not have the required $requiredNrOfColumns columns\n${row.toString()}"

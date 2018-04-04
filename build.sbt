@@ -1,3 +1,5 @@
+import scalariform.formatter.preferences._
+
 name := "spark-jobs"
 
 version := "0.2.0"
@@ -34,3 +36,14 @@ test in assembly := {}
 coverageExcludedPackages := "<empty>;.*storage.*"
 coverageMinimum := 27.5
 coverageFailOnMinimum := true
+
+scalariformPreferences := scalariformPreferences.value
+  .setPreference(AlignParameters, false)
+  .setPreference(AlignSingleLineCaseStatements, true)
+  .setPreference(AlignSingleLineCaseStatements.MaxArrowIndent, 90)
+  .setPreference(DoubleIndentConstructorArguments, true)
+  .setPreference(RewriteArrowSymbols, true)
+  .setPreference(DanglingCloseParenthesis, Preserve)
+  .setPreference(IndentSpaces, 2)
+  .setPreference(IndentWithTabs, false)
+  .setPreference(NewlineAtEndOfFile, true)

@@ -12,7 +12,7 @@ object OrderAcmConverter extends SparkJob {
   def transform(spark: SparkSession, orders: Dataset[OrderRecord]): Dataset[UFSOrder] = {
     import spark.implicits._
 
-    orders.map(order => UFSOrder(
+    orders.map(order ⇒ UFSOrder(
       ORDER_ID = order.orderConcatId,
       COUNTRY_CODE = order.countryCode,
       ORDER_TYPE = order.orderType,

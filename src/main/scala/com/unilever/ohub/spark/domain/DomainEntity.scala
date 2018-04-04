@@ -24,7 +24,6 @@ trait DomainEntity extends Product {
   val ohubId: Option[String]
   val isGoldenRecord: Boolean
 
-
   // aggregated fields
   val ingestionErrors: Map[String, IngestionError]
 

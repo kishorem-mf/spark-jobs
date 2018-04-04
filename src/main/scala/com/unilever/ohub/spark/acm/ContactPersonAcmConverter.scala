@@ -8,9 +8,9 @@ import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
 object ContactPersonAcmConverter extends SparkJob {
-  private val boolAsString = (bool: Boolean) => if (bool) "Y" else "N"
-  private val clean = (str: String) => StringFunctions.removeGenericStrangeChars(str)
-  private val cleanNames = (firstName: String, lastName: String, isFirstName: Boolean) => {
+  private val boolAsString = (bool: Boolean) ⇒ if (bool) "Y" else "N"
+  private val clean = (str: String) ⇒ StringFunctions.removeGenericStrangeChars(str)
+  private val cleanNames = (firstName: String, lastName: String, isFirstName: Boolean) ⇒ {
     StringFunctions.fillLastNameOnlyWhenFirstEqualsLastName(firstName, lastName, isFirstName)
   }
   private val dateFormat = "yyyy-MM-dd HH:mm:ss"
@@ -21,7 +21,7 @@ object ContactPersonAcmConverter extends SparkJob {
   ): Dataset[UFSRecipient] = {
     import spark.implicits._
 
-    goldenContactPersonRecords.map { goldenContactPersonRecord =>
+    goldenContactPersonRecords.map { goldenContactPersonRecord ⇒
       val contactPerson = goldenContactPersonRecord.contactPerson
 
       UFSRecipient(
@@ -48,9 +48,9 @@ object ContactPersonAcmConverter extends SparkJob {
         MIDDLE_NAME = "",
         TITLE = contactPerson.title,
         GENDER = contactPerson.gender.map {
-          case "M" => "1"
-          case "F" => "2"
-          case _   => "0"
+          case "M" ⇒ "1"
+          case "F" ⇒ "2"
+          case _   ⇒ "0"
         },
         LANGUAGE = contactPerson.languageKey,
         EMAIL_ADDRESS = contactPerson.emailAddress,
@@ -72,7 +72,7 @@ object ContactPersonAcmConverter extends SparkJob {
         ROLE = contactPerson.function,
         COUNTRY_CODE = contactPerson.countryCode,
         SCM = contactPerson.scm,
-        DELETE_FLAG = contactPerson.status.map(status => if (status) "0" else "1"),
+        DELETE_FLAG = contactPerson.status.map(status ⇒ if (status) "0" else "1"),
         KEY_DECISION_MAKER = contactPerson.keyDecisionMaker.map(boolAsString),
         OPT_IN = contactPerson.emailOptIn.map(boolAsString),
         OPT_IN_DATE = contactPerson.emailOptInDate.map(_.formatted(dateFormat)),

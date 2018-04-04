@@ -11,7 +11,7 @@ import com.unilever.ohub.spark.data.{ CountryRecord, OperatorRecord }
 import com.unilever.ohub.spark.generic.StringFunctions
 import org.apache.spark.sql.{ Dataset, Row, SparkSession }
 
-object OperatorConverter extends SparkJob  {
+object OperatorConverter extends SparkJob {
   private val csvColumnSeparator = "‰"
 
   private def rowToOperatorRecord(row: Row): OperatorRecord = {
@@ -120,7 +120,7 @@ object OperatorConverter extends SparkJob  {
         JoinType.LeftOuter
       )
       .map {
-        case (operatorRecord, countryRecord) => Option(countryRecord).fold(operatorRecord) { cr =>
+        case (operatorRecord, countryRecord) ⇒ Option(countryRecord).fold(operatorRecord) { cr ⇒
           operatorRecord.copy(
             country = Option(cr.countryName),
             countryCode = Option(cr.countryCode)
@@ -141,7 +141,7 @@ object OperatorConverter extends SparkJob  {
     val requiredNrOfColumns = 59
     val operatorRecords = storage
       .readFromCsv(inputFile, fieldSeparator = csvColumnSeparator)
-      .filter { row =>
+      .filter { row ⇒
         if (row.length != requiredNrOfColumns) {
           throw new InputMismatchException(
             s"An input CSV row did not have the required $requiredNrOfColumns columns\n${row.toString()}"

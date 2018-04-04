@@ -27,7 +27,7 @@ object ContactPersonMerging2 extends SparkJob {
         JoinType.LeftOuter
       )
       .map {
-        case (contactPerson, maybeOperator) =>
+        case (contactPerson, maybeOperator) ⇒
           val refOperatorId = Option(maybeOperator).map(_.ohubId).getOrElse("REF_OPERATOR_UNKNOWN")
           contactPerson.copy(
             contactPerson = contactPerson.contactPerson.copy(
@@ -61,7 +61,7 @@ object ContactPersonMerging2 extends SparkJob {
 
     val contactPersonMerging = storage
       .readFromParquet[GoldenContactPersonRecord](contactPersonMergingInputFile)
-      .map(line => { // need the operator ref to have the data of a concat id
+      .map(line ⇒ { // need the operator ref to have the data of a concat id
         val contact = line.contactPerson
         val concatId = StringFunctions.createConcatId(
           contact.countryCode,
@@ -79,7 +79,7 @@ object ContactPersonMerging2 extends SparkJob {
     val operatorIdAndRefs = storage
       .readFromParquet[GoldenOperatorRecord](operatorMergingInputFile)
       .select($"ohubOperatorId", $"refIds")
-      .flatMap(row => row.getSeq[String](1).map(OHubIdAndRefId(row.getString(0),_)))
+      .flatMap(row ⇒ row.getSeq[String](1).map(OHubIdAndRefId(row.getString(0), _)))
 
     val transformed = transform(spark, contactPersonMerging, operatorIdAndRefs)
 

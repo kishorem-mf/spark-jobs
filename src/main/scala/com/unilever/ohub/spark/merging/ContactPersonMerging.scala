@@ -18,7 +18,7 @@ object ContactPersonMerging extends SparkJob {
   ): GoldenContactPersonRecord = {
     val refIds = contactPersons.map(_.contactPersonConcatId)
 
-    val goldenRecord = contactPersons.reduce { (cp1, cp2) =>
+    val goldenRecord = contactPersons.reduce { (cp1, cp2) ⇒
       val source1 = cp1.source.getOrElse(unknownSource)
       val preference1 = sourcePreference.getOrElse(source1, defaultSourcePreference)
 
@@ -53,10 +53,10 @@ object ContactPersonMerging extends SparkJob {
     import spark.implicits._
 
     contactPersons
-      .filter(cpn => cpn.emailAddress.isDefined || cpn.mobilePhoneNumber.isDefined)
-      .groupByKey(cpn => cpn.emailAddress.getOrElse("") + cpn.mobilePhoneNumber.getOrElse(""))
+      .filter(cpn ⇒ cpn.emailAddress.isDefined || cpn.mobilePhoneNumber.isDefined)
+      .groupByKey(cpn ⇒ cpn.emailAddress.getOrElse("") + cpn.mobilePhoneNumber.getOrElse(""))
       .mapGroups {
-        case (_, contactPersonsIt) => pickGoldenRecordAndGroupId(sourcePreference, contactPersonsIt.toSet)
+        case (_, contactPersonsIt) ⇒ pickGoldenRecordAndGroupId(sourcePreference, contactPersonsIt.toSet)
       }
       .repartition(60)
   }

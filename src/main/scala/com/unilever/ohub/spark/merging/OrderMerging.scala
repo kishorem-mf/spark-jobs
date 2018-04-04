@@ -20,11 +20,11 @@ object OrderMerging extends SparkJob {
     import spark.implicits._
 
     val orders = orderRecords
-      .map(order => {
-        val operatorRef = order.refOperatorId.map { refOperatorId =>
+      .map(order ⇒ {
+        val operatorRef = order.refOperatorId.map { refOperatorId ⇒
           StringFunctions.createConcatId(order.countryCode, order.source, refOperatorId)
         }
-        val contactRef = order.refContactPersonId.map { refContactPersonId =>
+        val contactRef = order.refContactPersonId.map { refContactPersonId ⇒
           StringFunctions.createConcatId(order.countryCode, order.source, refContactPersonId)
         }
         order.copy(
@@ -34,15 +34,15 @@ object OrderMerging extends SparkJob {
       })
 
     val operators = operatorRecords
-      .flatMap { operator =>
-        operator.refIds.map { refId =>
+      .flatMap { operator ⇒
+        operator.refIds.map { refId ⇒
           OHubIdRefIdAndCountry(operator.ohubOperatorId, refId, operator.countryCode)
         }
       }
 
     val contactPersons = contactPersonRecords
-      .flatMap { contactPerson =>
-        contactPerson.refIds.map { refId =>
+      .flatMap { contactPerson ⇒
+        contactPerson.refIds.map { refId ⇒
           OHubIdRefIdAndCountry(contactPerson.ohubContactPersonId, refId, contactPerson.countryCode)
         }
       }
@@ -55,7 +55,7 @@ object OrderMerging extends SparkJob {
         JoinType.Left
       )
       .map {
-        case (order, maybeOperator) =>
+        case (order, maybeOperator) ⇒
           val refOperatorId = Option(maybeOperator).map(_.ohubId).getOrElse("REF_OPERATOR_UNKNOWN")
           order.copy(refOperatorId = Some(refOperatorId))
       }
@@ -68,7 +68,7 @@ object OrderMerging extends SparkJob {
         JoinType.Left
       )
       .map {
-        case (order, maybeContactPerson) =>
+        case (order, maybeContactPerson) ⇒
           val refContactPersonId = Option(maybeContactPerson)
             .map(_.ohubId)
             .getOrElse("REF_CONTACT_PERSON_UNKNOWN")
@@ -91,7 +91,7 @@ object OrderMerging extends SparkJob {
       operatorMergingInputFile: String,
       orderInputFile: String,
       outputFile: String
-    ) = filePaths
+      ) = filePaths
 
     log.info(
       s"Merging orders from [$contactPersonMergingInputFile], [$operatorMergingInputFile] " +

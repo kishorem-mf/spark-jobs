@@ -7,22 +7,22 @@ import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.generic.StringFunctions
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
 object OperatorAcmConverter extends SparkJob {
-  private val boolAsString = (bool: Boolean) => if (bool) "Y" else "N"
-  private val clean = (str: String) => StringFunctions.removeGenericStrangeChars(str)
+  private val boolAsString = (bool: Boolean) ⇒ if (bool) "Y" else "N"
+  private val clean = (str: String) ⇒ StringFunctions.removeGenericStrangeChars(str)
 
   def transform(
-                 spark: SparkSession,
-                 channelMappings: Dataset[ChannelMapping],
-                 operators: Dataset[Operator]
-               ): Dataset[AcmOperator] = {
+    spark: SparkSession,
+    channelMappings: Dataset[ChannelMapping],
+    operators: Dataset[Operator]
+  ): Dataset[AcmOperator] = {
     import spark.implicits._
 
     val ufsOperators = operators
       .filter(_.isGoldenRecord)
-      .map(operator =>
+      .map(operator ⇒
 
         AcmOperator(
           OPR_ORIG_INTEGRATION_ID = operator.ohubId.getOrElse("UNKNOWN"),
@@ -43,7 +43,7 @@ object OperatorAcmConverter extends SparkJob {
           COUNTRY = operator.countryName,
           AVERAGE_SELLING_PRICE = operator.averagePrice.map(_.setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble),
           NUMBER_OF_COVERS = operator.totalDishes,
-          NUMBER_OF_WEEKS_OPEN = operator.weeksClosed.map { weeksClosed =>
+          NUMBER_OF_WEEKS_OPEN = operator.weeksClosed.map { weeksClosed ⇒
             if (52 - weeksClosed < 0) 0 else 52 - weeksClosed
           },
           NUMBER_OF_DAYS_OPEN = operator.daysOpen,
@@ -86,7 +86,7 @@ object OperatorAcmConverter extends SparkJob {
         JoinType.Left
       )
       .map {
-        case (operator, maybeChannelMapping) => Option(maybeChannelMapping).fold(operator) { channelMapping =>
+        case (operator, maybeChannelMapping) ⇒ Option(maybeChannelMapping).fold(operator) { channelMapping ⇒
           operator.copy(
             LOCAL_CHANNEL = Option(channelMapping.localChannel),
             CHANNEL_USAGE = Option(channelMapping.channelUsage),
