@@ -30,14 +30,14 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag] extends Sp
 
   override final val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
 
-  def toDomainEntity: Row => DomainType
+  def toDomainEntity: (Row, DomainTransformer) => DomainType
 
-  def transform(transformFn: Row => DomainType): Row => Either[ErrorMessage, DomainType] =
+  def transform(transformFn: (Row, DomainTransformer) => DomainType): Row => Either[ErrorMessage, DomainType] =
     row =>
       try
-        Right(transformFn(row))
+        Right(transformFn(row, DomainTransformer()))
       catch {
-        case e: Exception =>
+        case e: Throwable =>
           Left(s"Error parsing row: '$e', row = '$row'")
       }
 
@@ -53,6 +53,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag] extends Sp
         hasHeaders = hasHeaders
       )
       .map(transform(toDomainEntity))
+      .distinct()
       // persist the result here (result is evaluated multiple times, since spark transformations are lazy)
       .persist(StorageLevels.MEMORY_AND_DISK)
 
@@ -62,9 +63,10 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag] extends Sp
     if (numberOfErrors > 0) { // do something with the errors here
       log.error(s"No parquet file written, number of errors found is '$numberOfErrors'")
       errors.toDF("ERROR").show(numRows = 100, truncate = false)
-    } else {
-      val domainEntities: Dataset[DomainType] = result.filter(_.isRight ).map(_.right.get)
-      storage.writeToParquet(domainEntities, outputFile, partitionByValue)
     }
+
+    // TODO reintroduce strictness with the ability to switch behaviour for development purposes
+    val domainEntities: Dataset[DomainType] = result.filter(_.isRight ).map(_.right.get)
+    storage.writeToParquet(domainEntities, outputFile, partitionByValue)
   }
 }

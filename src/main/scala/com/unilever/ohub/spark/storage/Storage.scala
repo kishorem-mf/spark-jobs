@@ -2,11 +2,11 @@ package com.unilever.ohub.spark.storage
 
 import java.util.Properties
 
-import com.unilever.ohub.spark.data.{ ChannelMapping, CountryRecord }
+import com.unilever.ohub.spark.data.{ChannelMapping, CountryRecord}
 import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.{ Column, DataFrame, Dataset, Encoder, Row, SaveMode, SparkSession }
-import java.io.{ File, FileOutputStream }
+import org.apache.spark.sql.{Column, DataFrame, Dataset, Encoder, Row, SaveMode, SparkSession}
+import java.io.{File, FileOutputStream}
 
 import scala.io.Source
 
@@ -33,10 +33,14 @@ trait Storage {
 
   def sourcePreference: Map[String, Int]
 
-  def channelMappings: Dataset[ChannelMapping]
+  def channelMappings(dbUrl: String,
+                      dbName: String,
+                      userName: String,
+                      userPassword: String): Dataset[ChannelMapping]
 }
 
 class DefaultStorage(spark: SparkSession) extends Storage {
+
   import spark.implicits._
 
   override def readFromCsv(
@@ -49,7 +53,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .option("header", hasHeaders)
       .option("sep", fieldSeparator)
       .option("inferSchema", value = false)
-      .option("mode", "FAILFAST") // let's fail fast for now
+      //      .option("mode", "FAILFAST") // let's fail fast for now
       .csv(location)
   }
 
@@ -131,16 +135,13 @@ class DefaultStorage(spark: SparkSession) extends Storage {
 
   private def readJdbcTable(
                              spark: SparkSession,
-                             dbConnectionString: String = "jdbc:postgresql://localhost:5432/",
-                             dbName: String = "ufs_example",
+                             dbUrl: String,
+                             dbName: String,
                              dbTable: String,
-                             userName: String = "ufs_example",
-                             userPassword: String = "ufs_example"
+                             userName: String,
+                             userPassword: String
                            ): DataFrame = {
-    val dbFullConnectionString = {
-      if (dbConnectionString.endsWith("/")) s"$dbConnectionString$dbName"
-      else s"$dbConnectionString/$dbName"
-    }
+    val dbFullConnectionString = s"jdbc::postgresql://$dbUrl:5432/$dbName"
 
     val jdbcProperties = new Properties
     jdbcProperties.put("user", userName)
@@ -149,9 +150,13 @@ class DefaultStorage(spark: SparkSession) extends Storage {
     spark.read.jdbc(dbFullConnectionString, dbTable, jdbcProperties)
   }
 
-  override def channelMappings: Dataset[ChannelMapping] = {
-    val channelMappingDF = readJdbcTable(spark, dbTable = "channel_mapping")
-    val channelReferencesDF = readJdbcTable(spark, dbTable = "channel_references")
+  override def channelMappings(dbUrl: String,
+                               dbName: String,
+                               userName: String,
+                               userPassword: String): Dataset[ChannelMapping] = {
+
+    val channelMappingDF = readJdbcTable(spark, dbUrl, dbName, "channel_mapping", userName, userPassword)
+    val channelReferencesDF = readJdbcTable(spark, dbUrl, dbName, "channel_references", userName, userPassword)
     channelMappingDF
       .join(
         channelReferencesDF,
@@ -170,4 +175,5 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       )
       .as[ChannelMapping]
   }
+
 }

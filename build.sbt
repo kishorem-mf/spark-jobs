@@ -1,6 +1,6 @@
 name := "spark-jobs"
 
-version := "0.1"
+version := "0.2.0"
 
 scalaVersion := "2.11.11"
 
@@ -32,5 +32,5 @@ test in assembly := {}
 
 // Scoverage settings
 coverageExcludedPackages := "<empty>;.*storage.*"
-coverageMinimum := 28.55
+coverageMinimum := 27.5
 coverageFailOnMinimum := true

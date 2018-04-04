@@ -28,50 +28,50 @@ class CustomParsersSpec extends FunSpec with Matchers {
 
   describe("parseDateTimeStampOption") {
     it("should parse empty string") {
-      assert(parseDateTimeStampOption("").isEmpty)
+      assertThrows[IllegalArgumentException](parseDateTimeStampUnsafe(""))
     }
 
     it("should parse 0 as None") {
-      assert(parseDateTimeStampOption("0").isEmpty)
+      assertThrows[IllegalArgumentException](parseDateTimeStampUnsafe("0"))
     }
 
     it("should parse 20171215 as 2017-12-15 00:00:00") {
-      assert(parseDateTimeStampOption("20171215").get.toString == "2017-12-15 00:00:00.0")
+      assert(parseDateTimeStampUnsafe("20171215").toString == "2017-12-15 00:00:00.0")
     }
 
     it("should parse 20171215 12:13:14 as 2017-12-15 12:13:14") {
-      assert(parseDateTimeStampOption("20171215 12:13:14").get.toString == "2017-12-15 12:13:14.0")
+      assert(parseDateTimeStampUnsafe("20171215 12:13:14").toString == "2017-12-15 12:13:14.0")
     }
 
     it("should parse 2017-12-15 12:13:14 as 2017-12-15 12:13:14") {
-      assert(parseDateTimeStampOption("2017-12-15 12:13:14").get.toString == "2017-12-15 12:13:14.0")
+      assert(parseDateTimeStampUnsafe("2017-12-15 12:13:14").toString == "2017-12-15 12:13:14.0")
     }
 
     it("should parse 2017/12/15 12:13:14 as 2017-12-15 12:13:14") {
-      assert(parseDateTimeStampOption("2017/12/15 12:13:14").get.toString == "2017-12-15 12:13:14.0")
+      assert(parseDateTimeStampUnsafe("2017/12/15 12:13:14").toString == "2017-12-15 12:13:14.0")
     }
 
     it("should parse 2017.12.15 12:13:14 as 2017-12-15 12:13:14") {
-      assert(parseDateTimeStampOption("2017.12.15 12:13:14").get.toString == "2017-12-15 12:13:14.0")
+      assert(parseDateTimeStampUnsafe("2017.12.15 12:13:14").toString == "2017-12-15 12:13:14.0")
     }
 
     it("should return None on other input") {
-      assert(parseDateTimeStampOption("Foo").isEmpty)
+      assertThrows[IllegalArgumentException](parseDateTimeStampUnsafe("Foo"))
     }
   }
 
   describe("parseBigDecimalOption") {
     it("should parse an empty string") {
-      assert(parseBigDecimalOption("").isEmpty)
+      assertThrows[MatchError](parseBigDecimalUnsafe(""))
     }
     it("should parse -1000,96 as -1000.96") {
-      assert(parseBigDecimalOption("-1000,96").get.toString == "-1000.96")
+      assert(parseBigDecimalUnsafe("-1000,96").toString == "-1000.96")
     }
     it("should parse -1000.96 as -1000.96") {
-      assert(parseBigDecimalOption("-1000.96").get.toString == "-1000.96")
+      assert(parseBigDecimalUnsafe("-1000.96").toString == "-1000.96")
     }
     it("should parse abc as 0") {
-      assert(parseBigDecimalOption("abc").get.toString == "0")
+      assertThrows[MatchError](parseBigDecimalUnsafe("abc"))
     }
   }
 
@@ -122,27 +122,27 @@ class CustomParsersSpec extends FunSpec with Matchers {
 
   describe("parseBoolOption") {
     it("should parse Y to true") {
-      assert(parseBoolOption("Y").contains(true))
+      assert(parseBoolUnsafe("Y") == true)
     }
 
     it("should parse N to false") {
-      assert(parseBoolOption("N").contains(false))
+      assert(parseBoolUnsafe("N") == false)
     }
 
     it("should parse A to true") {
-      assert(parseBoolOption("A").contains(true))
+      assert(parseBoolUnsafe("A") == true)
     }
 
     it("should parse D to false") {
-      assert(parseBoolOption("D").contains(false))
+      assert(parseBoolUnsafe("D") == false)
     }
 
     it("should parse empty string to None") {
-      assert(parseBoolOption("").isEmpty)
+      assertThrows[Exception](parseBoolUnsafe(""))
     }
 
     it("should throw exception on other input") {
-      assert(parseBoolOption("Foo").isEmpty)
+      assertThrows[Exception](parseBoolUnsafe("Foo"))
     }
   }
 

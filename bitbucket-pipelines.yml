@@ -29,14 +29,19 @@ pipelines:
             - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
             - fn="$(ls target/scala-2.11/*.jar | cut -d'/' -f3)"
             - az storage blob upload -f target/scala-2.11/${fn} -c prod -n deployment/spark-jobs/${fn} --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_ACCOUNT}
-
       - step:
-          name: Deploy to gcloud bucket
-          image: google/cloud-sdk:latest
+          name: Deploy to databricks fs
+          image: timvancann/databricks-cli
           script:
-            - echo $G_SECRET > key.json
-            - gcloud auth activate-service-account bitbucket@ufs-prod.iam.gserviceaccount.com --key-file=key.json
-            - gsutil cp target/scala-2.11/*.jar gs://ufs-prod/deployment/ohub2.0/
+            - touch ~/.databrickscfg
+            - echo "[DEFAULT]" >> ~/.databrickscfg
+            - echo "host = ${DB_HOST}" >> ~/.databrickscfg
+            - echo "token = ${DB_TOKEN}" >> ~/.databrickscfg
+            - cat ~/.databrickscfg
+
+            - fn="$(ls target/scala-2.11/*.jar | cut -d'/' -f3)"
+            - databricks fs rm dbfs:/libraries/ohub/${fn}
+            - databricks fs cp target/scala-2.11/${fn} dbfs:/libraries/ohub/${fn}
 
     dev:
       - step:
