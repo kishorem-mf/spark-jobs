@@ -1,5 +1,7 @@
 package com.unilever.ohub.spark.tsv2parquet
 
+import java.sql.Timestamp
+
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import org.apache.spark.sql.Row
 
@@ -72,6 +74,19 @@ class DomainTransformer extends Serializable {
       // maybe there is a BOM char in front of the column name, otherwise let's fail.
       case _: Throwable => row.fieldIndex(s"$ZERO_WIDTH_NO_BREAK_SPACE$columnName")
     }
+
+  // where to put the following functions
+
+  def createConcatId(countryCodeColumn: String, sourceNameColumn: String, sourceEntityIdColumn: String)(implicit row: Row): String = {
+    val countryCode: String = originalValue("COUNTRY_CODE")(row).get
+    val sourceName: String = originalValue("SOURCE")(row).get
+    val sourceEntityId: String = originalValue("REF_OPERATOR_ID")(row).get
+
+    s"$countryCode~$sourceName~$sourceEntityId"
+  }
+
+  def currentTimestamp() = new Timestamp(System.currentTimeMillis())
+
 }
 
 object MandatoryFieldException {

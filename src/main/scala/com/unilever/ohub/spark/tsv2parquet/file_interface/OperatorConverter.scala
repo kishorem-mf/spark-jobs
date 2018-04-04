@@ -1,7 +1,5 @@
 package com.unilever.ohub.spark.tsv2parquet.file_interface
 
-import java.sql.Timestamp
-
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 import com.unilever.ohub.spark.generic.StringFunctions._
@@ -15,12 +13,9 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
       import transformer._
       implicit val source: Row = row
 
-      val countryCode: String = originalValue("COUNTRY_CODE")(row).getOrElse("")
-      val sourceName: String = originalValue("SOURCE")(row).getOrElse("")
-      val sourceEntityId: String = originalValue("REF_OPERATOR_ID")(row).getOrElse("")
-
-      val concatId: String = s"$countryCode~$sourceName~$sourceEntityId"
-      val ohubCreated = new Timestamp(System.currentTimeMillis())
+      val countryCode: String = originalValue("COUNTRY_CODE")(row).get
+      val concatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_OPERATOR_ID")
+      val ohubCreated = currentTimestamp()
 
       // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
 
@@ -31,7 +26,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ), // TODO lookup country code
         isActive                    = mandatory ( "STATUS",                   "isActive",                     parseBoolUnsafe _                         ),
         isGoldenRecord              = false                                                                                                              ,
-        groupId                     = Option.empty                                                                                                       ,
+        ohubId                     = Option.empty                                                                                                       ,
         name                        = mandatory ( "NAME",                     "name"                                                                    ),
         sourceEntityId              = mandatory ( "REF_OPERATOR_ID",          "sourceEntityId"                                                          ),
         sourceName                  = mandatory ( "SOURCE",                   "sourceName"                                                              ),
@@ -41,7 +36,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         chainId                     = optional  ( "CHAIN_ID",                 "chainId"                                                                 ),
         chainName                   = optional  ( "CHAIN_NAME",               "chainName"                                                               ),
         channel                     = optional  ( "CHANNEL",                  "channel"                                                                 ),
-        city                        = optional  ( "CITY",                     "city",                         removeSpacesStrangeCharsAndToLower _      ),
+        city                        = optional  ( "CITY",                     "city"                                                                    ),
         cookingConvenienceLevel     = optional  ( "CONVENIENCE_LEVEL",        "cookingConvenienceLevel"                                                 ),
         countryName                 = optional  ( "COUNTRY",                  "countryName"                                                             ),
         customerType                = None                                                                                                               , // TODO introduce when enum is available
@@ -85,7 +80,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         region                      = optional  ( "REGION",                   "region"                                                                  ),
         salesRepresentative         = optional  ( "SALES_REP",                "salesRepresentative"                                                     ),
         state                       = optional  ( "STATE",                    "state"                                                                   ),
-        street                      = optional  ( "STREET",                   "street",                       removeSpacesStrangeCharsAndToLower _      ),
+        street                      = optional  ( "STREET",                   "street"                                                                  ),
         subChannel                  = optional  ( "SUB_CHANNEL",              "subChannel"                                                              ),
         totalDishes                 = optional  ( "NR_OF_DISHES",             "totalDishes",                  parseNumberOrAverageFromRange _           ),
         totalLocations              = optional  ( "NR_OF_LOCATIONS",          "totalLocations",               parseNumberOrAverageFromRange _           ),
@@ -93,7 +88,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         vat                         = optional  ( "VAT_NUMBER",               "vat"                                                                     ),
         webUpdaterId                = None                                                                                                               ,
         weeksClosed                 = optional  ( "WEEKS_CLOSED",             "weeksClosed",                  toInt _                                   ),
-        zipCode                     = optional  ( "ZIP_CODE",                 "zipCode",                      removeSpacesStrangeCharsAndToLower _      ),
+        zipCode                     = optional  ( "ZIP_CODE",                 "zipCode"                                                                 ),
         ingestionErrors             = errors
       )
     // format: ON

@@ -6,17 +6,19 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.constraint._
 
+// TODO add german fields to additional fields
+
 case class Operator( // generic fields
-                     concatId: String,
+                     concatId: String, // concatenation of: countryCode ~ sourceName ~ sourceEntityId (entity identifier)
                      countryCode: String, // TODO Existing country code in OHUB using: Iso 3166-1 alpha 2
                      isActive: Boolean,
                      isGoldenRecord: Boolean,
-                     groupId: Option[String],
+                     ohubId: Option[String],
                      name: String,
                      sourceEntityId: String,
                      sourceName: String,
                      ohubCreated: Timestamp,
-                     ohubUpdated: Timestamp,
+                     ohubUpdated: Timestamp, // currently always created timestamp (how/when will it get an updated timestamp?)
                      // specific fields
                      averagePrice: Option[BigDecimal],
                      chainId: Option[String],
@@ -25,7 +27,7 @@ case class Operator( // generic fields
                      city: Option[String],
                      cookingConvenienceLevel: Option[String],
                      countryName: Option[String],
-                     customerType: Option[String],
+                     customerType: Option[String], // TODO Options: entity types, why do we have this, isn't it encoded in the entity type implicitly?
                      dateCreated: Option[Timestamp],
                      dateUpdated: Option[Timestamp],
                      daysOpen: Option[Int],
@@ -60,7 +62,7 @@ case class Operator( // generic fields
                      mobileNumber: Option[String],
                      netPromoterScore: Option[BigDecimal],
                      oldIntegrationId: Option[String],
-                     otm: Option[String], // Options: A | B | C | D | E | F
+                     otm: Option[String], // TODO Options: A | B | C | D | E | F
                      otmEnteredBy: Option[String],
                      phoneNumber: Option[String],
                      region: Option[String],
