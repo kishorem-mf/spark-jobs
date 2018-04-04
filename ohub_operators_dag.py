@@ -78,7 +78,7 @@ with DAG('ohub_operators', default_args=default_args,
         ],
         spark_python_task={
             'python_file': 'dbfs:/libraries/name_matching/match_operators.py',
-            'parameters': ['--input_file', intermediate_bucket.format(date='2017-07-12', fn='operators'),
+            'parameters': ['--input_file', ingested_bucket.format(date='2017-07-12', fn='operators'),
                            '--output_path', intermediate_bucket.format(date='2017-07-12', fn='operators_matched'),
                            '--country_code', 'DK']
         }
@@ -114,7 +114,7 @@ with DAG('ohub_operators', default_args=default_args,
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
             'parameters': [intermediate_bucket.format(date='2017-07-12', fn='operators_matched'),
                            ingested_bucket.format(date='2017-07-12', fn='operators'),
-                           integrated_bucket.format(date='2017-07-12', fn='operators_merged')]
+                           integrated_bucket.format(date='2017-07-12', fn='operators')]
         })
 
     postgres_connection = BaseHook.get_connection('postgres_channels')
