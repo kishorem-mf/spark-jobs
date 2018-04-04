@@ -79,7 +79,7 @@ with DAG('ohub_operators', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.deduplicate.OperatorDeduplication",
             'parameters': [integrated_bucket.format(date='2017-07-12', fn='operators'),
-                           intermediate_bucket.format(date='2017-07-12', fn='operators'),
+                           ingested_bucket.format(date='2017-07-12', fn='operators'),
                            intermediate_bucket.format(date='2018-04-04', fn='operators_integrated'),
                            intermediate_bucket.format(date='2018-04-04', fn='operators_daily')]
         }
