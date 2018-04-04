@@ -35,7 +35,7 @@ class OperatorGoldenRecordSpec extends SparkJobSpec {
       )
       val golden = Foo().pickGoldenRecord(sourcePreferences, operators)
 
-      assert(golden.sourceName === "sourceA")
+      assert(golden.sourceName === "sourceB")
     }
   }
 
