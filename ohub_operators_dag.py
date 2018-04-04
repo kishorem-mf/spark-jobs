@@ -86,7 +86,6 @@ with DAG('ohub_operators', default_args=default_args,
                            intermediate_bucket.format(date=one_day_ago, fn='operators_integrated'),
                            intermediate_bucket.format(date=one_day_ago, fn='operators_daily')]
         }
-
     )
 
     # match_operators = DatabricksSubmitRunOperator(
@@ -147,7 +146,8 @@ with DAG('ohub_operators', default_args=default_args,
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorUpdateGoldenRecord",
             'parameters': [intermediate_bucket.format(date=one_day_ago, fn='groups_existing'),
                            intermediate_bucket.format(date=one_day_ago, fn='golden_records_updated')]
-        })
+        }
+    )
 
     combine = DatabricksSubmitRunOperator(
         task_id='combine',
@@ -161,7 +161,8 @@ with DAG('ohub_operators', default_args=default_args,
             'parameters': [intermediate_bucket.format(date=one_day_ago, fn='golden_records_updated'),
                            intermediate_bucket.format(date=one_day_ago, fn='golden_records_new'),
                            integrated_bucket.format(date=one_day_ago, fn='operators')]
-        })
+        }
+    )
 
     postgres_connection = BaseHook.get_connection('postgres_channels')
     operators_to_acm = DatabricksSubmitRunOperator(
