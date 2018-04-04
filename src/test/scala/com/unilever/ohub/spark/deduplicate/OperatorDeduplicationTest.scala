@@ -133,7 +133,7 @@ class OperatorDeduplicationTest extends SparkJobSpec {
       assert(updated.length === 2)
       assert(dailyNew.length === 0)
 
-      assert(updated.map(_.concatId) === Seq("a", "b"))
+      updated.map(_.concatId) should contain theSameElementsAs Seq("a", "b")
     }
 
     it("return a deduplicated dataset with the newest record if there are duplicates") {
@@ -152,8 +152,8 @@ class OperatorDeduplicationTest extends SparkJobSpec {
       assert(updated.length === 2)
       assert(dailyNew.length === 0)
 
-      assert(updated.map(_.concatId) === Seq("a", "b"))
-      assert(updated.find(_.concatId == "a").get.dateUpdated === newTimestamp))
+      updated.map(_.concatId) should contain theSameElementsAs Seq("a", "b")
+      assert(updated.find(_.concatId == "a").get.dateUpdated === newTimestamp)
     }
   }
 }

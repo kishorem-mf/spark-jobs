@@ -2,6 +2,7 @@ package com.unilever.ohub.spark.deduplicate
 
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.domain.entity.Operator
+import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{Dataset, SparkSession}
 
@@ -15,14 +16,12 @@ object OperatorDeduplication extends SparkJob {
     import spark.implicits._
 
     val dailyNew = newOperators
-      .joinWith(integratedOperators, newOperators("concatId") === integratedOperators("concatId"), "left_anti")
-      .filter(_._2 == null)
-      .map(_._1)
+      .join(integratedOperators, Seq("concatId"), JoinType.LeftAnti)
+      .as[Operator]
 
     val dailyDupe = newOperators
-      .joinWith(dailyNew, newOperators("concatId") === dailyNew("concatId"), "left_anti")
-      .filter(_._2 == null)
-      .map(_._1)
+      .join(dailyNew, Seq("concatId"), JoinType.LeftAnti)
+      .as[Operator]
 
     val deduped = integratedOperators
       .union(dailyDupe)
