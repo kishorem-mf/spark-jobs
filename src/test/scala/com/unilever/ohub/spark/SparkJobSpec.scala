@@ -19,6 +19,7 @@ trait SparkJobSpec extends FunSpec with Matchers with MockFactory {
     def toDataset: Dataset[T] = spark.createDataset(objs)
   }
 
+  // @formatter:off
   protected val defaultOperatorRecord: Operator =
     Operator(
       concatId                    = UUID.randomUUID().toString,
@@ -90,5 +91,6 @@ trait SparkJobSpec extends FunSpec with Matchers with MockFactory {
       zipCode                     = None,
       ingestionErrors             = Map()
     )
+    // @formatter:on
 
 }
