@@ -35,14 +35,12 @@ object OperatorUpdateGoldenRecord extends SparkJob with OperatorGoldenRecord {
   }
 
 
-  override val neededFilePaths = Array("MATCHING_INPUT_FILE", "OPERATOR_INPUT_FILE", "OUTPUT_FILE")
+  override val neededFilePaths = Array("OPERATOR_INPUT_FILE", "OUTPUT_FILE")
 
   override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
     import spark.implicits._
 
-    val (matchingInputFile: String, operatorInputFile: String, outputFile: String) = filePaths
-
-    log.info(s"Merging operators from [$matchingInputFile] and [$operatorInputFile] to [$outputFile]")
+    val (operatorInputFile: String, outputFile: String) = filePaths
 
     val operators = storage
       .readFromParquet[Operator](operatorInputFile)
