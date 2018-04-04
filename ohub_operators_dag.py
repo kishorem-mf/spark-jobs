@@ -39,8 +39,8 @@ cluster_config = {
     "num_workers": 16
 }
 
-one_day_ago = '2018-04-04'
-two_day_ago = '2017-07-12'
+one_day_ago = '2018-04-04'  # should become {{ macros.ds_add(ds, -1) }}
+two_day_ago = '2017-07-12'  # should become {{ ds }}
 
 jar = 'dbfs:/libraries/ohub/spark-jobs-assembly-WIP.jar'
 
