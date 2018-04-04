@@ -28,16 +28,16 @@ object OperatorDeduplication extends SparkJob {
     val deduped = integratedOperators
       .union(dailyDupe)
       .groupByKey(_.concatId)
-      .reduceGroups((a, b) => {
-        val bothTimestampsAvailable = a.dateUpdated.isDefined && b.dateUpdated.isDefined
-        def operatorWithLatestUpdate(o1: Operator, o2: Operator) = {
-          val time1 = o1.dateUpdated.get
-          val time2 = o2.dateUpdated.get
+      .reduceGroups((left, right) => {
+        val bothTimestampsAvailable = left.dateUpdated.isDefined && right.dateUpdated.isDefined
+        def operatorWithLatestUpdate(leftOperator: Operator, rightOperator: Operator) = {
+          val leftTime = leftOperator.dateUpdated.get
+          val rightTime = rightOperator.dateUpdated.get
 
-          if (time1.after(time2)) o1 else o2
+          if (leftTime.after(rightTime)) leftOperator else rightOperator
         }
 
-        if (bothTimestampsAvailable) operatorWithLatestUpdate(a, b) else a
+        if (bothTimestampsAvailable) operatorWithLatestUpdate(left, right) else right
       })
       .map(_._2)
 
