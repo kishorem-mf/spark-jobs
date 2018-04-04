@@ -1,5 +1,7 @@
 package com.unilever.ohub.spark.deduplicate
 
+import java.sql.Timestamp
+
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.sql.JoinType
@@ -27,12 +29,15 @@ object OperatorDeduplication extends SparkJob {
       .union(dailyDupe)
       .groupByKey(_.concatId)
       .reduceGroups((a, b) => {
-        if (a.dateUpdated.isDefined && b.dateUpdated.isDefined) {
-          if (a.dateUpdated.get.after(b.dateUpdated.get)) a else b
+        val bothTimestampsAvailable = a.dateUpdated.isDefined && b.dateUpdated.isDefined
+        def operatorWithLatestUpdate(o1: Operator, o2: Operator) = {
+          val time1 = o1.dateUpdated.get
+          val time2 = o2.dateUpdated.get
+
+          if (time1.after(time2)) o1 else o2
         }
-        else {
-          a
-        }
+
+        if (bothTimestampsAvailable) operatorWithLatestUpdate(a, b) else a
       })
       .map(_._2)
 
