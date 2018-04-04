@@ -2,7 +2,6 @@ package com.unilever.ohub.spark.combining
 
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.domain.entity.Operator
-import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{Dataset, SparkSession}
 
@@ -10,14 +9,15 @@ object OperatorCombining extends SparkJob {
 
   def transform(
                  spark: SparkSession,
-                 integratedMatched: Dataset[Operator],
+                 integratedUpdated: Dataset[Operator],
                  newGoldenRecords: Dataset[Operator]
                ): Dataset[Operator] = {
-    import spark.implicits._
 
+    integratedUpdated
+      .union(newGoldenRecords)
   }
 
-  override val neededFilePaths = Array("INTEGRATED_MATCHED", "NEW_GOLDEN", "NEW_INTEGRATED_OUTPUT")
+  override val neededFilePaths = Array("INTEGRATED_UPDATED", "NEW_GOLDEN", "NEW_INTEGRATED_OUTPUT")
 
   override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
     import spark.implicits._
