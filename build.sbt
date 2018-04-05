@@ -6,7 +6,7 @@ version := "0.2.0"
 
 scalaVersion := "2.11.11"
 
-val sparkVersion = "2.1.0" // 2.1.0 is the latest version supported by Azure as of 22/11/17
+val sparkVersion = "2.2.1"
 val sparkDependencyType = sys.props.getOrElse("sparkDependencyType", "compile")
 lazy val depType = taskKey[Unit]("print sparkDependencyType")
 
@@ -34,7 +34,7 @@ test in assembly := {}
 
 // Scoverage settings
 coverageExcludedPackages := "<empty>;.*storage.*"
-coverageMinimum := 28.5
+coverageMinimum := 30.5
 coverageFailOnMinimum := true
 
 scalariformPreferences := scalariformPreferences.value
