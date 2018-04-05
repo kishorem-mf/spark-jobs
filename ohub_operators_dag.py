@@ -72,39 +72,8 @@ with DAG('ohub_operators', default_args=default_args,
         }
     )
 
-    deduplicate_daily = DatabricksSubmitRunOperator(
-        task_id="deduplicate_daily",
-        existing_cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
-        spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.deduplicate.OperatorDeduplication",
-            'parameters': [integrated_bucket.format(date=two_day_ago, fn='operators'),
-                           ingested_bucket.format(date=one_day_ago, fn='operators'),
-                           intermediate_bucket.format(date=one_day_ago, fn='operators_integrated'),
-                           intermediate_bucket.format(date=one_day_ago, fn='operators_daily')]
-        }
-    )
-
-    # match_operators = DatabricksSubmitRunOperator(
-    #     task_id='match_operators',
-    #     existing_cluster_id=cluster_id,
-    #     databricks_conn_id=databricks_conn_id,
-    #     libraries=[
-    #         {'egg': 'dbfs:/libraries/name_matching/string_matching.egg'}
-    #     ],
-    #     spark_python_task={
-    #         'python_file': 'dbfs:/libraries/name_matching/match_operators.py',
-    #         'parameters': ['--input_file', intermediate_bucket.format(date='2017-07-12', fn='operators'),
-    #                        '--output_path', intermediate_bucket.format(date='2017-07-12', fn='operators_matched'),
-    #                        '--country_code', 'DK']
-    #     }
-    # )
-
-    persistent_uuid = DatabricksSubmitRunOperator(
-        task_id='persistent_uuid',
+    match_new_operators_with_integrated_operators = DatabricksSubmitRunOperator(
+        task_id='match_new_operators_with_integrated_operators',
         cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
@@ -113,11 +82,26 @@ with DAG('ohub_operators', default_args=default_args,
         spark_python_task={
             'python_file': 'dbfs:/libraries/join_new_operators_with_persistent_uuid.py',
             'parameters': [
-                '--current_operators_path', intermediate_bucket.format(date=one_day_ago, fn='operators_integrated'),
-                '--new_operators_path', intermediate_bucket.format(date=one_day_ago, fn='operators_daily'),
-                '--output_path_existing', intermediate_bucket.format(date=one_day_ago, fn='groups_existing'),
-                '--output_path_new', intermediate_bucket.format(date=one_day_ago, fn='groups_new')
+                '--current_operators_path', integrated_bucket.format(date=two_day_ago, fn='operators'),
+                '--new_operators_path', ingested_bucket.format(date=one_day_ago, fn='operators'),
+                '--output_path_existing', intermediate_bucket.format(date=one_day_ago, fn='updated_operators_integrated'),
+                '--output_path_new', intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched')
             ]
+        }
+    )
+
+    match_unmatched_operators = DatabricksSubmitRunOperator(
+        task_id='match_unmatched_operators',
+        existing_cluster_id=cluster_id,
+        databricks_conn_id=databricks_conn_id,
+        libraries=[
+            {'egg': 'dbfs:/libraries/name_matching/string_matching.egg'}
+        ],
+        spark_python_task={
+            'python_file': 'dbfs:/libraries/name_matching/match_operators.py',
+            'parameters': ['--input_file', intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched'),
+                           '--output_path', intermediate_bucket.format(date=one_day_ago, fn='operators_matched'),
+                           '--country_code', 'DK']
         }
     )
 
@@ -130,7 +114,7 @@ with DAG('ohub_operators', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
-            'parameters': [intermediate_bucket.format(date=one_day_ago, fn='groups_new'),
+            'parameters': [intermediate_bucket.format(date=one_day_ago, fn='operators_matched'),
                            ingested_bucket.format(date=one_day_ago, fn='operators'),
                            intermediate_bucket.format(date=one_day_ago, fn='golden_records_new')]
         })
@@ -144,7 +128,7 @@ with DAG('ohub_operators', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorUpdateGoldenRecord",
-            'parameters': [intermediate_bucket.format(date=one_day_ago, fn='groups_existing'),
+            'parameters': [intermediate_bucket.format(date=one_day_ago, fn='updated_operators_integrated'),
                            intermediate_bucket.format(date=one_day_ago, fn='golden_records_updated')]
         }
     )
@@ -183,7 +167,7 @@ with DAG('ohub_operators', default_args=default_args,
         }
     )
 
-    start_cluster >> operators_to_parquet >> deduplicate_daily >> persistent_uuid
-    persistent_uuid >> update_golden_records >> combine
-    persistent_uuid >> merge_operators >> combine
+    start_cluster >> operators_to_parquet >> match_new_operators_with_integrated_operators
+    match_new_operators_with_integrated_operators >> update_golden_records >> combine
+    match_unmatched_operators >> merge_operators >> combine
     combine >> operators_to_acm
