@@ -31,7 +31,6 @@ case class Operator( // generic fields
     dateCreated: Option[Timestamp],
     dateUpdated: Option[Timestamp],
     daysOpen: Option[Int],
-    distributorCustomerNumber: Option[String],
     distributorName: Option[String],
     distributorOperatorId: Option[String],
     emailAddress: Option[String],

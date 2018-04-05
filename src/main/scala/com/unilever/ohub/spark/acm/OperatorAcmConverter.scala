@@ -64,7 +64,7 @@ object OperatorAcmConverter extends SparkJob {
           DATE_CREATED = operator.dateCreated,
           DATE_UPDATED = operator.dateUpdated,
           DELETE_FLAG = if (operator.isActive) "N" else "Y",
-          WHOLESALER_OPERATOR_ID = operator.distributorCustomerNumber,
+          WHOLESALER_OPERATOR_ID = operator.distributorOperatorId,
           PRIVATE_HOUSEHOLD = operator.isPrivateHousehold.map(boolAsString),
           VAT = operator.vat,
           OPEN_ON_MONDAY = operator.isOpenOnMonday.map(boolAsString),

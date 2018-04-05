@@ -1,7 +1,5 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import java.sql.Timestamp
-
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import org.apache.spark.sql.Row
 
@@ -11,8 +9,14 @@ object DomainTransformer {
   val ZERO_WIDTH_NO_BREAK_SPACE = "\uFEFF" // see also: http://www.fileformat.info/info/unicode/char/FEFF/index.htm
 }
 
-class DomainTransformer extends Serializable {
+class DomainTransformer extends DomainTransformFunctions with Serializable {
   import DomainTransformer._
+
+  var headers: Map[String, Int] = Map()
+
+  def useHeaders(headers: Map[String, Int]): Unit = {
+    this.headers = headers
+  }
 
   var errors: Map[String, IngestionError] = Map()
 
@@ -68,25 +72,16 @@ class DomainTransformer extends Serializable {
   }
 
   private def getFieldIndex(columnName: String)(row: Row): Int =
-    try {
-      row.fieldIndex(columnName)
-    } catch {
-      // maybe there is a BOM char in front of the column name, otherwise let's fail.
-      case _: Throwable ⇒ row.fieldIndex(s"$ZERO_WIDTH_NO_BREAK_SPACE$columnName")
+    if (headers.isEmpty) {
+      try {
+        row.fieldIndex(columnName)
+      } catch {
+        // maybe there is a BOM char in front of the column name, otherwise let's fail.
+        case _: Throwable ⇒ row.fieldIndex(s"$ZERO_WIDTH_NO_BREAK_SPACE$columnName")
+      }
+    } else {
+      headers(columnName)
     }
-
-  // where to put the following functions
-
-  def createConcatId(countryCodeColumn: String, sourceNameColumn: String, sourceEntityIdColumn: String)(implicit row: Row): String = {
-    val countryCode: String = originalValue("COUNTRY_CODE")(row).get
-    val sourceName: String = originalValue("SOURCE")(row).get
-    val sourceEntityId: String = originalValue("REF_OPERATOR_ID")(row).get
-
-    s"$countryCode~$sourceName~$sourceEntityId"
-  }
-
-  def currentTimestamp() = new Timestamp(System.currentTimeMillis())
-
 }
 
 object MandatoryFieldException {

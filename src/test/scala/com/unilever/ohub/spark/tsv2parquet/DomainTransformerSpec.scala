@@ -113,6 +113,17 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
         value shouldBe Some(123456)
       }
     }
+
+    "use headers" when {
+      "no header is provided" in {
+        val row = new GenericRowWithSchema(List("123456").toArray, StructType(List(StructField(originalColumnName, DataTypes.LongType, nullable = true))))
+
+        domainTransformer.useHeaders(Map(originalColumnName -> 0))
+
+        val value = domainTransformer.originalValue(originalColumnName)(row)
+        value shouldBe Some("123456")
+      }
+    }
   }
 
   private def assertMandatoryFieldException(domainFieldName: String, errorMessage: String, actualException: MandatoryFieldException) = {
