@@ -178,5 +178,5 @@ with DAG('ohub_operators', default_args=default_args,
     start_cluster >> operators_to_parquet >> match_new_operators_with_integrated_operators
     match_new_operators_with_integrated_operators >> update_golden_records >> combine
     match_unmatched_operators >> merge_operators >> combine
-    combine >> update_operators_table
-    combine >> operators_to_acm
+    combine >> update_operators_table >> terminate_cluster
+    combine >> operators_to_acm >> terminate_cluster
