@@ -139,5 +139,5 @@ with DAG('ohub_operators', default_args=default_args,
     #     }
     # )
 
-    start_cluster >> operators_to_parquet
+    start_cluster >> operators_to_parquet >> terminate_cluster
     # >> match_operators >> merge_operators >> operators_to_acm >> terminate_cluster
