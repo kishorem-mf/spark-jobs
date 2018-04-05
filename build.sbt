@@ -4,9 +4,9 @@ name := "spark-jobs"
 
 version := "0.2.0"
 
-scalaVersion := "2.11.11"
+scalaVersion := "2.11.12"
 
-val sparkVersion = "2.2.1"
+val sparkVersion = "2.3.0"
 val sparkDependencyType = sys.props.getOrElse("sparkDependencyType", "compile")
 lazy val depType = taskKey[Unit]("print sparkDependencyType")
 
@@ -23,9 +23,9 @@ libraryDependencies ++= Seq(
   "org.apache.spark"    %% "spark-sql"      % sparkVersion  % sparkDependencyType,
   "org.apache.spark"    %% "spark-mllib"    % sparkVersion  % sparkDependencyType,
   "org.postgresql"      %  "postgresql"     % "42.1.4",
-  "org.apache.commons"  %  "commons-lang3"  % "3.6",
-  "org.scalatest"       %% "scalatest"      % "3.0.4"       % "test,it",
-  "org.scalamock"       %% "scalamock"      % "4.0.0"       % "test,it"
+  "org.apache.commons"  %  "commons-lang3"  % "3.7",
+  "org.scalatest"       %% "scalatest"      % "3.0.5"       % "test,it",
+  "org.scalamock"       %% "scalamock"      % "4.1.0"       % "test,it"
 )
 
 lazy val root = project.in(file(".")).configs(IntegrationTest)

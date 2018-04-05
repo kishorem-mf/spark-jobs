@@ -13,3 +13,6 @@ Spark jobs for the OHub2 project.
 # Build and Test
 run `sbt package`.  
 (We might need to switch to sbt-assembly later on)
+
+# Tips
+run `sbt dependencyUpdates` to check for updates on the dependencies.
