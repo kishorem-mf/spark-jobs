@@ -66,7 +66,7 @@ with DAG('gcp_ga', default_args=default_args, schedule_interval='0 4 * * *') as 
 
     update_ga_table = DatabricksSubmitRunOperator(
         task_id='update_ga_table',
-        cluster_name='0405-082501-flare296',
+        existing_cluster_id='0405-082501-flare296',
         databricks_conn_id=databricks_conn_id,
         notebook_task={'notebook_path': '/Workspace/Users/tim.vancann@unilever.com/update_ga_tables'}
     )
