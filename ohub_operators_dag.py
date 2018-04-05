@@ -84,7 +84,8 @@ with DAG('ohub_operators', default_args=default_args,
             'parameters': [
                 '--current_operators_path', integrated_bucket.format(date=two_day_ago, fn='operators'),
                 '--new_operators_path', ingested_bucket.format(date=one_day_ago, fn='operators'),
-                '--output_path_existing', intermediate_bucket.format(date=one_day_ago, fn='updated_operators_integrated'),
+                '--output_path_existing',
+                intermediate_bucket.format(date=one_day_ago, fn='updated_operators_integrated'),
                 '--output_path_new', intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched')
             ]
         }
@@ -167,7 +168,15 @@ with DAG('ohub_operators', default_args=default_args,
         }
     )
 
+    update_operators_table = DatabricksSubmitRunOperator(
+        task_id='update_operators_table',
+        existing_cluster_id=cluster_id,
+        databricks_conn_id=databricks_conn_id,
+        notebook_task={'notebook_path': '/Workspace/Users/tim.vancann@unilever.com/update_integrated_tables'}
+    )
+
     start_cluster >> operators_to_parquet >> match_new_operators_with_integrated_operators
     match_new_operators_with_integrated_operators >> update_golden_records >> combine
     match_unmatched_operators >> merge_operators >> combine
+    combine >> update_operators_table
     combine >> operators_to_acm
