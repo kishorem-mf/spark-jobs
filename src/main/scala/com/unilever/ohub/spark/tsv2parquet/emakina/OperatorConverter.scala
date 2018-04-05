@@ -22,7 +22,6 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
 
       // format: OFF
 
-                                                                              // ↓ not so happy with this column (it should be the same as the fieldName), macro?
       Operator(
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
         concatId                    = concatId                                                                                                           ,

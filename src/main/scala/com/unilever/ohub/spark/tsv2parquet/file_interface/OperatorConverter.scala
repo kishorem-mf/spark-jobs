@@ -17,8 +17,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
       val concatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_OPERATOR_ID")
       val ohubCreated = currentTimestamp()
 
-      // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
-
+      // format: OFF
                                                                               // ↓ not so happy with this column (it should be the same as the fieldName), macro?
       Operator(
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)

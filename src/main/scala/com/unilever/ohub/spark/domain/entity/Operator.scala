@@ -6,8 +6,6 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.constraint._
 
-// TODO add german fields to additional fields
-
 case class Operator( // generic fields
     concatId: String, // concatenation of: countryCode ~ sourceName ~ sourceEntityId (entity identifier)
     countryCode: String, // TODO Existing country code in OHUB using: Iso 3166-1 alpha 2

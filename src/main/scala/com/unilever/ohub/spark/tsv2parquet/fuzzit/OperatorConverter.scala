@@ -69,7 +69,7 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
 
       additionalField(CAM_KEY, "germanChainId")
       additionalField(CAM_TEXT, "germanChainName")
-                                                                            // ↓ not so happy with this column (it should be the same as the fieldName), macro?
+
       Operator(
         // fieldName                  mandatory   sourceFieldName           targetFieldName                 transformationFunction (unsafe)
         concatId                    = concatId                                                                                                           ,
