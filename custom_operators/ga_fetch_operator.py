@@ -186,6 +186,7 @@ class LocalGAToWasbOperator(BaseOperator):
         """Upload a file to Azure Blob Storage."""
         hook = WasbHook(wasb_conn_id=self.wasb_conn_id)
         for country_code in self.country_codes.keys():
-            blob_name = self.blob_path + 'PARTITION_DATE={}/COUNTRY_CODE={}/{}'.format(self.date, country_code, FILE_NAME)
+            blob_name = self.blob_path + 'PARTITION_DATE={}/COUNTRY_CODE={}/{}'.format(self.date, country_code,
+                                                                                       FILE_NAME)
             file_path = self.path + 'PARTITION_DATE={}/COUNTRY_CODE={}/{}'.format(self.date, country_code, FILE_NAME)
             self.upload_file(hook, blob_name, self.container_name, file_path)
