@@ -43,7 +43,7 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
         val row = new GenericRowWithSchema(List("abc").toArray, StructType(List(StructField(originalColumnName, DataTypes.LongType, nullable = true))))
 
         val actualException = intercept[MandatoryFieldException] {
-          domainTransformer.mandatory[Long](originalColumnName, domainFieldName, toInt _)(row)
+          domainTransformer.mandatory[Long](originalColumnName, domainFieldName, toInt)(row)
         }
 
         assertMandatoryFieldException(domainFieldName, s"Couldn't apply transformation function on value 'Some(abc)'", actualException)
@@ -54,7 +54,7 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
       "an original column has a valid value" in {
         val row = new GenericRowWithSchema(List("123456").toArray, StructType(List(StructField(originalColumnName, DataTypes.LongType, nullable = true))))
 
-        val value: Long = domainTransformer.mandatory[Long](originalColumnName, domainFieldName, toInt _)(row)
+        val value: Long = domainTransformer.mandatory[Long](originalColumnName, domainFieldName, toInt)(row)
 
         value shouldBe 123456
       }
@@ -97,7 +97,7 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
       "an original column has an invalid Int value" in {
         val row = new GenericRowWithSchema(List("abc").toArray, StructType(List(StructField(originalColumnName, DataTypes.LongType, nullable = true))))
 
-        val value = domainTransformer.optional[Long](originalColumnName, domainFieldName, toInt _)(row)
+        val value = domainTransformer.optional[Long](originalColumnName, domainFieldName, toInt)(row)
 
         value shouldBe None
         domainTransformer.errors shouldBe Map("domain-field-name" -> IngestionError(originalColumnName, Some("abc"), "java.lang.NumberFormatException:For input string: \"abc\""))
@@ -108,7 +108,7 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
       "an original column has a valid value" in {
         val row = new GenericRowWithSchema(List("123456").toArray, StructType(List(StructField(originalColumnName, DataTypes.LongType, nullable = true))))
 
-        val value: Option[Long] = domainTransformer.optional[Long](originalColumnName, domainFieldName, toInt _)(row)
+        val value: Option[Long] = domainTransformer.optional[Long](originalColumnName, domainFieldName, toInt)(row)
 
         value shouldBe Some(123456)
       }

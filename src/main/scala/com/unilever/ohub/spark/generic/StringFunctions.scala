@@ -59,7 +59,8 @@ object StringFunctions extends App {
   def isValidEmailAddress(emailAddress: String): Boolean = {
     val pattern = Pattern.compile(EMAIL_ADDRESS_REGEX, Pattern.CASE_INSENSITIVE)
     val matcher = pattern.matcher(emailAddress)
-    return matcher.matches
+
+    matcher.matches
   }
 
   def fillLastNameOnlyWhenFirstEqualsLastName(firstName: String, lastName: String, isFirstName: Boolean): String = {
