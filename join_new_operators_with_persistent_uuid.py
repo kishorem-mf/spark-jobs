@@ -1,20 +1,22 @@
-""" Join new operator data with current operator data, keeping persistent group id's
+""" Join ingested daily data with integrated data, keeping persistent group id's
 
-The following steps are performed:
-- Load all current operators
-- Pre-process current operators to format for joining
-- Pre-process new operator data to format for joining
-- Per country
-    - join all current operators with new operators
-    - join the result from matching with all current operators
-    - write parquet file
+This script outputs two dataframes:
+- Updated integrated data
+  - Changed records that match with integrated data
+  - New records that match with integrated data
+- Unmatched data
+  - All records that do not match with integrated data
+
+The following steps are performed per country:
+- Pre-process integrated data to format for joining
+- Pre-process ingested daily data to format for joining
+- Match ingested data with integrated data
+- write two dataframes to file: updated integrated data and unmatched data
 """
 
 import argparse
-import hashlib
 
 from pyspark.sql import DataFrame
-from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
@@ -24,106 +26,55 @@ from string_matching.spark_string_matching import match_strings
 N_GRAMS = 2
 MINIMUM_DOCUMENT_FREQUENCY = 2
 VOCABULARY_SIZE = 2000
-LOGGER = None
 
 
-def get_all_current_operators(spark: SparkSession, fn: str, fraction: float) -> DataFrame:
-    return (spark
-            .read
-            .parquet(fn)
-            .sample(False, fraction)
-            .withColumn('refId', sf.explode('refIds'))
-            .drop('refIds')
-            .withColumnRenamed('ohubOperatorId', 'ohubOperatorId_old')
-            )
-
-
-def preprocess_current_operators_for_matching(spark: SparkSession, fn: str, fraction: float) -> DataFrame:
+def preprocess_for_matching(ddf: DataFrame, id_column: str, drop_if_name_is_null=False) -> DataFrame:
     """Create column 'matching_string' used originally for the matching"""
-    w = Window.partitionBy('countryCode').orderBy(sf.asc('ohubOperatorId'))
-
-    return (spark
-            .read
-            .parquet(fn)
-            .sample(False, fraction)
+    w = Window.partitionBy('countryCode').orderBy(sf.asc(id_column))
+    if drop_if_name_is_null:
+        ddf = ddf.na.drop(subset=['name'])
+    return (ddf
+            .fillna('')
             .withColumn('matching_string',
                         sf.concat_ws(' ',
-                                     sf.col('operator.nameCleansed'),
-                                     sf.col('operator.cityCleansed'),
-                                     sf.col('operator.streetCleansed'),
-                                     sf.col('operator.zipCodeCleansed')
+                                     sf.col('name'),
+                                     sf.col('city'),
+                                     sf.col('street'),
+                                     sf.col('zipCode')
                                      )
                         )
             .withColumn('matching_string', sf.regexp_replace('matching_string', utils.REGEX, ''))
             .withColumn('matching_string', sf.lower(sf.trim(sf.regexp_replace(sf.col('matching_string'), '\s+', ' '))))
             .withColumn('string_index', sf.row_number().over(w) - 1)
-            .select('countryCode', 'string_index', 'ohubOperatorId', 'matching_string')
+            .select('countryCode', 'string_index', id_column, 'matching_string')
             )
 
 
-def preprocess_new_operators_for_matching(spark: SparkSession, fn: str, fraction: float) -> DataFrame:
-    """Create unique 'refID' and 'matching_string' for new input data"""
-    w = Window.partitionBy('COUNTRY_CODE').orderBy(sf.asc('refId'))
-    return (spark
-            .read
-            .parquet(fn)
-            .sample(False, fraction)
-            .na.drop(subset=['NAME_CLEANSED'])
-            .withColumn('refId',
-                        sf.concat_ws('~',
-                                     sf.col('COUNTRY_CODE'),
-                                     sf.col('SOURCE'),
-                                     sf.col('REF_OPERATOR_ID')
-                                     )
-                        )
-            .fillna('')
-            # create string columns to matched
-            .withColumn('matching_string',
-                        sf.concat_ws(' ',
-                                     sf.col('NAME_CLEANSED'),
-                                     sf.col('CITY_CLEANSED'),
-                                     sf.col('STREET_CLEANSED'),
-                                     sf.col('ZIP_CODE_CLEANSED')))
-            .withColumn('matching_string', sf.regexp_replace('matching_string', utils.REGEX, ''))
-            .withColumn('matching_string', sf.lower(sf.trim(sf.regexp_replace('matching_string', '\s+', ' '))))
-            .withColumn('string_index', sf.row_number().over(w) - 1)
-            .select('COUNTRY_CODE', 'string_index', 'refId', 'matching_string', 'record_type')
-            )
-
-
-def create_32_char_hash(string):
-    hash_id = hashlib.md5(string.encode(encoding='utf-8')).hexdigest()
-    return '-'.join([hash_id[:8], hash_id[8:12], hash_id[12:16], hash_id[16:]])
-
-
-# create udf for use in spark later
-udf_create_32_char_hash = sf.udf(create_32_char_hash)
-
-
-def get_country_codes(new_operators: DataFrame):
-    return (new_operators
-            .select('COUNTRY_CODE')
+def get_country_codes(ddf: DataFrame):
+    return (ddf
+            .select('countryCode')
             .distinct()
             .rdd.map(lambda r: r[0]).collect()
             )
 
 
-def join_new_with_all_current_operators(spark, new_operators, all_operators_for_matching, all_operators,
-                                        country_code, n_top, threshold):
-    new_operators_1country = (
-        new_operators
-        .filter(sf.col('COUNTRY_CODE') == country_code)
-        .repartition('refId')
-    )
-    all_operators_1country = (
-        all_operators_for_matching
+def join_ingested_daily_with_integrated_operators(spark, ingested_daily, integrated,
+                                                  country_code, n_top, threshold):
+    ingested_daily_1country = (
+        ingested_daily
         .filter(sf.col('countryCode') == country_code)
-        .repartition('ohubOperatorId')
+        .repartition('concatId')
     )
+    integrated_1country = (
+        integrated
+        .filter(sf.col('countryCode') == country_code)
+        .repartition('ohubId')
+    )
+
     similarity = match_strings(
         spark,
-        new_operators_1country.select('string_index', 'matching_string'),
-        df2=all_operators_1country.select('string_index', 'matching_string'),
+        ingested_daily_1country.select('string_index', 'matching_string'),
+        df2=integrated_1country.select('string_index', 'matching_string'),
         string_column='matching_string',
         row_number_column='string_index',
         n_top=n_top,
@@ -133,80 +84,98 @@ def join_new_with_all_current_operators(spark, new_operators, all_operators_for_
         max_vocabulary_size=VOCABULARY_SIZE
     )
 
-    # Join on refId and ohubOperatorId to get all columns based on IDs
-    matches = (
-        new_operators_1country
-        .join(similarity, new_operators_1country['string_index'] == similarity['i'], how='left')
+    window = Window.partitionBy('i').orderBy(sf.desc('SIMILARITY'), 'j')
+    best_match = (
+        similarity
+        .withColumn('j', sf.first('j').over(window))
+        .drop_duplicates()
+    )
+
+    # Join on string_index to get back the concatId and ohubId
+    matched_ingested_daily = (
+        best_match
+        .join(ingested_daily_1country, ingested_daily_1country['string_index'] == best_match['i'])
         .drop('string_index')
         .selectExpr('j', 'SIMILARITY',
-                    'matching_string as matching_string_new', 'refId', 'record_type')
-        .join(all_operators_1country, sf.col('j') == all_operators_1country['string_index'], how='left')
+                    'matching_string as matching_string_new', 'concatId')
+        .join(integrated_1country, sf.col('j') == integrated_1country['string_index'])
         .drop('string_index')
         .withColumn('countryCode', sf.lit(country_code))
         .selectExpr('SIMILARITY',
                     'countryCode',
                     'matching_string_new',
                     'matching_string as matching_string_old',
-                    'refId',
-                    'ohubOperatorId as ohubOperatorId_matched',
-                    'record_type')
+                    'concatId',
+                    'ohubId as ohubId_matched')
     )
-
-    # Updating UUID
-    return (matches
-            .join(all_operators.filter(sf.col('countryCode') == country_code),
-                  on=['refId', 'countryCode'], how='outer')
-            .withColumn('ohubOperatorId_new',
-                        sf.when(sf.col('ohubOperatorId_matched').isNotNull(),
-                                sf.col('ohubOperatorId_matched'))
-                        .when(sf.col('ohubOperatorId_old').isNotNull(),
-                              sf.col('ohubOperatorId_old'))
-                        .otherwise(udf_create_32_char_hash(sf.col('refId')))
-                        )
-            )
+    return matched_ingested_daily
 
 
 def main(arguments):
     global LOGGER
-    spark, LOGGER = utils.start_spark('Join new operators with persistent UUID')
-    all_operators = get_all_current_operators(spark, arguments.current_operators_path, arguments.fraction)
-    all_operators_for_matching = preprocess_current_operators_for_matching(spark,
-                                                                           arguments.current_operators_path,
-                                                                           arguments.fraction)
-    new_operators = preprocess_new_operators_for_matching(spark, arguments.new_operators_path, arguments.fraction)
-    country_codes = get_country_codes(new_operators)
+    spark, LOGGER = utils.start_spark('Match and join newly ingested operators with persistent ohubId')
 
+    ingested_daily = spark.read.parquet(arguments.ingested_daily_operators_input_path)
+    ingested_daily_for_matching = preprocess_for_matching(ingested_daily, 'concatId', True)
+
+    integrated = spark.read.parquet(arguments.integrated_operators_input_path)
+    integrated_for_matching = preprocess_for_matching(integrated, 'ohubId')
+
+    country_codes = get_country_codes(ingested_daily)
     mode = 'overwrite'
     for i, country_code in enumerate(country_codes):
-        if i == 1:
+        if i >= 1:
             mode = 'append'
-        joined_operators = join_new_with_all_current_operators(spark, new_operators, all_operators_for_matching,
-                                                               all_operators, country_code,
-                                                               arguments.n_top, arguments.threshold)
-        if arguments.output_path:
-            utils.save_to_parquet(joined_operators, arguments.output_path, mode)
-        else:
-            print('Number of groups:', all_operators.count(), '-->', joined_operators.count())
-            (joined_operators
-             .show(50, truncate=False))
+
+        LOGGER.info('Match the ingested data with the integrated data')
+        matched_ingested_daily = join_ingested_daily_with_integrated_operators(
+            spark, ingested_daily_for_matching, integrated_for_matching,
+            country_code, arguments.n_top, arguments.threshold)
+
+        LOGGER.info('Select matched records from ingested daily and set their ohubId')
+        matched_ingested_daily_full_record = (matched_ingested_daily
+                                              .select('concatId', 'ohubId_matched')
+                                              .join(ingested_daily.filter(sf.col('countryCode') == country_code),
+                                                    on='concatId', how='left')
+                                              .withColumn('ohubId', sf.col('ohubId_matched'))
+                                              .drop('ohubId_matched')
+                                              )
+        LOGGER.info('Merge the integrated data with the matched ingested daily data')
+        updated_integrated = (integrated.filter(sf.col('countryCode') == country_code)
+                              .join(matched_ingested_daily_full_record, on='concatId', how='left_anti')
+                              .union(matched_ingested_daily_full_record)
+                              )
+
+        LOGGER.info('Select the unmatched records from ingested daily')
+        unmatched = (ingested_daily.filter(sf.col('countryCode') == country_code)
+                     .join(matched_ingested_daily, on='concatId', how='left_anti')
+                     )
+
+        LOGGER.info('Write to parquet')
+        if arguments.updated_integrated_output_path is not None:
+            utils.save_to_parquet(updated_integrated, arguments.updated_integrated_output_path, mode)
+        if arguments.unmatched_output_path is not None:
+            utils.save_to_parquet(unmatched, arguments.unmatched_output_path, mode)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('-f', '--current_operators_path',
-                        help='full path or location of the parquet file with current operators')
-    parser.add_argument('-g', '--new_operators_path',
-                        help='full path or location of the parquet file with new operators which we want to add')
-    parser.add_argument('-p', '--output_path', default=None,
+    parser.add_argument('-f', '--integrated_operators_input_path',
+                        help='full path or location of the parquet file with integrated operator data')
+    parser.add_argument('-g', '--ingested_daily_operators_input_path',
+                        help='full path or location of the parquet file with ingested daily operator data')
+
+    parser.add_argument('-p', '--updated_integrated_output_path', default=None,
                         help='write results in a parquet file to this full path or location directory')
+    parser.add_argument('-q', '--unmatched_output_path', default=None,
+                        help='write results in a parquet file to this full path or location directory')
+
     parser.add_argument('-c', '--country_code', default='all',
                         help='country code to use (e.g. US). Default all countries.')
     parser.add_argument('-t', '--threshold', default=0.8, type=float,
-                        help='drop similarities below this value [0-1].')
+                        help='drop similarities below this value [0.-1.].')
     parser.add_argument('-n', '--n_top', default=1, type=int,
                         help='keep N top similarities for each record.')
-    parser.add_argument('-frac', '--fraction', default=1.0, type=float,
-                        help='use this fraction of records.')
     args = parser.parse_args()
 
     main(args)

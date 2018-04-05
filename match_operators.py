@@ -53,7 +53,6 @@ def preprocess_operators(ddf: DataFrame) -> DataFrame:
     ddf = clean_fields(ddf)
     return (ddf
             .na.drop(subset=['nameCleansed'])
-            .filter(sf.col('nameCleansed') != 'unknown')
             # create unique ID
             .withColumn('id', sf.concat_ws('~',
                                            sf.col('countryCode'),
