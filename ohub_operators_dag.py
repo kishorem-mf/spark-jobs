@@ -39,6 +39,9 @@ cluster_config = {
     "num_workers": 16
 }
 
+one_day_ago = '2018-04-04'  # should become {{ macros.ds_add(ds, -1) }}
+two_day_ago = '2017-07-12'  # should become {{ ds }}
+
 jar = 'dbfs:/libraries/ohub/spark-jobs-assembly-WIP.jar'
 
 with DAG('ohub_operators', default_args=default_args,
@@ -64,25 +67,25 @@ with DAG('ohub_operators', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
-            'parameters': [raw_bucket.format(date='2017-07-12', schema='operators'),
-                           ingested_bucket.format(date='2017-07-12', fn='operators')]
+            'parameters': [raw_bucket.format(date=one_day_ago, schema='operators'),
+                           ingested_bucket.format(date=one_day_ago, fn='operators')]
         }
     )
 
-    match_operators = DatabricksSubmitRunOperator(
-        task_id='match_operators',
-        existing_cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'egg': 'dbfs:/libraries/name_matching/string_matching.egg'}
-        ],
-        spark_python_task={
-            'python_file': 'dbfs:/libraries/name_matching/match_operators.py',
-            'parameters': ['--input_file', ingested_bucket.format(date='2017-07-12', fn='operators'),
-                           '--output_path', intermediate_bucket.format(date='2017-07-12', fn='operators_matched'),
-                           '--country_code', 'DK']
-        }
-    )
+    # match_operators = DatabricksSubmitRunOperator(
+    #     task_id='match_operators',
+    #     existing_cluster_id=cluster_id,
+    #     databricks_conn_id=databricks_conn_id,
+    #     libraries=[
+    #         {'egg': 'dbfs:/libraries/name_matching/string_matching.egg'}
+    #     ],
+    #     spark_python_task={
+    #         'python_file': 'dbfs:/libraries/name_matching/match_operators.py',
+    #         'parameters': ['--input_file', ingested_bucket.format(date='2017-07-12', fn='operators'),
+    #                        '--output_path', intermediate_bucket.format(date='2017-07-12', fn='operators_matched'),
+    #                        '--country_code', 'DK']
+    #     }
+    # )
 
     # persistent_uuid = DatabricksSubmitRunOperator(
     #     task_id='persistent_uuid',
@@ -103,37 +106,38 @@ with DAG('ohub_operators', default_args=default_args,
     #     }
     # )
 
-    merge_operators = DatabricksSubmitRunOperator(
-        task_id='merge_operators',
-        existing_cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
-        spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
-            'parameters': [intermediate_bucket.format(date='2017-07-12', fn='operators_matched'),
-                           ingested_bucket.format(date='2017-07-12', fn='operators'),
-                           integrated_bucket.format(date='2017-07-12', fn='operators')]
-        })
+    # merge_operators = DatabricksSubmitRunOperator(
+    #     task_id='merge_operators',
+    #     existing_cluster_id=cluster_id,
+    #     databricks_conn_id=databricks_conn_id,
+    #     libraries=[
+    #         {'jar': jar}
+    #     ],
+    #     spark_jar_task={
+    #         'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
+    #         'parameters': [intermediate_bucket.format(date='2017-07-12', fn='operators_matched'),
+    #                        ingested_bucket.format(date='2017-07-12', fn='operators'),
+    #                        integrated_bucket.format(date='2017-07-12', fn='operators')]
+    #     })
+    #
+    # postgres_connection = BaseHook.get_connection('postgres_channels')
+    # operators_to_acm = DatabricksSubmitRunOperator(
+    #     task_id="operators_to_acm",
+    #     existing_cluster_id=cluster_id,
+    #     databricks_conn_id=databricks_conn_id,
+    #     libraries=[
+    #         {'jar': jar}
+    #     ],
+    #     spark_jar_task={
+    #         'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmConverter",
+    #         'parameters': [integrated_bucket.format(date='2017-07-12', fn='operators_merged.parquet'),
+    #                        export_bucket.format(date='2017-07-12', fn='acm/operators.csv'),
+    #                        postgres_connection.host,
+    #                        postgres_connection.login,
+    #                        postgres_connection.password,
+    #                        postgres_connection.schema]
+    #     }
+    # )
 
-    postgres_connection = BaseHook.get_connection('postgres_channels')
-    operators_to_acm = DatabricksSubmitRunOperator(
-        task_id="operators_to_acm",
-        existing_cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
-        spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmConverter",
-            'parameters': [integrated_bucket.format(date='2017-07-12', fn='operators_merged.parquet'),
-                           export_bucket.format(date='2017-07-12', fn='acm/operators.csv'),
-                           postgres_connection.host,
-                           postgres_connection.login,
-                           postgres_connection.password,
-                           postgres_connection.schema]
-        }
-    )
-
-    start_cluster >> operators_to_parquet >> match_operators >> merge_operators >> operators_to_acm >> terminate_cluster
+    start_cluster >> operators_to_parquet
+    # >> match_operators >> merge_operators >> operators_to_acm >> terminate_cluster
