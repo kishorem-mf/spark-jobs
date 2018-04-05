@@ -124,6 +124,17 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
         value shouldBe Some("123456")
       }
     }
+
+    "add an additional field" when {
+      "a additional value is provided correctly" in {
+        val row = new GenericRowWithSchema(List("some-value").toArray, StructType(List(StructField(originalColumnName, DataTypes.StringType, nullable = true))))
+
+        val value = domainTransformer.additionalField[String](originalColumnName, "additional-field-name")(row)
+
+        value shouldBe Some("some-value")
+        domainTransformer.additionalFields shouldBe Map("additional-field-name" -> "some-value")
+      }
+    }
   }
 
   private def assertMandatoryFieldException(domainFieldName: String, errorMessage: String, actualException: MandatoryFieldException) = {

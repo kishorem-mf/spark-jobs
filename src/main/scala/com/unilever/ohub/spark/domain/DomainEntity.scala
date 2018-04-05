@@ -25,6 +25,7 @@ trait DomainEntity extends Product {
   val isGoldenRecord: Boolean
 
   // aggregated fields
+  val additionalFields: Map[String, String]
   val ingestionErrors: Map[String, IngestionError]
 
   assert(ingestionErrors.isEmpty, s"can't create domain entity due to '${ingestionErrors.size}' ingestion error(s): '$ingestionErrors'")

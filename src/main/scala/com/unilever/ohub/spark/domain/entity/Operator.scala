@@ -77,6 +77,7 @@ case class Operator( // generic fields
     weeksClosed: Option[Int],
     zipCode: Option[String],
     // other fields
+    additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]
 ) extends DomainEntity {
   emailAddress.foreach(EmailAddressConstraint.validate)

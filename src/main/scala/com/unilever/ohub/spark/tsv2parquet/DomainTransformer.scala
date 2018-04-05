@@ -13,12 +13,12 @@ class DomainTransformer extends DomainTransformFunctions with Serializable {
   import DomainTransformer._
 
   var headers: Map[String, Int] = Map()
+  var additionalFields: Map[String, String] = Map()
+  var errors: Map[String, IngestionError] = Map()
 
   def useHeaders(headers: Map[String, Int]): Unit = {
     this.headers = headers
   }
-
-  var errors: Map[String, IngestionError] = Map()
 
   def mandatory(originalColumnName: String, domainFieldName: String)(implicit row: Row): String =
     mandatory(originalColumnName, domainFieldName, identity)(row)
@@ -39,6 +39,17 @@ class DomainTransformer extends DomainTransformFunctions with Serializable {
     val originalValueFn: Row ⇒ Option[String] = originalValue(originalColumnName)
 
     readAndTransform(originalColumnName, domainFieldName, mandatory = false, originalValueFn, transformFn)(row)
+  }
+
+  def additionalField[T](originalColumnName: String, additionalFieldName: String)(implicit row: Row): Option[String] = {
+    val originalValueFn: Row ⇒ Option[String] = originalValue(originalColumnName)
+
+    val result = readAndTransform(originalColumnName, additionalFieldName, mandatory = false, originalValueFn, identity)(row)
+
+    result.foreach { additionalValue ⇒
+      additionalFields = additionalFields.updated(additionalFieldName, additionalValue)
+    }
+    result
   }
 
   private def readAndTransform[T](originalColumnName: String, domainFieldName: String, mandatory: Boolean, originalValueFn: Row ⇒ Option[String], transformFn: String ⇒ T)(implicit row: Row): Option[T] = {

@@ -59,8 +59,6 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
 
       // format: OFF
 
-      // TODO german fields -> introduce additional fields functionality first
-
       val sourceName                                    =   "FUZZIT"
       val countryCode                                   =   originalValue(SALES_ORG)(row).get
       val sourceEntityId                                =   originalValue(CUSTOMER_UUID)(row).get
@@ -69,6 +67,8 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
       val ohubCreated                                   =   currentTimestamp()
       val (street, houseNumber, houseNumberExtension)   =   splitAddress(STREET, "street")
 
+      additionalField(CAM_KEY, "germanChainId")
+      additionalField(CAM_TEXT, "germanChainName")
                                                                             // ↓ not so happy with this column (it should be the same as the fieldName), macro?
       Operator(
         // fieldName                  mandatory   sourceFieldName           targetFieldName                 transformationFunction (unsafe)
@@ -138,6 +138,7 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
         webUpdaterId                = None                                                                                                               ,
         weeksClosed                 = None                                                                                                               ,
         zipCode                     = optional  ( ZIP,                      "zipCode"                                                                   ),
+        additionalFields            = additionalFields                                                                                                   ,
         ingestionErrors             = errors
       )
     // format: ON

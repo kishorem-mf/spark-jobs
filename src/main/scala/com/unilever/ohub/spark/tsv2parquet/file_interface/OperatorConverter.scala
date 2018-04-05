@@ -88,6 +88,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         webUpdaterId                = None                                                                                                               ,
         weeksClosed                 = optional  ( "WEEKS_CLOSED",             "weeksClosed",                  toInt _                                   ),
         zipCode                     = optional  ( "ZIP_CODE",                 "zipCode"                                                                 ),
+        additionalFields            = additionalFields                                                                                                   ,
         ingestionErrors             = errors
       )
     // format: ON

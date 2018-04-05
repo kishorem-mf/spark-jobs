@@ -91,6 +91,7 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
         webUpdaterId                = optional  ( "WEBUPDATER_ID",            "webUpdaterId"                                                            ),
         weeksClosed                 = None                                                                                                               ,
         zipCode                     = None                                                                                                               ,
+        additionalFields            = additionalFields                                                                                                   ,
         ingestionErrors             = errors
       )
     // format: ON

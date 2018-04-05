@@ -77,6 +77,7 @@ class OperatorSpec extends WordSpec with Matchers {
           webUpdaterId = Some("web-updater-id"),
           weeksClosed = Some(2),
           zipCode = Some("1234 AB"),
+          additionalFields = Map(),
           ingestionErrors = Map()
         )
 
