@@ -10,7 +10,7 @@ import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{Dataset, SparkSession}
 import org.apache.spark.sql.functions.collect_list
 
-object OperatorMerging extends SparkJob {
+object OperatorMerging extends SparkJob with OperatorGoldenRecord {
 
   private case class MatchingResult(sourceId: String, targetId: String, countryCode: String)
 
@@ -23,19 +23,9 @@ object OperatorMerging extends SparkJob {
     val sourceId: String = matchingResult.sourceId
   }
 
-  def pickGoldenRecordAndGroupId(sourcePreference: Map[String, Int])
+  def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])
                                 (operators: Seq[Operator]): Seq[Operator] = {
-    val goldenRecord = operators.reduce((o1, o2) => {
-      val preference1 = sourcePreference.getOrElse(o1.sourceName, Int.MaxValue)
-      val preference2 = sourcePreference.getOrElse(o2.sourceName, Int.MaxValue)
-      if (preference1 < preference2) o1
-      else if (preference1 > preference2) o2
-      else { // same source preference
-        val created1 = o1.dateCreated.getOrElse(new Timestamp(System.currentTimeMillis))
-        val created2 = o1.dateCreated.getOrElse(new Timestamp(System.currentTimeMillis))
-        if (created1.before(created2)) o1 else o2
-      }
-    })
+    val goldenRecord = pickGoldenRecord(sourcePreference, operators)
     val groupId = UUID.randomUUID().toString
     operators.map(o => o.copy(ohubId = Some(groupId), isGoldenRecord = (o == goldenRecord)))
   }
@@ -71,7 +61,7 @@ object OperatorMerging extends SparkJob {
 
     groupedOperators
       .union(singletonOperators)
-      .flatMap(pickGoldenRecordAndGroupId(sourcePreference))
+      .flatMap(markGoldenRecordAndGroupId(sourcePreference))
       .repartition(60)
   }
 
