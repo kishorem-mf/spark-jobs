@@ -6,6 +6,10 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.constraint._
 
+object Operator {
+  val otmConstraint = FiniteDiscreteSetConstraint(Set("A", "B", "C", "D", "E", "F"))
+}
+
 case class Operator( // generic fields
     concatId: String, // concatenation of: countryCode ~ sourceName ~ sourceEntityId (entity identifier)
     countryCode: String, // TODO Existing country code in OHUB using: Iso 3166-1 alpha 2
@@ -59,7 +63,7 @@ case class Operator( // generic fields
     mobileNumber: Option[String],
     netPromoterScore: Option[BigDecimal],
     oldIntegrationId: Option[String],
-    otm: Option[String], // TODO Options: A | B | C | D | E | F
+    otm: Option[String],
     otmEnteredBy: Option[String],
     phoneNumber: Option[String],
     region: Option[String],
@@ -78,7 +82,10 @@ case class Operator( // generic fields
     additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]
 ) extends DomainEntity {
+  import Operator._
+
   emailAddress.foreach(EmailAddressConstraint.validate)
   daysOpen.foreach(NumberOfDaysConstraint.validate)
   weeksClosed.foreach(NumberOfWeeksConstraint.validate)
+  otm.foreach(otmConstraint.validate)
 }

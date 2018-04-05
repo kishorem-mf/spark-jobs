@@ -63,7 +63,7 @@ class OperatorSpec extends WordSpec with Matchers {
           mobileNumber                = Some("+31612345678"),
           netPromoterScore            = Some(BigDecimal(75)),
           oldIntegrationId            = Some("old-integration-id"),
-          otm                         = Some("otm"),
+          otm                         = Some("D"),
           otmEnteredBy                = Some("otm-entered-by"),
           phoneNumber                 = Some("+31123456789"),
           region                      = Some("region"),
