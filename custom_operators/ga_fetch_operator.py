@@ -53,10 +53,10 @@ class GAToGSOperator(BaseOperator):
                        destination):
         ga_dataset = '{country_code}.ga_sessions_{working_date}'.format(country_code=ga_country_code,
                                                                         working_date=working_date.replace('-', ''))
-        destination = '{dest}/PARTITION_DATE={date}/COUNTRY={country}/{fn}'.format(dest=destination,
-                                                                                   date=working_date,
-                                                                                   country=country_code,
-                                                                                   fn=FILE_NAME)
+        destination = '{dest}/PARTITION_DATE={date}/COUNTRY_CODE={country}/{fn}'.format(dest=destination,
+                                                                                        date=working_date,
+                                                                                        country=country_code,
+                                                                                        fn=FILE_NAME)
 
         bq_operator = BigQueryToCloudStorageOperator(
             task_id='to_gs',
@@ -143,8 +143,9 @@ class GSToLocalOperator(BaseOperator):
 
     def execute(self, context):
         for country_code in self.country_codes.keys():
-            obj = '{}/PARTITION_DATE={}/COUNTRY={}/{}'.format(self.path_in_bucket, self.date, country_code, FILE_NAME)
-            file_path = self.path + 'PARTITION_DATE={}/COUNTRY={}/{}'.format(self.date, country_code, FILE_NAME)
+            obj = '{}/PARTITION_DATE={}/COUNTRY_CODE={}/{}'.format(self.path_in_bucket, self.date, country_code,
+                                                                   FILE_NAME)
+            file_path = self.path + 'PARTITION_DATE={}/COUNTRY_CODE={}/{}'.format(self.date, country_code, FILE_NAME)
             self.download_file(context, self.gcp_conn_id, file_path, self.bucket, obj)
 
 
@@ -185,6 +186,6 @@ class LocalGAToWasbOperator(BaseOperator):
         """Upload a file to Azure Blob Storage."""
         hook = WasbHook(wasb_conn_id=self.wasb_conn_id)
         for country_code in self.country_codes.keys():
-            blob_name = self.blob_path + 'PARTITION_DATE={}/COUNTRY={}/{}'.format(self.date, country_code, FILE_NAME)
-            file_path = self.path + 'PARTITION_DATE={}/COUNTRY={}/{}'.format(self.date, country_code, FILE_NAME)
+            blob_name = self.blob_path + 'PARTITION_DATE={}/COUNTRY_CODE={}/{}'.format(self.date, country_code, FILE_NAME)
+            file_path = self.path + 'PARTITION_DATE={}/COUNTRY_CODE={}/{}'.format(self.date, country_code, FILE_NAME)
             self.upload_file(hook, blob_name, self.container_name, file_path)
