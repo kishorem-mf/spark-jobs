@@ -74,7 +74,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     match_new_operators_with_integrated_operators = DatabricksSubmitRunOperator(
         task_id='match_new_operators_with_integrated_operators',
-        cluster_name=cluster_name,
+        existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'egg': 'dbfs:/libraries/string_matching.egg'}
@@ -82,11 +82,11 @@ with DAG('ohub_operators', default_args=default_args,
         spark_python_task={
             'python_file': 'dbfs:/libraries/join_new_operators_with_persistent_uuid.py',
             'parameters': [
-                '--current_operators_path', integrated_bucket.format(date=two_day_ago, fn='operators'),
-                '--new_operators_path', ingested_bucket.format(date=one_day_ago, fn='operators'),
-                '--output_path_existing',
+                '--integrated_operators_input_path', integrated_bucket.format(date=two_day_ago, fn='operators'),
+                '--ingested_daily_operators_input_path', ingested_bucket.format(date=one_day_ago, fn='operators'),
+                '--updated_integrated_output_path',
                 intermediate_bucket.format(date=one_day_ago, fn='updated_operators_integrated'),
-                '--output_path_new', intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched')
+                '--unmatched_output_path', intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched')
             ]
         }
     )
