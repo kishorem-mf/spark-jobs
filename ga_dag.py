@@ -2,6 +2,8 @@ from airflow import DAG
 from datetime import datetime, timedelta
 
 from config import email_addresses, country_codes
+from custom_operators.databricks_functions import DatabricksSubmitRunOperator, DatabricksStartClusterOperator, \
+    DatabricksTerminateClusterOperator
 from custom_operators.ga_fetch_operator import GAToGSOperator, LocalGAToWasbOperator, GSToLocalOperator
 
 default_args = {
@@ -18,6 +20,9 @@ default_args = {
 local_path = '/tmp/gs_export/'
 remote_bucket = 'digitaldataufs'
 path_in_bucket = 'ga_data'
+
+cluster_id = '0405-082501-flare296'
+databricks_conn_id = 'databricks_azure'
 
 with DAG('gcp_ga', default_args=default_args, schedule_interval='0 4 * * *') as dag:
     ga_to_gs = GAToGSOperator(
@@ -47,4 +52,24 @@ with DAG('gcp_ga', default_args=default_args, schedule_interval='0 4 * * *') as 
         blob_path='data/raw/gaData/'
     )
 
-    ga_to_gs >> gs_to_local >> local_to_wasb
+    start_cluster = DatabricksStartClusterOperator(
+        task_id='start_cluster',
+        cluster_id=cluster_id,
+        databricks_conn_id=databricks_conn_id
+    )
+
+    terminate_cluster = DatabricksTerminateClusterOperator(
+        task_id='terminate_cluster',
+        cluster_id=cluster_id,
+        databricks_conn_id=databricks_conn_id
+    )
+
+    update_ga_table = DatabricksSubmitRunOperator(
+        task_id='update_ga_table',
+        cluster_name='0405-082501-flare296',
+        databricks_conn_id=databricks_conn_id,
+        notebook_task={'notebook_path': 'Workspace/Users/tim.vancann@unilever.com/update_ga_tables'}
+    )
+
+    ga_to_gs >> gs_to_local >> local_to_wasb >> update_ga_table
+    start_cluster >> update_ga_table >> terminate_cluster
