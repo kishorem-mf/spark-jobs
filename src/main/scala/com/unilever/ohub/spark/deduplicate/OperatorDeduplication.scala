@@ -1,20 +1,18 @@
 package com.unilever.ohub.spark.deduplicate
 
-import java.sql.Timestamp
-
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
 object OperatorDeduplication extends SparkJob {
 
   def transform(
-                 spark: SparkSession,
-                 integratedOperators: Dataset[Operator],
-                 newOperators: Dataset[Operator]
-               ): (Dataset[Operator], Dataset[Operator]) = {
+    spark: SparkSession,
+    integratedOperators: Dataset[Operator],
+    newOperators: Dataset[Operator]
+  ): (Dataset[Operator], Dataset[Operator]) = {
     import spark.implicits._
 
     val dailyNew = newOperators
@@ -28,7 +26,7 @@ object OperatorDeduplication extends SparkJob {
     val deduped = integratedOperators
       .union(dailyDupe)
       .groupByKey(_.concatId)
-      .reduceGroups((left, right) => {
+      .reduceGroups((left, right) ⇒ {
         if (left.dateUpdated.exists(right.dateUpdated.isEmpty || _.after(right.dateUpdated.get))) {
           left
         } else {

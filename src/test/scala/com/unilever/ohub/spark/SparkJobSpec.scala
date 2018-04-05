@@ -3,8 +3,8 @@ package com.unilever.ohub.spark
 import java.sql.Timestamp
 import java.util.UUID
 
-import org.apache.spark.sql.{Dataset, Encoder}
-import org.scalatest.{FunSpec, Matchers}
+import org.apache.spark.sql.{ Dataset, Encoder }
+import org.scalatest.{ FunSpec, Matchers }
 import SharedSparkSession.spark
 import com.unilever.ohub.spark.domain.entity.Operator
 import org.scalamock.scalatest.MockFactory
@@ -19,7 +19,7 @@ trait SparkJobSpec extends FunSpec with Matchers with MockFactory {
     def toDataset: Dataset[T] = spark.createDataset(objs)
   }
 
-  // @formatter:off
+  // format: OFF
   protected val defaultOperatorRecord: Operator =
     Operator(
       concatId                    = UUID.randomUUID().toString,
@@ -91,6 +91,6 @@ trait SparkJobSpec extends FunSpec with Matchers with MockFactory {
       zipCode                     = None,
       ingestionErrors             = Map()
     )
-    // @formatter:on
+  // format: ON
 
 }

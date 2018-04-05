@@ -1,6 +1,5 @@
 package com.unilever.ohub.spark.merging
 
-import java.sql.Timestamp
 import java.util.UUID
 
 import com.unilever.ohub.spark.SparkJob
@@ -23,8 +22,7 @@ object OperatorMerging extends SparkJob with OperatorGoldenRecord {
     val sourceId: String = matchingResult.sourceId
   }
 
-  def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])
-                                (operators: Seq[Operator]): Seq[Operator] = {
+  def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])(operators: Seq[Operator]): Seq[Operator] = {
     val goldenRecord = pickGoldenRecord(sourcePreference, operators)
     val groupId = UUID.randomUUID().toString
     operators.map(o ⇒ o.copy(ohubId = Some(groupId), isGoldenRecord = (o == goldenRecord)))
