@@ -6,9 +6,9 @@ import java.nio.file.{ Path, Paths }
 import org.apache.spark.sql.SparkSession
 
 /**
-  * SharedSparkSession is a spark session usable for unit tests that share a single spark object. By
-  * using the same object only one spark session is created for all tests.
-  */
+ * SharedSparkSession is a spark session usable for unit tests that share a single spark object. By
+ * using the same object only one spark session is created for all tests.
+ */
 object SharedSparkSession {
   lazy val spark: SparkSession = createSparkSession
 

@@ -3,9 +3,9 @@ package com.unilever.ohub.spark.tsv2parquet
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
-import org.apache.spark.sql.types.{DataTypes, StructField, StructType}
+import org.apache.spark.sql.types.{ DataTypes, StructField, StructType }
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{ Matchers, WordSpec }
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 
 class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
@@ -100,7 +100,7 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
         val value = domainTransformer.optional[Long](originalColumnName, domainFieldName, toInt _)(row)
 
         value shouldBe None
-        domainTransformer.errors shouldBe Map("domain-field-name" -> IngestionError(originalColumnName,Some("abc"),"java.lang.NumberFormatException:For input string: \"abc\""))
+        domainTransformer.errors shouldBe Map("domain-field-name" -> IngestionError(originalColumnName, Some("abc"), "java.lang.NumberFormatException:For input string: \"abc\""))
       }
     }
 
@@ -116,7 +116,7 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
   }
 
   private def assertMandatoryFieldException(domainFieldName: String, errorMessage: String, actualException: MandatoryFieldException) = {
-      val expectedException = MandatoryFieldException(domainFieldName, errorMessage)
-      actualException.getMessage shouldBe expectedException.getMessage
+    val expectedException = MandatoryFieldException(domainFieldName, errorMessage)
+    actualException.getMessage shouldBe expectedException.getMessage
   }
 }

@@ -12,7 +12,7 @@ object ProductAcmConverter extends SparkJob {
   def transform(spark: SparkSession, products: Dataset[ProductRecord]): Dataset[UFSProduct] = {
     import spark.implicits._
 
-    products.map { product =>
+    products.map { product ⇒
       UFSProduct(
         COUNTY_CODE = product.countryCode,
         PRODUCT_NAME = product.productName,
@@ -21,7 +21,7 @@ object ProductAcmConverter extends SparkJob {
         MRDR_CODE = product.mrdr,
         CREATED_AT = product.dateCreated.map(_.formatted(dateFormat)),
         UPDATED_AT = product.dateCreated.map(_.formatted(dateFormat)),
-        DELETE_FLAG = product.status.map(status => if (status) "N" else "Y")
+        DELETE_FLAG = product.status.map(status ⇒ if (status) "N" else "Y")
       )
     }
   }

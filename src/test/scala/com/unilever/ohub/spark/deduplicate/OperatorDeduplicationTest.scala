@@ -11,7 +11,6 @@ class OperatorDeduplicationTest extends SparkJobSpec {
 
   import spark.implicits._
 
-
   describe("deduplication") {
 
     it("should return integrated if daily is empty") {

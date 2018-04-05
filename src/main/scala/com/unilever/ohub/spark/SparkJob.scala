@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.storage.{ DefaultStorage, Storage }
 import org.apache.log4j.{ LogManager, Logger }
 import org.apache.spark.sql.SparkSession
 
-trait SparkJob { self =>
+trait SparkJob { self ⇒
   def neededFilePaths: Array[String]
 
   def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit
@@ -18,9 +18,9 @@ trait SparkJob { self =>
     }
 
     args.length match {
-      case 2 => (args(0), args(1))
-      case 3 => (args(0), args(1), args(2))
-      case 4 => (args(0), args(1), args(2), args(3))
+      case 2 ⇒ (args(0), args(1))
+      case 3 ⇒ (args(0), args(1), args(2))
+      case 4 ⇒ (args(0), args(1), args(2), args(3))
     }
   }
 

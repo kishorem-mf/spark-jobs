@@ -16,13 +16,13 @@ object StringFunctions extends App {
     if (lengthFirst == 0) return lengthSecond
     if (lengthSecond == 0) return lengthFirst
     val distanceMatrix = Array.ofDim[Int](lengthFirst, lengthSecond)
-    for (i <- 0 until lengthFirst) distanceMatrix(i)(0) = i
-    for (i <- 0 until lengthSecond) distanceMatrix(0)(i) = i
+    for (i ← 0 until lengthFirst) distanceMatrix(i)(0) = i
+    for (i ← 0 until lengthSecond) distanceMatrix(0)(i) = i
     var isTransposition = false
 
-    for (row <- 1 until lengthFirst) {
+    for (row ← 1 until lengthFirst) {
       val charRowFirst = first.charAt(row)
-      for (column <- 1 until lengthSecond) {
+      for (column ← 1 until lengthSecond) {
         val charColumnSecond = second.charAt(column)
         if (addDamerau) {
           isTransposition = false //if(setToLower) row > 1 && column > 1 && charRowFirst.toLower == second.charAt(column - 1).toLower && first.charAt(row - 1).toLower == charColumnSecond.toLower
@@ -62,13 +62,13 @@ object StringFunctions extends App {
     return matcher.matches
   }
 
-  def fillLastNameOnlyWhenFirstEqualsLastName(firstName: String, lastName: String, isFirstName:Boolean): String = {
+  def fillLastNameOnlyWhenFirstEqualsLastName(firstName: String, lastName: String, isFirstName: Boolean): String = {
     val firstNameWithoutNull = if (firstName == null) "" else firstName
     val lastNameWithoutNull = if (lastName == null) "" else lastName
     val isBothEqual = firstNameWithoutNull.equals(lastNameWithoutNull)
     val isNotEmptyFirst = firstNameWithoutNull != ""
-    if(isFirstName) {
-      if(isNotEmptyFirst && isBothEqual) "" else firstNameWithoutNull
+    if (isFirstName) {
+      if (isNotEmptyFirst && isBothEqual) "" else firstNameWithoutNull
     } else {
       lastNameWithoutNull
     }
@@ -102,10 +102,10 @@ object StringFunctions extends App {
       val extractedNames = if (emailWithoutNull != "") emailWithoutNull.substring(0, emailWithoutNull.indexOf('@')) else ""
       if (firstNameWithoutNull == "" && lastNameWithoutNull == "" && extractedNames != "") {
         extractedNames match {
-          case value: String if value.contains(".") => return extractedNames.split("\\.").sorted.mkString
-          case value: String if value.contains("-") => return extractedNames.split("-").sorted.mkString
-          case value: String if value.contains("_") => return extractedNames.split("_").sorted.mkString
-          case _ => return extractedNames
+          case value: String if value.contains(".") ⇒ return extractedNames.split("\\.").sorted.mkString
+          case value: String if value.contains("-") ⇒ return extractedNames.split("-").sorted.mkString
+          case value: String if value.contains("_") ⇒ return extractedNames.split("_").sorted.mkString
+          case _                                    ⇒ return extractedNames
         }
 
       }
@@ -113,7 +113,7 @@ object StringFunctions extends App {
       if (firstName.equals(lastName)) return firstName
       if (firstName < lastName) firstName + lastName else lastName + firstName
     } catch {
-      case _: Exception => throw new Exception("string: ".concat(new String(firstName + ", " + lastName + ", " + emailAddress)))
+      case _: Exception ⇒ throw new Exception("string: ".concat(new String(firstName + ", " + lastName + ", " + emailAddress)))
     }
   }
 
@@ -138,20 +138,20 @@ object StringFunctions extends App {
 
     if (lengthFirstString == 1) {
       lengthSecondString match {
-        case 1.0 => return 0.0
-        case _ => return 1.0 / lengthSecondString.toDouble
+        case 1.0 ⇒ return 0.0
+        case _   ⇒ return 1.0 / lengthSecondString.toDouble
       }
     }
     var matchPairCounterFirstString: Double = 0.0
     var matchPairCounterSecondString: Double = 0.0
     val firstArray = new Array[Int](lengthFirstString - 1)
     val secondArray = new Array[Int](lengthSecondString - 1)
-    for (i <- 1 until lengthFirstString) firstArray(i - 1) = (firstString(i - 1).toInt * firstString(i - 1).toInt) + (firstString(i).toInt * firstString(i).toInt)
-    for (i <- 1 until lengthSecondString) secondArray(i - 1) = (secondString(i - 1).toInt * secondString(i - 1).toInt) + (secondString(i).toInt * secondString(i).toInt)
-    for (i <- 0 until lengthFirstString.toInt - 1) {
+    for (i ← 1 until lengthFirstString) firstArray(i - 1) = (firstString(i - 1).toInt * firstString(i - 1).toInt) + (firstString(i).toInt * firstString(i).toInt)
+    for (i ← 1 until lengthSecondString) secondArray(i - 1) = (secondString(i - 1).toInt * secondString(i - 1).toInt) + (secondString(i).toInt * secondString(i).toInt)
+    for (i ← 0 until lengthFirstString.toInt - 1) {
       var duplicateCounterFirst = 0
       var duplicateCounterSecond = 0
-      for (j <- 0 until lengthSecondString.toInt - 1) {
+      for (j ← 0 until lengthSecondString.toInt - 1) {
         if (j < lengthFirstString - 1 && firstArray(i) == firstArray(j)) {
           duplicateCounterFirst += 1
         }
@@ -185,7 +185,7 @@ object StringFunctions extends App {
     }
   }
 
-  def getFileDateString:String = {
+  def getFileDateString: String = {
     val dateTime = java.time.LocalDateTime.now().toString
     s"${dateTime.substring(0, 4)}${dateTime.substring(5, 7)}${dateTime.substring(8, 10)}${dateTime.substring(11, 13)}${dateTime.substring(14, 16)}${dateTime.substring(17, 19)}"
   }
@@ -214,22 +214,22 @@ object StringFunctions extends App {
 
     if (lengthFirstString == 1) {
       lengthSecondString match {
-        case 1.0 => return 0.0
-        case _ => return 1.0 / lengthSecondString
+        case 1.0 ⇒ return 0.0
+        case _   ⇒ return 1.0 / lengthSecondString
       }
     }
 
     try {
       var matchPairCounter: Double = 0.0
       var totalSinglesSameIndex: Double = 0.0
-      for (i <- 0 until lengthFirstString.toInt) {
+      for (i ← 0 until lengthFirstString.toInt) {
         val firstCharOne = firstString.charAt(i)
         val secondCharOne = if (i < lengthFirstString - 1) firstString.charAt(i + 1) else '‰'
         val sameIndexFirstCharTwo = secondString.charAt(i)
         if (firstCharOne == sameIndexFirstCharTwo) totalSinglesSameIndex += 1.0
 
         var isCountedPair = false
-        for (j <- 0 until lengthSecondString.toInt) {
+        for (j ← 0 until lengthSecondString.toInt) {
           val firstCharTwo = secondString.charAt(j)
           val secondCharTwo = if (j < lengthSecondString.toInt - 1) secondString.charAt(j + 1) else null
           val isDoubleMatch = firstCharOne == firstCharTwo && secondCharOne == secondCharTwo
@@ -251,7 +251,7 @@ object StringFunctions extends App {
 
       calculateSimilarityToPower(math.max(matchPairCounter / pairDenominator, totalSinglesSameIndex / (lengthFirstString + lengthDifference)))
     } catch {
-      case _: Exception => throw new Exception("first: ".concat(new String(firstString)).concat("; second: ").concat(new String(secondString)))
+      case _: Exception ⇒ throw new Exception("first: ".concat(new String(firstString)).concat("; second: ").concat(new String(secondString)))
     }
   }
 

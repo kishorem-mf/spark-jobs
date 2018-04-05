@@ -19,25 +19,25 @@ class DomainTransformer extends Serializable {
   def mandatory(originalColumnName: String, domainFieldName: String)(implicit row: Row): String =
     mandatory(originalColumnName, domainFieldName, identity)(row)
 
-  def mandatory[T](originalColumnName: String, domainFieldName: String, transformFn: String => T)(implicit row: Row): T = {
-    val originalValueFn: Row => Option[String] = originalValue(originalColumnName)
+  def mandatory[T](originalColumnName: String, domainFieldName: String, transformFn: String ⇒ T)(implicit row: Row): T = {
+    val originalValueFn: Row ⇒ Option[String] = originalValue(originalColumnName)
 
     readAndTransform[T](originalColumnName, domainFieldName, mandatory = true, originalValueFn, transformFn)(row).get
   }
 
   def optional(originalColumnName: String, domainFieldName: String)(implicit row: Row): Option[String] = {
-    val originalValueFn: Row => Option[String] = originalValue(originalColumnName)
+    val originalValueFn: Row ⇒ Option[String] = originalValue(originalColumnName)
 
     readAndTransform(originalColumnName, domainFieldName, mandatory = false, originalValueFn, identity)(row)
   }
 
-  def optional[T](originalColumnName: String, domainFieldName: String, transformFn: String => T)(implicit row: Row): Option[T] = {
-    val originalValueFn: Row => Option[String] = originalValue(originalColumnName)
+  def optional[T](originalColumnName: String, domainFieldName: String, transformFn: String ⇒ T)(implicit row: Row): Option[T] = {
+    val originalValueFn: Row ⇒ Option[String] = originalValue(originalColumnName)
 
     readAndTransform(originalColumnName, domainFieldName, mandatory = false, originalValueFn, transformFn)(row)
   }
 
-  private def readAndTransform[T](originalColumnName: String, domainFieldName: String, mandatory: Boolean, originalValueFn: Row => Option[String], transformFn: String => T)(implicit row: Row): Option[T] = {
+  private def readAndTransform[T](originalColumnName: String, domainFieldName: String, mandatory: Boolean, originalValueFn: Row ⇒ Option[String], transformFn: String ⇒ T)(implicit row: Row): Option[T] = {
     val valueOpt: Option[String] = originalValueFn(row)
 
     if (mandatory && valueOpt.isEmpty) {
@@ -47,7 +47,7 @@ class DomainTransformer extends Serializable {
     try {
       valueOpt.map(transformFn)
     } catch {
-      case e: Exception =>
+      case e: Exception ⇒
         if (mandatory) {
           throw MandatoryFieldException(domainFieldName, s"Couldn't apply transformation function on value '$valueOpt'")
         } else {
@@ -72,7 +72,7 @@ class DomainTransformer extends Serializable {
       row.fieldIndex(columnName)
     } catch {
       // maybe there is a BOM char in front of the column name, otherwise let's fail.
-      case _: Throwable => row.fieldIndex(s"$ZERO_WIDTH_NO_BREAK_SPACE$columnName")
+      case _: Throwable ⇒ row.fieldIndex(s"$ZERO_WIDTH_NO_BREAK_SPACE$columnName")
     }
 
   // where to put the following functions

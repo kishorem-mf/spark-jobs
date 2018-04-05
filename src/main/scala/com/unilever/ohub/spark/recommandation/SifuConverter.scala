@@ -73,8 +73,9 @@ object SifuConverter extends SparkJob {
       if (index >= maxIterations) accumulatingBody
       else {
         createSifuURL(countryCode, languageKey, sifuSelection, index, index + range) match {
-          case Failure(e)   => log.error("Failed to create SIFU URL", e); ""
-          case Success(url) =>
+          case Failure(e) ⇒
+            log.error("Failed to create SIFU URL", e); ""
+          case Success(url) ⇒
             val body = getResponseBodyString(url)
 
             if (body.nonEmpty) inner(index + 1, accumulatingBody + body)
@@ -99,18 +100,18 @@ object SifuConverter extends SparkJob {
     log.info(s"Generating SIFU_PRODUCTS parquet [$productsFile] and SIFU_RECIPES parquet [$recipesFile]")
 
     val productsJsonStrings = countryLanguageListEmakina
-      .map { case (country, lang) => getConcatenatedJsonString(country, lang, PRODUCTS, RANGE, MAX) }
+      .map { case (country, lang) ⇒ getConcatenatedJsonString(country, lang, PRODUCTS, RANGE, MAX) }
       .filter(_.nonEmpty)
 
     val recipesJsonStrings = countryLanguageListEmakina
-      .map { case (country, lang) => getConcatenatedJsonString(country, lang, RECIPES, RANGE, MAX) }
+      .map { case (country, lang) ⇒ getConcatenatedJsonString(country, lang, RECIPES, RANGE, MAX) }
       .filter(_.nonEmpty)
 
     productsJsonStrings.exists(_.nonEmpty) -> recipesJsonStrings.exists(_.nonEmpty) match {
-      case (true, true) => log.info("Products and recipes found")
-      case (true, _)    => log.warn("Products found, recipes not found")
-      case (_, false)   => log.warn("Recipes found, products not found")
-      case _            =>
+      case (true, true) ⇒ log.info("Products and recipes found")
+      case (true, _)    ⇒ log.warn("Products found, recipes not found")
+      case (_, false)   ⇒ log.warn("Recipes found, products not found")
+      case _ ⇒
         log.error("No products or recipes found, terminating...")
         sys.exit(1)
     }

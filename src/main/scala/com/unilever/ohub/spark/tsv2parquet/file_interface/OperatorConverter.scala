@@ -8,8 +8,8 @@ import org.apache.spark.sql.Row
 
 object OperatorConverter extends FileDomainGateKeeper[Operator] {
 
-  override def toDomainEntity: (Row, DomainTransformer) => Operator = {
-    (row, transformer) =>
+  override def toDomainEntity: (Row, DomainTransformer) ⇒ Operator = {
+    (row, transformer) ⇒
       import transformer._
       implicit val source: Row = row
 

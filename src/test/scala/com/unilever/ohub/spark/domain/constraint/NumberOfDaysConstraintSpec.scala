@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.domain.constraint
 
 import com.unilever.ohub.spark.domain.DomainConstraintViolationException
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{ Matchers, WordSpec }
 
 class NumberOfDaysConstraintSpec extends WordSpec with Matchers {
 

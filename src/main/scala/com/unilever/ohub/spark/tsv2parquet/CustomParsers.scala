@@ -15,7 +15,7 @@ object CustomParsers {
         Try(row.getString(index))
           .toOption
           .flatMap(Option.apply) // turn null values into None
-          .filter(_.nonEmpty)    // turn empty strings into None
+          .filter(_.nonEmpty) // turn empty strings into None
       }
 
       def parseDateTimeStampOption(index: Int)(implicit log: Logger): Option[Timestamp] = {
@@ -46,34 +46,34 @@ object CustomParsers {
 
   def parseDateTimeStampUnsafe(input: String)(implicit log: Logger): Timestamp =
     input match {
-      case inputString: String if inputString.matches("[ /:0-9]+") && inputString.length == 19   =>
+      case inputString: String if inputString.matches("[ /:0-9]+") && inputString.length == 19 ⇒
         new Timestamp(timestampFormatter.get.parse(input.replace("/", "")).getTime)
-      case inputString: String if inputString.matches("[ \\-:0-9]+") && inputString.length == 19 =>
+      case inputString: String if inputString.matches("[ \\-:0-9]+") && inputString.length == 19 ⇒
         new Timestamp(timestampFormatter.get.parse(input.replace("-", "")).getTime)
-      case inputString: String if inputString.matches("[ \\.:0-9]+") && inputString.length == 19 =>
+      case inputString: String if inputString.matches("[ \\.:0-9]+") && inputString.length == 19 ⇒
         new Timestamp(timestampFormatter.get.parse(input.replace(".", "")).getTime)
-      case inputString: String if inputString.matches("[ :0-9]+") && inputString.length == 17    =>
+      case inputString: String if inputString.matches("[ :0-9]+") && inputString.length == 17 ⇒
         new Timestamp(timestampFormatter.get.parse(input).getTime)
-      case inputString: String if inputString.matches("[0-9]+") && inputString.length == 8       =>
+      case inputString: String if inputString.matches("[0-9]+") && inputString.length == 8 ⇒
         new Timestamp(timestampFormatter.get.parse(input.concat(" 00:00:00")).getTime)
-      case _                                                                                     =>
+      case _ ⇒
         throw new IllegalArgumentException(s"Could not parse [$input] as DateTimeStampOption")
     }
 
-  def parseBigDecimalUnsafe(input:String): BigDecimal = input match {
-    case inputString:String if inputString.matches("[-,0-9]+") => BigDecimal(inputString.replace(",","."))
-    case inputString:String if inputString.matches("[-.0-9]+") => BigDecimal(input)
+  def parseBigDecimalUnsafe(input: String): BigDecimal = input match {
+    case inputString: String if inputString.matches("[-,0-9]+") ⇒ BigDecimal(inputString.replace(",", "."))
+    case inputString: String if inputString.matches("[-.0-9]+") ⇒ BigDecimal(input)
   }
 
   private val numberRegex = "(-?\\d+)[\\.,]?\\d*".r
   private val numberRangeRegex = "(\\d+)-(\\d+)".r
 
-  def parseLongRangeOption(input:String): Option[Long] = {
+  def parseLongRangeOption(input: String): Option[Long] = {
     input match {
-      case "" => None
-      case numberRegex(longString) => Some(longString.toLong)
-      case numberRangeRegex(longString1,longString2) => Some((longString1.toLong + longString2.toLong)/2)
-      case _ => None
+      case ""                                         ⇒ None
+      case numberRegex(longString)                    ⇒ Some(longString.toLong)
+      case numberRangeRegex(longString1, longString2) ⇒ Some((longString1.toLong + longString2.toLong) / 2)
+      case _                                          ⇒ None
     }
   }
 
@@ -83,36 +83,36 @@ object CustomParsers {
 
   def parseBigDecimalRangeOption(input: String): Option[BigDecimal] = {
     input match {
-      case doubleRegex(bigDecimalString)                          =>
+      case doubleRegex(bigDecimalString) ⇒
         Some(BigDecimal(bigDecimalString))
-      case doubleRangeRegex(bigDecimalString1, bigDecimalString2) =>
+      case doubleRangeRegex(bigDecimalString1, bigDecimalString2) ⇒
         Some((BigDecimal(bigDecimalString1) + BigDecimal(bigDecimalString2)) / 2)
-      case _                                                      =>
+      case _ ⇒
         None
     }
   }
 
   def parseBoolUnsafe(input: String): Boolean = {
     input.toUpperCase match {
-      case "Y" => true
-      case "N" => false
-      case "A" => true
-      case "D" => false
-      case "X" => true
-      case "1" => true
-      case "0" => false
-      case "TRUE" => true
-      case "FALSE" => false
-      case "YES" => true
-      case "NO" => false
+      case "Y"                   ⇒ true
+      case "N"                   ⇒ false
+      case "A"                   ⇒ true
+      case "D"                   ⇒ false
+      case "X"                   ⇒ true
+      case "1"                   ⇒ true
+      case "0"                   ⇒ false
+      case "TRUE"                ⇒ true
+      case "FALSE"               ⇒ false
+      case "YES"                 ⇒ true
+      case "NO"                  ⇒ false
       /* Capturing strange cases from data source DEX begin*/
-      case "DIRECTOR COMPRAS" => true
-      case "RESPONSIBLE FOOD" => true
-      case "RESPONSIBLE TEA" => true
-      case "RESPONSIBLE GENERAL" => true
-      case "OTHER" => true
+      case "DIRECTOR COMPRAS"    ⇒ true
+      case "RESPONSIBLE FOOD"    ⇒ true
+      case "RESPONSIBLE TEA"     ⇒ true
+      case "RESPONSIBLE GENERAL" ⇒ true
+      case "OTHER"               ⇒ true
       /* Capturing strange cases from data source DEX end*/
-      case s: String =>
+      case s: String ⇒
         throw new Exception(s"Could not parse [$s] as Boolean")
         false
     }
@@ -122,13 +122,13 @@ object CustomParsers {
 
   def parseNumberOrAverageFromRange(input: String): Int =
     input match {
-      case numberRegex(number)            =>  number.toInt
-      case numberRangeRegex(start, end)   =>  Math.round(start.toInt + end.toInt / 2)
+      case numberRegex(number)          ⇒ number.toInt
+      case numberRangeRegex(start, end) ⇒ Math.round(start.toInt + end.toInt / 2)
     }
 
   def parseBigDecimalOrAverageFromRange(input: String): BigDecimal =
     input match {
-      case doubleRegex(bigDecimalString)                          => BigDecimal(bigDecimalString)
-      case doubleRangeRegex(bigDecimalString1, bigDecimalString2) => (BigDecimal(bigDecimalString1) + BigDecimal(bigDecimalString2)) / 2
+      case doubleRegex(bigDecimalString)                          ⇒ BigDecimal(bigDecimalString)
+      case doubleRangeRegex(bigDecimalString1, bigDecimalString2) ⇒ (BigDecimal(bigDecimalString1) + BigDecimal(bigDecimalString2)) / 2
     }
 }

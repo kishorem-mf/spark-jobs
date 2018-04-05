@@ -7,7 +7,7 @@ import com.unilever.ohub.spark.domain.entity.Operator
 trait OperatorGoldenRecord {
 
   def pickGoldenRecord(sourcePreference: Map[String, Int], operators: Seq[Operator]): Operator = {
-    operators.reduce((o1, o2) => {
+    operators.reduce((o1, o2) ⇒ {
       val preference1 = sourcePreference.getOrElse(o1.sourceName, Int.MaxValue)
       val preference2 = sourcePreference.getOrElse(o2.sourceName, Int.MaxValue)
       if (preference1 < preference2) o1

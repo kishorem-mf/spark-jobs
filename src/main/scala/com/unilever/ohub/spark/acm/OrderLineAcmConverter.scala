@@ -13,7 +13,7 @@ object OrderLineAcmConverter extends SparkJob {
   def transform(spark: SparkSession, orders: Dataset[OrderRecord]): Dataset[UFSOrderLine] = {
     import spark.implicits._
 
-    orders.map(order => UFSOrderLine(
+    orders.map(order ⇒ UFSOrderLine(
       ORDER_ID = order.orderConcatId,
       ORDERLINE_ID = UUID.randomUUID().toString,
       PRD_INTEGRATION_ID = StringFunctions.createConcatId(

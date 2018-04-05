@@ -18,7 +18,7 @@ object DomainGateKeeper {
   }
 }
 
-abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag] extends SparkJob {
+abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends SparkJob {
   import DomainGateKeeper._
   import DomainGateKeeper.implicits._
 
@@ -30,14 +30,14 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag] extends Sp
 
   override final val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
 
-  def toDomainEntity: (Row, DomainTransformer) => DomainType
+  def toDomainEntity: (Row, DomainTransformer) ⇒ DomainType
 
-  def transform(transformFn: (Row, DomainTransformer) => DomainType): Row => Either[ErrorMessage, DomainType] =
-    row =>
+  def transform(transformFn: (Row, DomainTransformer) ⇒ DomainType): Row ⇒ Either[ErrorMessage, DomainType] =
+    row ⇒
       try
         Right(transformFn(row, DomainTransformer()))
       catch {
-        case e: Throwable =>
+        case e: Throwable ⇒
           Left(s"Error parsing row: '$e', row = '$row'")
       }
 
@@ -66,7 +66,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag] extends Sp
     }
 
     // TODO reintroduce strictness with the ability to switch behaviour for development purposes
-    val domainEntities: Dataset[DomainType] = result.filter(_.isRight ).map(_.right.get)
+    val domainEntities: Dataset[DomainType] = result.filter(_.isRight).map(_.right.get)
     storage.writeToParquet(domainEntities, outputFile, partitionByValue)
   }
 }

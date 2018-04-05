@@ -3,19 +3,20 @@ package com.unilever.ohub.spark.domain.entity
 import java.sql.Timestamp
 import java.util.UUID
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{ Matchers, WordSpec }
 
 class OperatorSpec extends WordSpec with Matchers {
 
   "Operator" should {
     "be created correctly (no exception is thrown)" when {
       "only valid data is provided" in {
+        // format: OFF
         val operator = Operator(
           concatId                    = "concat-id",
           countryCode                 = "country-code",
           isActive                    = true,
           isGoldenRecord              = false,
-          ohubId                     = Some(UUID.randomUUID().toString),
+          ohubId                      = Some(UUID.randomUUID().toString),
           name                        = "operator-name",
           sourceEntityId              = "source-entity-id",
           sourceName                  = "source-name",
@@ -80,6 +81,7 @@ class OperatorSpec extends WordSpec with Matchers {
           zipCode                     = Some("1234 AB"),
           ingestionErrors             = Map()
         )
+        // format: ON
 
         operator.name shouldBe "operator-name"
       }

@@ -73,7 +73,7 @@ object OrderConverter extends SparkJob {
         JoinType.LeftOuter
       )
       .map {
-        case (orderRecord, countryRecord) => Option(countryRecord).fold(orderRecord) { cr =>
+        case (orderRecord, countryRecord) ⇒ Option(countryRecord).fold(orderRecord) { cr ⇒
           orderRecord.copy(
             countryCode = Option(cr.countryCode),
             currencyCode = Option(cr.currencyCode)
@@ -94,7 +94,7 @@ object OrderConverter extends SparkJob {
     val requiredNrOfColumns = 19
     val orderRecords = storage
       .readFromCsv(inputFile, fieldSeparator = csvColumnSeparator)
-      .filter { row =>
+      .filter { row ⇒
         if (row.length != requiredNrOfColumns) {
           throw new InputMismatchException(
             s"An input CSV row did not have the required $requiredNrOfColumns columns\n${row.toString()}"

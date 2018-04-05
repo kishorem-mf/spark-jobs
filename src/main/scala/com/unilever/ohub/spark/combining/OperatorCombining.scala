@@ -3,15 +3,15 @@ package com.unilever.ohub.spark.combining
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
 object OperatorCombining extends SparkJob {
 
   def transform(
-                 spark: SparkSession,
-                 integratedUpdated: Dataset[Operator],
-                 newGoldenRecords: Dataset[Operator]
-               ): Dataset[Operator] = {
+    spark: SparkSession,
+    integratedUpdated: Dataset[Operator],
+    newGoldenRecords: Dataset[Operator]
+  ): Dataset[Operator] = {
 
     integratedUpdated
       .union(newGoldenRecords)
