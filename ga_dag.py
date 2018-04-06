@@ -68,7 +68,7 @@ with DAG('gcp_ga', default_args=default_args, schedule_interval='0 4 * * *') as 
         task_id='update_ga_table',
         existing_cluster_id='0405-082501-flare296',
         databricks_conn_id=databricks_conn_id,
-        notebook_task={'notebook_path': '/Workspace/Users/tim.vancann@unilever.com/update_ga_tables'}
+        notebook_task={'notebook_path': '/Users/tim.vancann@unilever.com/update_ga_tables'}
     )
 
     ga_to_gs >> gs_to_local >> local_to_wasb >> update_ga_table

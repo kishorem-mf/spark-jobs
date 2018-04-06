@@ -172,7 +172,7 @@ with DAG('ohub_operators', default_args=default_args,
         task_id='update_operators_table',
         existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
-        notebook_task={'notebook_path': '/Workspace/Users/tim.vancann@unilever.com/update_integrated_tables'}
+        notebook_task={'notebook_path': '/Users/tim.vancann@unilever.com/update_integrated_tables'}
     )
 
     start_cluster >> operators_to_parquet >> match_new_operators_with_integrated_operators
