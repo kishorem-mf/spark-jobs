@@ -32,13 +32,6 @@ cluster_id = '0314-131901-shalt605'
 
 databricks_conn_id = 'databricks_azure'
 
-cluster_config = {
-    'cluster_name': cluster_name,
-    "spark_version": "3.5.x-scala2.11",
-    "node_type_id": "Standard_DS3_v2",
-    "num_workers": 16
-}
-
 one_day_ago = '2018-04-06'  # should become {{ macros.ds_add(ds, -1) }}
 two_day_ago = '2017-07-12'  # should become {{ ds }}
 
