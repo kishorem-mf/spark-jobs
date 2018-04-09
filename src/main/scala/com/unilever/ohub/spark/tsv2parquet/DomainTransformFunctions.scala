@@ -2,6 +2,7 @@ package com.unilever.ohub.spark.tsv2parquet
 
 import java.sql.Timestamp
 
+import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import org.apache.spark.sql.Row
 
@@ -12,11 +13,8 @@ trait DomainTransformFunctions { self: DomainTransformer ⇒
     val sourceName: String = originalValue("SOURCE")(row).get
     val sourceEntityId: String = originalValue("REF_OPERATOR_ID")(row).get
 
-    createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
+    DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
   }
-
-  def createConcatIdFromValues(countryCode: String, sourceName: String, sourceEntityId: String): String =
-    s"$countryCode~$sourceName~$sourceEntityId"
 
   def currentTimestamp() = new Timestamp(System.currentTimeMillis())
 

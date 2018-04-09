@@ -1,5 +1,6 @@
 package com.unilever.ohub.spark.tsv2parquet.fuzzit
 
+import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.generic.StringFunctions._
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
@@ -63,7 +64,7 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
       val countryCode                                   =   originalValue(SALES_ORG)(row).get
       val sourceEntityId                                =   originalValue(CUSTOMER_UUID)(row).get
       val concatNames                                   =   Seq(originalValue(NAME_1)(row), originalValue(NAME_2)(row)).flatten.mkString(" ")
-      val concatId                                      =   createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
+      val concatId                                      =   DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
       val ohubCreated                                   =   currentTimestamp()
       val (street, houseNumber, houseNumberExtension)   =   splitAddress(STREET, "street")
 
@@ -76,7 +77,7 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
         countryCode                 = mandatory ( SALES_ORG,                "countryCode"                                                               ), // TODO lookup country code
         isActive                    = true                                                                                                               ,
         isGoldenRecord              = false                                                                                                              ,
-        ohubId                      = Option.empty                                                                                                       ,
+        ohubId                      = None                                                                                                               ,
         name                        = concatNames                                                                                                        ,
         sourceEntityId              = mandatory ( CUSTOMER_UUID,            "sourceEntityId"                                                            ),
         sourceName                  = sourceName                                                                                                         ,

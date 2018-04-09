@@ -1,5 +1,6 @@
 package com.unilever.ohub.spark.tsv2parquet.emakina
 
+import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
@@ -15,7 +16,7 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
       val countryCode = originalValue("COUNTRY_CODE")(row).get
       val sourceName = "EMAKINA"
       val sourceEntityId = originalValue("EM_SOURCE_ID")(row).get
-      val concatId = createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
+      val concatId = DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
       val ohubCreated = currentTimestamp()
 
       // TODO: OPERATOR_REF_ID, what is this id?
@@ -28,7 +29,7 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
         countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ), // TODO lookup country code
         isActive                    = true                                                                                                               ,
         isGoldenRecord              = false                                                                                                              ,
-        ohubId                      = Option.empty                                                                                                       ,
+        ohubId                      = None                                                                                                               ,
         name                        = mandatory ( "OPERATOR_NAME",            "name"                                                                    ),
         sourceEntityId              = mandatory ( "EM_SOURCE_ID",             "sourceEntityId"                                                          ),
         sourceName                  = sourceName                                                                                                         ,

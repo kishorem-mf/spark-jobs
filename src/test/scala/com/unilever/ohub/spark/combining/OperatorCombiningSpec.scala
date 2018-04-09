@@ -2,9 +2,9 @@ package com.unilever.ohub.spark.combining
 
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.domain.entity.Operator
+import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
 
-class OperatorCombiningSpec extends SparkJobSpec {
+class OperatorCombiningSpec extends SparkJobSpec with TestOperators {
   import spark.implicits._
 
   describe("combining") {
@@ -19,16 +19,15 @@ class OperatorCombiningSpec extends SparkJobSpec {
 
     it("should combine two operator datasets") {
       val d1 = Seq(
-        defaultOperatorRecord.copy(concatId = "a"),
-        defaultOperatorRecord.copy(concatId = "b"))
-        .toDataset
-      val d2 = defaultOperatorRecord.copy(concatId = "c").toDataset
+        defaultOperatorWithSourceEntityId("source-entity-id-a"),
+        defaultOperatorWithSourceEntityId("source-entity-id-b")
+      ).toDataset
+      val d2 = defaultOperatorWithSourceEntityId("source-entity-id-c").toDataset
 
       val res = OperatorCombining.transform(spark, d1, d2).collect()
 
       assert(res.length === 3)
-      res.map(_.concatId) should contain theSameElementsAs Seq("a", "b", "c")
+      res.map(_.sourceEntityId) should contain theSameElementsAs Seq("source-entity-id-a", "source-entity-id-b", "source-entity-id-c")
     }
   }
-
 }

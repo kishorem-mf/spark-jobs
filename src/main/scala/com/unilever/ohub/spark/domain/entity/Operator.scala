@@ -11,7 +11,7 @@ object Operator {
 }
 
 case class Operator( // generic fields
-    concatId: String, // concatenation of: countryCode ~ sourceName ~ sourceEntityId (entity identifier)
+    concatId: String,
     countryCode: String, // TODO Existing country code in OHUB using: Iso 3166-1 alpha 2
     isActive: Boolean,
     isGoldenRecord: Boolean,
@@ -28,7 +28,7 @@ case class Operator( // generic fields
     channel: Option[String],
     city: Option[String],
     cookingConvenienceLevel: Option[String],
-    countryName: Option[String],
+    countryName: Option[String], // TODO do a lookup for the countryName? that's derived why do we need it in the first place? so far it's only set for the file interface.
     customerType: Option[String], // TODO Options: entity types, why do we have this, isn't it encoded in the entity type implicitly?
     dateCreated: Option[Timestamp],
     dateUpdated: Option[Timestamp],
@@ -36,8 +36,8 @@ case class Operator( // generic fields
     distributorName: Option[String],
     distributorOperatorId: Option[String],
     emailAddress: Option[String],
-    faxNumber: Option[String],
-    hasDirectMailOptIn: Option[Boolean],
+    faxNumber: Option[String], // TODO set phone number constraint?
+    hasDirectMailOptIn: Option[Boolean], // TODO can we merge the opt in & opt outs?
     hasDirectMailOptOut: Option[Boolean],
     hasEmailOptIn: Option[Boolean],
     hasEmailOptOut: Option[Boolean],
@@ -59,13 +59,13 @@ case class Operator( // generic fields
     isOpenOnTuesday: Option[Boolean],
     isOpenOnWednesday: Option[Boolean],
     isPrivateHousehold: Option[Boolean],
-    kitchenType: Option[String],
-    mobileNumber: Option[String],
+    kitchenType: Option[String], // TODO is this a finite discrete set? need to constraint it?
+    mobileNumber: Option[String], // TODO set phone number constraint?
     netPromoterScore: Option[BigDecimal],
     oldIntegrationId: Option[String],
     otm: Option[String],
-    otmEnteredBy: Option[String],
-    phoneNumber: Option[String],
+    otmEnteredBy: Option[String], // TODO is this also a finite discrete set? need to constraint it?
+    phoneNumber: Option[String], // TODO set phone number constraint?
     region: Option[String],
     salesRepresentative: Option[String],
     state: Option[String],
@@ -87,5 +87,6 @@ case class Operator( // generic fields
   emailAddress.foreach(EmailAddressConstraint.validate)
   daysOpen.foreach(NumberOfDaysConstraint.validate)
   weeksClosed.foreach(NumberOfWeeksConstraint.validate)
+
   otm.foreach(otmConstraint.validate)
 }

@@ -1,20 +1,19 @@
 package com.unilever.ohub.spark.deduplicate
 
 import java.sql.Timestamp
-import java.util.UUID
 
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.Operator
+import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
 import com.unilever.ohub.spark.SharedSparkSession.spark
 
-class OperatorDeduplicationTest extends SparkJobSpec {
+class OperatorDeduplicationTest extends SparkJobSpec with TestOperators {
 
   import spark.implicits._
 
   describe("deduplication") {
 
     it("should return integrated if daily is empty") {
-      val integrated = defaultOperatorRecord.toDataset
+      val integrated = defaultOperator.toDataset
 
       val daily = spark.emptyDataset[Operator]
 
@@ -28,11 +27,11 @@ class OperatorDeduplicationTest extends SparkJobSpec {
 
     it("should find no duplicates if none are there") {
       val integrated = Seq(
-        defaultOperatorRecord.copy(concatId = "a"),
-        defaultOperatorRecord.copy(concatId = "b")
+        defaultOperatorWithSourceEntityId("a"),
+        defaultOperatorWithSourceEntityId("b")
       ).toDataset
 
-      val daily = defaultOperatorRecord.copy(concatId = "c").toDataset
+      val daily = defaultOperatorWithSourceEntityId("c").toDataset
 
       val (updatedDs, dailyNewDs) = OperatorDeduplication.transform(spark, integrated, daily)
 
@@ -41,16 +40,16 @@ class OperatorDeduplicationTest extends SparkJobSpec {
       assert(updated.length === 2)
       assert(dailyNew.length === 1)
 
-      updated.map(_.concatId) should contain theSameElementsAs Seq("a", "b")
-      assert(dailyNew.head.concatId === "c")
+      updated.map(_.sourceEntityId) should contain theSameElementsAs Seq("a", "b")
+      assert(dailyNew.head.sourceEntityId === "c")
     }
 
     it("should return a deduplicated dataset if there are duplicates") {
       val integrated = Seq(
-        defaultOperatorRecord.copy(concatId = "a"),
-        defaultOperatorRecord.copy(concatId = "b")
+        defaultOperatorWithSourceEntityId("a"),
+        defaultOperatorWithSourceEntityId("b")
       ).toDataset
-      val daily = defaultOperatorRecord.copy(concatId = "a").toDataset
+      val daily = defaultOperatorWithSourceEntityId("a").toDataset
 
       val (updatedDs, dailyNewDs) = OperatorDeduplication.transform(spark, integrated, daily)
 
@@ -59,17 +58,17 @@ class OperatorDeduplicationTest extends SparkJobSpec {
       assert(updated.length === 2)
       assert(dailyNew.length === 0)
 
-      updated.map(_.concatId) should contain theSameElementsAs Seq("a", "b")
+      updated.map(_.sourceEntityId) should contain theSameElementsAs Seq("a", "b")
     }
 
     it("return a deduplicated dataset with the newest record if there are duplicates") {
       val integrated = Seq(
-        defaultOperatorRecord.copy(concatId = "a", dateUpdated = Some(Timestamp.valueOf("2017-05-25 12:00:00"))),
-        defaultOperatorRecord.copy(concatId = "b")
+        defaultOperatorWithSourceEntityId("a").copy(dateUpdated = Some(Timestamp.valueOf("2017-05-25 12:00:00"))),
+        defaultOperatorWithSourceEntityId("b")
       ).toDataset
 
       val newTimestamp = Some(Timestamp.valueOf("2017-06-25 12:00:00"))
-      val daily = defaultOperatorRecord.copy(concatId = "a", dateUpdated = newTimestamp).toDataset
+      val daily = defaultOperatorWithSourceEntityId("a").copy(dateUpdated = newTimestamp).toDataset
 
       val (updatedDs, dailyNewDs) = OperatorDeduplication.transform(spark, integrated, daily)
 
@@ -78,8 +77,8 @@ class OperatorDeduplicationTest extends SparkJobSpec {
       assert(updated.length === 2)
       assert(dailyNew.length === 0)
 
-      updated.map(_.concatId) should contain theSameElementsAs Seq("a", "b")
-      assert(updated.find(_.concatId == "a").get.dateUpdated === newTimestamp)
+      updated.map(_.sourceEntityId) should contain theSameElementsAs Seq("a", "b")
+      assert(updated.find(_.sourceEntityId == "a").get.dateUpdated === newTimestamp)
     }
   }
 }
