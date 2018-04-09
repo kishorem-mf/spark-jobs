@@ -6,7 +6,7 @@ from airflow.contrib.hooks.ssh_hook import SSHHook
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 
 
-acm_ssh_hook = SSHHook(conn_id='acm_sftp_ssh')
+acm_ssh_hook = SSHHook(ssh_conn_id='acm_sftp_ssh')
 
 default_args = {
     'owner': 'airflow',
