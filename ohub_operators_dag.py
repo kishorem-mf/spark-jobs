@@ -21,7 +21,7 @@ default_args = {
 }
 
 wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'
-raw_bucket = wasb_root_bucket + 'raw/{date}/{schema}/**/*.csv'
+raw_bucket = wasb_root_bucket + 'raw/{schema}/{date}/**/*.csv'
 ingested_bucket = wasb_root_bucket + 'ingested/{date}/{fn}.parquet'
 intermediate_bucket = wasb_root_bucket + 'intermediate/{date}/{fn}.parquet'
 integrated_bucket = wasb_root_bucket + 'integrated/{date}/{fn}.parquet'
