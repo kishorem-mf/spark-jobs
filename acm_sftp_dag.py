@@ -36,7 +36,7 @@ task_defaults = {
 }
 
 with DAG('acm_sftp_dag', default_args=default_args,
-         schedule_interval="0 0 * * *") as dag:
+         schedule_interval="@once") as dag:
     fetch_order_lines = SFTPOperator(
         task_id='fetch_ACM_order_lines_for_date',
         local_filepath=templated_local_orderlines_filepath,

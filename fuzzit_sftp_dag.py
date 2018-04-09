@@ -27,7 +27,7 @@ os.makedirs(templated_path_to_unzip_contents, True)
 wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'
 
 with DAG('fuzzit_sftp_dag', default_args=default_args,
-         schedule_interval="0 0 * * *") as dag:
+         schedule_interval="@once") as dag:
     fetch = SFTPOperator(
         task_id='fetch_fuzzit_files_for_date',
         ssh_hook=fuzzit_ssh_hook,
