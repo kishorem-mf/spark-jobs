@@ -27,7 +27,7 @@ object OperatorDeduplication extends SparkJob {
       .union(dailyDupe)
       .groupByKey(_.concatId)
       .reduceGroups((left, right) ⇒ {
-        if (left.dateUpdated.exists(right.dateUpdated.isEmpty || _.after(right.dateUpdated.get))) {
+        if (left.dateUpdated.after(right.dateUpdated)) {
           left
         } else {
           right

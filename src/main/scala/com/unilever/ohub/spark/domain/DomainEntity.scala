@@ -19,6 +19,8 @@ trait DomainEntity extends Product {
   val name: String
   val ohubCreated: Timestamp
   val ohubUpdated: Timestamp
+  val dateCreated: Timestamp
+  val dateUpdated: Timestamp
 
   // used for grouping and marking the golden record within the group
   val ohubId: Option[String]
