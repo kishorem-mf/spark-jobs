@@ -20,12 +20,12 @@ default_args = {
     'retry_delay': timedelta(minutes=1),
 }
 
-wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'
-raw_bucket = wasb_root_bucket + 'raw/{schema}/{date}/**/*.csv'
-ingested_bucket = wasb_root_bucket + 'ingested/{date}/{fn}.parquet'
-intermediate_bucket = wasb_root_bucket + 'intermediate/{date}/{fn}.parquet'
-integrated_bucket = wasb_root_bucket + 'integrated/{date}/{fn}.parquet'
-export_bucket = wasb_root_bucket + 'export/{date}/{fn}.parquet'
+dbfs_root_bucket = 'dbfs:/mnt/ohub_data/'
+raw_bucket = dbfs_root_bucket + 'raw/{schema}/{date}/**/*.csv'
+ingested_bucket = dbfs_root_bucket + 'ingested/{date}/{fn}.parquet'
+intermediate_bucket = dbfs_root_bucket + 'intermediate/{date}/{fn}.parquet'
+integrated_bucket = dbfs_root_bucket + 'integrated/{date}/{fn}.parquet'
+export_bucket = dbfs_root_bucket + 'export/{date}/{fn}.parquet'
 
 cluster_id = '0314-131901-shalt605'
 databricks_conn_id = 'databricks_azure'
@@ -77,7 +77,8 @@ with DAG('ohub_operators', default_args=default_args,
                 '--ingested_daily_operators_input_path', ingested_bucket.format(date=one_day_ago, fn='operators'),
                 '--updated_integrated_output_path',
                 intermediate_bucket.format(date=one_day_ago, fn='updated_operators_integrated'),
-                '--unmatched_output_path', intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched')
+                '--unmatched_output_path', intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched'),
+                '--country_code', 'DK'
             ]
         }
     )
