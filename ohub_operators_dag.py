@@ -77,9 +77,7 @@ with DAG('ohub_operators', default_args=default_args,
                 '--ingested_daily_operators_input_path', ingested_bucket.format(date=one_day_ago, fn='operators'),
                 '--updated_integrated_output_path',
                 intermediate_bucket.format(date=one_day_ago, fn='updated_operators_integrated'),
-                '--unmatched_output_path', intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched'),
-                '--country_code', 'DK'
-            ]
+                '--unmatched_output_path', intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched')]
         }
     )
 
