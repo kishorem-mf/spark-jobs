@@ -19,7 +19,7 @@ default_args = {
 }
 
 rfp = "/incoming/OHUB_2_testing/quoted_semi_colon_delimited/"
-fds = "{{macros.ds_format(ds, '%Y%m%d')}}"
+fds = "{{macros.ds_format(ds, '%Y-%m-%d', '%Y%m%d')}}"
 local_filepath = "/tmp/acm/{{ds}}/"
 # os.makedirs(local_filepath, True)
 templated_local_orderlines_filepath = local_filepath + "ORDERLINES.csv"
