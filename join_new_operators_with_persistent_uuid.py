@@ -127,7 +127,7 @@ def main(arguments):
         if i >= 1:
             mode = 'append'
 
-        LOGGER.info('Match the ingested data with the integrated data')
+        LOGGER.info('Match the ingested data with the integrated data for country {}'.format(country_code))
         matched_ingested_daily = join_ingested_daily_with_integrated_operators(
             spark, ingested_daily_for_matching, integrated_for_matching,
             country_code, arguments.n_top, arguments.threshold)
