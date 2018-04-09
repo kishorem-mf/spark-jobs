@@ -102,8 +102,8 @@ def join_columns_and_filter(similarity: DataFrame, contacts: DataFrame, country_
         .withColumn('countryCode', sf.lit(country_code))
         .selectExpr('i', 'j', 'countryCode', 'sourceId',
                     'id as targetId', 'similarity',
-                    'sourceName', 'streetCleansed as targetStreet',
-                    'sourceStreet', 'name as targetName',
+                    'sourceName', 'name as targetName',
+                    'sourceStreet', 'streetCleansed as targetStreet',
                     'sourceZipCode', 'zipCodeCleansed as targetZipCode',
                     'sourceCity', 'cityCleansed as targetCity')
         .filter(
@@ -136,10 +136,11 @@ def match_contacts_for_country(spark: SparkSession, country_code: str, preproces
         max_vocabulary_size=VOCABULARY_SIZE,
         matrix_chunks_rows=MATRIX_CHUNK_ROWS
     )
+    LOGGER.info("Join matches with original columns and filter")
+    similarity_filtered = join_columns_and_filter(similarity, contacts, country_code)
     LOGGER.info("Group matches")
-    grouped_similarity = utils.group_matches(similarity)
-    LOGGER.info("Join matches with original columns, filter, and return result")
-    return join_columns_and_filter(grouped_similarity, contacts, country_code)
+    grouped_similarity = utils.group_matches(similarity_filtered)
+    return grouped_similarity
 
 
 def main(arguments):
@@ -154,7 +155,10 @@ def main(arguments):
     t.end_and_log()
 
     country_codes = utils.get_country_codes(arguments.country_code, preprocessed_contacts)
-    for country_code in country_codes:
+    mode = 'overwrite'
+    for i, country_code in enumerate(country_codes):
+        if i == 1:
+            mode = 'append'
         t = utils.Timer('Running for country {}'.format(country_code), LOGGER)
         grouped_matches = match_contacts_for_country(spark,
                                                      country_code,
@@ -163,7 +167,7 @@ def main(arguments):
                                                      arguments.threshold)
         t.end_and_log()
         if arguments.output_path:
-            utils.save_to_parquet(grouped_matches, arguments.output_path)
+            utils.save_to_parquet(grouped_matches, arguments.output_path, mode)
         else:
             utils.print_stats_contacts(grouped_matches, arguments.n_top, arguments.threshold)
     preprocessed_contacts.unpersist()
