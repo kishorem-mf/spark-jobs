@@ -23,7 +23,7 @@ fuzzit_ssh_hook = SSHHook(ssh_conn_id='fuzzit_sftp_ssh')
 templated_remote_filepath = "./UFS_Fuzzit_OHUB20_" + fds + "_1400.zip"
 templated_local_filepath = "/tmp/fuzzit/{{ds}}/UFS_Fuzzit_OHUB20_1400.zip"
 templated_path_to_unzip_contents = '/tmp/fuzzit/{{ds}}/csv/'
-os.makedirs(templated_path_to_unzip_contents, exist_ok=true)
+os.makedirs(templated_path_to_unzip_contents, exist_ok=True)
 wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'
 
 with DAG('fuzzit_sftp_dag', default_args=default_args,
