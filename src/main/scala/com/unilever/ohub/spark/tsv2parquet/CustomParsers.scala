@@ -44,6 +44,7 @@ object CustomParsers {
 
   def parseDateTimeForPattern(dateTimePattern: String = "yyyy-MM-dd HH:mm:ss.SS")(input: String): Timestamp = {
     val pattern = DateTimeFormatter.ofPattern(dateTimePattern)
+    // TODO what timezone do we use here?
     val millis = LocalDateTime.parse(input, pattern).toInstant(ZoneOffset.UTC).toEpochMilli
     new Timestamp(millis)
   }
