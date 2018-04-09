@@ -27,15 +27,13 @@ intermediate_bucket = wasb_root_bucket + 'intermediate/{date}/{fn}.parquet'
 integrated_bucket = wasb_root_bucket + 'integrated/{date}/{fn}.parquet'
 export_bucket = wasb_root_bucket + 'export/{date}/{fn}.parquet'
 
-cluster_name = 'ohub_basic'
 cluster_id = '0314-131901-shalt605'
-
 databricks_conn_id = 'databricks_azure'
 
 one_day_ago = '2018-04-06'  # should become {{ macros.ds_add(ds, -1) }}
 two_day_ago = '2017-07-12'  # should become {{ ds }}
 
-jar = 'dbfs:/libraries/ohub/spark-jobs-assembly-WIP.jar'
+jar = 'dbfs:/libraries/ohub/spark-jobs-assembly-0.2.0.jar'
 
 with DAG('ohub_operators', default_args=default_args,
          schedule_interval="@once") as dag:
