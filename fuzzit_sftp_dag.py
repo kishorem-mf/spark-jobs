@@ -19,7 +19,7 @@ default_args = {
 }
 
 fds = "{{macros.ds_format(ds, '%Y-%m-%d', '%Y%m%d')}}"
-fuzzit_ssh_hook = SSHHook(ssh_conn_id='fuzzit_sftp_ssh')
+fuzzit_ssh_hook = SSHHook(conn_id='fuzzit_sftp_ssh')
 templated_remote_filepath = "./UFS_Fuzzit_OHUB20_" + fds + "_1400.zip"
 templated_local_filepath = "/tmp/fuzzit/{{ds}}/UFS_Fuzzit_OHUB20_1400.zip"
 templated_path_to_unzip_contents = '/tmp/fuzzit/{{ds}}/csv/'
