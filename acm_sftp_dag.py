@@ -2,11 +2,8 @@ from datetime import datetime
 
 import os
 from airflow import DAG
-from airflow.contrib.hooks.ssh_hook import SSHHook
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 
-
-acm_ssh_hook = SSHHook(ssh_conn_id='acm_sftp_ssh')
 
 default_args = {
     'owner': 'airflow',
@@ -30,7 +27,7 @@ templated_local_products_filepath = local_filepath + "PRODUCTS.csv"
 templated_remote_products_filepath = rfp + "UFS_PRODUCTS_" + fds + "*.csv"
 
 task_defaults = {
-    'ssh_hook': acm_ssh_hook,
+    'ssh_conn_id': 'acm_sftp_ssh',
     'remote_host': 'unilever-z8i53y',
     'operation': SFTPOperation.GET
 }
