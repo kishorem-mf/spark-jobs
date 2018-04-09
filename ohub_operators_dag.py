@@ -30,8 +30,8 @@ export_bucket = wasb_root_bucket + 'export/{date}/{fn}.parquet'
 cluster_id = '0314-131901-shalt605'
 databricks_conn_id = 'databricks_azure'
 
-one_day_ago = '2018-04-06'  # should become {{ macros.ds_add(ds, -1) }}
-two_day_ago = '2017-07-12'  # should become {{ ds }}
+one_day_ago = '2018-04-06'  # should become {{ ds }}
+two_day_ago = '2017-07-12'  # should become {{ macros.ds_add(ds, -1) }}
 
 jar = 'dbfs:/libraries/ohub/spark-jobs-assembly-0.2.0.jar'
 
@@ -68,10 +68,10 @@ with DAG('ohub_operators', default_args=default_args,
         existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
-            {'egg': 'dbfs:/libraries/string_matching.egg'}
+            {'egg': 'dbfs:/libraries/name_matching/string_matching.egg'}
         ],
         spark_python_task={
-            'python_file': 'dbfs:/libraries/join_new_operators_with_persistent_uuid.py',
+            'python_file': 'dbfs:/libraries/name_matching/join_new_operators_with_persistent_uuid.py',
             'parameters': [
                 '--integrated_operators_input_path', integrated_bucket.format(date=two_day_ago, fn='operators'),
                 '--ingested_daily_operators_input_path', ingested_bucket.format(date=one_day_ago, fn='operators'),
