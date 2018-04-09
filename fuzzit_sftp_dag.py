@@ -18,7 +18,7 @@ default_args = {
 }
 
 fds = "{{macros.ds_format(ds, '%Y-%m-%d', '%Y%m%d')}}"
-templated_remote_filepath = "./UFS_Fuzzit_OHUB20_" + fds + "_1400.zip"
+templated_remote_filepath = "/ftp/ftp_ohub20/UFS_Fuzzit_OHUB20_" + fds + "_1400.zip"
 templated_local_filepath = "/tmp/fuzzit/{{ds}}/UFS_Fuzzit_OHUB20_1400.zip"
 templated_path_to_unzip_contents = '/tmp/fuzzit/{{ds}}/csv/'
 # os.makedirs(templated_path_to_unzip_contents, True)
