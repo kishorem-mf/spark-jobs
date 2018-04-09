@@ -107,11 +107,4 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         }
     )
 
-    update_operators_table = DatabricksSubmitRunOperator(
-        task_id='update_operators_table',
-        existing_cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
-        notebook_task={'notebook_path': '/Users/tim.vancann@unilever.com/update_integrated_tables'}
-    )
-
     start_cluster >> operators_to_parquet >> match_operators >> merge_operators >> operators_to_acm >> terminate_cluster
