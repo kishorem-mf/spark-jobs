@@ -37,13 +37,13 @@ with DAG('fuzzit_sftp_dag', default_args=default_args,
         operation=SFTPOperation.GET)
 
     unzip = UnzipOperator(
-        # task_id='unzip_fuzzit_file',
+        task_id='unzip_fuzzit_file',
         path_to_zip_file=templated_local_filepath,
         path_to_unzip_contents=templated_path_to_unzip_contents,
         dag=dag)
 
     wasb = FolderToWasbOperator(
-        # task_id='fuzzit_to_wasb',
+        task_id='fuzzit_to_wasb',
         folder_path=templated_path_to_unzip_contents,
         container_name='prod',
         blob_name='ulohub2storedevne',

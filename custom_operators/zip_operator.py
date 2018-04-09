@@ -36,6 +36,7 @@ class ZipOperator(BaseOperator):
             path_to_file_to_zip,
             path_to_save_zip,
             *args, **kwargs):
+        super(ZipOperator, self).__init__(*args, **kwargs)
         self.path_to_file_to_zip = path_to_file_to_zip
         self.path_to_save_zip = path_to_save_zip
 
@@ -104,6 +105,7 @@ class UnzipOperator(BaseOperator):
             path_to_zip_file,
             path_to_unzip_contents,
             *args, **kwargs):
+        super(UnzipOperator, self).__init__(*args, **kwargs)
         self.path_to_zip_file = path_to_zip_file
         self.path_to_unzip_contents = path_to_unzip_contents
 
