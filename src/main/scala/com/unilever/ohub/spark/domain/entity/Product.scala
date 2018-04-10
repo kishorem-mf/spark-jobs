@@ -6,7 +6,8 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.constraint._
 
-case class Product( // generic fields
+case class Product(
+    // generic fields
     concatId: String, // concatenation of: countryCode ~ sourceName ~ sourceEntityId (entity identifier)
     countryCode: String, // TODO Existing country code in OHUB using: Iso 3166-1 alpha 2
     dateCreated: Timestamp,
