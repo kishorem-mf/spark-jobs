@@ -7,7 +7,7 @@ pipelines:
         caches:
           - pip
         script:
-          - pip install pytest pycodestyle
+          - pip install pytest pycodestyle==2.3.1
 #          - pytest tests
           - pycodestyle --show-source .
     - step:
@@ -24,7 +24,7 @@ pipelines:
         image: python:3.5.2
         caches:
         script:
-          - pip install pytest pycodestyle
+          - pip install pytest pycodestyle==2.3.1
 #          - pytest tests
           - pycodestyle --show-source .
     - step:
@@ -36,13 +36,6 @@ pipelines:
           - ./compile_library.sh
         artifacts:
           - dist/*.egg
-#    - step:
-#        name: Deploy to azure blob store
-#        image: microsoft/azure-cli
-#        script:
-#          - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
-#          - az storage blob upload -f dist/string_matching.egg -c prod -n deployment/name-matching/dist/string_matching.egg --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_ACCOUNT}
-#          - az storage blob upload -f match_operators.py -c prod -n deployment/name-matching/match_operators.py --account-key ${AZ_STORAGE_KEY} --account-name ${AZ_STORAGE_ACCOUNT}
     - step:
         name: Deploy to databricks fs
         image: timvancann/databricks-cli
