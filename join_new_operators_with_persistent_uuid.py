@@ -120,7 +120,11 @@ def main(arguments):
     country_codes_integrated = utils.get_country_codes(arguments.country_code, integrated)
     country_codes = set(country_codes_ingested) & set(country_codes_integrated)
 
-    mode = 'overwrite'
+    if len(country_codes) > 1:
+        mode = 'overwrite'
+    else:
+        mode = 'append'
+
     for i, country_code in enumerate(country_codes):
         if i >= 1:
             mode = 'append'
