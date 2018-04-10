@@ -7,7 +7,8 @@ from config import email_addresses
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
-    DatabricksStartClusterOperator
+    DatabricksStartClusterOperator, \
+    DatabricksUninstallLibrariesOperator
 
 default_args = {
     'owner': 'airflow',
@@ -34,6 +35,7 @@ one_day_ago = '2018-04-06'  # should become {{ ds }}
 two_day_ago = '2017-07-12'  # should become {{ macros.ds_add(ds, -1) }}
 
 jar = 'dbfs:/libraries/ohub/spark-jobs-assembly-0.2.0.jar'
+egg = 'dbfs:/libraries/name_matching/string_matching.egg'
 
 with DAG('ohub_operators', default_args=default_args,
          schedule_interval="@once") as dag:
@@ -47,6 +49,16 @@ with DAG('ohub_operators', default_args=default_args,
         task_id='terminate_cluster',
         cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id
+    )
+
+    uninstall_old_libraries = DatabricksUninstallLibrariesOperator(
+        task_id='uninstall_old_libraries',
+        cluster_id=cluster_id,
+        databricks_conn_id=databricks_conn_id,
+        libraries_to_uninstall=[{
+            'jar': jar,
+            'egg': egg,
+        }]
     )
 
     operators_to_parquet = DatabricksSubmitRunOperator(
@@ -68,7 +80,7 @@ with DAG('ohub_operators', default_args=default_args,
         existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
-            {'egg': 'dbfs:/libraries/name_matching/string_matching.egg'}
+            {'egg': egg}
         ],
         spark_python_task={
             'python_file': 'dbfs:/libraries/name_matching/join_new_operators_with_persistent_uuid.py',
@@ -86,7 +98,7 @@ with DAG('ohub_operators', default_args=default_args,
         existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
-            {'egg': 'dbfs:/libraries/name_matching/string_matching.egg'}
+            {'egg': egg}
         ],
         spark_python_task={
             'python_file': 'dbfs:/libraries/name_matching/match_operators.py',
@@ -164,7 +176,8 @@ with DAG('ohub_operators', default_args=default_args,
         notebook_task={'notebook_path': '/Users/tim.vancann@unilever.com/update_integrated_tables'}
     )
 
-    start_cluster >> operators_to_parquet >> match_new_operators_with_integrated_operators
+    start_cluster >> uninstall_old_libraries
+    uninstall_old_libraries >> operators_to_parquet >> match_new_operators_with_integrated_operators
     match_new_operators_with_integrated_operators >> update_golden_records >> combine_to_create_integrated
     match_new_operators_with_integrated_operators >> match_unmatched_operators
     match_unmatched_operators >> merge_operators >> combine_to_create_integrated
