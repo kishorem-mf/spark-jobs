@@ -57,4 +57,4 @@ with DAG('acm_sftp_dag', default_args=default_args,
         remote_filepath=templated_remote_products_filepath,
         **task_defaults)
 
-    mkdir.set_downstream([fetch_order_lines, fetch_orders, fetch_products])
+    mkdir.set_upstream([fetch_order_lines, fetch_orders, fetch_products])
