@@ -84,10 +84,12 @@ case class Product(
     solutionCopy: Option[String],
     subBrandCode: Option[String],
     subBrandName: Option[String],
+    subCategoryByMarketeer: Option[String],
     subCategoryCode: Option[String],
     subCategoryName: Option[String],
+    `type`: Option[String],
     unit: Option[String],
-    unitPrice: Option[Float],
+    unitPrice: Option[BigDecimal],
     youtubeUrl: Option[String],
     // other fields
     ingestionErrors: Map[String, IngestionError]
