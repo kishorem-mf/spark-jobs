@@ -26,6 +26,7 @@ from string_matching.spark_string_matching import match_strings
 N_GRAMS = 2
 MINIMUM_DOCUMENT_FREQUENCY = 2
 VOCABULARY_SIZE = 2000
+LOGGER = None
 
 
 def preprocess_for_matching(ddf: DataFrame, id_column: str, drop_if_name_is_null=False) -> DataFrame:
