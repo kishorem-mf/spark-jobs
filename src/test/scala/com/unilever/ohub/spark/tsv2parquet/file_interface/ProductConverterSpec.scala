@@ -5,7 +5,7 @@ import java.util.UUID
 
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.domain.entity.{Product, TestProducts}
+import com.unilever.ohub.spark.domain.entity.{ Product, TestProducts }
 import com.unilever.ohub.spark.storage.Storage
 
 class ProductConverterSpec extends SparkJobSpec with TestProducts {

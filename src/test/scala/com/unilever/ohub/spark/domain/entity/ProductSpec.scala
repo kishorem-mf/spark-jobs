@@ -1,7 +1,5 @@
 package com.unilever.ohub.spark.domain.entity
 
-import java.sql.Timestamp
-
 import org.scalatest.{ Matchers, WordSpec }
 
 class ProductSpec extends WordSpec with Matchers with TestProducts {
