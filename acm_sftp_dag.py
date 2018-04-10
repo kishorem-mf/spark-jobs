@@ -35,7 +35,7 @@ with DAG('acm_sftp_dag', default_args=default_args,
          schedule_interval="@once") as dag:
 
     mkdir = BashOperator(
-        'mkdir -p ' + local_filepath,
+        bash_command='mkdir -p ' + local_filepath,
         task_id='mkdir_acm',
     )
 

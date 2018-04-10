@@ -28,7 +28,7 @@ with DAG('fuzzit_sftp_dag', default_args=default_args,
          schedule_interval="@once") as dag:
 
     mkdir = BashOperator(
-        'mkdir -p ' + templated_path_to_unzip_contents,
+        bash_command='mkdir -p ' + templated_path_to_unzip_contents,
         task_id='mkdir_fuzzit',
     )
 
