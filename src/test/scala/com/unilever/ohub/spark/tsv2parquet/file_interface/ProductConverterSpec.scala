@@ -30,7 +30,7 @@ class ProductConverterSpec extends SparkJobSpec with TestProducts {
         dateCreated = Timestamp.valueOf("2015-06-30 13:47:00"),
         dateUpdated = Timestamp.valueOf("2015-06-30 13:48:00"),
         isActive = true,
-        isGoldenRecord = false,
+        isGoldenRecord = true,
         ohubId = Some(UUID.randomUUID().toString), // can't access real value
         name = "KNORR CHICKEN POWDER(D) 12X1kg",
         sourceEntityId = "P1234",
@@ -44,13 +44,13 @@ class ProductConverterSpec extends SparkJobSpec with TestProducts {
         eanDistributionUnit = Some("112234000000"),
         `type` = Some("Product"),
         unit = Some("Cases"),
-        unitPrice = Some(4)
+        unitPrice = Some(BigDecimal(4))
       )
 
       (mockStorage.writeToParquet _).expects(*, outputFile, Seq("countryCode")).onCall { (resultDataSet, _, _) =>
         val actualProduct: Product = resultDataSet.head.asInstanceOf[Product]
 
-        actualProduct shouldBe expectedProduct.copy(ohubCreated = actualProduct.ohubCreated, ohubUpdated = actualProduct.ohubUpdated)
+        actualProduct shouldBe expectedProduct.copy(ohubId = actualProduct.ohubId, ohubCreated = actualProduct.ohubCreated, ohubUpdated = actualProduct.ohubUpdated)
       }
 
       ProductConverter.run(spark, (inputFile, outputFile), mockStorage)
