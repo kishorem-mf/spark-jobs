@@ -26,6 +26,7 @@ from string_matching.spark_string_matching import match_strings
 N_GRAMS = 2
 MINIMUM_DOCUMENT_FREQUENCY = 2
 VOCABULARY_SIZE = 2000
+MINIMUM_ENTRIES_PER_COUNTRY = 2
 
 
 def preprocess_for_matching(ddf: DataFrame, id_column: str, drop_if_name_is_null=False) -> DataFrame:
@@ -47,14 +48,6 @@ def preprocess_for_matching(ddf: DataFrame, id_column: str, drop_if_name_is_null
             .withColumn('matching_string', sf.lower(sf.trim(sf.regexp_replace(sf.col('matching_string'), '\s+', ' '))))
             .withColumn('string_index', sf.row_number().over(w) - 1)
             .select('countryCode', 'string_index', id_column, 'matching_string')
-            )
-
-
-def get_country_codes(ddf: DataFrame):
-    return (ddf
-            .select('countryCode')
-            .distinct()
-            .rdd.map(lambda r: r[0]).collect()
             )
 
 
@@ -121,7 +114,10 @@ def main(arguments):
     integrated = spark.read.parquet(arguments.integrated_operators_input_path)
     integrated_for_matching = preprocess_for_matching(integrated, 'ohubId')
 
-    country_codes = get_country_codes(ingested_daily)
+    country_codes_ingested = utils.get_country_codes(arguments.country_code, ingested_daily)
+    country_codes_integrated = utils.get_country_codes(arguments.country_code, integrated)
+    country_codes = set(country_codes_ingested) & set(country_codes_integrated)
+    
     mode = 'overwrite'
     for i, country_code in enumerate(country_codes):
         if i >= 1:
@@ -174,7 +170,7 @@ if __name__ == '__main__':
                         help='country code to use (e.g. US). Default all countries.')
     parser.add_argument('-t', '--threshold', default=0.8, type=float,
                         help='drop similarities below this value [0.-1.].')
-    parser.add_argument('-n', '--n_top', default=1, type=int,
+    parser.add_argument('-n', '--n_top', default=1500, type=int,
                         help='keep N top similarities for each record.')
     args = parser.parse_args()
 
