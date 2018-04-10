@@ -28,16 +28,18 @@ def start_spark(name):
     spark = (SparkSession
              .builder
              .appName("NameMatching")
-             .config('spark.dynamicAllocation.enabled', False)
-             .config('spark.executor.instances', 4)
-             .config('spark.executor.cores', 13)
-             .config('spark.executor.memory', '14g')
-             .config('spark.driver.memory', '15g')
+             # .config('spark.dynamicAllocation.enabled', False)
+             # .config('spark.executor.instances', 4)
+             # .config('spark.executor.cores', 13)
+             # .config('spark.executor.memory', '14g')
+             # .config('spark.driver.memory', '15g')
              .getOrCreate())
     sc = spark.sparkContext
     sc.setLogLevel("INFO")
 
     log4j = sc._jvm.org.apache.log4j
+    log4j.LogManager.getRootLogger().getLogger('org').setLevel(log4j.Level.WARN)
+    log4j.LogManager.getRootLogger().getLogger('akka').setLevel(log4j.Level.ERROR)
     global LOGGER
     LOGGER = log4j.LogManager.getLogger(name)
     return spark, LOGGER
@@ -54,10 +56,10 @@ def get_country_codes(country_code_arg: str, ddf: DataFrame) -> List[str]:
     if country_code_arg == 'all':
         count_per_country = ddf.groupby('countryCode').count()
         LOGGER.info("Selecting countries with more than " + str(MINIMUM_ENTRIES_PER_COUNTRY) + " entries")
-        codes = sorted((count_per_country[count_per_country['count'] > MINIMUM_ENTRIES_PER_COUNTRY]
-                        .select('countryCode')
-                        .distinct()
-                        .rdd.map(lambda r: r[0]).collect()))
+        codes = (count_per_country[count_per_country['count'] > MINIMUM_ENTRIES_PER_COUNTRY]
+                 .select('countryCode')
+                 .distinct()
+                 .rdd.map(lambda r: r[0]).collect())
     else:
         LOGGER.info("Selecting only country: " + country_code_arg)
         codes = [country_code_arg]
