@@ -3,7 +3,7 @@ from datetime import datetime
 import os
 from airflow import DAG
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
-
+from airflow.contrib.operators.bash_operator import BashOperator
 
 default_args = {
     'owner': 'airflow',
@@ -18,7 +18,6 @@ default_args = {
 rfp = "/incoming/OHUB_2_testing/quoted_semi_colon_delimited/"
 fds = "{{macros.ds_format(ds, '%Y-%m-%d', '%Y%m%d')}}"
 local_filepath = "/tmp/acm/{{ds}}/"
-# os.makedirs(local_filepath, True)
 templated_local_orderlines_filepath = local_filepath + "ORDERLINES.csv"
 templated_remote_orderlines_filepath = rfp + "UFS_ORDERLINES_" + fds + "*.csv"
 templated_local_orders_filepath = local_filepath + "ORDERS.csv"
@@ -34,6 +33,9 @@ task_defaults = {
 
 with DAG('acm_sftp_dag', default_args=default_args,
          schedule_interval="@once") as dag:
+
+    mkdir = BashOperator('mkdir -p ' + local_filepath)
+  
     fetch_order_lines = SFTPOperator(
         task_id='fetch_ACM_order_lines_for_date',
         local_filepath=templated_local_orderlines_filepath,
@@ -51,3 +53,5 @@ with DAG('acm_sftp_dag', default_args=default_args,
         local_filepath=templated_local_products_filepath,
         remote_filepath=templated_remote_products_filepath,
         **task_defaults)
+
+    mkdir.set_downstream([fetch_order_lines, fetch_orders, fetch_products])

@@ -3,6 +3,7 @@ from datetime import datetime
 import os
 from airflow import DAG
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
+from airflow.contrib.operators.bash_operator import BashOperator
 from custom_operators.zip_operator import UnzipOperator
 from custom_operators.folder_to_wasb import FolderToWasbOperator
 from config import country_codes
@@ -21,11 +22,13 @@ fds = "{{macros.ds_format(ds, '%Y-%m-%d', '%Y%m%d')}}"
 templated_remote_filepath = "/ftp/ftp_ohub20/UFS_Fuzzit_OHUB20_" + fds + "_1400.zip"
 templated_local_filepath = "/tmp/fuzzit/{{ds}}/UFS_Fuzzit_OHUB20_1400.zip"
 templated_path_to_unzip_contents = '/tmp/fuzzit/{{ds}}/csv/'
-# os.makedirs(templated_path_to_unzip_contents, True)
 wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'
 
 with DAG('fuzzit_sftp_dag', default_args=default_args,
          schedule_interval="@once") as dag:
+
+    mkdir = BashOperator('mkdir -p ' + templated_path_to_unzip_contents)
+  
     fetch = SFTPOperator(
         task_id='fetch_fuzzit_files_for_date',
         ssh_conn_id='fuzzit_sftp_ssh',
@@ -47,4 +50,4 @@ with DAG('fuzzit_sftp_dag', default_args=default_args,
         blob_name='ulohub2storedevne',
     )
 
-    fetch >> unzip >> wasb
+    mkdir >> fetch >> unzip >> wasb
