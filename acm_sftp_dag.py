@@ -38,7 +38,7 @@ with DAG('acm_sftp_dag', default_args=default_args,
         'mkdir -p ' + local_filepath,
         task_id='mkdir_acm',
     )
-  
+
     fetch_order_lines = SFTPOperator(
         task_id='fetch_ACM_order_lines_for_date',
         local_filepath=templated_local_orderlines_filepath,
