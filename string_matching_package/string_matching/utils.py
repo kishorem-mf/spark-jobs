@@ -38,8 +38,6 @@ def start_spark(name):
     sc.setLogLevel("INFO")
 
     log4j = sc._jvm.org.apache.log4j
-    log4j.LogManager.getRootLogger().getLogger('org').setLevel(log4j.Level.WARN)
-    log4j.LogManager.getRootLogger().getLogger('akka').setLevel(log4j.Level.ERROR)
     global LOGGER
     LOGGER = log4j.LogManager.getLogger(name)
     return spark, LOGGER
