@@ -1,5 +1,7 @@
 package com.unilever.ohub.spark.tsv2parquet.file_interface
 
+import java.util.UUID
+
 import com.unilever.ohub.spark.domain.entity.Product
 import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
@@ -25,8 +27,8 @@ object ProductConverter extends FileDomainGateKeeper[Product] {
         dateCreated                     = mandatory( "DATE_CREATED",              "dateCreated",            parseDateTimeStampUnsafe _),
         dateUpdated                     = mandatory( "DATE_MODIFIED",             "dateUpdated",            parseDateTimeStampUnsafe _),
         isActive                        = mandatory( "STATUS",                    "isActive",               parseBoolUnsafe _),
-        isGoldenRecord                  = false,
-        ohubId                          = Option.empty,
+        isGoldenRecord                  = true,
+        ohubId                          = Some(UUID.randomUUID().toString),
         name                            = mandatory( "PRODUCT_NAME",              "name"                                              ),
         sourceEntityId                  = mandatory( "REF_PRODUCT_ID",            "sourceEntityId"),
         sourceName                      = mandatory( "SOURCE",                    "sourceName"),
