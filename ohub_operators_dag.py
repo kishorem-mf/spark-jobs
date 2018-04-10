@@ -19,6 +19,7 @@ default_args = {
     'email_on_retry': False,
     'retries': 0,
     'retry_delay': timedelta(minutes=1),
+    'pool': 'ohub_pool'
 }
 
 dbfs_root_bucket = 'dbfs:/mnt/ohub_data/'
@@ -61,19 +62,19 @@ with DAG('ohub_operators', default_args=default_args,
         }]
     )
 
-    operators_to_parquet = DatabricksSubmitRunOperator(
-        task_id="operators_to_parquet",
-        existing_cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
-        spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
-            'parameters': [raw_bucket.format(date=one_day_ago, schema='operators'),
-                           ingested_bucket.format(date=one_day_ago, fn='operators')]
-        }
-    )
+    # operators_to_parquet = DatabricksSubmitRunOperator(
+    #     task_id="operators_to_parquet",
+    #     existing_cluster_id=cluster_id,
+    #     databricks_conn_id=databricks_conn_id,
+    #     libraries=[
+    #         {'jar': jar}
+    #     ],
+    #     spark_jar_task={
+    #         'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
+    #         'parameters': [raw_bucket.format(date=one_day_ago, schema='operators'),
+    #                        ingested_bucket.format(date=one_day_ago, fn='operators')]
+    #     }
+    # )
 
     tasks = []
     for code in operator_country_codes:
@@ -179,9 +180,9 @@ with DAG('ohub_operators', default_args=default_args,
         notebook_task={'notebook_path': '/Users/tim.vancann@unilever.com/update_integrated_tables'}
     )
 
-    start_cluster >> uninstall_old_libraries >> operators_to_parquet
+    start_cluster >> uninstall_old_libraries  # >> operators_to_parquet
     for t in tasks:
-        t.set_upstream([operators_to_parquet])
+        t.set_upstream([uninstall_old_libraries])
         t.set_downstream([update_golden_records, match_unmatched_operators])
     update_golden_records >> combine_to_create_integrated
     match_unmatched_operators >> merge_operators >> combine_to_create_integrated
