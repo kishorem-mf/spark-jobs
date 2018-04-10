@@ -40,8 +40,8 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         cookingConvenienceLevel     = optional  ( "CONVENIENCE_LEVEL",        "cookingConvenienceLevel"                                                 ),
         countryName                 = optional  ( "COUNTRY",                  "countryName"                                                             ),
         customerType                = None                                                                                                               , // TODO introduce when enum is available
-        dateCreated                 = optional  ( "DATE_CREATED",             "dateCreated",                  parseDateTimeStampUnsafe _                ),
-        dateUpdated                 = optional  ( "DATE_MODIFIED",            "dateUpdated",                  parseDateTimeStampUnsafe _                ),
+        dateCreated                 = mandatory ( "DATE_CREATED",             "dateCreated",                  parseDateTimeStampUnsafe _                ),
+        dateUpdated                 = mandatory ( "DATE_MODIFIED",            "dateUpdated",                  parseDateTimeStampUnsafe _                ),
         daysOpen                    = optional  ( "DAYS_OPEN",                "daysOpen",                     toInt _                                   ),
         distributorCustomerNumber   = optional  ( "DISTRIBUTOR_CUSTOMER_NR",  "distributorCustomerNumber"                                               ),
         distributorName             = optional  ( "DISTRIBUTOR_NAME",         "distributorName"                                                         ),

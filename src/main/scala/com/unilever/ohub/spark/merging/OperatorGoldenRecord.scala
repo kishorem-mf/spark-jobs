@@ -13,8 +13,8 @@ trait OperatorGoldenRecord {
       if (preference1 < preference2) o1
       else if (preference1 > preference2) o2
       else { // same source preference
-        val created1 = o1.dateCreated.getOrElse(new Timestamp(System.currentTimeMillis))
-        val created2 = o2.dateCreated.getOrElse(new Timestamp(System.currentTimeMillis))
+        val created1 = o1.dateCreated
+        val created2 = o2.dateCreated
         if (created1.after(created2)) o1 else o2
       }
     })

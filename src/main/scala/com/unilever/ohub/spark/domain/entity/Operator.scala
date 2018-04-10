@@ -8,9 +8,12 @@ import com.unilever.ohub.spark.domain.constraint._
 
 // TODO add german fields to additional fields
 
-case class Operator( // generic fields
+case class Operator(
+    // generic fields
     concatId: String, // concatenation of: countryCode ~ sourceName ~ sourceEntityId (entity identifier)
     countryCode: String, // TODO Existing country code in OHUB using: Iso 3166-1 alpha 2
+    dateCreated: Timestamp,
+    dateUpdated: Timestamp,
     isActive: Boolean,
     isGoldenRecord: Boolean,
     ohubId: Option[String],
@@ -28,8 +31,6 @@ case class Operator( // generic fields
     cookingConvenienceLevel: Option[String],
     countryName: Option[String],
     customerType: Option[String], // TODO Options: entity types, why do we have this, isn't it encoded in the entity type implicitly?
-    dateCreated: Option[Timestamp],
-    dateUpdated: Option[Timestamp],
     daysOpen: Option[Int],
     distributorCustomerNumber: Option[String],
     distributorName: Option[String],
