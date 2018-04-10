@@ -3,7 +3,7 @@ from datetime import datetime
 import os
 from airflow import DAG
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
-from airflow.contrib.operators.bash_operator import BashOperator
+from airflow.operators.bash_operator import BashOperator
 from custom_operators.zip_operator import UnzipOperator
 from custom_operators.folder_to_wasb import FolderToWasbOperator
 from config import country_codes
