@@ -116,7 +116,7 @@ def main(arguments):
     country_codes_ingested = utils.get_country_codes(arguments.country_code, ingested_daily)
     country_codes_integrated = utils.get_country_codes(arguments.country_code, integrated)
     country_codes = set(country_codes_ingested) & set(country_codes_integrated)
-    
+
     mode = 'overwrite'
     for i, country_code in enumerate(country_codes):
         if i >= 1:
