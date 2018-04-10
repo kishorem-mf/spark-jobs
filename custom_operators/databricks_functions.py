@@ -280,7 +280,7 @@ class DatabricksStartClusterOperator(BaseDatabricksOperator):
 
 
 class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
-    ui_color = '#bbf3ff'
+    ui_color = '#ffc3bb'
     ui_fgcolor = '#000'
 
     def __init__(self,
@@ -320,7 +320,7 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
 
 
 class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
-    ui_color = '#d5ebc2'
+    ui_color = '#bbf3ff'
     ui_fgcolor = '#000'
 
     def __init__(self,
