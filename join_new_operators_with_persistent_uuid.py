@@ -25,6 +25,7 @@ from string_matching.spark_string_matching import match_strings
 
 N_GRAMS = 2
 MINIMUM_DOCUMENT_FREQUENCY = 2
+MINIMUM_ENTRIES_PER_COUNTRY = 2
 VOCABULARY_SIZE = 2000
 LOGGER = None
 
@@ -114,7 +115,8 @@ def main(arguments):
     integrated = spark.read.parquet(arguments.integrated_operators_input_path)
     integrated_for_matching = preprocess_for_matching(integrated, 'ohubId')
 
-    country_codes_ingested = utils.get_country_codes(arguments.country_code, ingested_daily)
+    country_codes_ingested = utils.get_country_codes(arguments.country_code, ingested_daily,
+                                                     MINIMUM_ENTRIES_PER_COUNTRY)
     country_codes_integrated = utils.get_country_codes(arguments.country_code, integrated)
     country_codes = set(country_codes_ingested) & set(country_codes_integrated)
 
@@ -147,7 +149,7 @@ def main(arguments):
                      .join(matched_ingested_daily, on='concatId', how='left_anti')
                      )
 
-        LOGGER.info('Write to parquet')
+        LOGGER.info('Write to parquet for country {}'.format(country_code))
         if arguments.updated_integrated_output_path is not None:
             utils.save_to_parquet(updated_integrated, arguments.updated_integrated_output_path, mode)
         if arguments.unmatched_output_path is not None:
