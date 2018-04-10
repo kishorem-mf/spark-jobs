@@ -27,7 +27,10 @@ wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'
 with DAG('fuzzit_sftp_dag', default_args=default_args,
          schedule_interval="@once") as dag:
 
-    mkdir = BashOperator('mkdir -p ' + templated_path_to_unzip_contents)
+    mkdir = BashOperator(
+        'mkdir -p ' + templated_path_to_unzip_contents,
+        task_id='mkdir_fuzzit',
+    )
   
     fetch = SFTPOperator(
         task_id='fetch_fuzzit_files_for_date',

@@ -34,7 +34,10 @@ task_defaults = {
 with DAG('acm_sftp_dag', default_args=default_args,
          schedule_interval="@once") as dag:
 
-    mkdir = BashOperator('mkdir -p ' + local_filepath)
+    mkdir = BashOperator(
+        'mkdir -p ' + local_filepath,
+        task_id='mkdir_acm',
+    )
   
     fetch_order_lines = SFTPOperator(
         task_id='fetch_ACM_order_lines_for_date',
