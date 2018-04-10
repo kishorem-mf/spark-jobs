@@ -100,20 +100,19 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
     template_fields = ('spark_jar_task', 'notebook_task', 'spark_python_task',)
     template_ext = ('.j2', '.jinja2',)
 
-    def __init__(
-        self,
-        existing_cluster_id=None,
-        spark_jar_task=None,
-        spark_python_task=None,
-        notebook_task=None,
-        libraries=None,
-        run_name=None,
-        timeout_seconds=None,
-        cluster_name=None,
-        databricks_conn_id='databricks_default',
-        polling_period_seconds=30,
-        databricks_retry_limit=3,
-        **kwargs):
+    def __init__(self,
+                 existing_cluster_id=None,
+                 spark_jar_task=None,
+                 spark_python_task=None,
+                 notebook_task=None,
+                 libraries=None,
+                 run_name=None,
+                 timeout_seconds=None,
+                 cluster_name=None,
+                 databricks_conn_id='databricks_default',
+                 polling_period_seconds=30,
+                 databricks_retry_limit=3,
+                 **kwargs):
 
         super(DatabricksSubmitRunOperator, self).__init__(databricks_conn_id,
                                                           polling_period_seconds,
