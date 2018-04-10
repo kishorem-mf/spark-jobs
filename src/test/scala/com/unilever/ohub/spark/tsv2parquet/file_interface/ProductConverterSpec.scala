@@ -8,11 +8,8 @@ import com.unilever.ohub.spark.domain.entity.Product
 import com.unilever.ohub.spark.storage.Storage
 
 class ProductConverterSpec extends SparkJobSpec {
-
-  import spark.implicits._
-
   describe("running") {
-    ignore("should not throw any expection on a valid file") {
+    it("should not throw any expection on a valid file") {
       val mockStorage = mock[Storage]
 
       val inputFile = "src/test/resources/FILE_PRODUCTS.csv"
@@ -20,13 +17,13 @@ class ProductConverterSpec extends SparkJobSpec {
       (mockStorage.readFromCsv _).expects(inputFile, "‰", true).returns(
         spark
           .read
-          .option("header", true)
+          .option("header", value = true)
           .option("sep", "‰")
           .option("inferSchema", value = false)
           .csv(inputFile)
       )
 
-      val ds = Product(
+      val expectedProduct = Product(
         concatId = s"AU~WUFOO~P1234",
         countryCode = "AU",
         dateCreated = Timestamp.valueOf("2015-06-30 13:47:00"),
@@ -110,9 +107,13 @@ class ProductConverterSpec extends SparkJobSpec {
         unitPrice = Some(4),
         youtubeUrl = None,
         ingestionErrors = Map()
-      ).toDataset
+      )
 
-      (mockStorage.writeToParquet _).expects(ds, outputFile, Seq("countryCode"))
+      (mockStorage.writeToParquet _).expects(*, outputFile, Seq("countryCode")).onCall { (resultDataSet, _, _) =>
+        val actualProduct: Product = resultDataSet.head.asInstanceOf[Product]
+
+        actualProduct shouldBe expectedProduct.copy(ohubCreated = actualProduct.ohubCreated, ohubUpdated = actualProduct.ohubUpdated)
+      }
 
       ProductConverter.run(spark, (inputFile, outputFile), mockStorage)
     }

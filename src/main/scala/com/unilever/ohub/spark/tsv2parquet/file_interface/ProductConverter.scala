@@ -12,8 +12,7 @@ object ProductConverter extends FileDomainGateKeeper[Product] {
       import transformer._
       implicit val source: Row = row
 
-      val countryCode: String = originalValue("COUNTRY_CODE")(row).get
-      val concatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_OPERATOR_ID")
+      val concatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_PRODUCT_ID")
       val ohubCreated = currentTimestamp()
 
       // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
@@ -21,7 +20,7 @@ object ProductConverter extends FileDomainGateKeeper[Product] {
       // fieldName                        mandatory   sourceFieldName             targetFieldName           transformationFunction (unsafe)
       Product(
         concatId                        = concatId,
-        countryCode                     = mandatory( "COUNTR_CODE",               "countryCode"                                       ),
+        countryCode                     = mandatory( "COUNTRY_CODE",              "countryCode"                                       ),
         dateCreated                     = mandatory( "DATE_CREATED",              "dateCreated",            parseDateTimeStampUnsafe _),
         dateUpdated                     = mandatory( "DATE_MODIFIED",             "dateUpdated",            parseDateTimeStampUnsafe _),
         isActive                        = mandatory( "STATUS",                    "isActive",               parseBoolUnsafe _),
