@@ -30,8 +30,8 @@ class OperatorGoldenRecordSpec extends SparkJobSpec {
         "sourceB" -> 1
       )
       val operators = Seq(
-        defaultOperatorRecord.copy(sourceName = "sourceA", dateCreated = Some(Timestamp.valueOf("2017-05-25 12:00:00"))),
-        defaultOperatorRecord.copy(sourceName = "sourceB", dateCreated = Some(Timestamp.valueOf("2017-04-25 12:00:00")))
+        defaultOperatorRecord.copy(sourceName = "sourceA", dateCreated = Timestamp.valueOf("2017-05-25 12:00:00")),
+        defaultOperatorRecord.copy(sourceName = "sourceB", dateCreated = Timestamp.valueOf("2017-04-25 12:00:00"))
       )
       val golden = Foo().pickGoldenRecord(sourcePreferences, operators)
 
