@@ -26,7 +26,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ), // TODO lookup country code
         isActive                    = mandatory ( "STATUS",                   "isActive",                     parseBoolUnsafe _                         ),
         isGoldenRecord              = false                                                                                                              ,
-        ohubId                     = Option.empty                                                                                                       ,
+        ohubId                      = Option.empty                                                                                                       ,
         name                        = mandatory ( "NAME",                     "name"                                                                    ),
         sourceEntityId              = mandatory ( "REF_OPERATOR_ID",          "sourceEntityId"                                                          ),
         sourceName                  = mandatory ( "SOURCE",                   "sourceName"                                                              ),

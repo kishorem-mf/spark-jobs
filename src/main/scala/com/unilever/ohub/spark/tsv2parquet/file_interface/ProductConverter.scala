@@ -18,16 +18,16 @@ object ProductConverter extends FileDomainGateKeeper[Product] {
 
       // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
 
-      // fieldName                        mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
+      // fieldName                        mandatory   sourceFieldName             targetFieldName           transformationFunction (unsafe)
       Product(
         concatId                        = concatId,
-        countryCode                     = mandatory( "COUNTR_CODE",               "countryCode"                                             ),
-        dateCreated                     = mandatory( "DATE_CREATED",              "dateCreated",                  parseDateTimeStampUnsafe _),
-        dateUpdated                     = mandatory( "DATE_MODIFIED",             "dateUpdated",                  parseDateTimeStampUnsafe _),
-        isActive                        = mandatory( "STATUS",                    "isActive",                     parseBoolUnsafe _),
+        countryCode                     = mandatory( "COUNTR_CODE",               "countryCode"                                       ),
+        dateCreated                     = mandatory( "DATE_CREATED",              "dateCreated",            parseDateTimeStampUnsafe _),
+        dateUpdated                     = mandatory( "DATE_MODIFIED",             "dateUpdated",            parseDateTimeStampUnsafe _),
+        isActive                        = mandatory( "STATUS",                    "isActive",               parseBoolUnsafe _),
         isGoldenRecord                  = false,
         ohubId                          = Option.empty,
-        name                            = mandatory( "PRODUCT_NAME",              "name"                                                    ),
+        name                            = mandatory( "PRODUCT_NAME",              "name"                                              ),
         sourceEntityId                  = mandatory( "REF_PRODUCT_ID",            "sourceEntityId"),
         sourceName                      = mandatory( "SOURCE",                    "sourceName"),
         ohubCreated                     = ohubCreated,
@@ -101,7 +101,7 @@ object ProductConverter extends FileDomainGateKeeper[Product] {
         subCategoryName                 = Option.empty,
         `type`                          = Some("Product"),
         unit                            = optional(  "UNIT",                    "unit"),
-        unitPrice                       = optional(  "UNIT_PRICE",              "unitPrice",                      parseBigDecimalUnsafe _),
+        unitPrice                       = optional(  "UNIT_PRICE",              "unitPrice",                 parseBigDecimalUnsafe _),
         youtubeUrl                      = Option.empty,
         // other fields
         ingestionErrors                 = errors
