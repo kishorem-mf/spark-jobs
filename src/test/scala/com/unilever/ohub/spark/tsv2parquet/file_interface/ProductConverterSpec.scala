@@ -34,12 +34,12 @@ class ProductConverterSpec extends SparkJobSpec with TestProducts{
         dateUpdated = Timestamp.valueOf("2015-06-30 13:48:00"),
         isActive = true,
         isGoldenRecord = false,
-        ohubId = Some(UUID.randomUUID().toString),
+        ohubId = Some(UUID.randomUUID().toString), // can't access real value
         name = "KNORR CHICKEN POWDER(D) 12X1kg",
         sourceEntityId = "P1234",
         sourceName = "WUFOO",
-        ohubCreated = new Timestamp(System.currentTimeMillis()),
-        ohubUpdated = new Timestamp(System.currentTimeMillis()),
+        ohubCreated = new Timestamp(System.currentTimeMillis()), // can't access real value
+        ohubUpdated = new Timestamp(System.currentTimeMillis()), // can't access real value
         code = Some("201119"),
         codeType = Some("MRDR"),
         currency = Some("GBP"),
