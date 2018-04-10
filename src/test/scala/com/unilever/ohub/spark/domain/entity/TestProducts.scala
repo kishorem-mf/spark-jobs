@@ -7,14 +7,14 @@ object TestProducts extends TestProducts
 trait TestProducts {
 
   // format: OFF
-  lazy val defaultProduct: Product = Product(
+  lazy val defaultProductRecord: Product = Product(
     concatId = "concat-id",
     countryCode = "country-code",
     dateCreated = new Timestamp(System.currentTimeMillis()),
     dateUpdated = new Timestamp(System.currentTimeMillis()),
     isActive = true,
     isGoldenRecord = true,
-    ohubId = None,
+    ohubId = Some("ohub-id"),
     name = "product-name",
     sourceEntityId = "source-entity-id",
     sourceName = "source-name",

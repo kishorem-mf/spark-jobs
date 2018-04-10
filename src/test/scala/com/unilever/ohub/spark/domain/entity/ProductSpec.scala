@@ -9,7 +9,7 @@ class ProductSpec extends WordSpec with Matchers with TestProducts {
   "Product" should {
     "be created correctly (no exception is thrown)" when {
       "only valid data is provided" in {
-        defaultProduct.name shouldBe "product-name"
+        defaultProductRecord.name shouldBe "product-name"
       }
     }
   }
