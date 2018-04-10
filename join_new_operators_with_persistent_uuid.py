@@ -50,14 +50,6 @@ def preprocess_for_matching(ddf: DataFrame, id_column: str, drop_if_name_is_null
             )
 
 
-def get_country_codes(ddf: DataFrame):
-    return (ddf
-            .select('countryCode')
-            .distinct()
-            .rdd.map(lambda r: r[0]).collect()
-            )
-
-
 def join_ingested_daily_with_integrated_operators(spark, ingested_daily, integrated,
                                                   country_code, n_top, threshold):
     ingested_daily_1country = (
@@ -121,7 +113,10 @@ def main(arguments):
     integrated = spark.read.parquet(arguments.integrated_operators_input_path)
     integrated_for_matching = preprocess_for_matching(integrated, 'ohubId')
 
-    country_codes = get_country_codes(ingested_daily)
+    country_codes_ingested = utils.get_country_codes(arguments.country_code, ingested_daily)
+    country_codes_integrated = utils.get_country_codes(arguments.country_code, integrated)
+    country_codes = set(country_codes_ingested) & set(country_codes_integrated)
+
     mode = 'overwrite'
     for i, country_code in enumerate(country_codes):
         if i >= 1:
@@ -174,7 +169,7 @@ if __name__ == '__main__':
                         help='country code to use (e.g. US). Default all countries.')
     parser.add_argument('-t', '--threshold', default=0.8, type=float,
                         help='drop similarities below this value [0.-1.].')
-    parser.add_argument('-n', '--n_top', default=1, type=int,
+    parser.add_argument('-n', '--n_top', default=1500, type=int,
                         help='keep N top similarities for each record.')
     args = parser.parse_args()
 
