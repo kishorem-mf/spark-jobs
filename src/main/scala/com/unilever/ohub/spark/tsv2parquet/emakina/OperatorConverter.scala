@@ -27,6 +27,7 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
         concatId                    = concatId                                                                                                           ,
         countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ), // TODO lookup country code
+        customerType                = Operator.customerType                                                                                              ,
         isActive                    = true                                                                                                               ,
         isGoldenRecord              = false                                                                                                              ,
         ohubId                      = None                                                                                                               ,
@@ -42,7 +43,6 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
         city                        = None                                                                                                               ,
         cookingConvenienceLevel     = None                                                                                                               ,
         countryName                 = None                                                                                                               ,
-        customerType                = None                                                                                                               , // TODO introduce when enum is available
         dateCreated                 = None                                                                                                               ,
         dateUpdated                 = None                                                                                                               ,
         daysOpen                    = None                                                                                                               ,

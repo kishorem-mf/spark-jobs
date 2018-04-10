@@ -5,7 +5,6 @@ import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.domain.entity.TestOperators
 
 class OperatorUpdateGoldenRecordSpec extends SparkJobSpec with TestOperators {
-
   import spark.implicits._
 
   describe("marking golden record") {

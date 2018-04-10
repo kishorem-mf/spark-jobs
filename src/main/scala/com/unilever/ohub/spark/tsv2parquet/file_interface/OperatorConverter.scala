@@ -23,6 +23,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
         concatId                    = concatId                                                                                                           ,
         countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ), // TODO lookup country code
+        customerType                = Operator.customerType                                                                                              ,
         isActive                    = mandatory ( "STATUS",                   "isActive",                     parseBoolUnsafe                           ),
         isGoldenRecord              = false                                                                                                              ,
         ohubId                      = None                                                                                                               ,
@@ -38,7 +39,6 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         city                        = optional  ( "CITY",                     "city"                                                                    ),
         cookingConvenienceLevel     = optional  ( "CONVENIENCE_LEVEL",        "cookingConvenienceLevel"                                                 ),
         countryName                 = optional  ( "COUNTRY",                  "countryName"                                                             ),
-        customerType                = None                                                                                                               , // TODO introduce when enum is available
         dateCreated                 = optional  ( "DATE_CREATED",             "dateCreated",                  parseDateTimeStampUnsafe                  ),
         dateUpdated                 = optional  ( "DATE_MODIFIED",            "dateUpdated",                  parseDateTimeStampUnsafe                  ),
         daysOpen                    = optional  ( "DAYS_OPEN",                "daysOpen",                     toInt                                     ),

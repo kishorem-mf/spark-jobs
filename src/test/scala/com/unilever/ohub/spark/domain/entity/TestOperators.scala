@@ -40,7 +40,7 @@ trait TestOperators {
     city                        = Some("city"),
     cookingConvenienceLevel     = Some("cooking-convenience-level"),
     countryName                 = Some("country-name"),
-    customerType                = Some("customer-type"),
+    customerType                = Operator.customerType,
     dateCreated                 = Some(new Timestamp(System.currentTimeMillis())),
     dateUpdated                 = Some(new Timestamp(System.currentTimeMillis())),
     daysOpen                    = Some(4),

@@ -16,9 +16,10 @@ object DomainEntity {
 trait DomainEntity extends Product {
   // mandatory fields
   val concatId: String
+  val countryCode: String
+  val customerType: String
   val sourceEntityId: String
   val sourceName: String
-  val countryCode: String
   val isActive: Boolean
   val name: String
   val ohubCreated: Timestamp
@@ -33,6 +34,4 @@ trait DomainEntity extends Product {
   val ingestionErrors: Map[String, IngestionError]
 
   ConcatIdConstraint.validate(concatId, countryCode, sourceName, sourceEntityId)
-
-  assert(ingestionErrors.isEmpty, s"can't create domain entity due to '${ingestionErrors.size}' ingestion error(s): '$ingestionErrors'")
 }

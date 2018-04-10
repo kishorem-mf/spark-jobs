@@ -75,6 +75,7 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
         // fieldName                  mandatory   sourceFieldName           targetFieldName                 transformationFunction (unsafe)
         concatId                    = concatId                                                                                                           ,
         countryCode                 = mandatory ( SALES_ORG,                "countryCode"                                                               ), // TODO lookup country code
+        customerType                = Operator.customerType                                                                                              ,
         isActive                    = true                                                                                                               ,
         isGoldenRecord              = false                                                                                                              ,
         ohubId                      = None                                                                                                               ,
@@ -90,7 +91,6 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
         city                        = optional  ( CITY,                     "city"                                                                      ),
         cookingConvenienceLevel     = None                                                                                                               ,
         countryName                 = None                                                                                                               ,
-        customerType                = None                                                                                                               , // TODO introduce when enum is available
         dateCreated                 = optional  ( CREATION_DATE,            "dateCreated",                  parseDateTimeForPattern()                    ),
         dateUpdated                 = optional  ( CREATION_DATE,            "dateUpdated",                  parseDateTimeForPattern()                    ),
         daysOpen                    = None                                                                                                               ,
