@@ -1,4 +1,5 @@
 package com.unilever.ohub.spark.generic
+import scala.collection.immutable.HashMap
 
 import java.util.regex.Pattern
 
@@ -94,4 +95,12 @@ object StringFunctions extends App {
   def createConcatId(countryCode: Option[String], source: Option[String], refId: Option[String]): String = {
     createConcatId(countryCode, source, refId.getOrElse(""))
   }
+
+  def checkEnum(set: Set[String]) = (s: String) ⇒ {
+    if (!set.contains(s)) {
+      throw new IllegalArgumentException(s + " not contained in " + set)
+    }
+    s
+  }: String
+
 }
