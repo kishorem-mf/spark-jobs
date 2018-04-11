@@ -22,11 +22,11 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
   import DomainGateKeeper._
   import DomainGateKeeper.implicits._
 
-  protected def fieldSeparator: String
+  protected[tsv2parquet] def fieldSeparator: String
 
-  protected def hasHeaders: Boolean
+  protected[tsv2parquet] def hasHeaders: Boolean
 
-  protected def partitionByValue: Seq[String]
+  protected[tsv2parquet] def partitionByValue: Seq[String]
 
   override final val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
 
