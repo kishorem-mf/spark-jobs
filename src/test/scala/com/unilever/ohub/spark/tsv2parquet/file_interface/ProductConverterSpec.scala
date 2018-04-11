@@ -47,7 +47,7 @@ class ProductConverterSpec extends SparkJobSpec with TestProducts {
         unitPrice = Some(BigDecimal(4))
       )
 
-      (mockStorage.writeToParquet _).expects(*, outputFile, Seq("countryCode")).onCall { (resultDataSet, _, _) =>
+      (mockStorage.writeToParquet _).expects(*, outputFile, Seq("countryCode")).onCall { (resultDataSet, _, _) ⇒
         val actualProduct: Product = resultDataSet.head.asInstanceOf[Product]
 
         actualProduct shouldBe expectedProduct.copy(ohubId = actualProduct.ohubId, ohubCreated = actualProduct.ohubCreated, ohubUpdated = actualProduct.ohubUpdated)

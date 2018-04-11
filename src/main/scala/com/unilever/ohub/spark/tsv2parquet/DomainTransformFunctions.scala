@@ -9,9 +9,9 @@ import org.apache.spark.sql.Row
 trait DomainTransformFunctions { self: DomainTransformer ⇒
 
   def createConcatId(countryCodeColumn: String, sourceNameColumn: String, sourceEntityIdColumn: String)(implicit row: Row): String = {
-    val countryCode: String = originalValue("COUNTRY_CODE")(row).get
-    val sourceName: String = originalValue("SOURCE")(row).get
-    val sourceEntityId: String = originalValue("REF_OPERATOR_ID")(row).get
+    val countryCode: String = originalValue(countryCodeColumn)(row).get
+    val sourceName: String = originalValue(sourceNameColumn)(row).get
+    val sourceEntityId: String = originalValue(sourceEntityIdColumn)(row).get
 
     DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
   }

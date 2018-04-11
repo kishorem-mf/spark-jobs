@@ -8,8 +8,9 @@ trait TestProducts {
 
   // format: OFF
   lazy val defaultProductRecord: Product = Product(
-    concatId = "concat-id",
+    concatId = "country-code~source-name~source-entity-id",
     countryCode = "country-code",
+    customerType = Product.customerType,
     dateCreated = new Timestamp(System.currentTimeMillis()),
     dateUpdated = new Timestamp(System.currentTimeMillis()),
     isActive = true,
@@ -92,6 +93,7 @@ trait TestProducts {
     unitPrice = None,
     youtubeUrl = None,
     // other fields
+    additionalFields = Map(),
     ingestionErrors = Map()
   )
   // format: ON

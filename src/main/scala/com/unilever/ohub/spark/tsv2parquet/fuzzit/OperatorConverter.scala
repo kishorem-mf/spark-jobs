@@ -76,6 +76,8 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
         concatId                    = concatId                                                                                                           ,
         countryCode                 = mandatory ( SALES_ORG,                "countryCode"                                                               ), // TODO lookup country code
         customerType                = Operator.customerType                                                                                              ,
+        dateCreated                 = mandatory ( CREATION_DATE,            "dateCreated",                  parseDateTimeForPattern()                   ),
+        dateUpdated                 = mandatory ( CREATION_DATE,            "dateUpdated",                  parseDateTimeForPattern()                   ),
         isActive                    = true                                                                                                               ,
         isGoldenRecord              = false                                                                                                              ,
         ohubId                      = None                                                                                                               ,
@@ -91,8 +93,6 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
         city                        = optional  ( CITY,                     "city"                                                                      ),
         cookingConvenienceLevel     = None                                                                                                               ,
         countryName                 = None                                                                                                               ,
-        dateCreated                 = optional  ( CREATION_DATE,            "dateCreated",                  parseDateTimeForPattern()                    ),
-        dateUpdated                 = optional  ( CREATION_DATE,            "dateUpdated",                  parseDateTimeForPattern()                    ),
         daysOpen                    = None                                                                                                               ,
         distributorName             = None                                                                                                               ,
         distributorOperatorId       = None                                                                                                               ,

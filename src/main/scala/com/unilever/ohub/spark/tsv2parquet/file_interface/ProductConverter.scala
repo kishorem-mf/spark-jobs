@@ -23,9 +23,10 @@ object ProductConverter extends FileDomainGateKeeper[Product] {
       Product(
         concatId                        = concatId,
         countryCode                     = mandatory( "COUNTRY_CODE",              "countryCode"                                       ),
-        dateCreated                     = mandatory( "DATE_CREATED",              "dateCreated",            parseDateTimeStampUnsafe _),
-        dateUpdated                     = mandatory( "DATE_MODIFIED",             "dateUpdated",            parseDateTimeStampUnsafe _),
-        isActive                        = mandatory( "STATUS",                    "isActive",               parseBoolUnsafe _),
+        customerType                    = Product.customerType                                                                         ,
+        dateCreated                     = mandatory( "DATE_CREATED",              "dateCreated",            parseDateTimeStampUnsafe  ),
+        dateUpdated                     = mandatory( "DATE_MODIFIED",             "dateUpdated",            parseDateTimeStampUnsafe  ),
+        isActive                        = mandatory( "STATUS",                    "isActive",               parseBoolUnsafe           ),
         isGoldenRecord                  = true,
         ohubId                          = Some(UUID.randomUUID().toString),
         name                            = mandatory( "PRODUCT_NAME",              "name"                                              ),
@@ -102,9 +103,10 @@ object ProductConverter extends FileDomainGateKeeper[Product] {
         subCategoryName                 = Option.empty,
         `type`                          = Some("Product"),
         unit                            = optional(  "UNIT",                    "unit"),
-        unitPrice                       = optional(  "UNIT_PRICE",              "unitPrice",                 parseBigDecimalUnsafe _),
+        unitPrice                       = optional(  "UNIT_PRICE",              "unitPrice",                 parseBigDecimalUnsafe ),
         youtubeUrl                      = Option.empty,
         // other fields
+        additionalFields                = additionalFields,
         ingestionErrors                 = errors
       )
     // format: ON

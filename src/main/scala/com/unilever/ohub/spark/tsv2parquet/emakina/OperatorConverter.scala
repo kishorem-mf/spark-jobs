@@ -28,6 +28,8 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
         concatId                    = concatId                                                                                                           ,
         countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ), // TODO lookup country code
         customerType                = Operator.customerType                                                                                              ,
+        dateCreated                 = ohubCreated                                                                                                        , // TODO verify
+        dateUpdated                 = ohubCreated                                                                                                        , // TODO verify
         isActive                    = true                                                                                                               ,
         isGoldenRecord              = false                                                                                                              ,
         ohubId                      = None                                                                                                               ,
@@ -43,8 +45,6 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
         city                        = None                                                                                                               ,
         cookingConvenienceLevel     = None                                                                                                               ,
         countryName                 = None                                                                                                               ,
-        dateCreated                 = None                                                                                                               ,
-        dateUpdated                 = None                                                                                                               ,
         daysOpen                    = None                                                                                                               ,
         distributorName             = optional  ( "PRIMARY_DISTRIBUTOR",      "distributorName"                                                         ),
         distributorOperatorId       = optional  ( "DISTRIBUTOR_CUSTOMER_ID",  "distributorOperatorId"                                                   ),

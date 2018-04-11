@@ -4,12 +4,16 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
-import com.unilever.ohub.spark.domain.constraint._
+
+object Product {
+  val customerType = "product"
+}
 
 case class Product(
     // generic fields
     concatId: String, // concatenation of: countryCode ~ sourceName ~ sourceEntityId (entity identifier)
     countryCode: String, // TODO Existing country code in OHUB using: Iso 3166-1 alpha 2
+    customerType: String,
     dateCreated: Timestamp,
     dateUpdated: Timestamp,
     isActive: Boolean,
@@ -92,6 +96,7 @@ case class Product(
     unitPrice: Option[BigDecimal],
     youtubeUrl: Option[String],
     // other fields
+    additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]
 ) extends DomainEntity {
 }

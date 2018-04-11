@@ -34,7 +34,7 @@ test in assembly := {}
 
 // Scoverage settings
 coverageExcludedPackages := "<empty>;.*storage.*"
-coverageMinimum := 40.5
+coverageMinimum := 41.5
 coverageFailOnMinimum := true
 
 scalariformPreferences := scalariformPreferences.value
