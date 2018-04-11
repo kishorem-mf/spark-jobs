@@ -84,6 +84,7 @@ case class Product(
     portionUnit: Option[String],
     preparation: Option[String],
     productCodes: List[String],
+    productId: Option[String],
     productType: Option[String],
     solutionCopy: Option[String],
     subBrandCode: Option[String],
