@@ -20,8 +20,8 @@ class ProductConverterSpec extends DomainGateKeeperSpec[Product] with TestProduc
         val expectedProduct = defaultProductRecord.copy(
           concatId = "AU~WUFOO~P1234",
           countryCode = "AU",
-          dateCreated = Timestamp.valueOf("2015-06-30 13:47:00"),
-          dateUpdated = Timestamp.valueOf("2015-06-30 13:48:00"),
+          dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00")),
+          dateUpdated = Some(Timestamp.valueOf("2015-06-30 13:48:00")),
           isActive = true,
           isGoldenRecord = true,
           ohubId = actualProduct.ohubId,

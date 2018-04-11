@@ -28,8 +28,8 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
         concatId                    = concatId                                                                                                           ,
         countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ), // TODO lookup country code
         customerType                = Operator.customerType                                                                                              ,
-        dateCreated                 = ohubCreated                                                                                                        , // TODO verify
-        dateUpdated                 = ohubCreated                                                                                                        , // TODO verify
+        dateCreated                 = Option.empty                                                                                                       , // TODO verify
+        dateUpdated                 = Option.empty                                                                                                       , // TODO verify
         isActive                    = true                                                                                                               ,
         isGoldenRecord              = false                                                                                                              ,
         ohubId                      = None                                                                                                               ,

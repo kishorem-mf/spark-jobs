@@ -76,8 +76,8 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
         concatId                    = concatId                                                                                                           ,
         countryCode                 = mandatory ( SALES_ORG,                "countryCode"                                                               ), // TODO lookup country code
         customerType                = Operator.customerType                                                                                              ,
-        dateCreated                 = mandatory ( CREATION_DATE,            "dateCreated",                  parseDateTimeForPattern()                   ),
-        dateUpdated                 = mandatory ( CREATION_DATE,            "dateUpdated",                  parseDateTimeForPattern()                   ),
+        dateCreated                 = optional ( CREATION_DATE,            "dateCreated",                  parseDateTimeForPattern()                   ),
+        dateUpdated                 = optional ( CREATION_DATE,            "dateUpdated",                  parseDateTimeForPattern()                   ),
         isActive                    = true                                                                                                               ,
         isGoldenRecord              = false                                                                                                              ,
         ohubId                      = None                                                                                                               ,

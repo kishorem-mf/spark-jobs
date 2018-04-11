@@ -23,8 +23,8 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
         concatId                    = concatId                                                                                                           ,
         countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ), // TODO lookup country code
-        dateCreated                 = mandatory ( "DATE_CREATED",             "dateCreated",                  parseDateTimeStampUnsafe                  ),
-        dateUpdated                 = mandatory ( "DATE_MODIFIED",            "dateUpdated",                  parseDateTimeStampUnsafe                  ),
+        dateCreated                 = optional ( "DATE_CREATED",             "dateCreated",                  parseDateTimeStampUnsafe                   ),
+        dateUpdated                 = optional ( "DATE_MODIFIED",            "dateUpdated",                  parseDateTimeStampUnsafe                   ),
         customerType                = Operator.customerType                                                                                              ,
         isActive                    = mandatory ( "STATUS",                   "isActive",                     parseBoolUnsafe                           ),
         isGoldenRecord              = false                                                                                                              ,
