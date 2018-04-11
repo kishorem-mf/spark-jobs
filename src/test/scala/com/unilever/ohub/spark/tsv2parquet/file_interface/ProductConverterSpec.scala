@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.tsv2parquet.file_interface
 
 import java.sql.Timestamp
 
-import com.unilever.ohub.spark.domain.entity.{Product, TestProducts}
+import com.unilever.ohub.spark.domain.entity.{ Product, TestProducts }
 import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeperSpec
 
 class ProductConverterSpec extends DomainGateKeeperSpec[Product] with TestProducts {
