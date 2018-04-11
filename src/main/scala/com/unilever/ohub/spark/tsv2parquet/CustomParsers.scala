@@ -53,21 +53,49 @@ object CustomParsers {
     override protected def initialValue = new SimpleDateFormat("yyyyMMdd HH:mm:ss")
   }
 
-  def parseDateTimeStampUnsafe(input: String)(implicit log: Logger): Timestamp =
-    input match {
-      case inputString: String if inputString.matches("[ /:0-9]+") && inputString.length == 19 ⇒
-        new Timestamp(timestampFormatter.get.parse(input.replace("/", "")).getTime)
-      case inputString: String if inputString.matches("[ \\-:0-9]+") && inputString.length == 19 ⇒
-        new Timestamp(timestampFormatter.get.parse(input.replace("-", "")).getTime)
-      case inputString: String if inputString.matches("[ \\.:0-9]+") && inputString.length == 19 ⇒
-        new Timestamp(timestampFormatter.get.parse(input.replace(".", "")).getTime)
-      case inputString: String if inputString.matches("[ :0-9]+") && inputString.length == 17 ⇒
-        new Timestamp(timestampFormatter.get.parse(input).getTime)
-      case inputString: String if inputString.matches("[0-9]+") && inputString.length == 8 ⇒
-        new Timestamp(timestampFormatter.get.parse(input.concat(" 00:00:00")).getTime)
-      case _ ⇒
-        throw new IllegalArgumentException(s"Could not parse [$input] as DateTimeStampOption")
+  def parseDateTimeStampOption(input: String)(implicit log: Logger): Option[Timestamp] = {
+    Try(parseDateTimeStampUnsafe(input)(log)).toOption
+  }
+
+  def parseDateTimeStampUnsafe(input: String)(implicit log: Logger): Timestamp = {
+    val str = input match {
+      case s: String if s.matches("[ /:\\d]+") && s.length == 19 ⇒
+        s.replace("/", "")
+      case s: String if s.matches("[ \\-:\\d]+") && s.length == 19 ⇒
+        s.replace("-", "")
+      case s: String if s.matches("[ \\.:\\d]+") && s.length == 19 ⇒
+        s.replace(".", "")
+      case s: String if s.matches("[ :\\d]+") && s.length == 17 ⇒
+        s
+      case s: String if s.matches("\\d{8}") ⇒ // yyyyMMdd
+        s.concat(" 00:00:00")
+      case s: String if s.matches("\\d{2}-\\d{2}-\\d{2}") ⇒ // dd-MM-yy
+        ("20" + s.takeRight(2) + s.slice(3, 5) + s.take(2)).concat(" 00:00:00")
+      case s: String ⇒
+        throw new IllegalArgumentException(s"Could not parse [$s] as DateTimeStampOption")
+        s
     }
+    new Timestamp(timestampFormatter.get.parse(str).getTime)
+  }
+
+  def parseDateUnsafe(formatStr: String) = {
+    val format = new SimpleDateFormat(formatStr)
+    (s: String) ⇒ new Timestamp(format.parse(s).getTime)
+  }
+
+  // formats for dates not in standard format yyyy-MM-dd HH:mm:ss
+  val fuzzitFileNameDate = "yyyyMMddHHmmss"
+  val fileShortDate = "yyyyMMdd" // can also use below format including time
+  val ufsDate = "yyyyMMdd HH:mm:ss" // sifu api, file interface
+  val sifuDate = "dd-MM-yy" // sifu?
+  val acmDate = "dd/MM/yyyy HH:mm:ss"
+
+  // parsers for dates not in standard format yyyy-MM-dd HH:mm:ss
+  val parseFuzzitFileNameDateUnsafe = parseDateUnsafe(fuzzitFileNameDate)
+  val parseFileShortDateUnsafe = parseDateUnsafe(fileShortDate)
+  val parseUfsDateUnsafe = parseDateUnsafe(ufsDate) // sifu, file interface
+  val parseSifuDateUnsafe = parseDateUnsafe(sifuDate)
+  val parseAcmDateUnsafe = parseDateUnsafe(acmDate)
 
   def parseBigDecimalUnsafe(input: String): BigDecimal = input match {
     case inputString: String if inputString.matches("[-,0-9]+") ⇒ BigDecimal(inputString.replace(",", "."))
@@ -126,6 +154,16 @@ object CustomParsers {
         false
     }
   }
+
+  def longToBool(i: Long): Boolean = i > 0
+
+  def intToBool(i: Int): Boolean = i > 0
+
+  def floatToDate(f: Float): Timestamp = new Timestamp((1000 * f).toLong)
+
+  def dateToString(t: Timestamp): String = t.formatted("yyyy-MM-dd HH:mm:ss")
+
+  def boolAsString(bool: Boolean): String = if (bool) "Y" else "N"
 
   def toInt(input: String): Int = input.toInt
 
