@@ -3,10 +3,8 @@ package com.unilever.ohub.spark.tsv2parquet.fuzzit
 import java.util.UUID
 
 import com.unilever.ohub.spark.domain.DomainEntity
-import com.unilever.ohub.spark.domain.entity.{Operator, Product}
-import com.unilever.ohub.spark.generic.StringFunctions._
+import com.unilever.ohub.spark.domain.entity.Product
 import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
-import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 import org.apache.spark.sql.Row
 
 object ProductConverter extends FuzzitDomainGateKeeper[Product] {
@@ -46,9 +44,9 @@ object ProductConverter extends FuzzitDomainGateKeeper[Product] {
         concatId                        = concatId,
         countryCode                     = countryCode,
         customerType                    = Product.customerType,
-        dateCreated                     = ???,
-        dateUpdated                     = ???,
-        isActive                        = ???,
+        dateCreated                     = None,
+        dateUpdated                     = None,
+        isActive                        = true,
         isGoldenRecord                  = true,
         ohubId                          = Some(UUID.randomUUID().toString),
         name                            = mandatory( NAME_1,                 "name"),
