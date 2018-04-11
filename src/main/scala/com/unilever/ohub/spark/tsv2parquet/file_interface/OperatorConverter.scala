@@ -23,8 +23,8 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
         concatId                    = concatId                                                                                                           ,
         countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ), // TODO lookup country code
-        dateCreated                 = mandatory ( "DATE_CREATED",             "dateCreated",                  parseDateTimeStampUnsafe                  ),
-        dateUpdated                 = mandatory ( "DATE_MODIFIED",            "dateUpdated",                  parseDateTimeStampUnsafe                  ),
+        dateCreated                 = optional  ( "DATE_CREATED",             "dateCreated",                  parseDateTimeStampUnsafe                  ),
+        dateUpdated                 = optional  ( "DATE_MODIFIED",            "dateUpdated",                  parseDateTimeStampUnsafe                  ),
         customerType                = Operator.customerType                                                                                              ,
         isActive                    = mandatory ( "STATUS",                   "isActive",                     parseBoolUnsafe                           ),
         isGoldenRecord              = false                                                                                                              ,
@@ -40,8 +40,8 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         channel                     = optional  ( "CHANNEL",                  "channel"                                                                 ),
         city                        = optional  ( "CITY",                     "city"                                                                    ),
         cookingConvenienceLevel     = optional  ( "CONVENIENCE_LEVEL",        "cookingConvenienceLevel"                                                 ),
-        countryName                 = optional  ( "COUNTRY",                  "countryName"                                                             ),
-        daysOpen                    = optional  ( "DAYS_OPEN",                "daysOpen",                     toInt                                     ),
+        countryName                 = optional  ( "COUNTRY",                  "countryName"                                                             ), // TODO derive from country code
+        daysOpen                    = optional  ( "DAYS_OPEN",                "daysOpen",                     toInt                                     ), // TODO change transformation function withinRange
         distributorName             = optional  ( "DISTRIBUTOR_NAME",         "distributorName"                                                         ),
         distributorOperatorId       = optional  ( "DISTRIBUTOR_CUSTOMER_NR",  "distributorOperatorId"                                                   ),
         emailAddress                = optional  ( "EMAIL_ADDRESS",            "emailAddress"                                                            ),
@@ -85,7 +85,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         totalStaff                  = optional  ( "NR_OF_STAFF",              "totalStaff",                   parseNumberOrAverageFromRange             ),
         vat                         = optional  ( "VAT_NUMBER",               "vat"                                                                     ),
         webUpdaterId                = None                                                                                                               ,
-        weeksClosed                 = optional  ( "WEEKS_CLOSED",             "weeksClosed",                  toInt                                     ),
+        weeksClosed                 = optional  ( "WEEKS_CLOSED",             "weeksClosed",                  toInt                                     ), // TODO change transformation function withinRange
         zipCode                     = optional  ( "ZIP_CODE",                 "zipCode"                                                                 ),
         additionalFields            = additionalFields                                                                                                   ,
         ingestionErrors             = errors

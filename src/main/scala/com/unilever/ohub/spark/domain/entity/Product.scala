@@ -14,8 +14,8 @@ case class Product(
     concatId: String, // concatenation of: countryCode ~ sourceName ~ sourceEntityId (entity identifier)
     countryCode: String, // TODO Existing country code in OHUB using: Iso 3166-1 alpha 2
     customerType: String,
-    dateCreated: Timestamp,
-    dateUpdated: Timestamp,
+    dateCreated: Option[Timestamp],
+    dateUpdated: Option[Timestamp],
     isActive: Boolean,
     isGoldenRecord: Boolean, // does this make sense here / in DomainEntity?
     ohubId: Option[String],

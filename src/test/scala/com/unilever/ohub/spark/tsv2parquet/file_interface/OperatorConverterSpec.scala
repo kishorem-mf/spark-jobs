@@ -2,10 +2,10 @@ package com.unilever.ohub.spark.tsv2parquet.file_interface
 
 import java.sql.Timestamp
 
-import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
+import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeperSpec
 
-class OperatorConverterSpec extends DomainGateKeeperSpec[Operator] with TestOperators {
+class OperatorConverterSpec extends DomainGateKeeperSpec[Operator] {
 
   private[tsv2parquet] override val SUT = OperatorConverter
 
@@ -17,12 +17,14 @@ class OperatorConverterSpec extends DomainGateKeeperSpec[Operator] with TestOper
         actualDataSet.count() shouldBe 1
 
         val actualOperator = actualDataSet.head()
-        val expectedOperator = defaultOperator.copy(
+        val expectedOperator = Operator(
           concatId = "AU~WUFOO~E1-1234",
           countryCode = "AU",
           customerType = "operator",
-          dateCreated = Timestamp.valueOf("2015-06-30 13:47:00.0"),
-          dateUpdated = Timestamp.valueOf("2015-06-30 13:48:00.0"),
+          dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00.0")),
+          dateUpdated = Some(Timestamp.valueOf("2015-06-30 13:48:00.0")),
+          isActive = true,
+          isGoldenRecord = false,
           name = "Down under",
           sourceName = "WUFOO",
           sourceEntityId = "E1-1234",
@@ -81,7 +83,9 @@ class OperatorConverterSpec extends DomainGateKeeperSpec[Operator] with TestOper
           vat = Some("9864758522"),
           webUpdaterId = Option.empty,
           weeksClosed = Some(1),
-          zipCode = Some("3006")
+          zipCode = Some("3006"),
+          additionalFields = Map(),
+          ingestionErrors = Map()
         )
 
         actualOperator shouldBe expectedOperator

@@ -19,8 +19,6 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
       val concatId = DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
       val ohubCreated = currentTimestamp()
 
-      // TODO: OPERATOR_REF_ID, what is this id?
-
       // format: OFF
 
       Operator(
@@ -28,8 +26,8 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
         concatId                    = concatId                                                                                                           ,
         countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ), // TODO lookup country code
         customerType                = Operator.customerType                                                                                              ,
-        dateCreated                 = ohubCreated                                                                                                        , // TODO verify
-        dateUpdated                 = ohubCreated                                                                                                        , // TODO verify
+        dateCreated                 = Option.empty                                                                                                       ,
+        dateUpdated                 = Option.empty                                                                                                       ,
         isActive                    = true                                                                                                               ,
         isGoldenRecord              = false                                                                                                              ,
         ohubId                      = None                                                                                                               ,
@@ -44,7 +42,7 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
         channel                     = optional  ( "TYPE_OF_BUSINESS",         "channel"                                                                 ),
         city                        = None                                                                                                               ,
         cookingConvenienceLevel     = None                                                                                                               ,
-        countryName                 = None                                                                                                               ,
+        countryName                 = None                                                                                                               , // TODO derive from country code
         daysOpen                    = None                                                                                                               ,
         distributorName             = optional  ( "PRIMARY_DISTRIBUTOR",      "distributorName"                                                         ),
         distributorOperatorId       = optional  ( "DISTRIBUTOR_CUSTOMER_ID",  "distributorOperatorId"                                                   ),
