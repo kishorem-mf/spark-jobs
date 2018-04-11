@@ -27,9 +27,10 @@ class ConverterDataIngestionTest extends FunSpec with Matchers { self ⇒
   val fileNamesFull: Array[String] = fileNamesShort.map(fileName ⇒ s"$testFolderPath/$fileName.csv")
   val converters: Array[SparkJob] =
     Array[SparkJob](
-      FileContactPersonActivityConverter, FileContactPersonSocialConverter, FileContactPersonClassConverter, FileContactPersonConverter, FileOperatorActivityConverter, FileOperatorClassConverter, FileOperatorConverter, FileOrderConverter, FileProductConverter,
-      EmakinaActivityConverter, EmakinaAnswerConverter, EmakinaCompetitionEntryConverter, EmakinaContactPersonConverter, EmakinaContactRequestConverter, EmakinaLoyaltyBalanceConverter, EmakinaOrderConverter, EmakinaOrderItemConverter, EmakinaQuestionConverter, EmakinaResDownloadRequestConverter, EmakinaSampleOrderConverter, EmakinaSubscriptionRequestConverter, EmakinaWebOrderConverter, EmakinaWebOrderItemConverter, EmakinaWebserviceRequestConverter,
-      FuzzitOperatorConverter, FuzzitProductConverter, FuzzitSaleConverter
+      emakina.OperatorConverter,
+      file_interface.OperatorConverter,
+      fuzzit.OperatorConverter,
+      file_interface.ProductConverter
     )
 
   converters.zip(fileNamesShort.zip(fileNamesFull)).foreach {
@@ -47,7 +48,7 @@ class ConverterDataIngestionTest extends FunSpec with Matchers { self ⇒
       }
   }
 
-  private def runTestConverter(spark: SparkSession, converter: SparkJob, filePaths: List[String], tempFileName: String): Boolean = {
+  private def runTestConverter(spark: SparkSession, converter: SparkJob, filePaths: Product, tempFileName: String): Boolean = {
     try {
       if (new File(tempFileName).exists()) new File(tempFileName).delete()
       Thread.sleep(2000)
