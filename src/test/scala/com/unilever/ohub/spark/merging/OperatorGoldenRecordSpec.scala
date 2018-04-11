@@ -3,8 +3,9 @@ package com.unilever.ohub.spark.merging
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.SparkJobSpec
+import com.unilever.ohub.spark.domain.entity.TestOperators
 
-class OperatorGoldenRecordSpec extends SparkJobSpec {
+class OperatorGoldenRecordSpec extends SparkJobSpec with TestOperators {
 
   case class Foo() extends OperatorGoldenRecord
 
@@ -15,13 +16,12 @@ class OperatorGoldenRecordSpec extends SparkJobSpec {
         "sourceB" -> 1
       )
       val operators = Seq(
-        defaultOperatorRecord.copy(sourceName = "sourceA"),
-        defaultOperatorRecord.copy(sourceName = "sourceB")
+        defaultOperatorWithSourceName("sourceA"),
+        defaultOperatorWithSourceName("sourceB")
       )
       val golden = Foo().pickGoldenRecord(sourcePreferences, operators)
 
       assert(golden.sourceName === "sourceB")
-
     }
 
     it("should pick the operator created last if sourcePreferences are equal") {
@@ -30,13 +30,12 @@ class OperatorGoldenRecordSpec extends SparkJobSpec {
         "sourceB" -> 1
       )
       val operators = Seq(
-        defaultOperatorRecord.copy(sourceName = "sourceA", dateCreated = Timestamp.valueOf("2017-05-25 12:00:00")),
-        defaultOperatorRecord.copy(sourceName = "sourceB", dateCreated = Timestamp.valueOf("2017-04-25 12:00:00"))
+        defaultOperatorWithSourceName("sourceA").copy(dateCreated = Some(Timestamp.valueOf("2017-05-25 12:00:00"))),
+        defaultOperatorWithSourceName("sourceB").copy(dateCreated = Some(Timestamp.valueOf("2017-04-25 12:00:00")))
       )
       val golden = Foo().pickGoldenRecord(sourcePreferences, operators)
 
       assert(golden.sourceName === "sourceA")
     }
   }
-
 }

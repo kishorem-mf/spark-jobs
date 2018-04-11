@@ -22,11 +22,11 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
   import DomainGateKeeper._
   import DomainGateKeeper.implicits._
 
-  protected def fieldSeparator: String
+  protected[tsv2parquet] def fieldSeparator: String
 
-  protected def hasHeaders: Boolean
+  protected[tsv2parquet] def hasHeaders: Boolean
 
-  protected def partitionByValue: Seq[String]
+  protected[tsv2parquet] def partitionByValue: Seq[String]
 
   override final val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
 
@@ -63,9 +63,9 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
     if (numberOfErrors > 0) { // do something with the errors here
       log.error(s"No parquet file written, number of errors found is '$numberOfErrors'")
       errors.toDF("ERROR").show(numRows = 100, truncate = false)
+      System.exit(1) // let's fail fast now
     }
 
-    // TODO reintroduce strictness with the ability to switch behaviour for development purposes
     val domainEntities: Dataset[DomainType] = result.filter(_.isRight).map(_.right.get)
     storage.writeToParquet(domainEntities, outputFile, partitionByValue)
   }

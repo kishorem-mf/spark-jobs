@@ -6,20 +6,24 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.constraint._
 
-// TODO add german fields to additional fields
+object Operator {
+  val otmConstraint = FiniteDiscreteSetConstraint(Set("A", "B", "C", "D", "E", "F"))
+  val customerType = "operator"
+}
 
 case class Operator(
     // generic fields
-    concatId: String, // concatenation of: countryCode ~ sourceName ~ sourceEntityId (entity identifier)
-    countryCode: String, // TODO Existing country code in OHUB using: Iso 3166-1 alpha 2
-    dateCreated: Timestamp,
-    dateUpdated: Timestamp,
+    concatId: String,
+    countryCode: String, // TODO Existing country code in OHUB using: Iso 3166-1 alpha 2...do a lookup
+    customerType: String,
+    dateCreated: Option[Timestamp],
+    dateUpdated: Option[Timestamp],
     isActive: Boolean,
     isGoldenRecord: Boolean,
     ohubId: Option[String],
     name: String,
     sourceEntityId: String,
-    sourceName: String,
+    sourceName: String, // TODO existing source, add constraint? do a lookup
     ohubCreated: Timestamp,
     ohubUpdated: Timestamp, // currently always created timestamp (how/when will it get an updated timestamp?)
     // specific fields
@@ -29,10 +33,8 @@ case class Operator(
     channel: Option[String],
     city: Option[String],
     cookingConvenienceLevel: Option[String],
-    countryName: Option[String],
-    customerType: Option[String], // TODO Options: entity types, why do we have this, isn't it encoded in the entity type implicitly?
+    countryName: Option[String], // can be derived...however, having the country name right away has benefits.
     daysOpen: Option[Int],
-    distributorCustomerNumber: Option[String],
     distributorName: Option[String],
     distributorOperatorId: Option[String],
     emailAddress: Option[String],
@@ -63,7 +65,7 @@ case class Operator(
     mobileNumber: Option[String],
     netPromoterScore: Option[BigDecimal],
     oldIntegrationId: Option[String],
-    otm: Option[String], // TODO Options: A | B | C | D | E | F
+    otm: Option[String],
     otmEnteredBy: Option[String],
     phoneNumber: Option[String],
     region: Option[String],
@@ -79,9 +81,18 @@ case class Operator(
     weeksClosed: Option[Int],
     zipCode: Option[String],
     // other fields
+    additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]
 ) extends DomainEntity {
+  import Operator._
+
+  // TODO refine...what's the minimal amount of constraints needed before an operator should be accepted
+
   emailAddress.foreach(EmailAddressConstraint.validate)
+
+  // days open en weeks closed
   daysOpen.foreach(NumberOfDaysConstraint.validate)
   weeksClosed.foreach(NumberOfWeeksConstraint.validate)
+
+  otm.foreach(otmConstraint.validate)
 }

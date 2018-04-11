@@ -2,9 +2,9 @@ package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.SharedSparkSession.spark
+import com.unilever.ohub.spark.domain.entity.TestOperators
 
-class OperatorUpdateGoldenRecordSpec extends SparkJobSpec {
-
+class OperatorUpdateGoldenRecordSpec extends SparkJobSpec with TestOperators {
   import spark.implicits._
 
   describe("marking golden record") {
@@ -14,8 +14,8 @@ class OperatorUpdateGoldenRecordSpec extends SparkJobSpec {
         "sourceB" -> 1
       )
       val operators = Seq(
-        defaultOperatorRecord.copy(sourceName = "sourceA"),
-        defaultOperatorRecord.copy(sourceName = "sourceB")
+        defaultOperatorWithSourceName("sourceA"),
+        defaultOperatorWithSourceName("sourceB")
       )
       val golden = OperatorUpdateGoldenRecord.markGoldenRecord(sourcePreferences)(operators)
 
@@ -30,8 +30,8 @@ class OperatorUpdateGoldenRecordSpec extends SparkJobSpec {
         "sourceB" -> 1
       )
       val operators = Seq(
-        defaultOperatorRecord.copy(sourceName = "sourceA"),
-        defaultOperatorRecord.copy(sourceName = "sourceB")
+        defaultOperatorWithSourceName("sourceA"),
+        defaultOperatorWithSourceName("sourceB")
       )
       val golden = OperatorUpdateGoldenRecord.markGoldenRecord(sourcePreferences)(operators)
 
@@ -48,25 +48,24 @@ class OperatorUpdateGoldenRecordSpec extends SparkJobSpec {
         "sourceB" -> 1
       )
 
-      val a = defaultOperatorRecord.copy(sourceName = "sourceA", ohubId = Some("a"))
-      val b = defaultOperatorRecord.copy(sourceName = "sourceB", isGoldenRecord = true, ohubId = Some("a"))
+      val a = defaultOperatorWithSourceName("sourceA").copy(ohubId = Some("a"))
+      val b = defaultOperatorWithSourceName("sourceB").copy(isGoldenRecord = true, ohubId = Some("a"))
 
       val operators = Seq(a, b).toDataset
-
       val updated = OperatorUpdateGoldenRecord.transform(spark, operators, sourcePreferences).collect
 
       assert(updated.find(_.sourceName == "sourceA").get === a)
       assert(updated.find(_.sourceName == "sourceB").get === b)
-
     }
+
     it("should not change anything if needed") {
       val sourcePreferences = Map(
         "sourceA" -> 1,
         "sourceB" -> 2
       )
 
-      val a = defaultOperatorRecord.copy(sourceName = "sourceA", ohubId = Some("a"))
-      val b = defaultOperatorRecord.copy(sourceName = "sourceB", isGoldenRecord = true, ohubId = Some("a"))
+      val a = defaultOperatorWithSourceName("sourceA").copy(ohubId = Some("a"))
+      val b = defaultOperatorWithSourceName("sourceB").copy(isGoldenRecord = true, ohubId = Some("a"))
 
       val operators = Seq(a, b).toDataset
 
@@ -74,7 +73,6 @@ class OperatorUpdateGoldenRecordSpec extends SparkJobSpec {
 
       assert(updated.find(_.sourceName == "sourceA").get.isGoldenRecord)
       assert(!updated.find(_.sourceName == "sourceB").get.isGoldenRecord)
-
     }
   }
 }
