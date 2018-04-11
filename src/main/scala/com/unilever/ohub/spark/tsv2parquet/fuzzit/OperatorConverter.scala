@@ -76,8 +76,8 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
         concatId                    = concatId                                                                                                           ,
         countryCode                 = mandatory ( SALES_ORG,                "countryCode"                                                               ), // TODO lookup country code
         customerType                = Operator.customerType                                                                                              ,
-        dateCreated                 = optional ( CREATION_DATE,            "dateCreated",                  parseDateTimeForPattern()                   ),
-        dateUpdated                 = optional ( CREATION_DATE,            "dateUpdated",                  parseDateTimeForPattern()                   ),
+        dateCreated                 = optional ( CREATION_DATE,            "dateCreated",                  parseDateTimeForPattern()                    ),
+        dateUpdated                 = optional ( CREATION_DATE,            "dateUpdated",                  parseDateTimeForPattern()                    ),
         isActive                    = true                                                                                                               ,
         isGoldenRecord              = false                                                                                                              ,
         ohubId                      = None                                                                                                               ,
@@ -92,7 +92,7 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
         channel                     = optional  ( CHANNEL_TEXT,             "channel"                                                                   ),
         city                        = optional  ( CITY,                     "city"                                                                      ),
         cookingConvenienceLevel     = None                                                                                                               ,
-        countryName                 = None                                                                                                               ,
+        countryName                 = None                                                                                                               , // TODO derive from country code
         daysOpen                    = None                                                                                                               ,
         distributorName             = None                                                                                                               ,
         distributorOperatorId       = None                                                                                                               ,
