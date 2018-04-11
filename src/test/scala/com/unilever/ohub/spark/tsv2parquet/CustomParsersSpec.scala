@@ -120,7 +120,7 @@ class CustomParsersSpec extends FunSpec with Matchers {
     }
   }
 
-  describe("parseBoolOption") {
+  describe("parseBoolUnsafe") {
     it("should parse Y to true") {
       assert(parseBoolUnsafe("Y") == true)
     }
@@ -143,60 +143,6 @@ class CustomParsersSpec extends FunSpec with Matchers {
 
     it("should throw exception on other input") {
       assertThrows[Exception](parseBoolUnsafe("Foo"))
-    }
-  }
-
-  describe("getFastSimilarity") {
-    it("should return 0.0 when the first string is null") {
-      assert(getFastSimilarity(null, "test".toCharArray) <= 1.0 && getFastSimilarity(null, "test".toCharArray) >= 0.0)
-    }
-    it("should return 0.0 when the second string is null") {
-      assert(getFastSimilarity("test".toCharArray, null) <= 1.0 && getFastSimilarity("test".toCharArray, null) >= 0.0)
-    }
-    it("should return 0.2 when a is compared to aaaaa") {
-      assert(getFastSimilarity("a".toCharArray, "aaaaa".toCharArray) == 0.2)
-    }
-    it("should return 0.2 when aaaaa is compared to a") {
-      assert(getFastSimilarity("aaaaa".toCharArray, "a".toCharArray) == 0.2)
-    }
-    it("should return 1.0 when both string are levenshtein") {
-      assert(getFastSimilarity("levenshtein".toCharArray, "levenshtein".toCharArray) == 1.0)
-    }
-    it("""should return 0.9 when the first string is "jackhammer" and the second string is " jackhammer""") {
-      assert(getFastSimilarity("jackhammer".toCharArray, " jackhammer".toCharArray) == 0.9)
-    }
-    it("""should return 0.9 when the first 11 letter string is "شيء لطيف   " and the second 10 letter string is "يء لطيف   """") {
-      assert(getFastSimilarity("شيء لطيف   ".toCharArray, "يء لطيف   ".toCharArray) == 0.9)
-    }
-    it("""should return 0.875 when the first string is "Hotel California" and the second string is "California Hotel"""") {
-      assert(getFastSimilarity("Hotel California".toCharArray, "California Hotel".toCharArray) == 0.875)
-    }
-  }
-
-  describe("calculateLevenshtein") {
-    it("should return 0.0 when the first string is null") {
-      assert(calculateLevenshtein(null, "test".toCharArray) <= 1.0 && calculateLevenshtein(null, "test".toCharArray) >= 0.0)
-    }
-    it("should return 0.0 when the second string is null") {
-      assert(calculateLevenshtein("test".toCharArray, null) <= 1.0 && calculateLevenshtein("test".toCharArray, null) >= 0.0)
-    }
-    it("should return 0.2 when a is compared to aaaaa") {
-      assert(calculateLevenshtein("a".toCharArray, "aaaaa".toCharArray) == 0.2)
-    }
-    it("should return 0.2 when aaaaa is compared to a") {
-      assert(calculateLevenshtein("aaaaa".toCharArray, "a".toCharArray) == 0.2)
-    }
-    it("should return 1.0 when both string are levenshtein") {
-      assert(calculateLevenshtein("levenshtein".toCharArray, "levenshtein".toCharArray) == 1.0)
-    }
-    it("""should return 0.9 when the first string is "jackhamme" and the second string is "jackhammer""") {
-      assert(calculateLevenshtein("jackhamme".toCharArray, "jackhammer".toCharArray) == 0.9)
-    }
-    it("""should return 0.9 when the first 10 letter string is "شيء لطيف  " and the second 9 letter string is "يء لطيف  """") {
-      assert(calculateLevenshtein("شيء لطيف  ".toCharArray, "يء لطيف  ".toCharArray) == 0.9)
-    }
-    it("""should return 0.25 when the first string is "Hotel California" and the second string is "California Hotel"""") {
-      assert(calculateLevenshtein("Hotel California".toCharArray, "California Hotel".toCharArray) == 0.25)
     }
   }
 
