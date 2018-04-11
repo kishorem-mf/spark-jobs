@@ -20,8 +20,8 @@ object ConcatIdConstraint extends DomainConstraint[(ConcatId, CountryCode, Sourc
 
   def isValid(value: (ConcatId, CountryCode, SourceName, SourceEntityId)): Boolean = {
     val (concatId, countryCode, sourceName, sourceEntityId) = value
-    val splitted = concatId.split("~")
+    val expectedConcatId = s"$countryCode~$sourceName~$sourceEntityId"
 
-    splitted.size == 3 && splitted(0) == countryCode && splitted(1) == sourceName && splitted(2) == sourceEntityId
+    concatId == expectedConcatId
   }
 }
