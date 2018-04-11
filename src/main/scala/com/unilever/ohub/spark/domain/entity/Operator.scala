@@ -11,10 +11,13 @@ object Operator {
   val customerType = "operator"
 }
 
-case class Operator( // generic fields
+case class Operator(
+    // generic fields
     concatId: String,
     countryCode: String, // TODO Existing country code in OHUB using: Iso 3166-1 alpha 2...do a lookup
     customerType: String,
+    dateCreated: Timestamp,
+    dateUpdated: Timestamp,
     isActive: Boolean,
     isGoldenRecord: Boolean,
     ohubId: Option[String],
@@ -31,8 +34,6 @@ case class Operator( // generic fields
     city: Option[String],
     cookingConvenienceLevel: Option[String],
     countryName: Option[String], // can be derived...however, having the country name right away has benefits.
-    dateCreated: Option[Timestamp],
-    dateUpdated: Option[Timestamp],
     daysOpen: Option[Int],
     distributorName: Option[String],
     distributorOperatorId: Option[String],

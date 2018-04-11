@@ -19,8 +19,8 @@ object ProductAcmConverter extends SparkJob {
         PRD_INTEGRATION_ID = product.productConcatId,
         EAN_CODE = product.eanCu,
         MRDR_CODE = product.mrdr,
-        CREATED_AT = product.dateCreated.map(_.formatted(dateFormat)),
-        UPDATED_AT = product.dateCreated.map(_.formatted(dateFormat)),
+        CREATED_AT = Some(product.dateCreated.formatted(dateFormat)),
+        UPDATED_AT = Some(product.dateCreated.formatted(dateFormat)),
         DELETE_FLAG = product.status.map(status ⇒ if (status) "N" else "Y")
       )
     }
