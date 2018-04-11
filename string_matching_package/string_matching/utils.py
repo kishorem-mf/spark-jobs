@@ -53,18 +53,17 @@ def read_parquet(spark: SparkSession, fn: str, fraction: float) -> DataFrame:
 
 
 def get_country_codes(country_code_arg: str, ddf: DataFrame, minimum_entries=MINIMUM_ENTRIES_PER_COUNTRY) -> List[str]:
-    if country_code_arg == 'all':
-        count_per_country = ddf.groupby('countryCode').count()
-        LOGGER.info("Selecting countries with more than " + str(minimum_entries) + " entries")
-        codes = sorted((count_per_country[count_per_country['count'] > minimum_entries]
-                        .select('countryCode')
-                        .distinct()
-                        .rdd.map(lambda r: r[0]).collect()))
-        LOGGER.info("Selecting countries are: {}".format(codes))
-    else:
-        LOGGER.info("Selecting only country: " + country_code_arg)
-        codes = [country_code_arg]
-    return codes
+    count_per_country = ddf.groupby('countryCode').count()
+    LOGGER.info("Selecting countries with more than " + str(minimum_entries) + " entries")
+    codes = sorted(count_per_country[count_per_country['count'] > minimum_entries]
+                   .select('countryCode')
+                   .distinct()
+                   .rdd.map(lambda r: r[0]).collect())
+    if country_code_arg != 'all':
+        LOGGER.info("Selecting only union of all countries (with MINIMUM_ENTRIES_PER_COUNTRY) and: " + country_code_arg)
+        codes = set(codes) & set([country_code_arg])
+    LOGGER.info("Selected countries are: {}".format(codes))
+    return list(codes)
 
 
 def select_and_repartition_country(ddf: DataFrame, column_name: str, country_code: str) -> DataFrame:
