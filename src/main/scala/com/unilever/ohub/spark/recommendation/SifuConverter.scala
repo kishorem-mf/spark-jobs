@@ -1,4 +1,4 @@
-package com.unilever.ohub.spark.recommandation
+package com.unilever.ohub.spark.recommendation
 
 import java.net.{ URI, URL }
 
