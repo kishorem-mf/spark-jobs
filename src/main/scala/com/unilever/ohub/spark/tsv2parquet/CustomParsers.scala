@@ -127,6 +127,16 @@ object CustomParsers {
     }
   }
 
+  def withinRange(range: Range)(input: String): Int = {
+    val value = input.toInt
+
+    if (range.contains(value)) {
+      value
+    } else {
+      throw new IllegalArgumentException(s"Input value '$input' not within provided range '$range'")
+    }
+  }
+
   def toInt(input: String): Int = input.toInt
 
   def parseNumberOrAverageFromRange(input: String): Int =

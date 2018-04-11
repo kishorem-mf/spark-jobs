@@ -236,6 +236,18 @@ class CustomParsersSpec extends FunSpec with Matchers {
     }
   }
 
+  describe("withinRange") {
+    it("should return the provided int when the input is contained in the range") {
+      assert(withinRange(Range.inclusive(0, 5))("4") == 4)
+    }
+    intercept[IllegalArgumentException] {
+      withinRange(Range.inclusive(0, 5))("8")
+    }.getMessage shouldBe s"Input value '8' not within provided range 'Range(0, 1, 2, 3, 4, 5)'"
+    intercept[IllegalArgumentException] {
+      withinRange(Range.inclusive(0, 5))("abc")
+    }
+  }
+
   describe("concatNames") {
     it("should return null when first and last name are null") {
       assert(concatNames(null, null) == null)
