@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.tsv2parquet
 
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
-import java.time.{ LocalDateTime, ZoneOffset }
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 import org.apache.log4j.Logger
@@ -44,9 +44,8 @@ object CustomParsers {
 
   def parseDateTimeForPattern(dateTimePattern: String = "yyyy-MM-dd HH:mm:ss.SS")(input: String): Timestamp = {
     val pattern = DateTimeFormatter.ofPattern(dateTimePattern)
-    // TODO what timezone do we use here?
-    val millis = LocalDateTime.parse(input, pattern).toInstant(ZoneOffset.UTC).toEpochMilli
-    new Timestamp(millis)
+    LocalDateTime.parse(input, pattern) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
+    Timestamp.valueOf(input)
   }
 
   private val timestampFormatter = new ThreadLocal[SimpleDateFormat]() {
