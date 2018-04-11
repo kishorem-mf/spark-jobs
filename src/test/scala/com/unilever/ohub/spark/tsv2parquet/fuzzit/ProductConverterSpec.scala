@@ -16,7 +16,7 @@ class ProductConverterSpec extends DomainGateKeeperSpec[Product] with TestProduc
 
         val actualProduct = actualDataSet.head()
         val expectedProduct = defaultProductRecord.copy(
-          concatId = s"1030~FUZZIT~${actualProduct.productId}",
+          concatId = s"1030~FUZZIT~00590126-4249-4EA5-B44D-6D52A8E8B86F",
           countryCode = "1030",
           isActive = true,
           isGoldenRecord = true,
@@ -26,6 +26,7 @@ class ProductConverterSpec extends DomainGateKeeperSpec[Product] with TestProduc
           sourceName = "FUZZIT",
           ohubCreated = actualProduct.ohubCreated,
           ohubUpdated = actualProduct.ohubUpdated,
+          productId = actualProduct.productId,
           code = Some("8712566947799"),
           codeType = Some("MRDR"),
           eanDistributionUnit = Some("8712566947799")

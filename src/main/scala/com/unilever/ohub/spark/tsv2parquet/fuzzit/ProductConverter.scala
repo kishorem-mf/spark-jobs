@@ -17,6 +17,7 @@ object ProductConverter extends FuzzitDomainGateKeeper[Product] {
   val EAN = "EAN"
   val ORIGIN = "Origin"
   val WS_MRDR = "WS_MRDR"
+  val ID = "ID"
   val NAME_1 = "Name1"
   val NAME_2 = "Name2"
   val CON_FAC_INT = "ConFacInt"
@@ -33,10 +34,10 @@ object ProductConverter extends FuzzitDomainGateKeeper[Product] {
       // format: OFF
 
       val sourceName                                    =   "FUZZIT"
-      val countryCode                                   =   originalValue(SALES_ORG)(row).get
+      val countryCode                                   =   originalValue(SALES_ORG)(row).get // postgres
       val sourceEntityId                                =   originalValue(MAT_UID)(row).get
       val productId                                     =   UUID.randomUUID().toString
-      val concatId                                      =   DomainEntity.createConcatIdFromValues(countryCode, sourceName, productId)
+      val concatId                                      =   DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
       val ohubCreated                                   =   currentTimestamp()
 
       Product(
@@ -143,6 +144,7 @@ object ProductConverter extends FuzzitDomainGateKeeper[Product] {
       EAN,
       ORIGIN,
       WS_MRDR,
+      ID,
       NAME_1,
       NAME_2,
       CON_FAC_INT,

@@ -35,6 +35,7 @@ class ProductConverterSpec extends DomainGateKeeperSpec[Product] with TestProduc
           currency = Some("GBP"),
           eanConsumerUnit = Some("812234000000"),
           eanDistributionUnit = Some("112234000000"),
+          productId = actualProduct.productId,
           `type` = Some("Product"),
           unit = Some("Cases"),
           unitPrice = Some(BigDecimal(4))
