@@ -1,5 +1,8 @@
 package com.unilever.ohub.spark.tsv2parquet
 
+import java.sql.Timestamp
+import java.time.format.DateTimeParseException
+
 import com.unilever.ohub.spark.generic.StringFunctions._
 import org.scalatest.{ FunSpec, Matchers }
 import CustomParsers._
@@ -246,6 +249,15 @@ class CustomParsersSpec extends FunSpec with Matchers {
     intercept[IllegalArgumentException] {
       withinRange(Range.inclusive(0, 5))("abc")
     }
+  }
+
+  describe("parseDateTimeForPattern") {
+    it("should parse the date time correctly in") {
+      assert(parseDateTimeForPattern()("2018-01-12 13:20:58.70") == Timestamp.valueOf("2018-01-12 13:20:58.7"))
+    }
+    intercept[DateTimeParseException] {
+      parseDateTimeForPattern()("some-illegal-value")
+    }.getMessage shouldBe "Text 'some-illegal-value' could not be parsed at index 0"
   }
 
   describe("concatNames") {
