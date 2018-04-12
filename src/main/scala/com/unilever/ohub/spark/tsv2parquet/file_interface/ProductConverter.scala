@@ -9,13 +9,12 @@ import org.apache.spark.sql.Row
 
 object ProductConverter extends FileDomainGateKeeper[Product] {
 
-  override def toDomainEntity: (DomainTransformer, DomainDataProvider) ⇒ Row ⇒ Product = {
-    (transformer, dataProvider) ⇒ row ⇒
-      import transformer._
-      implicit val source: Row = row
+  override def toDomainEntity: (DomainTransformer, DomainDataProvider) ⇒ Row ⇒ Product = { (transformer, dataProvider) ⇒ row ⇒
+    import transformer._
+    implicit val source: Row = row
 
-      val concatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_PRODUCT_ID")
-      val ohubCreated = currentTimestamp()
+    val concatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_PRODUCT_ID")
+    val ohubCreated = currentTimestamp()
 
       // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
 

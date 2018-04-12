@@ -8,16 +8,15 @@ import org.apache.spark.sql.Row
 
 object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
 
-  override def toDomainEntity: (DomainTransformer, DomainDataProvider) ⇒ Row ⇒ Operator = {
-    (transformer, dataProvider) ⇒ row ⇒
-      import transformer._
-      implicit val source: Row = row
+  override def toDomainEntity: (DomainTransformer, DomainDataProvider) ⇒ Row ⇒ Operator = { (transformer, dataProvider) ⇒ row ⇒
+    import transformer._
+    implicit val source: Row = row
 
-      val countryCode = originalValue("COUNTRY_CODE")(row).get
-      val sourceName = "EMAKINA"
-      val sourceEntityId = originalValue("EM_SOURCE_ID")(row).get
-      val concatId = DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
-      val ohubCreated = currentTimestamp()
+    val countryCode = originalValue("COUNTRY_CODE")(row).get
+    val sourceName = "EMAKINA"
+    val sourceEntityId = originalValue("EM_SOURCE_ID")(row).get
+    val concatId = DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
+    val ohubCreated = currentTimestamp()
 
       // format: OFF
 

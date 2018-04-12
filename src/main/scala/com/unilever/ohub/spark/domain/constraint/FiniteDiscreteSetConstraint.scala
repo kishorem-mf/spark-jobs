@@ -7,10 +7,9 @@ object FiniteDiscreteSetConstraint {
 }
 
 class FiniteDiscreteSetConstraint[T](allowedValues: Set[T]) extends DomainConstraint[T] {
-  import DomainConstraint._
 
-  override def validate(value: T): Unit =
-    check[T](isValid, value, s"'$value' is not a valid value in the finite discrete set: '$allowedValues'.")
+  override def isValid(value: T): Boolean = allowedValues.contains(value)
 
-  def isValid(value: T): Boolean = allowedValues.contains(value)
+  override def errorMessage(value: T): String =
+    s"'$value' is not a valid value in the finite discrete set: '$allowedValues'."
 }

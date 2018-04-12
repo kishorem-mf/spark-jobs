@@ -8,14 +8,13 @@ import org.apache.spark.sql.Row
 
 object OperatorConverter extends FileDomainGateKeeper[Operator] {
 
-  override def toDomainEntity: (DomainTransformer, DomainDataProvider) ⇒ Row ⇒ Operator = {
-    (transformer, dataProvider) ⇒ row ⇒
-      import transformer._
-      implicit val source: Row = row
+  override def toDomainEntity: (DomainTransformer, DomainDataProvider) ⇒ Row ⇒ Operator = { (transformer, dataProvider) ⇒ row ⇒
+    import transformer._
+    implicit val source: Row = row
 
-      val countryCode: String = originalValue("COUNTRY_CODE")(row).get
-      val concatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_OPERATOR_ID")
-      val ohubCreated = currentTimestamp()
+    val countryCode: String = originalValue("COUNTRY_CODE")(row).get
+    val concatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_OPERATOR_ID")
+    val ohubCreated = currentTimestamp()
 
       // format: OFF
                                                                               // ↓ not so happy with this column (it should be the same as the fieldName), macro?

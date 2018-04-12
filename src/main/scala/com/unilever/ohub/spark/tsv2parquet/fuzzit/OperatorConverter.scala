@@ -51,12 +51,11 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
   val CREATION_DATE = "CREATION_DATE"
   val CUST_GRP_EXT = "CUST_GRP_EXT"
 
-  override def toDomainEntity: (DomainTransformer, DomainDataProvider) ⇒ Row ⇒ Operator = {
-    (transformer, dataProvider) ⇒ row ⇒
-      import transformer._
-      implicit val source: Row = row
+  override def toDomainEntity: (DomainTransformer, DomainDataProvider) ⇒ Row ⇒ Operator = { (transformer, dataProvider) ⇒ row ⇒
+    import transformer._
+    implicit val source: Row = row
 
-      useHeaders(fuzzitHeaders)
+    useHeaders(fuzzitHeaders)
 
       // format: OFF
 
