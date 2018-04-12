@@ -13,6 +13,7 @@ The UI has been shielded behind local port forwarding. To access the UI:
 - Install the az cli tools: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest
 - Login with your user using `az login` 
 - Install kubectl cli: https://kubernetes.io/docs/tasks/tools/install-kubectl/
+- [OPTIONAL] Install kubectl completion (highly recommended!) https://kubernetes.io/docs/tasks/tools/install-kubectl/#enabling-shell-autocompletion
 - Get the credentials for the Kubernetes cluster: 
 ```
 az aks get-credentials -g bieno-da-s-60072-containers-rg -n ul-ohub2-aks-dev-we
