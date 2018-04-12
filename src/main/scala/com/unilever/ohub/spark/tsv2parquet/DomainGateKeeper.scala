@@ -30,12 +30,12 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
 
   override final val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
 
-  def toDomainEntity: (Row, DomainTransformer) ⇒ DomainType
+  def toDomainEntity: (DomainTransformer, DomainDataProvider) ⇒ Row ⇒ DomainType
 
-  def transform(transformFn: (Row, DomainTransformer) ⇒ DomainType): Row ⇒ Either[ErrorMessage, DomainType] =
+  def transform(transformFn: Row ⇒ DomainType): Row ⇒ Either[ErrorMessage, DomainType] =
     row ⇒
       try
-        Right(transformFn(row, DomainTransformer()))
+        Right(transformFn(row))
       catch {
         case e: Throwable ⇒
           Left(s"Error parsing row: '$e', row = '$row'")
@@ -45,6 +45,8 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
     import spark.implicits._
 
     val (inputFile: String, outputFile: String) = filePaths
+    val transformer = new DomainTransformer()
+    val domainDataProvider = new SparkDomainDataProvider(spark, storage)
 
     val result = storage
       .readFromCsv(
@@ -52,7 +54,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
         fieldSeparator = fieldSeparator,
         hasHeaders = hasHeaders
       )
-      .map(transform(toDomainEntity))
+      .map(transform(toDomainEntity(transformer, domainDataProvider)))
       .distinct()
       // persist the result here (result is evaluated multiple times, since spark transformations are lazy)
       .persist(StorageLevels.MEMORY_AND_DISK)

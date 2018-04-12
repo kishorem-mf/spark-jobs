@@ -41,7 +41,6 @@ trait Storage {
 }
 
 class DefaultStorage(spark: SparkSession) extends Storage {
-
   import spark.implicits._
 
   override def readFromCsv(

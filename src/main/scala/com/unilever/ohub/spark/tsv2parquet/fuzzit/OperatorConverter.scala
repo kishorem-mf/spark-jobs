@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.generic.StringFunctions._
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
-import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
+import com.unilever.ohub.spark.tsv2parquet.{ DomainDataProvider, DomainTransformer }
 import org.apache.spark.sql.Row
 
 object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
@@ -51,12 +51,12 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
   val CREATION_DATE = "CREATION_DATE"
   val CUST_GRP_EXT = "CUST_GRP_EXT"
 
-  override def toDomainEntity: (Row, DomainTransformer) ⇒ Operator = {
-    (row, transformer) ⇒
+  override def toDomainEntity: (DomainTransformer, DomainDataProvider) ⇒ Row ⇒ Operator = {
+    (transformer, dataProvider) ⇒ row ⇒
       import transformer._
       implicit val source: Row = row
 
-      useHeaders(fuzzitHeaders())
+      useHeaders(fuzzitHeaders)
 
       // format: OFF
 
@@ -67,6 +67,8 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
       val concatId                                      =   DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
       val ohubCreated                                   =   currentTimestamp()
       val (street, houseNumber, houseNumberExtension)   =   splitAddress(STREET, "street")
+
+      // set additional fields first
 
       additionalField(CAM_KEY, "germanChainId")
       additionalField(CAM_TEXT, "germanChainName")
@@ -145,7 +147,7 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
     // format: ON
   }
 
-  private def fuzzitHeaders(): Map[String, Int] =
+  private lazy val fuzzitHeaders: Map[String, Int] =
     Seq(
       CUSTOMER_UUID,
       SALES_ORG,
