@@ -8,7 +8,7 @@ import com.unilever.ohub.spark.domain.constraint._
 
 object Operator {
   val otmConstraint = FiniteDiscreteSetConstraint(Set("A", "B", "C", "D", "E", "F"))
-  val customerType = "operator"
+  val customerType = "OPERATOR"
   val daysOpenRange: Range.Inclusive = Range.inclusive(0, 7)
   val weeksClosedRange: Range.Inclusive = Range.inclusive(0, 52)
 }
