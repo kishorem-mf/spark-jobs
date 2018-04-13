@@ -4,20 +4,20 @@ import com.unilever.ohub.spark.domain.DomainConstraintViolationException
 import com.unilever.ohub.spark.tsv2parquet.TestDomainDataProvider
 import org.scalatest.{ Matchers, WordSpec }
 
-class SourceNameConstraintSpec extends WordSpec with Matchers {
+class CountryCodeConstraintSpec extends WordSpec with Matchers {
 
-  "Source name constraint" should {
+  "Country code constraint" should {
     "throw a DomainConstraintViolationException" when {
-      "a value is an unknown source" in {
+      "a value is an unknown country" in {
         intercept[DomainConstraintViolationException] {
-          SourceNameConstraint(TestDomainDataProvider()).validate("UNKNOWN")
+          CountryCodeConstraint(TestDomainDataProvider()).validate("UNKNOWN")
         }
       }
     }
 
     "not throw a DomainConstraintViolationException" when {
-      "a value is a known source" in {
-        SourceNameConstraint(TestDomainDataProvider()).validate("EMAKINA")
+      "a value is a known country" in {
+        CountryCodeConstraint(TestDomainDataProvider()).validate("NL")
       }
     }
   }

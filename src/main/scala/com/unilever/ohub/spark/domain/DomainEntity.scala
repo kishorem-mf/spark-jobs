@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.domain
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
-import com.unilever.ohub.spark.domain.constraint.{ ConcatIdConstraint, SourceNameConstraint }
+import com.unilever.ohub.spark.domain.constraint.{ ConcatIdConstraint, CountryCodeConstraint, SourceNameConstraint }
 import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 
 object DomainEntity {
@@ -14,6 +14,7 @@ object DomainEntity {
 
   def postConditions(dataProvider: DomainDataProvider)(entity: DomainEntity): Unit = {
     SourceNameConstraint(dataProvider).validate(entity.sourceName)
+    CountryCodeConstraint(dataProvider).validate(entity.countryCode)
   }
 }
 

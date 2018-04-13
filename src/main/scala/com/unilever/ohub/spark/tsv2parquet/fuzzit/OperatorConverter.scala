@@ -60,7 +60,10 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
       // format: OFF
 
       val sourceName                                    =   "FUZZIT"
-      val countryCode                                   =   originalValue(SALES_ORG)(row).get
+      val salesOrg                                      =   originalValue(SALES_ORG)(row).get
+
+      val countryCode                                   =   "DE" // TODO LOOKUP COUNTRY CODE BY SALES ORG !!!
+
       val sourceEntityId                                =   originalValue(CUSTOMER_UUID)(row).get
       val concatNames                                   =   Seq(originalValue(NAME_1)(row), originalValue(NAME_2)(row)).flatten.mkString(" ")
       val concatId                                      =   DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
@@ -75,7 +78,7 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
       Operator(
         // fieldName                  mandatory   sourceFieldName           targetFieldName                 transformationFunction (unsafe)
         concatId                    = concatId                                                                                                           ,
-        countryCode                 = mandatory ( SALES_ORG,                "countryCode"                                                               ), // TODO lookup country code
+        countryCode                 = countryCode                                                                                                        ,
         customerType                = Operator.customerType                                                                                              ,
         dateCreated                 = optional ( CREATION_DATE,            "dateCreated",                  parseDateTimeForPattern()                    ),
         dateUpdated                 = optional ( CREATION_DATE,            "dateUpdated",                  parseDateTimeForPattern()                    ),

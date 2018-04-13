@@ -16,7 +16,7 @@ trait DomainGateKeeperSpec[DomainType <: DomainEntity] extends SparkJobSpec {
   private[tsv2parquet] val SUT: DomainGateKeeper[DomainType]
   private[tsv2parquet] val outputFile = ""
 
-  def testDataProvider() = new TestDomainDataProvider
+  def testDataProvider(): DomainDataProvider = TestDomainDataProvider()
 
   def runJobWith(inputFile: InputFile)(assertFn: Dataset[DomainType] ⇒ Unit): Unit = {
     val mockStorage = mock[Storage]
