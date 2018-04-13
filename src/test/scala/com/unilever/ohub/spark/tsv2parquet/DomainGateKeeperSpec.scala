@@ -2,7 +2,6 @@ package com.unilever.ohub.spark.tsv2parquet
 
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.data.CountryRecord
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.Dataset
@@ -43,5 +42,3 @@ trait DomainGateKeeperSpec[DomainType <: DomainEntity] extends SparkJobSpec {
     SUT.run(spark, (inputFile, outputFile), mockStorage, testDataProvider())
   }
 }
-
-case class TestDomainDataProvider(countries: Map[String, CountryRecord] = Map(), sourcePreferences: Map[String, Int] = Map("WUFOO" -> 1, "EMAKINA" -> 2, "FUZZIT" -> 3)) extends DomainDataProvider
