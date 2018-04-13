@@ -6,15 +6,13 @@ object DomainConstraintViolationException {
 
 class DomainConstraintViolationException(message: String) extends IllegalArgumentException(message)
 
-object DomainConstraint {
-
-  @throws(classOf[DomainConstraintViolationException])
-  def check[T](isValid: T ⇒ Boolean, value: T, errorMessage: String): Unit =
-    if (!isValid(value)) throw DomainConstraintViolationException(errorMessage)
-}
-
 trait DomainConstraint[T] {
 
+  private[domain] def isValid(value: T): Boolean
+
+  private[domain] def errorMessage(value: T): String
+
   @throws(classOf[DomainConstraintViolationException])
-  def validate(value: T): Unit
+  def validate(value: T): Unit =
+    if (!isValid(value)) throw DomainConstraintViolationException(errorMessage(value))
 }

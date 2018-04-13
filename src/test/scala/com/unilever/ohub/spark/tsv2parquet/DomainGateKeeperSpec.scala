@@ -16,9 +16,12 @@ trait DomainGateKeeperSpec[DomainType <: DomainEntity] extends SparkJobSpec {
   private[tsv2parquet] val SUT: DomainGateKeeper[DomainType]
   private[tsv2parquet] val outputFile = ""
 
+  def testDataProvider(): DomainDataProvider = TestDomainDataProvider()
+
   def runJobWith(inputFile: InputFile)(assertFn: Dataset[DomainType] ⇒ Unit): Unit = {
     val mockStorage = mock[Storage]
 
+    // read input data
     (mockStorage.readFromCsv _).expects(inputFile, SUT.fieldSeparator, SUT.hasHeaders)
       .returns(
         spark
@@ -29,12 +32,13 @@ trait DomainGateKeeperSpec[DomainType <: DomainEntity] extends SparkJobSpec {
           .csv(inputFile)
       )
 
+    // write output data
     (mockStorage.writeToParquet(_: Dataset[DomainType], _: String, _: Seq[String])) expects where {
       (resultDataset, _, _) ⇒
         assertFn(resultDataset)
         true // let's not fail here, but do proper assertions in the assertion function
     }
 
-    SUT.run(spark, (inputFile, outputFile), mockStorage)
+    SUT.run(spark, (inputFile, outputFile), mockStorage, testDataProvider())
   }
 }

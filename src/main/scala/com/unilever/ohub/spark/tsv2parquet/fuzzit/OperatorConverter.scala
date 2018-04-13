@@ -51,22 +51,26 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
   val CREATION_DATE = "CREATION_DATE"
   val CUST_GRP_EXT = "CUST_GRP_EXT"
 
-  override def toDomainEntity: (Row, DomainTransformer) ⇒ Operator = {
-    (row, transformer) ⇒
-      import transformer._
-      implicit val source: Row = row
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Operator = { transformer ⇒ row ⇒
+    import transformer._
+    implicit val source: Row = row
 
-      useHeaders(fuzzitHeaders())
+    useHeaders(fuzzitHeaders)
 
       // format: OFF
 
       val sourceName                                    =   "FUZZIT"
-      val countryCode                                   =   originalValue(SALES_ORG)(row).get
+      val salesOrg                                      =   originalValue(SALES_ORG)(row).get
+
+      val countryCode                                   =   "DE" // TODO LOOKUP COUNTRY CODE BY SALES ORG !!!
+
       val sourceEntityId                                =   originalValue(CUSTOMER_UUID)(row).get
       val concatNames                                   =   Seq(originalValue(NAME_1)(row), originalValue(NAME_2)(row)).flatten.mkString(" ")
       val concatId                                      =   DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
       val ohubCreated                                   =   currentTimestamp()
       val (street, houseNumber, houseNumberExtension)   =   splitAddress(STREET, "street")
+
+      // set additional fields first
 
       additionalField(CAM_KEY, "germanChainId")
       additionalField(CAM_TEXT, "germanChainName")
@@ -74,7 +78,7 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
       Operator(
         // fieldName                  mandatory   sourceFieldName           targetFieldName                 transformationFunction (unsafe)
         concatId                    = concatId                                                                                                           ,
-        countryCode                 = mandatory ( SALES_ORG,                "countryCode"                                                               ), // TODO lookup country code
+        countryCode                 = countryCode                                                                                                        ,
         customerType                = Operator.customerType                                                                                              ,
         dateCreated                 = optional ( CREATION_DATE,            "dateCreated",                  parseDateTimeForPattern()                    ),
         dateUpdated                 = optional ( CREATION_DATE,            "dateUpdated",                  parseDateTimeForPattern()                    ),
@@ -92,7 +96,7 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
         channel                     = optional  ( CHANNEL_TEXT,             "channel"                                                                   ),
         city                        = optional  ( CITY,                     "city"                                                                      ),
         cookingConvenienceLevel     = None                                                                                                               ,
-        countryName                 = None                                                                                                               , // TODO derive from country code
+        countryName                 = countryName(countryCode)                                                                                           ,
         daysOpen                    = None                                                                                                               ,
         distributorName             = None                                                                                                               ,
         distributorOperatorId       = None                                                                                                               ,
@@ -145,7 +149,7 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
     // format: ON
   }
 
-  private def fuzzitHeaders(): Map[String, Int] =
+  private lazy val fuzzitHeaders: Map[String, Int] =
     Seq(
       CUSTOMER_UUID,
       SALES_ORG,

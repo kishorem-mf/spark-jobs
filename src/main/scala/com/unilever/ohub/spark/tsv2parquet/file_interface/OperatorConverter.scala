@@ -8,21 +8,20 @@ import org.apache.spark.sql.Row
 
 object OperatorConverter extends FileDomainGateKeeper[Operator] {
 
-  override def toDomainEntity: (Row, DomainTransformer) ⇒ Operator = {
-    (row, transformer) ⇒
-      import transformer._
-      implicit val source: Row = row
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Operator = { transformer ⇒ row ⇒
+    import transformer._
+    implicit val source: Row = row
 
-      val countryCode: String = originalValue("COUNTRY_CODE")(row).get
-      val concatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_OPERATOR_ID")
-      val ohubCreated = currentTimestamp()
+    val countryCode: String = originalValue("COUNTRY_CODE")(row).get
+    val concatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_OPERATOR_ID")
+    val ohubCreated = currentTimestamp()
 
       // format: OFF
                                                                               // ↓ not so happy with this column (it should be the same as the fieldName), macro?
       Operator(
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
         concatId                    = concatId                                                                                                           ,
-        countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ), // TODO lookup country code
+        countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ),
         dateCreated                 = optional  ( "DATE_CREATED",             "dateCreated",                  parseDateTimeStampUnsafe                  ),
         dateUpdated                 = optional  ( "DATE_MODIFIED",            "dateUpdated",                  parseDateTimeStampUnsafe                  ),
         customerType                = Operator.customerType                                                                                              ,
@@ -40,11 +39,11 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         channel                     = optional  ( "CHANNEL",                  "channel"                                                                 ),
         city                        = optional  ( "CITY",                     "city"                                                                    ),
         cookingConvenienceLevel     = optional  ( "CONVENIENCE_LEVEL",        "cookingConvenienceLevel"                                                 ),
-        countryName                 = optional  ( "COUNTRY",                  "countryName"                                                             ), // TODO derive from country code
+        countryName                 = countryName(countryCode)                                                                                           ,
         daysOpen                    = optional  ( "DAYS_OPEN",                "daysOpen",                     withinRange(Operator.daysOpenRange)       ),
         distributorName             = optional  ( "DISTRIBUTOR_NAME",         "distributorName"                                                         ),
         distributorOperatorId       = optional  ( "DISTRIBUTOR_CUSTOMER_NR",  "distributorOperatorId"                                                   ),
-        emailAddress                = optional  ( "EMAIL_ADDRESS",            "emailAddress"                                                            ),
+        emailAddress                = optional  ( "EMAIL_ADDRESS",            "emailAddress",                 checkEmailValidity                        ),
         faxNumber                   = optional  ( "FAX_NUMBER",               "faxNumber",                    cleanPhone(countryCode)                   ),
         hasDirectMailOptIn          = optional  ( "DM_OPT_IN",                "hasDirectMailOptIn",           parseBoolUnsafe                           ),
         hasDirectMailOptOut         = optional  ( "DM_OPT_OUT",               "hasDirectMailOptOut",          parseBoolUnsafe                           ),

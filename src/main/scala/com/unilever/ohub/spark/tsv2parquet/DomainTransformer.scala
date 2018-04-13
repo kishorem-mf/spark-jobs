@@ -4,12 +4,12 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import org.apache.spark.sql.Row
 
 object DomainTransformer {
-  def apply(): DomainTransformer = new DomainTransformer()
+  def apply(dataProvider: DomainDataProvider): DomainTransformer = new DomainTransformer(dataProvider)
 
   val ZERO_WIDTH_NO_BREAK_SPACE = "\uFEFF" // see also: http://www.fileformat.info/info/unicode/char/FEFF/index.htm
 }
 
-class DomainTransformer extends DomainTransformFunctions with Serializable {
+class DomainTransformer(val dataProvider: DomainDataProvider) extends DomainTransformFunctions with Serializable {
   import DomainTransformer._
 
   var headers: Map[String, Int] = Map()

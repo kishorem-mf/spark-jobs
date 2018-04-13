@@ -9,13 +9,12 @@ import org.apache.spark.sql.Row
 
 object ProductConverter extends FileDomainGateKeeper[Product] {
 
-  override def toDomainEntity: (Row, DomainTransformer) ⇒ Product = {
-    (row, transformer) ⇒
-      import transformer._
-      implicit val source: Row = row
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Product = { transformer ⇒ row ⇒
+    import transformer._
+    implicit val source: Row = row
 
-      val concatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_PRODUCT_ID")
-      val ohubCreated = currentTimestamp()
+    val concatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_PRODUCT_ID")
+    val ohubCreated = currentTimestamp()
 
       // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
 
@@ -24,8 +23,8 @@ object ProductConverter extends FileDomainGateKeeper[Product] {
         concatId                        = concatId,
         countryCode                     = mandatory( "COUNTRY_CODE",              "countryCode"                                       ),
         customerType                    = Product.customerType                                                                         ,
-        dateCreated                     = optional( "DATE_CREATED",              "dateCreated",            parseDateTimeStampUnsafe  ),
-        dateUpdated                     = optional( "DATE_MODIFIED",             "dateUpdated",            parseDateTimeStampUnsafe  ),
+        dateCreated                     = optional(  "DATE_CREATED",              "dateCreated",            parseDateTimeStampUnsafe  ),
+        dateUpdated                     = optional(  "DATE_MODIFIED",             "dateUpdated",            parseDateTimeStampUnsafe  ),
         isActive                        = mandatory( "STATUS",                    "isActive",               parseBoolUnsafe           ),
         isGoldenRecord                  = true,
         ohubId                          = Some(UUID.randomUUID().toString),

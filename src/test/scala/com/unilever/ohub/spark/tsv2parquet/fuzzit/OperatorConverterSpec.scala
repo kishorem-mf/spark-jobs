@@ -18,8 +18,8 @@ class OperatorConverterSpec extends DomainGateKeeperSpec[Operator] {
 
         val actualOperator = actualDataSet.head()
         val expectedOperator = Operator(
-          concatId = "1611~FUZZIT~02700856-30A6-44CE-BC9A-4FC3D6935088",
-          countryCode = "1611",
+          concatId = "DE~FUZZIT~02700856-30A6-44CE-BC9A-4FC3D6935088",
+          countryCode = "DE",
           customerType = "operator",
           dateCreated = Some(Timestamp.valueOf("2018-01-12 13:20:58.7")),
           dateUpdated = Some(Timestamp.valueOf("2018-01-12 13:20:58.7")),
@@ -37,7 +37,7 @@ class OperatorConverterSpec extends DomainGateKeeperSpec[Operator] {
           channel = None,
           city = Some("Mittelh�usern"),
           cookingConvenienceLevel = None,
-          countryName = None,
+          countryName = Some("Germany"),
           daysOpen = None,
           distributorName = None,
           distributorOperatorId = None,
