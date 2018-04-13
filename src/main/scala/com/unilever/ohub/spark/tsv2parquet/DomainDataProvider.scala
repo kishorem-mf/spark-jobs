@@ -11,10 +11,15 @@ trait DomainDataProvider {
   def sourcePreferences: Map[String, Int]
 }
 
-class SparkDomainDataProvider(spark: SparkSession, storage: Storage) extends DomainDataProvider {
-  import spark.implicits._
+object DomainDataProvider {
+  def apply(spark: SparkSession, storage: Storage): DomainDataProvider = {
+    import spark.implicits._
 
-  override lazy val countries: Map[String, CountryRecord] = storage.createCountries.map(c ⇒ c.countryCode -> c).collect().toMap
-
-  override lazy val sourcePreferences: Map[String, Int] = storage.sourcePreference
+    InMemDomainDataProvider(
+      countries = storage.createCountries.map(c ⇒ c.countryCode -> c).collect().toMap,
+      sourcePreferences = storage.sourcePreference
+    )
+  }
 }
+
+case class InMemDomainDataProvider(countries: Map[String, CountryRecord], sourcePreferences: Map[String, Int]) extends DomainDataProvider with Serializable

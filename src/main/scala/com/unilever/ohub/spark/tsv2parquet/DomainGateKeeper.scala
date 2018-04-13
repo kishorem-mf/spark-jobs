@@ -22,31 +22,38 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
   import DomainGateKeeper._
   import DomainGateKeeper.implicits._
 
+  override final val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
+
   protected[tsv2parquet] def fieldSeparator: String
 
   protected[tsv2parquet] def hasHeaders: Boolean
 
   protected[tsv2parquet] def partitionByValue: Seq[String]
 
-  override final val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
+  protected[tsv2parquet] def toDomainEntity: DomainTransformer ⇒ Row ⇒ DomainType
 
-  def toDomainEntity: (DomainTransformer, DomainDataProvider) ⇒ Row ⇒ DomainType
+  protected[tsv2parquet] def postValidate: DomainDataProvider ⇒ DomainEntity ⇒ Unit = dataProvider ⇒ DomainEntity.postConditions(dataProvider)
 
-  def transform(transformFn: Row ⇒ DomainType): Row ⇒ Either[ErrorMessage, DomainType] =
+  private def transform(transformFn: Row ⇒ DomainType)(postValidateFn: DomainEntity ⇒ Unit): Row ⇒ Either[ErrorMessage, DomainType] =
     row ⇒
-      try
-        Right(transformFn(row))
-      catch {
+      try {
+        val entity = transformFn(row)
+        postValidateFn(entity)
+        Right(entity)
+      } catch {
         case e: Throwable ⇒
           Left(s"Error parsing row: '$e', row = '$row'")
       }
 
   override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
+    run(spark, filePaths, storage, DomainDataProvider(spark, storage))
+  }
+
+  protected[tsv2parquet] def run(spark: SparkSession, filePaths: Product, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     import spark.implicits._
 
     val (inputFile: String, outputFile: String) = filePaths
-    val transformer = new DomainTransformer()
-    val domainDataProvider = new SparkDomainDataProvider(spark, storage)
+    val transformer = DomainTransformer()
 
     val result = storage
       .readFromCsv(
@@ -54,7 +61,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
         fieldSeparator = fieldSeparator,
         hasHeaders = hasHeaders
       )
-      .map(transform(toDomainEntity(transformer, domainDataProvider)))
+      .map(transform(toDomainEntity(transformer))(postValidate(dataProvider)))
       .distinct()
       // persist the result here (result is evaluated multiple times, since spark transformations are lazy)
       .persist(StorageLevels.MEMORY_AND_DISK)

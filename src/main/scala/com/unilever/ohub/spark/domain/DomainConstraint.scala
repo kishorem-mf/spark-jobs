@@ -8,9 +8,9 @@ class DomainConstraintViolationException(message: String) extends IllegalArgumen
 
 trait DomainConstraint[T] {
 
-  def isValid(value: T): Boolean
+  private[domain] def isValid(value: T): Boolean
 
-  def errorMessage(value: T): String
+  private[domain] def errorMessage(value: T): String
 
   @throws(classOf[DomainConstraintViolationException])
   def validate(value: T): Unit =

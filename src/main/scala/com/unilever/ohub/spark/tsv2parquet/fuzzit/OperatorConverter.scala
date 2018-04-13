@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.generic.StringFunctions._
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
-import com.unilever.ohub.spark.tsv2parquet.{ DomainDataProvider, DomainTransformer }
+import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
 import org.apache.spark.sql.Row
 
 object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
@@ -51,7 +51,7 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
   val CREATION_DATE = "CREATION_DATE"
   val CUST_GRP_EXT = "CUST_GRP_EXT"
 
-  override def toDomainEntity: (DomainTransformer, DomainDataProvider) ⇒ Row ⇒ Operator = { (transformer, dataProvider) ⇒ row ⇒
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Operator = { transformer ⇒ row ⇒
     import transformer._
     implicit val source: Row = row
 

@@ -3,13 +3,13 @@ package com.unilever.ohub.spark.tsv2parquet.file_interface
 import java.util.UUID
 
 import com.unilever.ohub.spark.domain.entity.Product
-import com.unilever.ohub.spark.tsv2parquet.{ DomainDataProvider, DomainTransformer }
+import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 import org.apache.spark.sql.Row
 
 object ProductConverter extends FileDomainGateKeeper[Product] {
 
-  override def toDomainEntity: (DomainTransformer, DomainDataProvider) ⇒ Row ⇒ Product = { (transformer, dataProvider) ⇒ row ⇒
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Product = { transformer ⇒ row ⇒
     import transformer._
     implicit val source: Row = row
 
@@ -23,8 +23,8 @@ object ProductConverter extends FileDomainGateKeeper[Product] {
         concatId                        = concatId,
         countryCode                     = mandatory( "COUNTRY_CODE",              "countryCode"                                       ),
         customerType                    = Product.customerType                                                                         ,
-        dateCreated                     = optional( "DATE_CREATED",              "dateCreated",            parseDateTimeStampUnsafe  ),
-        dateUpdated                     = optional( "DATE_MODIFIED",             "dateUpdated",            parseDateTimeStampUnsafe  ),
+        dateCreated                     = optional(  "DATE_CREATED",              "dateCreated",            parseDateTimeStampUnsafe  ),
+        dateUpdated                     = optional(  "DATE_MODIFIED",             "dateUpdated",            parseDateTimeStampUnsafe  ),
         isActive                        = mandatory( "STATUS",                    "isActive",               parseBoolUnsafe           ),
         isGoldenRecord                  = true,
         ohubId                          = Some(UUID.randomUUID().toString),

@@ -3,13 +3,18 @@ package com.unilever.ohub.spark.domain
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
-import com.unilever.ohub.spark.domain.constraint.ConcatIdConstraint
+import com.unilever.ohub.spark.domain.constraint.{ ConcatIdConstraint, SourceNameConstraint }
+import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 
 object DomainEntity {
   case class IngestionError(originalColumnName: String, inputValue: Option[String], exceptionMessage: String)
 
   def createConcatIdFromValues(countryCode: String, sourceName: String, sourceEntityId: String): String =
     s"$countryCode~$sourceName~$sourceEntityId"
+
+  def postConditions(dataProvider: DomainDataProvider)(entity: DomainEntity): Unit = {
+    SourceNameConstraint(dataProvider).validate(entity.sourceName)
+  }
 }
 
 // marker trait for all domain entities (press ctrl + h in IntelliJ to see all)
