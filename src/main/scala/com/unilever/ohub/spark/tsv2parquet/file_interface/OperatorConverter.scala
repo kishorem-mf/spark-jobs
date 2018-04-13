@@ -21,7 +21,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
       Operator(
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
         concatId                    = concatId                                                                                                           ,
-        countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ), // TODO lookup country code
+        countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ),
         dateCreated                 = optional  ( "DATE_CREATED",             "dateCreated",                  parseDateTimeStampUnsafe                  ),
         dateUpdated                 = optional  ( "DATE_MODIFIED",            "dateUpdated",                  parseDateTimeStampUnsafe                  ),
         customerType                = Operator.customerType                                                                                              ,
@@ -43,7 +43,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
         daysOpen                    = optional  ( "DAYS_OPEN",                "daysOpen",                     withinRange(Operator.daysOpenRange)       ),
         distributorName             = optional  ( "DISTRIBUTOR_NAME",         "distributorName"                                                         ),
         distributorOperatorId       = optional  ( "DISTRIBUTOR_CUSTOMER_NR",  "distributorOperatorId"                                                   ),
-        emailAddress                = optional  ( "EMAIL_ADDRESS",            "emailAddress"                                                            ),
+        emailAddress                = optional  ( "EMAIL_ADDRESS",            "emailAddress",                 checkEmailValidity                        ),
         faxNumber                   = optional  ( "FAX_NUMBER",               "faxNumber",                    cleanPhone(countryCode)                   ),
         hasDirectMailOptIn          = optional  ( "DM_OPT_IN",                "hasDirectMailOptIn",           parseBoolUnsafe                           ),
         hasDirectMailOptOut         = optional  ( "DM_OPT_OUT",               "hasDirectMailOptOut",          parseBoolUnsafe                           ),

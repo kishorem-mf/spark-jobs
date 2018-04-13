@@ -219,23 +219,33 @@ class CustomParsersSpec extends FunSpec with Matchers {
   }
 
   describe("checkEmailValidity") {
-    it("should return null when email string is null") {
-      assert(checkEmailValidity(null) == null)
+    it("should throw a NPE when provided with null") {
+      intercept[NullPointerException] {
+        checkEmailValidity(null)
+      }
     }
-    it("should return null when email string is empty") {
-      assert(checkEmailValidity("") == null)
+    it("should throw an illegal argument exception when email string is empty") {
+      intercept[IllegalArgumentException] {
+        checkEmailValidity("")
+      }
     }
-    it("should return null when email contain more then one @") {
-      assert(checkEmailValidity("hans.kazan@@hotmail.nl") == null)
+    it("should throw an illegal argument exception when email contains more then one @") {
+      intercept[IllegalArgumentException] {
+        checkEmailValidity("hans.kazan@@hotmail.nl")
+      }
+    }
+    it("should throw an illegal argument exception when email has no dot after the @") {
+      intercept[IllegalArgumentException] {
+        checkEmailValidity("hans.kazan@hotmailnl")
+      }
+    }
+    it("should throw an illegal argument exception when email has non western letters in it like من") {
+      intercept[IllegalArgumentException] {
+        checkEmailValidity("hans.kazanمن@hotmail.nl")
+      }
     }
     it("should return hans.kazan@hotmail.nl") {
       assert(checkEmailValidity("hans.kazan@hotmail.nl") == "hans.kazan@hotmail.nl")
-    }
-    it("should return null when email has no dot after the @") {
-      assert(checkEmailValidity("hans.kazan@hotmailnl") == null)
-    }
-    it("should return null when email has non western letters in it like من") {
-      assert(checkEmailValidity("hans.kazanمن@hotmail.nl") == null)
     }
   }
 

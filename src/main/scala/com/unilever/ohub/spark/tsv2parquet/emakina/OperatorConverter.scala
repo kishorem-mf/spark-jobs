@@ -23,7 +23,7 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
       Operator(
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
         concatId                    = concatId                                                                                                           ,
-        countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ), // TODO lookup country code
+        countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ),
         customerType                = Operator.customerType                                                                                              ,
         dateCreated                 = Option.empty                                                                                                       ,
         dateUpdated                 = Option.empty                                                                                                       ,

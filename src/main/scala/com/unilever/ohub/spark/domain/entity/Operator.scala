@@ -16,7 +16,7 @@ object Operator {
 case class Operator(
     // generic fields
     concatId: String,
-    countryCode: String, // TODO Existing country code in OHUB using: Iso 3166-1 alpha 2...do a lookup
+    countryCode: String,
     customerType: String,
     dateCreated: Option[Timestamp],
     dateUpdated: Option[Timestamp],
@@ -25,9 +25,9 @@ case class Operator(
     ohubId: Option[String],
     name: String,
     sourceEntityId: String,
-    sourceName: String, // TODO existing source, add constraint? do a lookup
+    sourceName: String,
     ohubCreated: Timestamp,
-    ohubUpdated: Timestamp, // currently always created timestamp (how/when will it get an updated timestamp?)
+    ohubUpdated: Timestamp,
     // specific fields
     averagePrice: Option[BigDecimal],
     chainId: Option[String],
@@ -35,7 +35,7 @@ case class Operator(
     channel: Option[String],
     city: Option[String],
     cookingConvenienceLevel: Option[String],
-    countryName: Option[String], // can be derived...however, having the country name right away has benefits.
+    countryName: Option[String],
     daysOpen: Option[Int],
     distributorName: Option[String],
     distributorOperatorId: Option[String],
