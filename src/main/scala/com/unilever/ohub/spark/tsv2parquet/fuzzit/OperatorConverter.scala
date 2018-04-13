@@ -96,7 +96,7 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
         channel                     = optional  ( CHANNEL_TEXT,             "channel"                                                                   ),
         city                        = optional  ( CITY,                     "city"                                                                      ),
         cookingConvenienceLevel     = None                                                                                                               ,
-        countryName                 = None                                                                                                               , // TODO derive from country code
+        countryName                 = countryName(countryCode)                                                                                           ,
         daysOpen                    = None                                                                                                               ,
         distributorName             = None                                                                                                               ,
         distributorOperatorId       = None                                                                                                               ,

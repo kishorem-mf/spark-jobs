@@ -53,7 +53,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
     import spark.implicits._
 
     val (inputFile: String, outputFile: String) = filePaths
-    val transformer = DomainTransformer()
+    val transformer = DomainTransformer(dataProvider)
 
     val result = storage
       .readFromCsv(

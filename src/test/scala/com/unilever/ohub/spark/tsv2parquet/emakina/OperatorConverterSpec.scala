@@ -36,7 +36,7 @@ class OperatorConverterSpec extends DomainGateKeeperSpec[Operator] {
           channel = Some("unknown"),
           city = None,
           cookingConvenienceLevel = None,
-          countryName = None,
+          countryName = Some("Germany"),
           daysOpen = None,
           distributorName = Some("my primary distributer"),
           distributorOperatorId = Some("my customer id"),

@@ -41,7 +41,7 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
         channel                     = optional  ( "TYPE_OF_BUSINESS",         "channel"                                                                 ),
         city                        = None                                                                                                               ,
         cookingConvenienceLevel     = None                                                                                                               ,
-        countryName                 = None                                                                                                               , // TODO derive from country code
+        countryName                 = countryName(countryCode)                                                                                           ,
         daysOpen                    = None                                                                                                               ,
         distributorName             = optional  ( "PRIMARY_DISTRIBUTOR",      "distributorName"                                                         ),
         distributorOperatorId       = optional  ( "DISTRIBUTOR_CUSTOMER_ID",  "distributorOperatorId"                                                   ),

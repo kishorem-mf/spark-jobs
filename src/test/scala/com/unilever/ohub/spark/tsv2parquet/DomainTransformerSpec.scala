@@ -10,7 +10,7 @@ import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 
 class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
 
-  val domainTransformer = DomainTransformer()
+  val domainTransformer = DomainTransformer(TestDomainDataProvider())
   val domainFieldName = "domain-field-name"
   val originalColumnName = "original"
 
