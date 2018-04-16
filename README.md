@@ -13,9 +13,9 @@ Note: Files deleted in Git are NOT deleted on the fileshare. If DAGs are removed
 ## Viewing the UI
 The UI has been shielded behind local port forwarding. To access the UI:
 
-- Install the [az cli tools](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
+- Install the [`az` cli tools](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 - Login with your user using `az login` 
-- Install [kubectl cli](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+- Install [`kubectl` cli](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [OPTIONAL] Install [kubectl completion](https://kubernetes.io/docs/tasks/tools/install-kubectl/#enabling-shell-autocompletion) (highly recommended!)
 - Get the credentials for the Kubernetes cluster: 
 ```
