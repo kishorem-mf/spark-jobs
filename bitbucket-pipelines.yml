@@ -12,7 +12,7 @@ pipelines:
         caches:
           - pip
         script:
-          - pip install pycodestyle pytest requests_mock apache-airflow==1.9.0
+          - pip install pycodestyle==2.3.1 pytest requests_mock apache-airflow==1.9.0
 #          - pytest tests
           - pycodestyle --show-source .
 
@@ -24,7 +24,7 @@ pipelines:
         caches:
           - pip
         script:
-          - pip install pycodestyle pytest requests_mock apache-airflow==1.9.0
+          - pip install pycodestyle==2.3.1 pytest requests_mock apache-airflow==1.9.0
 #          - pytest tests
           - pycodestyle --show-source .
     - step:
