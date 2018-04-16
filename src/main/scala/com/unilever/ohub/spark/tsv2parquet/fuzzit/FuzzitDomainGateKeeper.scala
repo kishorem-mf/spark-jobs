@@ -2,6 +2,7 @@ package com.unilever.ohub.spark.tsv2parquet.fuzzit
 
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.tsv2parquet.DomainCsvGateKeeper
+import org.apache.spark.sql.Row
 
 /**
  * Fuzzit data format,

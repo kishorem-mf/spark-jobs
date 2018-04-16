@@ -18,7 +18,7 @@ object DomainGateKeeper {
   }
 }
 
-abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends SparkJob {
+abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] extends SparkJob {
   import DomainGateKeeper._
   import DomainGateKeeper.implicits._
 
@@ -26,13 +26,13 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
 
   protected[tsv2parquet] def partitionByValue: Seq[String]
 
-  protected[tsv2parquet] def toDomainEntity: DomainTransformer ⇒ Row ⇒ DomainType
+  protected[tsv2parquet] def toDomainEntity: DomainTransformer ⇒ RowType ⇒ DomainType
 
   protected[tsv2parquet] def postValidate: DomainDataProvider ⇒ DomainEntity ⇒ Unit = dataProvider ⇒ DomainEntity.postConditions(dataProvider)
 
-  protected def read(spark: SparkSession, storage: Storage, input: String): Dataset[Row]
+  protected def read(spark: SparkSession, storage: Storage, input: String): Dataset[RowType]
 
-  private def transform(transformFn: Row ⇒ DomainType)(postValidateFn: DomainEntity ⇒ Unit): Row ⇒ Either[ErrorMessage, DomainType] =
+  private def transform(transformFn: RowType ⇒ DomainType)(postValidateFn: DomainEntity ⇒ Unit): RowType ⇒ Either[ErrorMessage, DomainType] =
     row ⇒
       try {
         val entity = transformFn(row)

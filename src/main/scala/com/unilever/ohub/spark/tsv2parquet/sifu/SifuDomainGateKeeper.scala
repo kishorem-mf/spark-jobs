@@ -5,13 +5,14 @@ import java.net.{ URI, URL }
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeper
-import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+import io.circe.generic.auto._
+import io.circe.parser._
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
 import scala.io.Source
 import scala.util.{ Failure, Success, Try }
 
-trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T] {
+trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T, SifuProductResponse] {
 
   override protected[tsv2parquet] def partitionByValue: Seq[String] = Seq("countryCode")
 
@@ -43,7 +44,7 @@ trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T] {
     "ar", "en", "ro", "ru", "ar", "en", "sv", "zh", "en", "es", "fi", "nl", "tr", "zh", "sk", "es", "de",
     "en", "es", "th", "nl", "tr", "bg", "da", "de", "en", "es", "fi", "fr", "he", "hu", "id", "it", "ko",
     "nl", "no", "pl", "pt", "ru", "sv", "tr", "zh", "en", "vi", "zh", "af", "en")
-  private val countryLanguageListEmakina = countryListEmakina zip languageListEmakina.toList
+  private val countryLanguageListEmakina = countryListEmakina zip languageListEmakina.toList // todo fix order
 
   private val MAX = 1000000
   private val RANGE = 100
@@ -53,11 +54,10 @@ trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T] {
   override def read(spark: SparkSession, storage: Storage, input: String): Dataset[SifuProductResponse] = {
     import spark.implicits._
 
-    val products = countryLanguageListEmakina
+    val jsons = countryLanguageListEmakina
       .flatMap { case (country, lang) ⇒ getProductsFromApi(country, lang, sifuSelection, RANGE, MAX) }
-    val res = spark
-      .createDataset(products)
-    res
+    spark
+      .createDataset(jsons)
   }
 
   private[sifu] def createSifuURL(

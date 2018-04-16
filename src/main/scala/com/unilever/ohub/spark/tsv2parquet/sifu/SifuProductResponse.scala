@@ -100,4 +100,4 @@ case class SifuProductResponse(
     available: Option[String],
     description: Option[String],
     defaultPackagingType: Option[String]
-)
+) extends Product

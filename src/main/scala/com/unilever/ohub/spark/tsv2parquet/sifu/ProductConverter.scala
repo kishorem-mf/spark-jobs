@@ -11,9 +11,9 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
 
   override protected[sifu] def sifuSelection: String = "products"
 
-  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Product = { transformer ⇒ row ⇒
+  override def toDomainEntity: DomainTransformer ⇒ SifuProductResponse ⇒ Product = { transformer ⇒ row ⇒
     import transformer._
-    implicit val source: Row = row
+
 
       // format: OFF
 
@@ -34,7 +34,7 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
         isActive                        = true,
         isGoldenRecord                  = true,
         ohubId                          = Some(UUID.randomUUID().toString),
-        name                            = mandatory( "name",                 "name"),
+        name                            = "name",
         sourceEntityId                  = sourceEntityId,
         sourceName                      = sourceName,
         ohubCreated                     = ohubCreated,
@@ -61,7 +61,7 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
         categoryLevel11                 = None,
         categoryLevel12                 = None,
         categoryLevel13                 = None,
-        code                            = optional(  "code",        "code"),
+        code                            = None,
         codeType                        = Some("MRDR"),
         consumerUnitLoyaltyPoints       = None,
         consumerUnitPriceInCents        = None,
@@ -74,7 +74,7 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
         distributionUnitLoyaltyPoints   = Option.empty,
         distributionUnitPriceInCents    = Option.empty,
         eanConsumerUnit                 = None,
-        eanDistributionUnit             = optional(  "ean",                  "eanDistributionUnit"),
+        eanDistributionUnit             = None,
         hasConsumerUnit                 = Option.empty,
         hasDistributionUnit             = Option.empty,
         imageId                         = Option.empty,
