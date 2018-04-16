@@ -13,7 +13,6 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
   override def toDomainEntity: DomainTransformer ⇒ SifuProductResponse ⇒ Product = { transformer ⇒ row ⇒
     import transformer._
 
-
       // format: OFF
 
       val sourceName                                    =   "SIFU"
