@@ -5,6 +5,7 @@ from airflow import DAG
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 from airflow.operators.bash_operator import BashOperator
 from custom_operators.folder_to_wasb import FolderToWasbOperator
+from custom_operators.sftp_glob_operator import SFTPGlobOperator
 
 default_args = {
     'owner': 'airflow',
@@ -33,19 +34,19 @@ with DAG('acm_sftp', default_args=default_args,
         task_id='mkdir_acm',
     )
 
-    fetch_order_lines = SFTPOperator(
+    fetch_order_lines = SFTPGlobOperator(
         task_id='fetch_ACM_order_lines_for_date',
         local_filepath=local_filepath + "ORDERLINES.csv",
         remote_filepath=rfp + "UFS_ORDERLINES_" + fds + "*.csv",
         **task_defaults)
 
-    fetch_orders = SFTPOperator(
+    fetch_orders = SFTPGlobOperator(
         task_id='fetch_ACM_orders_for_date',
         local_filepath=local_filepath + "ORDERS.csv",
         remote_filepath=rfp + "UFS_ORDERS_" + fds + "*.csv",
         **task_defaults)
 
-    fetch_products = SFTPOperator(
+    fetch_products = SFTPGlobOperator(
         task_id='fetch_ACM_products_for_date',
         local_filepath=local_filepath + "PRODUCTS.csv",
         remote_filepath=rfp + "UFS_PRODUCTS_" + fds + "*.csv",
