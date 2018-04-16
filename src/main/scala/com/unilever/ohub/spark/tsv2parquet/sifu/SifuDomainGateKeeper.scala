@@ -5,6 +5,8 @@ import java.net.{ URI, URL }
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeper
+import io.circe
+import io.circe.Decoder
 import io.circe.generic.auto._
 import io.circe.parser._
 import org.apache.spark.sql.{ Dataset, SparkSession }
@@ -76,20 +78,26 @@ trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T, SifuPr
 
   protected[sifu] def getResponseBodyString(url: URL): String = Source.fromURL(url).mkString
 
+  protected[sifu] def decodeJsonString[Response: Decoder](body: String): Either[circe.Error, Response] = {
+    decode[Response](body)
+  }
+
   private[sifu] def getProductsFromApi(
     countryCode: String,
     languageKey: String,
     sifuSelection: String,
-    step: Int = 100,
-    maxIterations: Int = 10
+    pageSize: Int = 100,
+    pages: Int = 10
   ): Seq[SifuProductResponse] = {
-    (0 to maxIterations by step).foldLeft(Seq.empty[SifuProductResponse]) {
+    val totalNrOfResults = (pages - 1) * pageSize
+    (0 to totalNrOfResults by pageSize).foldLeft(Seq.empty[SifuProductResponse]) {
       case (acc, i) ⇒
-        val parsed: Seq[SifuProductResponse] = createSifuURL(countryCode, languageKey, sifuSelection, i, i + step) match {
+        val triedUrl = createSifuURL(countryCode, languageKey, sifuSelection, i, i + pageSize)
+        val parsed: Seq[SifuProductResponse] = triedUrl match {
           case Failure(e) ⇒ Seq.empty[SifuProductResponse]
           case Success(url) ⇒
             val body = getResponseBodyString(url)
-            decode[Seq[SifuProductResponse]](body).right.getOrElse(List.empty)
+            decodeJsonString[Seq[SifuProductResponse]](body).right.getOrElse(List.empty)
         }
         acc ++ parsed
     }

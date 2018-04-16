@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import com.unilever.ohub.spark.data.CountryRecord
+import com.unilever.ohub.spark.data.{ CountryRecord, CountrySalesOrg }
 
 case class TestDomainDataProvider(
     countries: Map[String, CountryRecord] = Map(
@@ -12,5 +12,9 @@ case class TestDomainDataProvider(
       "WUFOO" -> 1,
       "EMAKINA" -> 2,
       "FUZZIT" -> 3
+    ),
+    countrySalesOrg: Map[String, CountrySalesOrg] = Map(
+      "1030" -> CountrySalesOrg("NL", Some("1030"))
     )
-) extends DomainDataProvider
+) extends DomainDataProvider {
+}
