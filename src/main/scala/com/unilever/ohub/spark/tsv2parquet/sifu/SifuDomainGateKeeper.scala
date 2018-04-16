@@ -1,14 +1,15 @@
 package com.unilever.ohub.spark.tsv2parquet.sifu
 
-import java.net.{URI, URL}
+import java.net.{ URI, URL }
 
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeper
-import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
 import scala.io.Source
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T] {
 
@@ -47,29 +48,25 @@ trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T] {
   private val MAX = 1000000
   private val RANGE = 100
 
-
   protected[sifu] def sifuSelection: String
 
-
-  override def read(spark: SparkSession, storage: Storage, input: String): Dataset[Row] = {
+  override def read(spark: SparkSession, storage: Storage, input: String): Dataset[SifuProductResponse] = {
     import spark.implicits._
 
-    val jsonStrings = countryLanguageListEmakina
-      .map { case (country, lang) ⇒ getConcatenatedJsonString(country, lang, sifuSelection, RANGE, MAX) }
-      .filter(_.nonEmpty)
-    spark.sparkContext.parallelize(jsonStrings)
-      .toDS()
-      .as[Row]
+    val products = countryLanguageListEmakina
+      .flatMap { case (country, lang) ⇒ getProductsFromApi(country, lang, sifuSelection, RANGE, MAX) }
+    val res = spark
+      .createDataset(products)
+    res
   }
 
-
-  def createSifuURL(
-                     countryCode: String,
-                     languageKey: String,
-                     sifuSelection: String,
-                     startIndex: Int,
-                     endIndex: Int
-                   ): Try[URL] = Try {
+  private[sifu] def createSifuURL(
+    countryCode: String,
+    languageKey: String,
+    sifuSelection: String,
+    startIndex: Int,
+    endIndex: Int
+  ): Try[URL] = Try {
     val baseUri = new URI("https://sifu.unileversolutions.com:443")
     val typeParam = sifuSelection.toUpperCase().substring(0, sifuSelection.length - 1)
     baseUri
@@ -77,30 +74,24 @@ trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T] {
       .toURL
   }
 
-  def getResponseBodyString(url: URL): String = Source.fromURL(url).mkString
+  protected[sifu] def getResponseBodyString(url: URL): String = Source.fromURL(url).mkString
 
-  def getConcatenatedJsonString(
-                                 countryCode: String,
-                                 languageKey: String,
-                                 sifuSelection: String,
-                                 range: Int,
-                                 maxIterations: Int
-                               ): String = {
-    def inner(index: Int, accumulatingBody: String = ""): String = {
-      if (index >= maxIterations) accumulatingBody
-      else {
-        createSifuURL(countryCode, languageKey, sifuSelection, index, index + range) match {
-          case Failure(e) ⇒
-            log.error("Failed to create SIFU URL", e); ""
+  private[sifu] def getProductsFromApi(
+    countryCode: String,
+    languageKey: String,
+    sifuSelection: String,
+    step: Int = 100,
+    maxIterations: Int = 10
+  ): Seq[SifuProductResponse] = {
+    (0 to maxIterations by step).foldLeft(Seq.empty[SifuProductResponse]) {
+      case (acc, i) ⇒
+        val parsed: Seq[SifuProductResponse] = createSifuURL(countryCode, languageKey, sifuSelection, i, i + step) match {
+          case Failure(e) ⇒ Seq.empty[SifuProductResponse]
           case Success(url) ⇒
             val body = getResponseBodyString(url)
-
-            if (body.nonEmpty) inner(index + range, accumulatingBody + body)
-            else accumulatingBody
+            decode[Seq[SifuProductResponse]](body).right.getOrElse(List.empty)
         }
-      }
+        acc ++ parsed
     }
-
-    inner(0)
   }
 }

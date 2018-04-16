@@ -4,21 +4,22 @@ import java.util.UUID
 
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity.Product
-import com.unilever.ohub.spark.tsv2parquet.{DomainGateKeeper, DomainTransformer}
+import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
 import org.apache.spark.sql.Row
 
 object ProductConverter extends SifuDomainGateKeeper[Product] {
 
-  override def toDomainEntity: (Row, DomainTransformer) ⇒ Product = {
-    (row, transformer) ⇒
-      import transformer._
-      implicit val source: Row = row
+  override protected[sifu] def sifuSelection: String = "products"
+
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Product = { transformer ⇒ row ⇒
+    import transformer._
+    implicit val source: Row = row
 
       // format: OFF
 
       val sourceName                                    =   "SIFU"
-      val countryCode                                   =   originalValue(SALES_ORG)(row).get // postgres
-      val sourceEntityId                                =   originalValue(MAT_UID)(row).get
+      val countryCode                                   =   "foo"
+      val sourceEntityId                                =   "foo"
       val productId                                     =   UUID.randomUUID().toString
       val concatId                                      =   DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
       val ohubCreated                                   =   currentTimestamp()
@@ -33,7 +34,7 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
         isActive                        = true,
         isGoldenRecord                  = true,
         ohubId                          = Some(UUID.randomUUID().toString),
-        name                            = mandatory( NAME_1,                 "name"),
+        name                            = mandatory( "name",                 "name"),
         sourceEntityId                  = sourceEntityId,
         sourceName                      = sourceName,
         ohubCreated                     = ohubCreated,
@@ -60,7 +61,7 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
         categoryLevel11                 = None,
         categoryLevel12                 = None,
         categoryLevel13                 = None,
-        code                            = optional(  PRODUCT_MRDR,        "code"),
+        code                            = optional(  "code",        "code"),
         codeType                        = Some("MRDR"),
         consumerUnitLoyaltyPoints       = None,
         consumerUnitPriceInCents        = None,
@@ -73,7 +74,7 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
         distributionUnitLoyaltyPoints   = Option.empty,
         distributionUnitPriceInCents    = Option.empty,
         eanConsumerUnit                 = None,
-        eanDistributionUnit             = optional(  EAN,                  "eanDistributionUnit"),
+        eanDistributionUnit             = optional(  "ean",                  "eanDistributionUnit"),
         hasConsumerUnit                 = Option.empty,
         hasDistributionUnit             = Option.empty,
         imageId                         = Option.empty,
@@ -116,4 +117,5 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
       )
     // format: ON
   }
+
 }

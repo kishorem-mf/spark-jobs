@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import com.unilever.ohub.spark.data.{CountryRecord, CountrySalesOrg}
+import com.unilever.ohub.spark.data.{ CountryRecord, CountrySalesOrg }
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.SparkSession
 
@@ -26,7 +26,8 @@ object DomainDataProvider {
   }
 }
 
-case class InMemDomainDataProvider(countries: Map[String, CountryRecord],
-                                   countrySalesOrg: Map[String, CountrySalesOrg],
-                                   sourcePreferences: Map[String, Int])
+case class InMemDomainDataProvider(
+    countries: Map[String, CountryRecord],
+    countrySalesOrg: Map[String, CountrySalesOrg],
+    sourcePreferences: Map[String, Int])
   extends DomainDataProvider with Serializable

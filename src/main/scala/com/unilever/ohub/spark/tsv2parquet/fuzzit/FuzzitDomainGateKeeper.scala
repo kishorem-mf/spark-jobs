@@ -22,5 +22,5 @@ import com.unilever.ohub.spark.tsv2parquet.DomainCsvGateKeeper
 trait FuzzitDomainGateKeeper[T <: DomainEntity] extends DomainCsvGateKeeper[T] {
   override final val fieldSeparator: String = ";"
   override final val hasHeaders = false
-  override final val partitionByValue = "countryCode"
+  override final val partitionByValue = Seq("countryCode")
 }

@@ -2,10 +2,9 @@ package com.unilever.ohub.spark.tsv2parquet
 
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import org.apache.spark.sql.{ Dataset, Row, SparkSession }
 
 import scala.reflect.runtime.universe._
-
 
 abstract class DomainCsvGateKeeper[DomainType <: DomainEntity: TypeTag] extends DomainGateKeeper {
 
@@ -13,8 +12,7 @@ abstract class DomainCsvGateKeeper[DomainType <: DomainEntity: TypeTag] extends 
 
   protected[tsv2parquet] def hasHeaders: Boolean
 
-
-  override protected[t2v2parquet] def read(spark: SparkSession, storage: Storage, input: String): Dataset[Row] = {
+  override protected def read(spark: SparkSession, storage: Storage, input: String): Dataset[Row] = {
     storage
       .readFromCsv(
         location = input,

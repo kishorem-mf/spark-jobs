@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.tsv2parquet.sifu
 import java.util.UUID
 
 import com.unilever.ohub.spark.domain.DomainEntity
-import com.unilever.ohub.spark.domain.entity.{Product, Recipe}
+import com.unilever.ohub.spark.domain.entity.{ Product, Recipe }
 import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
 import org.apache.spark.sql.Row
 
@@ -11,10 +11,9 @@ object RecipesConverter extends SifuDomainGateKeeper[Recipe] {
 
   override protected[sifu] def sifuSelection: String = "recipes"
 
-  override def toDomainEntity: (Row, DomainTransformer) ⇒ Recipe = {
-    (row, transformer) ⇒
-      import transformer._
-      implicit val source: Row = row
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Recipe = { transformer ⇒ row ⇒
+    import transformer._
+    implicit val source: Row = row
 
       // format: OFF
 
@@ -25,7 +24,7 @@ object RecipesConverter extends SifuDomainGateKeeper[Recipe] {
       val concatId                                      =   DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
       val ohubCreated                                   =   currentTimestamp()
 
-      Recipe(
+     Recipe(
         // fieldName                  mandatory   sourceFieldName           targetFieldName                 transformationFunction (unsafe)
         concatId                        = concatId,
         countryCode                     = countryCode,

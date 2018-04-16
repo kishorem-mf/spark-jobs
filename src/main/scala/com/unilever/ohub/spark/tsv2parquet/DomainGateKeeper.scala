@@ -30,7 +30,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
 
   protected[tsv2parquet] def postValidate: DomainDataProvider ⇒ DomainEntity ⇒ Unit = dataProvider ⇒ DomainEntity.postConditions(dataProvider)
 
-  protected[t2v2parquet] def read(spark: SparkSession, storage: Storage, input: String): Dataset[Row]
+  protected def read(spark: SparkSession, storage: Storage, input: String): Dataset[Row]
 
   private def transform(transformFn: Row ⇒ DomainType)(postValidateFn: DomainEntity ⇒ Unit): Row ⇒ Either[ErrorMessage, DomainType] =
     row ⇒
@@ -53,7 +53,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
     val (input: String, outputFile: String) = filePaths
     val transformer = DomainTransformer(dataProvider)
 
-    val result = read(storage, input)
+    val result = read(spark, storage, input)
       .map(transform(toDomainEntity(transformer))(postValidate(dataProvider)))
       .distinct()
       // persist the result here (result is evaluated multiple times, since spark transformations are lazy)

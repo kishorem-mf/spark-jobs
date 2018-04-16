@@ -24,12 +24,11 @@ object ProductConverter extends FuzzitDomainGateKeeper[Product] {
   val CON_FAC_EXT = "ConFacExt"
   val IGNORE = "Ignore"
 
-  override def toDomainEntity: (Row, DomainTransformer) ⇒ Product = {
-    (row, transformer) ⇒
-      import transformer._
-      implicit val source: Row = row
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Product = { transformer ⇒ row ⇒
+    import transformer._
+    implicit val source: Row = row
 
-      useHeaders(fuzzitHeaders)
+    useHeaders(fuzzitHeaders)
 
       // format: OFF
 

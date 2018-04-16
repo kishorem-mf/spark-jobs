@@ -2,27 +2,28 @@ package com.unilever.ohub.spark.storage
 
 import java.util.Properties
 
-import com.unilever.ohub.spark.data.{ChannelMapping, CountryRecord, CountrySalesOrg}
+import com.unilever.ohub.spark.data.{ ChannelMapping, CountryRecord, CountrySalesOrg }
 import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.{Column, DataFrame, Dataset, Encoder, Row, SaveMode, SparkSession}
-import java.io.{File, FileOutputStream}
+import org.apache.spark.sql.{ Column, DataFrame, Dataset, Encoder, Row, SaveMode, SparkSession }
+import java.io.{ File, FileOutputStream }
 
 import scala.io.Source
 
 trait Storage {
   def readFromCsv(
-                   location: String,
-                   fieldSeparator: String,
-                   hasHeaders: Boolean = true
-                 ): Dataset[Row]
+    location: String,
+    fieldSeparator: String,
+    hasHeaders: Boolean = true
+  ): Dataset[Row]
 
-  def writeToCsv(ds: Dataset[_],
-                 outputFile: String,
-                 partitionBy: Seq[String] = Seq(),
-                 delim: String = ";",
-                 quote: String = "\""
-                ): Unit
+  def writeToCsv(
+    ds: Dataset[_],
+    outputFile: String,
+    partitionBy: Seq[String] = Seq(),
+    delim: String = ";",
+    quote: String = "\""
+  ): Unit
 
   def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
 
@@ -35,10 +36,10 @@ trait Storage {
   def sourcePreference: Map[String, Int]
 
   def channelMappings(
-                       dbUrl: String,
-                       dbName: String,
-                       userName: String,
-                       userPassword: String): Dataset[ChannelMapping]
+    dbUrl: String,
+    dbName: String,
+    userName: String,
+    userPassword: String): Dataset[ChannelMapping]
 }
 
 class DefaultStorage(spark: SparkSession) extends Storage {
@@ -46,10 +47,10 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   import spark.implicits._
 
   override def readFromCsv(
-                            location: String,
-                            fieldSeparator: String,
-                            hasHeaders: Boolean = true
-                          ): Dataset[Row] = {
+    location: String,
+    fieldSeparator: String,
+    hasHeaders: Boolean = true
+  ): Dataset[Row] = {
     spark
       .read
       .option("header", hasHeaders)
@@ -60,12 +61,12 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   }
 
   def writeToCsv(
-                  ds: Dataset[_],
-                  outputFile: String,
-                  partitionBy: Seq[String] = Seq(),
-                  delim: String = ";",
-                  quote: String = "\""
-                ): Unit = {
+    ds: Dataset[_],
+    outputFile: String,
+    partitionBy: Seq[String] = Seq(),
+    delim: String = ";",
+    quote: String = "\""
+  ): Unit = {
     ds
       .coalesce(1)
       .write
@@ -135,7 +136,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .as[CountrySalesOrg]
       .collect()
       .filter(_.salesOrg.nonEmpty)
-      .map(c => c.salesOrg.get -> c)
+      .map(c ⇒ c.salesOrg.get -> c)
       .toMap
   }
 
@@ -152,13 +153,13 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   }
 
   private def readJdbcTable(
-                             spark: SparkSession,
-                             dbUrl: String,
-                             dbName: String,
-                             dbTable: String,
-                             userName: String,
-                             userPassword: String
-                           ): DataFrame = {
+    spark: SparkSession,
+    dbUrl: String,
+    dbName: String,
+    dbTable: String,
+    userName: String,
+    userPassword: String
+  ): DataFrame = {
     val dbFullConnectionString = s"jdbc::postgresql://$dbUrl:5432/$dbName"
 
     val jdbcProperties = new Properties
@@ -169,10 +170,10 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   }
 
   override def channelMappings(
-                                dbUrl: String,
-                                dbName: String,
-                                userName: String,
-                                userPassword: String): Dataset[ChannelMapping] = {
+    dbUrl: String,
+    dbName: String,
+    userName: String,
+    userPassword: String): Dataset[ChannelMapping] = {
 
     val channelMappingDF = readJdbcTable(spark, dbUrl, dbName, "channel_mapping", userName, userPassword)
     val channelReferencesDF = readJdbcTable(spark, dbUrl, dbName, "channel_references", userName, userPassword)

@@ -5,7 +5,6 @@ import java.sql.Timestamp
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 
-
 object Recipe {
   val customerType = "recipe"
 }
