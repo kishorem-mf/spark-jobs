@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import com.unilever.ohub.spark.data.CountryRecord
+import com.unilever.ohub.spark.data.{CountryRecord, CountrySalesOrg}
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.SparkSession
 
@@ -8,7 +8,10 @@ trait DomainDataProvider {
 
   def countries: Map[String, CountryRecord]
 
+  def countrySalesOrg: Map[String, CountrySalesOrg]
+
   def sourcePreferences: Map[String, Int]
+
 }
 
 object DomainDataProvider {
@@ -17,9 +20,13 @@ object DomainDataProvider {
 
     InMemDomainDataProvider(
       countries = storage.createCountries.map(c ⇒ c.countryCode -> c).collect().toMap,
+      countrySalesOrg = storage.createCountriesSalesOrgMapping,
       sourcePreferences = storage.sourcePreference
     )
   }
 }
 
-case class InMemDomainDataProvider(countries: Map[String, CountryRecord], sourcePreferences: Map[String, Int]) extends DomainDataProvider with Serializable
+case class InMemDomainDataProvider(countries: Map[String, CountryRecord],
+                                   countrySalesOrg: Map[String, CountrySalesOrg],
+                                   sourcePreferences: Map[String, Int])
+  extends DomainDataProvider with Serializable

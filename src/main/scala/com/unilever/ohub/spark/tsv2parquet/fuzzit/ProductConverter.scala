@@ -34,7 +34,8 @@ object ProductConverter extends FuzzitDomainGateKeeper[Product] {
       // format: OFF
 
       val sourceName                                    =   "FUZZIT"
-      val countryCode                                   =   originalValue(SALES_ORG)(row).get // postgres
+      val salesOrg                                      =   originalValue(SALES_ORG)(row).get
+      val countryCode                                   =   transformer.dataProvider.countrySalesOrg(salesOrg).countryCode
       val sourceEntityId                                =   originalValue(MAT_UID)(row).get
       val productId                                     =   UUID.randomUUID().toString
       val concatId                                      =   DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
