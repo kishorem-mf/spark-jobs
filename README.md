@@ -36,4 +36,4 @@ kubectl port-forward [podname] [localport]:8080
 ```
 
 In this example `[podname]` is `airflow-webserver-799c7bd695-mbgk8`
-- Acces the UI in the browser at [http://localhost:[localport]](http://localhost:[localport])
+- Access the UI in the browser at [http://localhost:[localport]](http://localhost:[localport])
