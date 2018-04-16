@@ -1,13 +1,13 @@
-# Airflow DAGs
+# AirFlow DAGs
 
-This repository holds the Airflow dags for OHUB2.0 and O-Universe.
+This repository holds the AirFlow dags for OHUB2.0 and O-Universe.
 
-To start writing a DAG for Airflow have a look at the existing DAGs or the [Airflow tutorial](https://airflow.apache.org/tutorial.html).
+To start writing a DAG for AirFlow have a look at the existing DAGs or the [AirFlow tutorial](https://airflow.apache.org/tutorial.html).
 
 ## Deployment
-Every merge to `master` automatically deploys all dags to a file share in Azure (storage account: `ulohub2sadevne`, fileshare: `airflow-dags`. This fileshare is mounted as volume in the Airflow kubernetes deployment. Every change on this fileshare is therefore directly picked up by Airflow. Thus the DAGs are refreshed.
+Every merge to `master` automatically deploys all dags to a file share in Azure (storage account: `ulohub2sadevne`, fileshare: `airflow-dags`. This fileshare is mounted as volume in the AirFlow kubernetes deployment. Every change on this fileshare is therefore directly picked up by AirFlow. Thus the DAGs are refreshed.
 
-Note: Files deleted in Git are NOT deleted on the fileshare. If DAGs are removed from the master branch they have to be manually removed from the fileshare. Also: removed DAGs will still show up in the Airflow UI since they are not removed from the Airflow metadata database. You have to manually do this if you want to.
+Note: Files deleted in Git are NOT deleted on the fileshare. If DAGs are removed from the master branch they have to be manually removed from the fileshare. Also: removed DAGs will still show up in the AirFlow UI since they are not removed from the AirFlow metadata database. You have to manually do this if you want to.
 
 
 ## Viewing the UI
@@ -24,12 +24,12 @@ az aks get-credentials -g bieno-da-s-60072-containers-rg -n ul-ohub2-aks-dev-we
 
 All these steps have to be done (unless you logout) only once. Next:
 
-- Find the kubernetes podname for Airflow with: `kubectl get pod`. Should look something like:
+- Find the kubernetes podname for AirFlow with: `kubectl get pod`. Should look something like:
 ```
 NAME                                 READY     STATUS    RESTARTS   AGE
 airflow-webserver-799c7bd695-mbgk8   3/3       Running   0          5d
 ```
-- Forward the Airflow port to your localhost with 
+- Forward the AirFlow port to your localhost with 
 
 ```
 kubectl port-forward [podname] [localport]:8080
