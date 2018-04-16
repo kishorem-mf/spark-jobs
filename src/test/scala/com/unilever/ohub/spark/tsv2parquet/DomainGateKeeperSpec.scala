@@ -13,7 +13,7 @@ object DomainGateKeeperSpec {
 trait DomainGateKeeperSpec[DomainType <: DomainEntity] extends SparkJobSpec {
   import DomainGateKeeperSpec._
 
-  private[tsv2parquet] val SUT: DomainGateKeeper[DomainType]
+  private[tsv2parquet] val SUT: DomainCsvGateKeeper[DomainType]
   private[tsv2parquet] val outputFile = ""
 
   def testDataProvider(): DomainDataProvider = TestDomainDataProvider()

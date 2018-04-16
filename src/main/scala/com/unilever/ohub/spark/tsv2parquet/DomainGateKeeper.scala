@@ -22,7 +22,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
   import DomainGateKeeper._
   import DomainGateKeeper.implicits._
 
-  override final val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
+  override final val neededFilePaths = Array("INPUT", "OUTPUT_FILE")
 
   protected[tsv2parquet] def fieldSeparator: String
 
@@ -33,6 +33,8 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
   protected[tsv2parquet] def toDomainEntity: DomainTransformer ⇒ Row ⇒ DomainType
 
   protected[tsv2parquet] def postValidate: DomainDataProvider ⇒ DomainEntity ⇒ Unit = dataProvider ⇒ DomainEntity.postConditions(dataProvider)
+
+  protected[t2v2parquet] def read(storage: Storage, input: String): Dataset[Row]
 
   private def transform(transformFn: Row ⇒ DomainType)(postValidateFn: DomainEntity ⇒ Unit): Row ⇒ Either[ErrorMessage, DomainType] =
     row ⇒
@@ -52,15 +54,10 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
   protected[tsv2parquet] def run(spark: SparkSession, filePaths: Product, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     import spark.implicits._
 
-    val (inputFile: String, outputFile: String) = filePaths
+    val (input: String, outputFile: String) = filePaths
     val transformer = DomainTransformer(dataProvider)
 
-    val result = storage
-      .readFromCsv(
-        location = inputFile,
-        fieldSeparator = fieldSeparator,
-        hasHeaders = hasHeaders
-      )
+    val result = read(storage, input)
       .map(transform(toDomainEntity(transformer))(postValidate(dataProvider)))
       .distinct()
       // persist the result here (result is evaluated multiple times, since spark transformations are lazy)
