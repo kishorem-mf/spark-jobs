@@ -4,6 +4,7 @@ import os
 from airflow import DAG
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 from airflow.operators.bash_operator import BashOperator
+from custom_operators.folder_to_wasb import FolderToWasbOperator
 
 default_args = {
     'owner': 'airflow',
@@ -21,7 +22,6 @@ local_filepath = "/tmp/acm/{{ds}}/"
 
 task_defaults = {
     'ssh_conn_id': 'acm_sftp_ssh',
-    # 'remote_host': 'unilever-z8i53y',
     'operation': SFTPOperation.GET
 }
 
