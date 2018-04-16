@@ -14,13 +14,14 @@ object ContactPersonConverter extends FileDomainGateKeeper[ContactPerson] {
 
     val countryCode: String = originalValue("COUNTRY_CODE")(row).get
     val concatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_CONTACT_PERSON_ID")
+    val operatorConcatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_OPERATOR_ID")
     val ohubCreated = currentTimestamp()
 
       // format: OFF
 
       // fieldName                        mandatory   sourceFieldName                   targetFieldName                 transformationFunction (unsafe)
       ContactPerson(
-        concatId                      =   concatId                                                                                                          ,
+        concatId                      = concatId                                                                                                            ,
         countryCode                   =   mandatory(  "COUNTRY_CODE",                   "countryCode"                                                      ),
         customerType                  = ContactPerson.customerType                                                                                          ,
         ohubCreated                   = ohubCreated                                                                                                         ,
@@ -33,6 +34,7 @@ object ContactPersonConverter extends FileDomainGateKeeper[ContactPerson] {
         dateCreated                   =   optional(   "DATE_CREATED",                   "dateCreated",                  parseDateTimeStampUnsafe           ),
         dateUpdated                   =   optional(   "DATE_MODIFIED",                  "dateUpdated",                  parseDateTimeStampUnsafe           ),
         name                          = "TODO"                                                                                                              , // TODO is name a field in domain entity? should it be optional? what's the value for contact person?
+        operatorConcatId              = operatorConcatId                                                                                                    ,
         oldIntegrationId              =   optional(   "CP_INTEGRATION_ID",              "oldIntegrationId"                                                 ),
         firstName                     =   optional(   "FIRST_NAME",                     "firstName"                                                        ),
         lastName                      =   optional(   "LAST_NAME",                      "lastName"                                                         ),

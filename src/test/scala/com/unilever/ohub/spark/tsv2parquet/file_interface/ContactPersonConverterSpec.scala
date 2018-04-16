@@ -32,6 +32,7 @@ class ContactPersonConverterSpec extends DomainGateKeeperSpec[ContactPerson] {
             sourceName = "WUFOO",
             ohubCreated = actualContactPerson.ohubCreated,
             ohubUpdated = actualContactPerson.ohubUpdated,
+            operatorConcatId = "AU~WUFOO~E1-1234",
             oldIntegrationId = Some("G1234"),
             firstName = Some("John"),
             lastName = Some("Williams"),
