@@ -1,16 +1,18 @@
-package com.unilever.ohub.spark.recommendation
+package com.unilever.ohub.spark.tsv2parquet.sifu
 
-import java.net.{ URI, URL }
+import java.net.{URI, URL}
 
-import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeper
+import org.apache.spark.sql.{Dataset, Row, SparkSession}
 
 import scala.io.Source
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
-object SifuConverter extends SparkJob {
-  private case class SifuSelection(infoType: String)
+trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T] {
+
+  override protected[tsv2parquet] def partitionByValue: Seq[String] = Seq("countryCode")
 
   private val countryListEmakina = Array("AE", "AE", "AF", "AF", "AR", "AR", "AT", "AT", "AT", "AT", "AU", "AU",
     "AU", "AU", "AU", "AU", "AU", "AU", "AU", "AZ", "AZ", "BE", "BE", "BG", "BH", "BH", "BR", "BR", "CA",
@@ -41,34 +43,49 @@ object SifuConverter extends SparkJob {
     "en", "es", "th", "nl", "tr", "bg", "da", "de", "en", "es", "fi", "fr", "he", "hu", "id", "it", "ko",
     "nl", "no", "pl", "pt", "ru", "sv", "tr", "zh", "en", "vi", "zh", "af", "en")
   private val countryLanguageListEmakina = countryListEmakina zip languageListEmakina.toList
-  private val PRODUCTS: SifuSelection = SifuSelection("products")
-  private val RECIPES: SifuSelection = SifuSelection("recipes")
+
   private val MAX = 1000000
   private val RANGE = 100
 
+
+  protected[sifu] def sifuSelection: String
+
+
+  override def read(spark: SparkSession, storage: Storage, input: String): Dataset[Row] = {
+    import spark.implicits._
+
+    val jsonStrings = countryLanguageListEmakina
+      .map { case (country, lang) ⇒ getConcatenatedJsonString(country, lang, sifuSelection, RANGE, MAX) }
+      .filter(_.nonEmpty)
+    spark.sparkContext.parallelize(jsonStrings)
+      .toDS()
+      .as[Row]
+  }
+
+
   def createSifuURL(
-    countryCode: String,
-    languageKey: String,
-    sifuSelection: SifuSelection,
-    startIndex: Int,
-    endIndex: Int
-  ): Try[URL] = Try {
+                     countryCode: String,
+                     languageKey: String,
+                     sifuSelection: String,
+                     startIndex: Int,
+                     endIndex: Int
+                   ): Try[URL] = Try {
     val baseUri = new URI("https://sifu.unileversolutions.com:443")
-    val typeParam = sifuSelection.infoType.toUpperCase().substring(0, sifuSelection.infoType.length - 1)
+    val typeParam = sifuSelection.toUpperCase().substring(0, sifuSelection.length - 1)
     baseUri
-      .resolve(s"/${sifuSelection.infoType}/$countryCode/$languageKey/$startIndex/$endIndex?type=$typeParam")
+      .resolve(s"/$sifuSelection/$countryCode/$languageKey/$startIndex/$endIndex?type=$typeParam")
       .toURL
   }
 
   def getResponseBodyString(url: URL): String = Source.fromURL(url).mkString
 
   def getConcatenatedJsonString(
-    countryCode: String,
-    languageKey: String,
-    sifuSelection: SifuSelection,
-    range: Int,
-    maxIterations: Int
-  ): String = {
+                                 countryCode: String,
+                                 languageKey: String,
+                                 sifuSelection: String,
+                                 range: Int,
+                                 maxIterations: Int
+                               ): String = {
     def inner(index: Int, accumulatingBody: String = ""): String = {
       if (index >= maxIterations) accumulatingBody
       else {
@@ -78,51 +95,12 @@ object SifuConverter extends SparkJob {
           case Success(url) ⇒
             val body = getResponseBodyString(url)
 
-            if (body.nonEmpty) inner(index + 1, accumulatingBody + body)
+            if (body.nonEmpty) inner(index + range, accumulatingBody + body)
             else accumulatingBody
         }
       }
     }
 
     inner(0)
-  }
-
-  def transform(spark: SparkSession, jsonStrings: Array[String]): Dataset[String] = {
-    import spark.implicits._
-    spark.sparkContext.parallelize(jsonStrings).toDS()
-  }
-
-  override val neededFilePaths = Array("PRODUCTS_FILE", "RECIPES_FILE")
-
-  override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
-    val (productsFile: String, recipesFile: String) = filePaths
-
-    log.info(s"Generating SIFU_PRODUCTS parquet [$productsFile] and SIFU_RECIPES parquet [$recipesFile]")
-
-    val productsJsonStrings = countryLanguageListEmakina
-      .map { case (country, lang) ⇒ getConcatenatedJsonString(country, lang, PRODUCTS, RANGE, MAX) }
-      .filter(_.nonEmpty)
-
-    val recipesJsonStrings = countryLanguageListEmakina
-      .map { case (country, lang) ⇒ getConcatenatedJsonString(country, lang, RECIPES, RANGE, MAX) }
-      .filter(_.nonEmpty)
-
-    productsJsonStrings.exists(_.nonEmpty) -> recipesJsonStrings.exists(_.nonEmpty) match {
-      case (true, true) ⇒ log.info("Products and recipes found")
-      case (true, _)    ⇒ log.warn("Products found, recipes not found")
-      case (_, false)   ⇒ log.warn("Recipes found, products not found")
-      case _ ⇒
-        log.error("No products or recipes found, terminating...")
-        sys.exit(1)
-    }
-
-    val products = transform(spark, productsJsonStrings)
-    val recipes = transform(spark, recipesJsonStrings)
-
-    //  TODO create selection "queries" based on raw parquet needed for REC-O
-    storage
-      .writeToParquet(products, productsFile)
-    storage
-      .writeToParquet(recipes, recipesFile)
   }
 }

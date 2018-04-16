@@ -7,6 +7,7 @@ version := "0.2.0"
 scalaVersion := "2.11.12"
 
 val sparkVersion = "2.3.0"
+val circeVersion = "0.9.3"
 val sparkDependencyType = sys.props.getOrElse("sparkDependencyType", "compile")
 lazy val depType = taskKey[Unit]("print sparkDependencyType")
 
@@ -24,6 +25,9 @@ libraryDependencies ++= Seq(
   "org.apache.spark"    %% "spark-mllib"    % sparkVersion  % sparkDependencyType,
   "org.postgresql"      %  "postgresql"     % "42.1.4",
   "org.apache.commons"  %  "commons-lang3"  % "3.7",
+  "io.circe"            %% "circe-core"     % circeVersion,
+  "io.circe"            %% "circe-generic"  % circeVersion,
+  "io.circe"            %% "circe-parser"   % circeVersion,
   "org.scalatest"       %% "scalatest"      % "3.0.5"       % "test,it",
   "org.scalamock"       %% "scalamock"      % "4.1.0"       % "test,it"
 )

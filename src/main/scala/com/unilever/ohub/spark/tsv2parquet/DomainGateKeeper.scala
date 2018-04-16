@@ -24,17 +24,13 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
 
   override final val neededFilePaths = Array("INPUT", "OUTPUT_FILE")
 
-  protected[tsv2parquet] def fieldSeparator: String
-
-  protected[tsv2parquet] def hasHeaders: Boolean
-
   protected[tsv2parquet] def partitionByValue: Seq[String]
 
   protected[tsv2parquet] def toDomainEntity: DomainTransformer ⇒ Row ⇒ DomainType
 
   protected[tsv2parquet] def postValidate: DomainDataProvider ⇒ DomainEntity ⇒ Unit = dataProvider ⇒ DomainEntity.postConditions(dataProvider)
 
-  protected[t2v2parquet] def read(storage: Storage, input: String): Dataset[Row]
+  protected[t2v2parquet] def read(spark: SparkSession, storage: Storage, input: String): Dataset[Row]
 
   private def transform(transformFn: Row ⇒ DomainType)(postValidateFn: DomainEntity ⇒ Unit): Row ⇒ Either[ErrorMessage, DomainType] =
     row ⇒
