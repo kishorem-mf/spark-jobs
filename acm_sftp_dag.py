@@ -25,7 +25,7 @@ task_defaults = {
     'operation': SFTPOperation.GET
 }
 
-with DAG('acm_sftp_dag', default_args=default_args,
+with DAG('acm_sftp', default_args=default_args,
          schedule_interval="@once") as dag:
 
     mkdir = BashOperator(

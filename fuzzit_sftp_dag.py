@@ -24,7 +24,7 @@ templated_local_filepath = "/tmp/fuzzit/{{ds}}/UFS_Fuzzit_OHUB20_1400.zip"
 templated_path_to_unzip_contents = '/tmp/fuzzit/{{ds}}/csv/'
 wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'
 
-with DAG('fuzzit_sftp_dag', default_args=default_args,
+with DAG('fuzzit_sftp', default_args=default_args,
          schedule_interval="@once") as dag:
 
     mkdir = BashOperator(
