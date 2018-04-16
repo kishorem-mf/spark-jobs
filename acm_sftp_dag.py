@@ -21,7 +21,7 @@ local_filepath = "/tmp/acm/{{ds}}/"
 
 task_defaults = {
     'ssh_conn_id': 'acm_sftp_ssh',
-    'remote_host': 'unilever-z8i53y',
+    # 'remote_host': 'unilever-z8i53y',
     'operation': SFTPOperation.GET
 }
 
