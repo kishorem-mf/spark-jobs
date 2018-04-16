@@ -5,7 +5,7 @@ This repository holds the airflow dags for OHUB2.0 and O-Universe.
 To start writing a DAG for airflow have a look at the existing DAGs or the [airflow tutorial](https://airflow.apache.org/tutorial.html).
 
 ## Deployment
-Every merge to `master` automatically deploys all dags to a file share in Azure (storage account: `ulohub2sadevne`, fileshare: `airflow-dags`. This fileshare is mounted as volume in the airflow kuberneter deployment. Every change on this fileshare is therefor directly picked up by airflow. Thus the DAGs are refreshed.
+Every merge to `master` automatically deploys all dags to a file share in Azure (storage account: `ulohub2sadevne`, fileshare: `airflow-dags`. This fileshare is mounted as volume in the airflow kubernetes deployment. Every change on this fileshare is therefor directly picked up by airflow. Thus the DAGs are refreshed.
 
 Note: Files deleted in GIT are NOT deleted on the fileshare. If DAGs are removed from the master branch they have to be manually removed from the fileshare. Also: removed DAGs will still show up in the airflow UI since they are not removed from the airflow metadata database. You have to manually do this if you want to.
 
