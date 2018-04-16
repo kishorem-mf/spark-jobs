@@ -159,7 +159,7 @@ class LocalGAToWasbOperator(BaseOperator):
                  blob_path,
                  date,
                  country_codes,
-                 wasb_conn_id='wasb_default',
+                 wasb_conn_id='azure_blob',
                  load_options=None,
                  *args,
                  **kwargs):

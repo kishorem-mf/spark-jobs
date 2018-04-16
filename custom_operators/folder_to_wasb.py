@@ -25,7 +25,7 @@ class FolderToWasbOperator(BaseOperator):
 
     @apply_defaults
     def __init__(self, folder_path, container_name, blob_name,
-                 wasb_conn_id='wasb_default', load_options=None, *args,
+                 wasb_conn_id='azure_blob', load_options=None, *args,
                  **kwargs):
         super(FolderToWasbOperator, self).__init__(*args, **kwargs)
         if load_options is None:
