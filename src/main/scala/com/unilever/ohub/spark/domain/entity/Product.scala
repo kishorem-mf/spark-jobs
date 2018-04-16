@@ -11,19 +11,19 @@ object Product {
 
 case class Product(
     // generic fields
-    concatId: String, // concatenation of: countryCode ~ sourceName ~ sourceEntityId (entity identifier)
-    countryCode: String, // TODO Existing country code in OHUB using: Iso 3166-1 alpha 2
+    concatId: String,
+    countryCode: String,
     customerType: String,
     dateCreated: Option[Timestamp],
     dateUpdated: Option[Timestamp],
     isActive: Boolean,
-    isGoldenRecord: Boolean, // does this make sense here / in DomainEntity?
+    isGoldenRecord: Boolean,
     ohubId: Option[String],
     name: String,
     sourceEntityId: String,
     sourceName: String,
     ohubCreated: Timestamp,
-    ohubUpdated: Timestamp, // currently always created timestamp (how/when will it get an updated timestamp?)
+    ohubUpdated: Timestamp,
     // specific fields
     additives: List[String],
     allergens: List[String],
@@ -100,4 +100,5 @@ case class Product(
     additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]
 ) extends DomainEntity {
+  // TODO refine...what's the minimal amount of constraints needed before a product should be accepted
 }

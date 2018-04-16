@@ -4,8 +4,8 @@ import com.unilever.ohub.spark.domain.DomainConstraint
 import com.unilever.ohub.spark.generic.StringFunctions._
 
 object EmailAddressConstraint extends DomainConstraint[String] {
-  import DomainConstraint._
 
-  override def validate(value: String): Unit =
-    check(isValidEmailAddress, value, s"'$value' is not a valid email address.")
+  override def isValid(value: String): Boolean = isValidEmailAddress(value)
+
+  override def errorMessage(value: String): String = s"'$value' is not a valid email address."
 }

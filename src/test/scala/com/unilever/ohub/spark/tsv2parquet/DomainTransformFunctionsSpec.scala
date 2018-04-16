@@ -6,7 +6,7 @@ import org.scalatest.{ Matchers, WordSpec }
 
 class DomainTransformFunctionsSpec extends WordSpec with Matchers {
 
-  val domainTransformer = DomainTransformer()
+  val domainTransformer = DomainTransformer(TestDomainDataProvider())
   val domainFieldName = "domain-field-name"
   val originalColumnName = "original"
 

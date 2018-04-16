@@ -8,23 +8,22 @@ import org.apache.spark.sql.Row
 
 object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
 
-  override def toDomainEntity: (Row, DomainTransformer) ⇒ Operator = {
-    (row, transformer) ⇒
-      import transformer._
-      implicit val source: Row = row
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Operator = { transformer ⇒ row ⇒
+    import transformer._
+    implicit val source: Row = row
 
-      val countryCode = originalValue("COUNTRY_CODE")(row).get
-      val sourceName = "EMAKINA"
-      val sourceEntityId = originalValue("EM_SOURCE_ID")(row).get
-      val concatId = DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
-      val ohubCreated = currentTimestamp()
+    val countryCode = originalValue("COUNTRY_CODE")(row).get
+    val sourceName = "EMAKINA"
+    val sourceEntityId = originalValue("EM_SOURCE_ID")(row).get
+    val concatId = DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
+    val ohubCreated = currentTimestamp()
 
       // format: OFF
 
       Operator(
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
         concatId                    = concatId                                                                                                           ,
-        countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ), // TODO lookup country code
+        countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ),
         customerType                = Operator.customerType                                                                                              ,
         dateCreated                 = Option.empty                                                                                                       ,
         dateUpdated                 = Option.empty                                                                                                       ,
@@ -42,7 +41,7 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
         channel                     = optional  ( "TYPE_OF_BUSINESS",         "channel"                                                                 ),
         city                        = None                                                                                                               ,
         cookingConvenienceLevel     = None                                                                                                               ,
-        countryName                 = None                                                                                                               , // TODO derive from country code
+        countryName                 = countryName(countryCode)                                                                                           ,
         daysOpen                    = None                                                                                                               ,
         distributorName             = optional  ( "PRIMARY_DISTRIBUTOR",      "distributorName"                                                         ),
         distributorOperatorId       = optional  ( "DISTRIBUTOR_CUSTOMER_ID",  "distributorOperatorId"                                                   ),
