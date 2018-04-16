@@ -49,8 +49,7 @@ with DAG('fuzzit_sftp_dag', default_args=default_args,
     wasb = FolderToWasbOperator(
         task_id='fuzzit_to_wasb',
         folder_path=templated_path_to_unzip_contents,
-        container_name='prod',
-        blob_name='ulohub2storedevne',
+        container_name='prod/data/raw/fuzzit/{{ds}}',
     )
 
     mkdir >> fetch >> unzip >> wasb

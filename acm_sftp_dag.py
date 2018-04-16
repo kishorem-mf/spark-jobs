@@ -18,12 +18,6 @@ default_args = {
 rfp = "/incoming/OHUB_2_testing/quoted_semi_colon_delimited/"
 fds = "{{macros.ds_format(ds, '%Y-%m-%d', '%Y%m%d')}}"
 local_filepath = "/tmp/acm/{{ds}}/"
-templated_local_orderlines_filepath = local_filepath + "ORDERLINES.csv"
-templated_remote_orderlines_filepath = rfp + "UFS_ORDERLINES_" + fds + "*.csv"
-templated_local_orders_filepath = local_filepath + "ORDERS.csv"
-templated_remote_orders_filepath = rfp + "UFS_ORDERS_" + fds + "*.csv"
-templated_local_products_filepath = local_filepath + "PRODUCTS.csv"
-templated_remote_products_filepath = rfp + "UFS_PRODUCTS_" + fds + "*.csv"
 
 task_defaults = {
     'ssh_conn_id': 'acm_sftp_ssh',
@@ -41,20 +35,28 @@ with DAG('acm_sftp_dag', default_args=default_args,
 
     fetch_order_lines = SFTPOperator(
         task_id='fetch_ACM_order_lines_for_date',
-        local_filepath=templated_local_orderlines_filepath,
-        remote_filepath=templated_remote_orderlines_filepath,
+        local_filepath=local_filepath + "ORDERLINES.csv",
+        remote_filepath=rfp + "UFS_ORDERLINES_" + fds + "*.csv",
         **task_defaults)
 
     fetch_orders = SFTPOperator(
         task_id='fetch_ACM_orders_for_date',
-        local_filepath=templated_local_orders_filepath,
-        remote_filepath=templated_remote_orders_filepath,
+        local_filepath=local_filepath + "ORDERS.csv",
+        remote_filepath=rfp + "UFS_ORDERS_" + fds + "*.csv",
         **task_defaults)
 
     fetch_products = SFTPOperator(
         task_id='fetch_ACM_products_for_date',
-        local_filepath=templated_local_products_filepath,
-        remote_filepath=templated_remote_products_filepath,
+        local_filepath=local_filepath + "PRODUCTS.csv",
+        remote_filepath=rfp + "UFS_PRODUCTS_" + fds + "*.csv",
         **task_defaults)
 
-    mkdir.set_downstream([fetch_order_lines, fetch_orders, fetch_products])
+    wasb = FolderToWasbOperator(
+        task_id='acm_to_wasb',
+        folder_path=local_filepath,
+        container_name='prod/data/raw/acm/{{ds}}',
+    )
+
+    fetches = [fetch_order_lines, fetch_orders, fetch_products]
+    mkdir.set_downstream(fetches)
+    wasb.set_upstream(fetches)
