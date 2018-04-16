@@ -9,7 +9,7 @@ from custom_operators.folder_to_wasb import FolderToWasbOperator
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2018, 3, 2),
+    'start_date': datetime(2018, 2, 1),
     'email': ['airflow@airflow.com'],
     'email_on_failure': False,
     'email_on_retry': False,
