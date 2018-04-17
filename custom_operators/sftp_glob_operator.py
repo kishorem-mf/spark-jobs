@@ -3,6 +3,7 @@ from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 from airflow.contrib.hooks.ssh_hook import SSHHook
 from airflow.exceptions import AirflowException
 
+
 class SFTPGlobOperator(SFTPOperator):
     '''an SFTP operator for batch downloading files matching a glob'''
 
