@@ -20,7 +20,7 @@ class OperatorConverterSpec extends DomainGateKeeperCsvSpec[Operator] {
         val expectedOperator = Operator(
           concatId = "AU~WUFOO~E1-1234",
           countryCode = "AU",
-          customerType = "operator",
+          customerType = "OPERATOR",
           dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00.0")),
           dateUpdated = Some(Timestamp.valueOf("2015-06-30 13:48:00.0")),
           isActive = true,

@@ -6,7 +6,7 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 
 object Product {
-  val customerType = "product"
+  val customerType = "PRODUCT"
 }
 
 case class Product(

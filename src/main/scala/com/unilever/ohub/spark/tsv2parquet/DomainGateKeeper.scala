@@ -22,17 +22,19 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
   import DomainGateKeeper._
   import DomainGateKeeper.implicits._
 
-  override final val neededFilePaths = Array("INPUT", "OUTPUT_FILE")
-
   protected[tsv2parquet] def partitionByValue: Seq[String]
 
   protected[tsv2parquet] def toDomainEntity: DomainTransformer ⇒ RowType ⇒ DomainType
 
   protected[tsv2parquet] def postValidate: DomainDataProvider ⇒ DomainEntity ⇒ Unit = dataProvider ⇒ DomainEntity.postConditions(dataProvider)
 
+  override final val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
+
+  override final val optionalFilePaths = Array("STRICT_INGESTION")
+
   protected def read(spark: SparkSession, storage: Storage, input: String): Dataset[RowType]
 
-  private def transform(transformFn: RowType ⇒ DomainType)(postValidateFn: DomainEntity ⇒ Unit): RowType ⇒ Either[ErrorMessage, DomainType] =
+  private def transform(transformFn: Row ⇒ DomainType)(postValidateFn: DomainEntity ⇒ Unit): Row ⇒ Either[ErrorMessage, DomainType] =
     row ⇒
       try {
         val entity = transformFn(row)
@@ -50,7 +52,10 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
   protected[tsv2parquet] def run(spark: SparkSession, filePaths: Product, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     import spark.implicits._
 
-    val (input: String, outputFile: String) = filePaths
+    val (inputFile: String, outputFile: String, strictIngestion: Boolean) = filePaths match {
+      case (in, out)                 ⇒ (in, out, true)
+      case (in, out, strict: String) ⇒ (in, out, strict.toBoolean)
+    }
     val transformer = DomainTransformer(dataProvider)
 
     val result = read(spark, storage, input)
@@ -63,9 +68,14 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
     val numberOfErrors = errors.count()
 
     if (numberOfErrors > 0) { // do something with the errors here
-      log.error(s"No parquet file written, number of errors found is '$numberOfErrors'")
       errors.toDF("ERROR").show(numRows = 100, truncate = false)
-      System.exit(1) // let's fail fast now
+
+      if (strictIngestion) {
+        log.error(s"NO PARQUET FILE WRITTEN, NUMBER OF ERRORS FOUND IS '$numberOfErrors'")
+        System.exit(1) // let's fail fast now
+      } else {
+        log.error(s"WRITE PARQUET FILE ANYWAY, REGARDLESS OF NUMBER OF ERRORS FOUND '$numberOfErrors' (ERRONEOUS ENTITIES ARE NEGLECTED). ")
+      }
     }
 
     val domainEntities: Dataset[DomainType] = result.filter(_.isRight).map(_.right.get)

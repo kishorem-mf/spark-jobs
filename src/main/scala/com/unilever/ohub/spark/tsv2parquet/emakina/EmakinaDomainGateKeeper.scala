@@ -8,4 +8,5 @@ trait EmakinaDomainGateKeeper[T <: DomainEntity] extends DomainCsvGateKeeper[T] 
   override final val fieldSeparator = ";"
   override final val hasHeaders = true
   override final val partitionByValue = Seq("countryCode")
+  val sourceName = "EMAKINA"
 }

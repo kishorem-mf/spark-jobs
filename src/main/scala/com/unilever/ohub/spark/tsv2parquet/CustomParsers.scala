@@ -6,41 +6,10 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 import org.apache.log4j.Logger
-import org.apache.spark.sql.Row
 
 import scala.util.Try
 
 object CustomParsers {
-  object Implicits {
-    implicit class RowOps(row: Row) {
-      def parseStringOption(index: Int): Option[String] = {
-        Try(row.getString(index))
-          .toOption
-          .flatMap(Option.apply) // turn null values into None
-          .filter(_.nonEmpty) // turn empty strings into None
-      }
-
-      def parseDateTimeStampOption(index: Int)(implicit log: Logger): Option[Timestamp] = {
-        parseStringOption(index).map(CustomParsers.parseDateTimeStampUnsafe)
-      }
-
-      def parseBigDecimalOption(index: Int): Option[BigDecimal] = {
-        parseStringOption(index).map(CustomParsers.parseBigDecimalUnsafe)
-      }
-
-      def parseBigDecimalRangeOption(index: Int): Option[BigDecimal] = {
-        parseStringOption(index).flatMap(CustomParsers.parseBigDecimalRangeOption)
-      }
-
-      def parseLongRangeOption(index: Int): Option[Long] = {
-        parseStringOption(index).flatMap(CustomParsers.parseLongRangeOption)
-      }
-
-      def parseBooleanOption(index: Int): Option[Boolean] = {
-        parseStringOption(index).map(CustomParsers.parseBoolUnsafe)
-      }
-    }
-  }
 
   def parseDateTimeForPattern(dateTimePattern: String = "yyyy-MM-dd HH:mm:ss.SS")(input: String): Timestamp = {
     val pattern = DateTimeFormatter.ofPattern(dateTimePattern)
