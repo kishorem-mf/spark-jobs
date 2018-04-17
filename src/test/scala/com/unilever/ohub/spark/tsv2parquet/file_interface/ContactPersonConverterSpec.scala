@@ -3,9 +3,9 @@ package com.unilever.ohub.spark.tsv2parquet.file_interface
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.ContactPerson
-import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeperSpec
+import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeperCsvSpec
 
-class ContactPersonConverterSpec extends DomainGateKeeperSpec[ContactPerson] {
+class ContactPersonConverterSpec extends DomainGateKeeperCsvSpec[ContactPerson] {
 
   private[tsv2parquet] override val SUT = ContactPersonConverter
 

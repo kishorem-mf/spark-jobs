@@ -34,7 +34,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
 
   protected def read(spark: SparkSession, storage: Storage, input: String): Dataset[RowType]
 
-  private def transform(transformFn: Row ⇒ DomainType)(postValidateFn: DomainEntity ⇒ Unit): Row ⇒ Either[ErrorMessage, DomainType] =
+  private def transform(transformFn: RowType ⇒ DomainType)(postValidateFn: DomainEntity ⇒ Unit): RowType ⇒ Either[ErrorMessage, DomainType] =
     row ⇒
       try {
         val entity = transformFn(row)
@@ -58,7 +58,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
     }
     val transformer = DomainTransformer(dataProvider)
 
-    val result = read(spark, storage, input)
+    val result = read(spark, storage, inputFile)
       .map(transform(toDomainEntity(transformer))(postValidate(dataProvider)))
       .distinct()
       // persist the result here (result is evaluated multiple times, since spark transformations are lazy)
