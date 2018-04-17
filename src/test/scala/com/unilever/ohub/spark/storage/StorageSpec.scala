@@ -4,7 +4,8 @@ import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.tsv2parquet.sifu.SifuProductResponse
 import io.circe
-import org.scalatest.{FunSpec, Matchers}
+import io.circe.generic.auto._
+import org.scalatest.{ FunSpec, Matchers }
 
 class StorageSpec extends FunSpec with SparkJobSpec with Matchers {
 

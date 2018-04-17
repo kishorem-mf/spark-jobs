@@ -8,8 +8,7 @@ import com.unilever.ohub.spark.tsv2parquet.sifu.SifuProductResponse
 import org.apache.spark.sql.Dataset
 
 trait DomainGateKeeperDatasetSpec[DomainType <: DomainEntity] extends SparkJobSpec {
-
-  private[tsv2parquet] val SUT: DomainCsvGateKeeper[DomainType]
+  private[tsv2parquet] val SUT: DomainGateKeeper[DomainType, SifuProductResponse]
   private[tsv2parquet] val inputFile = ""
   private[tsv2parquet] val outputFile = ""
 

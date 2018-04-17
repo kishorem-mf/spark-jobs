@@ -77,11 +77,11 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
         hasDistributionUnit             = row.duAvailable,
         imageId                         = row.image1Id,
         ingredients                     = row.ingredients,
-        isAvailable                     = Some(row.isUnileverProduct),
+        isAvailable                     = Some(row.available),
         isDistributionUnitOnlyProduct   = Some(row.duOnlyProduct),
         isLoyaltyReward                 = Some(row.loyaltyReward),
         isTopProduct                    = Some(row.topProduct),
-        isUnileverProduct               = Some(row.isUnileverProduct),
+        isUnileverProduct               = row.isUnileverProduct,
         itemType                        = row.itemType,
         language                        = row.language, // todo convert
         lastModifiedDate                = transformOrError("lastModifiedDate", "lastModifiedDate", mandatory = false, parseDateTimeStampUnsafe, row.lastModifiedDate),

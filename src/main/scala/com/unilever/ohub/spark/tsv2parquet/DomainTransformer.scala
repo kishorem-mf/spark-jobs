@@ -53,11 +53,12 @@ class DomainTransformer(val dataProvider: DomainDataProvider) extends DomainTran
     result
   }
 
-  def transformOrError[T](originalColumnName: String,
-                          domainFieldName: String,
-                          mandatory: Boolean,
-                          transformFn: String => T,
-                          valueOpt: Option[String]): Option[T] = {
+  def transformOrError[T](
+    originalColumnName: String,
+    domainFieldName: String,
+    mandatory: Boolean,
+    transformFn: String ⇒ T,
+    valueOpt: Option[String]): Option[T] = {
     if (mandatory && valueOpt.isEmpty) {
       throw MandatoryFieldException(domainFieldName, s"No value found for '$originalColumnName'")
     }
@@ -80,16 +81,16 @@ class DomainTransformer(val dataProvider: DomainDataProvider) extends DomainTran
     }
   }
 
-  private def readAndTransform[T](originalColumnName: String,
-                                  domainFieldName: String,
-                                  mandatory: Boolean,
-                                  originalValueFn: Row ⇒ Option[String],
-                                  transformFn: String ⇒ T)(implicit row: Row): Option[T] = {
+  private def readAndTransform[T](
+    originalColumnName: String,
+    domainFieldName: String,
+    mandatory: Boolean,
+    originalValueFn: Row ⇒ Option[String],
+    transformFn: String ⇒ T)(implicit row: Row): Option[T] = {
     val valueOpt: Option[String] = originalValueFn(row)
 
     transformOrError(originalColumnName, domainFieldName, mandatory, transformFn, valueOpt)
   }
-
 
   def originalValue(columnName: String)(row: Row): Option[String] = {
     val fieldIndex = getFieldIndex(columnName)(row)

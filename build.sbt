@@ -37,7 +37,7 @@ lazy val root = project.in(file(".")).configs(IntegrationTest)
 test in assembly := {}
 
 // Scoverage settings
-coverageExcludedPackages := "<empty>;.*storage.*"
+coverageExcludedPackages := "<empty>"
 coverageMinimum := 47.9
 coverageFailOnMinimum := true
 
