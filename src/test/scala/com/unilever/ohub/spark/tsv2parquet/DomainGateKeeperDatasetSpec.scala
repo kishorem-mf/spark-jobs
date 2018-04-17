@@ -14,11 +14,15 @@ trait DomainGateKeeperDatasetSpec[DomainType <: DomainEntity] extends SparkJobSp
 
   def testDataProvider(): DomainDataProvider = TestDomainDataProvider()
 
-  def runJobWith(response: Seq[SifuProductResponse])(assertFn: Dataset[DomainType] ⇒ Unit): Unit = {
+  def runJobWith(response: Seq[SifuProductResponse], countryAndLanguages: Array[(String, String)])(assertFn: Dataset[DomainType] ⇒ Unit): Unit = {
     val mockStorage = mock[Storage]
 
-    (mockStorage.productsFromApi _).expects("NL", "nl", "products", 1, 1)
-      .returns(response)
+    countryAndLanguages
+      .foreach {
+        case (country, lang) ⇒
+          (mockStorage.productsFromApi _).expects(country, lang, "products", 100, 10)
+            .returns(response)
+      }
 
     // write output data
     (mockStorage.writeToParquet(_: Dataset[DomainType], _: String, _: Seq[String])) expects where {

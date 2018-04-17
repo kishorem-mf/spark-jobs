@@ -37,18 +37,18 @@ trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T, SifuPr
     "ar", "en", "ro", "ru", "ar", "en", "sv", "zh", "en", "es", "fi", "nl", "tr", "zh", "sk", "es", "de",
     "en", "es", "th", "nl", "tr", "bg", "da", "de", "en", "es", "fi", "fr", "he", "hu", "id", "it", "ko",
     "nl", "no", "pl", "pt", "ru", "sv", "tr", "zh", "en", "vi", "zh", "af", "en")
-  private val countryLanguageListEmakina = countryListEmakina zip languageListEmakina.toList // todo fix order
+  private[sifu] val countryAndLanguages = countryListEmakina zip languageListEmakina.toList // todo fix order
 
-  private val MAX = 1000000
-  private val RANGE = 100
+  private val PAGE_SIZE = 100
+  private val PAGES = 10
 
   protected[sifu] def sifuSelection: String
 
   override def read(spark: SparkSession, storage: Storage, input: String): Dataset[SifuProductResponse] = {
     import spark.implicits._
 
-    val jsons = countryLanguageListEmakina
-      .flatMap { case (country, lang) ⇒ storage.productsFromApi(country, lang, sifuSelection, RANGE, MAX) }
+    val jsons = countryAndLanguages
+      .flatMap { case (country, lang) ⇒ storage.productsFromApi(country, lang, sifuSelection, PAGE_SIZE, PAGES) }
     spark
       .createDataset(jsons)
   }

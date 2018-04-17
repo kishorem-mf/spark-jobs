@@ -10,8 +10,8 @@ class ProductConverterSpec extends DomainGateKeeperDatasetSpec[Product] with Tes
   describe("sifu product converter") {
     it("should convert a product correctly from a valid api input") {
 
-      runJobWith(Seq(TestProducts.sifuProductResponse)) { actualDataSet ⇒
-        actualDataSet.count() shouldBe 1
+      runJobWith(Seq(TestProducts.sifuProductResponse), SUT.countryAndLanguages) { actualDataSet ⇒
+        actualDataSet.count() shouldBe 229
 
         val actualProduct = actualDataSet.head()
         val expectedProduct = defaultProductRecord.copy()

@@ -17,7 +17,7 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
       // format: OFF
 
       val sourceName                                    =   "SIFU"
-      val countryCode                                   =   row.country.get // todo convert
+      val countryCode                                   =   row.country.get.toUpperCase // todo convert
       val sourceEntityId                                =   UUID.randomUUID().toString
       val concatId                                      =   DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
       val ohubCreated                                   =   currentTimestamp()
