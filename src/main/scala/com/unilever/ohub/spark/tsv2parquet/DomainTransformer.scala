@@ -10,6 +10,7 @@ object DomainTransformer {
 }
 
 class DomainTransformer(val dataProvider: DomainDataProvider) extends DomainTransformFunctions with Serializable {
+
   import DomainTransformer._
 
   var headers: Map[String, Int] = Map()
@@ -52,9 +53,11 @@ class DomainTransformer(val dataProvider: DomainDataProvider) extends DomainTran
     result
   }
 
-  private def readAndTransform[T](originalColumnName: String, domainFieldName: String, mandatory: Boolean, originalValueFn: Row ⇒ Option[String], transformFn: String ⇒ T)(implicit row: Row): Option[T] = {
-    val valueOpt: Option[String] = originalValueFn(row)
-
+  def transformOrError[T](originalColumnName: String,
+                          domainFieldName: String,
+                          mandatory: Boolean,
+                          transformFn: String => T,
+                          valueOpt: Option[String]): Option[T] = {
     if (mandatory && valueOpt.isEmpty) {
       throw MandatoryFieldException(domainFieldName, s"No value found for '$originalColumnName'")
     }
@@ -76,6 +79,17 @@ class DomainTransformer(val dataProvider: DomainDataProvider) extends DomainTran
         None
     }
   }
+
+  private def readAndTransform[T](originalColumnName: String,
+                                  domainFieldName: String,
+                                  mandatory: Boolean,
+                                  originalValueFn: Row ⇒ Option[String],
+                                  transformFn: String ⇒ T)(implicit row: Row): Option[T] = {
+    val valueOpt: Option[String] = originalValueFn(row)
+
+    transformOrError(originalColumnName, domainFieldName, mandatory, transformFn, valueOpt)
+  }
+
 
   def originalValue(columnName: String)(row: Row): Option[String] = {
     val fieldIndex = getFieldIndex(columnName)(row)

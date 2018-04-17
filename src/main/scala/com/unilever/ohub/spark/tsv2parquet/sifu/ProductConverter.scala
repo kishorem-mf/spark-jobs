@@ -5,6 +5,8 @@ import java.util.UUID
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity.Product
 import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
+import com.unilever.ohub.spark.generic.StringFunctions._
+import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 
 object ProductConverter extends SifuDomainGateKeeper[Product] {
 
@@ -16,7 +18,7 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
       // format: OFF
 
       val sourceName                                    =   "SIFU"
-      val countryCode                                   =   row.country.get
+      val countryCode                                   =   row.country.get // todo convert
       val sourceEntityId                                =   UUID.randomUUID().toString
       val concatId                                      =   DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
       val ohubCreated                                   =   currentTimestamp()
@@ -31,7 +33,7 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
         isActive                        = true,
         isGoldenRecord                  = true,
         ohubId                          = Some(UUID.randomUUID().toString),
-        name                            = row.name.get,
+        name                            = transformOrError("name", "name", mandatory = true, identity, row.name).get,
         sourceEntityId                  = sourceEntityId,
         sourceName                      = sourceName,
         ohubCreated                     = ohubCreated,
@@ -74,40 +76,40 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
         eanDistributionUnit             = row.duEanCode,
         hasConsumerUnit                 = row.cuAvailable,
         hasDistributionUnit             = row.duAvailable,
-        imageId                         = Option.empty,
-        ingredients                     = Option.empty,
-        isAvailable                     = Option.empty,
-        isDistributionUnitOnlyProduct   = Option.empty,
-        isLoyaltyReward                 = Option.empty,
-        isTopProduct                    = Option.empty,
-        isUnileverProduct               = Option.empty,
-        itemType                        = Option.empty,
-        language                        = Option.empty,
-        lastModifiedDate                = Option.empty,
-        nameSlug                        = Option.empty,
-        number                          = Option.empty,
-        nutrientTypes                   = List.empty,
-        nutrientValues                  = List.empty,
-        orderScore                      = Option.empty,
-        packagingCode                   = Option.empty,
-        packagingName                   = Option.empty,
-        packshotUrl                     = Option.empty,
-        portionSize                     = Option.empty,
-        portionUnit                     = Option.empty,
-        preparation                     = Option.empty,
-        productCodes                    = List.empty,
+        imageId                         = row.image1Id,
+        ingredients                     = row.ingredients,
+        isAvailable                     = Some(row.isUnileverProduct),
+        isDistributionUnitOnlyProduct   = Some(row.duOnlyProduct),
+        isLoyaltyReward                 = Some(row.loyaltyReward),
+        isTopProduct                    = Some(row.topProduct),
+        isUnileverProduct               = Some(row.isUnileverProduct),
+        itemType                        = row.itemType,
+        language                        = row.language, // todo convert
+        lastModifiedDate                = transformOrError("lastModifiedDate", "lastModifiedDate", mandatory = false, parseDateTimeStampUnsafe, row.lastModifiedDate),
+        nameSlug                        = row.nameSlug,
+        number                          = row.number,
+        nutrientTypes                   = row.nutrientTypes.getOrElse(List.empty),
+        nutrientValues                  = row.nutrientValues.getOrElse(List.empty),
+        orderScore                      = transformOrError("orderScore", "orderScore", mandatory = false, toInt, row.orderScore),
+        packagingCode                   = row.packagingCode,
+        packagingName                   = row.packagingName,
+        packshotUrl                     = row.packshotUrl,
+        portionSize                     = transformOrError("portionSize", "portionSize", mandatory = false, parseBigDecimalUnsafe, row.portionSize), // todo convert
+        portionUnit                     = row.portionUnit,
+        preparation                     = row.preparation,
+        productCodes                    = row.productCodes.getOrElse(List.empty),
         productId                       = Some(UUID.randomUUID().toString),
-        productType                     = Option.empty,
-        solutionCopy                    = Option.empty,
-        subBrandCode                    = Option.empty,
-        subBrandName                    = Option.empty,
-        subCategoryByMarketeer          = Option.empty,
-        subCategoryCode                 = Option.empty,
-        subCategoryName                 = Option.empty,
+        productType                     = row.productType,
+        solutionCopy                    = row.solutionCopy,
+        subBrandCode                    = row.subBrandCode,
+        subBrandName                    = row.subBrandName,
+        subCategoryByMarketeer          = None,
+        subCategoryCode                 = row.subCategoryCode,
+        subCategoryName                 = row.subCategoryName,
         `type`                          = None,
         unit                            = None,
         unitPrice                       = None,
-        youtubeUrl                      = Option.empty,
+        youtubeUrl                      = row.youtubeUrl,
         // other fields
         additionalFields                = additionalFields,
         ingestionErrors                 = errors
