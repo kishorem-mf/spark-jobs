@@ -84,7 +84,7 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
         isUnileverProduct               = row.isUnileverProduct,
         itemType                        = row.itemType,
         language                        = row.language, // todo convert
-        lastModifiedDate                = transformOrError("lastModifiedDate", "lastModifiedDate", mandatory = false, parseDateTimeStampUnsafe, row.lastModifiedDate),
+        lastModifiedDate                = transformOrError("lastModifiedDate", "lastModifiedDate", mandatory = false, parseDateTimeForPattern(dateTimePattern = sifuDate), row.lastModifiedDate),
         nameSlug                        = row.nameSlug,
         number                          = row.number,
         nutrientTypes                   = row.nutrientTypes.getOrElse(List.empty),

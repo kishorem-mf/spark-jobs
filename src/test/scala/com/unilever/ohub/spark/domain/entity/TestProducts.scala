@@ -131,7 +131,7 @@ trait TestProducts {
     disclaimer2 = None,
     disclaimer3 = None,
     duAvailable = Some(true),
-    duEanCode = Some("8712100979392"),
+    duEanCode       = Some("8712100979392"),
     duLoyaltyPoints = Some(107),
     duOnlyProduct = false,
     duPriceInCents = Some(10686),
