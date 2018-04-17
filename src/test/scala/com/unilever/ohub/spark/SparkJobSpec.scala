@@ -5,7 +5,7 @@ import org.scalatest.{ FunSpec, Matchers }
 import SharedSparkSession.spark
 import org.scalamock.scalatest.MockFactory
 
-trait SparkJobSpec extends FunSpec with Matchers with MockFactory {
+trait SparkJobSpec extends SparkJobSpec {
 
   protected implicit class ObjOps[T: Encoder](obj: T) {
     def toDataset: Dataset[T] = spark.createDataset(Seq(obj))

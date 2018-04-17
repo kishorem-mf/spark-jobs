@@ -43,7 +43,7 @@ case class SifuProductResponse(
     image3Id: Option[String],
     image3Text: Option[String],
     ingredients: Option[String],
-    isUnileverProduct: Boolean,
+    isUnileverProduct: Option[String],
     itemType: Option[String],
     language: Option[String],
     lastModifiedDate: Option[String],
@@ -63,6 +63,7 @@ case class SifuProductResponse(
     orderScore: Option[String],
     packagingCode: Option[String],
     packagingName: Option[String],
+    packshotResizedUrl: Option[String],
     packshotUrl: Option[String],
     portionSize: Option[String],
     portionUnit: Option[String],
@@ -98,5 +99,6 @@ case class SifuProductResponse(
     truthCopy: Option[String],
     truthVisualImageName: Option[String],
     truthVisualImageUrl: Option[String],
+    url: Option[String],
     youtubeUrl: Option[String]
 ) extends Product

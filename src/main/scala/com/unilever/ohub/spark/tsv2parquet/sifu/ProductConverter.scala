@@ -5,7 +5,6 @@ import java.util.UUID
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity.Product
 import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
-import com.unilever.ohub.spark.generic.StringFunctions._
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 
 object ProductConverter extends SifuDomainGateKeeper[Product] {

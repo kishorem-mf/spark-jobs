@@ -68,7 +68,7 @@ case class Product(
     isDistributionUnitOnlyProduct: Option[Boolean],
     isLoyaltyReward: Option[Boolean],
     isTopProduct: Option[Boolean],
-    isUnileverProduct: Option[Boolean],
+    isUnileverProduct: Option[String],
     itemType: Option[String],
     language: Option[String],
     lastModifiedDate: Option[Timestamp],

@@ -1,9 +1,9 @@
 package com.unilever.ohub.spark.tsv2parquet.emakina
 
 import com.unilever.ohub.spark.domain.entity.Operator
-import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeperSpec
+import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeperCsvSpec
 
-class OperatorConverterSpec extends DomainGateKeeperSpec[Operator] {
+class OperatorConverterSpec extends DomainGateKeeperCsvSpec[Operator] {
 
   private[tsv2parquet] override val SUT = OperatorConverter
 
