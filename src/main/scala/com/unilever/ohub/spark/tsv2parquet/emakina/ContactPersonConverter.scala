@@ -52,7 +52,7 @@ object ContactPersonConverter extends EmakinaDomainGateKeeper[ContactPerson] {
       city                          =   optional(   "CITY",                           "city"                                                             ),
       zipCode                       =   optional(   "POSTCODE",                       "zipCode"                                                          ),
       state                         =   optional(   "STATE",                          "state"                                                            ),
-      countryName                   =   countryName(countryCode)                                                                                          ,
+      countryName                   = countryName(countryCode)                                                                                            ,
       isPreferredContact            = None                                                                                                                ,
       isKeyDecisionMaker            = None                                                                                                                ,
       standardCommunicationChannel  = None                                                                                                                ,

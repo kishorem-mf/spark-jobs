@@ -7,13 +7,17 @@ import org.apache.spark.sql.SparkSession
 trait SparkJob { self ⇒
   def neededFilePaths: Array[String]
 
+  def optionalFilePaths: Array[String] = Array.empty
+
   def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit
 
   implicit protected val log: Logger = LogManager.getLogger(self.getClass)
 
   private def getFilePaths(args: Array[String]): Product = {
-    if (args.length != neededFilePaths.length) {
-      log.error("specify " + neededFilePaths.mkString("[", "], [", "]"))
+    val argRange = Range.inclusive(neededFilePaths.length, neededFilePaths.length + optionalFilePaths.length)
+
+    if (!argRange.contains(args.length)) {
+      log.error(s"specify mandatory '${neededFilePaths.mkString("[", "], [", "]")}' and optional '${optionalFilePaths.mkString("[", "], [", "]")}'")
       sys.exit(1)
     }
 
