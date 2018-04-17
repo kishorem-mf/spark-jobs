@@ -13,8 +13,8 @@ object CustomParsers {
 
   def parseDateTimeForPattern(dateTimePattern: String = "yyyy-MM-dd HH:mm:ss.SS")(input: String): Timestamp = {
     val pattern = DateTimeFormatter.ofPattern(dateTimePattern)
-    LocalDateTime.parse(input, pattern) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
-    Timestamp.valueOf(input)
+    val parsed = LocalDateTime.parse(input, pattern) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
+    Timestamp.valueOf(parsed)
   }
 
   // formats for dates not in standard format yyyy-MM-dd HH:mm:ss
