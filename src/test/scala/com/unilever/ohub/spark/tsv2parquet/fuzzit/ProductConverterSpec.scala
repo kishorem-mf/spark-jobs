@@ -16,8 +16,8 @@ class ProductConverterSpec extends DomainGateKeeperCsvSpec[Product] with TestPro
 
         val actualProduct = actualDataSet.head()
         val expectedProduct = defaultProductRecord.copy(
-          concatId = s"1030~FUZZIT~00590126-4249-4EA5-B44D-6D52A8E8B86F",
-          countryCode = "1030",
+          concatId = s"NL~FUZZIT~00590126-4249-4EA5-B44D-6D52A8E8B86F",
+          countryCode = "NL",
           isActive = true,
           isGoldenRecord = true,
           ohubId = actualProduct.ohubId,
