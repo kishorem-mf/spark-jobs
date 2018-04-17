@@ -71,8 +71,9 @@ with DAG('ohub_operators', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
-            'parameters': [raw_bucket.format(date=one_day_ago, schema='operators'),
-                           ingested_bucket.format(date=one_day_ago, fn='operators')]
+            'parameters': ['--input_file', raw_bucket.format(date=one_day_ago, schema='operators'),
+                           '--output_path', ingested_bucket.format(date=one_day_ago, fn='operators'),
+                           '--strict_ingestion', "false"]
         }
     )
 
