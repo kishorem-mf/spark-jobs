@@ -5,7 +5,7 @@ from airflow.exceptions import AirflowException
 
 
 class SFTPGlobOperator(SFTPOperator):
-    '''an SFTP operator for batch downloading files matching a glob'''
+    """an SFTP operator for batch downloading files matching a glob"""
 
     def execute(self, context):
         file_msg = None
