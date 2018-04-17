@@ -86,7 +86,7 @@ class ProductConverterSpec extends DomainGateKeeperDatasetSpec[Product] with Tes
           packagingCode = Some("3954"),
           packagingName = Some("6 x 1 L"),
           packshotUrl = Some("https://sifu.unileversolutions.com/image/nl-NL/original/1/knorr-professional-geconcentreerde-bouillon-vis-50209972.jpg"),
-          portionSize = Some(0),
+          portionSize = Some(0E-18),
           portionUnit = None,
           preparation = None,
           productCodes = List("25-NL-200194"),
