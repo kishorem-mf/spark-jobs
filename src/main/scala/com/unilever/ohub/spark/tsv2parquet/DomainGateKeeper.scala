@@ -61,8 +61,6 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
     val result = read(spark, storage, inputFile)
       .map(transform(toDomainEntity(transformer))(postValidate(dataProvider)))
       .distinct()
-      // persist the result here (result is evaluated multiple times, since spark transformations are lazy)
-      .persist(StorageLevels.MEMORY_AND_DISK)
 
     val errors: Dataset[ErrorMessage] = result.filter(_.isLeft).map(_.left.get)
     val numberOfErrors = errors.count()
