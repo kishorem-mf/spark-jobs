@@ -30,6 +30,7 @@ pipelines:
     - step:
         name: Deploy to azure blob store
         image: microsoft/azure-cli
+        deployment: production
         script:
           - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
           - rm -rf README.md bitbucket-pipelines.yml .gitignore setup.cfg .git .cache .pytest* tests
