@@ -6,6 +6,7 @@ import java.util.UUID
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.data.{ ContactPersonRecord, GoldenContactPersonRecord }
 import com.unilever.ohub.spark.storage.Storage
+import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
 object ContactPersonMerging extends SparkJob {
@@ -64,6 +65,10 @@ object ContactPersonMerging extends SparkJob {
   override val neededFilePaths: Array[String] = Array("INPUT_FILE", "OUTPUT_FILE")
 
   override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
+    run(spark, filePaths, storage, DomainDataProvider(spark, storage))
+  }
+
+  protected[merging] def run(spark: SparkSession, filePaths: Product, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     import spark.implicits._
 
     val (inputFile: String, outputFile: String) = filePaths
@@ -73,7 +78,7 @@ object ContactPersonMerging extends SparkJob {
     val contactPersons = storage
       .readFromParquet[ContactPersonRecord](inputFile)
 
-    val transformed = transform(spark, contactPersons, storage.sourcePreference)
+    val transformed = transform(spark, contactPersons, dataProvider.sourcePreferences)
 
     storage
       .writeToParquet(transformed, outputFile, partitionBy = Seq("countryCode"))

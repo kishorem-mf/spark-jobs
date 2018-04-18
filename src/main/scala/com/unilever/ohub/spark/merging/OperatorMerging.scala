@@ -6,6 +6,7 @@ import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
+import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import org.apache.spark.sql.functions.collect_list
 
@@ -66,6 +67,10 @@ object OperatorMerging extends SparkJob with OperatorGoldenRecord {
   override val neededFilePaths = Array("MATCHING_INPUT_FILE", "OPERATOR_INPUT_FILE", "OUTPUT_FILE")
 
   override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
+    run(spark, filePaths, storage, DomainDataProvider(spark, storage))
+  }
+
+  protected[merging] def run(spark: SparkSession, filePaths: Product, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     import spark.implicits._
 
     val (matchingInputFile: String, operatorInputFile: String, outputFile: String) = filePaths
@@ -85,7 +90,7 @@ object OperatorMerging extends SparkJob with OperatorGoldenRecord {
         )
       )
 
-    val transformed = transform(spark, operators, matches, storage.sourcePreference)
+    val transformed = transform(spark, operators, matches, dataProvider.sourcePreferences)
 
     storage
       .writeToParquet(transformed, outputFile, partitionBy = Seq("countryCode"))

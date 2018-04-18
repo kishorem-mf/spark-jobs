@@ -3,10 +3,8 @@ package com.unilever.ohub.spark.storage
 import java.util.Properties
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql._
-import java.io.{ File, FileOutputStream }
-import scala.io.Source
 
-import com.unilever.ohub.spark.data.{ ChannelMapping, CountryRecord, CountrySalesOrg }
+import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.sql.JoinType
 
 trait Storage {
@@ -29,18 +27,11 @@ trait Storage {
 
   def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq()): Unit
 
-  def createCountries: Dataset[CountryRecord]
-
-  def createCountriesSalesOrgMapping: Map[String, CountrySalesOrg]
-
-  def sourcePreference: Map[String, Int]
-
   def channelMappings(
     dbUrl: String,
     dbName: String,
     userName: String,
     userPassword: String): Dataset[ChannelMapping]
-
 }
 
 class DefaultStorage(spark: SparkSession) extends Storage {
@@ -115,57 +106,6 @@ class DefaultStorage(spark: SparkSession) extends Storage {
     jdbcProperties.put("password", userPassword)
 
     spark.read.jdbc(dbFullConnectionString, dbTable, jdbcProperties)
-  }
-
-  private def createCsvSource(fn: String): Unit = {
-    val in = this.getClass.getResourceAsStream(s"/$fn")
-    val out = new FileOutputStream(new File(fn))
-
-    Iterator
-      .continually(in.read)
-      .takeWhile(_ != -1)
-      .foreach(b ⇒ out.write(b))
-
-    out.close()
-    in.close()
-  }
-
-  override val createCountries: Dataset[CountryRecord] = {
-    val file = "country_codes.csv"
-    createCsvSource(file)
-
-    readFromCsv(file, fieldSeparator = ",")
-      .select(
-        $"ISO3166_1_Alpha_2" as "countryCode",
-        $"official_name_en" as "countryName",
-        $"ISO4217_currency_alphabetic_code" as "currencyCode"
-      )
-      .where($"countryCode".isNotNull and $"countryName".isNotNull and $"currencyCode".isNotNull)
-      .as[CountryRecord]
-  }
-
-  def createCountriesSalesOrgMapping: Map[String, CountrySalesOrg] = {
-    val file = "country_codes_sales_org.csv"
-    createCsvSource(file)
-
-    readFromCsv(file, fieldSeparator = ",")
-      .as[CountrySalesOrg]
-      .collect()
-      .filter(_.salesOrg.nonEmpty)
-      .map(c ⇒ c.salesOrg.get -> c)
-      .toMap
-  }
-
-  override def sourcePreference: Map[String, Int] = {
-    Source
-      .fromInputStream(this.getClass.getResourceAsStream("/source_preference.tsv"))
-      .getLines()
-      .toSeq
-      .filter(_.nonEmpty)
-      .filterNot(_.equals("SOURCE\tPRIORITY"))
-      .map(_.split("\t"))
-      .map(lineParts ⇒ lineParts(0) -> lineParts(1).toInt)
-      .toMap
   }
 
   override def channelMappings(
