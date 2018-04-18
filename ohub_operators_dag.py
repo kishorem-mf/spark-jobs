@@ -1,42 +1,25 @@
-from datetime import datetime, timedelta
-
 from airflow import DAG
 from airflow.hooks.base_hook import BaseHook
+from datetime import datetime
 
-from config import email_addresses, operator_country_codes
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
     DatabricksStartClusterOperator, \
     DatabricksUninstallLibrariesOperator
+from operators_config import \
+    default_args, \
+    cluster_id, databricks_conn_id, \
+    jar, egg, \
+    raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
+    operator_country_codes
 
-default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'start_date': datetime(2018, 3, 7),
-    'email': email_addresses,
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 0,
-    'retry_delay': timedelta(minutes=1),
-    'pool': 'ohub_pool'
-}
-
-dbfs_root_bucket = 'dbfs:/mnt/ohub_data/'
-raw_bucket = dbfs_root_bucket + 'raw/{schema}/{date}/**/*.csv'
-ingested_bucket = dbfs_root_bucket + 'ingested/{date}/{fn}.parquet'
-intermediate_bucket = dbfs_root_bucket + 'intermediate/{date}/{fn}.parquet'
-integrated_bucket = dbfs_root_bucket + 'integrated/{date}/{fn}.parquet'
-export_bucket = dbfs_root_bucket + 'export/{date}/{fn}.parquet'
-
-cluster_id = '0314-131901-shalt605'
-databricks_conn_id = 'databricks_azure'
+default_args.update(
+    {'start_date': datetime(2018, 4, 6)}
+)
 
 one_day_ago = '2018-04-06'  # should become {{ ds }}
 two_day_ago = '2017-07-12'  # should become {{ macros.ds_add(ds, -1) }}
-
-jar = 'dbfs:/libraries/ohub/spark-jobs-assembly-0.2.0.jar'
-egg = 'dbfs:/libraries/name_matching/string_matching.egg'
 
 with DAG('ohub_operators', default_args=default_args,
          schedule_interval="@once") as dag:

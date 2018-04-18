@@ -1,36 +1,21 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from airflow import DAG
 from airflow.hooks.base_hook import BaseHook
 
-from config import email_addresses
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
     DatabricksStartClusterOperator
+from operators_config import \
+    default_args, \
+    cluster_id, databricks_conn_id, \
+    jar, egg, \
+    raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket
 
-default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'start_date': datetime(2017, 7, 12),
-    'email': email_addresses,
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 0,
-    'retry_delay': timedelta(minutes=1),
-}
-
-dbfs_root_bucket = 'dbfs:/mnt/ohub_data/'
-raw_bucket = dbfs_root_bucket + 'raw/{schema}/{date}/**/*.csv'
-ingested_bucket = dbfs_root_bucket + 'ingested/{date}/{fn}.parquet'
-intermediate_bucket = dbfs_root_bucket + 'intermediate/{date}/{fn}.parquet'
-integrated_bucket = dbfs_root_bucket + 'integrated/{date}/{fn}.parquet'
-export_bucket = dbfs_root_bucket + 'export/{date}/{fn}.parquet'
-
-cluster_id = '0314-131901-shalt605'
-databricks_conn_id = 'databricks_azure'
-
-jar = 'dbfs:/libraries/ohub/spark-jobs-assembly-0.2.0.jar'
+default_args.update(
+    {'start_date': datetime(2017, 7, 12)}
+)
 
 with DAG('ohub_operators_first_ingest', default_args=default_args,
          schedule_interval="@once") as dag:
@@ -56,7 +41,8 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
             'parameters': [raw_bucket.format(date='{{ds}}', schema='operators'),
-                           ingested_bucket.format(date='{{ds}}', fn='operators')]
+                           ingested_bucket.format(date='{{ds}}', fn='operators'),
+                           "false"]
         }
     )
 
@@ -65,7 +51,7 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
-            {'egg': 'dbfs:/libraries/name_matching/string_matching.egg'}
+            {'egg': egg}
         ],
         spark_python_task={
             'python_file': 'dbfs:/libraries/name_matching/match_operators.py',
