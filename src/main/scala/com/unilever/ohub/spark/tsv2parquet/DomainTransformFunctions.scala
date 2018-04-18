@@ -22,6 +22,8 @@ trait DomainTransformFunctions { self: DomainTransformer ⇒
 
   def countryName(countryCode: String): Option[String] = dataProvider.countries.get(countryCode).map(_.countryName)
 
+  def countryCodeBySalesOrg(salesOrg: String): Option[String] = dataProvider.countrySalesOrg.get(salesOrg).map(_.countryCode)
+
   // TODO consider to use a lib for this
   def splitAddress(columnName: String, domainFieldName: String)(implicit row: Row): (Option[String], Option[String], Option[String]) = {
     val streetOpt = originalValue(columnName)(row)
