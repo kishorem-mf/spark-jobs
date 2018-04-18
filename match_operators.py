@@ -118,9 +118,15 @@ def main(arguments):
     t.end_and_log()
 
     country_codes = utils.get_country_codes(arguments.country_code, preprocessed_operators)
+
+    if len(country_codes) == 1:
+        save_fun = utils.save_to_parquet_per_partition('countryCode', country_codes[0])
+    else:
+        save_fun = utils.save_to_parquet
+
     mode = 'overwrite'
     for i, country_code in enumerate(country_codes):
-        if i == 1:
+        if i >= 1:
             mode = 'append'
         t = utils.Timer('Running for country {}'.format(country_code), LOGGER)
         grouped_matches = match_operators_for_country(spark,
@@ -130,7 +136,7 @@ def main(arguments):
                                                       arguments.threshold)
         t.end_and_log()
         if arguments.output_path:
-            utils.save_to_parquet(grouped_matches, arguments.output_path, mode)
+            save_fun(grouped_matches, arguments.output_path, mode)
         else:
             utils.print_stats_operators(grouped_matches, arguments.n_top, arguments.threshold)
     preprocessed_operators.unpersist()
