@@ -113,7 +113,3 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         t.set_upstream([operators_to_parquet])
         t.set_downstream([merge_operators])
     merge_operators >> operators_to_acm >> terminate_cluster
-
-
-
-
