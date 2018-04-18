@@ -56,13 +56,13 @@ def join_ingested_daily_with_integrated_operators(spark, ingested_daily, integra
                                                   country_code, n_top, threshold):
     ingested_daily_1country = (
         ingested_daily
-        .filter(sf.col('countryCode') == country_code)
-        .repartition('concatId')
+            .filter(sf.col('countryCode') == country_code)
+            .repartition('concatId')
     )
     integrated_1country = (
         integrated
-        .filter(sf.col('countryCode') == country_code)
-        .repartition('ohubId')
+            .filter(sf.col('countryCode') == country_code)
+            .repartition('ohubId')
     )
 
     similarity = match_strings(
@@ -81,26 +81,26 @@ def join_ingested_daily_with_integrated_operators(spark, ingested_daily, integra
     window = Window.partitionBy('i').orderBy(sf.desc('SIMILARITY'), 'j')
     best_match = (
         similarity
-        .withColumn('j', sf.first('j').over(window))
-        .drop_duplicates()
+            .withColumn('j', sf.first('j').over(window))
+            .drop_duplicates()
     )
 
     # Join on string_index to get back the concatId and ohubId
     matched_ingested_daily = (
         best_match
-        .join(ingested_daily_1country, ingested_daily_1country['string_index'] == best_match['i'])
-        .drop('string_index')
-        .selectExpr('j', 'SIMILARITY',
-                    'matching_string as matching_string_new', 'concatId')
-        .join(integrated_1country, sf.col('j') == integrated_1country['string_index'])
-        .drop('string_index')
-        .withColumn('countryCode', sf.lit(country_code))
-        .selectExpr('SIMILARITY',
-                    'countryCode',
-                    'matching_string_new',
-                    'matching_string as matching_string_old',
-                    'concatId',
-                    'ohubId as ohubId_matched')
+            .join(ingested_daily_1country, ingested_daily_1country['string_index'] == best_match['i'])
+            .drop('string_index')
+            .selectExpr('j', 'SIMILARITY',
+                        'matching_string as matching_string_new', 'concatId')
+            .join(integrated_1country, sf.col('j') == integrated_1country['string_index'])
+            .drop('string_index')
+            .withColumn('countryCode', sf.lit(country_code))
+            .selectExpr('SIMILARITY',
+                        'countryCode',
+                        'matching_string_new',
+                        'matching_string as matching_string_old',
+                        'concatId',
+                        'ohubId as ohubId_matched')
     )
     return matched_ingested_daily
 
@@ -118,13 +118,14 @@ def main(arguments):
     country_codes_ingested = utils.get_country_codes(arguments.country_code, ingested_daily,
                                                      MINIMUM_ENTRIES_PER_COUNTRY)
     country_codes_integrated = utils.get_country_codes(arguments.country_code, integrated)
-    country_codes = set(country_codes_ingested) & set(country_codes_integrated)
+    country_codes = list(set(country_codes_ingested) & set(country_codes_integrated))
 
-    if len(country_codes) > 1:
-        mode = 'overwrite'
+    if len(country_codes) == 1:
+        save_fun = utils.save_to_parquet_per_partition('countryCode', country_codes[0])
     else:
-        mode = 'append'
+        save_fun = utils.save_to_parquet
 
+    mode = 'overwrite'
     for i, country_code in enumerate(country_codes):
         if i >= 1:
             mode = 'append'
@@ -155,9 +156,9 @@ def main(arguments):
 
         LOGGER.info('Write to parquet for country {}'.format(country_code))
         if arguments.updated_integrated_output_path is not None:
-            utils.save_to_parquet(updated_integrated, arguments.updated_integrated_output_path, mode)
+            save_fun(updated_integrated, arguments.updated_integrated_output_path, mode)
         if arguments.unmatched_output_path is not None:
-            utils.save_to_parquet(unmatched, arguments.unmatched_output_path, mode)
+            save_fun(unmatched, arguments.unmatched_output_path, mode)
 
 
 if __name__ == '__main__':
