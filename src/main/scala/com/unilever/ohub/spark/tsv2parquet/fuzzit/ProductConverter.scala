@@ -115,7 +115,7 @@ object ProductConverter extends FuzzitDomainGateKeeper[Product] {
         portionUnit                     = Option.empty,
         preparation                     = Option.empty,
         productCodes                    = List.empty,
-        productId                       = Some(UUID.randomUUID().toString),
+        productId                       = Some(productId),
         productType                     = Option.empty,
         solutionCopy                    = Option.empty,
         subBrandCode                    = Option.empty,

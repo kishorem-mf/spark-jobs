@@ -1,4 +1,4 @@
-package com.unilever.ohub.spark.parquet
+package com.unilever.ohub.spark.upsert
 
 import org.apache.spark.sql.SparkSession
 import com.unilever.ohub.spark.SparkJob

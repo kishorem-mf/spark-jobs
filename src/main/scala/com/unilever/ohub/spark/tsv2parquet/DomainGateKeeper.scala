@@ -3,7 +3,6 @@ package com.unilever.ohub.spark.tsv2parquet
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.api.java.StorageLevels
 import org.apache.spark.sql._
 
 import scala.reflect.runtime.universe._
