@@ -105,7 +105,7 @@ with DAG('ohub_operators', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
             'parameters': [intermediate_bucket.format(date=one_day_ago, fn='operators_matched'),
-                           ingested_bucket.format(date=one_day_ago, fn='operators_unmatched'),
+                           intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched'),
                            intermediate_bucket.format(date=one_day_ago, fn='golden_records_new')]
         })
 
