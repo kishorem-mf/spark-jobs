@@ -39,6 +39,7 @@ pipelines:
     - step:
         name: Deploy to databricks fs
         image: timvancann/databricks-cli
+        deployment: production
         script:
           - touch ~/.databrickscfg
           - echo "[DEFAULT]" >> ~/.databrickscfg
