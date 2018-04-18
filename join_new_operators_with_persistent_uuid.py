@@ -54,16 +54,14 @@ def preprocess_for_matching(ddf: DataFrame, id_column: str, drop_if_name_is_null
 
 def join_ingested_daily_with_integrated_operators(spark, ingested_daily, integrated,
                                                   country_code, n_top, threshold):
-    ingested_daily_1country = (
-        ingested_daily
-            .filter(sf.col('countryCode') == country_code)
-            .repartition('concatId')
-    )
-    integrated_1country = (
-        integrated
-            .filter(sf.col('countryCode') == country_code)
-            .repartition('ohubId')
-    )
+    ingested_daily_1country = (ingested_daily
+                               .filter(sf.col('countryCode') == country_code)
+                               .repartition('concatId')
+                               )
+    integrated_1country = (integrated
+                           .filter(sf.col('countryCode') == country_code)
+                           .repartition('ohubId')
+                           )
 
     similarity = match_strings(
         spark,
@@ -79,28 +77,27 @@ def join_ingested_daily_with_integrated_operators(spark, ingested_daily, integra
     )
 
     window = Window.partitionBy('i').orderBy(sf.desc('SIMILARITY'), 'j')
-    best_match = (
-        similarity
-            .withColumn('j', sf.first('j').over(window))
-            .drop_duplicates()
-    )
+    best_match = (similarity
+                  .withColumn('j', sf.first('j').over(window))
+                  .drop_duplicates()
+                  )
 
     # Join on string_index to get back the concatId and ohubId
     matched_ingested_daily = (
         best_match
-            .join(ingested_daily_1country, ingested_daily_1country['string_index'] == best_match['i'])
-            .drop('string_index')
-            .selectExpr('j', 'SIMILARITY',
-                        'matching_string as matching_string_new', 'concatId')
-            .join(integrated_1country, sf.col('j') == integrated_1country['string_index'])
-            .drop('string_index')
-            .withColumn('countryCode', sf.lit(country_code))
-            .selectExpr('SIMILARITY',
-                        'countryCode',
-                        'matching_string_new',
-                        'matching_string as matching_string_old',
-                        'concatId',
-                        'ohubId as ohubId_matched')
+        .join(ingested_daily_1country, ingested_daily_1country['string_index'] == best_match['i'])
+        .drop('string_index')
+        .selectExpr('j', 'SIMILARITY',
+                    'matching_string as matching_string_new', 'concatId')
+        .join(integrated_1country, sf.col('j') == integrated_1country['string_index'])
+        .drop('string_index')
+        .withColumn('countryCode', sf.lit(country_code))
+        .selectExpr('SIMILARITY',
+                    'countryCode',
+                    'matching_string_new',
+                    'matching_string as matching_string_old',
+                    'concatId',
+                    'ohubId as ohubId_matched')
     )
     return matched_ingested_daily
 
