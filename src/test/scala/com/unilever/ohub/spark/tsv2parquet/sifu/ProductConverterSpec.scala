@@ -3,16 +3,17 @@ package com.unilever.ohub.spark.tsv2parquet.sifu
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.{ Product, TestProducts }
-import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeperDatasetSpec
 
-class ProductConverterSpec extends DomainGateKeeperDatasetSpec[Product] with TestProducts {
+class ProductConverterSpec extends SifuDomainGateKeeperDatasetSpec[Product] with TestProducts {
 
-  private[tsv2parquet] override val SUT = ProductConverter
+  private[tsv2parquet] override val SUT = new SifuProductConverter {
+    override protected[sifu] def sifuDataProvider: SifuDataProvider = new TestSifuDataProvider()
+  }
 
   describe("sifu product converter") {
     it("should convert a product correctly from a valid api input") {
 
-      runJobWith(Seq(TestProducts.sifuProductResponse), SUT.countryAndLanguages) { actualDataSet ⇒
+      runJobWith() { actualDataSet ⇒
         actualDataSet.count() shouldBe 229
 
         val actualProduct = actualDataSet.head()
@@ -111,4 +112,9 @@ class ProductConverterSpec extends DomainGateKeeperDatasetSpec[Product] with Tes
       }
     }
   }
+}
+
+class TestSifuDataProvider() extends SifuDataProvider {
+  override def productsFromApi(countryCode: String, languageKey: String, sifuSelection: String, pageSize: Int, pages: Int): Seq[SifuProductResponse] =
+    Seq(TestProducts.sifuProductResponse)
 }

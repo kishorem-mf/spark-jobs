@@ -44,13 +44,18 @@ trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T, SifuPr
 
   protected[sifu] def sifuSelection: String
 
+  protected[sifu] def sifuDataProvider: SifuDataProvider
+
   override def read(spark: SparkSession, storage: Storage, input: String): Dataset[SifuProductResponse] = {
+    read(spark, storage, input, sifuDataProvider)
+  }
+
+  protected[sifu] def read(spark: SparkSession, storage: Storage, input: String, sifuDataProvider: SifuDataProvider): Dataset[SifuProductResponse] = {
     import spark.implicits._
 
     val jsons = countryAndLanguages
-      .flatMap { case (country, lang) ⇒ storage.productsFromApi(country, lang, sifuSelection, PAGE_SIZE, PAGES) }
+      .flatMap { case (country, lang) ⇒ sifuDataProvider.productsFromApi(country, lang, sifuSelection, PAGE_SIZE, PAGES) }
     spark
       .createDataset(jsons)
   }
-
 }
