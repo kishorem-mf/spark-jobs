@@ -6,7 +6,7 @@ import org.apache.spark.sql.{ Dataset, Row, SparkSession }
 
 import scala.reflect.runtime.universe._
 
-abstract class DomainCsvGateKeeper[DomainType <: DomainEntity: TypeTag]
+abstract class CsvDomainGateKeeper[DomainType <: DomainEntity: TypeTag]
   extends DomainGateKeeper[DomainType, Row] {
 
   protected[tsv2parquet] def fieldSeparator: String

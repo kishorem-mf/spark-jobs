@@ -3,9 +3,9 @@ package com.unilever.ohub.spark.tsv2parquet.fuzzit
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.Operator
-import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeperCsvSpec
+import com.unilever.ohub.spark.tsv2parquet.CsvDomainGateKeeperSpec
 
-class OperatorConverterSpec extends DomainGateKeeperCsvSpec[Operator] {
+class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
 
   private[tsv2parquet] override val SUT = OperatorConverter
 

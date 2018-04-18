@@ -6,14 +6,14 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.Dataset
 
-object DomainGateKeeperCsvSpec {
+object CsvDomainGateKeeperSpec {
   type InputFile = String
 }
 
-trait DomainGateKeeperCsvSpec[DomainType <: DomainEntity] extends SparkJobSpec {
-  import DomainGateKeeperCsvSpec._
+trait CsvDomainGateKeeperSpec[DomainType <: DomainEntity] extends SparkJobSpec {
+  import CsvDomainGateKeeperSpec._
 
-  private[tsv2parquet] val SUT: DomainCsvGateKeeper[DomainType]
+  private[tsv2parquet] val SUT: CsvDomainGateKeeper[DomainType]
   private[tsv2parquet] val outputFile = ""
 
   def testDataProvider(): DomainDataProvider = TestDomainDataProvider()

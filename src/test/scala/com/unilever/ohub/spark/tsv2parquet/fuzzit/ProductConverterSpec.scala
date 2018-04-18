@@ -1,9 +1,9 @@
 package com.unilever.ohub.spark.tsv2parquet.fuzzit
 
 import com.unilever.ohub.spark.domain.entity.{ Product, TestProducts }
-import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeperCsvSpec
+import com.unilever.ohub.spark.tsv2parquet.CsvDomainGateKeeperSpec
 
-class ProductConverterSpec extends DomainGateKeeperCsvSpec[Product] with TestProducts {
+class ProductConverterSpec extends CsvDomainGateKeeperSpec[Product] with TestProducts {
 
   private[tsv2parquet] override val SUT = ProductConverter
 
