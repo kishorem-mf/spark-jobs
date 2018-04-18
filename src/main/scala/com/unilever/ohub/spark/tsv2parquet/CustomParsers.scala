@@ -48,7 +48,6 @@ object CustomParsers {
         ("20" + s.takeRight(2) + s.slice(3, 5) + s.take(2)).concat(" 00:00:00")
       case s: String ⇒
         throw new IllegalArgumentException(s"Could not parse [$s] as DateTimeStampOption")
-        s
     }
     new Timestamp(timestampFormatter.get.parse(str).getTime)
   }
@@ -131,7 +130,9 @@ object CustomParsers {
     }
   }
 
-  def toInt(input: String): Int = input.toInt
+  def toInt: String ⇒ Int = input ⇒ input.toInt
+
+  def toLong: String ⇒ Long = input ⇒ input.toLong
 
   def parseNumberOrAverageFromRange(input: String): Int =
     input match {

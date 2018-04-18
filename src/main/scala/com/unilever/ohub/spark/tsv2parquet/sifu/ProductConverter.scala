@@ -32,7 +32,7 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
         isActive                        = true,
         isGoldenRecord                  = true,
         ohubId                          = Some(UUID.randomUUID().toString),
-        name                            = transformOrError("name", "name", mandatory = true, identity, row.name).get,
+        name                            = mandatory("name", "name", row.name),
         sourceEntityId                  = sourceEntityId,
         sourceName                      = sourceName,
         ohubCreated                     = ohubCreated,
@@ -84,16 +84,16 @@ object ProductConverter extends SifuDomainGateKeeper[Product] {
         isUnileverProduct               = row.isUnileverProduct,
         itemType                        = row.itemType,
         language                        = row.language, // todo convert
-        lastModifiedDate                = transformOrError("lastModifiedDate", "lastModifiedDate", mandatory = false, parseDateTimeForPattern(dateTimePattern = sifuDate), row.lastModifiedDate),
+        lastModifiedDate                = optional("lastModifiedDate", "lastModifiedDate", row.lastModifiedDate, parseDateTimeForPattern(dateTimePattern = sifuDate)),
         nameSlug                        = row.nameSlug,
         number                          = row.number,
         nutrientTypes                   = row.nutrientTypes.getOrElse(List.empty),
         nutrientValues                  = row.nutrientValues.getOrElse(List.empty),
-        orderScore                      = transformOrError("orderScore", "orderScore", mandatory = false, toInt, row.orderScore),
+        orderScore                      = optional("orderScore", "orderScore",row.orderScore, toLong),
         packagingCode                   = row.packagingCode,
         packagingName                   = row.packagingName,
         packshotUrl                     = row.packshotUrl,
-        portionSize                     = transformOrError("portionSize", "portionSize", mandatory = false, parseBigDecimalUnsafe, row.portionSize), // todo convert
+        portionSize                     = optional("portionSize", "portionSize", row.portionSize, parseBigDecimalUnsafe), // todo convert
         portionUnit                     = row.portionUnit,
         preparation                     = row.preparation,
         productCodes                    = row.productCodes.getOrElse(List.empty),
