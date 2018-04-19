@@ -30,42 +30,20 @@ MINIMUM_DOCUMENT_FREQUENCY = 2
 VOCABULARY_SIZE = 1500
 LOGGER = None
 
-# create udf for use in spark later
-udf_remove_strange_chars_to_lower_and_trim = sf.udf(utils.remove_strange_chars_to_lower_and_trim)
-udf_remove_spaces_strange_chars_and_to_lower = sf.udf(utils.remove_strange_chars_to_lower_and_trim)
-
-
-def clean_fields(ddf: DataFrame) -> DataFrame:
-    return (ddf
-            .withColumn('nameCleansed', udf_remove_strange_chars_to_lower_and_trim(sf.col('name')))
-            .withColumn('cityCleansed', udf_remove_spaces_strange_chars_and_to_lower(sf.col('city')))
-            .withColumn('streetCleansed', sf.concat_ws('',
-                                                       udf_remove_strange_chars_to_lower_and_trim(sf.col('street')),
-                                                       sf.col('houseNumber')))
-            .withColumn('zipCodeCleansed', udf_remove_spaces_strange_chars_and_to_lower(sf.col('zipCode')))
-            )
-
 
 def preprocess_operators(ddf: DataFrame) -> DataFrame:
     """Create a unique ID and the string that is used for matching and select only necessary columns"""
     w = Window.partitionBy('countryCode').orderBy(sf.asc('id'))
-    ddf = clean_fields(ddf)
-    return (ddf
-            .na.drop(subset=['nameCleansed'])
-            .withColumnRenamed('concatId', 'id')
-            .fillna('')
-            # create matching-string
-            .withColumn('match_name',
-                        sf.concat_ws(' ',
-                                     sf.col('nameCleansed'),
-                                     sf.col('cityCleansed'),
-                                     sf.col('streetCleansed'),
-                                     sf.col('zipCodeCleansed')))
-            .withColumn('match_name', sf.regexp_replace('match_name', utils.REGEX, ''))
-            .withColumn('match_name', sf.trim(sf.regexp_replace('match_name', '\s+', ' ')))
+    ddf = utils.clean_fields(ddf, 'name', 'city', 'street', 'houseNumber', 'zipCode')
+
+    ddf = (ddf.na.drop(subset=['nameCleansed'])
+           .withColumnRenamed('concatId', 'id')
+           .fillna(''))
+
+    return (utils.create_matching_string(ddf)
             .withColumn('name_index', sf.row_number().over(w) - 1)
-            .select('name_index', 'id', 'match_name', 'countryCode')
-            .withColumnRenamed('match_name', 'name'))
+            .select('name_index', 'id', 'matching_string', 'countryCode')
+            .withColumnRenamed('matching_string', 'name'))
 
 
 def join_original_columns(grouped_similarity: DataFrame, operators: DataFrame, country_code: str) -> DataFrame:

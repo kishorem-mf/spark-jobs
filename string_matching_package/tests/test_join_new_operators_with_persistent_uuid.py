@@ -1,4 +1,4 @@
-import match_operators as victim
+import join_new_operators_with_persistent_uuid as victim
 
 
 class TestPreprocessing(object):
@@ -14,15 +14,22 @@ class TestPreprocessing(object):
         return spark.createDataFrame(self.data).toDF('id', 'countryCode', 'name', 'city', 'street', 'houseNumber',
                                                      'zipCode')
 
+    def test_should_not_drop_null_names(self, spark):
+        ddf = self.create_ddf(spark)
+        res = victim.preprocess_for_matching(ddf, 'id').collect()
+
+        assert len(res) == 4
+        assert ['1', '2', '3', '4'] == list(sorted([_[2] for _ in res]))
+
     def test_should_drop_null_names(self, spark):
         ddf = self.create_ddf(spark)
-        res = victim.preprocess_operators(ddf).collect()
+        res = victim.preprocess_for_matching(ddf, 'id', True).collect()
 
         assert len(res) == 3
-        assert ['2', '3', '4'] == [_[1] for _ in res]
+        assert ['2', '3', '4'] == list(sorted([_[2] for _ in res]))
 
     def test_match_string_should_be_concat_from_fields(self, spark):
         ddf = self.create_ddf(spark)
 
-        res = victim.preprocess_operators(ddf).select('name').collect()
+        res = victim.preprocess_for_matching(ddf, 'id', True).select('matching_string').collect()
         assert res[0][0] == 'dave mustaine amsterdam baravenue14b 5312be'
