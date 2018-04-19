@@ -34,13 +34,13 @@ LOGGER = None
 def preprocess_operators(ddf: DataFrame) -> DataFrame:
     """Create a unique ID and the string that is used for matching and select only necessary columns"""
     w = Window.partitionBy('countryCode').orderBy(sf.asc('id'))
-    ddf = utils.clean_fields(ddf, 'name', 'city', 'street', 'houseNumber', 'zipCode')
+    ddf = utils.clean_operator_fields(ddf, 'name', 'city', 'street', 'houseNumber', 'zipCode')
 
     ddf = (ddf.na.drop(subset=['nameCleansed'])
            .withColumnRenamed('concatId', 'id')
            .fillna(''))
 
-    return (utils.create_matching_string(ddf)
+    return (utils.create_operator_matching_string(ddf)
             .withColumn('name_index', sf.row_number().over(w) - 1)
             .select('name_index', 'id', 'matching_string', 'countryCode')
             .withColumnRenamed('matching_string', 'name'))

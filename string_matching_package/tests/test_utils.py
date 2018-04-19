@@ -60,7 +60,7 @@ class TestCleaning(object):
                                                     'zipCode')
 
         res = (victim
-               .clean_fields(ddf, 'name', 'city', 'street', 'houseNumber', 'zipCode')
+               .clean_operator_fields(ddf, 'name', 'city', 'street', 'houseNumber', 'zipCode')
                .select('nameCleansed', 'cityCleansed', 'streetCleansed', 'zipCodeCleansed')
                .collect()
                )
@@ -80,5 +80,5 @@ class TestMatchingString(object):
     def test_match_string_should_be_concat_from_fields(self, spark):
         ddf = spark.createDataFrame(self.data).toDF('nameCleansed', 'cityCleansed', 'streetCleansed', 'zipCodeCleansed')
 
-        res = victim.create_matching_string(ddf).select('matching_string').collect()
+        res = victim.create_operator_matching_string(ddf).select('matching_string').collect()
         assert res[0][0] == 'dave mustaine amsterdam baravenue14b 5312be'

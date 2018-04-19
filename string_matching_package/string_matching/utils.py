@@ -101,7 +101,7 @@ udf_remove_strange_chars_to_lower_and_trim = sf.udf(remove_strange_chars_to_lowe
 udf_remove_spaces_strange_chars_and_to_lower = sf.udf(remove_strange_chars_to_lower_and_trim)
 
 
-def clean_fields(ddf: DataFrame, name_col, city_col, street_col, housenr_col, zip_col) -> DataFrame:
+def clean_operator_fields(ddf: DataFrame, name_col, city_col, street_col, housenr_col, zip_col) -> DataFrame:
     return (ddf
             .withColumn('nameCleansed', udf_remove_strange_chars_to_lower_and_trim(sf.col(name_col)))
             .withColumn('cityCleansed', udf_remove_spaces_strange_chars_and_to_lower(sf.col(city_col)))
@@ -112,7 +112,7 @@ def clean_fields(ddf: DataFrame, name_col, city_col, street_col, housenr_col, zi
             )
 
 
-def create_matching_string(ddf: DataFrame):
+def create_operator_matching_string(ddf: DataFrame):
     return (ddf
             .fillna('')
             .withColumn('matching_string',

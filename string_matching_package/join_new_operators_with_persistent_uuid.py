@@ -35,9 +35,9 @@ def preprocess_for_matching(ddf: DataFrame, id_column: str, drop_if_name_is_null
     if drop_if_name_is_null:
         ddf = ddf.na.drop(subset=['name'])
 
-    ddf = utils.clean_fields(ddf, 'name', 'city', 'street', 'houseNumber', 'zipCode')
+    ddf = utils.clean_operator_fields(ddf, 'name', 'city', 'street', 'houseNumber', 'zipCode')
 
-    return (utils.create_matching_string(ddf)
+    return (utils.create_operator_matching_string(ddf)
             .withColumn('string_index', sf.row_number().over(w) - 1)
             .select('countryCode', 'string_index', id_column, 'matching_string')
             )
