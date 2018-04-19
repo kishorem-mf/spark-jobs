@@ -5,4 +5,4 @@ build/
 dist/
 *.egg
 *.egg-info
-spark-warehous/
+spark-warehouse/
