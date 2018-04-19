@@ -8,7 +8,7 @@ pipelines:
   default:
     - step:
         name: Check PEP8 codestyle and run tests
-        image: continuumio/miniconda
+        image: timvancann/miniconda3-gcc
         script:
           - conda env create -f environment.yml
           - source activate airflow-dags
@@ -19,7 +19,7 @@ pipelines:
     master:
     - step:
         name: Check PEP8 codestyle and run tests
-        image: continuumio/miniconda
+        image: timvancann/miniconda3-gcc
         script:
           - conda env create -f environment.yml
           - source activate airflow-dags
