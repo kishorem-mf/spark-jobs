@@ -16,3 +16,4 @@ class TestPreprocessing(object):
 
         res = match_operators.preprocess_operators(ddf).collect()
         assert len(res) == 3
+        assert ['2', '3', '4'] == [_[1] for _ in res]
