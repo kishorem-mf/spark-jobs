@@ -54,15 +54,18 @@ def read_parquet(spark: SparkSession, fn: str, fraction: float) -> DataFrame:
 
 def get_country_codes(country_code_arg: str, ddf: DataFrame, minimum_entries=MINIMUM_ENTRIES_PER_COUNTRY) -> List[str]:
     count_per_country = ddf.groupby('countryCode').count()
-    LOGGER.info("Selecting countries with more than " + str(minimum_entries) + " entries")
+    if LOGGER is not None:
+        LOGGER.info("Selecting countries with more than " + str(minimum_entries) + " entries")
     codes = sorted(count_per_country[count_per_country['count'] > minimum_entries]
                    .select('countryCode')
                    .distinct()
                    .rdd.map(lambda r: r[0]).collect())
     if country_code_arg != 'all':
-        LOGGER.info("Selecting only union of all countries (with MINIMUM_ENTRIES_PER_COUNTRY) and: " + country_code_arg)
+        if LOGGER is not None:
+            LOGGER.info("Selecting only union of all countries (with MINIMUM_ENTRIES_PER_COUNTRY) and: " + country_code_arg)
         codes = set(codes) & set([country_code_arg])
-    LOGGER.info("Selected countries are: {}".format(codes))
+    if LOGGER is not None:
+        LOGGER.info("Selected countries are: {}".format(codes))
     return list(codes)
 
 
