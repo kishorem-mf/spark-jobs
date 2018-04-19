@@ -14,9 +14,9 @@ object ContactPersonConverter extends EmakinaDomainGateKeeper[ContactPerson] {
 
     implicit val source: Row = row
 
-    val countryCode = originalValue("COUNTRY_CODE")(row).get
-    val sourceEntityId = originalValue("EM_SOURCE_ID")(row).get
-    val operatorRefId = originalValue("OPERATOR_REF_ID")(row).get
+    val countryCode = mandatoryValue("COUNTRY_CODE", "countryCode")(row)
+    val sourceEntityId = mandatoryValue("EM_SOURCE_ID", "sourceEntityId")(row)
+    val operatorRefId = mandatoryValue("OPERATOR_REF_ID", "operatorConcatId")(row)
     val concatId = DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
     val operatorConcatId: String = DomainEntity.createConcatIdFromValues(countryCode, sourceName, operatorRefId)
     val ohubCreated = currentTimestamp()
@@ -25,13 +25,13 @@ object ContactPersonConverter extends EmakinaDomainGateKeeper[ContactPerson] {
 
     ContactPerson(
       concatId                      = concatId                                                                                                            ,
-      countryCode                   =   mandatory(  "COUNTRY_CODE",                   "countryCode"                                                      ),
+      countryCode                   = countryCode                                                                                                         ,
       customerType                  = ContactPerson.customerType                                                                                          ,
       ohubCreated                   = ohubCreated                                                                                                         ,
       ohubUpdated                   = ohubCreated                                                                                                         ,
       ohubId                        = Option.empty                                                                                                        ,
       isGoldenRecord                = false                                                                                                               ,
-      sourceEntityId                =   mandatory(  "EM_SOURCE_ID",                   "sourceEntityId"                                                   ),
+      sourceEntityId                = sourceEntityId                                                                                                      ,
       sourceName                    = sourceName                                                                                                          ,
       isActive                      = true                                                                                                                ,
       dateCreated                   = None                                                                                                                ,

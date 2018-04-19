@@ -48,6 +48,14 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
 
         assertMandatoryFieldException(domainFieldName, s"Couldn't apply transformation function on value 'Some(abc)'", actualException)
       }
+
+      "use mandatoryValue to retrieve a value and there is no value for an original column" in {
+        val row = new GenericRowWithSchema(List(null).toArray, StructType(List(StructField(originalColumnName, DataTypes.StringType, nullable = true))))
+
+        intercept[MandatoryFieldException] {
+          domainTransformer.mandatoryValue(originalColumnName, domainFieldName)(row)
+        }
+      }
     }
 
     "resolve a mandatory value" when {
@@ -57,6 +65,14 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
         val value: Long = domainTransformer.mandatory[Long](originalColumnName, domainFieldName, toLong)(row)
 
         value shouldBe 123456
+      }
+
+      "se mandatoryValue to retrieve a value and an original column has a valid value" in {
+        val row = new GenericRowWithSchema(List("123456").toArray, StructType(List(StructField(originalColumnName, DataTypes.StringType, nullable = true))))
+
+        val value: String = domainTransformer.mandatoryValue(originalColumnName, domainFieldName)(row)
+
+        value shouldBe "123456"
       }
     }
 
@@ -120,7 +136,7 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
 
         domainTransformer.useHeaders(Map(originalColumnName -> 0))
 
-        val value = domainTransformer.originalValue(originalColumnName)(row)
+        val value = domainTransformer.optionalValue(originalColumnName)(row)
         value shouldBe Some("123456")
       }
     }

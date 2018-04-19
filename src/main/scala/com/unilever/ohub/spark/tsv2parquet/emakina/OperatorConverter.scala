@@ -12,8 +12,8 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
     import transformer._
     implicit val source: Row = row
 
-    val countryCode = originalValue("COUNTRY_CODE")(row).get
-    val sourceEntityId = originalValue("EM_SOURCE_ID")(row).get
+    val countryCode = mandatoryValue("COUNTRY_CODE", "countryCode")(row)
+    val sourceEntityId = mandatoryValue("EM_SOURCE_ID", "sourceEntityId")(row)
     val concatId = DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
     val ohubCreated = currentTimestamp()
 
@@ -22,7 +22,7 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
     Operator(
       // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
       concatId                    = concatId                                                                                                           ,
-      countryCode                 = mandatory ( "COUNTRY_CODE",             "countryCode"                                                             ),
+      countryCode                 = countryCode                                                                                                        ,
       customerType                = Operator.customerType                                                                                              ,
       dateCreated                 = Option.empty                                                                                                       ,
       dateUpdated                 = Option.empty                                                                                                       ,
@@ -30,7 +30,7 @@ object OperatorConverter extends EmakinaDomainGateKeeper[Operator] {
       isGoldenRecord              = false                                                                                                              ,
       ohubId                      = None                                                                                                               ,
       name                        = mandatory ( "OPERATOR_NAME",            "name"                                                                    ),
-      sourceEntityId              = mandatory ( "EM_SOURCE_ID",             "sourceEntityId"                                                          ),
+      sourceEntityId              = sourceEntityId                                                                                                     ,
       sourceName                  = sourceName                                                                                                         ,
       ohubCreated                 = ohubCreated                                                                                                        ,
       ohubUpdated                 = ohubCreated                                                                                                        ,
