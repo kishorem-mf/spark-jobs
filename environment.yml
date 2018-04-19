@@ -2,10 +2,12 @@ name: name-matching
 channels:
   - defaults
 dependencies:
-  - python=3.5.4=h417fded_24
-  - wheel=0.30.0=py35hd3883cf_1
-  - cython=0.27.3=py35h6cdc64b_0
-  - numpy=1.14.0=py35h3dfced4_1
+  - python=3.5.4
+  - wheel=0.30.0
+  - cython=0.27.3
+  - numpy=1.14.0
   - setuptools=38.4.0=py35_0
   - scipy==1.0.0
   - pandas==0.22.0
+  - pytest==2.8.5
+  - pycodestyle==2.3.1
