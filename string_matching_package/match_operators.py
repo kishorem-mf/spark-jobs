@@ -23,7 +23,6 @@ from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
 from string_matching import utils
-from string_matching.spark_string_matching import match_strings
 
 MATRIX_CHUNK_ROWS = 500
 N_GRAMS = 2
@@ -85,6 +84,7 @@ def join_original_columns(grouped_similarity: DataFrame, operators: DataFrame, c
 
 def match_operators_for_country(spark: SparkSession, country_code: str, all_operators: DataFrame,
                                 n_top: int, threshold: float):
+    from string_matching.spark_string_matching import match_strings
     """Match operators for a single country"""
     LOGGER.info("Matching operators for country: " + country_code)
     operators = utils.select_and_repartition_country(all_operators, 'countryCode', country_code)

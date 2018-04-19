@@ -47,7 +47,7 @@ pipelines:
           - cat ~/.databrickscfg
 
           - databricks fs cp --overwrite dist/string_matching.egg dbfs:/libraries/name_matching/string_matching.egg
-          - databricks fs cp --overwrite match_operators.py dbfs:/libraries/name_matching/match_operators.py
-          - databricks fs cp --overwrite match_contacts.py dbfs:/libraries/name_matching/match_contacts.py
-          - databricks fs cp --overwrite join_new_operators_with_persistent_uuid.py dbfs:/libraries/name_matching/join_new_operators_with_persistent_uuid.py
+          - databricks fs cp --overwrite string_matching_package/match_operators.py dbfs:/libraries/name_matching/match_operators.py
+          - databricks fs cp --overwrite string_matching_package/match_contacts.py dbfs:/libraries/name_matching/match_contacts.py
+          - databricks fs cp --overwrite string_matching_package/join_new_operators_with_persistent_uuid.py dbfs:/libraries/name_matching/join_new_operators_with_persistent_uuid.py
 

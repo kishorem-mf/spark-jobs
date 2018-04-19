@@ -10,20 +10,20 @@ class TestGetCountries(object):
         countries = [('NL', 1), ('DE', 2), ('BE', 3), ('US', 101)]
         cls.country_data = [(k,) for k, v in countries for _ in range(v)]
 
-    def test_get_countries_should_by_default_select_over_100(self, spark):
+    def test_should_by_default_select_over_100(self, spark):
         ddf = spark.createDataFrame(self.country_data).toDF("countryCode")
         selected_countries = utils.get_country_codes('all', ddf)
         assert len(selected_countries) == 1
         assert selected_countries[0] == 'US'
 
-    def test_get_countries_should_return_given_sizes(self, spark):
+    def test_should_return_given_sizes(self, spark):
         ddf = spark.createDataFrame(self.country_data).toDF("countryCode")
         selected_countries = utils.get_country_codes('all', ddf, 2)
         assert len(selected_countries) == 2
         assert selected_countries[0] == 'BE'
         assert selected_countries[1] == 'US'
 
-    def test_get_countries_should_return_only_selected_country_if_large_enough(self, spark):
+    def test_should_return_only_selected_country_if_large_enough(self, spark):
         ddf = spark.createDataFrame(self.country_data).toDF("countryCode")
         selected_countries = utils.get_country_codes('NL', ddf, 2)
         assert len(selected_countries) == 0
