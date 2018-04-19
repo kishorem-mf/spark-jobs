@@ -14,7 +14,7 @@ def spark(request):
         shutil.rmtree('metastore_db')
         shutil.rmtree('derby.log')
         shutil.rmtree('.cache')
-    except:
+    except OSError:
         pass
     return (SparkSession
             .builder
