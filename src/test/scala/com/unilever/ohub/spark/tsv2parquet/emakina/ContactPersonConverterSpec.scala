@@ -27,7 +27,7 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
             isActive = true,
             isGoldenRecord = false,
             ohubId = None,
-            name = "TODO",
+            name = "Anika Henke",
             sourceEntityId = "b3a6208c-d7f6-44e2-80e2-f26d461f64c0",
             sourceName = "EMAKINA",
             ohubCreated = actualContactPerson.ohubCreated,
