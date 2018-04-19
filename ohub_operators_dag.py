@@ -93,7 +93,7 @@ with DAG('ohub_operators', default_args=default_args,
             spark_python_task={
                 'python_file': 'dbfs:/libraries/name_matching/match_operators.py',
                 'parameters': ['--input_file', intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched'),
-                               '--output_path', intermediate_bucket.format(date=one_day_ago, fn='operators_matched')
+                               '--output_path', intermediate_bucket.format(date=one_day_ago, fn='operators_matched'),
                                '--country_code', code]
             }
         ))
