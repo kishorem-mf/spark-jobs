@@ -15,7 +15,8 @@ case class TestDomainDataProvider(
       "SIFU" -> 4
     ),
     countrySalesOrg: Map[String, CountrySalesOrg] = Map(
-      "1030" -> CountrySalesOrg("NL", Some("1030"))
+      "1030" -> CountrySalesOrg("NL", Some("1030")),
+      "1611" -> CountrySalesOrg("DE", Some("1611"))
     )
 ) extends DomainDataProvider {
 }

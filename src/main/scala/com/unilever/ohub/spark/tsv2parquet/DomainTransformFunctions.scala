@@ -11,9 +11,9 @@ trait DomainTransformFunctions { self: DomainTransformer ⇒
   def dataProvider: DomainDataProvider
 
   def createConcatId(countryCodeColumn: String, sourceNameColumn: String, sourceEntityIdColumn: String)(implicit row: Row): String = {
-    val countryCode: String = originalValue(countryCodeColumn)(row).get
-    val sourceName: String = originalValue(sourceNameColumn)(row).get
-    val sourceEntityId: String = originalValue(sourceEntityIdColumn)(row).get
+    val countryCode: String = optionalValue(countryCodeColumn)(row).get
+    val sourceName: String = optionalValue(sourceNameColumn)(row).get
+    val sourceEntityId: String = optionalValue(sourceEntityIdColumn)(row).get
 
     DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
   }
@@ -22,9 +22,11 @@ trait DomainTransformFunctions { self: DomainTransformer ⇒
 
   def countryName(countryCode: String): Option[String] = dataProvider.countries.get(countryCode).map(_.countryName)
 
+  def countryCodeBySalesOrg(salesOrg: String): Option[String] = dataProvider.countrySalesOrg.get(salesOrg).map(_.countryCode)
+
   // TODO consider to use a lib for this
   def splitAddress(columnName: String, domainFieldName: String)(implicit row: Row): (Option[String], Option[String], Option[String]) = {
-    val streetOpt = originalValue(columnName)(row)
+    val streetOpt = optionalValue(columnName)(row)
 
     streetOpt.map { street ⇒
       val splitStreet = street.split(" ")

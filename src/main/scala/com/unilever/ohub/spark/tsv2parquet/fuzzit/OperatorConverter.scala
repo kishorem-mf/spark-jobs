@@ -57,95 +57,93 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
 
     useHeaders(fuzzitHeaders)
 
-      // format: OFF
+    // format: OFF
 
-      val sourceName                                    =   "FUZZIT"
-      val salesOrg                                      =   originalValue(SALES_ORG)(row).get
+    val sourceName                                    =   "FUZZIT"
+    val salesOrg                                      =   mandatoryValue(SALES_ORG, "countryCode")(row)
+    val countryCode                                   =   countryCodeBySalesOrg(salesOrg).get // TODO improve error message, don't do a .get here
+    val sourceEntityId                                =   mandatoryValue(CUSTOMER_UUID, "concatId")(row)
+    val concatNames                                   =   Seq(optionalValue(NAME_1)(row), optionalValue(NAME_2)(row)).flatten.mkString(" ")
+    val concatId                                      =   DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
+    val ohubCreated                                   =   currentTimestamp()
+    val (street, houseNumber, houseNumberExtension)   =   splitAddress(STREET, "street")
 
-      val countryCode                                   =   "DE" // TODO LOOKUP COUNTRY CODE BY SALES ORG !!!
+    // set additional fields first
 
-      val sourceEntityId                                =   originalValue(CUSTOMER_UUID)(row).get
-      val concatNames                                   =   Seq(originalValue(NAME_1)(row), originalValue(NAME_2)(row)).flatten.mkString(" ")
-      val concatId                                      =   DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
-      val ohubCreated                                   =   currentTimestamp()
-      val (street, houseNumber, houseNumberExtension)   =   splitAddress(STREET, "street")
+    additionalField(CAM_KEY, "germanChainId")
+    additionalField(CAM_TEXT, "germanChainName")
 
-      // set additional fields first
-
-      additionalField(CAM_KEY, "germanChainId")
-      additionalField(CAM_TEXT, "germanChainName")
-
-      Operator(
-        // fieldName                  mandatory   sourceFieldName           targetFieldName                 transformationFunction (unsafe)
-        concatId                    = concatId                                                                                                           ,
-        countryCode                 = countryCode                                                                                                        ,
-        customerType                = Operator.customerType                                                                                              ,
-        dateCreated                 = optional ( CREATION_DATE,            "dateCreated",                  parseDateTimeForPattern()                    ),
-        dateUpdated                 = optional ( CREATION_DATE,            "dateUpdated",                  parseDateTimeForPattern()                    ),
-        isActive                    = true                                                                                                               ,
-        isGoldenRecord              = false                                                                                                              ,
-        ohubId                      = None                                                                                                               ,
-        name                        = concatNames                                                                                                        ,
-        sourceEntityId              = mandatory ( CUSTOMER_UUID,            "sourceEntityId"                                                            ),
-        sourceName                  = sourceName                                                                                                         ,
-        ohubCreated                 = ohubCreated                                                                                                        ,
-        ohubUpdated                 = ohubCreated                                                                                                        ,
-        averagePrice                = None                                                                                                               ,
-        chainId                     = optional  ( CHAIN_KNOTEN,             "chainId"                                                                   ),
-        chainName                   = optional  ( CHAIN_NAME,               "chainName"                                                                 ),
-        channel                     = optional  ( CHANNEL_TEXT,             "channel"                                                                   ),
-        city                        = optional  ( CITY,                     "city"                                                                      ),
-        cookingConvenienceLevel     = None                                                                                                               ,
-        countryName                 = countryName(countryCode)                                                                                           ,
-        daysOpen                    = None                                                                                                               ,
-        distributorName             = None                                                                                                               ,
-        distributorOperatorId       = None                                                                                                               ,
-        emailAddress                = optional  ( EMAIL,                    "emailAddress"                                                              ),
-        faxNumber                   = optional  ( FAX,                      "faxNumber",                    cleanPhone(countryCode)                     ),
-        hasDirectMailOptIn          = None                                                                                                               ,
-        hasDirectMailOptOut         = None                                                                                                               ,
-        hasEmailOptIn               = None                                                                                                               ,
-        hasEmailOptOut              = None                                                                                                               ,
-        hasFaxOptIn                 = None                                                                                                               ,
-        hasFaxOptOut                = None                                                                                                               ,
-        hasGeneralOptOut            = None                                                                                                               ,
-        hasMobileOptIn              = None                                                                                                               ,
-        hasMobileOptOut             = None                                                                                                               ,
-        hasTelemarketingOptIn       = None                                                                                                               ,
-        hasTelemarketingOptOut      = None                                                                                                               ,
-        houseNumber                 = houseNumber                                                                                                        ,
-        houseNumberExtension        = houseNumberExtension                                                                                               ,
-        isNotRecalculatingOtm       = None                                                                                                               ,
-        isOpenOnFriday              = None                                                                                                               ,
-        isOpenOnMonday              = None                                                                                                               ,
-        isOpenOnSaturday            = None                                                                                                               ,
-        isOpenOnSunday              = None                                                                                                               ,
-        isOpenOnThursday            = None                                                                                                               ,
-        isOpenOnTuesday             = None                                                                                                               ,
-        isOpenOnWednesday           = None                                                                                                               ,
-        isPrivateHousehold          = None                                                                                                               ,
-        kitchenType                 = None                                                                                                               ,
-        mobileNumber                = None                                                                                                               ,
-        netPromoterScore            = None                                                                                                               ,
-        oldIntegrationId            = None                                                                                                               ,
-        otm                         = None                                                                                                               ,
-        otmEnteredBy                = None                                                                                                               ,
-        phoneNumber                 = optional  ( PHONE_1,                  "phoneNumber",                  cleanPhone(countryCode)                     ),
-        region                      = None                                                                                                               ,
-        salesRepresentative         = optional  ( SALES_REP,                "salesRepresentative"                                                       ),
-        state                       = None                                                                                                               ,
-        street                      = street                                                                                                             ,
-        subChannel                  = None                                                                                                               ,
-        totalDishes                 = None                                                                                                               ,
-        totalLocations              = None                                                                                                               ,
-        totalStaff                  = None                                                                                                               ,
-        vat                         = None                                                                                                               ,
-        webUpdaterId                = None                                                                                                               ,
-        weeksClosed                 = None                                                                                                               ,
-        zipCode                     = optional  ( ZIP,                      "zipCode"                                                                   ),
-        additionalFields            = additionalFields                                                                                                   ,
-        ingestionErrors             = errors
-      )
+    Operator(
+      // fieldName                  mandatory   sourceFieldName           targetFieldName                 transformationFunction (unsafe)
+      concatId                    = concatId                                                                                                           ,
+      countryCode                 = countryCode                                                                                                        ,
+      customerType                = Operator.customerType                                                                                              ,
+      dateCreated                 = optional ( CREATION_DATE,            "dateCreated",                  parseDateTimeForPattern()                    ),
+      dateUpdated                 = optional ( CREATION_DATE,            "dateUpdated",                  parseDateTimeForPattern()                    ),
+      isActive                    = true                                                                                                               ,
+      isGoldenRecord              = false                                                                                                              ,
+      ohubId                      = None                                                                                                               ,
+      name                        = concatNames                                                                                                        ,
+      sourceEntityId              = mandatory ( CUSTOMER_UUID,            "sourceEntityId"                                                            ),
+      sourceName                  = sourceName                                                                                                         ,
+      ohubCreated                 = ohubCreated                                                                                                        ,
+      ohubUpdated                 = ohubCreated                                                                                                        ,
+      averagePrice                = None                                                                                                               ,
+      chainId                     = optional  ( CHAIN_KNOTEN,             "chainId"                                                                   ),
+      chainName                   = optional  ( CHAIN_NAME,               "chainName"                                                                 ),
+      channel                     = optional  ( CHANNEL_TEXT,             "channel"                                                                   ),
+      city                        = optional  ( CITY,                     "city"                                                                      ),
+      cookingConvenienceLevel     = None                                                                                                               ,
+      countryName                 = countryName(countryCode)                                                                                           ,
+      daysOpen                    = None                                                                                                               ,
+      distributorName             = None                                                                                                               ,
+      distributorOperatorId       = None                                                                                                               ,
+      emailAddress                = optional  ( EMAIL,                    "emailAddress"                                                              ),
+      faxNumber                   = optional  ( FAX,                      "faxNumber",                    cleanPhone(countryCode)                     ),
+      hasDirectMailOptIn          = None                                                                                                               ,
+      hasDirectMailOptOut         = None                                                                                                               ,
+      hasEmailOptIn               = None                                                                                                               ,
+      hasEmailOptOut              = None                                                                                                               ,
+      hasFaxOptIn                 = None                                                                                                               ,
+      hasFaxOptOut                = None                                                                                                               ,
+      hasGeneralOptOut            = None                                                                                                               ,
+      hasMobileOptIn              = None                                                                                                               ,
+      hasMobileOptOut             = None                                                                                                               ,
+      hasTelemarketingOptIn       = None                                                                                                               ,
+      hasTelemarketingOptOut      = None                                                                                                               ,
+      houseNumber                 = houseNumber                                                                                                        ,
+      houseNumberExtension        = houseNumberExtension                                                                                               ,
+      isNotRecalculatingOtm       = None                                                                                                               ,
+      isOpenOnFriday              = None                                                                                                               ,
+      isOpenOnMonday              = None                                                                                                               ,
+      isOpenOnSaturday            = None                                                                                                               ,
+      isOpenOnSunday              = None                                                                                                               ,
+      isOpenOnThursday            = None                                                                                                               ,
+      isOpenOnTuesday             = None                                                                                                               ,
+      isOpenOnWednesday           = None                                                                                                               ,
+      isPrivateHousehold          = None                                                                                                               ,
+      kitchenType                 = None                                                                                                               ,
+      mobileNumber                = None                                                                                                               ,
+      netPromoterScore            = None                                                                                                               ,
+      oldIntegrationId            = None                                                                                                               ,
+      otm                         = None                                                                                                               ,
+      otmEnteredBy                = None                                                                                                               ,
+      phoneNumber                 = optional  ( PHONE_1,                  "phoneNumber",                  cleanPhone(countryCode)                     ),
+      region                      = None                                                                                                               ,
+      salesRepresentative         = optional  ( SALES_REP,                "salesRepresentative"                                                       ),
+      state                       = None                                                                                                               ,
+      street                      = street                                                                                                             ,
+      subChannel                  = None                                                                                                               ,
+      totalDishes                 = None                                                                                                               ,
+      totalLocations              = None                                                                                                               ,
+      totalStaff                  = None                                                                                                               ,
+      vat                         = None                                                                                                               ,
+      webUpdaterId                = None                                                                                                               ,
+      weeksClosed                 = None                                                                                                               ,
+      zipCode                     = optional  ( ZIP,                      "zipCode"                                                                   ),
+      additionalFields            = additionalFields                                                                                                   ,
+      ingestionErrors             = errors
+    )
     // format: ON
   }
 

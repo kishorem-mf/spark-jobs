@@ -24,7 +24,7 @@ class DomainTransformer(val dataProvider: DomainDataProvider) extends DomainTran
     mandatory[String](originalColumnName, domainFieldName, identity)(row)
 
   def mandatory[T](originalColumnName: String, domainFieldName: String, transformFn: String ⇒ T)(implicit row: Row): T = {
-    val valueOpt: Option[String] = originalValue(originalColumnName)(row)
+    val valueOpt: Option[String] = optionalValue(originalColumnName)(row)
 
     transformOrError[T](originalColumnName, domainFieldName, mandatory = true, valueOpt, transformFn).get
   }
@@ -34,13 +34,13 @@ class DomainTransformer(val dataProvider: DomainDataProvider) extends DomainTran
   }
 
   def optional(originalColumnName: String, domainFieldName: String)(implicit row: Row): Option[String] = {
-    val valueOpt: Option[String] = originalValue(originalColumnName)(row)
+    val valueOpt: Option[String] = optionalValue(originalColumnName)(row)
 
     transformOrError(originalColumnName, domainFieldName, mandatory = false, valueOpt, identity)
   }
 
   def optional[T](originalColumnName: String, domainFieldName: String, transformFn: String ⇒ T)(implicit row: Row): Option[T] = {
-    val valueOpt: Option[String] = originalValue(originalColumnName)(row)
+    val valueOpt: Option[String] = optionalValue(originalColumnName)(row)
 
     transformOrError(originalColumnName, domainFieldName, mandatory = false, valueOpt, transformFn)
   }
@@ -50,7 +50,7 @@ class DomainTransformer(val dataProvider: DomainDataProvider) extends DomainTran
   }
 
   def additionalField[T](originalColumnName: String, additionalFieldName: String)(implicit row: Row): Option[String] = {
-    val valueOpt: Option[String] = originalValue(originalColumnName)(row)
+    val valueOpt: Option[String] = optionalValue(originalColumnName)(row)
     val result = transformOrError(originalColumnName, additionalFieldName, mandatory = false, valueOpt, identity)
 
     result.foreach { additionalValue ⇒
@@ -83,9 +83,18 @@ class DomainTransformer(val dataProvider: DomainDataProvider) extends DomainTran
     }
   }
 
-  def originalValue(columnName: String)(row: Row): Option[String] = {
+  def optionalValue(columnName: String)(row: Row): Option[String] = {
     val fieldIndex = getFieldIndex(columnName)(row)
     Option(row.getString(fieldIndex)).filterNot(_.trim.isEmpty) // treat empty strings as None
+  }
+
+  def mandatoryValue(columnName: String, domainFieldName: String)(row: Row): String = {
+    val valueOpt = optionalValue(columnName)(row)
+
+    if (valueOpt.isEmpty) {
+      throw MandatoryFieldException(domainFieldName, s"No value found for '$columnName'")
+    }
+    valueOpt.get
   }
 
   private def getFieldIndex(columnName: String)(row: Row): Int =
