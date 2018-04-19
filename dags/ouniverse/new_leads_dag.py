@@ -3,8 +3,7 @@ from datetime import datetime
 from airflow import DAG
 from airflow.models import Variable
 
-from custom_operators.databricks_functions import \
-    DatabricksCreateClusterOperator, \
+from dags.custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, DatabricksStartClusterOperator
 
