@@ -8,7 +8,8 @@ pipelines:
           - conda env create -f environment.yml
           - source activate name-matching
           - pycodestyle --show-source .
-          - cd string_matching_package && python -m pytest tests/
+          - cd string_matching_package
+          - python -m pytest --cov-config .coveragerc tests/
     - step:
         name: Test building EGG
         image: timvancann/miniconda3-gcc

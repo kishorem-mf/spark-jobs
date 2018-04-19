@@ -31,3 +31,18 @@ class TestGetCountries(object):
         selected_countries = utils.get_country_codes('BE', ddf, 2)
         assert len(selected_countries) == 1
         assert selected_countries[0] == 'BE'
+
+
+class TestGroupMatches(object):
+
+    @classmethod
+    def setup_class(cls):
+        cls.data = [(1, 2), (1, 3), (4, 3), ]
+
+    def test_each_i_should_only_appear_once(self, spark):
+        ddf = spark.createDataFrame(self.data).toDF('i', 'j')
+
+        res = utils.group_matches(ddf).collect()
+
+        assert res[0] == (3, 1)
+        assert res[1] == (2, 1)
