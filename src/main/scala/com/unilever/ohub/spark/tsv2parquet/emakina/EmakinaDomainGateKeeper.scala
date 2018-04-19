@@ -1,9 +1,9 @@
 package com.unilever.ohub.spark.tsv2parquet.emakina
 
 import com.unilever.ohub.spark.domain.DomainEntity
-import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeper
+import com.unilever.ohub.spark.tsv2parquet.CsvDomainGateKeeper
 
-trait EmakinaDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T] {
+trait EmakinaDomainGateKeeper[T <: DomainEntity] extends CsvDomainGateKeeper[T] {
   override final val fieldSeparator = ";"
   override final val hasHeaders = true
   override final val partitionByValue = Seq("countryCode")

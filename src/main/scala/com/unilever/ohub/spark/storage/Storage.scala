@@ -1,16 +1,14 @@
 package com.unilever.ohub.spark.storage
 
 import java.util.Properties
-
-import com.unilever.ohub.spark.data.{ ChannelMapping, CountryRecord }
-import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.{ Column, DataFrame, Dataset, Encoder, Row, SaveMode, SparkSession }
-import java.io.{ File, FileOutputStream }
+import org.apache.spark.sql._
 
-import scala.io.Source
+import com.unilever.ohub.spark.data.ChannelMapping
+import com.unilever.ohub.spark.sql.JoinType
 
 trait Storage {
+
   def readFromCsv(
     location: String,
     fieldSeparator: String,
@@ -28,10 +26,6 @@ trait Storage {
   def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
 
   def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq()): Unit
-
-  def createCountries: Dataset[CountryRecord]
-
-  def sourcePreference: Map[String, Int]
 
   def channelMappings(
     dbUrl: String,
@@ -53,7 +47,6 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .option("header", hasHeaders)
       .option("sep", fieldSeparator)
       .option("inferSchema", value = false)
-      //      .option("mode", "FAILFAST") // let's fail fast for now
       .csv(location)
   }
 
@@ -96,41 +89,6 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .mode(SaveMode.Overwrite)
       .partitionBy(partitionBy: _*)
       .parquet(location)
-  }
-
-  override val createCountries: Dataset[CountryRecord] = {
-    val file = "country_codes.csv"
-    val in = this.getClass.getResourceAsStream(s"/$file")
-    val out = new FileOutputStream(new File(file))
-
-    Iterator
-      .continually(in.read)
-      .takeWhile(_ != -1)
-      .foreach(b ⇒ out.write(b))
-
-    out.close()
-    in.close()
-
-    readFromCsv(file, fieldSeparator = ",")
-      .select(
-        $"ISO3166_1_Alpha_2" as "countryCode",
-        $"official_name_en" as "countryName",
-        $"ISO4217_currency_alphabetic_code" as "currencyCode"
-      )
-      .where($"countryCode".isNotNull and $"countryName".isNotNull and $"currencyCode".isNotNull)
-      .as[CountryRecord]
-  }
-
-  override def sourcePreference: Map[String, Int] = {
-    Source
-      .fromInputStream(this.getClass.getResourceAsStream("/source_preference.tsv"))
-      .getLines()
-      .toSeq
-      .filter(_.nonEmpty)
-      .filterNot(_.equals("SOURCE\tPRIORITY"))
-      .map(_.split("\t"))
-      .map(lineParts ⇒ lineParts(0) -> lineParts(1).toInt)
-      .toMap
   }
 
   private def readJdbcTable(
@@ -176,5 +134,4 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       )
       .as[ChannelMapping]
   }
-
 }

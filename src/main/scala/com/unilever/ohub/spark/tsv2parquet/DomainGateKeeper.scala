@@ -18,17 +18,13 @@ object DomainGateKeeper {
   }
 }
 
-abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends SparkJob {
+abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] extends SparkJob {
   import DomainGateKeeper._
   import DomainGateKeeper.implicits._
 
-  protected[tsv2parquet] def fieldSeparator: String
-
-  protected[tsv2parquet] def hasHeaders: Boolean
-
   protected[tsv2parquet] def partitionByValue: Seq[String]
 
-  protected[tsv2parquet] def toDomainEntity: DomainTransformer ⇒ Row ⇒ DomainType
+  protected[tsv2parquet] def toDomainEntity: DomainTransformer ⇒ RowType ⇒ DomainType
 
   protected[tsv2parquet] def postValidate: DomainDataProvider ⇒ DomainEntity ⇒ Unit = dataProvider ⇒ DomainEntity.postConditions(dataProvider)
 
@@ -36,7 +32,9 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
 
   override final val optionalFilePaths = Array("STRICT_INGESTION")
 
-  private def transform(transformFn: Row ⇒ DomainType)(postValidateFn: DomainEntity ⇒ Unit): Row ⇒ Either[ErrorMessage, DomainType] =
+  protected def read(spark: SparkSession, storage: Storage, input: String): Dataset[RowType]
+
+  private def transform(transformFn: RowType ⇒ DomainType)(postValidateFn: DomainEntity ⇒ Unit): RowType ⇒ Either[ErrorMessage, DomainType] =
     row ⇒
       try {
         val entity = transformFn(row)
@@ -60,12 +58,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends Spa
     }
     val transformer = DomainTransformer(dataProvider)
 
-    val result = storage
-      .readFromCsv(
-        location = inputFile,
-        fieldSeparator = fieldSeparator,
-        hasHeaders = hasHeaders
-      )
+    val result = read(spark, storage, inputFile)
       .map(transform(toDomainEntity(transformer))(postValidate(dataProvider)))
       .distinct()
 

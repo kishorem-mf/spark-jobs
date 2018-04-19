@@ -13,9 +13,16 @@ object CustomParsers {
 
   def parseDateTimeForPattern(dateTimePattern: String = "yyyy-MM-dd HH:mm:ss.SS")(input: String): Timestamp = {
     val pattern = DateTimeFormatter.ofPattern(dateTimePattern)
-    LocalDateTime.parse(input, pattern) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
-    Timestamp.valueOf(input)
+    val parsed = LocalDateTime.parse(input, pattern) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
+    Timestamp.valueOf(parsed)
   }
+
+  // formats for dates not in standard format yyyy-MM-dd HH:mm:ss
+  val fuzzitFileNameDate = "yyyyMMddHHmmss"
+  val fileShortDate = "yyyyMMdd" // can also use below format including time
+  val ufsDate = "yyyyMMdd HH:mm:ss" // sifu api, file interface
+  val sifuDate = "yyyyMMddHHmmss" // sifu?
+  val acmDate = "dd/MM/yyyy HH:mm:ss"
 
   private val timestampFormatter = new ThreadLocal[SimpleDateFormat]() {
     override protected def initialValue = new SimpleDateFormat("yyyyMMdd HH:mm:ss")
@@ -41,29 +48,9 @@ object CustomParsers {
         ("20" + s.takeRight(2) + s.slice(3, 5) + s.take(2)).concat(" 00:00:00")
       case s: String ⇒
         throw new IllegalArgumentException(s"Could not parse [$s] as DateTimeStampOption")
-        s
     }
     new Timestamp(timestampFormatter.get.parse(str).getTime)
   }
-
-  def parseDateUnsafe(formatStr: String) = {
-    val format = new SimpleDateFormat(formatStr)
-    (s: String) ⇒ new Timestamp(format.parse(s).getTime)
-  }
-
-  // formats for dates not in standard format yyyy-MM-dd HH:mm:ss
-  val fuzzitFileNameDate = "yyyyMMddHHmmss"
-  val fileShortDate = "yyyyMMdd" // can also use below format including time
-  val ufsDate = "yyyyMMdd HH:mm:ss" // sifu api, file interface
-  val sifuDate = "dd-MM-yy" // sifu?
-  val acmDate = "dd/MM/yyyy HH:mm:ss"
-
-  // parsers for dates not in standard format yyyy-MM-dd HH:mm:ss
-  val parseFuzzitFileNameDateUnsafe = parseDateUnsafe(fuzzitFileNameDate)
-  val parseFileShortDateUnsafe = parseDateUnsafe(fileShortDate)
-  val parseUfsDateUnsafe = parseDateUnsafe(ufsDate) // sifu, file interface
-  val parseSifuDateUnsafe = parseDateUnsafe(sifuDate)
-  val parseAcmDateUnsafe = parseDateUnsafe(acmDate)
 
   def parseBigDecimalUnsafe(input: String): BigDecimal = input match {
     case inputString: String if inputString.matches("[-,0-9]+") ⇒ BigDecimal(inputString.replace(",", "."))
@@ -143,7 +130,9 @@ object CustomParsers {
     }
   }
 
-  def toInt(input: String): Int = input.toInt
+  def toInt: String ⇒ Int = input ⇒ input.toInt
+
+  def toLong: String ⇒ Long = input ⇒ input.toLong
 
   def parseNumberOrAverageFromRange(input: String): Int =
     input match {

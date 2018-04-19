@@ -3,6 +3,7 @@ package com.unilever.ohub.spark.merging
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.storage.Storage
+import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import org.apache.spark.sql.functions._
 
@@ -35,6 +36,10 @@ object OperatorUpdateGoldenRecord extends SparkJob with OperatorGoldenRecord {
   override val neededFilePaths = Array("OPERATOR_INPUT_FILE", "OUTPUT_FILE")
 
   override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
+    run(spark, filePaths, storage, DomainDataProvider(spark, storage))
+  }
+
+  protected[merging] def run(spark: SparkSession, filePaths: Product, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     import spark.implicits._
 
     val (operatorInputFile: String, outputFile: String) = filePaths
@@ -42,7 +47,7 @@ object OperatorUpdateGoldenRecord extends SparkJob with OperatorGoldenRecord {
     val operators = storage
       .readFromParquet[Operator](operatorInputFile)
 
-    val transformed = transform(spark, operators, storage.sourcePreference)
+    val transformed = transform(spark, operators, dataProvider.sourcePreferences)
 
     storage
       .writeToParquet(transformed, outputFile, partitionBy = Seq("countryCode"))

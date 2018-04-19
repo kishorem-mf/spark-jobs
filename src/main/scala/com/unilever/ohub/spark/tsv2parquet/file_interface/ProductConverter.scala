@@ -93,6 +93,7 @@ object ProductConverter extends FileDomainGateKeeper[Product] {
         portionUnit                     = Option.empty,
         preparation                     = Option.empty,
         productCodes                    = List.empty,
+        productId                       = Some(UUID.randomUUID().toString),
         productType                     = Option.empty,
         solutionCopy                    = Option.empty,
         subBrandCode                    = Option.empty,

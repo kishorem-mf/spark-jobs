@@ -3,9 +3,9 @@ package com.unilever.ohub.spark.tsv2parquet.file_interface
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.{ Product, TestProducts }
-import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeperSpec
+import com.unilever.ohub.spark.tsv2parquet.CsvDomainGateKeeperSpec
 
-class ProductConverterSpec extends DomainGateKeeperSpec[Product] with TestProducts {
+class ProductConverterSpec extends CsvDomainGateKeeperSpec[Product] with TestProducts {
 
   private[tsv2parquet] override val SUT = ProductConverter
 
@@ -35,6 +35,7 @@ class ProductConverterSpec extends DomainGateKeeperSpec[Product] with TestProduc
           currency = Some("GBP"),
           eanConsumerUnit = Some("812234000000"),
           eanDistributionUnit = Some("112234000000"),
+          productId = actualProduct.productId,
           `type` = Some("Product"),
           unit = Some("Cases"),
           unitPrice = Some(BigDecimal(4))

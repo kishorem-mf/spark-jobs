@@ -21,30 +21,37 @@ class DomainTransformer(val dataProvider: DomainDataProvider) extends DomainTran
   }
 
   def mandatory(originalColumnName: String, domainFieldName: String)(implicit row: Row): String =
-    mandatory(originalColumnName, domainFieldName, identity)(row)
+    mandatory[String](originalColumnName, domainFieldName, identity)(row)
 
   def mandatory[T](originalColumnName: String, domainFieldName: String, transformFn: String ⇒ T)(implicit row: Row): T = {
-    val originalValueFn: Row ⇒ Option[String] = originalValue(originalColumnName)
+    val valueOpt: Option[String] = originalValue(originalColumnName)(row)
 
-    readAndTransform[T](originalColumnName, domainFieldName, mandatory = true, originalValueFn, transformFn)(row).get
+    transformOrError[T](originalColumnName, domainFieldName, mandatory = true, valueOpt, transformFn).get
+  }
+
+  def mandatory(originalColumnName: String, domainFieldName: String, valueOpt: Option[String]): String = {
+    transformOrError(originalColumnName, domainFieldName, mandatory = true, valueOpt, identity).get
   }
 
   def optional(originalColumnName: String, domainFieldName: String)(implicit row: Row): Option[String] = {
-    val originalValueFn: Row ⇒ Option[String] = originalValue(originalColumnName)
+    val valueOpt: Option[String] = originalValue(originalColumnName)(row)
 
-    readAndTransform(originalColumnName, domainFieldName, mandatory = false, originalValueFn, identity)(row)
+    transformOrError(originalColumnName, domainFieldName, mandatory = false, valueOpt, identity)
   }
 
   def optional[T](originalColumnName: String, domainFieldName: String, transformFn: String ⇒ T)(implicit row: Row): Option[T] = {
-    val originalValueFn: Row ⇒ Option[String] = originalValue(originalColumnName)
+    val valueOpt: Option[String] = originalValue(originalColumnName)(row)
 
-    readAndTransform(originalColumnName, domainFieldName, mandatory = false, originalValueFn, transformFn)(row)
+    transformOrError(originalColumnName, domainFieldName, mandatory = false, valueOpt, transformFn)
+  }
+
+  def optional[T](originalColumnName: String, domainFieldName: String, valueOpt: Option[String], transformFn: String ⇒ T): Option[T] = {
+    transformOrError(originalColumnName, domainFieldName, mandatory = false, valueOpt, transformFn)
   }
 
   def additionalField[T](originalColumnName: String, additionalFieldName: String)(implicit row: Row): Option[String] = {
-    val originalValueFn: Row ⇒ Option[String] = originalValue(originalColumnName)
-
-    val result = readAndTransform(originalColumnName, additionalFieldName, mandatory = false, originalValueFn, identity)(row)
+    val valueOpt: Option[String] = originalValue(originalColumnName)(row)
+    val result = transformOrError(originalColumnName, additionalFieldName, mandatory = false, valueOpt, identity)
 
     result.foreach { additionalValue ⇒
       additionalFields = additionalFields.updated(additionalFieldName, additionalValue)
@@ -52,9 +59,8 @@ class DomainTransformer(val dataProvider: DomainDataProvider) extends DomainTran
     result
   }
 
-  private def readAndTransform[T](originalColumnName: String, domainFieldName: String, mandatory: Boolean, originalValueFn: Row ⇒ Option[String], transformFn: String ⇒ T)(implicit row: Row): Option[T] = {
-    val valueOpt: Option[String] = originalValueFn(row)
-
+  private def transformOrError[T](originalColumnName: String, domainFieldName: String, mandatory: Boolean,
+    valueOpt: Option[String], transformFn: String ⇒ T): Option[T] = {
     if (mandatory && valueOpt.isEmpty) {
       throw MandatoryFieldException(domainFieldName, s"No value found for '$originalColumnName'")
     }
