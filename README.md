@@ -4,13 +4,49 @@ This repository holds the AirFlow dags for OHUB2.0 and O-Universe.
 
 To start writing a DAG for AirFlow have a look at the existing DAGs or the [AirFlow tutorial](https://airflow.apache.org/tutorial.html).
 
+## Development
+Put your DAGS into the `dags` folder, The `dags/custom_operators` is reserved for implementation of operators not present in apache-airflow. Use the word `dag` in the python files that are actual DAGs to separate configuration settings from DAGs. Placing DAGs in subfolders to group them is fine and will be picked up by airflow, however they are not grouped in the UI. To make sure they are grouped in the UI, come up with a prefix for the group and use that in the DAG `id`.
+
+### Running tests
+To run tests and  codestyle. Create and activate the python environment:
+
+- Download and install [miniconda](https://conda.io/miniconda.html)
+- `cd` into this repo in a terminal
+- Create and activate the `conda` environment with
+```
+conda env create -f environment.yml
+source activate airflow-dags
+```
+Now you can run the tests with:
+```
+python -m pytest --cov-config .coveragerc --cov=./dags tests
+```
+And check the codestyle with:
+```
+pycodestyle --show-source .
+```
+
+### Local UI
+Requirements: 
+
+- Ensure that you have logged in to azure with `az login`
+- Ensure that you have [docker](https://docs.docker.com/install/) installed and running
+
+Run the `local_dev.sh` script. The airflow UI should now be available at `http://localhost:8070`
+
+To check if DAGs can be loaded properly, you can use
+```
+docker exec -i ulohub_airflow_dags airflow list_dags
+```
+Any errors in any DAG setup will be reported using that command.
+
 ## Deployment
 Every merge to `master` automatically deploys all dags to a file share in Azure (storage account: `ulohub2sadevne`, fileshare: `airflow-dags`. This fileshare is mounted as volume in the AirFlow kubernetes deployment. Every change on this fileshare is therefore directly picked up by AirFlow. Thus the DAGs are refreshed.
 
 Note: Files deleted in Git are NOT deleted on the fileshare. If DAGs are removed from the master branch they have to be manually removed from the fileshare. Also: removed DAGs will still show up in the AirFlow UI since they are not removed from the AirFlow metadata database. You have to manually do this if you want to.
 
 
-## Viewing the UI
+## Viewing the remote UI on Azure
 The UI has been shielded behind local port forwarding. To access the UI:
 
 - Install the [`az` cli tools](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
