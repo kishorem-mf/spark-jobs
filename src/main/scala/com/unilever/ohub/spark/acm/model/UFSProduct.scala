@@ -1,4 +1,4 @@
-package com.unilever.ohub.spark.data.ufs
+package com.unilever.ohub.spark.acm.model
 
 case class UFSProduct(
     // Deliberate misspelling as the consuming system requires it :'(

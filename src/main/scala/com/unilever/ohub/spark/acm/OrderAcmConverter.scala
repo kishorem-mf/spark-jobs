@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.acm
 
 import com.unilever.ohub.spark.SparkJob
-import com.unilever.ohub.spark.data.ufs.UFSOrder
+import com.unilever.ohub.spark.acm.model.UFSOrder
 import com.unilever.ohub.spark.data.OrderRecord
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }

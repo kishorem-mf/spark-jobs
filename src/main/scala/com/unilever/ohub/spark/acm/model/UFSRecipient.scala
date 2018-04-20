@@ -1,4 +1,4 @@
-package com.unilever.ohub.spark.data.ufs
+package com.unilever.ohub.spark.acm.model
 
 // Data Model: OPR_ORIG_INTEGRATION_ID can be misleading for Ohub 2.0
 // as this will contain the new OHUB_OPERATOR_ID and OPR_LNKD_INTEGRATION_ID will contain OPERATOR_CONCAT_ID
@@ -24,7 +24,7 @@ case class UFSRecipient(
     PHONE_NUMBER: Option[String],
     FAX_NUMBER: Option[String],
     STREET: Option[String],
-    HOUSENUMBER: String,
+    HOUSENUMBER: String, // TODO why is this not an option, when everything else is?
     ZIPCODE: Option[String],
     CITY: Option[String],
     COUNTRY: Option[String],
