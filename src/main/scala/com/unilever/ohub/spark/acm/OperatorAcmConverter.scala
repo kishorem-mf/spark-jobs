@@ -2,29 +2,26 @@ package com.unilever.ohub.spark.acm
 
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.data.ChannelMapping
-import com.unilever.ohub.spark.data.ufs.AcmOperator
+import com.unilever.ohub.spark.acm.model.UFSOperator
 import com.unilever.ohub.spark.domain.entity.Operator
-import com.unilever.ohub.spark.generic.StringFunctions
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-object OperatorAcmConverter extends SparkJob {
-  private val boolAsString = (bool: Boolean) ⇒ if (bool) "Y" else "N"
-  private val clean = (str: String) ⇒ StringFunctions.removeGenericStrangeChars(str)
+object OperatorAcmConverter extends SparkJob with AcmTransformationFunctions {
 
   def transform(
     spark: SparkSession,
     channelMappings: Dataset[ChannelMapping],
     operators: Dataset[Operator]
-  ): Dataset[AcmOperator] = {
+  ): Dataset[UFSOperator] = {
     import spark.implicits._
 
     val ufsOperators = operators
       .filter(_.isGoldenRecord)
       .map(operator ⇒
 
-        AcmOperator(
+        UFSOperator(
           OPR_ORIG_INTEGRATION_ID = operator.ohubId.getOrElse("UNKNOWN"),
           OPR_LNKD_INTEGRATION_ID = operator.concatId,
           GOLDEN_RECORD_FLAG = boolAsString(operator.isGoldenRecord),
@@ -122,13 +119,9 @@ object OperatorAcmConverter extends SparkJob {
     log.info(s"Generating operator ACM csv file from [$inputFile] to [$outputFile]")
 
     val channelMappings = storage.channelMappings(postgressUrl, postgressDb, postgressUsername, postgressPassword)
-
-    val operators = storage
-      .readFromParquet[Operator](inputFile)
-
+    val operators = storage.readFromParquet[Operator](inputFile)
     val transformed = transform(spark, channelMappings, operators)
 
-    storage
-      .writeToCsv(transformed, outputFile, partitionBy = Seq("COUNTRY_CODE"))
+    storage.writeToCsv(transformed, outputFile, partitionBy = Seq("COUNTRY_CODE"))
   }
 }

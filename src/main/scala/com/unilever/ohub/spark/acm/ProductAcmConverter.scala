@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.acm
 
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.data.ProductRecord
-import com.unilever.ohub.spark.data.ufs.UFSProduct
+import com.unilever.ohub.spark.acm.model.UFSProduct
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
