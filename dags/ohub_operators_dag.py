@@ -83,7 +83,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     match_unmatched_tasks = []
     for code in operator_country_codes:
-        match_new_tasks.append(DatabricksSubmitRunOperator(
+        match_unmatched_tasks.append(DatabricksSubmitRunOperator(
             task_id='match_unmatched_operators_{}'.format(code),
             existing_cluster_id=cluster_id,
             databricks_conn_id=databricks_conn_id,
