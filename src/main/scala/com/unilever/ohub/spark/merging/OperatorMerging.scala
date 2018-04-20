@@ -10,7 +10,7 @@ import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import org.apache.spark.sql.functions.collect_list
 
-object OperatorMerging extends SparkJob with OperatorGoldenRecord {
+object OperatorMerging extends SparkJob with GoldenRecordPicking[Operator] {
 
   private case class MatchingResult(sourceId: String, targetId: String, countryCode: String)
 
@@ -74,11 +74,9 @@ object OperatorMerging extends SparkJob with OperatorGoldenRecord {
     import spark.implicits._
 
     val (matchingInputFile: String, operatorInputFile: String, outputFile: String) = filePaths
-
     log.info(s"Merging operators from [$matchingInputFile] and [$operatorInputFile] to [$outputFile]")
 
-    val operators = storage
-      .readFromParquet[Operator](operatorInputFile)
+    val operators = storage.readFromParquet[Operator](operatorInputFile)
 
     val matches = storage
       .readFromParquet[MatchingResult](
@@ -92,7 +90,6 @@ object OperatorMerging extends SparkJob with OperatorGoldenRecord {
 
     val transformed = transform(spark, operators, matches, dataProvider.sourcePreferences)
 
-    storage
-      .writeToParquet(transformed, outputFile, partitionBy = Seq("countryCode"))
+    storage.writeToParquet(transformed, outputFile, partitionBy = Seq("countryCode"))
   }
 }

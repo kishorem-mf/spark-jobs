@@ -27,6 +27,7 @@ object ContactPersonMerging2 extends SparkJob {
         JoinType.LeftOuter
       )
       .map {
+        // TODO it's probably smarter to add another id to contact persons that refers to the operator ohub id, then both ref id's are present.
         case (contactPerson, maybeOperator) ⇒
           val refOperatorId = Option(maybeOperator).map(_.ohubId).getOrElse("REF_OPERATOR_UNKNOWN")
           contactPerson.copy(
@@ -61,6 +62,7 @@ object ContactPersonMerging2 extends SparkJob {
 
     val contactPersonMerging = storage
       .readFromParquet[GoldenContactPersonRecord](contactPersonMergingInputFile)
+      // TODO this should not be necessary, since the domain provides a concatId already
       .map(line ⇒ { // need the operator ref to have the data of a concat id
         val contact = line.contactPerson
         val concatId = StringFunctions.createConcatId(

@@ -3,11 +3,11 @@ package com.unilever.ohub.spark.merging
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.TestOperators
+import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
 
-class OperatorGoldenRecordSpec extends SparkJobSpec with TestOperators {
+class GoldenRecordPickingSpec extends SparkJobSpec with TestOperators {
 
-  case class Foo() extends OperatorGoldenRecord
+  case class Foo() extends GoldenRecordPicking[Operator]
 
   describe("picking golden record") {
     it("should pick the operator with highest sourcePreference") {
