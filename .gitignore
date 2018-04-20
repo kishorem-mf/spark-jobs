@@ -5,6 +5,3 @@ __pycache__/
 .pytest_cache/
 .coverage
 logs/
-airflow.cfg
-airflow.db
-unittests.cfg
