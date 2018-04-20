@@ -4,6 +4,35 @@ This repository holds the AirFlow dags for OHUB2.0 and O-Universe.
 
 To start writing a DAG for AirFlow have a look at the existing DAGs or the [AirFlow tutorial](https://airflow.apache.org/tutorial.html).
 
+## Development
+Put your DAGS into the `dags` folder, The `dags/custom_operators` is reserved for implementation of operators not present in apache-airflow. Use the word `dag` in the python files that are actual DAGs to separate configuration settings from DAGs. Placing DAGs in subfolders to group them is fine and will be picked up by airflow, however they are not grouped in the UI. To make sure they are grouped in the UI, come up with a prefix for the group and use that in the DAG `id`.
+
+To run tests, codestyle and see the dags in a local UI. Create and activate the python environment:
+
+- Download and install [miniconda](https://conda.io/miniconda.html)
+- `cd` into this repo in a terminal
+- Create and activate the `conda` environment with
+```
+conda env create -f environment.yml
+source activate airflow-dags
+```
+- Run the `local_dev.sh` script to further setup local development. This will 
+  
+  - Install any remaining dependencies
+- Set some local ENV variables such that airflow does not need a config:
+```
+export AIRFLOW_HOME="`pwd`"
+export AIRFLOW__CORE__LOAD_EXAMPLES="False"
+export AIRFLOW__CORE__DAGS_FOLDER="$AIRFLOW_HOME/dags"
+export AIRFLOW__CORE__EXECUTOR="SequentialExecutor"
+export AIRFLOW__CORE__BASE_LOG_FOLDER="$AIRFLOW_HOME/logs"
+```
+- Fire up the airflow webserver with:
+```
+airflow webserver
+```
+
+
 ## Deployment
 Every merge to `master` automatically deploys all dags to a file share in Azure (storage account: `ulohub2sadevne`, fileshare: `airflow-dags`. This fileshare is mounted as volume in the AirFlow kubernetes deployment. Every change on this fileshare is therefore directly picked up by AirFlow. Thus the DAGs are refreshed.
 
