@@ -1,0 +1,11 @@
+name: airflow-dags
+channels:
+  - defaults
+dependencies:
+  - python=2.7.14
+  - pycodestyle==2.3.1
+  - pytest>=2.10
+  - pytest-cov==2.5.1
+  - pip:
+    - apache-airflow==1.9.0
+    - requests-mock==1.4.0

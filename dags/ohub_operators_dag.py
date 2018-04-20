@@ -60,9 +60,9 @@ with DAG('ohub_operators', default_args=default_args,
         }
     )
 
-    tasks = []
+    match_new_tasks = []
     for code in operator_country_codes:
-        tasks.append(DatabricksSubmitRunOperator(
+        match_new_tasks.append(DatabricksSubmitRunOperator(
             task_id=('match_new_operators_with_integrated_operators_{}'.format(code)),
             existing_cluster_id=cluster_id,
             databricks_conn_id=databricks_conn_id,
@@ -81,19 +81,22 @@ with DAG('ohub_operators', default_args=default_args,
             }
         ))
 
-    match_unmatched_operators = DatabricksSubmitRunOperator(
-        task_id='match_unmatched_operators',
-        existing_cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'egg': egg}
-        ],
-        spark_python_task={
-            'python_file': 'dbfs:/libraries/name_matching/match_operators.py',
-            'parameters': ['--input_file', intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched'),
-                           '--output_path', intermediate_bucket.format(date=one_day_ago, fn='operators_matched')]
-        }
-    )
+    match_unmatched_tasks = []
+    for code in operator_country_codes:
+        match_new_tasks.append(DatabricksSubmitRunOperator(
+            task_id='match_unmatched_operators_{}'.format(code),
+            existing_cluster_id=cluster_id,
+            databricks_conn_id=databricks_conn_id,
+            libraries=[
+                {'egg': egg}
+            ],
+            spark_python_task={
+                'python_file': 'dbfs:/libraries/name_matching/match_operators.py',
+                'parameters': ['--input_file', intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched'),
+                               '--output_path', intermediate_bucket.format(date=one_day_ago, fn='operators_matched'),
+                               '--country_code', code]
+            }
+        ))
 
     merge_operators = DatabricksSubmitRunOperator(
         task_id='merge_operators',
@@ -165,10 +168,11 @@ with DAG('ohub_operators', default_args=default_args,
     )
 
     start_cluster >> uninstall_old_libraries >> operators_to_parquet
-    for t in tasks:
-        t.set_upstream([operators_to_parquet])
-        t.set_downstream([update_golden_records, match_unmatched_operators])
+    for i, _ in enumerate(operator_country_codes):
+        match_new_tasks[i].set_upstream([operators_to_parquet])
+        match_new_tasks[i].set_downstream([update_golden_records, match_unmatched_tasks[i]])
+        match_unmatched_tasks[i].set_downstream([merge_operators])
     update_golden_records >> combine_to_create_integrated
-    match_unmatched_operators >> merge_operators >> combine_to_create_integrated
+    merge_operators >> combine_to_create_integrated
     combine_to_create_integrated >> update_operators_table >> terminate_cluster
     combine_to_create_integrated >> operators_to_acm >> terminate_cluster

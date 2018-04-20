@@ -1,0 +1,12 @@
+[report]
+fail_under = 14
+
+[run]
+omit =
+    ./dags/*dag*.py
+    ./dags/*__init__.py
+    ./dags/config.py
+    ./dags/operators_config.py
+
+include =
+    ./dags/custom_operators/*.py

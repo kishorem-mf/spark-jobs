@@ -8,30 +8,27 @@ pipelines:
   default:
     - step:
         name: Check PEP8 codestyle and run tests
-        image: python:2.7.14
-        caches:
-          - pip
+        image: timvancann/miniconda3-gcc
         script:
-          - pip install pycodestyle==2.3.1 apache-airflow==1.9.0
-#          - pytest tests
+          - conda env create -f environment.yml
+          - source activate airflow-dags
           - pycodestyle --show-source .
+          - python -m pytest --cov-config .coveragerc --cov=./dags tests
 
   branches:
     master:
     - step:
         name: Check PEP8 codestyle and run tests
-        image: python:2.7.14
-        caches:
-          - pip
+        image: timvancann/miniconda3-gcc
         script:
-          - pip install pycodestyle==2.3.1 apache-airflow==1.9.0
-#          - pytest tests
+          - conda env create -f environment.yml
+          - source activate airflow-dags
           - pycodestyle --show-source .
+          - python -m pytest --cov-config .coveragerc --cov=./dags tests
     - step:
         name: Deploy to azure blob store
         image: microsoft/azure-cli
         deployment: production
         script:
           - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
-          - rm -rf README.md bitbucket-pipelines.yml .gitignore setup.cfg .git .cache .pytest* tests
-          - az storage file upload-batch --source . --destination airflow-dags --account-key ${AZ_AIRFLOW_STORAGE_KEY} --account-name ${AZ_AIRFLOW_STORAGE_ACCOUNT}
+          - az storage file upload-batch --source dags/ --destination airflow-dags --account-key ${AZ_AIRFLOW_STORAGE_KEY} --account-name ${AZ_AIRFLOW_STORAGE_ACCOUNT}
