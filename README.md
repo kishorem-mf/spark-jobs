@@ -7,7 +7,8 @@ To start writing a DAG for AirFlow have a look at the existing DAGs or the [AirF
 ## Development
 Put your DAGS into the `dags` folder, The `dags/custom_operators` is reserved for implementation of operators not present in apache-airflow. Use the word `dag` in the python files that are actual DAGs to separate configuration settings from DAGs. Placing DAGs in subfolders to group them is fine and will be picked up by airflow, however they are not grouped in the UI. To make sure they are grouped in the UI, come up with a prefix for the group and use that in the DAG `id`.
 
-To run tests, codestyle and see the dags in a local UI. Create and activate the python environment:
+### Running tests
+To run tests and  codestyle and see the dags in a local UI. Create and activate the python environment:
 
 - Download and install [miniconda](https://conda.io/miniconda.html)
 - `cd` into this repo in a terminal
@@ -16,21 +17,22 @@ To run tests, codestyle and see the dags in a local UI. Create and activate the 
 conda env create -f environment.yml
 source activate airflow-dags
 ```
-- Run the `local_dev.sh` script to further setup local development. This will 
-  
-  - Install any remaining dependencies
-- Set some local ENV variables such that airflow does not need a config:
+Now you can run the tests with:
 ```
-export AIRFLOW_HOME="`pwd`"
-export AIRFLOW__CORE__LOAD_EXAMPLES="False"
-export AIRFLOW__CORE__DAGS_FOLDER="$AIRFLOW_HOME/dags"
-export AIRFLOW__CORE__EXECUTOR="SequentialExecutor"
-export AIRFLOW__CORE__BASE_LOG_FOLDER="$AIRFLOW_HOME/logs"
+python -m pytest --cov-config .coveragerc --cov=./dags tests
 ```
-- Fire up the airflow webserver with:
+And check the codestyle with:
 ```
-airflow webserver
+pycodestyle --show-source .
 ```
+
+### Local UI
+Requirements: 
+
+- Ensure that you have logged in to azure with `az login`
+- Ensure that you have [docker](https://docs.docker.com/install/) installed and running
+
+Run the `local_dev.sh` script. The airflow UI should now be available at `http://localhost:8070`
 
 
 ## Deployment
@@ -39,7 +41,7 @@ Every merge to `master` automatically deploys all dags to a file share in Azure 
 Note: Files deleted in Git are NOT deleted on the fileshare. If DAGs are removed from the master branch they have to be manually removed from the fileshare. Also: removed DAGs will still show up in the AirFlow UI since they are not removed from the AirFlow metadata database. You have to manually do this if you want to.
 
 
-## Viewing the UI
+## Viewing the remote UI on Azure
 The UI has been shielded behind local port forwarding. To access the UI:
 
 - Install the [`az` cli tools](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
