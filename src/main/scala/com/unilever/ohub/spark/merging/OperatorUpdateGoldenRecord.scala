@@ -7,12 +7,11 @@ import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import org.apache.spark.sql.functions._
 
-object OperatorUpdateGoldenRecord extends SparkJob with OperatorGoldenRecord {
+object OperatorUpdateGoldenRecord extends SparkJob with GoldenRecordPicking[Operator] {
 
   case class oHubIdAndRecord(ohubId: String, operator: Operator)
 
   def markGoldenRecord(sourcePreference: Map[String, Int])(operators: Seq[Operator]): Seq[Operator] = {
-
     val goldenRecord = pickGoldenRecord(sourcePreference, operators)
     operators.map(o ⇒ o.copy(isGoldenRecord = (o == goldenRecord)))
   }
