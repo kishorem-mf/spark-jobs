@@ -27,7 +27,6 @@ trait DomainEntity extends Product {
   val sourceEntityId: String
   val sourceName: String
   val isActive: Boolean
-  val name: String
   val ohubCreated: Timestamp
   val ohubUpdated: Timestamp
 

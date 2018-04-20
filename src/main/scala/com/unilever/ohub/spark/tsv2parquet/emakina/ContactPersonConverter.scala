@@ -14,14 +14,15 @@ object ContactPersonConverter extends EmakinaDomainGateKeeper[ContactPerson] {
 
     implicit val source: Row = row
 
-    val countryCode = mandatoryValue("COUNTRY_CODE", "countryCode")(row)
-    val sourceEntityId = mandatoryValue("EM_SOURCE_ID", "sourceEntityId")(row)
-    val operatorRefId = mandatoryValue("OPERATOR_REF_ID", "operatorConcatId")(row)
-    val concatId = DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
-    val operatorConcatId: String = DomainEntity.createConcatIdFromValues(countryCode, sourceName, operatorRefId)
-    val ohubCreated = currentTimestamp()
-
     // format: OFF
+
+    val countryCode       = mandatoryValue("COUNTRY_CODE", "countryCode")(row)
+    val sourceEntityId    = mandatoryValue("EM_SOURCE_ID", "sourceEntityId")(row)
+    val operatorRefId     = mandatoryValue("OPERATOR_REF_ID", "operatorConcatId")(row)
+    val concatId          = DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
+    val operatorConcatId  = DomainEntity.createConcatIdFromValues(countryCode, sourceName, operatorRefId)
+    val name              = concatValues("FIRST_NAME", "LAST_NAME")
+    val ohubCreated       = currentTimestamp()
 
     ContactPerson(
       concatId                      = concatId                                                                                                            ,
@@ -36,7 +37,7 @@ object ContactPersonConverter extends EmakinaDomainGateKeeper[ContactPerson] {
       isActive                      = true                                                                                                                ,
       dateCreated                   = None                                                                                                                ,
       dateUpdated                   = None                                                                                                                ,
-      name                          = "TODO"                                                                                                              , // TODO is name a field in domain entity? should it be optional? what's the value for contact person?
+      name                          = name                                                                                                                ,
       operatorConcatId              = operatorConcatId                                                                                                    ,
       oldIntegrationId              = None                                                                                                                ,
       firstName                     =   optional(   "FIRST_NAME",                     "firstName"                                                        ),

@@ -63,7 +63,7 @@ object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
     val salesOrg                                      =   mandatoryValue(SALES_ORG, "countryCode")(row)
     val countryCode                                   =   countryCodeBySalesOrg(salesOrg).get // TODO improve error message, don't do a .get here
     val sourceEntityId                                =   mandatoryValue(CUSTOMER_UUID, "concatId")(row)
-    val concatNames                                   =   Seq(optionalValue(NAME_1)(row), optionalValue(NAME_2)(row)).flatten.mkString(" ")
+    val concatNames                                   =   concatValues(NAME_1, NAME_2)
     val concatId                                      =   DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
     val ohubCreated                                   =   currentTimestamp()
     val (street, houseNumber, houseNumberExtension)   =   splitAddress(STREET, "street")
