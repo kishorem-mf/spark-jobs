@@ -1,40 +1,33 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJob
-import com.unilever.ohub.spark.data.{ GoldenContactPersonRecord, GoldenOperatorRecord }
-import com.unilever.ohub.spark.generic.StringFunctions
+import com.unilever.ohub.spark.domain.entity.{ ContactPerson, Operator }
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
 // The step that fixes the foreign key links between contact persons and operators
-// Temporarily in a 2nd file to make development easier,
-// will end up in the first ContactPersonMerging job eventually.
+// TODO Temporarily in a 2nd file to make development easier, will end up in the first ContactPersonMerging job eventually.
 object ContactPersonMerging2 extends SparkJob {
   private case class OHubIdAndRefId(ohubId: String, refId: String)
 
   def transform(
     spark: SparkSession,
-    contactPersonMatching: Dataset[GoldenContactPersonRecord],
+    contactPersonMatching: Dataset[ContactPerson],
     operatorIdAndRefs: Dataset[OHubIdAndRefId]
-  ): Dataset[GoldenContactPersonRecord] = {
+  ): Dataset[ContactPerson] = {
     import spark.implicits._
 
     contactPersonMatching
       .joinWith(
         operatorIdAndRefs,
-        operatorIdAndRefs("refId") === contactPersonMatching("contactPerson.refOperatorId"),
+        operatorIdAndRefs("refId") === contactPersonMatching("contactPerson.operatorConcatId"),
         JoinType.LeftOuter
       )
       .map {
         // TODO it's probably smarter to add another id to contact persons that refers to the operator ohub id, then both ref id's are present.
         case (contactPerson, maybeOperator) ⇒
-          val refOperatorId = Option(maybeOperator).map(_.ohubId).getOrElse("REF_OPERATOR_UNKNOWN")
-          contactPerson.copy(
-            contactPerson = contactPerson.contactPerson.copy(
-              refOperatorId = Some(refOperatorId)
-            )
-          )
+          contactPerson.copy(operatorConcatId = Option(maybeOperator).map(_.ohubId).getOrElse("REF_OPERATOR_UNKNOWN"))
       }
   }
 
@@ -60,32 +53,14 @@ object ContactPersonMerging2 extends SparkJob {
     spark.sql("SET spark.sql.shuffle.partitions=20").collect()
     spark.sql("SET spark.default.parallelism=20").collect()
 
-    val contactPersonMerging = storage
-      .readFromParquet[GoldenContactPersonRecord](contactPersonMergingInputFile)
-      // TODO this should not be necessary, since the domain provides a concatId already
-      .map(line ⇒ { // need the operator ref to have the data of a concat id
-        val contact = line.contactPerson
-        val concatId = StringFunctions.createConcatId(
-          contact.countryCode,
-          contact.source,
-          contact.refOperatorId
-        )
-
-        line.copy(
-          contactPerson = contact.copy(
-            refOperatorId = Some(concatId)
-          )
-        )
-      })
+    val contactPersonMerging = storage.readFromParquet[ContactPerson](contactPersonMergingInputFile)
 
     val operatorIdAndRefs = storage
-      .readFromParquet[GoldenOperatorRecord](operatorMergingInputFile)
-      .select($"ohubOperatorId", $"refIds")
-      .flatMap(row ⇒ row.getSeq[String](1).map(OHubIdAndRefId(row.getString(0), _)))
+      .readFromParquet[Operator](operatorMergingInputFile)
+      .map(op ⇒ OHubIdAndRefId(op.ohubId.get, op.concatId)) // TODO resolve .get?
 
     val transformed = transform(spark, contactPersonMerging, operatorIdAndRefs)
 
-    storage
-      .writeToParquet(transformed, outputFile, partitionBy = Seq("countryCode"))
+    storage.writeToParquet(transformed, outputFile, partitionBy = Seq("countryCode"))
   }
 }

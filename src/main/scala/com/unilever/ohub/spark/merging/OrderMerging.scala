@@ -1,7 +1,8 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJob
-import com.unilever.ohub.spark.data.{ GoldenContactPersonRecord, GoldenOperatorRecord, OrderRecord }
+import com.unilever.ohub.spark.data.OrderRecord
+import com.unilever.ohub.spark.domain.entity.{ ContactPerson, Operator }
 import com.unilever.ohub.spark.generic.StringFunctions
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.sql.JoinType
@@ -14,8 +15,8 @@ object OrderMerging extends SparkJob {
   def transform(
     spark: SparkSession,
     orderRecords: Dataset[OrderRecord],
-    operatorRecords: Dataset[GoldenOperatorRecord],
-    contactPersonRecords: Dataset[GoldenContactPersonRecord]
+    operatorRecords: Dataset[Operator],
+    contactPersonRecords: Dataset[ContactPerson]
   ): Dataset[OrderRecord] = {
     import spark.implicits._
 
@@ -34,17 +35,13 @@ object OrderMerging extends SparkJob {
       })
 
     val operators = operatorRecords
-      .flatMap { operator ⇒
-        operator.refIds.map { refId ⇒
-          OHubIdRefIdAndCountry(operator.ohubOperatorId, refId, operator.countryCode)
-        }
+      .map { operator ⇒
+        OHubIdRefIdAndCountry(operator.ohubId.get, operator.concatId, Some(operator.countryCode))
       }
 
     val contactPersons = contactPersonRecords
-      .flatMap { contactPerson ⇒
-        contactPerson.refIds.map { refId ⇒
-          OHubIdRefIdAndCountry(contactPerson.ohubContactPersonId, refId, contactPerson.countryCode)
-        }
+      .map { contactPerson ⇒
+        OHubIdRefIdAndCountry(contactPerson.ohubId.get, contactPerson.concatId, Some(contactPerson.countryCode))
       }
 
     val operatorsJoined = orders
@@ -102,10 +99,10 @@ object OrderMerging extends SparkJob {
       .readFromParquet[OrderRecord](orderInputFile)
 
     val operatorRecords = storage
-      .readFromParquet[GoldenOperatorRecord](operatorMergingInputFile)
+      .readFromParquet[Operator](operatorMergingInputFile)
 
     val contactPersonRecords = storage
-      .readFromParquet[GoldenContactPersonRecord](contactPersonMergingInputFile)
+      .readFromParquet[ContactPerson](contactPersonMergingInputFile)
 
     val transformed = transform(spark, orderRecords, operatorRecords, contactPersonRecords)
 
