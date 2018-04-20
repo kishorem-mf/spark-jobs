@@ -1,0 +1,9 @@
+[report]
+fail_under = 21
+
+[run]
+omit =
+    conftest.py
+    setup.py
+    tests/*
+    **/__init__.py

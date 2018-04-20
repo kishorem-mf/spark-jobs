@@ -54,16 +54,78 @@ def read_parquet(spark: SparkSession, fn: str, fraction: float) -> DataFrame:
 
 def get_country_codes(country_code_arg: str, ddf: DataFrame, minimum_entries=MINIMUM_ENTRIES_PER_COUNTRY) -> List[str]:
     count_per_country = ddf.groupby('countryCode').count()
-    LOGGER.info("Selecting countries with more than " + str(minimum_entries) + " entries")
+    if LOGGER is not None:
+        LOGGER.info("Selecting countries with more than " + str(minimum_entries) + " entries")
     codes = sorted(count_per_country[count_per_country['count'] > minimum_entries]
                    .select('countryCode')
                    .distinct()
                    .rdd.map(lambda r: r[0]).collect())
     if country_code_arg != 'all':
-        LOGGER.info("Selecting only union of all countries (with MINIMUM_ENTRIES_PER_COUNTRY) and: " + country_code_arg)
-        codes = set(codes) & set([country_code_arg])
-    LOGGER.info("Selected countries are: {}".format(codes))
+        if LOGGER is not None:
+            LOGGER.info("Selecting only union of all countries (with MINIMUM_ENTRIES_PER_COUNTRY) and: " +
+                        country_code_arg)
+        codes = set(codes) & {country_code_arg}
+    if LOGGER is not None:
+        LOGGER.info("Selected countries are: {}".format(codes))
     return list(codes)
+
+
+def remove_strange_chars_to_lower_and_trim(input: str):
+    if input is None:
+        return input
+    p = re.compile(
+        "(^\\s+)|(\\s+$)|[\u0024\u00A2\u00A3\u00A4\u00A5\u058F\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0"
+        "\u20A1\u20A2\u20A3\u20A4\u20A5\u20A6\u20A7\u20A8\u20A9\u20AA\u20AB\u20AC\u20AD\u20AE\u20AF\u20B0\u20B1\u20B2"
+        "\u20B3\u20B4\u20B5\u20B6\u20B7\u20B8\u20B9\u20BA\u20BB\u20BC\u20BD\u20BE\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1"
+        "\uFFE5\uFFE6\u0081°”\\\\_\\'\\~`!@#%()={}|:;\\?/<>,\\.\\[\\]\\+\\-\\*\\^&:]+")
+
+    input = p.sub('', input.lower())
+    return input.strip()
+
+
+def remove_spaces_strange_chars_and_to_lower(input: str):
+    if input is None:
+        return input
+    p = re.compile(
+        "[ \u0024\u00A2\u00A3\u00A4\u00A5\u058F\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0\u20A1\u20A2"
+        "\u20A3\u20A4\u20A5\u20A6\u20A7\u20A8\u20A9\u20AA\u20AB\u20AC\u20AD\u20AE\u20AF\u20B0\u20B1\u20B2\u20B3\u20B4"
+        "\u20B5\u20B6\u20B7\u20B8\u20B9\u20BA\u20BB\u20BC\u20BD\u20BE\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1\uFFE5\uFFE6"
+        "\u0081°”\\\\_\\'\\~`!@#$%()={}|:;\\?/<>,\\.\\[\\]\\+\\-\\*\\^&:]+")
+
+    input = p.sub('', input.lower())
+    return input
+
+
+# create udf for use in spark later
+udf_remove_strange_chars_to_lower_and_trim = sf.udf(remove_strange_chars_to_lower_and_trim)
+udf_remove_spaces_strange_chars_and_to_lower = sf.udf(remove_strange_chars_to_lower_and_trim)
+
+
+def clean_operator_fields(ddf: DataFrame, name_col, city_col, street_col, housenr_col, zip_col) -> DataFrame:
+    return (ddf
+            .withColumn('nameCleansed', udf_remove_strange_chars_to_lower_and_trim(sf.col(name_col)))
+            .withColumn('cityCleansed', udf_remove_spaces_strange_chars_and_to_lower(sf.col(city_col)))
+            .withColumn('streetCleansed', sf.concat_ws('',
+                                                       udf_remove_strange_chars_to_lower_and_trim(sf.col(street_col)),
+                                                       sf.col(housenr_col)))
+            .withColumn('zipCodeCleansed', udf_remove_spaces_strange_chars_and_to_lower(sf.col(zip_col)))
+            )
+
+
+def create_operator_matching_string(ddf: DataFrame):
+    return (ddf
+            .fillna('')
+            .withColumn('matching_string',
+                        sf.concat_ws(' ',
+                                     sf.col('nameCleansed'),
+                                     sf.col('cityCleansed'),
+                                     sf.col('streetCleansed'),
+                                     sf.col('zipCodeCleansed')
+                                     )
+                        )
+            .withColumn('matching_string', sf.regexp_replace('matching_string', REGEX, ''))
+            .withColumn('matching_string', sf.lower(sf.trim(sf.regexp_replace(sf.col('matching_string'), '\s+', ' '))))
+            )
 
 
 def select_and_repartition_country(ddf: DataFrame, column_name: str, country_code: str) -> DataFrame:
@@ -182,29 +244,3 @@ class Timer(object):
     def end_and_log(self):
         end = timer()
         self.logger.info('{} took {} s'.format(self.name, str(end - self.start)))
-
-
-def remove_strange_chars_to_lower_and_trim(input: str):
-    if input is None:
-        return input
-    p = re.compile(
-        "(^\\s+)|(\\s+$)|[\u0024\u00A2\u00A3\u00A4\u00A5\u058F\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0"
-        "\u20A1\u20A2\u20A3\u20A4\u20A5\u20A6\u20A7\u20A8\u20A9\u20AA\u20AB\u20AC\u20AD\u20AE\u20AF\u20B0\u20B1\u20B2"
-        "\u20B3\u20B4\u20B5\u20B6\u20B7\u20B8\u20B9\u20BA\u20BB\u20BC\u20BD\u20BE\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1"
-        "\uFFE5\uFFE6\u0081°”\\\\_\\'\\~`!@#%()={}|:;\\?/<>,\\.\\[\\]\\+\\-\\*\\^&:]+")
-
-    input = p.sub('', input.lower())
-    return input.strip()
-
-
-def remove_spaces_strange_chars_and_to_lower(input: str):
-    if input is None:
-        return input
-    p = re.compile(
-        "[ \u0024\u00A2\u00A3\u00A4\u00A5\u058F\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0\u20A1\u20A2"
-        "\u20A3\u20A4\u20A5\u20A6\u20A7\u20A8\u20A9\u20AA\u20AB\u20AC\u20AD\u20AE\u20AF\u20B0\u20B1\u20B2\u20B3\u20B4"
-        "\u20B5\u20B6\u20B7\u20B8\u20B9\u20BA\u20BB\u20BC\u20BD\u20BE\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1\uFFE5\uFFE6"
-        "\u0081°”\\\\_\\'\\~`!@#$%()={}|:;\\?/<>,\\.\\[\\]\\+\\-\\*\\^&:]+")
-
-    input = p.sub('', input.lower())
-    return input

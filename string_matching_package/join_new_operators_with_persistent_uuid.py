@@ -21,11 +21,10 @@ from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
 from string_matching import utils
-from string_matching.spark_string_matching import match_strings
 
 N_GRAMS = 2
 MINIMUM_DOCUMENT_FREQUENCY = 2
-MINIMUM_ENTRIES_PER_COUNTRY = 2
+MINIMUM_ENTRIES_PER_COUNTRY = 3
 VOCABULARY_SIZE = 2000
 LOGGER = None
 
@@ -35,18 +34,10 @@ def preprocess_for_matching(ddf: DataFrame, id_column: str, drop_if_name_is_null
     w = Window.partitionBy('countryCode').orderBy(sf.asc(id_column))
     if drop_if_name_is_null:
         ddf = ddf.na.drop(subset=['name'])
-    return (ddf
-            .fillna('')
-            .withColumn('matching_string',
-                        sf.concat_ws(' ',
-                                     sf.col('name'),
-                                     sf.col('city'),
-                                     sf.col('street'),
-                                     sf.col('zipCode')
-                                     )
-                        )
-            .withColumn('matching_string', sf.regexp_replace('matching_string', utils.REGEX, ''))
-            .withColumn('matching_string', sf.lower(sf.trim(sf.regexp_replace(sf.col('matching_string'), '\s+', ' '))))
+
+    ddf = utils.clean_operator_fields(ddf, 'name', 'city', 'street', 'houseNumber', 'zipCode')
+
+    return (utils.create_operator_matching_string(ddf)
             .withColumn('string_index', sf.row_number().over(w) - 1)
             .select('countryCode', 'string_index', id_column, 'matching_string')
             )
@@ -54,6 +45,7 @@ def preprocess_for_matching(ddf: DataFrame, id_column: str, drop_if_name_is_null
 
 def join_ingested_daily_with_integrated_operators(spark, ingested_daily, integrated,
                                                   country_code, n_top, threshold):
+    from string_matching.spark_string_matching import match_strings
     ingested_daily_1country = (ingested_daily
                                .filter(sf.col('countryCode') == country_code)
                                .repartition('concatId')
@@ -112,9 +104,9 @@ def main(arguments):
     integrated = spark.read.parquet(arguments.integrated_operators_input_path)
     integrated_for_matching = preprocess_for_matching(integrated, 'ohubId')
 
-    country_codes_ingested = utils.get_country_codes(arguments.country_code, ingested_daily,
+    country_codes_ingested = utils.get_country_codes(arguments.country_code, ingested_daily_for_matching,
                                                      MINIMUM_ENTRIES_PER_COUNTRY)
-    country_codes_integrated = utils.get_country_codes(arguments.country_code, integrated)
+    country_codes_integrated = utils.get_country_codes(arguments.country_code, integrated_for_matching)
     country_codes = list(set(country_codes_ingested) & set(country_codes_integrated))
 
     if len(country_codes) == 1:

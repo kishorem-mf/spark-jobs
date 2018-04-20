@@ -3,13 +3,13 @@ pipelines:
   default:
     - step:
         name: Check PEP8 codestyle and run tests
-        image: python:3.5.2
-        caches:
-          - pip
+        image: fokkodriesprong/docker-pyspark
         script:
-          - pip install pytest pycodestyle==2.3.1
-#          - pytest tests
+          - conda env create -f environment.yml
+          - source activate name-matching
           - pycodestyle --show-source .
+          - cd string_matching_package
+          - python -m pytest --cov-config .coveragerc --cov=./ tests
     - step:
         name: Test building EGG
         image: timvancann/miniconda3-gcc
@@ -20,13 +20,13 @@ pipelines:
   branches:
     master:
     - step:
-        name: Check PEP8 codestyle and run tests
-        image: python:3.5.2
-        caches:
+        image: fokkodriesprong/docker-pyspark
         script:
-          - pip install pytest pycodestyle==2.3.1
-#          - pytest tests
+          - conda env create -f environment.yml
+          - source activate name-matching
           - pycodestyle --show-source .
+          - cd string_matching_package
+          - python -m pytest --cov-config .coveragerc --cov=./ tests
     - step:
         name: Build EGG
         image: timvancann/miniconda3-gcc
@@ -48,7 +48,7 @@ pipelines:
           - cat ~/.databrickscfg
 
           - databricks fs cp --overwrite dist/string_matching.egg dbfs:/libraries/name_matching/string_matching.egg
-          - databricks fs cp --overwrite match_operators.py dbfs:/libraries/name_matching/match_operators.py
-          - databricks fs cp --overwrite match_contacts.py dbfs:/libraries/name_matching/match_contacts.py
-          - databricks fs cp --overwrite join_new_operators_with_persistent_uuid.py dbfs:/libraries/name_matching/join_new_operators_with_persistent_uuid.py
+          - databricks fs cp --overwrite string_matching_package/match_operators.py dbfs:/libraries/name_matching/match_operators.py
+          - databricks fs cp --overwrite string_matching_package/match_contacts.py dbfs:/libraries/name_matching/match_contacts.py
+          - databricks fs cp --overwrite string_matching_package/join_new_operators_with_persistent_uuid.py dbfs:/libraries/name_matching/join_new_operators_with_persistent_uuid.py
 
