@@ -1,10 +1,7 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import java.io.{ File, FileOutputStream }
-
 import com.unilever.ohub.spark.data.{ CountryRecord, CountrySalesOrg }
-import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import org.apache.spark.sql.SparkSession
 
 import scala.io.Source
 
@@ -18,49 +15,35 @@ trait DomainDataProvider {
 }
 
 object DomainDataProvider {
-  def apply(spark: SparkSession, storage: Storage): DomainDataProvider = {
-    import spark.implicits._
+  def apply(spark: SparkSession): DomainDataProvider = {
 
-    def createCsvSource(fn: String): Unit = {
-      val in = this.getClass.getResourceAsStream(s"/$fn")
-      val out = new FileOutputStream(new File(fn))
-
-      Iterator
-        .continually(in.read)
-        .takeWhile(_ != -1)
-        .foreach(b ⇒ out.write(b))
-
-      out.close()
-      in.close()
+    def countryMapping: Map[String, CountryRecord] = {
+      Source
+        .fromInputStream(this.getClass.getResourceAsStream("/country_codes.csv"))
+        .getLines()
+        .toSeq
+        .filter(_.nonEmpty)
+        .map(_.split(","))
+        .map(parts ⇒ CountryRecord(parts(6), parts(2), parts(10)))
+        .filter(cr ⇒ cr.countryCode.nonEmpty && cr.countryName.nonEmpty && cr.currencyCode.nonEmpty)
+        .map(cr ⇒ cr.countryCode -> cr)
+        .toMap
     }
 
-    def createCountries: Dataset[CountryRecord] = {
-      val file = "country_codes.csv"
-      createCsvSource(file)
-
-      storage.readFromCsv(file, fieldSeparator = ",")
-        .select(
-          $"ISO3166_1_Alpha_2" as "countryCode",
-          $"official_name_en" as "countryName",
-          $"ISO4217_currency_alphabetic_code" as "currencyCode"
-        )
-        .where($"countryCode".isNotNull and $"countryName".isNotNull and $"currencyCode".isNotNull)
-        .as[CountryRecord]
-    }
-
-    def createCountriesSalesOrgMapping: Map[String, CountrySalesOrg] = {
-      val file = "country_codes_sales_org.csv"
-      createCsvSource(file)
-
-      storage.readFromCsv(file, fieldSeparator = ",")
-        .as[CountrySalesOrg]
-        .collect()
+    def countriesSalesOrgMapping: Map[String, CountrySalesOrg] = {
+      Source
+        .fromInputStream(this.getClass.getResourceAsStream("/country_codes_sales_org.csv"))
+        .getLines()
+        .toSeq
+        .filter(_.nonEmpty)
+        .map(_.split(","))
+        .map(parts ⇒ CountrySalesOrg(parts(0), if (parts.length == 2) Option(parts(1)) else None))
         .filter(_.salesOrg.nonEmpty)
         .map(c ⇒ c.salesOrg.get -> c)
         .toMap
     }
 
-    def sourcePreference: Map[String, Int] = {
+    def sourcePreferenceMapping: Map[String, Int] = {
       Source
         .fromInputStream(this.getClass.getResourceAsStream("/source_preference.tsv"))
         .getLines()
@@ -73,9 +56,9 @@ object DomainDataProvider {
     }
 
     InMemDomainDataProvider(
-      countries = createCountries.map(c ⇒ c.countryCode -> c).collect().toMap,
-      countrySalesOrg = createCountriesSalesOrgMapping,
-      sourcePreferences = sourcePreference
+      countries = countryMapping,
+      countrySalesOrg = countriesSalesOrgMapping,
+      sourcePreferences = sourcePreferenceMapping
     )
   }
 }

@@ -67,7 +67,7 @@ object OperatorMerging extends SparkJob with GoldenRecordPicking[Operator] {
   override val neededFilePaths = Array("MATCHING_INPUT_FILE", "OPERATOR_INPUT_FILE", "OUTPUT_FILE")
 
   override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
-    run(spark, filePaths, storage, DomainDataProvider(spark, storage))
+    run(spark, filePaths, storage, DomainDataProvider(spark))
   }
 
   protected[merging] def run(spark: SparkSession, filePaths: Product, storage: Storage, dataProvider: DomainDataProvider): Unit = {
