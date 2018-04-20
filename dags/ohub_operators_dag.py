@@ -1,5 +1,4 @@
 from airflow import DAG
-from airflow.hooks.base_hook import BaseHook
 from datetime import datetime
 
 from custom_operators.databricks_functions import \
@@ -141,7 +140,6 @@ with DAG('ohub_operators', default_args=default_args,
         }
     )
 
-    postgres_connection = BaseHook.get_connection('postgres_channels')
     operators_to_acm = DatabricksSubmitRunOperator(
         task_id="operators_to_acm",
         existing_cluster_id=cluster_id,
@@ -152,11 +150,7 @@ with DAG('ohub_operators', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmConverter",
             'parameters': [integrated_bucket.format(date=one_day_ago, fn='operators'),
-                           export_bucket.format(date=one_day_ago, fn='acm/operators.csv'),
-                           postgres_connection.host,
-                           postgres_connection.login,
-                           postgres_connection.password,
-                           postgres_connection.schema]
+                           export_bucket.format(date=one_day_ago, fn='acm/operators.csv')],
         }
     )
 
