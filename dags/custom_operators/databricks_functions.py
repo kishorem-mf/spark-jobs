@@ -124,6 +124,7 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
         self.spark_jar_task = spark_jar_task
         self.spark_python_task = spark_python_task
         self.notebook_task = notebook_task
+        self.run_page_url = None
         if libraries is not None:
             self.json['libraries'] = libraries
         if run_name is not None:
