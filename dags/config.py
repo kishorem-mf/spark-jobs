@@ -66,7 +66,8 @@ country_codes = dict(
 def slack_on_failure_callback(context):
     from airflow.operators.slack_operator import SlackAPIPostOperator
     from airflow.models import Variable
-
+    import json
+#
 #     log_link = '<{base_url}/admin/airflow/log?dag_id={dag_id}&task_id={task_id}&execution_date={execution_date}|logs>' \
 #         .format(base_url=configuration.get('webserver', 'BASE_URL'),
 #                 dag_id=context['dag'].dag_id,
@@ -89,6 +90,6 @@ def slack_on_failure_callback(context):
         task_id='slack_failure_notification',
         token=slack_token,
         channel='#airflow',
-        text='foo')
+        text=json.dumps(context))
 
     return operator.execute(context=context)
