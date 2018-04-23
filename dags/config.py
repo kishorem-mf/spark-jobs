@@ -67,22 +67,22 @@ def slack_on_failure_callback(context):
     from airflow.operators.slack_operator import SlackAPIPostOperator
     from airflow.models import Variable
 
-    log_link = '<{base_url}/admin/airflow/log?dag_id={dag_id}&task_id={task_id}&execution_date={execution_date}|logs>' \
-        .format(base_url=configuration.get('webserver', 'BASE_URL'),
-                dag_id=context['dag'].dag_id,
-                task_id=context['task_instance'].task_id,
-                execution_date=context['ts'])
-    databricks_link = '<{url}|logs>'.format(url=context['task_instance'].output_encoding)
-
-    template = """
-:skull: Spark task *{task_id}* in *{dag_id}* failed at _{time}_
-> airflow log: {airflow_log}
-> databricks log: {databricks_log}
-""".format(task_id=str(context['task'].task_id),
-           dag_id=str(context['dag'].dag_id),
-           time=str(context['ts']),
-           airflow_log=log_link,
-           databricks_log=databricks_link)
+#     log_link = '<{base_url}/admin/airflow/log?dag_id={dag_id}&task_id={task_id}&execution_date={execution_date}|logs>' \
+#         .format(base_url=configuration.get('webserver', 'BASE_URL'),
+#                 dag_id=context['dag'].dag_id,
+#                 task_id=context['task_instance'].task_id,
+#                 execution_date=context['ts'])
+#     databricks_link = '<{url}|logs>'.format(url=context['task_instance'].output_encoding)
+#
+#     template = """
+# :skull: Spark task *{task_id}* in *{dag_id}* failed at _{time}_
+# > airflow log: {airflow_log}
+# > databricks log: {databricks_log}
+# """.format(task_id=str(context['task'].task_id),
+#            dag_id=str(context['dag'].dag_id),
+#            time=str(context['ts']),
+#            airflow_log=log_link,
+#            databricks_log=databricks_link)
 
     slack_token = Variable.get('slack_airflow_token')
     operator = SlackAPIPostOperator(
