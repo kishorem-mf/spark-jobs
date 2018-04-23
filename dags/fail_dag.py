@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
-from config import email_addresses, on_failure_callback
+from config import email_addresses, slack_on_failure_callback
 
 default_args = {
     'owner': 'airflow',
@@ -20,4 +20,4 @@ with DAG('fail_test', default_args=default_args,
     create_cluster = BashOperator(
         task_id='fail_me',
         bash_command='return 1',
-        on_failure_callback=on_failure_callback)
+        on_failure_callback=slack_on_failure_callback)
