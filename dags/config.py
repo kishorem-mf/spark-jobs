@@ -1,3 +1,4 @@
+from airflow import AirflowException
 from datetime import datetime, timedelta
 
 email_addresses = ['timvancann@godatadriven.com',
@@ -66,22 +67,24 @@ def slack_on_failure_callback(context):
     from airflow.operators.slack_operator import SlackAPIPostOperator
     from airflow.models import Variable
 
-    template = """
-:skull: Spark task *%s* in *%s* failed at _%s_
-> airflow log: %s
-> databricks log: %s
-    """.format(context.task.task_id,
-               context.dag._dag_id,
-               context.ts,
-               context.ti.log_filepath,
-               context.ti.output_encoding)
+    try:
+        template = """
+:skull: Spark task *{task_id}* in *{dag_id}* failed at _{time}_
+> airflow log: {airflow_log}
+> databricks log: {databricks_log}
+    """.format(task_id=str(context['task'].task_id),
+               dag_id=str(context['dag'].dag_id),
+               time=str(context['ts']),
+               airflow_log=str(context['task_instance'].log_filepath),
+               databricks_log=str(context['task_instance'].output_encoding))
+    except Exception as e:
+        raise AirflowException(e.message)
 
     slack_token = Variable.get('slack_airflow_token')
     operator = SlackAPIPostOperator(
         task_id='slack_failure_notification',
         token=slack_token,
         channel='#airflow',
-        text=template,
-        context=context
-    )
-    return operator.execute()
+        text=template)
+
+    return operator.execute(context=context)
