@@ -1,5 +1,6 @@
-from datetime import datetime, timedelta
-from config import email_addresses
+from datetime import timedelta
+from config import email_addresses, slack_on_databricks_failure_callback
+
 operator_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG', 'BH', 'BO', 'BR', 'CA', 'CH',
                           'CL', 'CN', 'CO', 'CR', 'CZ', 'DE', 'DK', 'DO', 'EC', 'EE', 'EG', 'ES', 'FI', 'FR', 'GB',
                           'GE', 'GR', 'GT', 'HK', 'HN', 'HU', 'ID', 'IE', 'IL', 'IN', 'IR', 'IT', 'JO', 'KR', 'KW',
@@ -11,11 +12,12 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'email': email_addresses,
-    'email_on_failure': True,
+    'email_on_failure': False,
     'email_on_retry': False,
     'retries': 0,
     'retry_delay': timedelta(minutes=1),
-    'pool': 'ohub_pool'
+    'pool': 'ohub_pool',
+    'on_failure_callback': slack_on_databricks_failure_callback
 }
 
 cluster_id = '0314-131901-shalt605'
