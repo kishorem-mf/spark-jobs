@@ -67,6 +67,8 @@ def slack_on_failure_callback(context):
     from airflow.operators.slack_operator import SlackAPIPostOperator
     from airflow.models import Variable
     import json
+
+    raise AirflowException("fail")
 #
 #     log_link = '<{base_url}/admin/airflow/log?dag_id={dag_id}&task_id={task_id}&execution_date={execution_date}|logs>' \
 #         .format(base_url=configuration.get('webserver', 'BASE_URL'),
