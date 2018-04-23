@@ -32,3 +32,8 @@ sleep 5
 printf "\n--------- setting internal airflow configuration  ------------\n"
 docker exec -i ${container_name} airflow pool --set "ohub_pool" "5" ""
 docker exec -i ${container_name} airflow variables --set "google_api_key" "foo"
+docker exec -i ${container_name} airflow connections --add --conn_id "postgres_channels" --conn_uri "foo"
+docker exec -i ${container_name} airflow variables --set "slack_airflow_token" "foo"
+
+sleep 1
+docker exec -i ulohub_airflow_dags airflow list_dags

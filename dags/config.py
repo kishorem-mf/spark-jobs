@@ -60,3 +60,28 @@ country_codes = dict(
     TR=149299194,
     IE=162648003,
     GB=136489308)
+
+
+def on_failure_callback(context):
+    from airflow.operators.slack_operator import SlackAPIPostOperator
+    from airflow.models import Variable
+
+    template = """
+:skull: Spark task *{task_id}* in *{dag_id}* failed at _{time}_
+> airflow log: {airflow_log}
+> databricks log: {databricks_log}
+    """
+
+    slack_token = Variable.get('slack_airflow_token')
+    operator = SlackAPIPostOperator(
+        task_id='slack_failure_notification',
+        token=slack_token,
+        channel='#airflow',
+        text=template.format(task_id=context['task'].task_id,
+                             dag_id=context['dag'].dag_id,
+                             time=context['ts'],
+                             airflow_log=context['task_instance'].log_filepath,
+                             databricks_log=context['task_instance'].output_encoding),
+
+        owner='Failure Handler')
+    return operator.execute(context=context)

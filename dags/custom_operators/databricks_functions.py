@@ -155,10 +155,10 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
             self.json['existing_cluster_id'] = cluster_id
 
         self.run_id = hook.submit_run(self.json)
-        run_page_url = hook.get_run_page_url(self.run_id)
+        self.run_page_url = hook.get_run_page_url(self.run_id)
         logging.info(LINE_BREAK)
         logging.info('Run submitted with run_id: {}'.format(self.run_id))
-        self._log_run_page_url(run_page_url)
+        self._log_run_page_url(self.run_page_url)
         logging.info(LINE_BREAK)
         while True:
             run_state = hook.get_run_state(self.run_id)
@@ -166,7 +166,7 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
                 if run_state.is_successful:
                     logging.info('{} completed successfully.'.format(
                         self.task_id))
-                    self._log_run_page_url(run_page_url)
+                    self._log_run_page_url(self.run_page_url)
                     return
                 else:
                     error_message = '{t} failed with terminal state: {s}'.format(
@@ -176,7 +176,7 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
             else:
                 logging.info('{t} in run state: {s}'.format(t=self.task_id,
                                                             s=run_state))
-                self._log_run_page_url(run_page_url)
+                self._log_run_page_url(self.run_page_url)
                 logging.info('Sleeping for {} seconds.'.format(
                     self.polling_period_seconds))
                 time.sleep(self.polling_period_seconds)
