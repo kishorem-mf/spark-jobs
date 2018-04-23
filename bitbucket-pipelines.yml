@@ -17,14 +17,14 @@ pipelines:
 
   branches:
     master:
-#    - step:
-#        name: Check PEP8 codestyle and run tests
-#        image: timvancann/miniconda3-gcc
-#        script:
-#          - conda env create -f environment.yml
-#          - source activate airflow-dags
-#          - pycodestyle --show-source .
-#          - python -m pytest --cov-config .coveragerc --cov=./dags tests
+    - step:
+        name: Check PEP8 codestyle and run tests
+        image: timvancann/miniconda3-gcc
+        script:
+          - conda env create -f environment.yml
+          - source activate airflow-dags
+          - pycodestyle --show-source .
+          - python -m pytest --cov-config .coveragerc --cov=./dags tests
     - step:
         name: Deploy to azure blob store
         image: microsoft/azure-cli
