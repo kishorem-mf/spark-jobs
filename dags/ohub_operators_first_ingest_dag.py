@@ -98,7 +98,11 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmConverter",
             'parameters': [integrated_bucket.format(date='{{ds}}', fn='operators'),
-                           export_bucket.format(date='{{ds}}', fn='acm/operators.csv')]
+                           export_bucket.format(date='{{ds}}', fn='acm/operators.csv'),
+                           postgres_connection.host,
+                           postgres_connection.login,
+                           postgres_connection.password,
+                           postgres_connection.schema]
         }
     )
 
