@@ -67,10 +67,14 @@ def slack_on_failure_callback(context):
     from airflow.models import Variable
 
     template = """
-:skull: Spark task *{{ task.task_id }}* in *{{ dag._dag_id }}* failed at _{{ ts }}_
-> airflow log: {{ ti.log_filepath }}
-> databricks log: {{ ti.output_encoding }}
-    """
+:skull: Spark task *%s* in *%s* failed at _%s_
+> airflow log: %s
+> databricks log: %s
+    """.format(context.task.task_id,
+               context.dag._dag_id,
+               context.ts,
+               context.ti.log_filepath,
+               context.ti.output_encoding)
 
     slack_token = Variable.get('slack_airflow_token')
     operator = SlackAPIPostOperator(
@@ -79,5 +83,5 @@ def slack_on_failure_callback(context):
         channel='#airflow',
         text=template,
         context=context
-        )
+    )
     return operator.execute()
