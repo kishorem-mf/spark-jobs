@@ -25,10 +25,10 @@ trait SparkJob { self ⇒
       case 2 ⇒ (args(0), args(1))
       case 3 ⇒ (args(0), args(1), args(2))
       case 4 ⇒ (args(0), args(1), args(2), args(3))
-      case 5 => (args(0), args(1), args(2), args(3), args(4))
-      case 6 => (args(0), args(1), args(2), args(3), args(4), args(5))
-      case 7 => (args(0), args(1), args(2), args(3), args(4), args(5), args(6))
-      case 8 => (args(0), args(1), args(2), args(3), args(4), args(5), args(6), args(7))
+      case 5 ⇒ (args(0), args(1), args(2), args(3), args(4))
+      case 6 ⇒ (args(0), args(1), args(2), args(3), args(4), args(5))
+      case 7 ⇒ (args(0), args(1), args(2), args(3), args(4), args(5), args(6))
+      case 8 ⇒ (args(0), args(1), args(2), args(3), args(4), args(5), args(6), args(7))
     }
   }
 
