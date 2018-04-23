@@ -81,7 +81,7 @@ def on_failure_callback(context):
                              dag_id=context['dag'].dag_id,
                              time=context['ts'],
                              airflow_log=context['task_instance'].log_filepath,
-                             databricks_log=context['dag_run'].run_page_url),
+                             databricks_log=context['task_instance'].output_encoding),
 
         owner='Failure Handler')
     return operator.execute(context=context)
