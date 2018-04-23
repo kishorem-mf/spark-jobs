@@ -2,6 +2,8 @@ from datetime import datetime
 
 from airflow import DAG
 
+from airflow.hooks.base_hook import BaseHook
+
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
@@ -87,6 +89,8 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
                            ingested_bucket.format(date='{{ds}}', fn='operators'),
                            integrated_bucket.format(date='{{ds}}', fn='operators')]
         })
+
+    postgres_connection = BaseHook.get_connection('postgres_channels')
 
     operators_to_acm = DatabricksSubmitRunOperator(
         task_id="operators_to_acm",
