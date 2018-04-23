@@ -12,12 +12,12 @@ default_args = {
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 0,
-    'retry_delay': timedelta(seconds=30)
+    'retry_delay': timedelta(seconds=30),
+    'on_failure_callback': slack_on_failure_callback
 }
 
 with DAG('fail_test', default_args=default_args,
          schedule_interval="@once") as dag:
     create_cluster = BashOperator(
         task_id='fail_me',
-        bash_command='return 1',
-        on_failure_callback=slack_on_failure_callback)
+        bash_command='return 1')
