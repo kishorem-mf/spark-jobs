@@ -62,27 +62,26 @@ country_codes = dict(
     GB=136489308)
 
 
-def slack_on_failure_callback(context):
+def slack_on_databricks_failure_callback(context):
     from airflow.operators.slack_operator import SlackAPIPostOperator
     from airflow.models import Variable
 
-    log_link = ('<{base_url}/admin/airflow/log?dag_id={dag_id}&task_id={task_id}&execution_date={execution_date}|logs>'
+    log_link = ('{base_url}/admin/airflow/log?dag_id={dag_id}&task_id={task_id}&execution_date={execution_date}'
                 .format(base_url=configuration.get('webserver', 'BASE_URL'),
                         dag_id=context['dag'].dag_id,
                         task_id=context['task_instance'].task_id,
                         execution_date=context['ts'])
                 )
-    databricks_link = '<{url}|logs>'.format(url=context['task'].output_encoding)
-
     template = """
-:skull: Task *{dag_id}.{task_id}* failed at _{time}_
-> airflow log: {airflow_log}
-> databricks log: {databricks_log}
+:skull: An airflow task failed at _{time}_
+It looks like something went wrong with the task *{dag_id}.{task_id}* :anguished:. Better check the logs!
+> <{airflow_log}|airflow logs>
+> <{databricks_log}|databricks logs>
 """.format(task_id=str(context['task'].task_id),
            dag_id=str(context['dag'].dag_id),
            time=str(context['ts']),
            airflow_log=log_link,
-           databricks_log=databricks_link)
+           databricks_log=context['task'].run_page_url)
 
     slack_token = Variable.get('slack_airflow_token')
     operator = SlackAPIPostOperator(
