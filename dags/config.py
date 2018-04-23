@@ -62,7 +62,7 @@ country_codes = dict(
     GB=136489308)
 
 
-def on_failure_callback():
+def on_failure_callback(context):
     from airflow.operators.slack_operator import SlackAPIPostOperator
     from airflow.models import Variable
 
@@ -72,19 +72,16 @@ def on_failure_callback():
 > databricks log: {databricks_log}
     """
 
-    def create_operator(context):
-        slack_token = Variable.get('slack_airflow_token')
-        slack_failure_notification = SlackAPIPostOperator(
-            task_id='slack_failure_notification',
-            token=slack_token,
-            channel='#airflow',
-            text=template.format(task_id=context['task'].task_id,
-                                 dag_id=context['dag'].dag_id,
-                                 time=context['ts'],
-                                 airflow_log=context['task_instance'].log_filepath,
-                                 databricks_log=context['dag_run'].run_page_url),
+    slack_token = Variable.get('slack_airflow_token')
+    operator = SlackAPIPostOperator(
+        task_id='slack_failure_notification',
+        token=slack_token,
+        channel='#airflow',
+        text=template.format(task_id=context['task'].task_id,
+                             dag_id=context['dag'].dag_id,
+                             time=context['ts'],
+                             airflow_log=context['task_instance'].log_filepath,
+                             databricks_log=context['dag_run'].run_page_url),
 
-            owner='Failure Handler')
-        return slack_failure_notification.execute(context=context)
-
-    return create_operator
+        owner='Failure Handler')
+    return operator.execute(context=context)
