@@ -1,19 +1,19 @@
 package com.unilever.ohub.spark.merging
 
-import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.{ DefaultConfig, SparkJobWithDefaultConfig }
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import org.apache.spark.sql.functions._
 
-object OperatorUpdateGoldenRecord extends SparkJob with GoldenRecordPicking[Operator] {
+object OperatorUpdateGoldenRecord extends SparkJobWithDefaultConfig with GoldenRecordPicking[Operator] {
 
   case class oHubIdAndRecord(ohubId: String, operator: Operator)
 
   def markGoldenRecord(sourcePreference: Map[String, Int])(operators: Seq[Operator]): Seq[Operator] = {
     val goldenRecord = pickGoldenRecord(sourcePreference, operators)
-    operators.map(o ⇒ o.copy(isGoldenRecord = (o == goldenRecord)))
+    operators.map(o ⇒ o.copy(isGoldenRecord = o == goldenRecord))
   }
 
   def transform(
@@ -32,23 +32,16 @@ object OperatorUpdateGoldenRecord extends SparkJob with GoldenRecordPicking[Oper
       .repartition(60)
   }
 
-  override val neededFilePaths = Array("OPERATOR_INPUT_FILE", "OUTPUT_FILE")
-
-  override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
-    run(spark, filePaths, storage, DomainDataProvider(spark))
+  override def run(spark: SparkSession, config: DefaultConfig, storage: Storage): Unit = {
+    run(spark, config, storage, DomainDataProvider(spark))
   }
 
-  protected[merging] def run(spark: SparkSession, filePaths: Product, storage: Storage, dataProvider: DomainDataProvider): Unit = {
+  protected[merging] def run(spark: SparkSession, config: DefaultConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     import spark.implicits._
 
-    val (operatorInputFile: String, outputFile: String) = filePaths
-
-    val operators = storage
-      .readFromParquet[Operator](operatorInputFile)
-
+    val operators = storage.readFromParquet[Operator](config.inputFile)
     val transformed = transform(spark, operators, dataProvider.sourcePreferences)
 
-    storage
-      .writeToParquet(transformed, outputFile, partitionBy = Seq("countryCode"))
+    storage.writeToParquet(transformed, config.outputFile, partitionBy = Seq("countryCode"))
   }
 }

@@ -4,6 +4,7 @@ import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
+import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeper.DomainConfig
 import org.apache.spark.sql.Dataset
 
 object CsvDomainGateKeeperSpec {
@@ -39,6 +40,6 @@ trait CsvDomainGateKeeperSpec[DomainType <: DomainEntity] extends SparkJobSpec {
         true // let's not fail here, but do proper assertions in the assertion function
     }
 
-    SUT.run(spark, (inputFile, outputFile), mockStorage, testDataProvider())
+    SUT.run(spark, DomainConfig(inputFile, outputFile), mockStorage, testDataProvider())
   }
 }

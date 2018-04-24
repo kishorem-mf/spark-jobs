@@ -3,39 +3,23 @@ package com.unilever.ohub.spark
 import com.unilever.ohub.spark.storage.{ DefaultStorage, Storage }
 import org.apache.log4j.{ LogManager, Logger }
 import org.apache.spark.sql.SparkSession
+import scopt.OptionParser
 
-trait SparkJob { self ⇒
-  def neededFilePaths: Array[String]
+trait SparkJobConfig extends Product
+case class DefaultConfig(inputFile: String = "path-to-input-file", outputFile: String = "path-to-output-file") extends SparkJobConfig
 
-  def optionalFilePaths: Array[String] = Array.empty
-
-  def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit
+trait SparkJob[Config <: SparkJobConfig] { self ⇒
 
   implicit protected val log: Logger = LogManager.getLogger(self.getClass)
 
-  private def getFilePaths(args: Array[String]): Product = {
-    val argRange = Range.inclusive(neededFilePaths.length, neededFilePaths.length + optionalFilePaths.length)
+  private[spark] def defaultConfig: Config
 
-    if (!argRange.contains(args.length)) {
-      log.error(s"specify mandatory '${neededFilePaths.mkString("[", "], [", "]")}' and optional '${optionalFilePaths.mkString("[", "], [", "]")}'")
-      sys.exit(1)
-    }
+  private[spark] def configParser(): OptionParser[Config]
 
-    args.length match {
-      case 2 ⇒ (args(0), args(1))
-      case 3 ⇒ (args(0), args(1), args(2))
-      case 4 ⇒ (args(0), args(1), args(2), args(3))
-      case 5 ⇒ (args(0), args(1), args(2), args(3), args(4))
-      case 6 ⇒ (args(0), args(1), args(2), args(3), args(4), args(5))
-      case 7 ⇒ (args(0), args(1), args(2), args(3), args(4), args(5), args(6))
-      case 8 ⇒ (args(0), args(1), args(2), args(3), args(4), args(5), args(6), args(7))
-    }
-  }
+  def run(spark: SparkSession, config: Config, storage: Storage): Unit
 
-  def main(args: Array[String]): Unit = {
+  private[spark] def invokeRunWithConfig(config: Config): Unit = {
     val jobName = self.getClass.getSimpleName
-
-    val filePaths = getFilePaths(args)
 
     val spark = SparkSession
       .builder()
@@ -43,11 +27,36 @@ trait SparkJob { self ⇒
       .getOrCreate()
 
     val storage = new DefaultStorage(spark)
-
     val startOfJob = System.currentTimeMillis()
 
-    run(spark, filePaths, storage)
+    run(spark, config, storage)
 
     log.info(s"Done in ${(System.currentTimeMillis - startOfJob) / 1000}s")
   }
+
+  def main(args: Array[String]): Unit = {
+    configParser().parse(args, defaultConfig) match {
+      case Some(config) ⇒
+        invokeRunWithConfig(config)
+      case None ⇒ // nothing to do here
+    }
+  }
+}
+
+trait SparkJobWithDefaultConfig extends SparkJob[DefaultConfig] {
+  override private[spark] def defaultConfig = DefaultConfig()
+
+  override private[spark] def configParser(): OptionParser[DefaultConfig] =
+    new scopt.OptionParser[DefaultConfig]("Domain gate keeper") {
+      head("converts a csv into domain entities and writes the result to parquet.", "1.0")
+      opt[String]("inputFile") required () action { (x, c) ⇒
+        c.copy(inputFile = x)
+      } text "inputFile is a string property"
+      opt[String]("outputFile") required () action { (x, c) ⇒
+        c.copy(outputFile = x)
+      } text "outputFile is a string property"
+
+      version("1.0")
+      help("help") text "help text"
+    }
 }

@@ -1,12 +1,12 @@
 package com.unilever.ohub.spark.acm
 
-import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.{ DefaultConfig, SparkJobWithDefaultConfig }
 import com.unilever.ohub.spark.acm.model.UFSRecipient
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-object ContactPersonAcmConverter extends SparkJob with AcmTransformationFunctions {
+object ContactPersonAcmConverter extends SparkJobWithDefaultConfig with AcmTransformationFunctions {
 
   def transform(spark: SparkSession, contactPersons: Dataset[ContactPerson]): Dataset[UFSRecipient] = {
     import spark.implicits._
@@ -82,17 +82,14 @@ object ContactPersonAcmConverter extends SparkJob with AcmTransformationFunction
     }
   }
 
-  override val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
-
-  override def run(spark: SparkSession, filePaths: scala.Product, storage: Storage): Unit = {
+  override def run(spark: SparkSession, config: DefaultConfig, storage: Storage): Unit = {
     import spark.implicits._
 
-    val (inputFile: String, outputFile: String) = filePaths
-    log.info(s"Generating contact person ACM csv file from [$inputFile] to [$outputFile]")
+    log.info(s"Generating contact person ACM csv file from [${config.inputFile}] to [${config.outputFile}]")
 
-    val contactPersons = storage.readFromParquet[ContactPerson](inputFile)
+    val contactPersons = storage.readFromParquet[ContactPerson](config.inputFile)
     val transformed = transform(spark, contactPersons)
 
-    storage.writeToCsv(transformed, outputFile, partitionBy = Seq("COUNTRY_CODE"))
+    storage.writeToCsv(transformed, config.outputFile, partitionBy = Seq("COUNTRY_CODE"))
   }
 }

@@ -1,11 +1,18 @@
 package com.unilever.ohub.spark.combining
 
-import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
+import scopt.OptionParser
 
-object OperatorCombining extends SparkJob {
+case class CombiningConfig(
+    integratedUpdated: String = "path-to-integrated-updated-file",
+    newGolden: String = "path-to-new-golden-file",
+    newIntegratedOutput: String = "path-to-new integrated-file"
+) extends SparkJobConfig
+
+object OperatorCombining extends SparkJob[CombiningConfig] {
 
   def transform(
     spark: SparkSession,
@@ -17,22 +24,32 @@ object OperatorCombining extends SparkJob {
       .union(newGoldenRecords)
   }
 
-  override val neededFilePaths = Array("INTEGRATED_UPDATED", "NEW_GOLDEN", "NEW_INTEGRATED_OUTPUT")
+  override private[spark] def defaultConfig = CombiningConfig()
 
-  override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
+  override private[spark] def configParser(): OptionParser[CombiningConfig] =
+    new scopt.OptionParser[CombiningConfig]("Domain gate keeper") {
+      head("converts a csv into domain entities and writes the result to parquet.", "1.0")
+      opt[String]("integratedUpdated") required () action { (x, c) ⇒
+        c.copy(integratedUpdated = x)
+      } text "integratedUpdated is a string property"
+      opt[String]("newGolden") required () action { (x, c) ⇒
+        c.copy(newGolden = x)
+      } text "newGolden is a string property"
+      opt[String]("newIntegratedOutput") required () action { (x, c) ⇒
+        c.copy(newIntegratedOutput = x)
+      } text "newIntegratedOutput is a string property"
+
+      version("1.0")
+      help("help") text "help text"
+    }
+
+  override def run(spark: SparkSession, config: CombiningConfig, storage: Storage): Unit = {
     import spark.implicits._
 
-    val (
-      integratedMatchedFn: String,
-      newGoldenFn: String,
-      newIntegratedFn: String) = filePaths
-
-    val integratedMatched = storage.readFromParquet[Operator](integratedMatchedFn)
-    val newGolden = storage.readFromParquet[Operator](newGoldenFn)
-
+    val integratedMatched = storage.readFromParquet[Operator](config.integratedUpdated)
+    val newGolden = storage.readFromParquet[Operator](config.newGolden)
     val newIntegrated = transform(spark, integratedMatched, newGolden)
 
-    storage
-      .writeToParquet(newIntegrated, newIntegratedFn, partitionBy = Seq("countryCode"))
+    storage.writeToParquet(newIntegrated, config.newIntegratedOutput, partitionBy = Seq("countryCode"))
   }
 }

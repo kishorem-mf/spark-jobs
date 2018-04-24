@@ -1,12 +1,12 @@
 package com.unilever.ohub.spark.acm
 
-import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.{ DefaultConfig, SparkJobWithDefaultConfig }
 import com.unilever.ohub.spark.acm.model.UFSOrder
 import com.unilever.ohub.spark.data.OrderRecord
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-object OrderAcmConverter extends SparkJob {
+object OrderAcmConverter extends SparkJobWithDefaultConfig {
   private val dateFormat = "yyyy-MM-dd HH:mm:ss"
 
   def transform(spark: SparkSession, orders: Dataset[OrderRecord]): Dataset[UFSOrder] = {
@@ -35,21 +35,14 @@ object OrderAcmConverter extends SparkJob {
     ))
   }
 
-  override val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
-
-  override def run(spark: SparkSession, filePaths: scala.Product, storage: Storage): Unit = {
+  override def run(spark: SparkSession, config: DefaultConfig, storage: Storage): Unit = {
     import spark.implicits._
 
-    val (inputFile: String, outputFile: String) = filePaths
+    log.info(s"Generating orders ACM csv file from [${config.inputFile}] to [${config.outputFile}]")
 
-    log.info(s"Generating orders ACM csv file from [$inputFile] to [$outputFile]")
-
-    val orders = storage
-      .readFromParquet[OrderRecord](inputFile)
-
+    val orders = storage.readFromParquet[OrderRecord](config.inputFile)
     val transformed = transform(spark, orders)
 
-    storage
-      .writeToCsv(transformed, outputFile)
+    storage.writeToCsv(transformed, config.outputFile)
   }
 }

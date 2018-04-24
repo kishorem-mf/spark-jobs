@@ -28,6 +28,7 @@ libraryDependencies ++= Seq(
   "io.circe"            %% "circe-core"     % circeVersion,
   "io.circe"            %% "circe-generic"  % circeVersion,
   "io.circe"            %% "circe-parser"   % circeVersion,
+  "com.github.scopt"    %% "scopt"          % "3.7.0",
   "org.scalatest"       %% "scalatest"      % "3.0.5"       % "test,it",
   "org.scalamock"       %% "scalamock"      % "4.1.0"       % "test,it"
 )
