@@ -38,14 +38,13 @@ from pyspark.sql.types import StructField
 from pyspark.sql.types import StructType
 from scipy.sparse import csr_matrix
 
-from .sparse_dot_topn import sparse_dot_topn
-
 
 VECTORIZE_STRING_COLUMN_NAME = 'vectorized_string'
 
 
 def matrix_dot_limit(A, B, n_top,
                      threshold=0., start_row=0, upper_triangular=False):
+    from .sparse_dot_topn import sparse_dot_topn
     """Calculate dot product of sparse matrices
 
     This function uses a C++ wrapped in Cython implementation. It
@@ -318,7 +317,9 @@ def match_strings(spark, df,
     chunks_rdd = spark.sparkContext.parallelize(chunks, numSlices=len(chunks))
     del csr_names_vs_ngrams
 
+    chunks_rdd.persist()
     similarity = calculate_similarity(chunks_rdd, csr_rdd_transpose,
                                       n_top, threshold, upper_triangular)
+    chunks_rdd.unpersist()
 
     return similarity
