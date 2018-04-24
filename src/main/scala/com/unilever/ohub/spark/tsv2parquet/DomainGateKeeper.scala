@@ -41,7 +41,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       opt[String]("outputFile") required () action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
-      opt[Boolean]("strictIngestion") required () action { (x, c) ⇒
+      opt[Boolean]("strictIngestion") optional () action { (x, c) ⇒
         c.copy(strictIngestion = x)
       } text "strictIngestion is a boolean property"
 
