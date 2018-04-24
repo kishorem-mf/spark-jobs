@@ -41,8 +41,8 @@ object ContactPersonMerging2 extends SparkJob[ContactPersonMergingConfig] {
   override private[spark] def defaultConfig = ContactPersonMergingConfig()
 
   override private[spark] def configParser(): OptionParser[ContactPersonMergingConfig] =
-    new scopt.OptionParser[ContactPersonMergingConfig]("Domain gate keeper") {
-      head("converts a csv into domain entities and writes the result to parquet.", "1.0")
+    new scopt.OptionParser[ContactPersonMergingConfig]("Contact person merging 2") {
+      head("merges contact persons and resolves refs to operators.", "1.0")
       opt[String]("matchingInputFile") required () action { (x, c) ⇒
         c.copy(matchingInputFile = x)
       } text "matchingInputFile is a string property"

@@ -109,8 +109,8 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbConfig] with AcmTransf
   override private[spark] def defaultConfig = DefaultWithDbConfig()
 
   override private[spark] def configParser(): OptionParser[DefaultWithDbConfig] =
-    new scopt.OptionParser[DefaultWithDbConfig]("Domain gate keeper") {
-      head("converts a csv into domain entities and writes the result to parquet.", "1.0")
+    new scopt.OptionParser[DefaultWithDbConfig]("Operator ACM converter") {
+      head("converts domain operators into ufs operators.", "1.0")
       opt[String]("inputFile") required () action { (x, c) ⇒
         c.copy(inputFile = x)
       } text "inputFile is a string property"

@@ -74,8 +74,8 @@ object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecord
   override private[spark] def defaultConfig = OperatorMergingConfig()
 
   override private[spark] def configParser(): OptionParser[OperatorMergingConfig] =
-    new scopt.OptionParser[OperatorMergingConfig]("Domain gate keeper") {
-      head("converts a csv into domain entities and writes the result to parquet.", "1.0")
+    new scopt.OptionParser[OperatorMergingConfig]("Operator merging") {
+      head("merges operators into an integrated operator output file", "1.0")
       opt[String]("matchingInputFile") required () action { (x, c) ⇒
         c.copy(matchingInputFile = x)
       } text "matchingInputFile is a string property"

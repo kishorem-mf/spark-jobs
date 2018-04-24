@@ -27,8 +27,8 @@ object OperatorCombining extends SparkJob[CombiningConfig] {
   override private[spark] def defaultConfig = CombiningConfig()
 
   override private[spark] def configParser(): OptionParser[CombiningConfig] =
-    new scopt.OptionParser[CombiningConfig]("Domain gate keeper") {
-      head("converts a csv into domain entities and writes the result to parquet.", "1.0")
+    new scopt.OptionParser[CombiningConfig]("Operator combiner") {
+      head("combines operators from integrated and new golden into new integrated output.", "1.0")
       opt[String]("integratedUpdated") required () action { (x, c) ⇒
         c.copy(integratedUpdated = x)
       } text "integratedUpdated is a string property"

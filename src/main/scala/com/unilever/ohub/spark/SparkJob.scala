@@ -47,8 +47,8 @@ trait SparkJobWithDefaultConfig extends SparkJob[DefaultConfig] {
   override private[spark] def defaultConfig = DefaultConfig()
 
   override private[spark] def configParser(): OptionParser[DefaultConfig] =
-    new scopt.OptionParser[DefaultConfig]("Domain gate keeper") {
-      head("converts a csv into domain entities and writes the result to parquet.", "1.0")
+    new scopt.OptionParser[DefaultConfig]("Spark job default") {
+      head("run a spark job with default config.", "1.0")
       opt[String]("inputFile") required () action { (x, c) ⇒
         c.copy(inputFile = x)
       } text "inputFile is a string property"

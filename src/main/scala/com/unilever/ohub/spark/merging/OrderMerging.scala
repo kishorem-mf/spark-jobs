@@ -84,8 +84,8 @@ object OrderMerging extends SparkJob[OrderMergingConfig] {
   override private[spark] def defaultConfig = OrderMergingConfig()
 
   override private[spark] def configParser(): OptionParser[OrderMergingConfig] =
-    new scopt.OptionParser[OrderMergingConfig]("Domain gate keeper") {
-      head("converts a csv into domain entities and writes the result to parquet.", "1.0")
+    new scopt.OptionParser[OrderMergingConfig]("Order merging") {
+      head("merges orders into an integrated order output file.", "1.0")
       opt[String]("contactPersonInputFile") required () action { (x, c) ⇒
         c.copy(contactPersonInputFile = x)
       } text "contactPersonInputFile is a string property"
