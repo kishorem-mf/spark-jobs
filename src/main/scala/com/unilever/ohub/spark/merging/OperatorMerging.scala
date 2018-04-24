@@ -2,15 +2,22 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import org.apache.spark.sql.functions.collect_list
+import scopt.OptionParser
 
-object OperatorMerging extends SparkJob with GoldenRecordPicking[Operator] {
+case class OperatorMergingConfig(
+    matchingInputFile: String = "matching-input-file",
+    operatorInputFile: String = "operator-input-file",
+    outputFile: String = "path-to-output-file"
+) extends SparkJobConfig
+
+object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecordPicking[Operator] {
 
   private case class MatchingResult(sourceId: String, targetId: String, countryCode: String)
 
@@ -26,7 +33,7 @@ object OperatorMerging extends SparkJob with GoldenRecordPicking[Operator] {
   def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])(operators: Seq[Operator]): Seq[Operator] = {
     val goldenRecord = pickGoldenRecord(sourcePreference, operators)
     val groupId = UUID.randomUUID().toString
-    operators.map(o ⇒ o.copy(ohubId = Some(groupId), isGoldenRecord = (o == goldenRecord)))
+    operators.map(o ⇒ o.copy(ohubId = Some(groupId), isGoldenRecord = o == goldenRecord))
   }
 
   def transform(
@@ -64,23 +71,39 @@ object OperatorMerging extends SparkJob with GoldenRecordPicking[Operator] {
       .repartition(60)
   }
 
-  override val neededFilePaths = Array("MATCHING_INPUT_FILE", "OPERATOR_INPUT_FILE", "OUTPUT_FILE")
+  override private[spark] def defaultConfig = OperatorMergingConfig()
 
-  override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
-    run(spark, filePaths, storage, DomainDataProvider(spark))
+  override private[spark] def configParser(): OptionParser[OperatorMergingConfig] =
+    new scopt.OptionParser[OperatorMergingConfig]("Operator merging") {
+      head("merges operators into an integrated operator output file", "1.0")
+      opt[String]("matchingInputFile") required () action { (x, c) ⇒
+        c.copy(matchingInputFile = x)
+      } text "matchingInputFile is a string property"
+      opt[String]("operatorInputFile") required () action { (x, c) ⇒
+        c.copy(operatorInputFile = x)
+      } text "operatorInputFile is a string property"
+      opt[String]("outputFile") required () action { (x, c) ⇒
+        c.copy(outputFile = x)
+      } text "outputFile is a string property"
+
+      version("1.0")
+      help("help") text "help text"
+    }
+
+  override def run(spark: SparkSession, config: OperatorMergingConfig, storage: Storage): Unit = {
+    run(spark, config, storage, DomainDataProvider(spark))
   }
 
-  protected[merging] def run(spark: SparkSession, filePaths: Product, storage: Storage, dataProvider: DomainDataProvider): Unit = {
+  protected[merging] def run(spark: SparkSession, config: OperatorMergingConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     import spark.implicits._
 
-    val (matchingInputFile: String, operatorInputFile: String, outputFile: String) = filePaths
-    log.info(s"Merging operators from [$matchingInputFile] and [$operatorInputFile] to [$outputFile]")
+    log.info(s"Merging operators from [${config.matchingInputFile}] and [${config.operatorInputFile}] to [${config.outputFile}]")
 
-    val operators = storage.readFromParquet[Operator](operatorInputFile)
+    val operators = storage.readFromParquet[Operator](config.operatorInputFile)
 
     val matches = storage
       .readFromParquet[MatchingResult](
-        matchingInputFile,
+        config.matchingInputFile,
         selectColumns = Seq(
           $"sourceId",
           $"targetId",
@@ -90,6 +113,6 @@ object OperatorMerging extends SparkJob with GoldenRecordPicking[Operator] {
 
     val transformed = transform(spark, operators, matches, dataProvider.sourcePreferences)
 
-    storage.writeToParquet(transformed, outputFile, partitionBy = Seq("countryCode"))
+    storage.writeToParquet(transformed, config.outputFile, partitionBy = Seq("countryCode"))
   }
 }

@@ -1,12 +1,12 @@
 package com.unilever.ohub.spark.acm
 
-import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.{ DefaultConfig, SparkJobWithDefaultConfig }
 import com.unilever.ohub.spark.acm.model.UFSProduct
 import com.unilever.ohub.spark.domain.entity.Product
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-object ProductAcmConverter extends SparkJob with AcmTransformationFunctions {
+object ProductAcmConverter extends SparkJobWithDefaultConfig with AcmTransformationFunctions {
 
   def transform(spark: SparkSession, products: Dataset[Product]): Dataset[UFSProduct] = {
     import spark.implicits._
@@ -25,18 +25,15 @@ object ProductAcmConverter extends SparkJob with AcmTransformationFunctions {
     }
   }
 
-  override val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
-
-  override def run(spark: SparkSession, filePaths: scala.Product, storage: Storage): Unit = {
+  override def run(spark: SparkSession, config: DefaultConfig, storage: Storage): Unit = {
     import spark.implicits._
 
-    val (inputFile: String, outputFile: String) = filePaths
-    log.info(s"Generating products ACM csv file from [$inputFile] to [$outputFile]")
+    log.info(s"Generating products ACM csv file from [${config.inputFile}] to [${config.outputFile}]")
 
-    val products = storage.readFromParquet[Product](inputFile)
+    val products = storage.readFromParquet[Product](config.inputFile)
 
     val transformed = transform(spark, products)
 
-    storage.writeToCsv(transformed, outputFile, partitionBy = Seq("COUNTY_CODE"))
+    storage.writeToCsv(transformed, config.outputFile, partitionBy = Seq("COUNTY_CODE"))
   }
 }

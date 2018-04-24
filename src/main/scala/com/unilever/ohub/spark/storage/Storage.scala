@@ -1,11 +1,12 @@
 package com.unilever.ohub.spark.storage
 
 import java.util.Properties
+
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql._
-
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.sql.JoinType
+import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 
 trait Storage {
 
@@ -99,13 +100,16 @@ class DefaultStorage(spark: SparkSession) extends Storage {
     userName: String,
     userPassword: String
   ): DataFrame = {
-    val dbFullConnectionString = s"jdbc::postgresql://$dbUrl:5432/$dbName"
+    val dbFullConnectionString = s"jdbc:postgresql://$dbUrl:5432/$dbName?ssl=true"
 
-    val jdbcProperties = new Properties
-    jdbcProperties.put("user", userName)
-    jdbcProperties.put("password", userPassword)
+    val connectionProperties = new Properties
+    connectionProperties.put("user", userName)
+    connectionProperties.put("password", userPassword)
 
-    spark.read.jdbc(dbFullConnectionString, dbTable, jdbcProperties)
+    spark
+      .read
+      .option(JDBCOptions.JDBC_DRIVER_CLASS, "org.postgresql.Driver")
+      .jdbc(dbFullConnectionString, dbTable, connectionProperties)
   }
 
   override def channelMappings(

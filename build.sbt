@@ -23,11 +23,12 @@ libraryDependencies ++= Seq(
   "org.apache.spark"    %% "spark-core"     % sparkVersion  % sparkDependencyType excludeAll ExclusionRule(organization = "org.scalatest"),
   "org.apache.spark"    %% "spark-sql"      % sparkVersion  % sparkDependencyType,
   "org.apache.spark"    %% "spark-mllib"    % sparkVersion  % sparkDependencyType,
-  "org.postgresql"      %  "postgresql"     % "42.1.4",
+  "org.postgresql"      %  "postgresql"     % "42.2.2",
   "org.apache.commons"  %  "commons-lang3"  % "3.7",
   "io.circe"            %% "circe-core"     % circeVersion,
   "io.circe"            %% "circe-generic"  % circeVersion,
   "io.circe"            %% "circe-parser"   % circeVersion,
+  "com.github.scopt"    %% "scopt"          % "3.7.0",
   "org.scalatest"       %% "scalatest"      % "3.0.5"       % "test,it",
   "org.scalamock"       %% "scalamock"      % "4.1.0"       % "test,it"
 )

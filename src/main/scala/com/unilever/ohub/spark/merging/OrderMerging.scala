@@ -1,15 +1,23 @@
 package com.unilever.ohub.spark.merging
 
-import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.data.OrderRecord
 import com.unilever.ohub.spark.domain.entity.{ ContactPerson, Operator }
 import com.unilever.ohub.spark.generic.StringFunctions
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.{ Dataset, SparkSession }
+import scopt.OptionParser
+
+case class OrderMergingConfig(
+    contactPersonInputFile: String = "contact-person-input-file",
+    operatorInputFile: String = "operator-input-file",
+    orderInputFile: String = "order-input-file",
+    outputFile: String = "path-to-output-file"
+) extends SparkJobConfig
 
 // Technically not really order MERGING, but we need to update foreign key IDs in the other records
-object OrderMerging extends SparkJob {
+object OrderMerging extends SparkJob[OrderMergingConfig] {
   private case class OHubIdRefIdAndCountry(ohubId: String, refId: String, countryCode: Option[String])
 
   def transform(
@@ -73,40 +81,41 @@ object OrderMerging extends SparkJob {
       }
   }
 
-  override val neededFilePaths = Array(
-    "CONTACT_PERSON_MERGING_INPUT_FILE",
-    "OPERATOR_MERGING_INPUT_FILE",
-    "ORDER_INPUT_FILE",
-    "OUTPUT_FILE"
-  )
+  override private[spark] def defaultConfig = OrderMergingConfig()
 
-  override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
+  override private[spark] def configParser(): OptionParser[OrderMergingConfig] =
+    new scopt.OptionParser[OrderMergingConfig]("Order merging") {
+      head("merges orders into an integrated order output file.", "1.0")
+      opt[String]("contactPersonInputFile") required () action { (x, c) ⇒
+        c.copy(contactPersonInputFile = x)
+      } text "contactPersonInputFile is a string property"
+      opt[String]("operatorInputFile") required () action { (x, c) ⇒
+        c.copy(operatorInputFile = x)
+      } text "operatorInputFile is a string property"
+      opt[String]("orderInputFile") required () action { (x, c) ⇒
+        c.copy(orderInputFile = x)
+      } text "orderInputFile is a string property"
+      opt[String]("outputFile") required () action { (x, c) ⇒
+        c.copy(outputFile = x)
+      } text "outputFile is a string property"
+
+      version("1.0")
+      help("help") text "help text"
+    }
+
+  override def run(spark: SparkSession, config: OrderMergingConfig, storage: Storage): Unit = {
     import spark.implicits._
 
-    val (
-      contactPersonMergingInputFile: String,
-      operatorMergingInputFile: String,
-      orderInputFile: String,
-      outputFile: String
-      ) = filePaths
-
     log.info(
-      s"Merging orders from [$contactPersonMergingInputFile], [$operatorMergingInputFile] " +
-        s"and [$orderInputFile] to [$outputFile]"
+      s"Merging orders from [${config.contactPersonInputFile}], [${config.operatorInputFile}] " +
+        s"and [${config.orderInputFile}] to [${config.outputFile}]"
     )
 
-    val orderRecords = storage
-      .readFromParquet[OrderRecord](orderInputFile)
-
-    val operatorRecords = storage
-      .readFromParquet[Operator](operatorMergingInputFile)
-
-    val contactPersonRecords = storage
-      .readFromParquet[ContactPerson](contactPersonMergingInputFile)
-
+    val orderRecords = storage.readFromParquet[OrderRecord](config.orderInputFile)
+    val operatorRecords = storage.readFromParquet[Operator](config.operatorInputFile)
+    val contactPersonRecords = storage.readFromParquet[ContactPerson](config.contactPersonInputFile)
     val transformed = transform(spark, orderRecords, operatorRecords, contactPersonRecords)
 
-    storage
-      .writeToParquet(transformed, outputFile, partitionBy = Seq("countryCode"))
+    storage.writeToParquet(transformed, config.outputFile, partitionBy = Seq("countryCode"))
   }
 }

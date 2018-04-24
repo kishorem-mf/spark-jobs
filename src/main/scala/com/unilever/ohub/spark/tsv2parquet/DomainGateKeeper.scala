@@ -1,14 +1,18 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql._
+import scopt.OptionParser
+import DomainGateKeeper._
 
 import scala.reflect.runtime.universe._
 
 object DomainGateKeeper {
   type ErrorMessage = String
+
+  case class DomainConfig(inputFile: String = "path-to-input-file", outputFile: String = "path-to-output-file", strictIngestion: Boolean = true) extends SparkJobConfig
 
   object implicits {
     // if we upgrade our scala version, we can probably get rid of this encoder too (because Either has become a Product in scala 2.12)
@@ -17,8 +21,7 @@ object DomainGateKeeper {
   }
 }
 
-abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] extends SparkJob {
-  import DomainGateKeeper._
+abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] extends SparkJob[DomainConfig] {
   import DomainGateKeeper.implicits._
 
   protected[tsv2parquet] def partitionByValue: Seq[String]
@@ -27,9 +30,24 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
 
   protected[tsv2parquet] def postValidate: DomainDataProvider ⇒ DomainEntity ⇒ Unit = dataProvider ⇒ DomainEntity.postConditions(dataProvider)
 
-  override final val neededFilePaths = Array("INPUT_FILE", "OUTPUT_FILE")
+  private[spark] def defaultConfig: DomainConfig = DomainConfig()
 
-  override final val optionalFilePaths = Array("STRICT_INGESTION")
+  private[spark] def configParser(): OptionParser[DomainConfig] =
+    new scopt.OptionParser[DomainConfig]("Domain gate keeper") {
+      head("converts a csv into domain entities and writes the result to parquet.", "1.0")
+      opt[String]("inputFile") required () action { (x, c) ⇒
+        c.copy(inputFile = x)
+      } text "inputFile is a string property"
+      opt[String]("outputFile") required () action { (x, c) ⇒
+        c.copy(outputFile = x)
+      } text "outputFile is a string property"
+      opt[Boolean]("strictIngestion") optional () action { (x, c) ⇒
+        c.copy(strictIngestion = x)
+      } text "strictIngestion is a boolean property"
+
+      version("1.0")
+      help("help") text "help text"
+    }
 
   protected def read(spark: SparkSession, storage: Storage, input: String): Dataset[RowType]
 
@@ -44,20 +62,16 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
           Left(s"Error parsing row: '$e', row = '$row'")
       }
 
-  override def run(spark: SparkSession, filePaths: Product, storage: Storage): Unit = {
-    run(spark, filePaths, storage, DomainDataProvider(spark))
+  override def run(spark: SparkSession, config: DomainConfig, storage: Storage): Unit = {
+    run(spark, config, storage, DomainDataProvider(spark))
   }
 
-  protected[tsv2parquet] def run(spark: SparkSession, filePaths: Product, storage: Storage, dataProvider: DomainDataProvider): Unit = {
+  protected[tsv2parquet] def run(spark: SparkSession, config: DomainConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     import spark.implicits._
 
-    val (inputFile: String, outputFile: String, strictIngestion: Boolean) = filePaths match {
-      case (in, out)                 ⇒ (in, out, true)
-      case (in, out, strict: String) ⇒ (in, out, strict.toBoolean)
-    }
     val transformer = DomainTransformer(dataProvider)
 
-    val result = read(spark, storage, inputFile)
+    val result = read(spark, storage, config.inputFile)
       .map(transform(toDomainEntity(transformer))(postValidate(dataProvider)))
       .distinct()
 
@@ -67,7 +81,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
     if (numberOfErrors > 0) { // do something with the errors here
       errors.toDF("ERROR").show(numRows = 100, truncate = false)
 
-      if (strictIngestion) {
+      if (config.strictIngestion) {
         log.error(s"NO PARQUET FILE WRITTEN, NUMBER OF ERRORS FOUND IS '$numberOfErrors'")
         System.exit(1) // let's fail fast now
       } else {
@@ -76,6 +90,6 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
     }
 
     val domainEntities: Dataset[DomainType] = result.filter(_.isRight).map(_.right.get)
-    storage.writeToParquet(domainEntities, outputFile, partitionByValue)
+    storage.writeToParquet(domainEntities, config.outputFile, partitionByValue)
   }
 }

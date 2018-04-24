@@ -1,14 +1,24 @@
 package com.unilever.ohub.spark.acm
 
-import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.acm.model.UFSOperator
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
+import scopt.OptionParser
 
-object OperatorAcmConverter extends SparkJob with AcmTransformationFunctions {
+case class DefaultWithDbConfig(
+    inputFile: String = "path-to-input-file",
+    outputFile: String = "path-to-output-file",
+    postgressUrl: String = "postgress-url",
+    postgressUsername: String = "postgress-username",
+    postgressPassword: String = "postgress-password",
+    postgressDB: String = "postgress-db"
+) extends SparkJobConfig
+
+object OperatorAcmConverter extends SparkJob[DefaultWithDbConfig] with AcmTransformationFunctions {
 
   def transform(
     spark: SparkSession,
@@ -96,32 +106,43 @@ object OperatorAcmConverter extends SparkJob with AcmTransformationFunctions {
       }
   }
 
-  override val neededFilePaths = Array(
-    "INPUT_FILE",
-    "OUTPUT_FILE",
-    "POSTGRESS_URL",
-    "POSTGRESS_USERNAME",
-    "POSTGRESS_PASSWORD",
-    "POSTGRESS_DB")
+  override private[spark] def defaultConfig = DefaultWithDbConfig()
 
-  override def run(spark: SparkSession, filePaths: scala.Product, storage: Storage): Unit = {
+  override private[spark] def configParser(): OptionParser[DefaultWithDbConfig] =
+    new scopt.OptionParser[DefaultWithDbConfig]("Operator ACM converter") {
+      head("converts domain operators into ufs operators.", "1.0")
+      opt[String]("inputFile") required () action { (x, c) ⇒
+        c.copy(inputFile = x)
+      } text "inputFile is a string property"
+      opt[String]("outputFile") required () action { (x, c) ⇒
+        c.copy(outputFile = x)
+      } text "outputFile is a string property"
+      opt[String]("postgressUrl") required () action { (x, c) ⇒
+        c.copy(postgressUrl = x)
+      } text "postgressUrl is a string property"
+      opt[String]("postgressUsername") required () action { (x, c) ⇒
+        c.copy(postgressUsername = x)
+      } text "postgressUsername is a string property"
+      opt[String]("postgressPassword") required () action { (x, c) ⇒
+        c.copy(postgressPassword = x)
+      } text "postgressPassword is a string property"
+      opt[String]("postgressDB") required () action { (x, c) ⇒
+        c.copy(postgressDB = x)
+      } text "postgressDB is a string property"
+
+      version("1.0")
+      help("help") text "help text"
+    }
+
+  override def run(spark: SparkSession, config: DefaultWithDbConfig, storage: Storage): Unit = {
     import spark.implicits._
 
-    val (
-      inputFile: String,
-      outputFile: String,
-      postgressUrl: String,
-      postgressUsername: String,
-      postgressPassword: String,
-      postgressDb: String
-      ) = filePaths
+    log.info(s"Generating operator ACM csv file from [$config.inputFile] to [$config.outputFile]")
 
-    log.info(s"Generating operator ACM csv file from [$inputFile] to [$outputFile]")
-
-    val channelMappings = storage.channelMappings(postgressUrl, postgressDb, postgressUsername, postgressPassword)
-    val operators = storage.readFromParquet[Operator](inputFile)
+    val channelMappings = storage.channelMappings(config.postgressUrl, config.postgressDB, config.postgressUsername, config.postgressPassword)
+    val operators = storage.readFromParquet[Operator](config.inputFile)
     val transformed = transform(spark, channelMappings, operators)
 
-    storage.writeToCsv(transformed, outputFile, partitionBy = Seq("COUNTRY_CODE"))
+    storage.writeToCsv(transformed, config.outputFile, partitionBy = Seq("COUNTRY_CODE"))
   }
 }
