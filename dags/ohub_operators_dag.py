@@ -3,6 +3,8 @@ from datetime import datetime
 
 from airflow.operators.subdag_operator import SubDagOperator
 
+from airflow.hooks.base_hook import BaseHook
+
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
@@ -56,9 +58,9 @@ with DAG('ohub_operators', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
-            'parameters': [raw_bucket.format(date=one_day_ago, schema='operators'),
-                           ingested_bucket.format(date=one_day_ago, fn='operators'),
-                           "false"]
+            'parameters': ['--inputFile', raw_bucket.format(date=one_day_ago, schema='operators'),
+                           '--outputFile', ingested_bucket.format(date=one_day_ago, fn='operators'),
+                           '--strictIngestion', "false"]
         }
     )
 
@@ -127,9 +129,9 @@ with DAG('ohub_operators', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
-            'parameters': [intermediate_bucket.format(date=one_day_ago, fn='operators_matched'),
-                           intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched'),
-                           intermediate_bucket.format(date=one_day_ago, fn='golden_records_new')]
+            'parameters': ['--matchingInputFile', intermediate_bucket.format(date=one_day_ago, fn='operators_matched'),
+                           '--operatorInputFile', intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched'),
+                           '--outputFile', intermediate_bucket.format(date=one_day_ago, fn='golden_records_new')]
         })
 
     update_golden_records = DatabricksSubmitRunOperator(
@@ -141,8 +143,8 @@ with DAG('ohub_operators', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorUpdateGoldenRecord",
-            'parameters': [intermediate_bucket.format(date=one_day_ago, fn='updated_operators_integrated'),
-                           intermediate_bucket.format(date=one_day_ago, fn='golden_records_updated')]
+            'parameters': ['--inputFile', intermediate_bucket.format(date=one_day_ago, fn='updated_operators_integrated'),
+                           '--outputFile', intermediate_bucket.format(date=one_day_ago, fn='golden_records_updated')]
         }
     )
 
@@ -155,11 +157,13 @@ with DAG('ohub_operators', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.combining.OperatorCombining",
-            'parameters': [intermediate_bucket.format(date=one_day_ago, fn='golden_records_updated'),
-                           intermediate_bucket.format(date=one_day_ago, fn='golden_records_new'),
-                           integrated_bucket.format(date=one_day_ago, fn='operators')]
+            'parameters': ['--integratedUpdated', intermediate_bucket.format(date=one_day_ago, fn='golden_records_updated'),
+                           '--newGolden', intermediate_bucket.format(date=one_day_ago, fn='golden_records_new'),
+                           '--newIntegratedOutput', integrated_bucket.format(date=one_day_ago, fn='operators')]
         }
     )
+
+    postgres_connection = BaseHook.get_connection('postgres_channels')
 
     operators_to_acm = DatabricksSubmitRunOperator(
         task_id="operators_to_acm",
@@ -170,8 +174,12 @@ with DAG('ohub_operators', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmConverter",
-            'parameters': [integrated_bucket.format(date=one_day_ago, fn='operators'),
-                           export_bucket.format(date=one_day_ago, fn='acm/operators.csv')],
+            'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
+                           '--outputFile', export_bucket.format(date=one_day_ago, fn='acm/operators.csv'),
+                           '--postgressUrl', postgres_connection.host,
+                           '--postgressUsername', postgres_connection.login,
+                           '--postgressPassword', postgres_connection.password,
+                           '--postgressDB', postgres_connection.schema],
         }
     )
 

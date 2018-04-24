@@ -55,9 +55,9 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
-            'parameters': [raw_bucket.format(date='{{ds}}', schema='operators'),
-                           ingested_bucket.format(date='{{ds}}', fn='operators'),
-                           "false"]
+            'parameters': ['--inputFile', raw_bucket.format(date='{{ds}}', schema='operators'),
+                           '--outputFile', ingested_bucket.format(date='{{ds}}', fn='operators'),
+                           '--strictIngestion', "false"]
         }
     )
 
@@ -102,9 +102,9 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
-            'parameters': [intermediate_bucket.format(date='{{ds}}', fn='operators_matched'),
-                           ingested_bucket.format(date='{{ds}}', fn='operators'),
-                           integrated_bucket.format(date='{{ds}}', fn='operators')]
+            'parameters': ['--matchingInputFile', intermediate_bucket.format(date='{{ds}}', fn='operators_matched'),
+                           '--operatorInputFile', ingested_bucket.format(date='{{ds}}', fn='operators'),
+                           '--outputFile', integrated_bucket.format(date='{{ds}}', fn='operators')]
         })
 
     postgres_connection = BaseHook.get_connection('postgres_channels')
@@ -118,12 +118,12 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmConverter",
-            'parameters': [integrated_bucket.format(date='{{ds}}', fn='operators'),
-                           export_bucket.format(date='{{ds}}', fn='acm/operators.csv'),
-                           postgres_connection.host,
-                           postgres_connection.login,
-                           postgres_connection.password,
-                           postgres_connection.schema]
+            'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn='operators'),
+                           '--outputFile', export_bucket.format(date='{{ds}}', fn='acm/operators.csv'),
+                           '--postgressUrl', postgres_connection.host,
+                           '--postgressUsername', postgres_connection.login,
+                           '--postgressPassword', postgres_connection.password,
+                           '--postgressDB', postgres_connection.schema]
         }
     )
 

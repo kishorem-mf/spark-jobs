@@ -86,8 +86,8 @@ with DAG('ohub_dag', default_args=default_args,
             ],
             spark_jar_task={
                 'main_class_name': "com.unilever.ohub.spark.tsv2parquet.{}".format(task['class']),
-                'parameters': [data_input_bucket.format(task['input']),
-                               data_output_bucket.format(task['input'].lower())]
+                'parameters': ['--inputFile', data_input_bucket.format(task['input']),
+                               '--outputFile', data_output_bucket.format(task['output'].lower())]
             }
         )
 
@@ -105,8 +105,8 @@ with DAG('ohub_dag', default_args=default_args,
             ],
             spark_jar_task={
                 'main_class_name': "com.unilever.ohub.spark.tsv2parquet.{}".format(task['class']),
-                'parameters': [data_input_bucket.format(task['input']),
-                               data_output_bucket.format(task['output']) + '_acm']
+                'parameters': ['--inputFile', data_input_bucket.format(task['input']),
+                               '--outputFile', data_output_bucket.format(task['output']) + '_acm']
             })
         globals()[task_name] >> delete_cluster
 
@@ -153,9 +153,9 @@ with DAG('ohub_dag', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
-            'parameters': [data_output_bucket.format('operators_uuid'),
-                           data_input_bucket.format('OPERATORS'),
-                           data_output_bucket.format('operators_merged')]
+            'parameters': ['--matchingInputFile', data_output_bucket.format('operators_uuid'),
+                           '--operatorInputFile', data_input_bucket.format('OPERATORS'),
+                           '--outputFile', data_output_bucket.format('operators_merged')]
         })
 
     operators_to_parquet >> match_operators >> persistent_uuid >> merge_operators >> operators_to_acm
@@ -168,9 +168,9 @@ with DAG('ohub_dag', default_args=default_args,
             {'jar': 'dbfs:/libraries/spark-jobs-assembly-0.1.jar'}
         ],
         spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonMerging1",
-            'parameters': [data_output_bucket.format('contactpersons'),
-                           data_output_bucket.format('contactpersons_merged_1')]
+            'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonMerging",
+            'parameters': ['--inputFile', data_output_bucket.format('contactpersons'),
+                           '--outputFile', data_output_bucket.format('contactpersons_merged_1')]
         })
 
     merge_operators >> merge_contactpersons1
@@ -185,9 +185,9 @@ with DAG('ohub_dag', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonMerging2",
-            'parameters': [data_output_bucket.format('contactpersons_merged_1'),
-                           data_output_bucket.format('operators_merged'),
-                           data_output_bucket.format('contactpersons_merged_2')]
+            'parameters': ['--matchingInputFile', data_output_bucket.format('contactpersons_merged_1'),
+                           '--operatorInputFile', data_output_bucket.format('operators_merged'),
+                           '--outputFile', data_output_bucket.format('contactpersons_merged_2')]
         })
 
     merge_contactpersons1 >> merge_contactpersons2 >> contactpersons_to_acm
