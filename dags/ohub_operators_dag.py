@@ -22,7 +22,7 @@ default_args.update(
 )
 
 one_day_ago = '2018-04-06'  # should become {{ ds }}
-two_day_ago = '2017-07-12'  # should become {{ macros.ds_add(ds, -1) }}
+two_day_ago = '2017-07-12'  # should become {{ yesterday_ds }}
 interval = '@once'
 
 with DAG('ohub_operators', default_args=default_args,

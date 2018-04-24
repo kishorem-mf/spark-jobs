@@ -14,8 +14,8 @@ default_args = {
     'email': email_addresses,
     'email_on_failure': False,
     'email_on_retry': False,
-    'retries': 0,
-    'retry_delay': timedelta(minutes=1),
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
     'pool': 'ohub_pool',
     'on_failure_callback': slack_on_databricks_failure_callback
 }
