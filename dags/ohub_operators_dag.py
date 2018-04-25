@@ -64,6 +64,7 @@ with DAG('ohub_operators', default_args=default_args,
         }
     )
 
+
     def matching_sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval):
         sub_dag = DAG(
             '%s.%s' % (parent_dag_name, child_dag_name),
@@ -114,6 +115,7 @@ with DAG('ohub_operators', default_args=default_args,
             match_new >> match_unmatched
 
         return sub_dag
+
 
     match_per_country = SubDagOperator(
         subdag=matching_sub_dag('ohub_operators', 'match_per_country', default_args['start_date'], interval),
@@ -183,7 +185,8 @@ with DAG('ohub_operators', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmConverter",
             'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
-                           '--outputFile', export_bucket.format(date=one_day_ago, fn='acm/operators.csv'),
+                           '--outputFile', export_bucket.format(date=one_day_ago,
+                                                                fn='acm/UFS_OPERATORS_{{ds_nodash}}000000'),
                            '--postgressUrl', postgres_connection.host,
                            '--postgressUsername', postgres_connection.login,
                            '--postgressPassword', postgres_connection.password,
