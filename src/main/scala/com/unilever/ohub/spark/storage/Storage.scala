@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.storage
 
-import java.util.{Properties, UUID}
+import java.util.{ Properties, UUID }
 
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql._
