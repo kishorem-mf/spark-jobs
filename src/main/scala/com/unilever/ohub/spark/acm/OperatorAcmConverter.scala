@@ -1,12 +1,15 @@
 package com.unilever.ohub.spark.acm
 
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
+import java.io.File
+
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.acm.model.UFSOperator
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 case class DefaultWithDbConfig(
@@ -143,6 +146,11 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbConfig] with AcmTransf
     val operators = storage.readFromParquet[Operator](config.inputFile)
     val transformed = transform(spark, channelMappings, operators)
 
-    storage.writeToCsv(transformed, config.outputFile, partitionBy = Seq("COUNTRY_CODE"))
+
+    //  Rename file
+    val filePath = new Path(config.outputFile)
+    val temporaryPath = new Path(filePath.getParent, "operator_acm_to_csv.tmp")
+
+    storage.writeToSingleCsv(transformed, temporaryPath.toString, config.outputFile, delim = "\u00B6")
   }
 }

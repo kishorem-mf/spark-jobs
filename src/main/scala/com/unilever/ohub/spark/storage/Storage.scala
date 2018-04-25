@@ -7,42 +7,46 @@ import org.apache.spark.sql._
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
+import org.apache.hadoop.fs._
+import org.apache.log4j.Logger
+
 
 trait Storage {
 
   def readFromCsv(
-    location: String,
-    fieldSeparator: String,
-    hasHeaders: Boolean = true
-  ): Dataset[Row]
+                   location: String,
+                   fieldSeparator: String,
+                   hasHeaders: Boolean = true
+                 ): Dataset[Row]
 
-  def writeToCsv(
-    ds: Dataset[_],
-    outputFile: String,
-    partitionBy: Seq[String] = Seq(),
-    delim: String = ";",
-    quote: String = "\""
-  ): Unit
+  def writeToSingleCsv(
+                        ds: Dataset[_],
+                        temporaryPath: String,
+                        outputFile: String,
+                        delim: String = ";",
+                        quote: String = "\""
+                      )(implicit log: Logger): Unit
 
   def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
 
   def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq()): Unit
 
   def channelMappings(
-    dbUrl: String,
-    dbName: String,
-    userName: String,
-    userPassword: String): Dataset[ChannelMapping]
+                       dbUrl: String,
+                       dbName: String,
+                       userName: String,
+                       userPassword: String): Dataset[ChannelMapping]
 }
 
 class DefaultStorage(spark: SparkSession) extends Storage {
+
   import spark.implicits._
 
   override def readFromCsv(
-    location: String,
-    fieldSeparator: String,
-    hasHeaders: Boolean = true
-  ): Dataset[Row] = {
+                            location: String,
+                            fieldSeparator: String,
+                            hasHeaders: Boolean = true
+                          ): Dataset[Row] = {
     spark
       .read
       .option("header", hasHeaders)
@@ -51,15 +55,19 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .csv(location)
   }
 
-  def writeToCsv(
-    ds: Dataset[_],
-    outputFile: String,
-    partitionBy: Seq[String] = Seq(),
-    delim: String = ";",
-    quote: String = "\""
-  ): Unit = {
-    ds
-      .coalesce(1)
+  def writeToSingleCsv(
+                        ds: Dataset[_],
+                        temporaryPath: String,
+                        outputFile: String,
+                        delim: String = ";",
+                        quote: String = "\""
+                      )(implicit log: Logger): Unit = {
+
+    val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
+
+    val concatAvailable = isConcatAvailable(fs)
+    val updatedDs = if (concatAvailable) ds else ds.coalesce(1)
+    updatedDs
       .write
       .mode(SaveMode.Overwrite)
       .option("encoding", "UTF-8")
@@ -67,9 +75,46 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .option("quoteAll", "true")
       .option("delimiter", delim)
       .option("quote", quote)
-      .partitionBy(partitionBy: _*)
       .csv(outputFile)
+
+    val csvPaths = getCsvFilePaths(fs, new Path(temporaryPath))
+    if (concatAvailable){
+      fs.concat(new Path(outputFile), csvPaths)
+    } else {
+      if (csvPaths.length != 1) {
+        log.error("the number of csv-files found is greater or smaller than 1, this is not supported")
+        System.exit(1)
+      }
+      fs.rename(csvPaths.head, new Path(outputFile))
+    }
   }
+
+  private[storage] def isConcatAvailable(fs: FileSystem) = {
+    val shouldCoalesce = try {
+      fs.concat(new Path("/tmp/"), Array.empty)
+      true
+    }
+    catch {
+      case _: UnsupportedOperationException => false
+      case _ => true
+    }
+    shouldCoalesce
+  }
+
+  private[storage] def getCsvFilePaths(fs: FileSystem, path: Path): Array[Path] = {
+    def toList(it: RemoteIterator[LocatedFileStatus], arr: List[Path] = List.empty): List[Path] = {
+      if (it.hasNext) {
+        val nextPath = it.next().getPath
+        toList(it, arr :+ nextPath)
+      }
+      else arr
+    }
+
+    toList(fs.listFiles(path, true))
+      .filter(_.getName.endsWith(".csv"))
+      .toArray
+  }
+
 
   override def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T] = {
     val parquetDF = spark
@@ -93,13 +138,13 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   }
 
   private def readJdbcTable(
-    spark: SparkSession,
-    dbUrl: String,
-    dbName: String,
-    dbTable: String,
-    userName: String,
-    userPassword: String
-  ): DataFrame = {
+                             spark: SparkSession,
+                             dbUrl: String,
+                             dbName: String,
+                             dbTable: String,
+                             userName: String,
+                             userPassword: String
+                           ): DataFrame = {
     val dbFullConnectionString = s"jdbc:postgresql://$dbUrl:5432/$dbName?ssl=true"
 
     val connectionProperties = new Properties
@@ -113,10 +158,10 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   }
 
   override def channelMappings(
-    dbUrl: String,
-    dbName: String,
-    userName: String,
-    userPassword: String): Dataset[ChannelMapping] = {
+                                dbUrl: String,
+                                dbName: String,
+                                userName: String,
+                                userPassword: String): Dataset[ChannelMapping] = {
 
     val channelMappingDF = readJdbcTable(spark, dbUrl, dbName, "channel_mapping", userName, userPassword)
     val channelReferencesDF = readJdbcTable(spark, dbUrl, dbName, "channel_references", userName, userPassword)
