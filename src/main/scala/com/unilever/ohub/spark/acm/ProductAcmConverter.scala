@@ -34,6 +34,6 @@ object ProductAcmConverter extends SparkJobWithDefaultConfig with AcmTransformat
 
     val transformed = transform(spark, products)
 
-    storage.writeToSingleCsv(transformed, "foo", config.outputFile)
+    storage.writeToSingleCsv(transformed, config.outputFile)
   }
 }

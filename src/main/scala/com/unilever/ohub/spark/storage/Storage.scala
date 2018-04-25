@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.storage
 
-import java.util.Properties
+import java.util.{Properties, UUID}
 
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql._
@@ -13,28 +13,27 @@ import org.apache.log4j.Logger
 trait Storage {
 
   def readFromCsv(
-                   location: String,
-                   fieldSeparator: String,
-                   hasHeaders: Boolean = true
-                 ): Dataset[Row]
+    location: String,
+    fieldSeparator: String,
+    hasHeaders: Boolean = true
+  ): Dataset[Row]
 
   def writeToSingleCsv(
-                        ds: Dataset[_],
-                        temporaryPath: String,
-                        outputFile: String,
-                        delim: String = ";",
-                        quote: String = "\""
-                      )(implicit log: Logger): Unit
+    ds: Dataset[_],
+    outputFile: String,
+    delim: String = ";",
+    quote: String = "\""
+  )(implicit log: Logger): Unit
 
   def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
 
   def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq()): Unit
 
   def channelMappings(
-                       dbUrl: String,
-                       dbName: String,
-                       userName: String,
-                       userPassword: String): Dataset[ChannelMapping]
+    dbUrl: String,
+    dbName: String,
+    userName: String,
+    userPassword: String): Dataset[ChannelMapping]
 }
 
 class DefaultStorage(spark: SparkSession) extends Storage {
@@ -42,10 +41,10 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   import spark.implicits._
 
   override def readFromCsv(
-                            location: String,
-                            fieldSeparator: String,
-                            hasHeaders: Boolean = true
-                          ): Dataset[Row] = {
+    location: String,
+    fieldSeparator: String,
+    hasHeaders: Boolean = true
+  ): Dataset[Row] = {
     spark
       .read
       .option("header", hasHeaders)
@@ -55,17 +54,18 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   }
 
   def writeToSingleCsv(
-                        ds: Dataset[_],
-                        temporaryPath: String,
-                        outputFile: String,
-                        delim: String = ";",
-                        quote: String = "\""
-                      )(implicit log: Logger): Unit = {
+    ds: Dataset[_],
+    outputFile: String,
+    delim: String = ";",
+    quote: String = "\""
+  )(implicit log: Logger): Unit = {
 
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
+    val temporaryPath: String = new Path(new Path(outputFile).getParent, UUID.randomUUID().toString).toString
 
     val concatAvailable = isConcatAvailable(fs)
     val updatedDs = if (concatAvailable) ds else ds.coalesce(1)
+
     updatedDs
       .write
       .mode(SaveMode.Overwrite)
@@ -74,9 +74,10 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .option("quoteAll", "true")
       .option("delimiter", delim)
       .option("quote", quote)
-      .csv(outputFile)
+      .csv(temporaryPath)
 
     val csvPaths = getCsvFilePaths(fs, new Path(temporaryPath))
+
     if (concatAvailable) {
       fs.concat(new Path(outputFile), csvPaths)
       fs.delete(new Path(temporaryPath), true)
@@ -96,7 +97,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       true
     } catch {
       case _: UnsupportedOperationException ⇒ false
-      case _: Throwable ⇒ true
+      case _: Throwable                     ⇒ true
     }
     shouldCoalesce
   }
@@ -136,13 +137,13 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   }
 
   private def readJdbcTable(
-                             spark: SparkSession,
-                             dbUrl: String,
-                             dbName: String,
-                             dbTable: String,
-                             userName: String,
-                             userPassword: String
-                           ): DataFrame = {
+    spark: SparkSession,
+    dbUrl: String,
+    dbName: String,
+    dbTable: String,
+    userName: String,
+    userPassword: String
+  ): DataFrame = {
     val dbFullConnectionString = s"jdbc:postgresql://$dbUrl:5432/$dbName?ssl=true"
 
     val connectionProperties = new Properties
@@ -156,10 +157,10 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   }
 
   override def channelMappings(
-                                dbUrl: String,
-                                dbName: String,
-                                userName: String,
-                                userPassword: String): Dataset[ChannelMapping] = {
+    dbUrl: String,
+    dbName: String,
+    userName: String,
+    userPassword: String): Dataset[ChannelMapping] = {
 
     val channelMappingDF = readJdbcTable(spark, dbUrl, dbName, "channel_mapping", userName, userPassword)
     val channelReferencesDF = readJdbcTable(spark, dbUrl, dbName, "channel_references", userName, userPassword)

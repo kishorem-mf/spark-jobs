@@ -21,8 +21,6 @@ case class DefaultWithDbConfig(
     postgressPassword: String = "postgress-password",
     postgressDB: String = "postgress-db"
 ) extends SparkJobConfig {
-  val filePath = new Path(outputFile)
-  val temporaryPath = new Path(filePath.getParent, UUID.randomUUID().toString)
 }
 
 object OperatorAcmConverter extends SparkJob[DefaultWithDbConfig] with AcmTransformationFunctions {
@@ -150,9 +148,6 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbConfig] with AcmTransf
     val operators = storage.readFromParquet[Operator](config.inputFile)
     val transformed = transform(spark, channelMappings, operators)
 
-    val filePath = new Path(config.outputFile)
-    val temporaryPath = new Path(filePath.getParent, "operator_acm_to_csv.tmp")
-
-    storage.writeToSingleCsv(transformed, temporaryPath.toString, config.outputFile, delim = "\u00B6")
+    storage.writeToSingleCsv(transformed, config.outputFile, delim = "\u00B6")
   }
 }
