@@ -61,11 +61,12 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   )(implicit log: Logger): Unit = {
 
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
-    val temporaryPath: String = new Path(new Path(outputFile).getParent, UUID.randomUUID().toString).toString
+    val outputFilePath = new Path(outputFile)
+    val temporaryPath = new Path(outputFilePath.getParent, UUID.randomUUID().toString)
 
     val concatAvailable = isConcatAvailable(fs)
-    val updatedDs = if (concatAvailable) ds else ds.coalesce(1)
 
+    val updatedDs = if (concatAvailable) ds else ds.coalesce(1)
     updatedDs
       .write
       .mode(SaveMode.Overwrite)
@@ -74,20 +75,20 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .option("quoteAll", "true")
       .option("delimiter", delim)
       .option("quote", quote)
-      .csv(temporaryPath)
+      .csv(temporaryPath.toString)
 
-    val csvPaths = getCsvFilePaths(fs, new Path(temporaryPath))
+    val csvPaths = getCsvFilePaths(fs, temporaryPath)
 
     if (concatAvailable) {
-      fs.concat(new Path(outputFile), csvPaths)
-      fs.delete(new Path(temporaryPath), true)
+      fs.concat(outputFilePath, csvPaths)
+      fs.delete(temporaryPath, true)
     } else {
       if (csvPaths.length != 1) {
         log.error("the number of csv-files found is greater or smaller than 1, this is not supported")
         System.exit(1)
       }
-      fs.rename(csvPaths.head, new Path(outputFile))
-      fs.delete(new Path(temporaryPath), true)
+      fs.rename(csvPaths.head, outputFilePath)
+      fs.delete(temporaryPath, true)
     }
   }
 
