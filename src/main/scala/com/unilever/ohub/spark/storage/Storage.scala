@@ -92,14 +92,13 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   }
 
   private[storage] def isConcatAvailable(fs: FileSystem) = {
-    val shouldCoalesce = try {
+    try {
       fs.concat(new Path("/tmp/"), Array.empty)
       true
     } catch {
       case _: UnsupportedOperationException ⇒ false
       case _: Throwable                     ⇒ true
     }
-    shouldCoalesce
   }
 
   private[storage] def getCsvFilePaths(fs: FileSystem, path: Path): Array[Path] = {

@@ -16,7 +16,7 @@ class DefaultStorageSpec extends SparkJobSpec {
   }
   describe("getCsvFilePaths") {
     it("should return only and all csvs files in a path") {
-      val files = victim.getCsvFilePaths(fs, new Path("src/test/resources"))
+      val files = victim.getCsvFilePaths(fs, new Path("src/test/"))
       assert(files.length == 27)
       files.foreach(f ⇒ {
         assert(f.toString.endsWith(".csv"))

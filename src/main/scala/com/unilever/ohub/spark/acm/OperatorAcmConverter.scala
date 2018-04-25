@@ -20,8 +20,7 @@ case class DefaultWithDbConfig(
     postgressUsername: String = "postgress-username",
     postgressPassword: String = "postgress-password",
     postgressDB: String = "postgress-db"
-) extends SparkJobConfig {
-}
+) extends SparkJobConfig
 
 object OperatorAcmConverter extends SparkJob[DefaultWithDbConfig] with AcmTransformationFunctions {
 
