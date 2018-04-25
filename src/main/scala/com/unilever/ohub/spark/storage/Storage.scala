@@ -10,7 +10,6 @@ import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.hadoop.fs._
 import org.apache.log4j.Logger
 
-
 trait Storage {
 
   def readFromCsv(
@@ -78,14 +77,16 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .csv(outputFile)
 
     val csvPaths = getCsvFilePaths(fs, new Path(temporaryPath))
-    if (concatAvailable){
+    if (concatAvailable) {
       fs.concat(new Path(outputFile), csvPaths)
+      fs.delete(new Path(temporaryPath), true)
     } else {
       if (csvPaths.length != 1) {
         log.error("the number of csv-files found is greater or smaller than 1, this is not supported")
         System.exit(1)
       }
       fs.rename(csvPaths.head, new Path(outputFile))
+      fs.delete(new Path(temporaryPath), true)
     }
   }
 
@@ -93,10 +94,9 @@ class DefaultStorage(spark: SparkSession) extends Storage {
     val shouldCoalesce = try {
       fs.concat(new Path("/tmp/"), Array.empty)
       true
-    }
-    catch {
-      case _: UnsupportedOperationException => false
-      case _ => true
+    } catch {
+      case _: UnsupportedOperationException ⇒ false
+      case _: Throwable ⇒ true
     }
     shouldCoalesce
   }
@@ -106,15 +106,13 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       if (it.hasNext) {
         val nextPath = it.next().getPath
         toList(it, arr :+ nextPath)
-      }
-      else arr
+      } else arr
     }
 
     toList(fs.listFiles(path, true))
       .filter(_.getName.endsWith(".csv"))
       .toArray
   }
-
 
   override def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T] = {
     val parquetDF = spark

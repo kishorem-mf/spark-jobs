@@ -1,15 +1,16 @@
 package com.unilever.ohub.spark.acm
 
 import java.io.File
+import java.util.UUID
 
-import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.acm.model.UFSOperator
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.hadoop.fs.{ FileSystem, Path }
+import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 case class DefaultWithDbConfig(
@@ -19,7 +20,10 @@ case class DefaultWithDbConfig(
     postgressUsername: String = "postgress-username",
     postgressPassword: String = "postgress-password",
     postgressDB: String = "postgress-db"
-) extends SparkJobConfig
+) extends SparkJobConfig {
+  val filePath = new Path(outputFile)
+  val temporaryPath = new Path(filePath.getParent, UUID.randomUUID().toString)
+}
 
 object OperatorAcmConverter extends SparkJob[DefaultWithDbConfig] with AcmTransformationFunctions {
 
@@ -146,8 +150,6 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbConfig] with AcmTransf
     val operators = storage.readFromParquet[Operator](config.inputFile)
     val transformed = transform(spark, channelMappings, operators)
 
-
-    //  Rename file
     val filePath = new Path(config.outputFile)
     val temporaryPath = new Path(filePath.getParent, "operator_acm_to_csv.tmp")
 
