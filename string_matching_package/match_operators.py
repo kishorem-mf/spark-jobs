@@ -41,6 +41,7 @@ def preprocess_operators(ddf: DataFrame) -> DataFrame:
            .fillna(''))
 
     return (utils.create_operator_matching_string(ddf)
+            .filter(sf.col('matching_string') != '')
             .withColumn('name_index', sf.row_number().over(w) - 1)
             .select('name_index', 'id', 'matching_string', 'countryCode')
             .withColumnRenamed('matching_string', 'name'))

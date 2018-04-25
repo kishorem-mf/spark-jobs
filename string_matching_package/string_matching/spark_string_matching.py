@@ -84,7 +84,7 @@ def matrix_dot_limit(A, B, n_top,
         # max number of possible non-zero element
         nnz_max = min(int(M * (2 * (N - start_row) - M - 1) / 2), M * n_top)
     else:
-        nnz_max = 2 * M * n_top
+        nnz_max = M * n_top
 
     # arrays will be returned by reference
     rows = np.empty(nnz_max, dtype=idx_dtype)

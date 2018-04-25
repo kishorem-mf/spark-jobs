@@ -38,6 +38,7 @@ def preprocess_for_matching(ddf: DataFrame, id_column: str, drop_if_name_is_null
     ddf = utils.clean_operator_fields(ddf, 'name', 'city', 'street', 'houseNumber', 'zipCode')
 
     return (utils.create_operator_matching_string(ddf)
+            .filter(sf.col('matching_string') != '')
             .withColumn('string_index', sf.row_number().over(w) - 1)
             .select('countryCode', 'string_index', id_column, 'matching_string')
             )
