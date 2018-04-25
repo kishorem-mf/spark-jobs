@@ -61,7 +61,6 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         }
     )
 
-
     def matching_sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval):
         sub_dag = DAG(
             '%s.%s' % (parent_dag_name, child_dag_name),
@@ -87,7 +86,6 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
             )
 
         return sub_dag
-
 
     match_per_country = SubDagOperator(
         subdag=matching_sub_dag('ohub_operators_first_ingest', 'match_per_country', default_args['start_date'],
