@@ -77,18 +77,27 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .option("quote", quote)
       .csv(temporaryPath.toString)
 
-    val csvPaths = getCsvFilePaths(fs, temporaryPath)
+    createSingleFileFromPath(fs, outputFilePath, temporaryPath, concatAvailable, getCsvFilePaths)
+  }
+
+  private[storage] def createSingleFileFromPath(fs: FileSystem,
+                                                outputFilePath: Path,
+                                                inputPath: Path,
+                                                concatAvailable: Boolean,
+                                                getFilesFun: (FileSystem, Path) => Array[Path]
+                                               )(implicit log: Logger) = {
+    val paths = getFilesFun(fs, inputPath)
 
     if (concatAvailable) {
-      fs.concat(outputFilePath, csvPaths)
-      fs.delete(temporaryPath, true)
+      fs.concat(outputFilePath, paths)
+      fs.delete(inputPath, true)
     } else {
-      if (csvPaths.length != 1) {
-        log.error("the number of csv-files found is greater or smaller than 1, this is not supported")
+      if (paths.length != 1) {
+        log.error("the number of files found is greater or smaller than 1, this is not supported")
         System.exit(1)
       }
-      fs.rename(csvPaths.head, outputFilePath)
-      fs.delete(temporaryPath, true)
+      fs.rename(paths.head, outputFilePath)
+      fs.delete(inputPath, true)
     }
   }
 
