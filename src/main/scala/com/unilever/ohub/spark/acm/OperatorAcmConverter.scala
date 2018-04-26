@@ -8,7 +8,7 @@ import com.unilever.ohub.spark.storage.Storage
 import org.apache.log4j.Logger
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-trait OperatorAcmConverter extends AcmTransformationFunctions {
+object OperatorAcmConverter extends AcmTransformationFunctions {
 
   def createUfsOperators(spark: SparkSession, operators: Dataset[Operator], channelMappings: Dataset[ChannelMapping]): Dataset[UFSOperator] = {
     import spark.implicits._

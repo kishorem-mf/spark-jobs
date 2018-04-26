@@ -19,7 +19,7 @@ case class DefaultWithDbAndDeltaConfig(
     postgressDB: String = "postgress-db"
 ) extends SparkJobConfig
 
-object OperatorAcmDeltaConverter extends SparkJob[DefaultWithDbAndDeltaConfig] with OperatorAcmConverter {
+object OperatorAcmDeltaConverter extends SparkJob[DefaultWithDbAndDeltaConfig] {
 
   def transform(
     spark: SparkSession,
@@ -29,8 +29,8 @@ object OperatorAcmDeltaConverter extends SparkJob[DefaultWithDbAndDeltaConfig] w
   ): Dataset[UFSOperator] = {
     import spark.implicits._
 
-    val dailyUfsOperators = createUfsOperators(spark, operators, channelMappings)
-    val allPreviousUfsOperators = createUfsOperators(spark, previousIntegrated, channelMappings)
+    val dailyUfsOperators = OperatorAcmConverter.createUfsOperators(spark, operators, channelMappings)
+    val allPreviousUfsOperators = OperatorAcmConverter.createUfsOperators(spark, previousIntegrated, channelMappings)
 
     val newOperators = dailyUfsOperators
       .join(allPreviousUfsOperators, Seq("OPR_LNKD_INTEGRATION_ID"), JoinType.LeftAnti)
@@ -93,6 +93,6 @@ object OperatorAcmDeltaConverter extends SparkJob[DefaultWithDbAndDeltaConfig] w
     val previousIntegrated = storage.readFromParquet[Operator](config.previousIntegrated)
     val transformed = transform(spark, channelMappings, operators, previousIntegrated)
 
-    writeToCsv(storage, transformed, config.outputFile)
+    OperatorAcmConverter.writeToCsv(storage, transformed, config.outputFile)
   }
 }

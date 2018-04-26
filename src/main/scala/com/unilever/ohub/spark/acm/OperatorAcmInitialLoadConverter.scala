@@ -17,14 +17,14 @@ case class DefaultWithDbConfig(
     postgressDB: String = "postgress-db"
 ) extends SparkJobConfig
 
-object OperatorAcmInitialLoadConverter extends SparkJob[DefaultWithDbConfig] with OperatorAcmConverter {
+object OperatorAcmInitialLoadConverter extends SparkJob[DefaultWithDbConfig] {
 
   def transform(
     spark: SparkSession,
     channelMappings: Dataset[ChannelMapping],
     operators: Dataset[Operator]
   ): Dataset[UFSOperator] = {
-    createUfsOperators(spark, operators, channelMappings)
+    OperatorAcmConverter.createUfsOperators(spark, operators, channelMappings)
   }
 
   override private[spark] def defaultConfig = DefaultWithDbConfig()
@@ -64,6 +64,6 @@ object OperatorAcmInitialLoadConverter extends SparkJob[DefaultWithDbConfig] wit
     val operators = storage.readFromParquet[Operator](config.inputFile)
     val transformed = transform(spark, channelMappings, operators)
 
-    writeToCsv(storage, transformed, config.outputFile)
+    OperatorAcmConverter.writeToCsv(storage, transformed, config.outputFile)
   }
 }

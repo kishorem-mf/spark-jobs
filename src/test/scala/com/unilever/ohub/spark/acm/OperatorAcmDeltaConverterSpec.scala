@@ -62,14 +62,13 @@ class OperatorAcmDeltaConverterSpec extends SparkJobSpec with TestOperators {
 
       val result = SUT.transform(spark, channelMappings, input, previous)
         .collect()
-        .sortBy(_.OPR_LNKD_INTEGRATION_ID)
+        .sortBy(_.COUNTRY_CODE)
 
       result.length shouldBe 3
-      assert(result.head.OPR_LNKD_INTEGRATION_ID == s"deleted~${defaultOperator.sourceName}~${defaultOperator.sourceEntityId}")
+      assert(result.head.COUNTRY_CODE == s"deleted")
       assert(result.head.DELETE_FLAG == "Y")
-      assert(result(1).OPR_LNKD_INTEGRATION_ID == s"new~${defaultOperator.sourceName}~${defaultOperator.sourceEntityId}")
-      assert(result(2).OPR_LNKD_INTEGRATION_ID == s"updated~${defaultOperator.sourceName}~${defaultOperator.sourceEntityId}")
-      assert(result(2).OPR_LNKD_INTEGRATION_ID == s"updated~${defaultOperator.sourceName}~${defaultOperator.sourceEntityId}")
+      assert(result(1).COUNTRY_CODE == s"new")
+      assert(result(2).COUNTRY_CODE == s"updated")
       assert(result(2).CITY.contains("Amsterdam"))
     }
   }
