@@ -62,7 +62,7 @@ object OperatorAcmDeltaConverter extends SparkJob[DefaultWithDbAndDeltaConfig] {
       } text "inputFile is a string property"
       opt[String]("previousIntegrated") required () action { (x, c) ⇒
         c.copy(inputFile = x)
-      } text "inputFile is a string property"
+      } text "previousIntegrated is a string property"
       opt[String]("outputFile") required () action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
