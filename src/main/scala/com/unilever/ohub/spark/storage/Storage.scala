@@ -1,12 +1,14 @@
 package com.unilever.ohub.spark.storage
 
-import java.util.Properties
+import java.util.{ Properties, UUID }
 
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql._
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
+import org.apache.hadoop.fs._
+import org.apache.log4j.Logger
 
 trait Storage {
 
@@ -16,13 +18,12 @@ trait Storage {
     hasHeaders: Boolean = true
   ): Dataset[Row]
 
-  def writeToCsv(
+  def writeToSingleCsv(
     ds: Dataset[_],
     outputFile: String,
-    partitionBy: Seq[String] = Seq(),
     delim: String = ";",
     quote: String = "\""
-  ): Unit
+  )(implicit log: Logger): Unit
 
   def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
 
@@ -36,6 +37,7 @@ trait Storage {
 }
 
 class DefaultStorage(spark: SparkSession) extends Storage {
+
   import spark.implicits._
 
   override def readFromCsv(
@@ -51,15 +53,21 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .csv(location)
   }
 
-  def writeToCsv(
+  def writeToSingleCsv(
     ds: Dataset[_],
     outputFile: String,
-    partitionBy: Seq[String] = Seq(),
     delim: String = ";",
     quote: String = "\""
-  ): Unit = {
-    ds
-      .coalesce(1)
+  )(implicit log: Logger): Unit = {
+
+    val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
+    val outputFilePath = new Path(outputFile)
+    val temporaryPath = new Path(outputFilePath.getParent, UUID.randomUUID().toString)
+
+    val concatAvailable = isConcatAvailable(fs)
+
+    val updatedDs = if (concatAvailable) ds else ds.coalesce(1)
+    updatedDs
       .write
       .mode(SaveMode.Overwrite)
       .option("encoding", "UTF-8")
@@ -67,8 +75,53 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .option("quoteAll", "true")
       .option("delimiter", delim)
       .option("quote", quote)
-      .partitionBy(partitionBy: _*)
-      .csv(outputFile)
+      .csv(temporaryPath.toString)
+
+    createSingleFileFromPath(fs, outputFilePath, temporaryPath, concatAvailable, getCsvFilePaths)
+  }
+
+  private[storage] def createSingleFileFromPath(fs: FileSystem,
+                                                outputFilePath: Path,
+                                                inputPath: Path,
+                                                concatAvailable: Boolean,
+                                                getFilesFun: (FileSystem, Path) => Array[Path]
+                                               )(implicit log: Logger) = {
+    val paths = getFilesFun(fs, inputPath)
+
+    if (concatAvailable) {
+      fs.concat(outputFilePath, paths)
+      fs.delete(inputPath, true)
+    } else {
+      if (paths.length != 1) {
+        log.error("the number of files found is greater or smaller than 1, this is not supported")
+        System.exit(1)
+      }
+      fs.rename(paths.head, outputFilePath)
+      fs.delete(inputPath, true)
+    }
+  }
+
+  private[storage] def isConcatAvailable(fs: FileSystem) = {
+    try {
+      fs.concat(new Path("/tmp/"), Array.empty)
+      true
+    } catch {
+      case _: UnsupportedOperationException ⇒ false
+      case _: Throwable                     ⇒ true
+    }
+  }
+
+  private[storage] def getCsvFilePaths(fs: FileSystem, path: Path): Array[Path] = {
+    def toList(it: RemoteIterator[LocatedFileStatus], arr: List[Path] = List.empty): List[Path] = {
+      if (it.hasNext) {
+        val nextPath = it.next().getPath
+        toList(it, arr :+ nextPath)
+      } else arr
+    }
+
+    toList(fs.listFiles(path, true))
+      .filter(_.getName.endsWith(".csv"))
+      .toArray
   }
 
   override def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T] = {
