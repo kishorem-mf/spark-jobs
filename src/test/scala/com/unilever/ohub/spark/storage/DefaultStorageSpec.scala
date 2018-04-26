@@ -3,6 +3,7 @@ package com.unilever.ohub.spark.storage
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import org.apache.hadoop.fs.{ FileSystem, Path }
+import org.apache.spark.sql.functions._
 
 class DefaultStorageSpec extends SparkJobSpec {
 
@@ -14,6 +15,7 @@ class DefaultStorageSpec extends SparkJobSpec {
       assert(!victim.isConcatAvailable(fs))
     }
   }
+
   describe("getCsvFilePaths") {
     it("should return only and all csvs files in a path") {
       val files = victim.getCsvFilePaths(fs, new Path("src/test/"))
@@ -21,6 +23,19 @@ class DefaultStorageSpec extends SparkJobSpec {
       files.foreach(f ⇒ {
         assert(f.toString.endsWith(".csv"))
       })
+    }
+  }
+
+  describe("writeToSingleCsv") {
+    it("should write a single csv file if concat is not available") {
+      val ds = spark
+        .range(1, 1000, 1, 4)
+        .withColumn("random", (rand()*10).cast("int"))
+
+      val fileName = "src/test/resources/test_output/single.csv"
+      victim.writeToSingleCsv(ds, fileName)(null)
+      assert(new java.io.File(fileName).exists)
+      assert(new java.io.File(fileName).isFile)
     }
   }
 }

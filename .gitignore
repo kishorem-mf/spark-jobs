@@ -6,3 +6,4 @@ derby.log
 metastore_db
 src/main/scala/ScratchFile.scala
 *.parquet/
+test_output/
