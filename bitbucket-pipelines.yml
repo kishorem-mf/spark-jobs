@@ -26,7 +26,7 @@ pipelines:
           - pycodestyle --show-source .
           - python -m pytest --cov-config .coveragerc --cov=./dags tests
     - step:
-        name: Deploy to azure blob store
+        name: Deploy to azure file share
         image: microsoft/azure-cli
         deployment: production
         script:
