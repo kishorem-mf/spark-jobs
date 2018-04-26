@@ -1,7 +1,7 @@
 from airflow import DAG
 from datetime import datetime, timedelta
 
-from config import email_addresses, country_codes
+from config import email_addresses, country_codes, slack_on_databricks_failure_callback
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator, DatabricksStartClusterOperator, \
     DatabricksTerminateClusterOperator
 from custom_operators.ga_fetch_operator import GAToGSOperator, LocalGAToWasbOperator, GSToLocalOperator
@@ -15,6 +15,7 @@ default_args = {
     'retries': 1,
     'retry_delay': timedelta(minutes=2),
     'start_date': datetime(2018, 3, 26),
+    'on_failure_callback': slack_on_databricks_failure_callback
 }
 
 local_path = '/tmp/gs_export/'
@@ -29,13 +30,13 @@ with DAG('gcp_ga', default_args=default_args, schedule_interval='0 4 * * *') as 
         task_id="fetch_GA_from_BQ_for_date",
         bigquery_conn_id='gcp_storage',
         destination='gs://' + remote_bucket + '/' + path_in_bucket,
-        date='{{ macros.ds_add(ds, -1) }}',
+        date='{{ yesterday_ds }}',
         country_codes=country_codes)
 
     gs_to_local = GSToLocalOperator(
         task_id='gcp_bucket_to_local',
         path=local_path,
-        date='{{ macros.ds_add(ds, -1) }}',
+        date='{{ yesterday_ds }}',
         bucket=remote_bucket,
         path_in_bucket=path_in_bucket,
         gcp_conn_id='gcp_storage',
@@ -46,7 +47,7 @@ with DAG('gcp_ga', default_args=default_args, schedule_interval='0 4 * * *') as 
         task_id='local_to_azure',
         wasb_conn_id='azure_blob',
         path=local_path,
-        date='{{ macros.ds_add(ds, -1) }}',
+        date='{{ yesterday_ds }}',
         country_codes=country_codes,
         container_name='prod',
         blob_path='data/raw/gaData/'
