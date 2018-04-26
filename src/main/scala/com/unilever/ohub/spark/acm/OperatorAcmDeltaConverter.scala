@@ -33,12 +33,8 @@ object OperatorAcmDeltaConverter extends SparkJob[DefaultWithDbAndDeltaConfig] w
     val allPreviousUfsOperators = createUfsOperators(spark, previousIntegrated, channelMappings)
 
     val newOperators = dailyUfsOperators
-      .joinWith(
-        allPreviousUfsOperators,
-        dailyUfsOperators("OPR_LNKD_INTEGRATION_ID") === allPreviousUfsOperators("OPR_LNKD_INTEGRATION_ID"),
-        JoinType.LeftAnti)
-      .filter(_._2 == null)
-      .map(_._1)
+      .join(allPreviousUfsOperators, Seq("OPR_LNKD_INTEGRATION_ID"), JoinType.LeftAnti)
+      .as[UFSOperator]
 
     val updatedOperators = dailyUfsOperators
       .joinWith(
