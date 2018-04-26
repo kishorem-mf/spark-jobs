@@ -1,7 +1,7 @@
 from airflow import DAG
 from datetime import datetime, timedelta
 
-from config import email_addresses, country_codes
+from config import email_addresses, country_codes, slack_on_databricks_failure_callback
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator, DatabricksStartClusterOperator, \
     DatabricksTerminateClusterOperator
 from custom_operators.ga_fetch_operator import GAToGSOperator, LocalGAToWasbOperator, GSToLocalOperator
@@ -15,6 +15,7 @@ default_args = {
     'retries': 1,
     'retry_delay': timedelta(minutes=2),
     'start_date': datetime(2018, 3, 26),
+    'on_failure_callback': slack_on_databricks_failure_callback
 }
 
 local_path = '/tmp/gs_export/'
