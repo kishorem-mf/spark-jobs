@@ -147,6 +147,6 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbConfig] with AcmTransf
     val operators = storage.readFromParquet[Operator](config.inputFile)
     val transformed = transform(spark, channelMappings, operators)
 
-    storage.writeToSingleCsv(transformed, config.outputFile, delim = "\u00B6")
+    storage.writeToSingleCsv(transformed, config.outputFile, delim = "\u00B6") // todo double check delimiter with Wunderman
   }
 }
