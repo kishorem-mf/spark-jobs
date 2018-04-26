@@ -2,15 +2,16 @@ package com.unilever.ohub.spark.acm
 
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.SharedSparkSession.spark
+import com.unilever.ohub.spark.acm.model.UFSOperator
 import com.unilever.ohub.spark.data.ChannelMapping
-import com.unilever.ohub.spark.domain.entity.{Operator, TestOperators}
+import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
 import org.apache.spark.sql.Dataset
 
-class OperatorAcmConverterSpec extends SparkJobSpec with TestOperators {
+class OperatorAcmInitialLoadConverterSpec extends SparkJobSpec with TestOperators {
 
   private[acm] val SUT = OperatorAcmInitialLoadConverter
 
-  describe("contact person acm converter") {
+  describe("operator acm converter") {
     it("should convert a domain operator correctly into an acm converter") {
       import spark.implicits._
 

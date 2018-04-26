@@ -19,7 +19,7 @@ class DefaultStorageSpec extends SparkJobSpec {
   describe("getCsvFilePaths") {
     it("should return only and all csvs files in a path") {
       val files = victim.getCsvFilePaths(fs, new Path("src/test/"))
-      assert(files.length == 27)
+      assert(files.length >= 27)
       files.foreach(f ⇒ {
         assert(f.toString.endsWith(".csv"))
       })
@@ -30,12 +30,13 @@ class DefaultStorageSpec extends SparkJobSpec {
     it("should write a single csv file if concat is not available") {
       val ds = spark
         .range(1, 1000, 1, 4)
-        .withColumn("random", (rand()*10).cast("int"))
+        .withColumn("random", (rand() * 10).cast("int"))
 
       val fileName = "src/test/resources/test_output/single.csv"
       victim.writeToSingleCsv(ds, fileName)(null)
-      assert(new java.io.File(fileName).exists)
-      assert(new java.io.File(fileName).isFile)
+      val file = new java.io.File(fileName)
+      assert(file.exists)
+      assert(file.isFile)
     }
   }
 }

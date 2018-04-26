@@ -1,10 +1,12 @@
 package com.unilever.ohub.spark.acm
 
+import com.unilever.ohub.spark.acm.model.UFSOperator
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.log4j.Logger
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
 trait OperatorAcmConverter extends AcmTransformationFunctions {
 
@@ -88,7 +90,7 @@ trait OperatorAcmConverter extends AcmTransformationFunctions {
       }
   }
 
-  def writeToCsv(storage: Storage, ds: Dataset[UFSOperator], fileName: String): Unit = {
+  def writeToCsv(storage: Storage, ds: Dataset[UFSOperator], fileName: String)(implicit log: Logger): Unit = {
     storage.writeToSingleCsv(ds, fileName, delim = "\u00B6") // todo double check delimiter with Wunderman
   }
 }

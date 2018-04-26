@@ -1,11 +1,12 @@
 package com.unilever.ohub.spark.acm
 
-import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
+import com.unilever.ohub.spark.acm.model.UFSOperator
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 case class DefaultWithDbAndDeltaConfig(
@@ -18,7 +19,7 @@ case class DefaultWithDbAndDeltaConfig(
     postgressDB: String = "postgress-db"
 ) extends SparkJobConfig
 
-object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig] with OperatorAcmConverter {
+object OperatorAcmDeltaConverter extends SparkJob[DefaultWithDbAndDeltaConfig] with OperatorAcmConverter {
 
   def transform(
     spark: SparkSession,
@@ -26,24 +27,29 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig] with O
     operators: Dataset[Operator],
     previousIntegrated: Dataset[Operator]
   ): Dataset[UFSOperator] = {
+    import spark.implicits._
 
     val dailyUfsOperators = createUfsOperators(spark, operators, channelMappings)
     val allPreviousUfsOperators = createUfsOperators(spark, previousIntegrated, channelMappings)
 
     val newOperators = dailyUfsOperators
-      .joinWith(allPreviousUfsOperators,
+      .joinWith(
+        allPreviousUfsOperators,
         dailyUfsOperators("OPR_LNKD_INTEGRATION_ID") === allPreviousUfsOperators("OPR_LNKD_INTEGRATION_ID"),
         JoinType.LeftAnti)
       .filter(_._2 == null)
       .map(_._1)
 
-      val updatedOperators = dailyUfsOperators
-      .joinWith(allPreviousUfsOperators,
+    val updatedOperators = dailyUfsOperators
+      .joinWith(
+        allPreviousUfsOperators,
         dailyUfsOperators("OPR_LNKD_INTEGRATION_ID") === allPreviousUfsOperators("OPR_LNKD_INTEGRATION_ID"),
         JoinType.Inner)
-      .map{case (left, right) => {
-        (left, left != right)
-      }}
+      .map {
+        case (left, right) ⇒ {
+          (left, left != right)
+        }
+      }
       .filter(_._2)
       .map(_._1)
 

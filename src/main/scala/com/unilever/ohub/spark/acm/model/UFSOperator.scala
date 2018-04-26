@@ -1,4 +1,4 @@
-package com.unilever.ohub.spark.acm
+package com.unilever.ohub.spark.acm.model
 
 import java.sql.Timestamp
 
