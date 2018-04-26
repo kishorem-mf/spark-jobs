@@ -160,6 +160,7 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
         logging.info(LINE_BREAK)
         logging.info('Run submitted with run_id: {}'.format(self.run_id))
         self._log_run_page_url(self.run_page_url)
+        context.update({'databricks_url': self.run_page_url})
         logging.info(LINE_BREAK)
         while True:
             run_state = hook.get_run_state(self.run_id)
