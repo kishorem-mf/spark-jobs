@@ -10,7 +10,7 @@ class OperatorAcmDeltaConverterSpec extends SparkJobSpec with TestOperators {
 
   private[acm] val SUT = OperatorAcmDeltaConverter
 
-  describe("contact person acm delta converter") {
+  describe("operator acm delta converter") {
     it("should convert a domain operator correctly into an acm converter containing only delta records") {
       import spark.implicits._
 
