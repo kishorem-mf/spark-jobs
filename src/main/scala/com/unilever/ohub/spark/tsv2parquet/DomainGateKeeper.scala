@@ -12,7 +12,15 @@ import scala.reflect.runtime.universe._
 object DomainGateKeeper {
   type ErrorMessage = String
 
-  case class DomainConfig(inputFile: String = "path-to-input-file", outputFile: String = "path-to-output-file", strictIngestion: Boolean = true) extends SparkJobConfig
+  case class DomainConfig(
+      inputFile: String = "path-to-input-file",
+      outputFile: String = "path-to-output-file",
+      strictIngestion: Boolean = true,
+      postgressUrl: String = "postgress-url",
+      postgressUsername: String = "postgress-username",
+      postgressPassword: String = "postgress-password",
+      postgressDB: String = "postgress-db"
+  ) extends SparkJobConfig
 
   object implicits {
     // if we upgrade our scala version, we can probably get rid of this encoder too (because Either has become a Product in scala 2.12)
@@ -44,6 +52,18 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       opt[Boolean]("strictIngestion") optional () action { (x, c) ⇒
         c.copy(strictIngestion = x)
       } text "strictIngestion is a boolean property"
+      opt[String]("postgressUrl") required () action { (x, c) ⇒
+        c.copy(postgressUrl = x)
+      } text "postgressUrl is a string property"
+      opt[String]("postgressUsername") required () action { (x, c) ⇒
+        c.copy(postgressUsername = x)
+      } text "postgressUsername is a string property"
+      opt[String]("postgressPassword") required () action { (x, c) ⇒
+        c.copy(postgressPassword = x)
+      } text "postgressPassword is a string property"
+      opt[String]("postgressDB") required () action { (x, c) ⇒
+        c.copy(postgressDB = x)
+      } text "postgressDB is a string property"
 
       version("1.0")
       help("help") text "help text"
@@ -63,7 +83,8 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       }
 
   override def run(spark: SparkSession, config: DomainConfig, storage: Storage): Unit = {
-    run(spark, config, storage, DomainDataProvider(spark))
+    val dataProvider = new PostgressDomainDataProvider(spark, config.postgressUrl, config.postgressDB, config.postgressUsername, config.postgressPassword)
+    run(spark, config, storage, dataProvider)
   }
 
   protected[tsv2parquet] def run(spark: SparkSession, config: DomainConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {

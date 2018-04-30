@@ -2,13 +2,13 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.{ DefaultConfig, SparkJobWithDefaultConfig }
+import com.unilever.ohub.spark.{ DefaultWithDbConfig, SparkJobWithDefaultDbConfig }
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-object ContactPersonMerging extends SparkJobWithDefaultConfig with GoldenRecordPicking[ContactPerson] {
+object ContactPersonMerging extends SparkJobWithDefaultDbConfig with GoldenRecordPicking[ContactPerson] {
 
   def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])(contactPersons: Seq[ContactPerson]): Seq[ContactPerson] = {
     val goldenRecord = pickGoldenRecord(sourcePreference, contactPersons)
@@ -24,7 +24,8 @@ object ContactPersonMerging extends SparkJobWithDefaultConfig with GoldenRecordP
     import spark.implicits._
 
     contactPersons
-      // TODO what if both are undefined, then we loose contact persons here (what about adding a constraint in the domain)?
+      // TODO what if both are undefined, then we loose contact persons here (what about adding a constraint in the domain)? this legacy code...
+      // we shouldn't loose data here...check whether the contact persons is the full list of contact persons (including ones without email address)
       .filter(cpn ⇒ cpn.emailAddress.isDefined || cpn.mobileNumber.isDefined)
       .groupByKey(cpn ⇒ cpn.emailAddress.getOrElse("") + cpn.mobileNumber.getOrElse(""))
       .flatMapGroups {
@@ -33,11 +34,11 @@ object ContactPersonMerging extends SparkJobWithDefaultConfig with GoldenRecordP
       .repartition(60)
   }
 
-  override def run(spark: SparkSession, config: DefaultConfig, storage: Storage): Unit = {
-    run(spark, config, storage, DomainDataProvider(spark))
+  override def run(spark: SparkSession, config: DefaultWithDbConfig, storage: Storage): Unit = {
+    run(spark, config, storage, DomainDataProvider(spark, config.postgressUrl, config.postgressDB, config.postgressUsername, config.postgressPassword))
   }
 
-  protected[merging] def run(spark: SparkSession, config: DefaultConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
+  protected[merging] def run(spark: SparkSession, config: DefaultWithDbConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     import spark.implicits._
 
     log.info(s"Merging contact persons from [${config.inputFile}] to [${config.outputFile}]")

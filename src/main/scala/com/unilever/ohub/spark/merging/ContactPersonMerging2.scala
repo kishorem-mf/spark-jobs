@@ -33,6 +33,7 @@ object ContactPersonMerging2 extends SparkJob[ContactPersonMergingConfig] {
       )
       .map {
         // TODO it's probably smarter to add another id to contact persons that refers to the operator ohub id, then both ref id's are present.
+        // concat id operator
         case (contactPerson, maybeOperator) ⇒
           contactPerson.copy(operatorConcatId = Option(maybeOperator).map(_.ohubId).getOrElse("REF_OPERATOR_UNKNOWN"))
       }

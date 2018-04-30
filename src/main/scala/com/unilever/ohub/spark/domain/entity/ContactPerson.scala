@@ -26,7 +26,7 @@ case class ContactPerson(
     sourceName: String,
     ohubCreated: Timestamp,
     ohubUpdated: Timestamp,
-    operatorConcatId: String,
+    operatorConcatId: String, // TODO operatorOhubId
     // specific fields
     oldIntegrationId: Option[String],
     firstName: Option[String],

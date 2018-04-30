@@ -11,13 +11,12 @@ object ContactPersonAcmConverter extends SparkJobWithDefaultConfig with AcmTrans
   def transform(spark: SparkSession, contactPersons: Dataset[ContactPerson]): Dataset[UFSRecipient] = {
     import spark.implicits._
 
-    contactPersons.map { contactPerson ⇒
-
+    contactPersons.filter(_.isGoldenRecord).map { contactPerson ⇒ // TODO check whether the filter is at the right location
       UFSRecipient(
         CP_ORIG_INTEGRATION_ID = contactPerson.concatId,
         CP_LNKD_INTEGRATION_ID = contactPerson.ohubId.get, // TODO resolve .get here...what if we don't have an ohubId?
-        OPR_ORIG_INTEGRATION_ID = contactPerson.oldIntegrationId,
-        GOLDEN_RECORD_FLAG = "Y", // TODO do we need to filter here (or somewhere else)?
+        OPR_ORIG_INTEGRATION_ID = contactPerson.oldIntegrationId, // TODO opr-ohub-id...add to domain (is set in the merging step)
+        GOLDEN_RECORD_FLAG = "Y",
         WEB_CONTACT_ID = "",
         EMAIL_OPTOUT = contactPerson.hasEmailOptOut.map(boolAsString),
         PHONE_OPTOUT = contactPerson.hasTeleMarketingOptOut.map(boolAsString),
@@ -61,7 +60,7 @@ object ContactPersonAcmConverter extends SparkJobWithDefaultConfig with AcmTrans
         ROLE = contactPerson.jobTitle,
         COUNTRY_CODE = Some(contactPerson.countryCode),
         SCM = contactPerson.standardCommunicationChannel,
-        DELETE_FLAG = if (contactPerson.isActive) Some("0") else Some("1"), // TODO verify
+        DELETE_FLAG = if (contactPerson.isActive) Some("0") else Some("1"),
         KEY_DECISION_MAKER = contactPerson.isKeyDecisionMaker.map(boolAsString),
         OPT_IN = contactPerson.hasEmailOptIn.map(boolAsString),
         OPT_IN_DATE = contactPerson.emailOptInDate.map(formatWithPattern()),

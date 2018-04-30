@@ -14,7 +14,7 @@ class ContactPersonAcmConverterSpec extends SparkJobSpec with TestContactPersons
     it("should convert a domain operator correctly into an acm converter") {
       import spark.implicits._
 
-      val input: Dataset[ContactPerson] = spark.createDataset(Seq(defaultContactPerson))
+      val input: Dataset[ContactPerson] = spark.createDataset(Seq(defaultContactPerson.copy(isGoldenRecord = true)))
       val result = SUT.transform(spark, input)
 
       result.count() shouldBe 1
