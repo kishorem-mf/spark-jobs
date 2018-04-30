@@ -122,6 +122,13 @@ with DAG('ohub_dag', default_args=default_args,
             })
         globals()[task_name] >> delete_cluster
 
+    operators_ftp_to_acm = SFTPOperator(
+        task_id='operators_ftp_to_acm',
+        local_filepath=local_acm_file,
+        remote_filepath='/incoming/UFS_upload_folder/,
+        ssh_conn_id='acm_sftp_ssh',
+        operation=SFTPOperation.PUT)
+
     match_operators = DatabricksSubmitRunOperator(
         task_id='match_operators',
         existing_cluster_id=cluster_id,
@@ -174,7 +181,7 @@ with DAG('ohub_dag', default_args=default_args,
                            '--postgressDB', postgres_connection.schema]
         })
 
-    operators_to_parquet >> match_operators >> persistent_uuid >> merge_operators >> operators_to_acm
+    operators_to_parquet >> match_operators >> persistent_uuid >> merge_operators >> operators_to_acm >> operators_ftp_to_acm
 
     merge_contactpersons1 = DatabricksSubmitRunOperator(
         task_id='merge_contactpersons_1',

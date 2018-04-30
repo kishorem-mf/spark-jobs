@@ -205,6 +205,13 @@ with DAG('ohub_operators', default_args=default_args,
         }
     )
 
+    operators_ftp_to_acm = SFTPOperator(
+        task_id='operators_ftp_to_acm',
+        local_filepath=local_acm_file,
+        remote_filepath='/incoming/UFS_upload_folder/,
+        ssh_conn_id='acm_sftp_ssh',
+        operation=SFTPOperation.PUT)
+
     update_operators_table = DatabricksSubmitRunOperator(
         task_id='update_operators_table',
         existing_cluster_id=cluster_id,
@@ -216,4 +223,4 @@ with DAG('ohub_operators', default_args=default_args,
     match_per_country >> update_golden_records >> combine_to_create_integrated
     match_per_country >> merge_operators >> combine_to_create_integrated
     combine_to_create_integrated >> update_operators_table >> terminate_cluster
-    combine_to_create_integrated >> operators_to_acm >> terminate_cluster
+    combine_to_create_integrated >> operators_to_acm >> operators_ftp_to_acm >> terminate_cluster
