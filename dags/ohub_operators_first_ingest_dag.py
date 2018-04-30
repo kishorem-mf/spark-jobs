@@ -117,7 +117,7 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
             {'jar': jar}
         ],
         spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmConverter",
+            'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmInitialLoadConverter",
             'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn='operators'),
                            '--outputFile', export_bucket.format(date='{{ds}}',
                                                                 fn='acm/UFS_OPERATORS_{{ds_nodash}}000000.csv'),
