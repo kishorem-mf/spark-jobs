@@ -46,6 +46,8 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         }]
     )
 
+    postgres_connection = BaseHook.get_connection('postgres_channels')
+
     operators_to_parquet = DatabricksSubmitRunOperator(
         task_id="operators_to_parquet",
         existing_cluster_id=cluster_id,
@@ -57,7 +59,11 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
             'parameters': ['--inputFile', raw_bucket.format(date='{{ds}}', schema='operators'),
                            '--outputFile', ingested_bucket.format(date='{{ds}}', fn='operators'),
-                           '--strictIngestion', "false"]
+                           '--strictIngestion', "false",
+                           '--postgressUrl', postgres_connection.host,
+                           '--postgressUsername', postgres_connection.login,
+                           '--postgressPassword', postgres_connection.password,
+                           '--postgressDB', postgres_connection.schema]
         }
     )
 
@@ -104,10 +110,12 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
             'parameters': ['--matchingInputFile', intermediate_bucket.format(date='{{ds}}', fn='operators_matched'),
                            '--operatorInputFile', ingested_bucket.format(date='{{ds}}', fn='operators'),
-                           '--outputFile', integrated_bucket.format(date='{{ds}}', fn='operators')]
+                           '--outputFile', integrated_bucket.format(date='{{ds}}', fn='operators'),
+                           '--postgressUrl', postgres_connection.host,
+                           '--postgressUsername', postgres_connection.login,
+                           '--postgressPassword', postgres_connection.password,
+                           '--postgressDB', postgres_connection.schema]
         })
-
-    postgres_connection = BaseHook.get_connection('postgres_channels')
 
     operators_to_acm = DatabricksSubmitRunOperator(
         task_id="operators_to_acm",
