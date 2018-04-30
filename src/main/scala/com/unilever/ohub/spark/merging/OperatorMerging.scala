@@ -2,20 +2,20 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import org.apache.spark.sql.{Dataset, SparkSession}
 import org.apache.spark.sql.functions.collect_list
 import scopt.OptionParser
 
 case class OperatorMergingConfig(
-    matchingInputFile: String = "matching-input-file",
-    operatorInputFile: String = "operator-input-file",
-    outputFile: String = "path-to-output-file"
-) extends SparkJobConfig
+                                  matchingInputFile: String = "matching-input-file",
+                                  operatorInputFile: String = "operator-input-file",
+                                  outputFile: String = "path-to-output-file"
+                                ) extends SparkJobConfig
 
 object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecordPicking[Operator] {
 
@@ -24,9 +24,9 @@ object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecord
   private case class IdAndCountry(concatId: String, countryCode: String)
 
   private case class MatchingResultAndOperator(
-      matchingResult: MatchingResult,
-      operator: Operator
-  ) {
+                                                matchingResult: MatchingResult,
+                                                operator: Operator
+                                              ) {
     val sourceId: String = matchingResult.sourceId
   }
 
@@ -37,14 +37,28 @@ object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecord
   }
 
   def transform(
-    spark: SparkSession,
-    operators: Dataset[Operator],
-    matches: Dataset[MatchingResult],
-    sourcePreference: Map[String, Int]
-  ): Dataset[Operator] = {
+                 spark: SparkSession,
+                 operators: Dataset[Operator],
+                 matches: Dataset[MatchingResult],
+                 sourcePreference: Map[String, Int]
+               ): Dataset[Operator] = {
     import spark.implicits._
 
-    val groupedOperators = matches
+    val matchedOperators: Dataset[Seq[Operator]] = groupMatchedOperators(spark, operators, matches)
+    val unmatchedOperators: Dataset[Seq[Operator]] = findUnmatchedOperators(spark, operators, matchedOperators)
+
+    matchedOperators
+      .union(unmatchedOperators)
+      .flatMap(markGoldenRecordAndGroupId(sourcePreference))
+      .repartition(60)
+  }
+
+  private[merging] def groupMatchedOperators(
+                                              spark: SparkSession,
+                                              operators: Dataset[Operator],
+                                              matches: Dataset[MatchingResult]): Dataset[Seq[Operator]] = {
+    import spark.implicits._
+   matches
       .joinWith(
         operators,
         matches("countryCode") === operators("countryCode")
@@ -55,20 +69,22 @@ object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecord
       .agg(collect_list("operator").alias("operators").as[Seq[Operator]])
       .joinWith(operators, $"value" === $"concatId")
       .map(x ⇒ x._2 +: x._1._2)
+  }
 
-    val matchedIds = groupedOperators
+  private[merging] def findUnmatchedOperators(spark: SparkSession,
+                                          allOperators: Dataset[Operator],
+                                          matched: Dataset[Seq[Operator]]) = {
+
+    import spark.implicits._
+
+    val matchedIds = matched
       .flatMap(_.map(x ⇒ IdAndCountry(x.concatId, x.countryCode)))
       .distinct()
 
-    val singletonOperators = operators
+    allOperators
       .join(matchedIds, Seq("concatId"), JoinType.LeftAnti)
       .as[Operator]
       .map(Seq(_))
-
-    groupedOperators
-      .union(singletonOperators)
-      .flatMap(markGoldenRecordAndGroupId(sourcePreference))
-      .repartition(60)
   }
 
   override private[spark] def defaultConfig = OperatorMergingConfig()
@@ -76,13 +92,13 @@ object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecord
   override private[spark] def configParser(): OptionParser[OperatorMergingConfig] =
     new scopt.OptionParser[OperatorMergingConfig]("Operator merging") {
       head("merges operators into an integrated operator output file", "1.0")
-      opt[String]("matchingInputFile") required () action { (x, c) ⇒
+      opt[String]("matchingInputFile") required() action { (x, c) ⇒
         c.copy(matchingInputFile = x)
       } text "matchingInputFile is a string property"
-      opt[String]("operatorInputFile") required () action { (x, c) ⇒
+      opt[String]("operatorInputFile") required() action { (x, c) ⇒
         c.copy(operatorInputFile = x)
       } text "operatorInputFile is a string property"
-      opt[String]("outputFile") required () action { (x, c) ⇒
+      opt[String]("outputFile") required() action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
 
@@ -103,13 +119,13 @@ object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecord
 
     val matches = storage
       .readFromParquet[MatchingResult](
-        config.matchingInputFile,
-        selectColumns = Seq(
-          $"sourceId",
-          $"targetId",
-          $"countryCode"
-        )
+      config.matchingInputFile,
+      selectColumns = Seq(
+        $"sourceId",
+        $"targetId",
+        $"countryCode"
       )
+    )
 
     val transformed = transform(spark, operators, matches, dataProvider.sourcePreferences)
 
