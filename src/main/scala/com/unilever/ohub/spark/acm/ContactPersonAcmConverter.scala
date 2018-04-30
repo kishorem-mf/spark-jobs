@@ -89,6 +89,6 @@ object ContactPersonAcmConverter extends SparkJobWithDefaultConfig with AcmTrans
     val contactPersons = storage.readFromParquet[ContactPerson](config.inputFile)
     val transformed = transform(spark, contactPersons)
 
-    storage.writeToCsv(transformed, config.outputFile, partitionBy = Seq("COUNTRY_CODE"))
+    storage.writeToSingleCsv(transformed, config.outputFile)
   }
 }
