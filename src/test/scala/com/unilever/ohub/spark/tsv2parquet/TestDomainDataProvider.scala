@@ -6,7 +6,8 @@ case class TestDomainDataProvider(
     countries: Map[String, CountryRecord] = Map(
       "AU" -> CountryRecord("AU", "Australia", "AUD"),
       "DE" -> CountryRecord("DE", "Germany", "EUR"),
-      "NL" -> CountryRecord("NL", "Netherlands", "EUR")
+      "NL" -> CountryRecord("NL", "Netherlands", "EUR"),
+      "NZ" -> CountryRecord("NZ", "New Zealand", "???")
     ),
     sourcePreferences: Map[String, Int] = Map(
       "WUFOO" -> 1,

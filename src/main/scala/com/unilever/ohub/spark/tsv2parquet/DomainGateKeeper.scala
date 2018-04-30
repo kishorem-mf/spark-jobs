@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql._
@@ -8,7 +8,6 @@ import scopt.OptionParser
 import DomainGateKeeper._
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
-
 
 import scala.reflect.runtime.universe._
 
@@ -25,7 +24,7 @@ object DomainGateKeeper {
 
 }
 
-abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag, RowType] extends SparkJob[DomainConfig] {
+abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] extends SparkJob[DomainConfig] {
 
   import DomainGateKeeper.implicits._
 
@@ -40,13 +39,13 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag, RowType] e
   private[spark] def configParser(): OptionParser[DomainConfig] =
     new scopt.OptionParser[DomainConfig]("Domain gate keeper") {
       head("converts a csv into domain entities and writes the result to parquet.", "1.0")
-      opt[String]("inputFile") required() action { (x, c) ⇒
+      opt[String]("inputFile") required () action { (x, c) ⇒
         c.copy(inputFile = x)
       } text "inputFile is a string property"
-      opt[String]("outputFile") required() action { (x, c) ⇒
+      opt[String]("outputFile") required () action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
-      opt[Boolean]("strictIngestion") optional() action { (x, c) ⇒
+      opt[Boolean]("strictIngestion") optional () action { (x, c) ⇒
         c.copy(strictIngestion = x)
       } text "strictIngestion is a boolean property"
 
@@ -78,7 +77,6 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag, RowType] e
 
     val result = read(spark, storage, config.inputFile)
       .map(transform(toDomainEntity(transformer))(postValidate(dataProvider)))
-      .distinct()
 
     val errors: Dataset[ErrorMessage] = result.filter(_.isLeft).map(_.left.get)
     val numberOfErrors = errors.count()

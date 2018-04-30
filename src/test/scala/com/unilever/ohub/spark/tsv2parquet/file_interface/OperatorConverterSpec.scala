@@ -91,5 +91,21 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
         actualOperator shouldBe expectedOperator
       }
     }
+    it("should select the latest operator based on dateUpdated") {
+      val inputFile = "src/test/resources/FILE_OPERATORS_DUPLICATES.csv"
+
+      runJobWith(inputFile) { actualDataSet ⇒
+        actualDataSet.count() shouldBe 2
+
+        val res = actualDataSet.collect
+
+        val emptyDateUpdated = res.filter(_.countryCode == "NZ")
+        emptyDateUpdated.length shouldBe 1
+
+        val filledDateUpdated = res.filter(_.countryCode == "AU")
+        filledDateUpdated.length shouldBe 1
+        filledDateUpdated.head.street shouldBe Some("Some street")
+      }
+    }
   }
 }
