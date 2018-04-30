@@ -14,7 +14,11 @@ import scopt.OptionParser
 case class OperatorMergingConfig(
     matchingInputFile: String = "matching-input-file",
     operatorInputFile: String = "operator-input-file",
-    outputFile: String = "path-to-output-file"
+    outputFile: String = "path-to-output-file",
+    postgressUrl: String = "postgress-url",
+    postgressUsername: String = "postgress-username",
+    postgressPassword: String = "postgress-password",
+    postgressDB: String = "postgress-db"
 ) extends SparkJobConfig
 
 object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecordPicking[Operator] {
@@ -85,13 +89,25 @@ object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecord
       opt[String]("outputFile") required () action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
+      opt[String]("postgressUrl") required () action { (x, c) ⇒
+        c.copy(postgressUrl = x)
+      } text "postgressUrl is a string property"
+      opt[String]("postgressUsername") required () action { (x, c) ⇒
+        c.copy(postgressUsername = x)
+      } text "postgressUsername is a string property"
+      opt[String]("postgressPassword") required () action { (x, c) ⇒
+        c.copy(postgressPassword = x)
+      } text "postgressPassword is a string property"
+      opt[String]("postgressDB") required () action { (x, c) ⇒
+        c.copy(postgressDB = x)
+      } text "postgressDB is a string property"
 
       version("1.0")
       help("help") text "help text"
     }
 
   override def run(spark: SparkSession, config: OperatorMergingConfig, storage: Storage): Unit = {
-    run(spark, config, storage, DomainDataProvider(spark))
+    run(spark, config, storage, DomainDataProvider(spark, config.postgressUrl, config.postgressDB, config.postgressUsername, config.postgressPassword))
   }
 
   protected[merging] def run(spark: SparkSession, config: OperatorMergingConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
