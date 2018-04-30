@@ -10,12 +10,13 @@ import DomainGateKeeper._
 import scala.reflect.runtime.universe._
 
 object DomainGateKeeper {
-  type ErrorMessage = String
+  case class ErrorMessage(error: String, row: String)
 
   case class DomainConfig(
       inputFile: String = "path-to-input-file",
       outputFile: String = "path-to-output-file",
       strictIngestion: Boolean = true,
+      showErrorSummary: Boolean = true,
       postgressUrl: String = "postgress-url",
       postgressUsername: String = "postgress-username",
       postgressPassword: String = "postgress-password",
@@ -52,6 +53,9 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       opt[Boolean]("strictIngestion") optional () action { (x, c) ⇒
         c.copy(strictIngestion = x)
       } text "strictIngestion is a boolean property"
+      opt[Boolean]("showErrorSummary") optional () action { (x, c) ⇒
+        c.copy(showErrorSummary = x)
+      } text "showErrorSummary is a boolean property"
       opt[String]("postgressUrl") required () action { (x, c) ⇒
         c.copy(postgressUrl = x)
       } text "postgressUrl is a string property"
@@ -79,7 +83,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
         Right(entity)
       } catch {
         case e: Throwable ⇒
-          Left(s"Error parsing row: '$e', row = '$row'")
+          Left(ErrorMessage(s"Error parsing row: '$e'", s"$row"))
       }
 
   override def run(spark: SparkSession, config: DomainConfig, storage: Storage): Unit = {
@@ -100,7 +104,15 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
     val numberOfErrors = errors.count()
 
     if (numberOfErrors > 0) { // do something with the errors here
-      errors.toDF("ERROR").show(numRows = 100, truncate = false)
+      if (config.showErrorSummary) {
+        errors
+          .groupByKey(_.error)
+          .count()
+          .toDF("ERROR", "COUNT").show(numRows = 100, truncate = false)
+      } else {
+        errors
+         .toDF("ERROR", "ROW").show(numRows = 100, truncate = false)
+      }
 
       if (config.strictIngestion) {
         log.error(s"NO PARQUET FILE WRITTEN, NUMBER OF ERRORS FOUND IS '$numberOfErrors'")
