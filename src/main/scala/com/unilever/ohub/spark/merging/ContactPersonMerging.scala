@@ -24,7 +24,8 @@ object ContactPersonMerging extends SparkJobWithDefaultConfig with GoldenRecordP
     import spark.implicits._
 
     contactPersons
-      // TODO what if both are undefined, then we loose contact persons here (what about adding a constraint in the domain)?
+      // TODO what if both are undefined, then we loose contact persons here (what about adding a constraint in the domain)? this legacy code...
+      // we shouldn't loose data here...check whether the contact persons is the full list of contact persons (including ones without email address)
       .filter(cpn ⇒ cpn.emailAddress.isDefined || cpn.mobileNumber.isDefined)
       .groupByKey(cpn ⇒ cpn.emailAddress.getOrElse("") + cpn.mobileNumber.getOrElse(""))
       .flatMapGroups {

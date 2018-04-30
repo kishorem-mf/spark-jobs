@@ -24,7 +24,7 @@ case class UFSRecipient(
     PHONE_NUMBER: Option[String],
     FAX_NUMBER: Option[String],
     STREET: Option[String],
-    HOUSENUMBER: String, // TODO why is this not an option, when everything else is?
+    HOUSENUMBER: String, // TODO why is this not an option, when everything else is? change to option
     ZIPCODE: Option[String],
     CITY: Option[String],
     COUNTRY: Option[String],
