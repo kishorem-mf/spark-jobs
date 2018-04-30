@@ -1,6 +1,7 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import com.unilever.ohub.spark.data.{ CountryRecord, CountrySalesOrg }
+import com.unilever.ohub.spark.data.{ ChannelMapping, CountryRecord, CountrySalesOrg }
+import org.apache.spark.sql.Dataset
 
 case class TestDomainDataProvider(
     countries: Map[String, CountryRecord] = Map(
@@ -19,4 +20,5 @@ case class TestDomainDataProvider(
       "1611" -> CountrySalesOrg("DE", Some("1611"))
     )
 ) extends DomainDataProvider {
+  override def channelMappings(): Dataset[ChannelMapping] = ???
 }

@@ -6,6 +6,7 @@ import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
+import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
@@ -42,9 +43,8 @@ object OperatorAcmDeltaConverter extends SparkJob[DefaultWithDbAndDeltaConfig] {
         dailyUfsOperators("OPR_LNKD_INTEGRATION_ID") === allPreviousUfsOperators("OPR_LNKD_INTEGRATION_ID"),
         JoinType.Inner)
       .map {
-        case (left, right) ⇒ {
+        case (left, right) ⇒
           (left, left != right)
-        }
       }
       .filter(_._2)
       .map(_._1)
@@ -88,7 +88,9 @@ object OperatorAcmDeltaConverter extends SparkJob[DefaultWithDbAndDeltaConfig] {
 
     log.info(s"Generating operator ACM csv file from [$config.inputFile] to [$config.outputFile]")
 
-    val channelMappings = storage.channelMappings(config.postgressUrl, config.postgressDB, config.postgressUsername, config.postgressPassword)
+    val dataProvider = DomainDataProvider(spark, config.postgressUrl, config.postgressDB, config.postgressUsername, config.postgressPassword)
+
+    val channelMappings = dataProvider.channelMappings()
     val operators = storage.readFromParquet[Operator](config.inputFile)
     val previousIntegrated = storage.readFromParquet[Operator](config.previousIntegrated)
     val transformed = transform(spark, channelMappings, operators, previousIntegrated)

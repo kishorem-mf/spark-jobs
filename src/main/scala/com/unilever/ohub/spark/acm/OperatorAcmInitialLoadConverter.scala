@@ -1,11 +1,12 @@
 package com.unilever.ohub.spark.acm
 
-import com.unilever.ohub.spark.{DefaultWithDbConfig, SparkJobWithDefaultDbConfig}
+import com.unilever.ohub.spark.{ DefaultWithDbConfig, SparkJobWithDefaultDbConfig }
 import com.unilever.ohub.spark.acm.model.UFSOperator
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{Dataset, SparkSession}
+import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
 object OperatorAcmInitialLoadConverter extends SparkJobWithDefaultDbConfig {
 
@@ -22,7 +23,9 @@ object OperatorAcmInitialLoadConverter extends SparkJobWithDefaultDbConfig {
 
     log.info(s"Generating operator ACM csv file from [$config.inputFile] to [$config.outputFile]")
 
-    val channelMappings = storage.channelMappings(config.postgressUrl, config.postgressDB, config.postgressUsername, config.postgressPassword)
+    val dataProvider = DomainDataProvider(spark, config.postgressUrl, config.postgressDB, config.postgressUsername, config.postgressPassword)
+
+    val channelMappings = dataProvider.channelMappings()
     val operators = storage.readFromParquet[Operator](config.inputFile)
     val transformed = transform(spark, channelMappings, operators)
 

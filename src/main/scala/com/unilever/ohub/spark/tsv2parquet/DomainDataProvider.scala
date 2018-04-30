@@ -2,9 +2,11 @@ package com.unilever.ohub.spark.tsv2parquet
 
 import java.util.Properties
 
-import com.unilever.ohub.spark.data.{ CountryRecord, CountrySalesOrg, SourcePreference }
+import com.unilever.ohub.spark.data.{ ChannelMapping, CountryRecord, CountrySalesOrg, SourcePreference }
+import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql._
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
+import org.apache.spark.sql.functions.col
 
 trait DomainDataProvider {
 
@@ -13,6 +15,8 @@ trait DomainDataProvider {
   def countrySalesOrg: Map[String, CountrySalesOrg]
 
   def sourcePreferences: Map[String, Int]
+
+  def channelMappings(): Dataset[ChannelMapping]
 }
 
 object DomainDataProvider {
@@ -84,5 +88,28 @@ class PostgressDomainDataProvider(spark: SparkSession, dbUrl: String, dbName: St
       .map(sp ⇒ sp.source -> sp.priority)
       .collect()
       .toMap
+  }
+
+  override def channelMappings(): Dataset[ChannelMapping] = {
+    val channelMappingDF = readJdbcTable(spark, dbUrl, dbName, "channel_mapping", userName, userPassword)
+    val channelReferencesDF = readJdbcTable(spark, dbUrl, dbName, "channel_references", userName, userPassword)
+
+    channelMappingDF
+      .join(
+        channelReferencesDF,
+        col("channel_reference_fk") === col("channel_reference_id"),
+        JoinType.Left
+      )
+      .select(
+        $"COUNTRY_CODE" as "countryCode",
+        $"ORIGINAL_CHANNEL" as "originalChannel",
+        $"LOCAL_CHANNEL" as "localChannel",
+        $"CHANNEL_USAGE" as "channelUsage",
+        $"SOCIAL_COMMERCIAL" as "socialCommercial",
+        $"STRATEGIC_CHANNEL" as "strategicChannel",
+        $"GLOBAL_CHANNEL" as "globalChannel",
+        $"GLOBAL_SUBCHANNEL" as "globalSubChannel"
+      )
+      .as[ChannelMapping]
   }
 }
