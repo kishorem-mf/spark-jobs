@@ -16,4 +16,10 @@ class OperatorMergingSpec extends SparkJobSpec {
     }
   }
 
+  describe("transform"){
+    it("should create ohub ids for all matched and unmatched operators") {
+
+    }
+  }
+
 }
