@@ -10,5 +10,10 @@ class OperatorMergingSpec extends SparkJobSpec {
 
     }
   }
+  describe("findUnmatchedOperators"){
+    it("should return all unmatched operators") {
+
+    }
+  }
 
 }
