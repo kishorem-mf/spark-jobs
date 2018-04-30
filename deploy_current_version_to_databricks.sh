@@ -16,8 +16,7 @@ targetFn="spark-jobs-assembly-WIP.jar"
 path="dbfs:/libraries/ohub"
 
 echo "uploading: ${fn} as ${targetFn} to ${path}"
-databricks fs rm ${path}/${targetFn}
-databricks fs cp target/scala-2.11/${fn} ${path}/${targetFn}
+databricks fs cp --overwrite target/scala-2.11/${fn} ${path}/${targetFn}
 
 echo '------------------ removing old libary from cluster --------------------'
 curl -i -d '{"cluster_id": "0314-131901-shalt605","libraries": [

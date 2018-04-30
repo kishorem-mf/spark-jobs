@@ -80,12 +80,13 @@ class DefaultStorage(spark: SparkSession) extends Storage {
     createSingleFileFromPath(fs, outputFilePath, temporaryPath, concatAvailable, getCsvFilePaths)
   }
 
-  private[storage] def createSingleFileFromPath(fs: FileSystem,
-                                                outputFilePath: Path,
-                                                inputPath: Path,
-                                                concatAvailable: Boolean,
-                                                getFilesFun: (FileSystem, Path) => Array[Path]
-                                               )(implicit log: Logger) = {
+  private[storage] def createSingleFileFromPath(
+    fs: FileSystem,
+    outputFilePath: Path,
+    inputPath: Path,
+    concatAvailable: Boolean,
+    getFilesFun: (FileSystem, Path) ⇒ Array[Path]
+  )(implicit log: Logger) = {
     val paths = getFilesFun(fs, inputPath)
 
     if (concatAvailable) {
