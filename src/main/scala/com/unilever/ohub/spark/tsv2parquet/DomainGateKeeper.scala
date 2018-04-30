@@ -1,11 +1,14 @@
 package com.unilever.ohub.spark.tsv2parquet
 
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql._
 import scopt.OptionParser
 import DomainGateKeeper._
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions._
+
 
 import scala.reflect.runtime.universe._
 
@@ -19,9 +22,11 @@ object DomainGateKeeper {
     implicit def eitherEncoder[T1, T2]: Encoder[Either[T1, T2]] =
       Encoders.kryo[Either[T1, T2]]
   }
+
 }
 
-abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] extends SparkJob[DomainConfig] {
+abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag, RowType] extends SparkJob[DomainConfig] {
+
   import DomainGateKeeper.implicits._
 
   protected[tsv2parquet] def partitionByValue: Seq[String]
@@ -35,13 +40,13 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
   private[spark] def configParser(): OptionParser[DomainConfig] =
     new scopt.OptionParser[DomainConfig]("Domain gate keeper") {
       head("converts a csv into domain entities and writes the result to parquet.", "1.0")
-      opt[String]("inputFile") required () action { (x, c) ⇒
+      opt[String]("inputFile") required() action { (x, c) ⇒
         c.copy(inputFile = x)
       } text "inputFile is a string property"
-      opt[String]("outputFile") required () action { (x, c) ⇒
+      opt[String]("outputFile") required() action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
-      opt[Boolean]("strictIngestion") optional () action { (x, c) ⇒
+      opt[Boolean]("strictIngestion") optional() action { (x, c) ⇒
         c.copy(strictIngestion = x)
       } text "strictIngestion is a boolean property"
 
@@ -89,7 +94,14 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       }
     }
 
-    val domainEntities: Dataset[DomainType] = result.filter(_.isRight).map(_.right.get)
+    val w = Window.partitionBy($"concatId").orderBy($"dateUpdated".desc)
+    val domainEntities: Dataset[DomainType] = result
+      .filter(_.isRight).map(_.right.get)
+      .withColumn("rn", row_number.over(w))
+      .filter($"rn" === 1)
+      .drop($"rn")
+      .as[DomainType]
+
     storage.writeToParquet(domainEntities, config.outputFile, partitionByValue)
   }
 }
