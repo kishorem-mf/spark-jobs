@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 
+from airflow.hooks.base_hook import BaseHook
+
 from config import email_addresses
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
@@ -74,6 +76,8 @@ with DAG('ohub_dag', default_args=default_args,
         databricks_conn_id=databricks_conn_id
     )
 
+    postgres_connection = BaseHook.get_connection('postgres_channels')
+
     for task in csv_to_parquet:
         task_name = "{}_to_parquet".format(task['input'].lower())
         globals()[task_name] = DatabricksSubmitRunOperator(
@@ -87,7 +91,11 @@ with DAG('ohub_dag', default_args=default_args,
             spark_jar_task={
                 'main_class_name': "com.unilever.ohub.spark.tsv2parquet.{}".format(task['class']),
                 'parameters': ['--inputFile', data_input_bucket.format(task['input']),
-                               '--outputFile', data_output_bucket.format(task['output'].lower())]
+                               '--outputFile', data_output_bucket.format(task['output'].lower()),
+                               '--postgressUrl', postgres_connection.host,
+                               '--postgressUsername', postgres_connection.login,
+                               '--postgressPassword', postgres_connection.password,
+                               '--postgressDB', postgres_connection.schema]
             }
         )
 
@@ -106,7 +114,11 @@ with DAG('ohub_dag', default_args=default_args,
             spark_jar_task={
                 'main_class_name': "com.unilever.ohub.spark.tsv2parquet.{}".format(task['class']),
                 'parameters': ['--inputFile', data_input_bucket.format(task['input']),
-                               '--outputFile', data_output_bucket.format(task['output']) + '_acm']
+                               '--outputFile', data_output_bucket.format(task['output']) + '_acm',
+                               '--postgressUrl', postgres_connection.host,
+                               '--postgressUsername', postgres_connection.login,
+                               '--postgressPassword', postgres_connection.password,
+                               '--postgressDB', postgres_connection.schema]
             })
         globals()[task_name] >> delete_cluster
 
@@ -155,7 +167,11 @@ with DAG('ohub_dag', default_args=default_args,
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
             'parameters': ['--matchingInputFile', data_output_bucket.format('operators_uuid'),
                            '--operatorInputFile', data_input_bucket.format('OPERATORS'),
-                           '--outputFile', data_output_bucket.format('operators_merged')]
+                           '--outputFile', data_output_bucket.format('operators_merged'),
+                           '--postgressUrl', postgres_connection.host,
+                           '--postgressUsername', postgres_connection.login,
+                           '--postgressPassword', postgres_connection.password,
+                           '--postgressDB', postgres_connection.schema]
         })
 
     operators_to_parquet >> match_operators >> persistent_uuid >> merge_operators >> operators_to_acm
@@ -170,7 +186,11 @@ with DAG('ohub_dag', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonMerging",
             'parameters': ['--inputFile', data_output_bucket.format('contactpersons'),
-                           '--outputFile', data_output_bucket.format('contactpersons_merged_1')]
+                           '--outputFile', data_output_bucket.format('contactpersons_merged_1'),
+                           '--postgressUrl', postgres_connection.host,
+                           '--postgressUsername', postgres_connection.login,
+                           '--postgressPassword', postgres_connection.password,
+                           '--postgressDB', postgres_connection.schema]
         })
 
     merge_operators >> merge_contactpersons1

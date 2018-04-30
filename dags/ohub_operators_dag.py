@@ -49,6 +49,8 @@ with DAG('ohub_operators', default_args=default_args,
         }]
     )
 
+    postgres_connection = BaseHook.get_connection('postgres_channels')
+
     operators_to_parquet = DatabricksSubmitRunOperator(
         task_id="operators_to_parquet",
         existing_cluster_id=cluster_id,
@@ -60,7 +62,11 @@ with DAG('ohub_operators', default_args=default_args,
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
             'parameters': ['--inputFile', raw_bucket.format(date=one_day_ago, schema='operators'),
                            '--outputFile', ingested_bucket.format(date=one_day_ago, fn='operators'),
-                           '--strictIngestion', "false"]
+                           '--strictIngestion', "false",
+                           '--postgressUrl', postgres_connection.host,
+                           '--postgressUsername', postgres_connection.login,
+                           '--postgressPassword', postgres_connection.password,
+                           '--postgressDB', postgres_connection.schema]
         }
     )
 
@@ -134,7 +140,11 @@ with DAG('ohub_operators', default_args=default_args,
                            '--operatorInputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched'),
                            '--outputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='golden_records_new')]
+                           intermediate_bucket.format(date=one_day_ago, fn='golden_records_new'),
+                           '--postgressUrl', postgres_connection.host,
+                           '--postgressUsername', postgres_connection.login,
+                           '--postgressPassword', postgres_connection.password,
+                           '--postgressDB', postgres_connection.schema]
         })
 
     update_golden_records = DatabricksSubmitRunOperator(
@@ -149,7 +159,11 @@ with DAG('ohub_operators', default_args=default_args,
             'parameters': ['--inputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='updated_operators_integrated'),
                            '--outputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='golden_records_updated')]
+                           intermediate_bucket.format(date=one_day_ago, fn='golden_records_updated'),
+                           '--postgressUrl', postgres_connection.host,
+                           '--postgressUsername', postgres_connection.login,
+                           '--postgressPassword', postgres_connection.password,
+                           '--postgressDB', postgres_connection.schema]
         }
     )
 
@@ -170,8 +184,6 @@ with DAG('ohub_operators', default_args=default_args,
                            integrated_bucket.format(date=one_day_ago, fn='operators')]
         }
     )
-
-    postgres_connection = BaseHook.get_connection('postgres_channels')
 
     operators_to_acm = DatabricksSubmitRunOperator(
         task_id="operators_to_acm",
