@@ -21,7 +21,7 @@ case class MatchingResult(sourceId: String, targetId: String, countryCode: Strin
 
 object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecordPicking[Operator] {
 
-  private case class IdAndCountry(concatId: String, countryCode: String)
+  private case class ConcatId(concatId: String)
 
   private case class MatchingResultAndOperator(
       matchingResult: MatchingResult,
@@ -69,8 +69,9 @@ object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecord
     import spark.implicits._
 
     val matchedIds = matched
-      .flatMap(_.map(x ⇒ IdAndCountry(x.concatId, x.countryCode)))
-      .distinct()
+      .flatMap(_.map(c => ConcatId(c.concatId)))
+      .as[ConcatId]
+      .distinct
 
     allOperators
       .join(matchedIds, Seq("concatId"), JoinType.LeftAnti)
