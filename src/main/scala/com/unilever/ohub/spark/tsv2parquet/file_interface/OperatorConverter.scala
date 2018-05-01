@@ -71,7 +71,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] {
       mobileNumber                = optional  ( "MOBILE_PHONE_NUMBER",      "mobileNumber",                 cleanPhone(countryCode)                   ),
       netPromoterScore            = optional  ( "NPS_POTENTIAL",            "netPromoterScore",             parseBigDecimalOrAverageFromRange         ),
       oldIntegrationId            = optional  ( "OPR_INTEGRATION_ID",       "oldIntegrationId"                                                        ),
-      otm                         = optional  ( "OTM",                      "otm"                                                                     ),
+      otm                         = optional  ( "OTM",                      "otm",                          checkEnum(Operator.otmEnum)               ),
       otmEnteredBy                = optional  ( "OTM_REASON",               "otmEnteredBy"                                                            ),
       phoneNumber                 = optional  ( "PHONE_NUMBER",             "phoneNumber",                  cleanPhone(countryCode)                   ),
       region                      = optional  ( "REGION",                   "region"                                                                  ),

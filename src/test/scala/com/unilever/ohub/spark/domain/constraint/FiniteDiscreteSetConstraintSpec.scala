@@ -5,7 +5,7 @@ import org.scalatest.{ Matchers, WordSpec }
 
 class FiniteDiscreteSetConstraintSpec extends WordSpec with Matchers {
 
-  val constraint = FiniteDiscreteSetConstraint(Set("A", "B", "C"))
+  val constraint = FiniteDiscreteSetConstraint("constraint-name", Set("A", "B", "C"))
 
   "Finite discrete set constraint" should {
     "throw a DomainConstraintViolationException" when {
