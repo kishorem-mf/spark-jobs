@@ -19,7 +19,7 @@ class OperatorMergingSpec extends SparkJobSpec with TestOperators {
     defaultOperatorWithSourceNameAndCountryCode("a", "NL"),
     defaultOperatorWithSourceNameAndCountryCode("b", "NL"),
     defaultOperatorWithSourceNameAndCountryCode("c", "NL"),
-    defaultOperatorWithSourceNameAndCountryCode("d", "NL"),
+    defaultOperatorWithSourceNameAndCountryCode("d", "NL"), // not in MATCHES
     defaultOperatorWithSourceNameAndCountryCode("x", "US"),
     defaultOperatorWithSourceNameAndCountryCode("y", "US")
   ).toDataset
