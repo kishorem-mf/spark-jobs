@@ -6,6 +6,8 @@ import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql._
 import scopt.OptionParser
 import DomainGateKeeper._
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions._
 
 import scala.reflect.runtime.universe._
 
@@ -27,9 +29,11 @@ object DomainGateKeeper {
     implicit def eitherEncoder[T1, T2]: Encoder[Either[T1, T2]] =
       Encoders.kryo[Either[T1, T2]]
   }
+
 }
 
 abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] extends SparkJob[DomainConfig] {
+
   import DomainGateKeeper.implicits._
 
   protected[tsv2parquet] def partitionByValue: Seq[String]
@@ -94,7 +98,6 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
 
     val result = read(spark, storage, config.inputFile)
       .map(transform(toDomainEntity(transformer))(postValidate(dataProvider)))
-      .distinct()
 
     val errors: Dataset[ErrorMessage] = result.filter(_.isLeft).map(_.left.get)
     val numberOfErrors = errors.count()
@@ -110,7 +113,14 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       }
     }
 
-    val domainEntities: Dataset[DomainType] = result.filter(_.isRight).map(_.right.get)
+    val w = Window.partitionBy($"concatId").orderBy($"dateUpdated".desc_nulls_last)
+    val domainEntities: Dataset[DomainType] = result
+      .filter(_.isRight).map(_.right.get)
+      .withColumn("rn", row_number.over(w))
+      .filter($"rn" === 1)
+      .drop($"rn")
+      .as[DomainType]
+
     storage.writeToParquet(domainEntities, config.outputFile, partitionByValue)
   }
 }

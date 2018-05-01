@@ -21,23 +21,17 @@ case class OperatorMergingConfig(
     postgressDB: String = "postgress-db"
 ) extends SparkJobConfig
 
+case class MatchingResult(sourceId: String, targetId: String, countryCode: String)
+
 object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecordPicking[Operator] {
 
-  private case class MatchingResult(sourceId: String, targetId: String, countryCode: String)
-
-  private case class IdAndCountry(concatId: String, countryCode: String)
+  private case class ConcatId(concatId: String)
 
   private case class MatchingResultAndOperator(
       matchingResult: MatchingResult,
       operator: Operator
   ) {
     val sourceId: String = matchingResult.sourceId
-  }
-
-  def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])(operators: Seq[Operator]): Seq[Operator] = {
-    val goldenRecord = pickGoldenRecord(sourcePreference, operators)
-    val groupId = UUID.randomUUID().toString
-    operators.map(o ⇒ o.copy(ohubId = Some(groupId), isGoldenRecord = o == goldenRecord))
   }
 
   def transform(
@@ -48,31 +42,50 @@ object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecord
   ): Dataset[Operator] = {
     import spark.implicits._
 
-    val groupedOperators = matches
-      .joinWith(
-        operators,
-        matches("countryCode") === operators("countryCode")
-          and $"targetId" === $"concatId"
-      )
+    val matchedOperators: Dataset[Seq[Operator]] = groupMatchedOperators(spark, operators, matches)
+    val unmatchedOperators: Dataset[Seq[Operator]] = findUnmatchedOperators(spark, operators, matchedOperators)
+
+    matchedOperators
+      .union(unmatchedOperators)
+      .flatMap(markGoldenRecordAndGroupId(sourcePreference))
+  }
+
+  private[merging] def groupMatchedOperators(
+    spark: SparkSession,
+    allOperators: Dataset[Operator],
+    matches: Dataset[MatchingResult]): Dataset[Seq[Operator]] = {
+    import spark.implicits._
+    matches
+      .joinWith(allOperators, matches("targetId") === allOperators("concatId"), JoinType.Inner)
       .map((MatchingResultAndOperator.apply _).tupled)
       .groupByKey(_.sourceId)
       .agg(collect_list("operator").alias("operators").as[Seq[Operator]])
-      .joinWith(operators, $"value" === $"concatId")
-      .map(x ⇒ x._2 +: x._1._2)
+      .joinWith(allOperators, $"value" === $"concatId", JoinType.Inner)
+      .map { case ((_, operators), operator) ⇒ operator +: operators }
+  }
 
-    val matchedIds = groupedOperators
-      .flatMap(_.map(x ⇒ IdAndCountry(x.concatId, x.countryCode)))
-      .distinct()
+  private[merging] def findUnmatchedOperators(
+    spark: SparkSession,
+    allOperators: Dataset[Operator],
+    matched: Dataset[Seq[Operator]]) = {
 
-    val singletonOperators = operators
+    import spark.implicits._
+
+    val matchedIds = matched
+      .flatMap(_.map(c ⇒ ConcatId(c.concatId)))
+      .as[ConcatId]
+      .distinct
+
+    allOperators
       .join(matchedIds, Seq("concatId"), JoinType.LeftAnti)
       .as[Operator]
       .map(Seq(_))
+  }
 
-    groupedOperators
-      .union(singletonOperators)
-      .flatMap(markGoldenRecordAndGroupId(sourcePreference))
-      .repartition(60)
+  private[merging] def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])(operators: Seq[Operator]): Seq[Operator] = {
+    val goldenRecord = pickGoldenRecord(sourcePreference, operators)
+    val groupId = UUID.randomUUID().toString
+    operators.map(o ⇒ o.copy(ohubId = Some(groupId), isGoldenRecord = o == goldenRecord))
   }
 
   override private[spark] def defaultConfig = OperatorMergingConfig()
