@@ -19,11 +19,9 @@ echo "uploading: ${fn} as ${targetFn} to ${path}"
 databricks fs cp --overwrite target/scala-2.11/${fn} ${path}/${targetFn}
 
 echo '------------------ removing old libary from cluster --------------------'
-curl -i -d '{"cluster_id": "0314-131901-shalt605","libraries": [
+curl -i -d '{"cluster_id": "0425-080000-books393","libraries": [
 {"jar": "dbfs:/libraries/ohub/spark-jobs-assembly-WIP.jar"},
-{"jar": "dbfs:/libraries/ohub/spark-jobs-assembly-0.2.0.jar"},
-{"jar": "dbfs:/libraries/spark-jobs-assembly-0.2.jar"},
-{"egg": "dbfs:/libraries/string_matching.egg"}]}' \
+{"jar": "dbfs:/libraries/ohub/spark-jobs-assembly-0.2.0.jar"}]}' \
 -H "Content-Type: application/json" \
 -H "Authorization: Bearer ${DATABRICKS_TOKEN}" \
 -X POST https://westeurope.azuredatabricks.net/api/2.0/libraries/uninstall
@@ -31,7 +29,7 @@ curl -i -d '{"cluster_id": "0314-131901-shalt605","libraries": [
 sleep 10
 
 echo '------------------ restarting cluster --------------------'
-curl -i -d '{"cluster_id": "0314-131901-shalt605"}' \
+curl -i -d '{"cluster_id": "0425-080000-books393"}' \
 -H "Content-Type: application/json" \
 -H "Authorization: Bearer ${DATABRICKS_TOKEN}" \
 -X POST https://westeurope.azuredatabricks.net/api/2.0/clusters/restart

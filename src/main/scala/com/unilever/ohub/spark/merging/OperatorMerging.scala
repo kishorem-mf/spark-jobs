@@ -44,21 +44,20 @@ object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecord
     matchedOperators
       .union(unmatchedOperators)
       .flatMap(markGoldenRecordAndGroupId(sourcePreference))
-      .repartition(60)
   }
 
   private[merging] def groupMatchedOperators(
     spark: SparkSession,
-    operators: Dataset[Operator],
+    allOperators: Dataset[Operator],
     matches: Dataset[MatchingResult]): Dataset[Seq[Operator]] = {
     import spark.implicits._
     matches
-      .joinWith(operators, matches("targetId") === operators("concatId"), JoinType.Inner)
+      .joinWith(allOperators, matches("targetId") === allOperators("concatId"), JoinType.Inner)
       .map((MatchingResultAndOperator.apply _).tupled)
       .groupByKey(_.sourceId)
       .agg(collect_list("operator").alias("operators").as[Seq[Operator]])
-      .joinWith(operators, $"value" === $"concatId")
-      .map(x ⇒ x._2 +: x._1._2)
+      .joinWith(allOperators, $"value" === $"concatId", JoinType.Inner)
+      .map { case ((_, operators), operator) ⇒ operator +: operators }
   }
 
   private[merging] def findUnmatchedOperators(
@@ -69,7 +68,7 @@ object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecord
     import spark.implicits._
 
     val matchedIds = matched
-      .flatMap(_.map(c => ConcatId(c.concatId)))
+      .flatMap(_.map(c ⇒ ConcatId(c.concatId)))
       .as[ConcatId]
       .distinct
 
