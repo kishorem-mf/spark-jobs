@@ -62,9 +62,10 @@ class OperatorMergingSpec extends SparkJobSpec with TestOperators {
           defaultOperatorWithSourceNameAndCountryCode("x", "US"),
           defaultOperatorWithSourceNameAndCountryCode("y", "US"))
       ).toDataset
-      OperatorMerging.findUnmatchedOperators(spark, OPERATORS, matchedOperators)
+
       val res = OperatorMerging.findUnmatchedOperators(spark, OPERATORS, matchedOperators)
         .collect
+
       res.length shouldBe 1
       res.head.length shouldBe 1
       res.head.head.concatId shouldBe s"NL~d~${defaultOperator.sourceEntityId}"
