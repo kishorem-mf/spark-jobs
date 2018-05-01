@@ -1,13 +1,28 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.TestOperators
+import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
 import org.apache.spark.sql.Dataset
 import com.unilever.ohub.spark.SharedSparkSession.spark
+import com.unilever.ohub.spark.tsv2parquet.TestDomainDataProvider
 
 class OperatorMergingSpec extends SparkJobSpec with TestOperators {
 
   import spark.implicits._
+
+  private val MATCHES: Dataset[MatchingResult] = Seq(
+    matchingResultWithSourceName("a", "b", "NL"),
+    matchingResultWithSourceName("a", "c", "NL"),
+    matchingResultWithSourceName("x", "y", "US")
+  ).toDataset
+  private val OPERATORS = Seq(
+    defaultOperatorWithSourceNameAndCountryCode("a", "NL"),
+    defaultOperatorWithSourceNameAndCountryCode("b", "NL"),
+    defaultOperatorWithSourceNameAndCountryCode("c", "NL"),
+    defaultOperatorWithSourceNameAndCountryCode("d", "NL"),
+    defaultOperatorWithSourceNameAndCountryCode("x", "US"),
+    defaultOperatorWithSourceNameAndCountryCode("y", "US")
+  ).toDataset
 
   def matchingResultWithSourceName(source: String, target: String, countryCode: String) = {
     def concat(sourceName: String, cc: String) = s"$cc~$sourceName~${defaultOperator.sourceEntityId}"
@@ -17,22 +32,8 @@ class OperatorMergingSpec extends SparkJobSpec with TestOperators {
 
   describe("groupMatchedOperators") {
     it("should group all operators based on the target from the matching algorithm") {
-      val matches: Dataset[MatchingResult] = Seq(
-        matchingResultWithSourceName("a", "b", "NL"),
-        matchingResultWithSourceName("a", "c", "NL"),
-        matchingResultWithSourceName("x", "y", "US")
-      ).toDataset
-      val operators = Seq(
-        defaultOperator,
-        defaultOperatorWithSourceNameAndCountryCode("a", "NL"),
-        defaultOperatorWithSourceNameAndCountryCode("b", "NL"),
-        defaultOperatorWithSourceNameAndCountryCode("c", "NL"),
-        defaultOperatorWithSourceNameAndCountryCode("d", "NL"),
-        defaultOperatorWithSourceNameAndCountryCode("x", "US"),
-        defaultOperatorWithSourceNameAndCountryCode("y", "US")
-      ).toDataset
 
-      val res = OperatorMerging.groupMatchedOperators(spark, operators, matches)
+      val res = OperatorMerging.groupMatchedOperators(spark, OPERATORS, MATCHES)
         .collect
         .sortBy(_.length)
 
@@ -52,13 +53,41 @@ class OperatorMergingSpec extends SparkJobSpec with TestOperators {
   }
   describe("findUnmatchedOperators") {
     it("should return all unmatched operators") {
-
+      val matchedOperators: Dataset[Seq[Operator]] = Seq(
+        Seq(
+          defaultOperatorWithSourceNameAndCountryCode("a", "NL"),
+          defaultOperatorWithSourceNameAndCountryCode("b", "NL"),
+          defaultOperatorWithSourceNameAndCountryCode("c", "NL")),
+        Seq(
+          defaultOperatorWithSourceNameAndCountryCode("x", "US"),
+          defaultOperatorWithSourceNameAndCountryCode("y", "US"))
+      ).toDataset
+      OperatorMerging.findUnmatchedOperators(spark, OPERATORS, matchedOperators)
+      val res = OperatorMerging.findUnmatchedOperators(spark, OPERATORS, matchedOperators)
+        .collect
+      res.length shouldBe 1
+      res.head.length shouldBe 1
+      res.head.head.concatId shouldBe s"NL~d~${defaultOperator.sourceEntityId}"
     }
   }
 
   describe("transform") {
     it("should create ohub ids for all matched and unmatched operators") {
+      val sourcePreferences = Map("a" -> 1, "b" -> 2, "c" -> 3, "d" -> 4, "x" -> 4, "y" -> 5)
+      val res = OperatorMerging.transform(spark, OPERATORS, MATCHES, sourcePreferences)
+        .collect
+        .sortBy(_.sourceName)
 
+      res.length shouldBe 6
+      res.map(r ⇒ (r.sourceName, r.isGoldenRecord)) should contain inOrderOnly (
+        ("a", true), ("b", false), ("c", false), ("d", true), ("x", true), ("y", false)
+      )
+
+      val firstGroup = res.take(3)
+      firstGroup.map(_.ohubId.get) should contain only firstGroup.head.ohubId.get
+
+      val secondGroup = res.drop(4)
+      secondGroup.map(_.ohubId.get) should contain only secondGroup.head.ohubId.get
     }
   }
 }
