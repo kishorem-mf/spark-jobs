@@ -2,6 +2,7 @@ from airflow import DAG
 from datetime import datetime
 
 from airflow.operators.subdag_operator import SubDagOperator
+from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 
 from airflow.hooks.base_hook import BaseHook
 
@@ -209,7 +210,7 @@ with DAG('ohub_operators', default_args=default_args,
     operators_ftp_to_acm = SFTPOperator(
         task_id='operators_ftp_to_acm',
         local_filepath=local_acm_file,
-        remote_filepath='/incoming/UFS_upload_folder/,
+        remote_filepath='/incoming/UFS_upload_folder/',
         ssh_conn_id='acm_sftp_ssh',
         operation=SFTPOperation.PUT)
 
