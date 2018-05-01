@@ -15,6 +15,13 @@ trait TestOperators {
       concatId = DomainEntity.createConcatIdFromValues(defaultOperator.countryCode, sourceName, defaultOperator.sourceEntityId)
     )
 
+  def defaultOperatorWithSourceNameAndCountryCode(source: String, countryCode: String): Operator =
+    defaultOperator.copy(
+      sourceName = source,
+      countryCode = countryCode,
+      concatId = DomainEntity.createConcatIdFromValues(countryCode, source, defaultOperator.sourceEntityId)
+    )
+
   def defaultOperatorWithSourceEntityId(sourceEntityId: String): Operator =
     defaultOperator.copy(
       sourceEntityId = sourceEntityId,
