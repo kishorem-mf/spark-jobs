@@ -43,4 +43,7 @@ trait DomainEntity extends Product {
   val ingestionErrors: Map[String, IngestionError]
 
   ConcatIdConstraint.validate(concatId, countryCode, sourceName, sourceEntityId)
+
+  // ENABLE IF THE ENTITY SHOULDN'T BE CREATED WHEN INGESTION ERRORS ARE PRESENT
+  // assert(ingestionErrors.isEmpty, s"can't create domain entity due to '${ingestionErrors.size}' ingestion error(s): '${ingestionErrors.keySet.toSeq.sorted.mkString(",")}'")
 }

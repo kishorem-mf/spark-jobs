@@ -94,33 +94,37 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
   protected[tsv2parquet] def run(spark: SparkSession, config: DomainConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     import spark.implicits._
 
+    def handleErrors(config: DomainConfig, result: Dataset[Either[ErrorMessage, DomainType]]): Unit = {
+      val errors: Dataset[ErrorMessage] = result.filter(_.isLeft).map(_.left.get)
+      val numberOfErrors = errors.count()
+
+      if (numberOfErrors > 0) { // do something with the errors here
+        if (config.showErrorSummary) { // create a summary report
+          errors
+            .groupByKey(_.error)
+            .count()
+            .toDF("ERROR", "COUNT").show(numRows = 100, truncate = false)
+        } else { // show plain errors
+          errors
+            .toDF("ERROR", "ROW").show(numRows = 100, truncate = false)
+        }
+
+        if (config.strictIngestion) {
+          log.error(s"NO PARQUET FILE WRITTEN, NUMBER OF ERRORS FOUND IS '$numberOfErrors'")
+          System.exit(1) // let's fail fast now
+        } else {
+          log.error(s"WRITE PARQUET FILE ANYWAY, REGARDLESS OF NUMBER OF ERRORS FOUND '$numberOfErrors' (ERRONEOUS ENTITIES ARE NEGLECTED). ")
+        }
+      }
+    }
+
     val transformer = DomainTransformer(dataProvider)
 
     val result = read(spark, storage, config.inputFile)
       .map(transform(toDomainEntity(transformer))(postValidate(dataProvider)))
       .distinct()
 
-    val errors: Dataset[ErrorMessage] = result.filter(_.isLeft).map(_.left.get)
-    val numberOfErrors = errors.count()
-
-    if (numberOfErrors > 0) { // do something with the errors here
-      if (config.showErrorSummary) {
-        errors
-          .groupByKey(_.error)
-          .count()
-          .toDF("ERROR", "COUNT").show(numRows = 100, truncate = false)
-      } else {
-        errors
-         .toDF("ERROR", "ROW").show(numRows = 100, truncate = false)
-      }
-
-      if (config.strictIngestion) {
-        log.error(s"NO PARQUET FILE WRITTEN, NUMBER OF ERRORS FOUND IS '$numberOfErrors'")
-        System.exit(1) // let's fail fast now
-      } else {
-        log.error(s"WRITE PARQUET FILE ANYWAY, REGARDLESS OF NUMBER OF ERRORS FOUND '$numberOfErrors' (ERRONEOUS ENTITIES ARE NEGLECTED). ")
-      }
-    }
+    handleErrors(config, result)
 
     val domainEntities: Dataset[DomainType] = result.filter(_.isRight).map(_.right.get)
     storage.writeToParquet(domainEntities, config.outputFile, partitionByValue)
