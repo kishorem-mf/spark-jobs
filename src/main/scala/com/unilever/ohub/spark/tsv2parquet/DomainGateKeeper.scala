@@ -92,7 +92,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       }
     }
 
-    val w = Window.partitionBy($"concatId").orderBy($"dateUpdated".desc)
+    val w = Window.partitionBy($"concatId").orderBy($"dateUpdated".desc_nulls_last)
     val domainEntities: Dataset[DomainType] = result
       .filter(_.isRight).map(_.right.get)
       .withColumn("rn", row_number.over(w))
