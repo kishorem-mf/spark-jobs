@@ -24,7 +24,7 @@ class OperatorMergingSpec extends SparkJobSpec with TestOperators {
     defaultOperatorWithSourceNameAndCountryCode("y", "US")
   ).toDataset
 
-  def matchingResultWithSourceName(source: String, target: String, countryCode: String) = {
+  private def matchingResultWithSourceName(source: String, target: String, countryCode: String) = {
     def concat(sourceName: String, cc: String) = s"$cc~$sourceName~${defaultOperator.sourceEntityId}"
 
     MatchingResult(concat(source, countryCode), concat(target, countryCode), countryCode)
