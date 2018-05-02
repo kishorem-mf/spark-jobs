@@ -45,20 +45,20 @@ def preprocess_for_matching(ddf: DataFrame, id_column: str, drop_if_name_is_null
 
 
 def join_ingested_daily_with_integrated_operators(spark, ingested_daily, integrated,
-                                                  country_code, n_top, threshold):
-    from string_matching.spark_string_matching import match_strings
+                                                  country_code, n_top, threshold,
+                                                  match_function):
     ingested_daily_1country = (ingested_daily
                                .filter(sf.col('countryCode') == country_code)
                                .repartition('concatId')
-                               )
+                               ).persist()
     integrated_1country = (integrated
                            .filter(sf.col('countryCode') == country_code)
                            .repartition('ohubId')
-                           )
+                           ).persist()
 
-    similarity = match_strings(
+    similarity = match_function(
         spark,
-        ingested_daily_1country.select('string_index', 'matching_string'),
+        df=ingested_daily_1country.select('string_index', 'matching_string'),
         df2=integrated_1country.select('string_index', 'matching_string'),
         string_column='matching_string',
         row_number_column='string_index',
@@ -71,7 +71,9 @@ def join_ingested_daily_with_integrated_operators(spark, ingested_daily, integra
 
     window = Window.partitionBy('i').orderBy(sf.desc('SIMILARITY'), 'j')
     best_match = (similarity
-                  .withColumn('j', sf.first('j').over(window))
+                  .withColumn('rn', sf.row_number().over(window))
+                  .filter(sf.col('rn') == 1)
+                  .drop('rn')
                   .drop_duplicates()
                   )
 
@@ -92,11 +94,16 @@ def join_ingested_daily_with_integrated_operators(spark, ingested_daily, integra
                     'concatId',
                     'ohubId as ohubId_matched')
     )
+    ingested_daily_1country.unpersist()
+    integrated_1country.unpersist()
+
     return matched_ingested_daily
 
 
 def main(arguments):
+    from string_matching.spark_string_matching import match_strings
     global LOGGER
+
     spark, LOGGER = utils.start_spark('Match and join newly ingested operators with persistent ohubId')
 
     ingested_daily = spark.read.parquet(arguments.ingested_daily_operators_input_path)
@@ -123,8 +130,8 @@ def main(arguments):
         LOGGER.info('Match the ingested data with the integrated data for country {}'.format(country_code))
         matched_ingested_daily = join_ingested_daily_with_integrated_operators(
             spark, ingested_daily_for_matching, integrated_for_matching,
-            country_code, arguments.n_top, arguments.threshold)
-
+            country_code, arguments.n_top, arguments.threshold, match_strings)
+        columns = ingested_daily.columns - ['ingestionErrors', 'additionalFields']
         LOGGER.info('Select matched records from ingested daily and set their ohubId')
         matched_ingested_daily_full_record = (matched_ingested_daily
                                               .select('concatId', 'ohubId_matched')
