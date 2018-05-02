@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from airflow import DAG
+from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 
 from airflow.hooks.base_hook import BaseHook
 
@@ -122,6 +123,15 @@ with DAG('ohub_dag', default_args=default_args,
             })
         globals()[task_name] >> delete_cluster
 
+    for task in to_acm:
+        task_name = "{}_ftp_to_acm".format(task['output'].lower())
+        globals()[task_name] = SFTPOperator(
+            task_id=task_name,
+            local_filepath=data_output_bucket.format(task['output']) + '_acm',
+            remote_filepath='/incoming/UFS_upload_folder/',
+            ssh_conn_id='acm_sftp_ssh',
+            operation=SFTPOperation.PUT)
+
     match_operators = DatabricksSubmitRunOperator(
         task_id='match_operators',
         existing_cluster_id=cluster_id,
@@ -174,7 +184,8 @@ with DAG('ohub_dag', default_args=default_args,
                            '--postgressDB', postgres_connection.schema]
         })
 
-    operators_to_parquet >> match_operators >> persistent_uuid >> merge_operators >> operators_to_acm
+    operators_to_parquet >> match_operators >> persistent_uuid >> merge_operators
+    merge_operators >> operators_to_acm >> operators_ftp_to_acm
 
     merge_contactpersons1 = DatabricksSubmitRunOperator(
         task_id='merge_contactpersons_1',

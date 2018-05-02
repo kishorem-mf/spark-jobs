@@ -2,6 +2,7 @@ from airflow import DAG
 from datetime import datetime
 
 from airflow.operators.subdag_operator import SubDagOperator
+from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 
 from airflow.hooks.base_hook import BaseHook
 
@@ -185,6 +186,8 @@ with DAG('ohub_operators', default_args=default_args,
         }
     )
 
+    local_acm_file = export_bucket.format(date=one_day_ago, fn='acm/UFS_OPERATORS_{{ds_nodash}}000000.csv')
+
     operators_to_acm = DatabricksSubmitRunOperator(
         task_id="operators_to_acm",
         existing_cluster_id=cluster_id,
@@ -195,8 +198,7 @@ with DAG('ohub_operators', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmDeltaConverter",
             'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
-                           '--outputFile', export_bucket.format(date=one_day_ago,
-                                                                fn='acm/UFS_OPERATORS_{{ds_nodash}}000000.csv'),
+                           '--outputFile', local_acm_file,
                            '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn='operators'),
                            '--postgressUrl', postgres_connection.host,
                            '--postgressUsername', postgres_connection.login,
@@ -204,6 +206,13 @@ with DAG('ohub_operators', default_args=default_args,
                            '--postgressDB', postgres_connection.schema],
         }
     )
+
+    operators_ftp_to_acm = SFTPOperator(
+        task_id='operators_ftp_to_acm',
+        local_filepath=local_acm_file,
+        remote_filepath='/incoming/UFS_upload_folder/',
+        ssh_conn_id='acm_sftp_ssh',
+        operation=SFTPOperation.PUT)
 
     update_operators_table = DatabricksSubmitRunOperator(
         task_id='update_operators_table',
@@ -217,3 +226,4 @@ with DAG('ohub_operators', default_args=default_args,
     match_per_country >> merge_operators >> combine_to_create_integrated
     combine_to_create_integrated >> update_operators_table >> terminate_cluster
     combine_to_create_integrated >> operators_to_acm >> terminate_cluster
+    operators_to_acm >> operators_ftp_to_acm

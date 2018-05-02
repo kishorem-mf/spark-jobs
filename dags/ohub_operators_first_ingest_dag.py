@@ -2,6 +2,7 @@ from datetime import datetime
 
 from airflow import DAG
 from airflow.operators.subdag_operator import SubDagOperator
+from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 
 from airflow.hooks.base_hook import BaseHook
 
@@ -117,6 +118,8 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
                            '--postgressDB', postgres_connection.schema]
         })
 
+    local_acm_file = export_bucket.format(date='{{ds}}', fn='acm/UFS_OPERATORS_{{ds_nodash}}000000.csv')
+
     operators_to_acm = DatabricksSubmitRunOperator(
         task_id="operators_to_acm",
         existing_cluster_id=cluster_id,
@@ -127,8 +130,7 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmInitialLoadConverter",
             'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn='operators'),
-                           '--outputFile', export_bucket.format(date='{{ds}}',
-                                                                fn='acm/UFS_OPERATORS_{{ds_nodash}}000000.csv'),
+                           '--outputFile', export_bucket.format(local_acm_file),
                            '--postgressUrl', postgres_connection.host,
                            '--postgressUsername', postgres_connection.login,
                            '--postgressPassword', postgres_connection.password,
@@ -136,5 +138,13 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         }
     )
 
+    operators_ftp_to_acm = SFTPOperator(
+        task_id='operators_ftp_to_acm',
+        local_filepath=local_acm_file,
+        remote_filepath='/incoming/UFS_upload_folder/',
+        ssh_conn_id='acm_sftp_ssh',
+        operation=SFTPOperation.PUT)
+
     start_cluster >> uninstall_old_libraries >> operators_to_parquet >> match_per_country
     match_per_country >> merge_operators >> operators_to_acm >> terminate_cluster
+    operators_to_acm >> operators_ftp_to_acm
