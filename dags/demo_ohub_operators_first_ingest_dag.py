@@ -96,7 +96,7 @@ with DAG('demo_ohub_operators_first_ingest', default_args=default_args,
         return sub_dag
 
     match_per_country = SubDagOperator(
-        subdag=matching_sub_dag('ohub_operators_first_ingest', 'match_per_country', default_args['start_date'],
+        subdag=matching_sub_dag('demo_ohub_operators_first_ingest', 'match_per_country', default_args['start_date'],
                                 interval),
         task_id='match_per_country',
     )
