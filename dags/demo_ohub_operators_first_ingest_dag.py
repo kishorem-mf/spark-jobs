@@ -131,7 +131,7 @@ with DAG('demo_ohub_operators_first_ingest', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmInitialLoadConverter",
             'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn='operators'),
-                           '--outputFile', export_bucket.format(local_acm_file),
+                           '--outputFile', local_acm_file,
                            '--postgressUrl', postgres_connection.host,
                            '--postgressUsername', postgres_connection.login,
                            '--postgressPassword', postgres_connection.password,
