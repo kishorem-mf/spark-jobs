@@ -25,7 +25,7 @@ templated_path_to_unzip_contents = '/tmp/fuzzit/{{ds}}/csv/'
 wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'
 
 with DAG('fuzzit_sftp', default_args=default_args,
-         schedule_interval="@once") as dag:
+         schedule_interval="0 0 1 * *") as dag:
 
     mkdir = BashOperator(
         bash_command='mkdir -p ' + templated_path_to_unzip_contents,
