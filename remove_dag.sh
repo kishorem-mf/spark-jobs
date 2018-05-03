@@ -17,7 +17,8 @@ query=$(cat <<-END
 END
 )
 
-echo "Running query ${query}"
+echo "Running query
+${query}"
 
 PGPASSWORD=${password} psql \
 --host=${host} \
