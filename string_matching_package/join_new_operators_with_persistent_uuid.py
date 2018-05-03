@@ -50,11 +50,11 @@ def join_ingested_daily_with_integrated_operators(spark, ingested_daily, integra
     ingested_daily_1country = (ingested_daily
                                .filter(sf.col('countryCode') == country_code)
                                .repartition('concatId')
-                               )
+                               ).persist()
     integrated_1country = (integrated
                            .filter(sf.col('countryCode') == country_code)
                            .repartition('ohubId')
-                           )
+                           ).persist()
 
     similarity = match_function(
         spark,
@@ -94,6 +94,9 @@ def join_ingested_daily_with_integrated_operators(spark, ingested_daily, integra
                     'concatId',
                     'ohubId as ohubId_matched')
     )
+    ingested_daily_1country.unpersist()
+    integrated_1country.unpersist()
+
     return matched_ingested_daily
 
 
@@ -128,7 +131,6 @@ def main(arguments):
         matched_ingested_daily = join_ingested_daily_with_integrated_operators(
             spark, ingested_daily_for_matching, integrated_for_matching,
             country_code, arguments.n_top, arguments.threshold, match_strings)
-        columns = ingested_daily.columns - ['ingestionErrors', 'additionalFields']
         LOGGER.info('Select matched records from ingested daily and set their ohubId')
         matched_ingested_daily_full_record = (matched_ingested_daily
                                               .select('concatId', 'ohubId_matched')
