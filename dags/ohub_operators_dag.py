@@ -76,7 +76,7 @@ with DAG('ohub_operators', default_args=default_args,
             '%s.%s' % (parent_dag_name, child_dag_name),
             schedule_interval=schedule_interval,
             start_date=start_date,
-            default_args=default_args.update({'pool': 'ohub_pool' })
+            default_args=default_args.update({'pool': 'ohub_pool'})
         )
 
         for code in operator_country_codes:
