@@ -20,15 +20,15 @@ default_args = {
     'on_failure_callback': slack_on_databricks_failure_callback
 }
 
-cluster_id = '0314-131901-shalt605'
+cluster_id = '0503-091728-vouch458'
 databricks_conn_id = 'databricks_azure'
 
 jar = 'dbfs:/libraries/ohub/spark-jobs-assembly-0.2.0.jar'
 egg = 'dbfs:/libraries/name_matching/string_matching.egg'
 
 dbfs_root_bucket = 'dbfs:/mnt/ohub_data/'
-raw_bucket = dbfs_root_bucket + 'raw/{schema}/{date}/**/*.csv'
-ingested_bucket = dbfs_root_bucket + 'ingested/{date}/{fn}.parquet'
-intermediate_bucket = dbfs_root_bucket + 'intermediate/{date}/{fn}.parquet'
-integrated_bucket = dbfs_root_bucket + 'integrated/{date}/{fn}.parquet'
-export_bucket = dbfs_root_bucket + 'export/{date}/{fn}'
+raw_bucket = dbfs_root_bucket + 'raw/{schema}/{date}/file_interface/*.csv'
+ingested_bucket = dbfs_root_bucket + 'demo/ingested/{date}/{fn}.parquet'
+intermediate_bucket = dbfs_root_bucket + 'demo/intermediate/{date}/{fn}.parquet'
+integrated_bucket = dbfs_root_bucket + 'demo/integrated/{date}/{fn}.parquet'
+export_bucket = dbfs_root_bucket + 'demo/export/{date}/{fn}'
