@@ -27,7 +27,7 @@ task_defaults = {
 }
 
 with DAG('acm_sftp', default_args=default_args,
-         schedule_interval="@once") as dag:
+         schedule_interval="0 0 1 * *") as dag:
 
     mkdir = BashOperator(
         bash_command='mkdir -p ' + local_filepath,
