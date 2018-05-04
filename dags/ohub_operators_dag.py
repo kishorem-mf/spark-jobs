@@ -16,6 +16,7 @@ from operators_config import \
     cluster_id, databricks_conn_id, \
     jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
+    wasb_raw_bucket, wasb_ingested_bucket, wasb_intermediate_bucket, wasb_integrated_bucket, wasb_export_bucket, \
     operator_country_codes
 
 default_args.update(
@@ -186,8 +187,6 @@ with DAG('ohub_operators', default_args=default_args,
         }
     )
 
-    local_acm_file = export_bucket.format(date=one_day_ago, fn='acm/UFS_OPERATORS_{{ds_nodash}}000000.csv')
-
     operators_to_acm = DatabricksSubmitRunOperator(
         task_id="operators_to_acm",
         existing_cluster_id=cluster_id,
@@ -198,7 +197,7 @@ with DAG('ohub_operators', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmDeltaConverter",
             'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
-                           '--outputFile', local_acm_file,
+                           '--outputFile', export_bucket.format(date=one_day_ago, fn='acm/UFS_OPERATORS_{{ds_nodash}}000000.csv'),
                            '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn='operators'),
                            '--postgressUrl', postgres_connection.host,
                            '--postgressUsername', postgres_connection.login,
@@ -209,7 +208,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     operators_ftp_to_acm = SFTPOperator(
         task_id='operators_ftp_to_acm',
-        local_filepath=local_acm_file,
+        local_filepath=wasb_export_bucket.format(date=one_day_ago, fn='acm/UFS_OPERATORS_{{ds_nodash}}000000.csv'),
         remote_filepath='/incoming/UFS_upload_folder/',
         ssh_conn_id='acm_sftp_ssh',
         operation=SFTPOperation.PUT)
