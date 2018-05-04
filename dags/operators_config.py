@@ -33,7 +33,7 @@ intermediate_bucket = dbfs_root_bucket + 'intermediate/{date}/{fn}.parquet'
 integrated_bucket = dbfs_root_bucket + 'integrated/{date}/{fn}.parquet'
 export_bucket = dbfs_root_bucket + 'export/{date}/{fn}'
 
-wasb_root_bucket = 'dbfs:/mnt/ohub_data/'
+wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'
 wasb_raw_bucket = wasb_root_bucket + 'raw/{schema}/{date}/**/*.csv'
 wasb_ingested_bucket = wasb_root_bucket + 'ingested/{date}/{fn}.parquet'
 wasb_intermediate_bucket = wasb_root_bucket + 'intermediate/{date}/{fn}.parquet'
