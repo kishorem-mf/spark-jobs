@@ -76,6 +76,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
     getFilesFun: (FileSystem, Path) ⇒ Array[Path]
   )(implicit log: Logger) = {
     val paths = getFilesFun(fs, inputPath)
+      fs.delete(inputPath, true)
 
     if (concatAvailable) {
       fs.concat(outputFilePath, paths)
