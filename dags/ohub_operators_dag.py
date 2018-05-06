@@ -149,26 +149,6 @@ with DAG('ohub_operators', default_args=default_args,
                            '--postgressDB', postgres_connection.schema]
         })
 
-    update_golden_records = DatabricksSubmitRunOperator(
-        task_id='update_golden_records',
-        existing_cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
-        spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.merging.OperatorUpdateGoldenRecord",
-            'parameters': ['--inputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='updated_operators_integrated'),
-                           '--outputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='golden_records_updated'),
-                           '--postgressUrl', postgres_connection.host,
-                           '--postgressUsername', postgres_connection.login,
-                           '--postgressPassword', postgres_connection.password,
-                           '--postgressDB', postgres_connection.schema]
-        }
-    )
-
     combine_to_create_integrated = DatabricksSubmitRunOperator(
         task_id='combine_to_create_integrated',
         existing_cluster_id=cluster_id,
@@ -179,11 +159,31 @@ with DAG('ohub_operators', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.combining.OperatorCombining",
             'parameters': ['--integratedUpdated',
-                           intermediate_bucket.format(date=one_day_ago, fn='golden_records_updated'),
+                           intermediate_bucket.format(date=one_day_ago, fn='updated_operators_integrated'),
                            '--newGolden',
                            intermediate_bucket.format(date=one_day_ago, fn='golden_records_new'),
                            '--newIntegratedOutput',
-                           integrated_bucket.format(date=one_day_ago, fn='operators')]
+                           intermediate_bucket.format(date=one_day_ago, fn='golden_records_updated')]
+        }
+    )
+
+    update_golden_records = DatabricksSubmitRunOperator(
+        task_id='update_golden_records',
+        existing_cluster_id=cluster_id,
+        databricks_conn_id=databricks_conn_id,
+        libraries=[
+            {'jar': jar}
+        ],
+        spark_jar_task={
+            'main_class_name': "com.unilever.ohub.spark.merging.OperatorUpdateGoldenRecord",
+            'parameters': ['--inputFile',
+                           intermediate_bucket.format(date=one_day_ago, fn='golden_records_updated'),
+                           '--outputFile',
+                           integrated_bucket.format(date=one_day_ago, fn='operators'),
+                           '--postgressUrl', postgres_connection.host,
+                           '--postgressUsername', postgres_connection.login,
+                           '--postgressPassword', postgres_connection.password,
+                           '--postgressDB', postgres_connection.schema]
         }
     )
 
