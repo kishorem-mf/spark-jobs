@@ -61,9 +61,6 @@ def get_country_codes(country_code_arg: str, ddf: DataFrame, minimum_entries=MIN
                    .distinct()
                    .rdd.map(lambda r: r[0]).collect())
     if country_code_arg != 'all':
-        if LOGGER is not None:
-            LOGGER.info("Selecting only union of all countries (with MINIMUM_ENTRIES_PER_COUNTRY) and: " +
-                        country_code_arg)
         codes = set(codes) & {country_code_arg}
     if LOGGER is not None:
         LOGGER.info("Selected countries are: {}".format(codes))
