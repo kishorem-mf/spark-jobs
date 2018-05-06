@@ -47,14 +47,8 @@ def preprocess_for_matching(ddf: DataFrame, id_column: str, drop_if_name_is_null
 def join_ingested_daily_with_integrated_operators(spark, ingested_daily, integrated,
                                                   country_code, n_top, threshold,
                                                   match_function):
-    ingested_daily_1country = (ingested_daily
-                               .filter(sf.col('countryCode') == country_code)
-                               .repartition('concatId')
-                               )
-    integrated_1country = (integrated
-                           .filter(sf.col('countryCode') == country_code)
-                           .repartition('ohubId')
-                           )
+    ingested_daily_1country = ingested_daily.repartition('concatId')
+    integrated_1country = integrated.repartition('ohubId')
 
     similarity = match_function(
         spark,
@@ -103,10 +97,14 @@ def main(arguments):
 
     spark, LOGGER = utils.start_spark('Match and join newly ingested operators with persistent ohubId')
 
-    ingested_daily = spark.read.parquet(arguments.ingested_daily_operators_input_path)
+    ingested_daily = (spark.read.parquet(arguments.ingested_daily_operators_input_path)
+                      .filter(sf.col('countryCode') == arguments.country_code)
+                      )
     ingested_daily_for_matching = preprocess_for_matching(ingested_daily, 'concatId', True)
 
-    integrated = spark.read.parquet(arguments.integrated_operators_input_path)
+    integrated = (spark.read.parquet(arguments.integrated_operators_input_path)
+                  .filter(sf.col('countryCode') == arguments.country_code)
+                  )
     integrated_for_matching = preprocess_for_matching(integrated, 'ohubId')
 
     country_codes_ingested = utils.get_country_codes(arguments.country_code, ingested_daily_for_matching,
@@ -114,12 +112,9 @@ def main(arguments):
     country_codes_integrated = utils.get_country_codes(arguments.country_code, integrated_for_matching)
     country_codes = list(set(country_codes_ingested) & set(country_codes_integrated))
 
-    if len(country_codes) == 1:
-        save_fun = utils.save_to_parquet_per_partition('countryCode', country_codes[0])
-    else:
-        save_fun = utils.save_to_parquet
-
+    save_fun = utils.save_to_parquet_per_partition('countryCode', arguments.country_code)
     mode = 'overwrite'
+
     for i, country_code in enumerate(country_codes):
         if i >= 1:
             mode = 'append'
@@ -129,22 +124,21 @@ def main(arguments):
             spark, ingested_daily_for_matching, integrated_for_matching,
             country_code, arguments.n_top, arguments.threshold, match_strings)
         columns = ingested_daily.columns - ['ingestionErrors', 'additionalFields']
-        LOGGER.info('Select matched records from ingested daily and set their ohubId')
+        LOGGER.info('Find matched records from ingested daily and set their ohubId')
         matched_ingested_daily_full_record = (matched_ingested_daily
                                               .select('concatId', 'ohubId_matched')
-                                              .join(ingested_daily.filter(sf.col('countryCode') == country_code),
-                                                    on='concatId', how='left')
+                                              .join(ingested_daily, on='concatId', how='left')
                                               .withColumn('ohubId', sf.col('ohubId_matched'))
                                               .drop('ohubId_matched')
                                               )
         LOGGER.info('Merge the integrated data with the matched ingested daily data')
-        updated_integrated = (integrated.filter(sf.col('countryCode') == country_code)
+        updated_integrated = (integrated
                               .join(matched_ingested_daily_full_record, on='concatId', how='left_anti')
                               .union(matched_ingested_daily_full_record)
                               )
 
-        LOGGER.info('Select the unmatched records from ingested daily')
-        unmatched = (ingested_daily.filter(sf.col('countryCode') == country_code)
+        LOGGER.info('Find the unmatched records from ingested daily')
+        unmatched = (ingested_daily
                      .join(matched_ingested_daily, on='concatId', how='left_anti')
                      )
 
