@@ -19,8 +19,11 @@ object OperatorCombining extends SparkJob[CombiningConfig] {
     integratedUpdated: Dataset[Operator],
     newGoldenRecords: Dataset[Operator]
   ): Dataset[Operator] = {
+    import spark.implicits._
 
     integratedUpdated
+      .join(newGoldenRecords, Seq("concatId"), "left_anti")
+      .as[Operator]
       .union(newGoldenRecords)
   }
 
