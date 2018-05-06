@@ -123,7 +123,7 @@ def main(arguments):
         matched_ingested_daily = join_ingested_daily_with_integrated_operators(
             spark, ingested_daily_for_matching, integrated_for_matching,
             country_code, arguments.n_top, arguments.threshold, match_strings)
-        columns = ingested_daily.columns - ['ingestionErrors', 'additionalFields']
+
         LOGGER.info('Find matched records from ingested daily and set their ohubId')
         matched_ingested_daily_full_record = (matched_ingested_daily
                                               .select('concatId', 'ohubId_matched')
