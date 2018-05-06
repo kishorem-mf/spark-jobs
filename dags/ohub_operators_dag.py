@@ -223,8 +223,8 @@ with DAG('ohub_operators', default_args=default_args,
     )
 
     start_cluster >> uninstall_old_libraries >> operators_to_parquet >> match_per_country
-    match_per_country >> update_golden_records >> combine_to_create_integrated
+    match_per_country >> combine_to_create_integrated
     match_per_country >> merge_operators >> combine_to_create_integrated
-    combine_to_create_integrated >> update_operators_table >> terminate_cluster
-    combine_to_create_integrated >> operators_to_acm >> terminate_cluster
+    combine_to_create_integrated >> update_golden_records >> update_operators_table >> terminate_cluster
+    update_golden_records >> operators_to_acm >> terminate_cluster
     operators_to_acm >> operators_ftp_to_acm
