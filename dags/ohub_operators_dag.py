@@ -162,8 +162,8 @@ with DAG('ohub_operators', default_args=default_args,
                            intermediate_bucket.format(date=one_day_ago, fn='updated_operators_integrated'),
                            '--newGolden',
                            intermediate_bucket.format(date=one_day_ago, fn='golden_records_new'),
-                           '--newIntegratedOutput',
-                           intermediate_bucket.format(date=one_day_ago, fn='golden_records_updated')]
+                           '--combinedOperators',
+                           intermediate_bucket.format(date=one_day_ago, fn='operators_combined')]
         }
     )
 
@@ -177,7 +177,7 @@ with DAG('ohub_operators', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorUpdateGoldenRecord",
             'parameters': ['--inputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='golden_records_updated'),
+                           intermediate_bucket.format(date=one_day_ago, fn='operators_combined'),
                            '--outputFile',
                            integrated_bucket.format(date=one_day_ago, fn='operators'),
                            '--postgressUrl', postgres_connection.host,
