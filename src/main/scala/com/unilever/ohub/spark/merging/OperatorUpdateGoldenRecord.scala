@@ -25,8 +25,9 @@ object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with Golde
 
     operators
       .map(x ⇒ oHubIdAndRecord(x.ohubId.get, x))
-      .groupByKey(_.ohubId)
-      .agg(collect_list("operator").as("operator").as[Seq[Operator]])
+      .groupBy("ohubId")
+      .agg(collect_list($"operator").as("operators"))
+      .as[(String, Seq[Operator])]
       .map(_._2)
       .flatMap(markGoldenRecord(sourcePreference))
   }
