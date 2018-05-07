@@ -9,7 +9,7 @@ import scopt.OptionParser
 case class CombiningConfig(
     integratedUpdated: String = "path-to-integrated-updated-file",
     newGolden: String = "path-to-new-golden-file",
-    newIntegratedOutput: String = "path-to-new integrated-file"
+    combinedOperators: String = "path-to-new combined operators"
 ) extends SparkJobConfig
 
 object OperatorCombining extends SparkJob[CombiningConfig] {
