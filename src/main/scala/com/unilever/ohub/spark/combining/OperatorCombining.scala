@@ -39,7 +39,7 @@ object OperatorCombining extends SparkJob[CombiningConfig] {
         c.copy(newGolden = x)
       } text "newGolden is a string property"
       opt[String]("newIntegratedOutput") required () action { (x, c) ⇒
-        c.copy(newIntegratedOutput = x)
+        c.copy(combinedOperators = x)
       } text "newIntegratedOutput is a string property"
 
       version("1.0")
@@ -53,6 +53,6 @@ object OperatorCombining extends SparkJob[CombiningConfig] {
     val newGolden = storage.readFromParquet[Operator](config.newGolden)
     val newIntegrated = transform(spark, integratedMatched, newGolden)
 
-    storage.writeToParquet(newIntegrated, config.newIntegratedOutput, partitionBy = Seq("countryCode"))
+    storage.writeToParquet(newIntegrated, config.newIntegratedOutput)
   }
 }

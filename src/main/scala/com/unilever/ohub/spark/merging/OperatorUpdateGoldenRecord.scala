@@ -29,7 +29,6 @@ object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with Golde
       .agg(collect_list("operator").as("operator").as[Seq[Operator]])
       .map(_._2)
       .flatMap(markGoldenRecord(sourcePreference))
-      .repartition(60)
   }
 
   override def run(spark: SparkSession, config: DefaultWithDbConfig, storage: Storage): Unit = {
@@ -42,6 +41,6 @@ object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with Golde
     val operators = storage.readFromParquet[Operator](config.inputFile)
     val transformed = transform(spark, operators, dataProvider.sourcePreferences)
 
-    storage.writeToParquet(transformed, config.outputFile, partitionBy = Seq("countryCode"))
+    storage.writeToParquet(transformed, config.outputFile)
   }
 }
