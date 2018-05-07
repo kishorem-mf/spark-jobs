@@ -53,6 +53,6 @@ object OperatorCombining extends SparkJob[CombiningConfig] {
     val newGolden = storage.readFromParquet[Operator](config.newGolden)
     val newIntegrated = transform(spark, integratedMatched, newGolden)
 
-    storage.writeToParquet(newIntegrated, config.newIntegratedOutput)
+    storage.writeToParquet(newIntegrated, config.combinedOperators)
   }
 }

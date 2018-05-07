@@ -85,7 +85,7 @@ object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecord
   private[merging] def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])(operators: Seq[Operator]): Seq[Operator] = {
     val goldenRecord = pickGoldenRecord(sourcePreference, operators)
     val groupId = UUID.randomUUID().toString
-    operators.map(o ⇒ o.copy(ohubId = Some(gropId), isGoldenRecord = o == goldenRecord))
+    operators.map(o ⇒ o.copy(ohubId = Some(groupId), isGoldenRecord = o == goldenRecord))
   }
 
   override private[spark] def defaultConfig = OperatorMergingConfig()
