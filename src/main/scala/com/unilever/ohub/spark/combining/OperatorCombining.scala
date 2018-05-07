@@ -24,6 +24,7 @@ object OperatorCombining extends SparkJob[CombiningConfig] {
     integratedUpdated
       .join(newGoldenRecords, Seq("concatId"), "left_anti")
       .as[Operator]
+      .map(identity)
       .union(newGoldenRecords)
   }
 
