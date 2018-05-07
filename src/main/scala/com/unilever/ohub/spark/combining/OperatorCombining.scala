@@ -38,9 +38,9 @@ object OperatorCombining extends SparkJob[CombiningConfig] {
       opt[String]("newGolden") required () action { (x, c) ⇒
         c.copy(newGolden = x)
       } text "newGolden is a string property"
-      opt[String]("newIntegratedOutput") required () action { (x, c) ⇒
+      opt[String]("combinedOperators") required () action { (x, c) ⇒
         c.copy(combinedOperators = x)
-      } text "newIntegratedOutput is a string property"
+      } text "combinedOperators is a string property"
 
       version("1.0")
       help("help") text "help text"
