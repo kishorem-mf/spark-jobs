@@ -8,7 +8,7 @@ import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
-import org.apache.spark.sql.functions.collect_list
+import org.apache.spark.sql.functions._
 import scopt.OptionParser
 
 case class OperatorMergingConfig(
@@ -55,12 +55,14 @@ object OperatorMerging extends SparkJob[OperatorMergingConfig] with GoldenRecord
     allOperators: Dataset[Operator],
     matches: Dataset[MatchingResult]): Dataset[Seq[Operator]] = {
     import spark.implicits._
+
     matches
       .joinWith(allOperators, matches("targetId") === allOperators("concatId"), JoinType.Inner)
       .map((MatchingResultAndOperator.apply _).tupled)
-      .groupByKey(_.sourceId)
-      .agg(collect_list("operator").alias("operators").as[Seq[Operator]])
-      .joinWith(allOperators, $"value" === $"concatId", JoinType.Inner)
+      .groupBy($"matchingResult.sourceId")
+      .agg(collect_list("operator").as("operators"))
+      .as[(String, Seq[Operator])]
+      .joinWith(allOperators, $"sourceId" === $"concatId", JoinType.Inner)
       .map { case ((_, operators), operator) ⇒ operator +: operators }
   }
 
