@@ -20,7 +20,7 @@ from operators_config import \
     operator_country_codes
 
 default_args.update(
-    {'start_date': datetime(2017, 7, 12)}
+    {'start_date': datetime(2018, 5, 8)}
 )
 interval = '@once'
 
@@ -50,8 +50,8 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
 
     postgres_connection = BaseHook.get_connection('postgres_channels')
 
-    operators_to_parquet = DatabricksSubmitRunOperator(
-        task_id="operators_to_parquet",
+    operators_file_interface_to_parquet = DatabricksSubmitRunOperator(
+        task_id="operators_file_interface_to_parquet",
         existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
@@ -59,8 +59,12 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
-            'parameters': ['--inputFile', raw_bucket.format(date='{{ds}}', schema='operators'),
-                           '--outputFile', ingested_bucket.format(date='{{ds}}', fn='operators'),
+            'parameters': ['--inputFile', raw_bucket.format(date='{{ds}}',
+                                                            schema='operators',
+                                                            channel='file_interface'),
+                           '--outputFile', ingested_bucket.format(date='{{ds}}',
+                                                                  fn='operators',
+                                                                  channel='file_interface'),
                            '--strictIngestion', "false",
                            '--postgressUrl', postgres_connection.host,
                            '--postgressUsername', postgres_connection.login,
@@ -87,7 +91,9 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
                 ],
                 spark_python_task={
                     'python_file': 'dbfs:/libraries/name_matching/match_operators.py',
-                    'parameters': ['--input_file', ingested_bucket.format(date='{{ds}}', fn='operators'),
+                    'parameters': ['--input_file', ingested_bucket.format(date='{{ds}}',
+                                                                          fn='operators',
+                                                                          channel='*'),
                                    '--output_path', intermediate_bucket.format(date='{{ds}}', fn='operators_matched'),
                                    '--country_code', code]
                 }
@@ -111,7 +117,9 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
             'parameters': ['--matchingInputFile', intermediate_bucket.format(date='{{ds}}', fn='operators_matched'),
-                           '--operatorInputFile', ingested_bucket.format(date='{{ds}}', fn='operators'),
+                           '--operatorInputFile', ingested_bucket.format(date='{{ds}}',
+                                                                         fn='operators',
+                                                                         channel='*'),
                            '--outputFile', integrated_bucket.format(date='{{ds}}', fn='operators'),
                            '--postgressUrl', postgres_connection.host,
                            '--postgressUsername', postgres_connection.login,
@@ -146,6 +154,6 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         ssh_conn_id='acm_sftp_ssh',
         operation=SFTPOperation.PUT)
 
-    start_cluster >> uninstall_old_libraries >> operators_to_parquet >> match_per_country
+    start_cluster >> uninstall_old_libraries >> operators_file_interface_to_parquet >> match_per_country
     match_per_country >> merge_operators >> operators_to_acm >> terminate_cluster
     operators_to_acm >> operators_ftp_to_acm
