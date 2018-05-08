@@ -28,11 +28,6 @@ def start_spark(name):
     spark = (SparkSession
              .builder
              .appName("NameMatching")
-             # .config('spark.dynamicAllocation.enabled', False)
-             # .config('spark.executor.instances', 4)
-             # .config('spark.executor.cores', 13)
-             # .config('spark.executor.memory', '14g')
-             # .config('spark.driver.memory', '15g')
              .getOrCreate())
     sc = spark.sparkContext
     sc.setLogLevel("INFO")
@@ -109,20 +104,44 @@ def clean_operator_fields(ddf: DataFrame, name_col, city_col, street_col, housen
             )
 
 
-def create_operator_matching_string(ddf: DataFrame):
+def clean_contactperson_fields(ddf: DataFrame, first_name_col, last_name_col, street_col, housenr_col,
+                               city_col, zip_col) -> DataFrame:
     return (ddf
-            .fillna('')
-            .withColumn('matching_string',
-                        sf.concat_ws(' ',
-                                     sf.col('nameCleansed'),
-                                     sf.col('cityCleansed'),
-                                     sf.col('streetCleansed'),
-                                     sf.col('zipCodeCleansed')
-                                     )
-                        )
+            .withColumn('firstNameCleansed', sf.col(first_name_col))
+            .withColumn('lastNameCleansed', sf.col(last_name_col))
+            .withColumn('streetCleansed', sf.concat_ws('',
+                                                       udf_remove_strange_chars_to_lower_and_trim(sf.col(street_col)),
+                                                       sf.col(housenr_col)))
+            .withColumn('cityCleansed', udf_remove_spaces_strange_chars_and_to_lower(sf.col(city_col)))
+            .withColumn('zipCodeCleansed', udf_remove_spaces_strange_chars_and_to_lower(sf.col(zip_col)))
+            )
+
+
+def clean_matching_string(ddf: DataFrame) -> DataFrame:
+    return (ddf
             .withColumn('matching_string', sf.regexp_replace('matching_string', REGEX, ''))
             .withColumn('matching_string', sf.lower(sf.trim(sf.regexp_replace(sf.col('matching_string'), '\s+', ' '))))
             )
+
+
+def create_operator_matching_string(ddf: DataFrame):
+    with_matching_string = (ddf.fillna('').withColumn('matching_string',
+                                                      sf.concat_ws(' ', sf.col('nameCleansed'), sf.col('cityCleansed'),
+                                                                   sf.col('streetCleansed'),
+                                                                   sf.col('zipCodeCleansed'))))
+    return clean_matching_string(with_matching_string)
+
+
+def create_contactperson_matching_string(ddf: DataFrame):
+    with_matching_string = (
+        ddf
+            .fillna('')
+            .withColumn('matching_string', sf.concat_ws(' ',
+                                                        sf.col('firstNameCleansed'),
+                                                        sf.col('lastNameCleansed')))
+    )
+
+    return clean_matching_string(with_matching_string)
 
 
 def select_and_repartition_country(ddf: DataFrame, column_name: str, country_code: str) -> DataFrame:
