@@ -53,8 +53,8 @@ with DAG('ohub_operators', default_args=default_args,
 
     postgres_connection = BaseHook.get_connection('postgres_channels')
 
-    operators_to_parquet = DatabricksSubmitRunOperator(
-        task_id="operators_to_parquet",
+    operators_file_interface_to_parquet = DatabricksSubmitRunOperator(
+        task_id="operators_file_interface_to_parquet",
         existing_cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id,
         libraries=[
@@ -62,8 +62,12 @@ with DAG('ohub_operators', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
-            'parameters': ['--inputFile', raw_bucket.format(date=one_day_ago, schema='operators'),
-                           '--outputFile', ingested_bucket.format(date=one_day_ago, fn='operators'),
+            'parameters': ['--inputFile', raw_bucket.format(date=one_day_ago,
+                                                            schema='operators',
+                                                            channel='file_interface'),
+                           '--outputFile', ingested_bucket.format(date=one_day_ago,
+                                                                  fn='operators',
+                                                                  channel='file_interface'),
                            '--strictIngestion', "false",
                            '--postgressUrl', postgres_connection.host,
                            '--postgressUsername', postgres_connection.login,
@@ -94,7 +98,9 @@ with DAG('ohub_operators', default_args=default_args,
                     'parameters': [
                         '--integrated_operators_input_path', integrated_bucket.format(date=two_day_ago, fn='operators'),
                         '--ingested_daily_operators_input_path',
-                        ingested_bucket.format(date=one_day_ago, fn='operators'),
+                        ingested_bucket.format(date=one_day_ago,
+                                               fn='operators',
+                                               channel='*'),
                         '--updated_integrated_output_path',
                         intermediate_bucket.format(date=one_day_ago, fn='updated_operators_integrated'),
                         '--unmatched_output_path',
@@ -222,7 +228,7 @@ with DAG('ohub_operators', default_args=default_args,
         notebook_task={'notebook_path': '/Users/tim.vancann@unilever.com/update_integrated_tables'}
     )
 
-    start_cluster >> uninstall_old_libraries >> operators_to_parquet >> match_per_country
+    start_cluster >> uninstall_old_libraries >> operators_file_interface_to_parquet >> match_per_country
     match_per_country >> combine_to_create_integrated
     match_per_country >> merge_operators >> combine_to_create_integrated
     combine_to_create_integrated >> update_golden_records >> update_operators_table >> terminate_cluster
