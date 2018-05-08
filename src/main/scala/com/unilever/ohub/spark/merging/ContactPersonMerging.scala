@@ -31,6 +31,7 @@ object ContactPersonMerging extends SparkJobWithDefaultDbConfig with GoldenRecor
       .map(cpn => GroupObject(cpn.emailAddress.getOrElse("") + cpn.mobileNumber.getOrElse(""), cpn))
       .groupBy($"group")
       .agg(collect_list("contactPerson").as("contactPersons"))
+      .as[(String, Seq[ContactPerson])]
       .flatMap {
         case (_, contactPersonList) ⇒ markGoldenRecordAndGroupId(sourcePreference)(contactPersonList)
       }
