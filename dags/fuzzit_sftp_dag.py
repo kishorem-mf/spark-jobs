@@ -22,7 +22,6 @@ fds = "{{macros.ds_format(ds, '%Y-%m-%d', '%Y%m%d')}}"
 templated_remote_filepath = "/ftp/ftp_ohub20/UFS_Fuzzit_OHUB20_" + fds + "_1400.zip"
 templated_local_filepath = "/tmp/fuzzit/{{ds}}/UFS_Fuzzit_OHUB20_1400.zip"
 templated_path_to_unzip_contents = '/tmp/fuzzit/{{ds}}/csv/'
-wasb_root_bucket = 'wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/'
 
 with DAG('fuzzit_sftp', default_args=default_args,
          schedule_interval="0 0 1 * *") as dag:
