@@ -36,6 +36,7 @@ object ContactPersonConverter extends FileDomainGateKeeper[ContactPerson] {
       dateUpdated                   =   optional(   "DATE_MODIFIED",                  "dateUpdated",                  parseDateTimeStampUnsafe           ),
       name                          = name                                                                                                                ,
       operatorConcatId              = operatorConcatId                                                                                                    ,
+      operatorOhubId                = None                                                                                                                ,
       oldIntegrationId              =   optional(   "CP_INTEGRATION_ID",              "oldIntegrationId"                                                 ),
       firstName                     =   optional(   "FIRST_NAME",                     "firstName"                                                        ),
       lastName                      =   optional(   "LAST_NAME",                      "lastName"                                                         ),

@@ -8,7 +8,7 @@ import com.unilever.ohub.spark.domain.constraint._
 
 object ContactPerson {
   val customerType = "CONTACTPERSON"
-  val genderConstraint = FiniteDiscreteSetConstraint(Set("M", "F", "U"))
+  val genderConstraint = FiniteDiscreteSetConstraint("gender", Set("M", "F", "U"))
 }
 
 case class ContactPerson(
@@ -26,7 +26,8 @@ case class ContactPerson(
     sourceName: String,
     ohubCreated: Timestamp,
     ohubUpdated: Timestamp,
-    operatorConcatId: String, // TODO operatorOhubId
+    operatorConcatId: String,
+    operatorOhubId: Option[String],
     // specific fields
     oldIntegrationId: Option[String],
     firstName: Option[String],

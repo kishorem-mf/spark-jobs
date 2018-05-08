@@ -9,7 +9,7 @@ import scopt.OptionParser
 case class CombiningConfig(
     integratedUpdated: String = "path-to-integrated-updated-file",
     newGolden: String = "path-to-new-golden-file",
-    newIntegratedOutput: String = "path-to-new integrated-file"
+    combinedOperators: String = "path-to-new combined operators"
 ) extends SparkJobConfig
 
 object OperatorCombining extends SparkJob[CombiningConfig] {
@@ -19,8 +19,12 @@ object OperatorCombining extends SparkJob[CombiningConfig] {
     integratedUpdated: Dataset[Operator],
     newGoldenRecords: Dataset[Operator]
   ): Dataset[Operator] = {
+    import spark.implicits._
 
     integratedUpdated
+      .join(newGoldenRecords, Seq("concatId"), "left_anti")
+      .as[Operator]
+      .map(identity)
       .union(newGoldenRecords)
   }
 
@@ -35,9 +39,9 @@ object OperatorCombining extends SparkJob[CombiningConfig] {
       opt[String]("newGolden") required () action { (x, c) ⇒
         c.copy(newGolden = x)
       } text "newGolden is a string property"
-      opt[String]("newIntegratedOutput") required () action { (x, c) ⇒
-        c.copy(newIntegratedOutput = x)
-      } text "newIntegratedOutput is a string property"
+      opt[String]("combinedOperators") required () action { (x, c) ⇒
+        c.copy(combinedOperators = x)
+      } text "combinedOperators is a string property"
 
       version("1.0")
       help("help") text "help text"
@@ -50,6 +54,6 @@ object OperatorCombining extends SparkJob[CombiningConfig] {
     val newGolden = storage.readFromParquet[Operator](config.newGolden)
     val newIntegrated = transform(spark, integratedMatched, newGolden)
 
-    storage.writeToParquet(newIntegrated, config.newIntegratedOutput, partitionBy = Seq("countryCode"))
+    storage.writeToParquet(newIntegrated, config.combinedOperators)
   }
 }

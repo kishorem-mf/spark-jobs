@@ -91,7 +91,7 @@ object StringFunctions {
     createConcatId(countryCode, source, refId.getOrElse(""))
   }
 
-  def checkEnum(set: Set[String]): String ⇒ String = input ⇒ {
+  def checkEnum(set: Set[String])(input: String): String = {
     if (!set.contains(input)) {
       throw new IllegalArgumentException(s"'$input' not contained in '$set'")
     }
