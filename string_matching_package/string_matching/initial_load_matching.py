@@ -180,7 +180,6 @@ def apply_matching_on(ddf: DataFrame, spark, preprocess_function, match_function
                                          n_top,
                                          threshold)
         return_value = grouped_matches
-    preprocessed.unpersist()
     return return_value
 
 
