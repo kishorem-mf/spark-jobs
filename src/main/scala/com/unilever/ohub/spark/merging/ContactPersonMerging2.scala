@@ -16,7 +16,7 @@ case class ContactPersonMergingConfig(
 // The step that fixes the foreign key links between contact persons and operators
 // TODO Temporarily in a 2nd file to make development easier, will end up in the first ContactPersonMerging job eventually.
 object ContactPersonMerging2 extends SparkJob[ContactPersonMergingConfig] {
-  private case class OHubIdAndRefId(ohubId: String, refId: String)
+  private case class OHubIdAndRefId(ohubId: Option[String], refId: String)
 
   def transform(
     spark: SparkSession,
@@ -32,10 +32,8 @@ object ContactPersonMerging2 extends SparkJob[ContactPersonMergingConfig] {
         JoinType.LeftOuter
       )
       .map {
-        // TODO it's probably smarter to add another id to contact persons that refers to the operator ohub id, then both ref id's are present.
-        // concat id operator
         case (contactPerson, maybeOperator) ⇒
-          contactPerson.copy(operatorConcatId = Option(maybeOperator).map(_.ohubId).getOrElse("REF_OPERATOR_UNKNOWN"))
+          contactPerson.copy(operatorOhubId = maybeOperator.ohubId)
       }
   }
 
@@ -75,7 +73,7 @@ object ContactPersonMerging2 extends SparkJob[ContactPersonMergingConfig] {
 
     val operatorIdAndRefs = storage
       .readFromParquet[Operator](config.operatorInputFile)
-      .map(op ⇒ OHubIdAndRefId(op.ohubId.get, op.concatId)) // TODO resolve .get?
+      .map(op ⇒ OHubIdAndRefId(op.ohubId, op.concatId))
 
     val transformed = transform(spark, contactPersonMerging, operatorIdAndRefs)
 
