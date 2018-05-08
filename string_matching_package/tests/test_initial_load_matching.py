@@ -58,3 +58,18 @@ class TestPreprocessingContactPersons(object):
 
         res = victim.preprocess_contacts(ddf).select('matching_string').collect()
         assert res[0][0] == 'dave mustaine'
+
+class TestOperatorMatching(object):
+    @classmethod
+    def setup_class(cls):
+        cls.data = [('1', None, None, 'foo', 'foo', 'foo', 'foo'),
+                    ('2', 'NL', 'Dave Mustaine ', 'Amsterdam  ', '@barAvenue', '\uFE3614b', '5312BE'),
+                    ('3', 'NL', 'Ritchie Blackmore', 'Utrecht', 'fooStreet', '8', '1234AB'),
+                    ('4', 'DE', 'Bruce Dickinson', 'Utrecht', 'Accacia Avenue', '22', '6666XX'), ]
+
+    def create_ddf(self, spark):
+        return spark.createDataFrame(self.data).toDF('id', 'countryCode', 'name', 'city', 'street', 'houseNumber',
+                                                     'zipCode')
+
+    def test_full_matching(self, spark):
+        victim.main()

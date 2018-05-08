@@ -29,24 +29,24 @@ def preprocess_contacts(ddf: DataFrame) -> DataFrame:
     cleaned = clean_contactperson_fields(ddf, 'firstName', 'lastName', 'street', 'houseNumber', 'city', 'zipCode')
 
     filtered = (cleaned
-           # keep only if no email and phone
-           .filter(sf.isnull(sf.col('emailAddress')) & sf.isnull(sf.col('mobilePhoneNumber')))
-           # drop if no first name and no last name
-           .na.drop(subset=['firstNameCleansed', 'lastNameCleansed'], how='all')
-           # drop if no street
-           .na.drop(subset=['streetCleansed'], how='any')
-           # same logic but for an empty string
-           .filter((sf.trim(sf.col('streetCleansed')) != '') &
-                   ((sf.trim(sf.col('firstNameCleansed')) != '') | (sf.trim(sf.col('lastNameCleansed')) != '')))
-           .withColumnRenamed('concatId', 'id')
-           )
+                # keep only if no email and phone
+                .filter(sf.isnull(sf.col('emailAddress')) & sf.isnull(sf.col('mobilePhoneNumber')))
+                # drop if no first name and no last name
+                .na.drop(subset=['firstNameCleansed', 'lastNameCleansed'], how='all')
+                # drop if no street
+                .na.drop(subset=['streetCleansed'], how='any')
+                # same logic but for an empty string
+                .filter((sf.trim(sf.col('streetCleansed')) != '') &
+                        ((sf.trim(sf.col('firstNameCleansed')) != '') | (sf.trim(sf.col('lastNameCleansed')) != '')))
+                .withColumnRenamed('concatId', 'id')
+                )
 
     return (create_contactperson_matching_string(filtered)
             .filter(sf.col('matching_string') != '')
             .withColumn('name_index', sf.row_number().over(w) - 1)
             .select('name_index', 'id', 'matching_string', 'countryCode', 'firstNameCleansed', 'lastNameCleansed',
                     'streetCleansed', 'zipCodeCleansed', 'cityCleansed')
-    )
+            )
 
 
 def match_contacts_for_country(spark: SparkSession, country_code: str, preprocessed_contacts: DataFrame,
@@ -165,34 +165,44 @@ def join_operators_columns(grouped_similarity: DataFrame, operators: DataFrame, 
                         'similarity', 'sourceName', 'matching_string as targetName'))
 
 
+def apply_matching_on(ddf: DataFrame, spark, preprocess_function, match_function, country_code, n_top, threshold):
+    records_per_country = (ddf
+                           .filter("countryCode" == country_code)
+                           )
+    preprocessed = preprocess_function(records_per_country)
+    country_codes = get_country_codes(country_code, preprocessed)
+    return_value = None
+
+    if len(country_codes) == 1:
+        grouped_matches = match_function(spark,
+                                         country_code,
+                                         preprocessed,
+                                         n_top,
+                                         threshold)
+        return_value = grouped_matches
+    preprocessed.unpersist()
+    return return_value
+
+
 def main(arguments, preprocess_function, match_function):
     global LOGGER
     spark, LOGGER = start_spark('Matching')
 
-    t = Timer('Preprocessing', LOGGER)
-    records_per_country = (read_parquet(spark, arguments.input_file, arguments.fraction)
-                           .filter("countryCode" == arguments.country_code)
-                           )
-    preprocessed = preprocess_function(records_per_country)
-    LOGGER.info("Parsing and persisting data for country {}".format(arguments.country_code))
-    preprocessed.persist()
+    t = Timer('Reading for country {}'.format(arguments.country_code), LOGGER)
+    ddf = (read_parquet(spark, arguments.input_file, arguments.fraction)
+           .filter(sf.col('countryCode') == arguments.country_code)
+           )
+    ddf.persist()
     t.end_and_log()
 
-    country_codes = get_country_codes(arguments.country_code, preprocessed)
+    t = Timer('Running for country {}'.format(arguments.country_code), LOGGER)
+    grouped_matches = apply_matching_on(ddf, spark, preprocess_function, match_function, arguments.country_code,
+                                        arguments.n_top, arguments.threshold)
+    t.end_and_log()
 
-    if len(country_codes) == 1:
-        save_fun = save_to_parquet_per_partition('countryCode', arguments.country_code)
-        mode = 'overwrite'
-        t = Timer('Running for country {}'.format(arguments.country_code), LOGGER)
-        grouped_matches = match_function(spark,
-                                         arguments.country_code,
-                                         preprocessed,
-                                         arguments.n_top,
-                                         arguments.threshold)
-        t.end_and_log()
-        save_fun(grouped_matches, arguments.output_path, mode)
-        preprocessed.unpersist()
+    if grouped_matches is None:
+        LOGGER.warn('Matching was unable to run due country {} too small'.format(arguments.country_code))
     else:
-        LOGGER("Country too small, skipping")
-        preprocessed.unpersist()
-        exit(0)
+        save_to_parquet_per_partition('countryCode', arguments.country_code)(grouped_matches, arguments.output_path,
+                                                                             'overwrite')
+    ddf.unpersist()
