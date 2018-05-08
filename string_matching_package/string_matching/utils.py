@@ -125,21 +125,23 @@ def clean_matching_string(ddf: DataFrame) -> DataFrame:
 
 
 def create_operator_matching_string(ddf: DataFrame):
-    with_matching_string = (ddf.fillna('').withColumn('matching_string',
-                                                      sf.concat_ws(' ', sf.col('nameCleansed'), sf.col('cityCleansed'),
-                                                                   sf.col('streetCleansed'),
-                                                                   sf.col('zipCodeCleansed'))))
+    with_matching_string = (ddf
+                            .fillna('')
+                            .withColumn('matching_string', sf.concat_ws(' ',
+                                                                        sf.col('nameCleansed'),
+                                                                        sf.col('cityCleansed'),
+                                                                        sf.col('streetCleansed'),
+                                                                        sf.col('zipCodeCleansed'))))
     return clean_matching_string(with_matching_string)
 
 
 def create_contactperson_matching_string(ddf: DataFrame):
-    with_matching_string = (
-        ddf
-            .fillna('')
-            .withColumn('matching_string', sf.concat_ws(' ',
-                                                        sf.col('firstNameCleansed'),
-                                                        sf.col('lastNameCleansed')))
-    )
+    with_matching_string = (ddf
+                            .fillna('')
+                            .withColumn('matching_string', sf.concat_ws(' ',
+                                                                        sf.col('firstNameCleansed'),
+                                                                        sf.col('lastNameCleansed')))
+                            )
 
     return clean_matching_string(with_matching_string)
 

@@ -3,7 +3,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
-from .utils import start_spark, Timer, REGEX, read_parquet, get_country_codes, save_to_parquet, \
+from .utils import start_spark, Timer, read_parquet, get_country_codes, \
     save_to_parquet_per_partition, group_matches, select_and_repartition_country, \
     clean_operator_fields, create_operator_matching_string, clean_contactperson_fields, \
     create_contactperson_matching_string
