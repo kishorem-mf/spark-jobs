@@ -220,6 +220,7 @@ with DAG('ohub_operators', default_args=default_args,
     tmp_file = '/tmp/' + op_file
 
     operators_acm_from_wasb = FileFromWasbOperator(
+        task_id='operators_acm_from_wasb',
         file_path=tmp_file,
         container_name=wasb_export_container.format(date=one_day_ago, fn=op_file),
         blob_name='prod'
