@@ -17,7 +17,7 @@ from demo_operators_config import \
     cluster_id, databricks_conn_id, \
     jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_raw_container, wasb_ingested_container, wasb_intermediate_container,
+    wasb_raw_container, wasb_ingested_container, wasb_intermediate_container, \
     wasb_integrated_container, wasb_export_container, operator_country_codes
 
 default_args.update(
