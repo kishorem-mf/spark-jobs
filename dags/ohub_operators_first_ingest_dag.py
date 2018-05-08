@@ -16,8 +16,8 @@ from operators_config import \
     cluster_id, databricks_conn_id, \
     jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_raw_bucket, wasb_ingested_bucket, wasb_intermediate_bucket, wasb_integrated_bucket, wasb_export_bucket, \
-    operator_country_codes
+    wasb_raw_container, wasb_ingested_container, wasb_intermediate_container, \
+    wasb_integrated_container, wasb_export_container, operator_country_codes
 
 default_args.update(
     {'start_date': datetime(2018, 5, 8)}
