@@ -53,9 +53,7 @@ def match_contacts_for_country(spark: SparkSession, country_code: str, preproces
                                n_top: int, threshold: float):
     from .spark_string_matching import match_strings
     """Match contacts for a single country"""
-    LOGGER.info("Matching contacts for country: " + country_code)
     contacts = select_and_repartition_country(preprocessed_contacts, 'countryCode', country_code)
-    LOGGER.info("Calculating similarities")
     similarity = match_strings(
         spark, contacts,
         string_column='matching_string',
@@ -67,9 +65,7 @@ def match_contacts_for_country(spark: SparkSession, country_code: str, preproces
         max_vocabulary_size=VOCABULARY_SIZE,
         matrix_chunks_rows=MATRIX_CHUNK_ROWS
     )
-    LOGGER.info("Join matches with original columns and filter")
     similarity_filtered = join_contact_columns_and_filter(similarity, contacts, country_code)
-    LOGGER.info("Group matches")
     grouped_similarity = group_matches(similarity_filtered)
     return grouped_similarity
 
@@ -115,9 +111,7 @@ def match_operators_for_country(spark: SparkSession, country_code: str, all_oper
                                 n_top: int, threshold: float):
     from .spark_string_matching import match_strings
     """Match operators for a single country"""
-    LOGGER.info("Matching operators for country: " + country_code)
     operators = select_and_repartition_country(all_operators, 'countryCode', country_code)
-    LOGGER.info("Calculating similarities")
     similarity = match_strings(
         spark, operators,
         string_column='matching_string',
@@ -129,9 +123,7 @@ def match_operators_for_country(spark: SparkSession, country_code: str, all_oper
         max_vocabulary_size=VOCABULARY_SIZE,
         matrix_chunks_rows=MATRIX_CHUNK_ROWS
     )
-    LOGGER.info("Group matches")
     grouped_similarity = group_matches(similarity)
-    LOGGER.info("Join matches with original columns and return result")
     return join_operators_columns(grouped_similarity, operators, country_code)
 
 
@@ -167,7 +159,7 @@ def join_operators_columns(grouped_similarity: DataFrame, operators: DataFrame, 
 
 def apply_matching_on(ddf: DataFrame, spark, preprocess_function, match_function, country_code, n_top, threshold):
     records_per_country = (ddf
-                           .filter("countryCode" == country_code)
+                           .filter(sf.col('countryCode') == country_code)
                            )
     preprocessed = preprocess_function(records_per_country)
     country_codes = get_country_codes(country_code, preprocessed)
