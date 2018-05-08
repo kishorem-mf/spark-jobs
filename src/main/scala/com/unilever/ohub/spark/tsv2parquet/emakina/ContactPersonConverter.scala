@@ -39,6 +39,7 @@ object ContactPersonConverter extends EmakinaDomainGateKeeper[ContactPerson] {
       dateUpdated                   = None                                                                                                                ,
       name                          = name                                                                                                                ,
       operatorConcatId              = operatorConcatId                                                                                                    ,
+      operatorOhubId                = None                                                                                                                ,
       oldIntegrationId              = None                                                                                                                ,
       firstName                     =   optional(   "FIRST_NAME",                     "firstName"                                                        ),
       lastName                      =   optional(   "LAST_NAME",                      "lastName"                                                         ),
