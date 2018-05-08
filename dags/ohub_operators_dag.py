@@ -17,8 +17,9 @@ from operators_config import \
     cluster_id, databricks_conn_id, \
     jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_raw_container, wasb_ingested_container, wasb_intermediate_container, wasb_integrated_container, wasb_export_container, \
-    operator_country_codes
+    wasb_raw_container, wasb_ingested_container, \
+    wasb_intermediate_container, wasb_integrated_container, \
+    wasb_export_container, operator_country_codes
 
 default_args.update(
     {'start_date': datetime(2018, 4, 6)}
@@ -27,7 +28,7 @@ default_args.update(
 one_day_ago = '2018-04-06'  # should become {{ ds }}
 two_day_ago = '2017-07-12'  # should become {{ yesterday_ds }}
 interval = '@once'
-wasb_conn_id='azure_blob'
+wasb_conn_id = 'azure_blob'
 
 with DAG('ohub_operators', default_args=default_args,
          schedule_interval=interval) as dag:
