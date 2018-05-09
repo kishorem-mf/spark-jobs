@@ -97,13 +97,21 @@ class DomainTransformer(val dataProvider: DomainDataProvider) extends DomainTran
     valueOpt.get
   }
 
-  private def getFieldIndex(columnName: String)(row: Row): Int =
+  private def getFieldIndex(columnName: String, numberOfBomCharsToPrepend: Int = 0)(row: Row): Int =
     if (headers.isEmpty) {
       try {
-        row.fieldIndex(columnName)
+        val bomChars = (0 until numberOfBomCharsToPrepend).map(_ ⇒ ZERO_WIDTH_NO_BREAK_SPACE).mkString("")
+        val newColumnName = if (numberOfBomCharsToPrepend == 0) columnName else bomChars + "\"" + columnName + "\""
+
+        row.fieldIndex(newColumnName)
       } catch {
-        // maybe there is a BOM char in front of the column name, otherwise let's fail.
-        case _: Throwable ⇒ row.fieldIndex(s"$ZERO_WIDTH_NO_BREAK_SPACE$columnName")
+        case e: Throwable ⇒
+          // maybe there are n BOM chars in front of the column name (with n < 100), otherwise let's fail.
+          if (numberOfBomCharsToPrepend < 100) {
+            getFieldIndex(columnName, numberOfBomCharsToPrepend + 1)(row)
+          } else {
+            throw e
+          }
       }
     } else {
       headers(columnName)
