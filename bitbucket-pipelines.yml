@@ -9,7 +9,7 @@ pipelines:
           - source activate name-matching
           - pycodestyle --show-source .
           - cd string_matching_package
-          - python -m pytest --cov-config .coveragerc --cov=./ tests
+          - python setup.py pytest --addopts "--cov-config .coveragerc --cov=./ tests"
     - step:
         name: Test building EGG
         image: timvancann/miniconda3-gcc
@@ -26,7 +26,7 @@ pipelines:
           - source activate name-matching
           - pycodestyle --show-source .
           - cd string_matching_package
-          - python -m pytest --cov-config .coveragerc --cov=./ tests
+          - python setup.py pytest --addopts "--cov-config .coveragerc --cov=./ tests"
     - step:
         name: Build EGG
         image: timvancann/miniconda3-gcc

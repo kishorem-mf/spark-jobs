@@ -2,8 +2,6 @@ import pytest
 import shutil
 from pyspark.sql import SparkSession
 
-EGG_NAME = 'string_matching.egg'
-
 
 @pytest.fixture(scope="session")
 def spark(request):
@@ -25,5 +23,4 @@ def spark(request):
             .config("spark.ui.enabled", "false")
             .getOrCreate())
 
-    spark.sparkContext.addPyFile('/tmp/dist/string_matching.egg')
     return spark

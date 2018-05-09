@@ -7,3 +7,10 @@ dist/
 *.egg-info
 spark-warehouse/
 *.so
+hive/
+metastore_db/
+.cache/v/
+hsperfdata_root/
+root/
+*.log
+__pycache__/
