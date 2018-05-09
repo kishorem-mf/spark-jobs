@@ -7,6 +7,7 @@ import org.apache.spark.sql.types.{ DataTypes, StructField, StructType }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ Matchers, WordSpec }
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
+import com.unilever.ohub.spark.tsv2parquet.DomainTransformer.ZERO_WIDTH_NO_BREAK_SPACE
 
 class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
 
@@ -19,8 +20,7 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
       "an original column name does not exist" in {
         val row = mock[Row]
 
-        (row.fieldIndex(_: String)).expects(originalColumnName).throwing(new IllegalArgumentException(s"Fieldname '$originalColumnName' does not exist."))
-        (row.fieldIndex(_: String)).expects(s"${DomainTransformer.ZERO_WIDTH_NO_BREAK_SPACE}$originalColumnName").throwing(new IllegalArgumentException(s"Fieldname '$originalColumnName' does not exist."))
+        expectColumnNameNotFound(row)
 
         intercept[IllegalArgumentException] {
           domainTransformer.mandatory(originalColumnName, domainFieldName)(row)
@@ -80,8 +80,7 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
       "and optional column does not exist" in {
         val row = mock[Row]
 
-        (row.fieldIndex(_: String)).expects(originalColumnName).throwing(new IllegalArgumentException(s"Fieldname '$originalColumnName' does not exist."))
-        (row.fieldIndex(_: String)).expects(s"${DomainTransformer.ZERO_WIDTH_NO_BREAK_SPACE}$originalColumnName").throwing(new IllegalArgumentException(s"Fieldname '$originalColumnName' does not exist."))
+        expectColumnNameNotFound(row)
 
         intercept[IllegalArgumentException] {
           domainTransformer.optional(originalColumnName, domainFieldName)(row)
@@ -150,6 +149,17 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
         value shouldBe Some("some-value")
         domainTransformer.additionalFields shouldBe Map("additional-field-name" -> "some-value")
       }
+    }
+  }
+
+  private def expectColumnNameNotFound(row: Row) = {
+    for (i ← (0 until 100)) {
+      val bomChars = (0 until i + 1).map(_ ⇒ ZERO_WIDTH_NO_BREAK_SPACE).mkString("")
+      val newColumnName = if (i == 0) originalColumnName else bomChars + "\"" + originalColumnName + "\""
+
+      (row.fieldIndex(_: String))
+        .expects(newColumnName)
+        .throwing(new IllegalArgumentException(s"Fieldname '$newColumnName' does not exist."))
     }
   }
 

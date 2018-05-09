@@ -4,6 +4,7 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.tsv2parquet.CsvDomainGateKeeperSpec
+import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeper.DomainConfig
 
 class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] {
 
@@ -12,8 +13,9 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
   describe("file interface contact person converter") {
     it("should convert a contact person correctly from a valid file interface csv input") {
       val inputFile = "src/test/resources/FILE_CONTACTPERSONS.csv"
+      val config = DomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = "‰")
 
-      runJobWith(inputFile) { actualDataSet ⇒
+      runJobWith(config) { actualDataSet ⇒
         actualDataSet.count() shouldBe 1
 
         val actualContactPerson = actualDataSet.head()
