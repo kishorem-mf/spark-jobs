@@ -3,6 +3,7 @@ package com.unilever.ohub.spark.tsv2parquet.sifu
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeper
+import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeper.DomainConfig
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
 trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T, SifuProductResponse] {
@@ -46,11 +47,11 @@ trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T, SifuPr
 
   protected[sifu] def sifuDataProvider: SifuDataProvider
 
-  override def read(spark: SparkSession, storage: Storage, input: String): Dataset[SifuProductResponse] = {
-    read(spark, storage, input, sifuDataProvider)
+  override def read(spark: SparkSession, storage: Storage, config: DomainConfig): Dataset[SifuProductResponse] = {
+    read(spark, storage, config, sifuDataProvider)
   }
 
-  protected[sifu] def read(spark: SparkSession, storage: Storage, input: String, sifuDataProvider: SifuDataProvider): Dataset[SifuProductResponse] = {
+  protected[sifu] def read(spark: SparkSession, storage: Storage, config: DomainConfig, sifuDataProvider: SifuDataProvider): Dataset[SifuProductResponse] = {
     import spark.implicits._
 
     val jsons = countryAndLanguages

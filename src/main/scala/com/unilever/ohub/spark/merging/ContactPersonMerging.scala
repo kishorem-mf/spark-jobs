@@ -28,7 +28,7 @@ object ContactPersonMerging extends SparkJobWithDefaultDbConfig with GoldenRecor
 
     contactPersons
       .filter(cpn ⇒ cpn.emailAddress.isDefined || cpn.mobileNumber.isDefined)
-      .map(cpn => GroupObject(cpn.emailAddress.getOrElse("") + cpn.mobileNumber.getOrElse(""), cpn))
+      .map(cpn ⇒ GroupObject(cpn.emailAddress.getOrElse("") + cpn.mobileNumber.getOrElse(""), cpn))
       .groupBy($"group")
       .agg(collect_list("contactPerson").as("contactPersons"))
       .as[(String, Seq[ContactPerson])]

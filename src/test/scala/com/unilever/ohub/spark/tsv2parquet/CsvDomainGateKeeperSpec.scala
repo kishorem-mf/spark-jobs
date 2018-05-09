@@ -19,18 +19,21 @@ trait CsvDomainGateKeeperSpec[DomainType <: DomainEntity] extends SparkJobSpec {
 
   def testDataProvider(): DomainDataProvider = TestDomainDataProvider()
 
-  def runJobWith(inputFile: InputFile)(assertFn: Dataset[DomainType] ⇒ Unit): Unit = {
+  def runJobWith(inputFile: InputFile)(assertFn: Dataset[DomainType] ⇒ Unit): Unit =
+    runJobWith(DomainConfig(inputFile, outputFile))(assertFn)
+
+  def runJobWith(config: DomainConfig)(assertFn: Dataset[DomainType] ⇒ Unit): Unit = {
     val mockStorage = mock[Storage]
 
     // read input data
-    (mockStorage.readFromCsv _).expects(inputFile, SUT.fieldSeparator, SUT.hasHeaders)
+    (mockStorage.readFromCsv _).expects(config.inputFile, SUT.determineFieldSeparator(config), SUT.hasHeaders)
       .returns(
         spark
           .read
           .option("header", value = SUT.hasHeaders)
-          .option("sep", SUT.fieldSeparator)
+          .option("sep", SUT.determineFieldSeparator(config))
           .option("inferSchema", value = false)
-          .csv(inputFile)
+          .csv(config.inputFile)
       )
 
     // write output data
@@ -40,6 +43,6 @@ trait CsvDomainGateKeeperSpec[DomainType <: DomainEntity] extends SparkJobSpec {
         true // let's not fail here, but do proper assertions in the assertion function
     }
 
-    SUT.run(spark, DomainConfig(inputFile, outputFile), mockStorage, testDataProvider())
+    SUT.run(spark, config, mockStorage, testDataProvider())
   }
 }
