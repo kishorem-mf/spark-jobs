@@ -11,6 +11,12 @@ docker pull fokkodriesprong/docker-pyspark
 docker run -it -v $(pwd):/tmp fokkodriesprong/docker-pyspark /bin/bash
 ```
 
+or in command line:
+```cmd
+docker pull fokkodriesprong/docker-pyspark
+docker run -it -v %CD%:/tmp fokkodriesprong/docker-pyspark /bin/bash
+```
+
 Inside the container, `cd` into the working directory and install the python environment
 ```bash
 cd /tmp
