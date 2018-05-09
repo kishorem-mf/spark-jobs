@@ -6,6 +6,7 @@ from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 
 from airflow.hooks.base_hook import BaseHook
 
+from custom_operators.file_from_wasb import FileFromWasbOperator
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
@@ -16,8 +17,9 @@ from operators_config import \
     cluster_id, databricks_conn_id, \
     jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_raw_bucket, wasb_ingested_bucket, wasb_intermediate_bucket, wasb_integrated_bucket, wasb_export_bucket, \
-    operator_country_codes
+    wasb_raw_container, wasb_ingested_container, \
+    wasb_intermediate_container, wasb_integrated_container, \
+    wasb_export_container, operator_country_codes
 
 default_args.update(
     {'start_date': datetime(2018, 4, 6)}
@@ -26,6 +28,7 @@ default_args.update(
 one_day_ago = '2018-04-06'  # should become {{ ds }}
 two_day_ago = '2017-07-12'  # should become {{ yesterday_ds }}
 interval = '@once'
+wasb_conn_id = 'azure_blob'
 
 with DAG('ohub_operators', default_args=default_args,
          schedule_interval=interval) as dag:
@@ -214,9 +217,18 @@ with DAG('ohub_operators', default_args=default_args,
         }
     )
 
+    tmp_file = '/tmp/' + op_file
+
+    operators_acm_from_wasb = FileFromWasbOperator(
+        task_id='operators_acm_from_wasb',
+        file_path=tmp_file,
+        container_name=wasb_export_container.format(date=one_day_ago, fn=op_file),
+        blob_name='prod'
+    )
+
     operators_ftp_to_acm = SFTPOperator(
         task_id='operators_ftp_to_acm',
-        local_filepath=wasb_export_bucket.format(date=one_day_ago, fn=op_file),
+        local_filepath=tmp_file,
         remote_filepath='/incoming/UFS_upload_folder/',
         ssh_conn_id='acm_sftp_ssh',
         operation=SFTPOperation.PUT)
@@ -233,4 +245,4 @@ with DAG('ohub_operators', default_args=default_args,
     match_per_country >> merge_operators >> combine_to_create_integrated
     combine_to_create_integrated >> update_golden_records >> update_operators_table >> terminate_cluster
     update_golden_records >> operators_to_acm >> terminate_cluster
-    operators_to_acm >> operators_ftp_to_acm
+    operators_to_acm >> operators_acm_from_wasb >> operators_ftp_to_acm
