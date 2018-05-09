@@ -4,6 +4,7 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.tsv2parquet.CsvDomainGateKeeperSpec
+import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeper.DomainConfig
 
 class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
 
@@ -12,8 +13,9 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
   describe("file interface operator converter") {
     it("should convert an operator correctly from a valid file interface csv input") {
       val inputFile = "src/test/resources/FILE_OPERATORS.csv"
+      val config = DomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = "‰")
 
-      runJobWith(inputFile) { actualDataSet ⇒
+      runJobWith(config) { actualDataSet ⇒
         actualDataSet.count() shouldBe 1
 
         val actualOperator = actualDataSet.head()
@@ -93,8 +95,9 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
     }
     it("should select the latest operator based on dateUpdated") {
       val inputFile = "src/test/resources/FILE_OPERATORS_DUPLICATES.csv"
+      val config = DomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = "‰")
 
-      runJobWith(inputFile) { actualDataSet ⇒
+      runJobWith(config) { actualDataSet ⇒
         actualDataSet.count() shouldBe 2
 
         val res = actualDataSet.collect
