@@ -11,7 +11,7 @@ docker pull fokkodriesprong/docker-pyspark
 docker run -it -v $(pwd):/tmp fokkodriesprong/docker-pyspark /bin/bash
 ```
 
-Inside the container, `cd` into the working directory with and install the python environment
+Inside the container, `cd` into the working directory and install the python environment
 ```bash
 cd /tmp
 conda env create -f environment.yml
