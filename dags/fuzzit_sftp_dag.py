@@ -6,6 +6,7 @@ from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 from airflow.operators.bash_operator import BashOperator
 from custom_operators.zip_operator import UnzipOperator
 from custom_operators.folder_to_wasb import FolderToWasbOperator
+from custom_operators.short_circuit_sftp_operator import ShortCircuitSFTPOperator
 from config import country_codes
 
 default_args = {
@@ -31,7 +32,7 @@ with DAG('fuzzit_sftp', default_args=default_args,
         task_id='mkdir_fuzzit',
     )
 
-    fetch = SFTPOperator(
+    fetch = ShortCircuitSFTPOperator(
         task_id='fetch_fuzzit_files_for_date',
         ssh_conn_id='fuzzit_sftp_ssh',
         remote_host='apps.systrion.eu',
