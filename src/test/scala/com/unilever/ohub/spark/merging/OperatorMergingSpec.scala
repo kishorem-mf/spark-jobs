@@ -4,10 +4,8 @@ import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
 import org.apache.spark.sql.Dataset
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.tsv2parquet.TestDomainDataProvider
 
 class OperatorMergingSpec extends SparkJobSpec with TestOperators {
-
   import spark.implicits._
 
   private val MATCHES: Dataset[MatchingResult] = Seq(
