@@ -33,7 +33,7 @@ If you get weird path errors (all paths should be relative to the docker contain
 ```bash
 find  . -name "*pycache*" | exec rm -rf {} \;
 ```
-and rerun the tests
+and rerun the tests. After making changes 
 
 
 # Name-Matching

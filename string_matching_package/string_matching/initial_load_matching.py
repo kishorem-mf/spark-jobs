@@ -51,11 +51,12 @@ def preprocess_contacts(ddf: DataFrame) -> DataFrame:
 
 def match_contacts_for_country(spark: SparkSession, country_code: str, preprocessed_contacts: DataFrame,
                                n_top: int, threshold: float):
-    from .spark_string_matching import match_strings
     """Match contacts for a single country"""
+    from .spark_string_matching import match_strings
     contacts = select_and_repartition_country(preprocessed_contacts, 'countryCode', country_code)
     similarity = match_strings(
-        spark, contacts,
+        spark,
+        df=contacts,
         string_column='matching_string',
         row_number_column='name_index',
         n_top=n_top,
@@ -65,8 +66,12 @@ def match_contacts_for_country(spark: SparkSession, country_code: str, preproces
         max_vocabulary_size=VOCABULARY_SIZE,
         matrix_chunks_rows=MATRIX_CHUNK_ROWS
     )
+    print('----similarity')
+    similarity.show()
     similarity_filtered = join_contact_columns_and_filter(similarity, contacts, country_code)
+    similarity_filtered.show()
     grouped_similarity = group_matches(similarity_filtered)
+    grouped_similarity.show()
     return grouped_similarity
 
 
@@ -113,7 +118,8 @@ def match_operators_for_country(spark: SparkSession, country_code: str, all_oper
     """Match operators for a single country"""
     operators = select_and_repartition_country(all_operators, 'countryCode', country_code)
     similarity = match_strings(
-        spark, operators,
+        spark,
+        df=operators,
         string_column='matching_string',
         row_number_column='name_index',
         n_top=n_top,
@@ -162,16 +168,18 @@ def apply_matching_on(ddf: DataFrame, spark, preprocess_function, match_function
                            .filter(sf.col('countryCode') == country_code)
                            )
     preprocessed = preprocess_function(records_per_country)
+    print('-----preprocessed')
+    preprocessed.show()
     country_codes = get_country_codes(country_code, preprocessed)
     return_value = None
 
     if len(country_codes) == 1:
-        grouped_matches = match_function(spark,
+        matches = match_function(spark,
                                          country_code,
                                          preprocessed,
                                          n_top,
                                          threshold)
-        return_value = grouped_matches
+        return_value = matches
     return return_value
 
 

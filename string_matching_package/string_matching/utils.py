@@ -7,7 +7,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
-MINIMUM_ENTRIES_PER_COUNTRY = 100
+MINIMUM_ENTRIES_PER_COUNTRY = 5
 LOGGER = None
 
 # characters to be dropped from strings to be compared
@@ -90,7 +90,7 @@ def remove_spaces_strange_chars_and_to_lower(input: str):
 
 # create udf for use in spark later
 udf_remove_strange_chars_to_lower_and_trim = sf.udf(remove_strange_chars_to_lower_and_trim)
-udf_remove_spaces_strange_chars_and_to_lower = sf.udf(remove_strange_chars_to_lower_and_trim)
+udf_remove_spaces_strange_chars_and_to_lower = sf.udf(remove_spaces_strange_chars_and_to_lower)
 
 
 def clean_operator_fields(ddf: DataFrame, name_col, city_col, street_col, housenr_col, zip_col) -> DataFrame:
@@ -99,7 +99,7 @@ def clean_operator_fields(ddf: DataFrame, name_col, city_col, street_col, housen
             .withColumn('cityCleansed', udf_remove_spaces_strange_chars_and_to_lower(sf.col(city_col)))
             .withColumn('streetCleansed', sf.concat_ws('',
                                                        udf_remove_strange_chars_to_lower_and_trim(sf.col(street_col)),
-                                                       sf.col(housenr_col)))
+                                                       udf_remove_strange_chars_to_lower_and_trim(sf.col(housenr_col))))
             .withColumn('zipCodeCleansed', udf_remove_spaces_strange_chars_and_to_lower(sf.col(zip_col)))
             )
 
@@ -111,7 +111,7 @@ def clean_contactperson_fields(ddf: DataFrame, first_name_col, last_name_col, st
             .withColumn('lastNameCleansed', sf.col(last_name_col))
             .withColumn('streetCleansed', sf.concat_ws('',
                                                        udf_remove_strange_chars_to_lower_and_trim(sf.col(street_col)),
-                                                       sf.col(housenr_col)))
+                                                       udf_remove_strange_chars_to_lower_and_trim(sf.col(housenr_col))))
             .withColumn('cityCleansed', udf_remove_spaces_strange_chars_and_to_lower(sf.col(city_col)))
             .withColumn('zipCodeCleansed', udf_remove_spaces_strange_chars_and_to_lower(sf.col(zip_col)))
             )
