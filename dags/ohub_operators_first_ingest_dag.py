@@ -165,4 +165,4 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
 
     start_cluster >> uninstall_old_libraries >> operators_file_interface_to_parquet >> match_per_country
     match_per_country >> merge_operators >> operators_to_acm >> terminate_cluster
-    operators_to_acm >> operators_ftp_to_acm
+    operators_to_acm >> operators_acm_from_wasb >> operators_ftp_to_acm
