@@ -78,23 +78,23 @@ def join_contact_columns_and_filter(similarity: DataFrame, contacts: DataFrame, 
     """
     return (
         similarity
-            .join(contacts, similarity['i'] == contacts['name_index'],
-                  how='left').drop('name_index')
-            .selectExpr('i', 'j', 'id as sourceId',
-                        'similarity', 'matching_string as sourceName',
-                        'streetCleansed as sourceStreet',
-                        'zipCodeCleansed as sourceZipCode',
-                        'cityCleansed as sourceCity')
-            .join(contacts, similarity['j'] == contacts['name_index'],
-                  how='left').drop('name_index')
-            .withColumn('countryCode', sf.lit(country_code))
-            .selectExpr('i', 'j', 'countryCode', 'sourceId',
-                        'id as targetId', 'similarity',
-                        'sourceName', 'matching_string as targetName',
-                        'sourceStreet', 'streetCleansed as targetStreet',
-                        'sourceZipCode', 'zipCodeCleansed as targetZipCode',
-                        'sourceCity', 'cityCleansed as targetCity')
-            .filter(
+        .join(contacts, similarity['i'] == contacts['name_index'],
+              how='left').drop('name_index')
+        .selectExpr('i', 'j', 'id as sourceId',
+                    'similarity', 'matching_string as sourceName',
+                    'streetCleansed as sourceStreet',
+                    'zipCodeCleansed as sourceZipCode',
+                    'cityCleansed as sourceCity')
+        .join(contacts, similarity['j'] == contacts['name_index'],
+              how='left').drop('name_index')
+        .withColumn('countryCode', sf.lit(country_code))
+        .selectExpr('i', 'j', 'countryCode', 'sourceId',
+                    'id as targetId', 'similarity',
+                    'sourceName', 'matching_string as targetName',
+                    'sourceStreet', 'streetCleansed as targetStreet',
+                    'sourceZipCode', 'zipCodeCleansed as targetZipCode',
+                    'sourceCity', 'cityCleansed as targetCity')
+        .filter(
             (sf.col('sourceZipCode') == sf.col('targetZipCode')) |
             (
                     sf.isnull('sourceZipCode') &
@@ -102,8 +102,8 @@ def join_contact_columns_and_filter(similarity: DataFrame, contacts: DataFrame, 
                     (sf.col('sourceCity') == sf.col('targetCity'))
             )
         )
-            .withColumn('street_lev_distance', sf.levenshtein(sf.col('sourceStreet'), sf.col('targetStreet')))
-            .filter(sf.col('street_lev_distance') < MIN_LEVENSHTEIN_DISTANCE)
+        .withColumn('street_lev_distance', sf.levenshtein(sf.col('sourceStreet'), sf.col('targetStreet')))
+        .filter(sf.col('street_lev_distance') < MIN_LEVENSHTEIN_DISTANCE)
     )
 
 

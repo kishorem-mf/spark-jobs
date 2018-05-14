@@ -18,9 +18,10 @@ def spark(request):
         pass
     spark = (
         SparkSession.builder
-            .master("local[2]")
-            .appName("pytest")
-            .config("spark.ui.enabled", "false")
-            .getOrCreate())
+        .master("local[2]")
+        .appName("pytest")
+        .config("spark.ui.enabled", "false")
+        .getOrCreate()
+    )
 
     return spark
