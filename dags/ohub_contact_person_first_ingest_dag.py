@@ -139,8 +139,8 @@ with DAG('ohub_contact_person_first_ingest_dag', default_args=default_args,
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonReferencing",
             'parameters': ['--combinedInputFile', intermediate_bucket.format(date='{{ds}}', fn='contacts_matched'),
                            '--operatorInputFile', integrated_bucket.format(date='{{ds}}',
-                                                                         fn='operators',
-                                                                         channel='*'),
+                                                                           fn='operators',
+                                                                           channel='*'),
                            '--outputFile', integrated_bucket.format(date='{{ds}}', fn='contacts'),
                            '--postgressUrl', postgres_connection.host,
                            '--postgressUsername', postgres_connection.login,
@@ -176,5 +176,6 @@ with DAG('ohub_contact_person_first_ingest_dag', default_args=default_args,
         operation=SFTPOperation.PUT)
 
     start_cluster >> uninstall_old_libraries >> contact_persons_file_interface_to_parquet >> match_per_country
-    match_per_country >> merge_contact_persons >> contact_person_referencing >> contact_persons_to_acm >> terminate_cluster
+    match_per_country >> merge_contact_persons >> contact_person_referencing >> contact_persons_to_acm
+    contact_persons_to_acm >> terminate_cluster
     contact_persons_to_acm >> contact_person_ftp_to_acm
