@@ -3,9 +3,17 @@ package com.unilever.ohub.spark.domain.entity
 import java.sql.Timestamp
 import java.util.UUID
 
+import com.unilever.ohub.spark.domain.DomainEntity
+
 object TestContactPersons extends TestContactPersons
 
 trait TestContactPersons {
+
+  def defaultContactPersonWithSourceEntityId(sourceEntityId: String): ContactPerson =
+    defaultContactPerson.copy(
+      sourceEntityId = sourceEntityId,
+      concatId = DomainEntity.createConcatIdFromValues(defaultContactPerson.countryCode, defaultContactPerson.sourceName, sourceEntityId)
+    )
 
   val defaultContactPerson = ContactPerson(
     concatId = "AU~WUFOO~AB123",
