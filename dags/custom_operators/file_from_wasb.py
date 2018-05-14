@@ -4,6 +4,7 @@
 from airflow.contrib.hooks.wasb_hook import WasbHook
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
+from custom_operators.file_from_wasb import FileFromWasbOperator
 
 
 class FileFromWasbOperator(BaseOperator):
