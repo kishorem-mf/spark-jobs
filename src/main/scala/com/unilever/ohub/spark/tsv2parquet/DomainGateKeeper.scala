@@ -53,9 +53,9 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       } text "inputFile is a string property"
       opt[String]("outputFile") required () action { (x, c) ⇒
         c.copy(outputFile = x)
-      } text "fieldSeparator is a string property"
+      } text "outputFile is a string property"
       opt[String]("fieldSeparator") optional () action { (x, c) ⇒
-        c.copy(outputFile = x)
+        c.copy(fieldSeparator = x)
       } text "fieldSeparator is a string property"
       opt[Boolean]("strictIngestion") optional () action { (x, c) ⇒
         c.copy(strictIngestion = x)
