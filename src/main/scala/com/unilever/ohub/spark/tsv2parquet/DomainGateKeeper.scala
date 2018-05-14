@@ -17,6 +17,7 @@ object DomainGateKeeper {
   case class DomainConfig(
       inputFile: String = "path-to-input-file",
       outputFile: String = "path-to-output-file",
+      fieldSeparator: String = "field-separator",
       strictIngestion: Boolean = true,
       showErrorSummary: Boolean = true,
       postgressUrl: String = "postgress-url",
@@ -30,7 +31,6 @@ object DomainGateKeeper {
     implicit def eitherEncoder[T1, T2]: Encoder[Either[T1, T2]] =
       Encoders.kryo[Either[T1, T2]]
   }
-
 }
 
 abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] extends SparkJob[DomainConfig] {
@@ -53,7 +53,10 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       } text "inputFile is a string property"
       opt[String]("outputFile") required () action { (x, c) ⇒
         c.copy(outputFile = x)
-      } text "outputFile is a string property"
+      } text "fieldSeparator is a string property"
+      opt[String]("fieldSeparator") optional () action { (x, c) ⇒
+        c.copy(outputFile = x)
+      } text "fieldSeparator is a string property"
       opt[Boolean]("strictIngestion") optional () action { (x, c) ⇒
         c.copy(strictIngestion = x)
       } text "strictIngestion is a boolean property"
@@ -77,7 +80,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       help("help") text "help text"
     }
 
-  protected def read(spark: SparkSession, storage: Storage, input: String): Dataset[RowType]
+  protected def read(spark: SparkSession, storage: Storage, config: DomainConfig): Dataset[RowType]
 
   private def transform(transformFn: RowType ⇒ DomainType)(postValidateFn: DomainEntity ⇒ Unit): RowType ⇒ Either[ErrorMessage, DomainType] =
     row ⇒
@@ -124,7 +127,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
 
     val transformer = DomainTransformer(dataProvider)
 
-    val result = read(spark, storage, config.inputFile)
+    val result = read(spark, storage, config)
       .map(transform(toDomainEntity(transformer))(postValidate(dataProvider)))
 
     handleErrors(config, result)

@@ -20,7 +20,7 @@ import com.unilever.ohub.spark.tsv2parquet.CsvDomainGateKeeper
  * Default max length: 256 characters
  */
 trait FuzzitDomainGateKeeper[T <: DomainEntity] extends CsvDomainGateKeeper[T] {
-  override final val fieldSeparator: String = ";"
+  override final val defaultFieldSeparator: String = ";"
   override final val hasHeaders = false
   override final val partitionByValue = Seq("countryCode")
 }

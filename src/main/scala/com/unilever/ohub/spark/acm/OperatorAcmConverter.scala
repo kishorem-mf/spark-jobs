@@ -4,24 +4,25 @@ import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.acm.model.UFSOperator
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.domain.entity.Operator
-import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.log4j.Logger
+import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 case class DefaultWithDbAndDeltaConfig(
     inputFile: String = "path-to-input-file",
     outputFile: String = "path-to-output-file",
-    previousIntegrated: Option[String] = Option("path-to-previous-integrated-operators"),
+    previousIntegrated: Option[String] = None,
     postgressUrl: String = "postgress-url",
     postgressUsername: String = "postgress-username",
     postgressPassword: String = "postgress-password",
     postgressDB: String = "postgress-db"
 ) extends SparkJobConfig
 
-object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig] with AcmTransformationFunctions {
+object OperatorAcmDeltaConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
+  with DeltaFunctions with AcmTransformationFunctions {
 
   def transform(
     spark: SparkSession,
@@ -29,28 +30,10 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig] with A
     operators: Dataset[Operator],
     previousIntegrated: Dataset[Operator]
   ): Dataset[UFSOperator] = {
-    import spark.implicits._
-
     val dailyUfsOperators = createUfsOperators(spark, operators, channelMappings)
     val allPreviousUfsOperators = createUfsOperators(spark, previousIntegrated, channelMappings)
 
-    val newOperators = dailyUfsOperators
-      .join(allPreviousUfsOperators, Seq("OPR_LNKD_INTEGRATION_ID"), JoinType.LeftAnti)
-      .as[UFSOperator]
-
-    val updatedOperators = dailyUfsOperators
-      .joinWith(
-        allPreviousUfsOperators,
-        dailyUfsOperators("OPR_LNKD_INTEGRATION_ID") === allPreviousUfsOperators("OPR_LNKD_INTEGRATION_ID"),
-        JoinType.Inner)
-      .map {
-        case (left, right) ⇒
-          (left, left != right)
-      }
-      .filter(_._2)
-      .map(_._1)
-
-    newOperators.union(updatedOperators)
+    integrate[UFSOperator](spark, dailyUfsOperators, allPreviousUfsOperators, "OPR_LNKD_INTEGRATION_ID")
   }
 
   override private[spark] def defaultConfig = DefaultWithDbAndDeltaConfig()
@@ -61,7 +44,7 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig] with A
       opt[String]("inputFile") required () action { (x, c) ⇒
         c.copy(inputFile = x)
       } text "inputFile is a string property"
-      opt[String]("previousIntegrated") required () withFallback (() ⇒ null) action { (x, c) ⇒
+      opt[String]("previousIntegrated") optional () action { (x, c) ⇒
         c.copy(previousIntegrated = Option(x))
       } text "previousIntegrated is a string property"
       opt[String]("outputFile") required () action { (x, c) ⇒

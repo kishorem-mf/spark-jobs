@@ -7,6 +7,9 @@ import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
+import org.apache.spark.sql.functions._
+
+case class GroupObject(group: String, contactPerson: ContactPerson)
 
 object ContactPersonMerging extends SparkJobWithDefaultDbConfig with GoldenRecordPicking[ContactPerson] {
 
@@ -24,14 +27,14 @@ object ContactPersonMerging extends SparkJobWithDefaultDbConfig with GoldenRecor
     import spark.implicits._
 
     contactPersons
-      // TODO what if both are undefined, then we loose contact persons here (what about adding a constraint in the domain)? this legacy code...
-      // we shouldn't loose data here...check whether the contact persons is the full list of contact persons (including ones without email address)
       .filter(cpn ⇒ cpn.emailAddress.isDefined || cpn.mobileNumber.isDefined)
-      .groupByKey(cpn ⇒ cpn.emailAddress.getOrElse("") + cpn.mobileNumber.getOrElse(""))
-      .flatMapGroups {
-        case (_, contactPersonsIt) ⇒ markGoldenRecordAndGroupId(sourcePreference)(contactPersonsIt.toSeq)
+      .map(cpn ⇒ GroupObject(cpn.emailAddress.getOrElse("") + cpn.mobileNumber.getOrElse(""), cpn))
+      .groupBy($"group")
+      .agg(collect_list("contactPerson").as("contactPersons"))
+      .as[(String, Seq[ContactPerson])]
+      .flatMap {
+        case (_, contactPersonList) ⇒ markGoldenRecordAndGroupId(sourcePreference)(contactPersonList)
       }
-      .repartition(60)
   }
 
   override def run(spark: SparkSession, config: DefaultWithDbConfig, storage: Storage): Unit = {
@@ -46,6 +49,6 @@ object ContactPersonMerging extends SparkJobWithDefaultDbConfig with GoldenRecor
     val contactPersons = storage.readFromParquet[ContactPerson](config.inputFile)
     val transformed = transform(spark, contactPersons, dataProvider.sourcePreferences)
 
-    storage.writeToParquet(transformed, config.outputFile, partitionBy = Seq("countryCode"))
+    storage.writeToParquet(transformed, config.outputFile)
   }
 }
