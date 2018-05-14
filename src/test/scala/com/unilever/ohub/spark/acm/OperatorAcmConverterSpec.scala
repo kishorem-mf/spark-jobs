@@ -5,6 +5,7 @@ import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
 import org.apache.spark.sql.Dataset
+import com.unilever.ohub.spark.acm.model.UFSOperator
 
 class OperatorAcmConverterSpec extends SparkJobSpec with TestOperators {
 
@@ -80,7 +81,7 @@ class OperatorAcmConverterSpec extends SparkJobSpec with TestOperators {
       val channelMapping = ChannelMapping(countryCode = "country-code", originalChannel = "channel", localChannel = "local-channel", channelUsage = "channel-usage", socialCommercial = "social-commercial", strategicChannel = "strategic-channel", globalChannel = "global-channel", globalSubChannel = "global-sub-channel")
       val channelMappings: Dataset[ChannelMapping] = spark.createDataset(Seq(channelMapping))
       val input: Dataset[Operator] = spark.createDataset(Seq(defaultOperator.copy(isGoldenRecord = true)))
-      val result = SUT.transform(spark, channelMappings, input)
+      val result = SUT.transform(spark, channelMappings, input, spark.emptyDataset[Operator])
 
       result.count() shouldBe 1
 

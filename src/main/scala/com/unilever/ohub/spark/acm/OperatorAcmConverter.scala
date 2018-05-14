@@ -21,7 +21,7 @@ case class DefaultWithDbAndDeltaConfig(
     postgressDB: String = "postgress-db"
 ) extends SparkJobConfig
 
-object OperatorAcmDeltaConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
+object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
   with DeltaFunctions with AcmTransformationFunctions {
 
   def transform(
