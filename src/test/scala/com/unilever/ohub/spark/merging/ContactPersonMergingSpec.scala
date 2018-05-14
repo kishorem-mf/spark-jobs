@@ -14,7 +14,9 @@ class ContactPersonMergingSpec extends SparkJobSpec with TestContactPersons {
     then contact persons match, hence the expected results below. This is a business decision and thus implemented accordingly.
    */
 
-  private val ContactPersons = Seq(
+  private val matchedContactPersons = Seq[ContactPerson]().toDataset
+
+  private val ingestedContactPersons: Dataset[ContactPerson] = Seq(
     defaultContactPersonWithSourceEntityId("a"),
     defaultContactPersonWithSourceEntityId("b").copy(mobileNumber = None),
     defaultContactPersonWithSourceEntityId("c").copy(emailAddress = None),
@@ -32,7 +34,9 @@ class ContactPersonMergingSpec extends SparkJobSpec with TestContactPersons {
 
   describe("ContactPersonMerging.transform") {
     it("should group all contact persons with the same email address and mobile phone number") {
-      val result: Dataset[ContactPerson] = ContactPersonMerging.transform(spark, ContactPersons, TestDomainDataProvider().sourcePreferences)
+      val result: Dataset[ContactPerson] = ContactPersonMerging.transform(
+        spark, matchedContactPersons, ingestedContactPersons, TestDomainDataProvider().sourcePreferences
+      )
 
       result.map(_.sourceEntityId).collect().toSet shouldBe Set("a", "b", "c", "e", "f", "g", "v", "w", "x", "y", "z")
       result.filter(_.isGoldenRecord).map(_.sourceEntityId).collect().toSet shouldBe Set("e", "f", "g", "v", "w", "x", "y", "z")
