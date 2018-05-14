@@ -147,9 +147,18 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         }
     )
 
+    tmp_file = '/tmp/' + op_file
+
+    operators_acm_from_wasb = FileFromWasbOperator(
+        task_id='operators_acm_from_wasb',
+        file_path=tmp_file,
+        container_name=wasb_export_container.format(date=one_day_ago, fn=op_file),
+        blob_name='prod'
+    )
+
     operators_ftp_to_acm = SFTPOperator(
         task_id='operators_ftp_to_acm',
-        local_filepath=wasb_export_container.format(date='{{ds}}', fn=op_file),
+        local_filepath=tmp_file,
         remote_filepath='/incoming/UFS_upload_folder/',
         ssh_conn_id='acm_sftp_ssh',
         operation=SFTPOperation.PUT)
