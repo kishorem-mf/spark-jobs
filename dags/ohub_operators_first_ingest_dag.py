@@ -153,6 +153,7 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         task_id='operators_acm_from_wasb',
         file_path=tmp_file,
         container_name=wasb_export_container.format(date='{{ds}}', fn=op_file),
+        wasb_conn_id='azure_blob',
         blob_name='prod'
     )
 
