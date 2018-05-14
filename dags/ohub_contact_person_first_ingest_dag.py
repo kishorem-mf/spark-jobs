@@ -24,7 +24,7 @@ default_args.update(
 )
 interval = '@once'
 
-with DAG('ohub_contact_person_first_ingest_dag', default_args=default_args,
+with DAG('ohub_contact_person_first_ingest', default_args=default_args,
          schedule_interval=interval) as dag:
     start_cluster = DatabricksStartClusterOperator(
         task_id='start_cluster',
