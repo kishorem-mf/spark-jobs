@@ -116,9 +116,30 @@ with DAG('ohub_contact_person_first_ingest_dag', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonMerging",
-            'parameters': ['--inputFile', intermediate_bucket.format(date='{{ds}}', fn='contacts_matched'),
-                           '--operatorInputFile', ingested_bucket.format(date='{{ds}}',
+            'parameters': ['--matchingInputFile', intermediate_bucket.format(date='{{ds}}', fn='contacts_matched'),
+                           '--contactsInputFile', ingested_bucket.format(date='{{ds}}',
                                                                          fn='contacts',
+                                                                         channel='*'),
+                           '--outputFile', intermediate_bucket.format(date='{{ds}}', fn='contacts'),
+                           '--postgressUrl', postgres_connection.host,
+                           '--postgressUsername', postgres_connection.login,
+                           '--postgressPassword', postgres_connection.password,
+                           '--postgressDB', postgres_connection.schema]
+        })
+
+    contact_person_referencing = DatabricksSubmitRunOperator(
+        task_id='contact_person_referencing',
+        existing_cluster_id=cluster_id,
+        databricks_conn_id=databricks_conn_id,
+        libraries=[
+            {'jar': jar}
+        ],
+
+        spark_jar_task={
+            'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonReferencing",
+            'parameters': ['--combinedInputFile', intermediate_bucket.format(date='{{ds}}', fn='contacts_matched'),
+                           '--operatorInputFile', integrated_bucket.format(date='{{ds}}',
+                                                                         fn='operators',
                                                                          channel='*'),
                            '--outputFile', integrated_bucket.format(date='{{ds}}', fn='contacts'),
                            '--postgressUrl', postgres_connection.host,
@@ -126,11 +147,6 @@ with DAG('ohub_contact_person_first_ingest_dag', default_args=default_args,
                            '--postgressPassword', postgres_connection.password,
                            '--postgressDB', postgres_connection.schema]
         })
-
-
-
-
-
 
     op_file = 'acm/UFS_RECIPIENTS_{{ds_nodash}}000000.csv'
 
@@ -160,5 +176,5 @@ with DAG('ohub_contact_person_first_ingest_dag', default_args=default_args,
         operation=SFTPOperation.PUT)
 
     start_cluster >> uninstall_old_libraries >> contact_persons_file_interface_to_parquet >> match_per_country
-    match_per_country >> merge_contact_persons >> contact_persons_to_acm >> terminate_cluster
+    match_per_country >> merge_contact_persons >> contact_person_referencing >> contact_persons_to_acm >> terminate_cluster
     contact_persons_to_acm >> contact_person_ftp_to_acm
