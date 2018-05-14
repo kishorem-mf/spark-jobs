@@ -55,7 +55,7 @@ with DAG('acm_sftp', default_args=default_args,
     wasb = FolderToWasbOperator(
         task_id='acm_to_wasb',
         folder_path=local_filepath,
-        container_name='prod/data/raw/acm/{{ds}}',
+        container_name='data/raw/acm/{{ds}}',
     )
 
     fetches = [fetch_order_lines, fetch_orders, fetch_products]
