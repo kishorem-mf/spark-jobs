@@ -4,11 +4,9 @@ import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.acm.model.UFSOperator
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.domain.entity.Operator
-import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
-import com.unilever.ohub.spark.generic.DeltaFunctions._
 import scopt.OptionParser
 
 case class DefaultWithDbAndDeltaConfig(
@@ -21,7 +19,7 @@ case class DefaultWithDbAndDeltaConfig(
     postgressDB: String = "postgress-db"
 ) extends SparkJobConfig
 
-object OperatorAcmDeltaConverter extends SparkJob[DefaultWithDbAndDeltaConfig] {
+object OperatorAcmDeltaConverter extends SparkJob[DefaultWithDbAndDeltaConfig] with DeltaFunctions {
 
   def transform(
     spark: SparkSession,
@@ -29,10 +27,9 @@ object OperatorAcmDeltaConverter extends SparkJob[DefaultWithDbAndDeltaConfig] {
     operators: Dataset[Operator],
     previousIntegrated: Dataset[Operator]
   ): Dataset[UFSOperator] = {
-    import spark.implicits._
-
     val dailyUfsOperators = OperatorAcmConverter.createUfsOperators(spark, operators, channelMappings)
     val allPreviousUfsOperators = OperatorAcmConverter.createUfsOperators(spark, previousIntegrated, channelMappings)
+
     integrate[UFSOperator](spark, dailyUfsOperators, allPreviousUfsOperators, "OPR_LNKD_INTEGRATION_ID")
   }
 

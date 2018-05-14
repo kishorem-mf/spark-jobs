@@ -1,34 +1,39 @@
-package com.unilever.ohub.spark.generic
-import org.apache.spark.sql.{ Dataset, SparkSession }
-import scala.reflect.runtime.universe.TypeTag
-import com.unilever.ohub.spark.sql.JoinType
+package com.unilever.ohub.spark.acm
 
-object DeltaFunctions {
+import com.unilever.ohub.spark.sql.JoinType
+import org.apache.spark.sql.{ Dataset, SparkSession }
+
+import scala.reflect.runtime.universe.TypeTag
+
+object DeltaFunctions extends DeltaFunctions
+
+trait DeltaFunctions {
 
   def integrate[T <: Product: TypeTag](
     spark: SparkSession,
-    current: Dataset[T],
+    delta: Dataset[T],
     previous: Dataset[T],
     key: String
   ): Dataset[T] = {
     import spark.implicits._
-    val newIntegrated = current
+
+    val newIntegrated = delta
       .join(previous, Seq(key), JoinType.LeftAnti)
       .as[T]
 
-    val updated = newIntegrated
+    val updated = delta
       .joinWith(
         previous,
-        newIntegrated(key) === previous(key),
+        delta(key) === previous(key),
         JoinType.Inner)
       .map {
-        case (left, right) ⇒
-          (left, left != right)
+        case (left, right) ⇒ (left, left != right)
       }
       .filter(_._2)
-      .map(_._1)
+      .map {
+        case (result, _) ⇒ result
+      }
 
-    previous.union(updated)
+    newIntegrated.union(updated)
   }
-
 }
