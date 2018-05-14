@@ -206,7 +206,7 @@ with DAG('ohub_operators', default_args=default_args,
             {'jar': jar}
         ],
         spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmDeltaConverter",
+            'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmConverter",
             'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
                            '--outputFile', export_bucket.format(date=one_day_ago, fn=op_file),
                            '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn='operators'),
