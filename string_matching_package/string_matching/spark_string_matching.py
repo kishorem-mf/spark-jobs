@@ -25,6 +25,7 @@ import numpy as np
 
 import pyspark.sql.functions as sf
 
+from pyspark.ml.linalg import Vectors, VectorUDT
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import CountVectorizer
 from pyspark.ml.feature import IDF
@@ -37,7 +38,6 @@ from pyspark.sql.types import IntegerType
 from pyspark.sql.types import StructField
 from pyspark.sql.types import StructType
 from scipy.sparse import csr_matrix
-
 
 VECTORIZE_STRING_COLUMN_NAME = 'vectorized_string'
 
@@ -202,13 +202,13 @@ def dense_to_sparse_ddf(ddf, row_number_column):
     udf_unpack_vector = sf.udf(unpack_vector, ngram_schema)
     return (
         ddf
-        .withColumn(
+            .withColumn(
             'explode',
             sf.explode(udf_unpack_vector(sf.col(VECTORIZE_STRING_COLUMN_NAME)))
         )
-        .withColumn('ngram_index', sf.col('explode').getItem('ngram_index'))
-        .withColumn('value', sf.col('explode').getItem('value'))
-        .select(row_number_column, 'ngram_index', 'value')
+            .withColumn('ngram_index', sf.col('explode').getItem('ngram_index'))
+            .withColumn('value', sf.col('explode').getItem('value'))
+            .select(row_number_column, 'ngram_index', 'value')
     )
 
 
@@ -235,9 +235,9 @@ def split_into_chunks(csr_names_vs_ngrams, matrix_chunks_rows):
     n_chunks = math.ceil(csr_names_vs_ngrams.shape[0] / chunk_size)
     chunks = [
         (csr_names_vs_ngrams[
-            (i * chunk_size):
-            min((i + 1) * chunk_size, csr_names_vs_ngrams.shape[0])
-        ], i * chunk_size)
+         (i * chunk_size):
+         min((i + 1) * chunk_size, csr_names_vs_ngrams.shape[0])
+         ], i * chunk_size)
         for i in range(n_chunks)]
     return chunks
 
@@ -274,7 +274,6 @@ def match_strings(spark, df,
                   max_vocabulary_size,
                   matrix_chunks_rows=500,
                   df2=None):
-
     str_vectorizer = (
         StringVectorizer(input_col=string_column,
                          n_gram=n_gram,
@@ -283,21 +282,30 @@ def match_strings(spark, df,
     )
     vectorized_strings = (
         str_vectorizer
-        .transform(df)
-        .select([row_number_column, VECTORIZE_STRING_COLUMN_NAME])
+            .transform(df)
+            .select([row_number_column, VECTORIZE_STRING_COLUMN_NAME])
     )
 
     names_vs_ngrams = dense_to_sparse_ddf(vectorized_strings,
                                           row_number_column)
-    csr_names_vs_ngrams = sparse_to_csr_matrix(names_vs_ngrams,
-                                               row_number_column)
+    try:
+        csr_names_vs_ngrams = sparse_to_csr_matrix(names_vs_ngrams,
+                                                   row_number_column)
+    except TypeError:  # special case where all the string are exactly the same
+        csr_names_vs_ngrams = sparse_to_csr_matrix(
+            vectorized_strings
+                .withColumn('ngram_index', sf.lit(0))
+                .withColumn('value', sf.lit(1))
+                .drop('vectorized_string'),
+            row_number_column
+        )
 
     if df2:
         upper_triangular = False
         vectorized_strings_2 = (
             str_vectorizer
-            .transform(df2)
-            .select([row_number_column, VECTORIZE_STRING_COLUMN_NAME])
+                .transform(df2)
+                .select([row_number_column, VECTORIZE_STRING_COLUMN_NAME])
         )
 
         names_vs_ngrams_2 = dense_to_sparse_ddf(vectorized_strings_2,

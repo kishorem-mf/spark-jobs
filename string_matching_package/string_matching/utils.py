@@ -7,7 +7,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
-MINIMUM_ENTRIES_PER_COUNTRY = 5
+MINIMUM_ENTRIES_PER_COUNTRY = 3
 LOGGER = None
 
 # characters to be dropped from strings to be compared
