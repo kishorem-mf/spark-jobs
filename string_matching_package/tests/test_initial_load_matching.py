@@ -118,7 +118,8 @@ class TestMatchingContactPersons(object):
                       'city', 'street', 'mobilePhoneNumber', 'emailAddress',
                       'zipCode', 'houseNumber'))
 
-    @pytest.mark.skipif(True, reason="No way to access data inside an IDF object")
+    @pytest.mark.skipif(True, reason="No way to access data inside an IDFModel object, "
+                                     "as such typos are not matched correctly due to sparsity")
     def test_full_matching(self, spark):
         ddf = self.create_ddf(spark, [
             ('4', 'NL', 'Dave', 'Mustaire', 'Amsterdam  ', '@barAvenue', None, None, '5314BE', '\u09F2144b')])
