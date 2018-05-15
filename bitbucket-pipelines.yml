@@ -10,13 +10,6 @@ pipelines:
           - pycodestyle --show-source .
           - cd string_matching_package
           - python setup.py pytest --addopts "--cov-config .coveragerc --cov=./ tests"
-    - step:
-        name: Test building EGG
-        image: timvancann/miniconda3-gcc
-        script:
-          - conda env create -f environment.yml
-          - source activate name-matching
-          - ./compile_library.sh
   branches:
     master:
     - step:
