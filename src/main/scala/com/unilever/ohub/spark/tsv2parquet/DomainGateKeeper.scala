@@ -82,11 +82,14 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
 
   protected def read(spark: SparkSession, storage: Storage, config: DomainConfig): Dataset[RowType]
 
-  private def transform(transformFn: RowType ⇒ DomainType)(postValidateFn: DomainEntity ⇒ Unit): RowType ⇒ Either[ErrorMessage, DomainType] =
+  private def transform(dataProvider: DomainDataProvider)(
+    transformFn: DomainTransformer ⇒ RowType ⇒ DomainType,
+    postValidateFn: DomainDataProvider ⇒ DomainEntity ⇒ Unit
+  ): RowType ⇒ Either[ErrorMessage, DomainType] =
     row ⇒
       try {
-        val entity = transformFn(row)
-        postValidateFn(entity)
+        val entity = transformFn(DomainTransformer(dataProvider))(row)
+        postValidateFn(dataProvider)(entity)
         Right(entity)
       } catch {
         case e: Throwable ⇒
@@ -125,10 +128,10 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       }
     }
 
-    val transformer = DomainTransformer(dataProvider)
-
     val result = read(spark, storage, config)
-      .map(transform(toDomainEntity(transformer))(postValidate(dataProvider)))
+      .map {
+        transform(dataProvider)(toDomainEntity, postValidate)
+      }
 
     handleErrors(config, result)
 
@@ -136,7 +139,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
     val domainEntities: Dataset[DomainType] = result
       .filter(_.isRight).map(_.right.get)
       .withColumn("rn", row_number.over(w))
-      .filter($"rn" === 1)
+      .filter($"rn" === 1) // TODO why do we filter and drop here?
       .drop($"rn")
       .as[DomainType]
 

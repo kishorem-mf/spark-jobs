@@ -15,7 +15,7 @@ case class ContactPersonRefsConfig(
 
 // The step that fixes the foreign key links between contact persons and operators
 object ContactPersonReferencing extends SparkJob[ContactPersonRefsConfig] {
-  private case class OHubIdAndRefId(ohubId: Option[String], refId: String)
+  private[merging] case class OHubIdAndRefId(ohubId: Option[String], refId: String)
 
   def transform(
     spark: SparkSession,
@@ -27,12 +27,16 @@ object ContactPersonReferencing extends SparkJob[ContactPersonRefsConfig] {
     contactPersons
       .joinWith(
         operatorIdAndRefs,
-        operatorIdAndRefs("refId") === contactPersons("contactPerson.operatorConcatId"),
+        operatorIdAndRefs("refId") === contactPersons("operatorConcatId"),
         JoinType.LeftOuter
       )
       .map {
         case (contactPerson, maybeOperator) ⇒
-          contactPerson.copy(operatorOhubId = maybeOperator.ohubId)
+          if (maybeOperator == null) { // TODO what to do when there is no valid reference to an operator?
+            contactPerson
+          } else {
+            contactPerson.copy(operatorOhubId = maybeOperator.ohubId)
+          }
       }
   }
 
