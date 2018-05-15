@@ -10,16 +10,16 @@ import scala.reflect.runtime.universe._
 
 case class MatchingResult(sourceId: String, targetId: String, countryCode: String)
 
+case class MatchingResultAndDomainEntity[T <: DomainEntity: TypeTag](
+    matchingResult: MatchingResult,
+    entity: T
+) {
+  val sourceId: String = matchingResult.sourceId
+}
+
+case class ConcatId(concatId: String)
+
 abstract class BaseMatchingJoiner[T <: DomainEntity: TypeTag, C <: SparkJobConfig] extends SparkJob[C] with GoldenRecordPicking[T] {
-
-  private case class MatchingResultAndDomainEntity(
-      matchingResult: MatchingResult,
-      entity: T
-  ) {
-    val sourceId: String = matchingResult.sourceId
-  }
-
-  private case class ConcatId(concatId: String)
 
   def transform(
     spark: SparkSession,
@@ -46,7 +46,7 @@ abstract class BaseMatchingJoiner[T <: DomainEntity: TypeTag, C <: SparkJobConfi
 
     matches
       .joinWith(allEntities, matches("targetId") === allEntities("concatId"), JoinType.Inner)
-      .map((MatchingResultAndDomainEntity.apply _).tupled)
+      .map { case (left, right) ⇒ MatchingResultAndDomainEntity(left, right) }
       .groupBy($"matchingResult.sourceId")
       .agg(collect_list("entity").as("entities"))
       .as[(String, Seq[T])]
