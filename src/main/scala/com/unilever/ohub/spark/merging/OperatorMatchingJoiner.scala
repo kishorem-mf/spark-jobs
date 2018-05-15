@@ -10,16 +10,16 @@ import org.apache.spark.sql.SparkSession
 import scopt.OptionParser
 
 case class OperatorJoinConfig(
-                                  matchingInputFile: String = "matching-input-file",
-                                  operatorInputFile: String = "operator-input-file",
-                                  outputFile: String = "path-to-output-file",
-                                  postgressUrl: String = "postgress-url",
-                                  postgressUsername: String = "postgress-username",
-                                  postgressPassword: String = "postgress-password",
-                                  postgressDB: String = "postgress-db"
-                                ) extends SparkJobConfig
+    matchingInputFile: String = "matching-input-file",
+    operatorInputFile: String = "operator-input-file",
+    outputFile: String = "path-to-output-file",
+    postgressUrl: String = "postgress-url",
+    postgressUsername: String = "postgress-username",
+    postgressPassword: String = "postgress-password",
+    postgressDB: String = "postgress-db"
+) extends SparkJobConfig
 
-object OperatorMerging extends BaseMatchingJoiner[Operator, OperatorJoinConfig] {
+object OperatorMatchingJoiner extends BaseMatchingJoiner[Operator, OperatorJoinConfig] {
 
   private[merging] def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])(operators: Seq[Operator]): Seq[Operator] = {
     val goldenRecord = pickGoldenRecord(sourcePreference, operators)
@@ -32,25 +32,25 @@ object OperatorMerging extends BaseMatchingJoiner[Operator, OperatorJoinConfig] 
   override private[spark] def configParser(): OptionParser[OperatorJoinConfig] =
     new scopt.OptionParser[OperatorJoinConfig]("Operator merging") {
       head("merges operators into an integrated operator output file", "1.0")
-      opt[String]("matchingInputFile") required() action { (x, c) ⇒
+      opt[String]("matchingInputFile") required () action { (x, c) ⇒
         c.copy(matchingInputFile = x)
       } text "matchingInputFile is a string property"
-      opt[String]("operatorInputFile") required() action { (x, c) ⇒
+      opt[String]("operatorInputFile") required () action { (x, c) ⇒
         c.copy(operatorInputFile = x)
       } text "operatorInputFile is a string property"
-      opt[String]("outputFile") required() action { (x, c) ⇒
+      opt[String]("outputFile") required () action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
-      opt[String]("postgressUrl") required() action { (x, c) ⇒
+      opt[String]("postgressUrl") required () action { (x, c) ⇒
         c.copy(postgressUrl = x)
       } text "postgressUrl is a string property"
-      opt[String]("postgressUsername") required() action { (x, c) ⇒
+      opt[String]("postgressUsername") required () action { (x, c) ⇒
         c.copy(postgressUsername = x)
       } text "postgressUsername is a string property"
-      opt[String]("postgressPassword") required() action { (x, c) ⇒
+      opt[String]("postgressPassword") required () action { (x, c) ⇒
         c.copy(postgressPassword = x)
       } text "postgressPassword is a string property"
-      opt[String]("postgressDB") required() action { (x, c) ⇒
+      opt[String]("postgressDB") required () action { (x, c) ⇒
         c.copy(postgressDB = x)
       } text "postgressDB is a string property"
 
@@ -71,13 +71,13 @@ object OperatorMerging extends BaseMatchingJoiner[Operator, OperatorJoinConfig] 
 
     val matches = storage
       .readFromParquet[MatchingResult](
-      config.matchingInputFile,
-      selectColumns = Seq(
-        $"sourceId",
-        $"targetId",
-        $"countryCode"
+        config.matchingInputFile,
+        selectColumns = Seq(
+          $"sourceId",
+          $"targetId",
+          $"countryCode"
+        )
       )
-    )
 
     val transformed = transform(spark, operators, matches, markGoldenRecordAndGroupId(dataProvider.sourcePreferences))
 

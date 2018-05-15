@@ -9,8 +9,6 @@ import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.spark.sql.SparkSession
 import scopt.OptionParser
 
-case class GroupObject(group: String, contactPerson: ContactPerson)
-
 case class ContactPersonJoinConfig(
     matchingInputFile: String = "matched-input-file",
     contactsInputFile: String = "contacts-input-file",
@@ -21,17 +19,17 @@ case class ContactPersonJoinConfig(
     postgressDB: String = "postgress-db"
 ) extends SparkJobConfig
 
-object ContactPersonMerging extends BaseMatchingJoiner[ContactPerson, ContactPersonJoinConfig] {
+object ContactPersonMatchingJoiner extends BaseMatchingJoiner[ContactPerson, ContactPersonJoinConfig] {
 
-  def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])(contactPersons: Seq[ContactPerson]): Seq[ContactPerson] = {
+  private[merging] def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])(contactPersons: Seq[ContactPerson]): Seq[ContactPerson] = {
     val goldenRecord = pickGoldenRecord(sourcePreference, contactPersons)
     val groupId = UUID.randomUUID().toString
     contactPersons.map(o ⇒ o.copy(ohubId = Some(groupId), isGoldenRecord = o == goldenRecord))
   }
 
-  private[spark] def defaultConfig: ContactPersonJoinConfig = ContactPersonJoinConfig()
+  override private[spark] def defaultConfig: ContactPersonJoinConfig = ContactPersonJoinConfig()
 
-  private[spark] def configParser(): OptionParser[ContactPersonJoinConfig] =
+  override private[spark] def configParser(): OptionParser[ContactPersonJoinConfig] =
     new scopt.OptionParser[ContactPersonJoinConfig]("Contact person merging") {
       head("joins contact persons from name matching and non exact matches.", "1.0")
       opt[String]("matchingInputFile") required () action { (x, c) ⇒
@@ -69,9 +67,19 @@ object ContactPersonMerging extends BaseMatchingJoiner[ContactPerson, ContactPer
 
     log.info(s"Joining contact persons from [${config.matchingInputFile}] with [${config.contactsInputFile}] to [${config.outputFile}]")
 
-    val matchedContactPersons = storage.readFromParquet[MatchingResult](config.matchingInputFile)
-    val allContactPersons = storage.readFromParquet[ContactPerson](config.contactsInputFile)
-    val transformed = transform(spark, allContactPersons, matchedContactPersons, markGoldenRecordAndGroupId(dataProvider.sourcePreferences))
+    val contactPersons = storage.readFromParquet[ContactPerson](config.contactsInputFile)
+
+    val matches = storage
+      .readFromParquet[MatchingResult](
+        config.matchingInputFile,
+        selectColumns = Seq(
+          $"sourceId",
+          $"targetId",
+          $"countryCode"
+        )
+      )
+
+    val transformed = transform(spark, contactPersons, matches, markGoldenRecordAndGroupId(dataProvider.sourcePreferences))
 
     storage.writeToParquet(transformed, config.outputFile)
   }
