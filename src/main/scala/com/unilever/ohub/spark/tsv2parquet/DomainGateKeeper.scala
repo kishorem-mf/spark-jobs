@@ -136,7 +136,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
     val domainEntities: Dataset[DomainType] = result
       .filter(_.isRight).map(_.right.get)
       .withColumn("rn", row_number.over(w))
-      .filter($"rn" === 1)
+      .filter($"rn" === 1) // TODO why do we filter and drop here?
       .drop($"rn")
       .as[DomainType]
 
