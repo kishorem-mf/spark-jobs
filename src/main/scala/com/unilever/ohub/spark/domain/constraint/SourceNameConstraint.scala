@@ -9,7 +9,7 @@ object SourceNameConstraint {
 
 class SourceNameConstraint(val domainDataProvider: DomainDataProvider) extends DomainConstraint[String] {
 
-  override private[domain] def isValid(value: String): Boolean = domainDataProvider.sourcePreferences.get(value).isDefined
+  override private[domain] def isValid(value: String): Boolean = domainDataProvider.sourcePreferences.get(value.toUpperCase).isDefined
 
   override private[domain] def errorMessage(value: String): String = s"Source name '$value' is unknown, only known sources are supported."
 }
