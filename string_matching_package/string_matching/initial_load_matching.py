@@ -36,8 +36,8 @@ def preprocess_contacts(ddf: DataFrame) -> DataFrame:
                 # drop if no street
                 .na.drop(subset=['streetCleansed'], how='any')
                 # same logic but for an empty string
-                .filter((sf.trim(sf.col('streetCleansed')) != '') &
-                        ((sf.trim(sf.col('firstNameCleansed')) != '') | (sf.trim(sf.col('lastNameCleansed')) != '')))
+                .filter((sf.col('streetCleansed') != '') &
+                        ((sf.col('firstNameCleansed') != '') | (sf.col('lastNameCleansed') != '')))
                 .withColumnRenamed('concatId', 'id')
                 )
 
@@ -81,35 +81,33 @@ def join_contact_columns_and_filter(similarity: DataFrame, contacts: DataFrame, 
             - if no zip code is present: keep match if cities (cleansed) match exactly
         - keep only the matches where Levenshtein distance between streets (cleansed) is lower than threshold (5)
     """
-    return (
-        similarity
-        .join(contacts, similarity['i'] == contacts['name_index'],
-              how='left').drop('name_index')
-        .selectExpr('i', 'j', 'id as sourceId',
-                    'similarity', 'matching_string as sourceName',
-                    'streetCleansed as sourceStreet',
-                    'zipCodeCleansed as sourceZipCode',
-                    'cityCleansed as sourceCity')
-        .join(contacts, similarity['j'] == contacts['name_index'],
-              how='left').drop('name_index')
-        .withColumn('countryCode', sf.lit(country_code))
-        .selectExpr('i', 'j', 'countryCode', 'sourceId',
-                    'id as targetId', 'similarity',
-                    'sourceName', 'matching_string as targetName',
-                    'sourceStreet', 'streetCleansed as targetStreet',
-                    'sourceZipCode', 'zipCodeCleansed as targetZipCode',
-                    'sourceCity', 'cityCleansed as targetCity')
-        .filter(
-            (sf.col('sourceZipCode') == sf.col('targetZipCode')) |
-            (
-                    sf.isnull('sourceZipCode') &
-                    sf.isnull('targetZipCode') &
-                    (sf.col('sourceCity') == sf.col('targetCity'))
+    return (similarity
+            .join(contacts, similarity['i'] == contacts['name_index'],
+                  how='left').drop('name_index')
+            .selectExpr('i', 'j', 'id as sourceId',
+                        'similarity', 'matching_string as sourceName',
+                        'streetCleansed as sourceStreet',
+                        'zipCodeCleansed as sourceZipCode',
+                        'cityCleansed as sourceCity')
+            .join(contacts, similarity['j'] == contacts['name_index'],
+                  how='left').drop('name_index')
+            .withColumn('countryCode', sf.lit(country_code))
+            .selectExpr('i', 'j', 'countryCode', 'sourceId',
+                        'id as targetId', 'similarity',
+                        'sourceName', 'matching_string as targetName',
+                        'sourceStreet', 'streetCleansed as targetStreet',
+                        'sourceZipCode', 'zipCodeCleansed as targetZipCode',
+                        'sourceCity', 'cityCleansed as targetCity')
+            .filter((sf.col('sourceZipCode') == sf.col('targetZipCode')) |
+                    (
+                            sf.isnull('sourceZipCode') &
+                            sf.isnull('targetZipCode') &
+                            (sf.col('sourceCity') == sf.col('targetCity'))
+                    )
+                    )
+            .withColumn('street_lev_distance', sf.levenshtein(sf.col('sourceStreet'), sf.col('targetStreet')))
+            .filter(sf.col('street_lev_distance') < MIN_LEVENSHTEIN_DISTANCE)
             )
-        )
-        .withColumn('street_lev_distance', sf.levenshtein(sf.col('sourceStreet'), sf.col('targetStreet')))
-        .filter(sf.col('street_lev_distance') < MIN_LEVENSHTEIN_DISTANCE)
-    )
 
 
 def match_operators_for_country(spark: SparkSession, country_code: str, all_operators: DataFrame,
@@ -172,11 +170,7 @@ def apply_matching_on(ddf: DataFrame, spark, preprocess_function, match_function
     return_value = None
 
     if len(country_codes) == 1:
-        matches = match_function(spark,
-                                         country_code,
-                                         preprocessed,
-                                         n_top,
-                                         threshold)
+        matches = match_function(spark, country_code, preprocessed, n_top, threshold)
         return_value = matches
     return return_value
 

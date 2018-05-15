@@ -107,11 +107,12 @@ def clean_operator_fields(ddf: DataFrame, name_col, city_col, street_col, housen
 def clean_contactperson_fields(ddf: DataFrame, first_name_col, last_name_col, street_col, housenr_col,
                                city_col, zip_col) -> DataFrame:
     return (ddf
-            .withColumn('firstNameCleansed', sf.col(first_name_col))
-            .withColumn('lastNameCleansed', sf.col(last_name_col))
-            .withColumn('streetCleansed', sf.concat_ws('',
-                                                       udf_remove_strange_chars_to_lower_and_trim(sf.col(street_col)),
-                                                       udf_remove_strange_chars_to_lower_and_trim(sf.col(housenr_col))))
+            .withColumn('firstNameCleansed', sf.trim(sf.col(first_name_col)))
+            .withColumn('lastNameCleansed', sf.trim(sf.col(last_name_col)))
+            .withColumn('streetCleansed',
+                        sf.trim(sf.concat_ws('',
+                                             udf_remove_strange_chars_to_lower_and_trim(sf.col(street_col)),
+                                             udf_remove_strange_chars_to_lower_and_trim(sf.col(housenr_col)))))
             .withColumn('cityCleansed', udf_remove_spaces_strange_chars_and_to_lower(sf.col(city_col)))
             .withColumn('zipCodeCleansed', udf_remove_spaces_strange_chars_and_to_lower(sf.col(zip_col)))
             )

@@ -200,16 +200,14 @@ ngram_schema = ArrayType(StructType([
 
 def dense_to_sparse_ddf(ddf, row_number_column):
     udf_unpack_vector = sf.udf(unpack_vector, ngram_schema)
-    return (
-        ddf
-            .withColumn(
-            'explode',
-            sf.explode(udf_unpack_vector(sf.col(VECTORIZE_STRING_COLUMN_NAME)))
-        )
+    return (ddf
+            .withColumn('explode',
+                        sf.explode(udf_unpack_vector(sf.col(VECTORIZE_STRING_COLUMN_NAME)))
+                        )
             .withColumn('ngram_index', sf.col('explode').getItem('ngram_index'))
             .withColumn('value', sf.col('explode').getItem('value'))
             .select(row_number_column, 'ngram_index', 'value')
-    )
+            )
 
 
 def sparse_to_csr_matrix(ddf, row_number_column):
@@ -280,11 +278,10 @@ def match_strings(spark, df,
                          min_df=min_document_frequency,
                          vocab_size=max_vocabulary_size).fit(df, df2)
     )
-    vectorized_strings = (
-        str_vectorizer
-            .transform(df)
-            .select([row_number_column, VECTORIZE_STRING_COLUMN_NAME])
-    )
+    vectorized_strings = (str_vectorizer
+                          .transform(df)
+                          .select([row_number_column, VECTORIZE_STRING_COLUMN_NAME])
+                          )
 
     names_vs_ngrams = dense_to_sparse_ddf(vectorized_strings,
                                           row_number_column)
@@ -292,21 +289,19 @@ def match_strings(spark, df,
         csr_names_vs_ngrams = sparse_to_csr_matrix(names_vs_ngrams,
                                                    row_number_column)
     except TypeError:  # special case where all the string are exactly the same
-        csr_names_vs_ngrams = sparse_to_csr_matrix(
-            vectorized_strings
-                .withColumn('ngram_index', sf.lit(0))
-                .withColumn('value', sf.lit(1))
-                .drop('vectorized_string'),
-            row_number_column
-        )
+        csr_names_vs_ngrams = sparse_to_csr_matrix(vectorized_strings
+                                                   .withColumn('ngram_index', sf.lit(0))
+                                                   .withColumn('value', sf.lit(1))
+                                                   .drop('vectorized_string'),
+                                                   row_number_column
+                                                   )
 
     if df2:
         upper_triangular = False
-        vectorized_strings_2 = (
-            str_vectorizer
-                .transform(df2)
-                .select([row_number_column, VECTORIZE_STRING_COLUMN_NAME])
-        )
+        vectorized_strings_2 = (str_vectorizer
+                                .transform(df2)
+                                .select([row_number_column, VECTORIZE_STRING_COLUMN_NAME])
+                                )
 
         names_vs_ngrams_2 = dense_to_sparse_ddf(vectorized_strings_2,
                                                 row_number_column)
