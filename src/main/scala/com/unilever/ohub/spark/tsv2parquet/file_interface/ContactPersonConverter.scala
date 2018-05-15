@@ -41,7 +41,7 @@ object ContactPersonConverter extends FileDomainGateKeeper[ContactPerson] {
       firstName                     =   optional(   "FIRST_NAME",                     "firstName"                                                        ),
       lastName                      =   optional(   "LAST_NAME",                      "lastName"                                                         ),
       title                         =   optional(   "TITLE",                          "title"                                                            ),
-      gender                        =   optional(   "GENDER",                         "gender"                                                           ),
+      gender                        =   optional(   "GENDER",                         "gender",                       checkEnum(ContactPerson.genderEnum) ),
       jobTitle                      =   optional(   "FUNCTION",                       "jobTitle"                                                         ),
       language                      =   optional(   "LANGUAGE_KEY",                   "language"                                                         ),
       birthDate                     =   optional(   "BIRTH_DATE",                     "birthDate",                    parseDateTimeStampUnsafe           ),
