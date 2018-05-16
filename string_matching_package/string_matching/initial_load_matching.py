@@ -54,7 +54,6 @@ def match_contacts_for_country(spark: SparkSession, country_code: str, preproces
     """Match contacts for a single country"""
     from .spark_string_matching import match_strings
     contacts = select_and_repartition_country(preprocessed_contacts, 'countryCode', country_code)
-    contacts.show()
     similarity = match_strings(
         spark,
         df=contacts,
@@ -67,11 +66,8 @@ def match_contacts_for_country(spark: SparkSession, country_code: str, preproces
         max_vocabulary_size=VOCABULARY_SIZE,
         matrix_chunks_rows=MATRIX_CHUNK_ROWS
     )
-    similarity.show()
     similarity_filtered = join_contact_columns_and_filter(similarity, contacts, country_code)
-    similarity_filtered.show()
     grouped_similarity = group_matches(similarity_filtered)
-    grouped_similarity.show()
     return grouped_similarity
 
 
@@ -161,10 +157,7 @@ def join_operators_columns(grouped_similarity: DataFrame, operators: DataFrame, 
                         'similarity', 'sourceName', 'matching_string as targetName'))
 
 
-def apply_matching_on(ddf: DataFrame, spark, preprocess_function, match_function, country_code, n_top, threshold):
-    records_per_country = (ddf
-                           .filter(sf.col('countryCode') == country_code)
-                           )
+def apply_matching_on(records_per_country: DataFrame, spark, preprocess_function, match_function, country_code, n_top, threshold):
     preprocessed = preprocess_function(records_per_country)
     country_codes = get_country_codes(country_code, preprocessed)
     return_value = None
