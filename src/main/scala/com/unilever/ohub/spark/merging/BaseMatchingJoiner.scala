@@ -14,13 +14,6 @@ case class ConcatId(concatId: String)
 
 abstract class BaseMatchingJoiner[T <: DomainEntity: TypeTag, C <: SparkJobConfig] extends SparkJob[C] with GoldenRecordPicking[T] {
 
-  case class MatchingResultAndDomainEntity(
-      matchingResult: MatchingResult,
-      entity: T
-  ) {
-    val sourceId: String = matchingResult.sourceId
-  }
-
   def transform(
     spark: SparkSession,
     entities: Dataset[T],
@@ -38,7 +31,6 @@ abstract class BaseMatchingJoiner[T <: DomainEntity: TypeTag, C <: SparkJobConfi
   }
 
   private[merging] def groupMatchedEntities(
-
     spark: SparkSession,
     allEntities: Dataset[T],
     matches: Dataset[MatchingResult]): Dataset[Seq[T]] = {
@@ -46,12 +38,12 @@ abstract class BaseMatchingJoiner[T <: DomainEntity: TypeTag, C <: SparkJobConfi
 
     matches
       .joinWith(allEntities, matches("targetId") === allEntities("concatId"), JoinType.Inner)
-      .map { case (left, right) ⇒ MatchingResultAndDomainEntity(left, right) }
-      .groupBy($"matchingResult.sourceId")
-      .agg(collect_list("entity").as("entities"))
-      .as[(String, Seq[T])]
-      .joinWith(allEntities, $"sourceId" === $"concatId", JoinType.Inner)
-      .map { case ((_, entities), entity) ⇒ entity +: entities }
+      .toDF("matchingResult", "entity")
+        .groupBy($"matchingResult.sourceId")
+        .agg(collect_list("entity").as("entities"))
+        .as[(String, Seq[T])]
+        .joinWith(allEntities, $"sourceId" === $"concatId", JoinType.Inner)
+        .map { case ((_, entities), entity) ⇒ entity +: entities }
   }
 
   private[merging] def findUnmatchedEntities(
