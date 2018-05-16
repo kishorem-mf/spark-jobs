@@ -157,7 +157,8 @@ def join_operators_columns(grouped_similarity: DataFrame, operators: DataFrame, 
                         'similarity', 'sourceName', 'matching_string as targetName'))
 
 
-def apply_matching_on(records_per_country: DataFrame, spark, preprocess_function, match_function, country_code, n_top, threshold):
+def apply_matching_on(records_per_country: DataFrame, spark, preprocess_function, match_function, country_code, n_top,
+                      threshold):
     preprocessed = preprocess_function(records_per_country)
     country_codes = get_country_codes(country_code, preprocessed)
     return_value = None
