@@ -18,7 +18,7 @@
 # under the License.
 from airflow.contrib.hooks.ssh_hook import SSHHook
 from airflow.exceptions import AirflowException
-from airflow.models import BaseOperator
+from airflow.models import BaseOperator, SkipMixin
 from airflow.utils.decorators import apply_defaults
 import errno
 
@@ -28,7 +28,7 @@ class SFTPOperation(object):
     GET = 'get'
 
 
-class ShortCircuitSFTPOperator(BaseOperator):
+class ShortCircuitSFTPOperator(BaseOperator, SkipMixin):
     """
     ShortCircuitSFTPOperator for transferring files from remote host to local or vice a versa.
     This operator uses ssh_hook to open sftp transport channel that serves as basis
