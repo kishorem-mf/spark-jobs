@@ -29,7 +29,7 @@ pycodestyle --show-source .
 ### Local UI
 Requirements: 
 
-- Ensure that you have logged in to azure with `az login`
+- Ensure that you have logged in to the docker azure registry with `docker login`. You can find the credentials in the Azure Portal -> shared resource group -> container registry -> access keys
 - Ensure that you have [docker](https://docs.docker.com/install/) installed and running
 
 Run the `local_dev.sh` script. The airflow UI should now be available at `http://localhost:8070`
