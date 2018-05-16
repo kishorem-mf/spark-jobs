@@ -1,0 +1,169 @@
+""" Join ingested daily data with integrated data, keeping persistent group id's
+
+This script outputs two dataframes:
+- Updated integrated data
+  - Changed records that match with integrated data
+  - New records that match with integrated data
+- Unmatched data
+  - All records that do not match with integrated data
+
+The following steps are performed per country:
+- Pre-process integrated data to format for joining
+- Pre-process ingested daily data to format for joining
+- Match ingested data with integrated data
+- write two dataframes to file: updated integrated data and unmatched data
+"""
+import argparse
+from pyspark.sql import DataFrame
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as sf
+from pyspark.sql.window import Window
+
+from .utils import start_spark, Timer, save_to_parquet_per_partition
+from .entity_matching import \
+    N_GRAMS, MINIMUM_DOCUMENT_FREQUENCY, VOCABULARY_SIZE, MINIMUM_ENTRIES_PER_COUNTRY
+
+
+def match_delta_entity_for_country(spark, ingested_daily, integrated, n_top, threshold):
+    from .spark_string_matching import match_strings
+
+    ingested_daily_1country = ingested_daily.repartition('concatId')
+    integrated_1country = integrated.repartition('ohubId')
+
+    similarity = match_strings(
+        spark,
+        df=ingested_daily_1country.select('string_index', 'matching_string'),
+        df2=integrated_1country.select('string_index', 'matching_string'),
+        string_column='matching_string',
+        row_number_column='string_index',
+        n_top=n_top,
+        threshold=threshold,
+        n_gram=N_GRAMS,
+        min_document_frequency=MINIMUM_DOCUMENT_FREQUENCY,
+        max_vocabulary_size=VOCABULARY_SIZE
+    )
+
+    return similarity
+
+
+def postprocess_operators(similarity: DataFrame,
+                          ingested_preprocessed: DataFrame,
+                          integrated_preprocessed: DataFrame):
+    window = Window.partitionBy('i').orderBy(sf.desc('SIMILARITY'), 'j')
+    best_match = (similarity
+                  .withColumn('rn', sf.row_number().over(window))
+                  .filter(sf.col('rn') == 1)
+                  .drop('rn')
+                  .drop_duplicates()
+                  )
+
+    # Join on string_index to get back the concatId and ohubId
+    matched_ingested_daily = (
+        best_match
+            .join(ingested_preprocessed, ingested_preprocessed['string_index'] == best_match['i'])
+            .drop('string_index')
+            .selectExpr('j', 'SIMILARITY',
+                        'matching_string as matching_string_new', 'concatId')
+            .join(integrated_preprocessed, sf.col('j') == integrated_preprocessed['string_index'])
+            .drop('string_index')
+            .selectExpr('SIMILARITY',
+                        'matching_string_new',
+                        'matching_string as matching_string_old',
+                        'concatId',
+                        'ohubId as ohubId_matched')
+    )
+    return matched_ingested_daily
+
+
+def recreate_matched_and_unmatched(integrated: DataFrame,
+                                   ingested: DataFrame,
+                                   matched: DataFrame):
+    matched_ingested_daily_full_record = (matched
+                                          .select('concatId', 'ohubId_matched')
+                                          .join(ingested, on='concatId', how='left')
+                                          .withColumn('ohubId', sf.col('ohubId_matched'))
+                                          .drop('ohubId_matched')
+                                          )
+
+    updated_integrated = (integrated
+                          .join(matched_ingested_daily_full_record, on='concatId', how='left_anti')
+                          .union(matched_ingested_daily_full_record)
+                          )
+
+    unmatched = (ingested
+                 .join(matched, on='concatId', how='left_anti')
+                 )
+
+    return (updated_integrated, unmatched)
+
+
+def apply_delta_matching_on(spark,
+                            ingested_records_for_country: DataFrame,
+                            integrated_records_for_country: DataFrame,
+                            preprocess_function,
+                            postprocess_function,
+                            n_top,
+                            threshold):
+    daily_preprocessed = (preprocess_function(ingested_records_for_country,
+                                              'concatId', True)
+                          .repartition('concatId')
+                          .sort('concatId', ascending=True)
+                          )
+    integrated_preprocessed = (preprocess_function(integrated_records_for_country,
+                                                   'ohubId', False)
+                               .repartition('ohubId')
+                               .sort('ohubId', ascending=True)
+                               )
+
+    return_value = (None, None)
+    if (daily_preprocessed.count() >= MINIMUM_ENTRIES_PER_COUNTRY and
+            integrated_preprocessed.count() >= MINIMUM_ENTRIES_PER_COUNTRY):
+        similarity = match_delta_entity_for_country(spark,
+                                                    daily_preprocessed,
+                                                    integrated_preprocessed,
+                                                    n_top,
+                                                    threshold)
+        matches = postprocess_function(similarity, daily_preprocessed, integrated_preprocessed)
+        return_value = recreate_matched_and_unmatched(integrated_records_for_country,
+                                                      ingested_records_for_country,
+                                                      matches)
+    return return_value
+
+
+def main(arguments, preprocess_function, postprocess_function):
+    global LOGGER
+    spark, LOGGER = start_spark('Match and join newly ingested operators with persistent ohubId')
+
+    t = Timer('Reading for country {}'.format(arguments.country_code), LOGGER)
+    ingested_daily = (spark.read.parquet(arguments.ingested_daily_operators_input_path)
+                      .filter(sf.col('countryCode') == arguments.country_code)
+                      )
+
+    integrated = (spark.read.parquet(arguments.integrated_operators_input_path)
+                  .filter(sf.col('countryCode') == arguments.country_code)
+                  )
+    ingested_daily.persist()
+    integrated.persist()
+    t.end_and_log()
+
+    save_to_parquet_per_partition('countryCode', arguments.country_code)
+
+    t = Timer('Running for country {}'.format(arguments.country_code), LOGGER)
+    updated_ingegrated, unmatched = apply_delta_matching_on(spark,
+                                                            ingested_daily,
+                                                            integrated,
+                                                            preprocess_function,
+                                                            postprocess_function,
+                                                            arguments.n_top,
+                                                            arguments.threshold)
+
+    t.end_and_log()
+    if updated_ingegrated is None or unmatched is None:
+        LOGGER.warn('Matching was unable to run for country {}'.format(arguments.country_code))
+    else:
+        save_to_parquet_per_partition('countryCode', arguments.country_code)(updated_ingegrated,
+                                                                             arguments.updated_integrated_output_path,
+                                                                             'overwrite')
+        save_to_parquet_per_partition('countryCode', arguments.country_code)(unmatched,
+                                                                             arguments.unmatched_output_path,
+                                                                             'overwrite')

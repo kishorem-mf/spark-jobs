@@ -140,7 +140,6 @@ def postprocess_operators(similarity: DataFrame, operators: DataFrame):
 def apply_matching_on(records_per_country: DataFrame, spark,
                       preprocess_function,
                       post_process_function,
-                      country_code,
                       n_top,
                       threshold):
     preprocessed = (preprocess_function(records_per_country, 'concatId', True)
@@ -171,8 +170,8 @@ def main(arguments, preprocess_function, post_process_function):
     grouped_matches = apply_matching_on(ddf, spark,
                                         preprocess_function,
                                         post_process_function,
-                                        arguments.country_code,
-                                        arguments.n_top, arguments.threshold)
+                                        arguments.n_top,
+                                        arguments.threshold)
     t.end_and_log()
 
     if grouped_matches is None:

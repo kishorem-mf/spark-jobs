@@ -31,7 +31,7 @@ from string_matching.initial_load_matching import \
     preprocess_contacts, post_process_contact_persons
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--input_file',
                         help='fullpath or location of the input parquet file')
     parser.add_argument('-p', '--output_path', default=None,
