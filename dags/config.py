@@ -72,6 +72,11 @@ def slack_on_databricks_failure_callback(context):
                         task_id=context['task_instance'].task_id,
                         execution_date=context['ts'])
                 )
+    if 'databricks_url' in context:
+        databricks_url = context['databricks_url']
+    else:
+        databricks_url = 'no url available'
+
     template = """
 :skull: An airflow task failed at _{time}_
 It looks like something went wrong with the task *{dag_id}.{task_id}* :anguished:. Better check the logs!
@@ -81,7 +86,7 @@ It looks like something went wrong with the task *{dag_id}.{task_id}* :anguished
            dag_id=str(context['dag'].dag_id),
            time=str(context['ts']),
            airflow_log=log_link,
-           databricks_log=context['databricks_url'])
+           databricks_log=databricks_url)
 
     slack_token = Variable.get('slack_airflow_token')
     operator = SlackAPIPostOperator(

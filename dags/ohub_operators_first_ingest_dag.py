@@ -22,7 +22,7 @@ default_args.update(
 )
 interval = '@once'
 
-utc_now = datetime.utcnow().strftime('%Y-%m-%d_%H%m%S')
+utc_now = datetime.utcnow().strftime('%Y%m%d_%H%m%S')
 
 with DAG('ohub_operators_first_ingest', default_args=default_args,
          schedule_interval=interval) as dag:
