@@ -1,58 +1,63 @@
 from datetime import datetime
 
 from airflow import DAG
-from airflow.operators.subdag_operator import SubDagOperator
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
-
 from airflow.hooks.base_hook import BaseHook
-from custom_operators.file_from_wasb import FileFromWasbOperator
+from airflow.operators.subdag_operator import SubDagOperator
+
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
-    DatabricksStartClusterOperator, \
-    DatabricksUninstallLibrariesOperator
+    DatabricksCreateClusterOperator
+from custom_operators.file_from_wasb import FileFromWasbOperator
 from operators_config import \
     default_args, \
-    cluster_id, databricks_conn_id, \
+    databricks_conn_id, \
     jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_raw_container, wasb_ingested_container, wasb_intermediate_container, \
-    wasb_integrated_container, wasb_export_container, operator_country_codes
+    wasb_export_container, operator_country_codes
 
 default_args.update(
     {'start_date': datetime(2018, 5, 8)}
 )
 interval = '@once'
 
+utc_now = datetime.utcnow().strftime('%Y-%m-%d_%H%m%S')
+
 with DAG('ohub_operators_first_ingest', default_args=default_args,
          schedule_interval=interval) as dag:
-    start_cluster = DatabricksStartClusterOperator(
-        task_id='start_cluster',
-        cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id
+
+    cluster_name = "ohub_operators_{}".format(utc_now)
+
+    create_cluster = DatabricksCreateClusterOperator(
+        task_id='create_cluster',
+        databricks_conn_id=databricks_conn_id,
+        cluster_config = {
+            "cluster_name": cluster_name,
+            "spark_version": "4.0.x-scala2.11",
+            "node_type_id": "Standard_DS5_v2",
+            "autoscale": {
+                "min_workers": 4,
+                "max_workers": 12
+            },
+            "autotermination_minutes": 30,
+            "spark_env_vars": {
+                "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+            },
+        }
     )
 
     terminate_cluster = DatabricksTerminateClusterOperator(
         task_id='terminate_cluster',
-        cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id
-    )
-
-    uninstall_old_libraries = DatabricksUninstallLibrariesOperator(
-        task_id='uninstall_old_libraries',
-        cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
-        libraries_to_uninstall=[{
-            'jar': jar,
-            'egg': egg,
-        }]
     )
 
     postgres_connection = BaseHook.get_connection('postgres_channels')
 
     operators_file_interface_to_parquet = DatabricksSubmitRunOperator(
         task_id="operators_file_interface_to_parquet",
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -84,7 +89,7 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
             DatabricksSubmitRunOperator(
                 dag=sub_dag,
                 task_id='match_operators_{}'.format(code),
-                existing_cluster_id=cluster_id,
+                cluster_name=cluster_name,
                 databricks_conn_id=databricks_conn_id,
                 libraries=[
                     {'egg': egg}
@@ -109,7 +114,7 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
 
     merge_operators = DatabricksSubmitRunOperator(
         task_id='merge_operators',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -131,7 +136,7 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
 
     operators_to_acm = DatabricksSubmitRunOperator(
         task_id="operators_to_acm",
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -164,6 +169,6 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         ssh_conn_id='acm_sftp_ssh',
         operation=SFTPOperation.PUT)
 
-    start_cluster >> uninstall_old_libraries >> operators_file_interface_to_parquet >> match_per_country
+    create_cluster >> operators_file_interface_to_parquet >> match_per_country
     match_per_country >> merge_operators >> operators_to_acm >> terminate_cluster
     operators_to_acm >> operators_acm_from_wasb >> operators_ftp_to_acm
