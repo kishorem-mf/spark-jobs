@@ -44,4 +44,5 @@ pipelines:
           - databricks fs cp --overwrite string_matching_package/match_operators.py dbfs:/libraries/name_matching/match_operators.py
           - databricks fs cp --overwrite string_matching_package/match_contacts.py dbfs:/libraries/name_matching/match_contacts.py
           - databricks fs cp --overwrite string_matching_package/delta_operators.py dbfs:/libraries/name_matching/delta_operators.py
+          - databricks fs cp --overwrite string_matching_package/delta_contacts.py dbfs:/libraries/name_matching/delta_contacts.py
 
