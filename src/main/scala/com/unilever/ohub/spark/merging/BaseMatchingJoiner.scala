@@ -13,8 +13,6 @@ import scala.reflect.runtime.universe._
 
 case class MatchingResult(sourceId: String, targetId: String, countryCode: String)
 
-case class ConcatId(concatId: String)
-
 case class DomainEntityJoinConfig(
     matchingInputFile: String = "matching-input-file",
     entityInputFile: String = "entity-input-file",
@@ -69,8 +67,8 @@ abstract class BaseMatchingJoiner[T <: DomainEntity: TypeTag] extends SparkJob[D
     import spark.implicits._
 
     val matchedIds = matched
-      .flatMap(_.map(c ⇒ ConcatId(c.concatId)))
-      .as[ConcatId]
+      .flatMap(_.map(c ⇒ c.concatId))
+      .toDF("concatId")
       .distinct
 
     allEntities
