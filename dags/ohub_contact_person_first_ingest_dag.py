@@ -116,9 +116,9 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
             {'jar': jar}
         ],
         spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonMerging",
+            'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonMatchingJoiner",
             'parameters': ['--matchingInputFile', intermediate_bucket.format(date='{{ds}}', fn='contacts_matched'),
-                           '--contactsInputFile', ingested_bucket.format(date='{{ds}}',
+                           '--entityInputFile', ingested_bucket.format(date='{{ds}}',
                                                                          fn='contactpersons',
                                                                          channel='*'),
                            '--outputFile', intermediate_bucket.format(date='{{ds}}', fn='contactpersons'),
@@ -126,7 +126,8 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
                            '--postgressUsername', postgres_connection.login,
                            '--postgressPassword', postgres_connection.password,
                            '--postgressDB', postgres_connection.schema]
-        })
+        }
+    )
 
     contact_person_referencing = DatabricksSubmitRunOperator(
         task_id='contact_person_referencing',
@@ -147,7 +148,8 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
                            '--postgressUsername', postgres_connection.login,
                            '--postgressPassword', postgres_connection.password,
                            '--postgressDB', postgres_connection.schema]
-        })
+        }
+    )
 
     op_file = 'acm/UFS_RECIPIENTS_{{ds_nodash}}000000.csv'
 

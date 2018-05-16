@@ -113,24 +113,25 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
     )
 
     merge_operators = DatabricksSubmitRunOperator(
-        task_id='merge_operators',
+        task_id='join_operators',
         cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
         ],
         spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
+            'main_class_name': "com.unilever.ohub.spark.merging.OperatorMatchingJoiner",
             'parameters': ['--matchingInputFile', intermediate_bucket.format(date='{{ds}}', fn='operators_matched'),
-                           '--operatorInputFile', ingested_bucket.format(date='{{ds}}',
-                                                                         fn='operators',
-                                                                         channel='*'),
+                           '--entityInputFile', ingested_bucket.format(date='{{ds}}',
+                                                                       fn='operators',
+                                                                       channel='*'),
                            '--outputFile', integrated_bucket.format(date='{{ds}}', fn='operators'),
                            '--postgressUrl', postgres_connection.host,
                            '--postgressUsername', postgres_connection.login,
                            '--postgressPassword', postgres_connection.password,
                            '--postgressDB', postgres_connection.schema]
-        })
+        }
+    )
 
     op_file = 'acm/UFS_OPERATORS_{{ds_nodash}}000000.csv'
 
@@ -167,7 +168,8 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         local_filepath=tmp_file,
         remote_filepath='/incoming/temp/ohub_2_test/{}'.format(tmp_file.split('/')[-1]),
         ssh_conn_id='acm_sftp_ssh',
-        operation=SFTPOperation.PUT)
+        operation=SFTPOperation.PUT
+    )
 
     create_cluster >> operators_file_interface_to_parquet >> match_per_country
     match_per_country >> merge_operators >> operators_to_acm >> terminate_cluster
