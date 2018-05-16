@@ -6,4 +6,8 @@ omit =
     conftest.py
     setup.py
     tests/*
+    delta_contacts.py
+    delta_operators.py
+    match_operators.py
+    match_contacts.py
     **/__init__.py

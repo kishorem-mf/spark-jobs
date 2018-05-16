@@ -1,6 +1,6 @@
 from typing import List
 
-import pytest
+from pyspark.sql.types import *
 from string_matching import entity_matching as victim
 
 
@@ -84,7 +84,7 @@ class TestMatchingOperators(object):
         res = victim.apply_matching_on(ddf, spark,
                                        victim.preprocess_operators,
                                        victim.postprocess_operators,
-                                       'NL', 1500, 0.8).select('sourceId', 'targetId').sort('targetId').collect()
+                                       1500, 0.8).select('sourceId', 'targetId').sort('targetId').collect()
         assert len(res) == 2
         sources = [_[0] for _ in res]
         targets = [_[1] for _ in res]
@@ -95,28 +95,31 @@ class TestMatchingOperators(object):
 class TestMatchingContactPersons(object):
 
     def create_ddf(self, spark, data: List[tuple]):
-        return (spark.createDataFrame(data)
-                .toDF('concatId', 'countryCode', 'firstName', 'lastName',
-                      'city', 'street', 'mobilePhoneNumber', 'emailAddress',
-                      'zipCode', 'houseNumber'))
+        schema = StructType([
+            StructField("concatId", StringType(), True),
+            StructField("countryCode", StringType(), True),
+            StructField("firstName", StringType(), True),
+            StructField("lastName", StringType(), True),
+            StructField("city", StringType(), True),
+            StructField("street", StringType(), True),
+            StructField("mobilePhoneNumber", StringType(), True),
+            StructField("emailAddress", StringType(), True),
+            StructField("zipCode", StringType(), True),
+            StructField("houseNumber", StringType(), True),
+        ])
+        return spark.createDataFrame(data, schema)
 
     def test_full_matching(self, spark):
         data = [
             ('1', 'NL', 'Dave', 'Mustaine', 'Amsterdam  ', '@barAvenue', None, None, '5314BE', '14b'),
             ('2', 'NL', 'Dave', 'Mustaine', 'Amsterdam  ', '@barAvenue', None, None, '5314BE', '14b'),
-            ('3', 'NL', 'Dave', 'Mustaire', 'Amsterdam  ', '@barAvenue', None, None, '5314BE', '14b'),
-            ('1000', None, None, 'foo', 'foo', 'foo', 'phone', 'email', 'foo', 'foo'),
-            ('1003', 'NL', 'Ritchie', 'Blackmore', 'Utrecht', 'fooStreet', '1234AB', None, None, '8'),
-            ('1004', 'DE', 'Bruce', 'Dickinson', 'Utrecht', 'Accacia Avenue', '6666XX', None, None, '22'),
-            ('1005', 'DE', None, None, 'bar', 'bar', '1234AB', None, None, '43'),
-            ('1006', 'DE', '', '', 'bar', 'bar', '1234AB', None, None, '43'),
-            ('1007', 'DE', 'firstName', 'emptyStreet', 'bar', '', '1234AB', None, None, None)
+            ('3', 'NL', 'Dave', 'Mustaire', 'Amsterdam  ', '@barAvenue', None, None, '5314BE', '14b')
         ]
         ddf = self.create_ddf(spark, data)
         res = victim.apply_matching_on(ddf, spark,
                                        victim.preprocess_contact_persons,
                                        victim.postprocess_contact_persons,
-                                       'NL', 1500, 0.8).select('sourceId', 'targetId').sort('targetId').collect()
+                                       1500, 0.8).select('sourceId', 'targetId').sort('targetId').collect()
         assert len(res) == 1
         sources = [_[0] for _ in res]
         targets = [_[1] for _ in res]

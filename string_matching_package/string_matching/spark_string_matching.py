@@ -284,6 +284,10 @@ def match_strings(spark, df,
                           )
 
     names_vs_ngrams = dense_to_sparse_ddf(vectorized_strings, row_number_column)
+
+    if names_vs_ngrams.count() == 0:
+        return spark.createDataFrame([], similarity_schema)
+
     csr_names_vs_ngrams = sparse_to_csr_matrix(names_vs_ngrams, row_number_column)
 
     if df2:
@@ -294,6 +298,10 @@ def match_strings(spark, df,
                                 )
 
         names_vs_ngrams_2 = dense_to_sparse_ddf(vectorized_strings_2, row_number_column)
+
+        if names_vs_ngrams_2.count() == 0:
+            return spark.createDataFrame([], similarity_schema)
+
         csr_names_vs_ngrams_2 = sparse_to_csr_matrix(names_vs_ngrams_2, row_number_column)
         csr_rdd_transpose = spark.sparkContext.broadcast(
             csr_names_vs_ngrams_2.transpose()
