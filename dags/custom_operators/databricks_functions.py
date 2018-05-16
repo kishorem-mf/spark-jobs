@@ -257,13 +257,16 @@ class DatabricksStartClusterOperator(BaseDatabricksOperator):
         hook = self.get_hook()
         logging.info('Starting Databricks cluster with id %s"', self.cluster_id)
 
-        hook._do_api_call(('POST', 'api/2.0/clusters/start'), {'cluster_id': self.cluster_id})
+        run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
+        if run_state == 'RUNNING':
+            logging.info('Cluster already running.'.format(self.task_id))
+            return
 
+        hook._do_api_call(('POST', 'api/2.0/clusters/start'), {'cluster_id': self.cluster_id})
         while True:
             run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
             if run_state == 'RUNNING':
-                logging.info('{} completed successfully.'.format(
-                    self.task_id))
+                logging.info('{} completed successfully.'.format(self.task_id))
                 return
             elif run_state == 'TERMINATED':
                 error_message = 'Cluster start failed with terminal state: {s}'.format(
