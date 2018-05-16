@@ -6,11 +6,11 @@ import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.tsv2parquet.TestDomainDataProvider
 import org.apache.spark.sql.Dataset
 
-class ContactPersonMergingSpec extends SparkJobSpec with TestContactPersons {
+class ContactPersonExactMatcherSpec extends SparkJobSpec with TestContactPersons {
   import spark.implicits._
 
   /*
-    Note: for the ContactPersonMerging spark job only when there is an exact match on the concatenated string of emailAddress & mobileNumber
+    Note: for the ContactPersonExactMatcher spark job only when there is an exact match on the concatenated string of emailAddress & mobileNumber
     then contact persons match, hence the expected results below. This is a business decision and thus implemented accordingly.
    */
 
@@ -34,7 +34,7 @@ class ContactPersonMergingSpec extends SparkJobSpec with TestContactPersons {
 
   describe("ContactPersonMerging.transform") {
     it("should group all contact persons with the same email address and mobile phone number") {
-      val result: Dataset[ContactPerson] = ContactPersonMerging.transform(
+      val result: Dataset[ContactPerson] = ContactPersonExactMatcher.transform(
         spark, matchedContactPersons, ingestedContactPersons, TestDomainDataProvider().sourcePreferences
       )
 

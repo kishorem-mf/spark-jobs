@@ -10,9 +10,7 @@ import org.apache.spark.sql.{ Dataset, SparkSession }
 import org.apache.spark.sql.functions._
 import scopt.OptionParser
 
-case class GroupObject(group: String, contactPerson: ContactPerson)
-
-case class ContactPersonMergeConfig(
+case class ContactPersonExactMatchConfig(
     matchingInputFile: String = "matched-input-file",
     contactsInputFile: String = "contacts-input-file",
     outputFile: String = "path-to-output-file",
@@ -22,7 +20,7 @@ case class ContactPersonMergeConfig(
     postgressDB: String = "postgress-db"
 ) extends SparkJobConfig
 
-object ContactPersonMerging extends SparkJob[ContactPersonMergeConfig] with GoldenRecordPicking[ContactPerson] {
+object ContactPersonExactMatcher extends SparkJob[ContactPersonExactMatchConfig] with GoldenRecordPicking[ContactPerson] {
 
   def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])(contactPersons: Seq[ContactPerson]): Seq[ContactPerson] = {
     val goldenRecord = pickGoldenRecord(sourcePreference, contactPersons)
@@ -38,11 +36,10 @@ object ContactPersonMerging extends SparkJob[ContactPersonMergeConfig] with Gold
   ): Dataset[ContactPerson] = {
     import spark.implicits._
 
-    // TODO OHUB-541: merge matched with what happens here (see operator merging)
-
     ingestedContactPersons
       .filter(cpn ⇒ cpn.emailAddress.isDefined || cpn.mobileNumber.isDefined)
-      .map(cpn ⇒ GroupObject(cpn.emailAddress.getOrElse("") + cpn.mobileNumber.getOrElse(""), cpn))
+      .map(cpn ⇒ (cpn.emailAddress.getOrElse("") + cpn.mobileNumber.getOrElse(""), cpn))
+      .toDF("group", "contactPerson")
       .groupBy($"group")
       .agg(collect_list("contactPerson").as("contactPersons"))
       .as[(String, Seq[ContactPerson])]
@@ -51,10 +48,10 @@ object ContactPersonMerging extends SparkJob[ContactPersonMergeConfig] with Gold
       }
   }
 
-  private[spark] def defaultConfig: ContactPersonMergeConfig = ContactPersonMergeConfig()
+  private[spark] def defaultConfig: ContactPersonExactMatchConfig = ContactPersonExactMatchConfig()
 
-  private[spark] def configParser(): OptionParser[ContactPersonMergeConfig] =
-    new scopt.OptionParser[ContactPersonMergeConfig]("Contact person merging") {
+  private[spark] def configParser(): OptionParser[ContactPersonExactMatchConfig] =
+    new scopt.OptionParser[ContactPersonExactMatchConfig]("Contact person merging") {
       head("merges contact persons from name matching and exact matching.", "1.0")
       opt[String]("matchingInputFile") required () action { (x, c) ⇒
         c.copy(matchingInputFile = x)
@@ -82,11 +79,11 @@ object ContactPersonMerging extends SparkJob[ContactPersonMergeConfig] with Gold
       help("help") text "help text"
     }
 
-  override def run(spark: SparkSession, config: ContactPersonMergeConfig, storage: Storage): Unit = {
+  override def run(spark: SparkSession, config: ContactPersonExactMatchConfig, storage: Storage): Unit = {
     run(spark, config, storage, DomainDataProvider(spark, config.postgressUrl, config.postgressDB, config.postgressUsername, config.postgressPassword))
   }
 
-  protected[merging] def run(spark: SparkSession, config: ContactPersonMergeConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
+  protected[merging] def run(spark: SparkSession, config: ContactPersonExactMatchConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     import spark.implicits._
 
     log.info(s"Merging contact persons from [${config.matchingInputFile}] with [${config.contactsInputFile}] to [${config.outputFile}]")

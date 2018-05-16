@@ -5,7 +5,7 @@ import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
 import org.apache.spark.sql.Dataset
 import com.unilever.ohub.spark.SharedSparkSession.spark
 
-class OperatorMergingSpec extends SparkJobSpec with TestOperators {
+class OperatorMatchingJoinerSpec extends SparkJobSpec with TestOperators {
   import spark.implicits._
 
   private val MATCHES: Dataset[MatchingResult] = Seq(
@@ -31,7 +31,7 @@ class OperatorMergingSpec extends SparkJobSpec with TestOperators {
   describe("groupMatchedOperators") {
     it("should group all operators based on the target from the matching algorithm") {
 
-      val res = OperatorMerging.groupMatchedOperators(spark, OPERATORS, MATCHES)
+      val res = OperatorMatchingJoiner.groupMatchedEntities(spark, OPERATORS, MATCHES)
         .collect
         .sortBy(_.length)
 
@@ -61,7 +61,7 @@ class OperatorMergingSpec extends SparkJobSpec with TestOperators {
           defaultOperatorWithSourceNameAndCountryCode("y", "US"))
       ).toDataset
 
-      val res = OperatorMerging.findUnmatchedOperators(spark, OPERATORS, matchedOperators)
+      val res = OperatorMatchingJoiner.findUnmatchedEntities(spark, OPERATORS, matchedOperators)
         .collect
 
       res.length shouldBe 1
@@ -73,7 +73,8 @@ class OperatorMergingSpec extends SparkJobSpec with TestOperators {
   describe("transform") {
     it("should create ohub ids for all matched and unmatched operators") {
       val sourcePreferences = Map("a" -> 1, "b" -> 2, "c" -> 3, "d" -> 4, "x" -> 4, "y" -> 5)
-      val res = OperatorMerging.transform(spark, OPERATORS, MATCHES, sourcePreferences)
+      val res = OperatorMatchingJoiner.transform(spark, OPERATORS, MATCHES,
+        OperatorMatchingJoiner.markGoldenRecordAndGroupId(sourcePreferences))
         .collect
         .sortBy(_.sourceName)
 
