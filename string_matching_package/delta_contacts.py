@@ -20,10 +20,10 @@ from string_matching.entity_delta_matching import \
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--integrated_operators_input_path',
-                        help='full path or location of the parquet file with integrated operator data')
-    parser.add_argument('-g', '--ingested_daily_operators_input_path',
-                        help='full path or location of the parquet file with ingested daily operator data')
+    parser.add_argument('-f', '--integrated_contact_persons_input_path',
+                        help='full path or location of the parquet file with integrated contact person data')
+    parser.add_argument('-g', '--ingested_daily_contact_persons_input_path',
+                        help='full path or location of the parquet file with ingested daily contact person data')
 
     parser.add_argument('-p', '--updated_integrated_output_path', default=None,
                         help='write results in a parquet file to this full path or location directory')
