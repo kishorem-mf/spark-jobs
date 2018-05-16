@@ -1,3 +1,41 @@
+# Local development
+
+# Local development
+
+Make sure you have installed docker
+
+Pull and step into the docker container with
+
+```bash
+docker pull fokkodriesprong/docker-pyspark
+docker run -it -v $(pwd):/tmp fokkodriesprong/docker-pyspark /bin/bash
+```
+
+or in command line:
+```cmd
+docker pull fokkodriesprong/docker-pyspark
+docker run -it -v %CD%:/tmp fokkodriesprong/docker-pyspark /bin/bash
+```
+
+Inside the container, `cd` into the working directory and install the python environment
+```bash
+cd /tmp
+conda env create -f environment.yml
+source activate name-matching
+```
+
+Now you can run all the tests with
+```bash
+cd string_matching_package
+python setup.py pytest --addopts "--cov-config .coveragerc --cov=./ tests"
+```
+If you get weird path errors (all paths should be relative to the docker container), remove all `__pycache__` folders with
+```bash
+find  . -name "*pycache*" | exec rm -rf {} \;
+```
+and rerun the tests. After making changes 
+
+
 # Name-Matching
 
 Requirements for the cluster and Driver:

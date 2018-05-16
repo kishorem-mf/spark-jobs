@@ -16,10 +16,12 @@ def spark(request):
         shutil.rmtree('.cache')
     except OSError:
         pass
-    return (SparkSession
-            .builder
-            .master("local[2]")
-            .appName("pytest")
-            .config("spark.ui.enabled", "false")
-            .getOrCreate()
-            )
+    spark = (
+        SparkSession.builder
+        .master("local[2]")
+        .appName("pytest")
+        .config("spark.ui.enabled", "false")
+        .getOrCreate()
+    )
+
+    return spark
