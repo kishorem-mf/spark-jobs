@@ -4,7 +4,7 @@ pipelines:
         name: Run tests
         image: timvancann/spark-sbt-ci:2.11-2.1.0
         script:
-          - sbt coverage test coverageReport
+          - sbt clean coverage test coverageReport
 
   branches:
     master:
@@ -12,11 +12,10 @@ pipelines:
           name: Run tests
           image: timvancann/spark-sbt-ci:2.11-2.1.0
           script:
-            - sbt coverage test coverageReport
+            - sbt clean coverage test coverageReport
       - step:
           name: Build assembly artifact
           image: timvancann/spark-sbt-ci:2.11-2.1.0
-          script:
           script:
             - sbt -DsparkDependencyType=provided assembly
           artifacts:
