@@ -28,7 +28,7 @@ import argparse
 
 from string_matching.initial_load_matching import \
     main, \
-    preprocess_contacts, match_contacts_for_country
+    preprocess_contacts, post_process_contact_persons
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some integers.')
@@ -46,4 +46,4 @@ if __name__ == '__main__':
                         help='keep N top similarities for each record.')
     args = parser.parse_args()
 
-    main(args, preprocess_contacts, match_contacts_for_country)
+    main(args, preprocess_contacts, post_process_contact_persons)

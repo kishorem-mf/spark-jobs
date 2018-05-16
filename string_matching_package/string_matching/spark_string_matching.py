@@ -283,18 +283,8 @@ def match_strings(spark, df,
                           .select([row_number_column, VECTORIZE_STRING_COLUMN_NAME])
                           )
 
-    names_vs_ngrams = dense_to_sparse_ddf(vectorized_strings,
-                                          row_number_column)
-    try:
-        csr_names_vs_ngrams = sparse_to_csr_matrix(names_vs_ngrams,
-                                                   row_number_column)
-    except TypeError:  # special case where all the string are exactly the same
-        csr_names_vs_ngrams = sparse_to_csr_matrix(vectorized_strings
-                                                   .withColumn('ngram_index', sf.lit(0))
-                                                   .withColumn('value', sf.lit(1))
-                                                   .drop('vectorized_string'),
-                                                   row_number_column
-                                                   )
+    names_vs_ngrams = dense_to_sparse_ddf(vectorized_strings, row_number_column)
+    csr_names_vs_ngrams = sparse_to_csr_matrix(names_vs_ngrams, row_number_column)
 
     if df2:
         upper_triangular = False
@@ -303,10 +293,8 @@ def match_strings(spark, df,
                                 .select([row_number_column, VECTORIZE_STRING_COLUMN_NAME])
                                 )
 
-        names_vs_ngrams_2 = dense_to_sparse_ddf(vectorized_strings_2,
-                                                row_number_column)
-        csr_names_vs_ngrams_2 = sparse_to_csr_matrix(names_vs_ngrams_2,
-                                                     row_number_column)
+        names_vs_ngrams_2 = dense_to_sparse_ddf(vectorized_strings_2, row_number_column)
+        csr_names_vs_ngrams_2 = sparse_to_csr_matrix(names_vs_ngrams_2, row_number_column)
         csr_rdd_transpose = spark.sparkContext.broadcast(
             csr_names_vs_ngrams_2.transpose()
         )
@@ -321,8 +309,7 @@ def match_strings(spark, df,
     del csr_names_vs_ngrams
 
     chunks_rdd.persist()
-    similarity = calculate_similarity(chunks_rdd, csr_rdd_transpose,
-                                      n_top, threshold, upper_triangular)
+    similarity = calculate_similarity(chunks_rdd, csr_rdd_transpose, n_top, threshold, upper_triangular)
     chunks_rdd.unpersist()
 
     return similarity

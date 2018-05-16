@@ -3,8 +3,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
-from .utils import start_spark, Timer, read_parquet, get_country_codes, \
-    save_to_parquet_per_partition, group_matches, select_and_repartition_country, \
+from .utils import start_spark, Timer, read_parquet, \
+    save_to_parquet_per_partition, group_matches, \
     clean_operator_fields, create_operator_matching_string, clean_contactperson_fields, \
     create_contactperson_matching_string
 
@@ -14,9 +14,31 @@ MINIMUM_DOCUMENT_FREQUENCY = 2
 VOCABULARY_SIZE = 1500
 MIN_LEVENSHTEIN_DISTANCE = 5
 LOGGER = None
+MINIMUM_ENTRIES_PER_COUNTRY = 3
 
 
-def preprocess_contacts(ddf: DataFrame) -> DataFrame:
+def match_entity_for_country(spark: SparkSession,
+                             entities: DataFrame,
+                             n_top: int,
+                             threshold: float):
+    from .spark_string_matching import match_strings
+    """Match entities for a single country"""
+    similarity = match_strings(
+        spark,
+        df=entities,
+        string_column='matching_string',
+        row_number_column='name_index',
+        n_top=n_top,
+        threshold=threshold,
+        n_gram=N_GRAMS,
+        min_document_frequency=MINIMUM_DOCUMENT_FREQUENCY,
+        max_vocabulary_size=VOCABULARY_SIZE,
+        matrix_chunks_rows=MATRIX_CHUNK_ROWS
+    )
+    return similarity
+
+
+def preprocess_contact_persons(ddf: DataFrame, id_column: str, *args) -> DataFrame:
     """Some pre-processing
         - keep only contacts without e-mail AND without mobile phone number
         - remove contacts without first AND without last name (cleansed)
@@ -25,7 +47,7 @@ def preprocess_contacts(ddf: DataFrame) -> DataFrame:
         - create matching-string
         - select only necessary columns
     """
-    w = Window.partitionBy('countryCode').orderBy(sf.asc('id'))
+    w = Window.partitionBy('countryCode').orderBy(sf.asc(id_column))
     cleaned = clean_contactperson_fields(ddf, 'firstName', 'lastName', 'street', 'houseNumber', 'city', 'zipCode')
 
     filtered = (cleaned
@@ -38,58 +60,36 @@ def preprocess_contacts(ddf: DataFrame) -> DataFrame:
                 # same logic but for an empty string
                 .filter((sf.col('streetCleansed') != '') &
                         ((sf.col('firstNameCleansed') != '') | (sf.col('lastNameCleansed') != '')))
-                .withColumnRenamed('concatId', 'id')
                 )
 
     return (create_contactperson_matching_string(filtered)
             .filter(sf.col('matching_string') != '')
             .withColumn('name_index', sf.row_number().over(w) - 1)
-            .select('name_index', 'id', 'matching_string', 'countryCode', 'firstNameCleansed', 'lastNameCleansed',
+            .select('name_index', id_column, 'matching_string', 'firstNameCleansed', 'lastNameCleansed',
                     'streetCleansed', 'zipCodeCleansed', 'cityCleansed')
             )
 
 
-def match_contacts_for_country(spark: SparkSession, country_code: str, preprocessed_contacts: DataFrame,
-                               n_top: int, threshold: float):
-    """Match contacts for a single country"""
-    from .spark_string_matching import match_strings
-    contacts = select_and_repartition_country(preprocessed_contacts, 'countryCode', country_code)
-    similarity = match_strings(
-        spark,
-        df=contacts,
-        string_column='matching_string',
-        row_number_column='name_index',
-        n_top=n_top,
-        threshold=0.2,
-        n_gram=N_GRAMS,
-        min_document_frequency=MINIMUM_DOCUMENT_FREQUENCY,
-        max_vocabulary_size=VOCABULARY_SIZE,
-        matrix_chunks_rows=MATRIX_CHUNK_ROWS
-    )
-    similarity_filtered = join_contact_columns_and_filter(similarity, contacts, country_code)
-    grouped_similarity = group_matches(similarity_filtered)
-    return grouped_similarity
-
-
-def join_contact_columns_and_filter(similarity: DataFrame, contacts: DataFrame, country_code: str) -> DataFrame:
+def postprocess_contact_persons(similarity: DataFrame,
+                                contacts: DataFrame):
     """Join back the original columns (street, zip, etc.) after matching and filter matches as follows:
         - keep only the matches with exactly matching zip code
             - if no zip code is present: keep match if cities (cleansed) match exactly
         - keep only the matches where Levenshtein distance between streets (cleansed) is lower than threshold (5)
     """
-    return (similarity
+    similarity_filtered = (
+        similarity
             .join(contacts, similarity['i'] == contacts['name_index'],
                   how='left').drop('name_index')
-            .selectExpr('i', 'j', 'id as sourceId',
+            .selectExpr('i', 'j', 'concatId as sourceId',
                         'similarity', 'matching_string as sourceName',
                         'streetCleansed as sourceStreet',
                         'zipCodeCleansed as sourceZipCode',
                         'cityCleansed as sourceCity')
             .join(contacts, similarity['j'] == contacts['name_index'],
                   how='left').drop('name_index')
-            .withColumn('countryCode', sf.lit(country_code))
-            .selectExpr('i', 'j', 'countryCode', 'sourceId',
-                        'id as targetId', 'similarity',
+            .selectExpr('i', 'j', 'sourceId',
+                        'concatId as targetId', 'similarity',
                         'sourceName', 'matching_string as targetName',
                         'sourceStreet', 'streetCleansed as targetStreet',
                         'sourceZipCode', 'zipCodeCleansed as targetZipCode',
@@ -103,73 +103,60 @@ def join_contact_columns_and_filter(similarity: DataFrame, contacts: DataFrame, 
                     )
             .withColumn('street_lev_distance', sf.levenshtein(sf.col('sourceStreet'), sf.col('targetStreet')))
             .filter(sf.col('street_lev_distance') < MIN_LEVENSHTEIN_DISTANCE)
-            )
-
-
-def match_operators_for_country(spark: SparkSession, country_code: str, all_operators: DataFrame,
-                                n_top: int, threshold: float):
-    from .spark_string_matching import match_strings
-    """Match operators for a single country"""
-    operators = select_and_repartition_country(all_operators, 'countryCode', country_code)
-    similarity = match_strings(
-        spark,
-        df=operators,
-        string_column='matching_string',
-        row_number_column='name_index',
-        n_top=n_top,
-        threshold=threshold,
-        n_gram=N_GRAMS,
-        min_document_frequency=MINIMUM_DOCUMENT_FREQUENCY,
-        max_vocabulary_size=VOCABULARY_SIZE,
-        matrix_chunks_rows=MATRIX_CHUNK_ROWS
     )
-    grouped_similarity = group_matches(similarity)
-    return join_operators_columns(grouped_similarity, operators, country_code)
+    grouped_similarity = group_matches(similarity_filtered)
+    return grouped_similarity
 
 
-def preprocess_operators(ddf: DataFrame) -> DataFrame:
+def preprocess_operators(ddf: DataFrame, id_column: str, drop_if_name_null=False) -> DataFrame:
     """Create a unique ID and the string that is used for matching and select only necessary columns"""
-    w = Window.partitionBy('countryCode').orderBy(sf.asc('id'))
+    w = Window.partitionBy('countryCode').orderBy(sf.asc(id_column))
     ddf = clean_operator_fields(ddf, 'name', 'city', 'street', 'houseNumber', 'zipCode')
 
-    ddf = (ddf.na.drop(subset=['nameCleansed'])
-           .withColumnRenamed('concatId', 'id')
-           .fillna(''))
+    if drop_if_name_null:
+        ddf = ddf.na.drop(subset=['nameCleansed'])
 
     return (create_operator_matching_string(ddf)
             .filter(sf.col('matching_string') != '')
             .withColumn('name_index', sf.row_number().over(w) - 1)
-            .select('name_index', 'id', 'matching_string', 'countryCode')
+            .select('name_index', id_column, 'matching_string')
             )
 
 
-def join_operators_columns(grouped_similarity: DataFrame, operators: DataFrame, country_code: str) -> DataFrame:
-    """Join back the original name and ID columns after matching"""
+def postprocess_operators(similarity: DataFrame, operators: DataFrame):
+    grouped_similarity = group_matches(similarity)
+
     return (grouped_similarity
             .join(operators, grouped_similarity['i'] == operators['name_index'],
                   how='left').drop('name_index')
-            .selectExpr('i', 'j', 'id as sourceId',
+            .selectExpr('i', 'j', 'concatId as sourceId',
                         'similarity', 'matching_string as sourceName')
             .join(operators, grouped_similarity['j'] == operators['name_index'],
                   how='left').drop('name_index')
-            .withColumn('countryCode', sf.lit(country_code))
-            .selectExpr('countryCode', 'sourceId', 'id as targetId',
+            .selectExpr('sourceId', 'concatId as targetId',
                         'similarity', 'sourceName', 'matching_string as targetName'))
 
 
-def apply_matching_on(records_per_country: DataFrame, spark, preprocess_function, match_function, country_code, n_top,
+def apply_matching_on(records_per_country: DataFrame, spark,
+                      preprocess_function,
+                      post_process_function,
+                      country_code,
+                      n_top,
                       threshold):
-    preprocessed = preprocess_function(records_per_country)
-    country_codes = get_country_codes(country_code, preprocessed)
-    return_value = None
+    preprocessed = (preprocess_function(records_per_country, 'concatId', True)
+                    .repartition('concatId')
+                    .sort('concatId', ascending=True)
+                    )
 
-    if len(country_codes) == 1:
-        matches = match_function(spark, country_code, preprocessed, n_top, threshold)
+    return_value = None
+    if preprocessed.count() >= MINIMUM_ENTRIES_PER_COUNTRY:
+        similarity = match_entity_for_country(spark, preprocessed, n_top, threshold)
+        matches = post_process_function(similarity, preprocessed)
         return_value = matches
     return return_value
 
 
-def main(arguments, preprocess_function, match_function):
+def main(arguments, preprocess_function, post_process_function):
     global LOGGER
     spark, LOGGER = start_spark('Matching')
 
@@ -181,7 +168,10 @@ def main(arguments, preprocess_function, match_function):
     t.end_and_log()
 
     t = Timer('Running for country {}'.format(arguments.country_code), LOGGER)
-    grouped_matches = apply_matching_on(ddf, spark, preprocess_function, match_function, arguments.country_code,
+    grouped_matches = apply_matching_on(ddf, spark,
+                                        preprocess_function,
+                                        post_process_function,
+                                        arguments.country_code,
                                         arguments.n_top, arguments.threshold)
     t.end_and_log()
 

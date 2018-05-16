@@ -7,7 +7,6 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
-MINIMUM_ENTRIES_PER_COUNTRY = 3
 LOGGER = None
 
 # characters to be dropped from strings to be compared
@@ -45,21 +44,6 @@ def read_parquet(spark: SparkSession, fn: str, fraction: float) -> DataFrame:
             .read
             .parquet(fn)
             .sample(False, fraction))
-
-
-def get_country_codes(country_code_arg: str, ddf: DataFrame, minimum_entries=MINIMUM_ENTRIES_PER_COUNTRY) -> List[str]:
-    count_per_country = ddf.groupby('countryCode').count()
-    if LOGGER is not None:
-        LOGGER.info("Selecting countries with more than " + str(minimum_entries) + " entries")
-    codes = sorted(count_per_country[count_per_country['count'] > minimum_entries]
-                   .select('countryCode')
-                   .distinct()
-                   .rdd.map(lambda r: r[0]).collect())
-    if country_code_arg != 'all':
-        codes = set(codes) & {country_code_arg}
-    if LOGGER is not None:
-        LOGGER.info("Selected countries are: {}".format(codes))
-    return list(codes)
 
 
 def remove_strange_chars_to_lower_and_trim(input: str):
@@ -145,14 +129,6 @@ def create_contactperson_matching_string(ddf: DataFrame):
                             )
 
     return clean_matching_string(with_matching_string)
-
-
-def select_and_repartition_country(ddf: DataFrame, column_name: str, country_code: str) -> DataFrame:
-    return (ddf
-            .filter(sf.col(column_name) == country_code)
-            .drop(column_name)
-            .repartition('id')
-            .sort('id', ascending=True))
 
 
 def group_matches(ddf: DataFrame) -> DataFrame:
