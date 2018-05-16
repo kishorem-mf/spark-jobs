@@ -99,7 +99,8 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
                                                                           fn='operators',
                                                                           channel='*'),
                                    '--output_path', intermediate_bucket.format(date='{{ds}}', fn='operators_matched'),
-                                   '--country_code', code]
+                                   '--country_code', code,
+                                   '--threshold', '0.9']
                 }
             )
 
