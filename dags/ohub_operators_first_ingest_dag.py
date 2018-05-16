@@ -26,13 +26,12 @@ utc_now = datetime.utcnow().strftime('%Y-%m-%d_%H%m%S')
 
 with DAG('ohub_operators_first_ingest', default_args=default_args,
          schedule_interval=interval) as dag:
-
     cluster_name = "ohub_operators_{}".format(utc_now)
 
     create_cluster = DatabricksCreateClusterOperator(
         task_id='create_cluster',
         databricks_conn_id=databricks_conn_id,
-        cluster_config = {
+        cluster_config={
             "cluster_name": cluster_name,
             "spark_version": "4.0.x-scala2.11",
             "node_type_id": "Standard_DS5_v2",
