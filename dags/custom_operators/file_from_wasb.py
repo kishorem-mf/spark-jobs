@@ -1,5 +1,6 @@
 # from: https://github.com/apache/incubator-airflow/blob/master/
 # airflow/contrib/operators/file_to_wasb.py
+import os
 
 from custom_operators.wasb_hook import WasbHook
 from airflow.models import BaseOperator
@@ -39,6 +40,11 @@ class FileFromWasbOperator(BaseOperator):
     def execute(self, context):
         """Upload a file to Azure Blob Storage."""
         hook = WasbHook(wasb_conn_id=self.wasb_conn_id)
+
+        dir = '/'.join(self.file_path.split('/')[:-1])
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
         self.log.info(
             'Downloading {self.file_path} from {self.blob_name} on wasb://{self.container_name}'.format(**locals())
         )
