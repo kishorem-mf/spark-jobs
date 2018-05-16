@@ -1,7 +1,8 @@
 # from: https://github.com/apache/incubator-airflow/blob/master/
 # airflow/contrib/operators/file_to_wasb.py
 
-from airflow.contrib.hooks.wasb_hook import WasbHook
+# from airflow.contrib.hooks.wasb_hook import WasbHook
+from wasb_hook import WasbHook
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
