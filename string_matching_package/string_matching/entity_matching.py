@@ -1,0 +1,182 @@
+from pyspark.sql import DataFrame
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as sf
+from pyspark.sql.window import Window
+
+from .utils import start_spark, Timer, read_parquet, \
+    save_to_parquet_per_partition, group_matches, \
+    clean_operator_fields, create_operator_matching_string, clean_contactperson_fields, \
+    create_contactperson_matching_string
+
+MATRIX_CHUNK_ROWS = 500
+N_GRAMS = 2
+MINIMUM_DOCUMENT_FREQUENCY = 2
+VOCABULARY_SIZE = 1500
+MIN_LEVENSHTEIN_DISTANCE = 5
+LOGGER = None
+MINIMUM_ENTRIES_PER_COUNTRY = 3
+
+
+def match_entity_for_country(spark: SparkSession,
+                             entities: DataFrame,
+                             n_top: int,
+                             threshold: float):
+    from .spark_string_matching import match_strings
+    """Match entities for a single country"""
+    similarity = match_strings(
+        spark,
+        df=entities,
+        string_column='matching_string',
+        row_number_column='name_index',
+        n_top=n_top,
+        threshold=threshold,
+        n_gram=N_GRAMS,
+        min_document_frequency=MINIMUM_DOCUMENT_FREQUENCY,
+        max_vocabulary_size=VOCABULARY_SIZE,
+        matrix_chunks_rows=MATRIX_CHUNK_ROWS
+    )
+    return similarity
+
+
+def preprocess_contact_persons(ddf: DataFrame, id_column: str, *args) -> DataFrame:
+    """Some pre-processing
+        - keep only contacts without e-mail AND without mobile phone number
+        - remove contacts without first AND without last name (cleansed)
+        - remove contacts without a street (cleansed)
+        - create a unique ID
+        - create matching-string
+        - select only necessary columns
+    """
+    w = Window.partitionBy('countryCode').orderBy(sf.asc(id_column))
+    cleaned = clean_contactperson_fields(ddf, 'firstName', 'lastName', 'street', 'houseNumber', 'city', 'zipCode')
+
+    filtered = (cleaned
+                # keep only if no email and phone
+                .filter(sf.isnull(sf.col('emailAddress')) & sf.isnull(sf.col('mobilePhoneNumber')))
+                # drop if no first name and no last name
+                .na.drop(subset=['firstNameCleansed', 'lastNameCleansed'], how='all')
+                # drop if no street
+                .na.drop(subset=['streetCleansed'], how='any')
+                # same logic but for an empty string
+                .filter((sf.col('streetCleansed') != '') &
+                        ((sf.col('firstNameCleansed') != '') | (sf.col('lastNameCleansed') != '')))
+                )
+
+    return (create_contactperson_matching_string(filtered)
+            .filter(sf.col('matching_string') != '')
+            .withColumn('name_index', sf.row_number().over(w) - 1)
+            .select('name_index', id_column, 'matching_string', 'firstNameCleansed', 'lastNameCleansed',
+                    'streetCleansed', 'zipCodeCleansed', 'cityCleansed')
+            )
+
+
+def postprocess_contact_persons(similarity: DataFrame,
+                                contacts: DataFrame):
+    """Join back the original columns (street, zip, etc.) after matching and filter matches as follows:
+        - keep only the matches with exactly matching zip code
+            - if no zip code is present: keep match if cities (cleansed) match exactly
+        - keep only the matches where Levenshtein distance between streets (cleansed) is lower than threshold (5)
+    """
+    similarity_filtered = (similarity
+                           .join(contacts, similarity['i'] == contacts['name_index'],
+                                 how='left').drop('name_index')
+                           .selectExpr('i', 'j', 'concatId as sourceId',
+                                       'similarity', 'matching_string as sourceName',
+                                       'streetCleansed as sourceStreet',
+                                       'zipCodeCleansed as sourceZipCode',
+                                       'cityCleansed as sourceCity')
+                           .join(contacts, similarity['j'] == contacts['name_index'],
+                                 how='left').drop('name_index')
+                           .selectExpr('i', 'j', 'sourceId',
+                                       'concatId as targetId', 'similarity',
+                                       'sourceName', 'matching_string as targetName',
+                                       'sourceStreet', 'streetCleansed as targetStreet',
+                                       'sourceZipCode', 'zipCodeCleansed as targetZipCode',
+                                       'sourceCity', 'cityCleansed as targetCity')
+                           .filter((sf.col('sourceZipCode') == sf.col('targetZipCode')) |
+                                   (
+                                           sf.isnull('sourceZipCode') &
+                                           sf.isnull('targetZipCode') &
+                                           (sf.col('sourceCity') == sf.col('targetCity'))
+                                   )
+                                   )
+                           .withColumn('street_lev_distance',
+                                       sf.levenshtein(sf.col('sourceStreet'), sf.col('targetStreet')))
+                           .filter(sf.col('street_lev_distance') < MIN_LEVENSHTEIN_DISTANCE)
+                           )
+    grouped_similarity = group_matches(similarity_filtered)
+    return grouped_similarity
+
+
+def preprocess_operators(ddf: DataFrame, id_column: str, drop_if_name_null=False) -> DataFrame:
+    """Create a unique ID and the string that is used for matching and select only necessary columns"""
+    w = Window.partitionBy('countryCode').orderBy(sf.asc(id_column))
+    ddf = clean_operator_fields(ddf, 'name', 'city', 'street', 'houseNumber', 'zipCode')
+
+    if drop_if_name_null:
+        ddf = ddf.na.drop(subset=['nameCleansed'])
+
+    return (create_operator_matching_string(ddf)
+            .filter(sf.col('matching_string') != '')
+            .withColumn('name_index', sf.row_number().over(w) - 1)
+            .select('name_index', id_column, 'matching_string')
+            )
+
+
+def postprocess_operators(similarity: DataFrame, operators: DataFrame):
+    grouped_similarity = group_matches(similarity)
+
+    return (grouped_similarity
+            .join(operators, grouped_similarity['i'] == operators['name_index'],
+                  how='left').drop('name_index')
+            .selectExpr('i', 'j', 'concatId as sourceId',
+                        'similarity', 'matching_string as sourceName')
+            .join(operators, grouped_similarity['j'] == operators['name_index'],
+                  how='left').drop('name_index')
+            .selectExpr('sourceId', 'concatId as targetId',
+                        'similarity', 'sourceName', 'matching_string as targetName'))
+
+
+def apply_matching_on(records_per_country: DataFrame, spark,
+                      preprocess_function,
+                      post_process_function,
+                      n_top,
+                      threshold):
+    preprocessed = (preprocess_function(records_per_country, 'concatId', True)
+                    .repartition('concatId')
+                    .sort('concatId', ascending=True)
+                    )
+
+    return_value = None
+    if preprocessed.count() >= MINIMUM_ENTRIES_PER_COUNTRY:
+        similarity = match_entity_for_country(spark, preprocessed, n_top, threshold)
+        matches = post_process_function(similarity, preprocessed)
+        return_value = matches
+    return return_value
+
+
+def main(arguments, preprocess_function, post_process_function):
+    global LOGGER
+    spark, LOGGER = start_spark('Matching')
+
+    t = Timer('Reading for country {}'.format(arguments.country_code), LOGGER)
+    ddf = (read_parquet(spark, arguments.input_file, arguments.fraction)
+           .filter(sf.col('countryCode') == arguments.country_code)
+           )
+    ddf.persist()
+    t.end_and_log()
+
+    t = Timer('Running for country {}'.format(arguments.country_code), LOGGER)
+    grouped_matches = apply_matching_on(ddf, spark,
+                                        preprocess_function,
+                                        post_process_function,
+                                        arguments.n_top,
+                                        arguments.threshold)
+    t.end_and_log()
+
+    if grouped_matches is None:
+        LOGGER.warn('Matching was unable to run due country {} too small'.format(arguments.country_code))
+    else:
+        save_to_parquet_per_partition('countryCode', arguments.country_code)(grouped_matches, arguments.output_path,
+                                                                             'overwrite')
+    ddf.unpersist()

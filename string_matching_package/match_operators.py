@@ -19,10 +19,10 @@ import argparse
 
 from string_matching.initial_load_matching import \
     main, \
-    preprocess_operators, match_operators_for_country
+    preprocess_operators, post_process_operators
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--input_file',
                         help='fullpath or location of the input parquet file')
     parser.add_argument('-p', '--output_path', default=None,
@@ -37,4 +37,4 @@ if __name__ == '__main__':
                         help='keep N top similarities for each record.')
     args = parser.parse_args()
 
-    main(args, preprocess_operators, match_operators_for_country)
+    main(args, preprocess_operators, post_process_operators)
