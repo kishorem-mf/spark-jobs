@@ -158,8 +158,6 @@ def apply_delta_matching_on(spark,
                                .sort('ohubId', ascending=True)
                                )
 
-    daily_preprocessed.show()
-    integrated_preprocessed.show()
     return_value = (None, None)
     if (daily_preprocessed.count() >= MINIMUM_ENTRIES_PER_COUNTRY and
             integrated_preprocessed.count() >= MINIMUM_ENTRIES_PER_COUNTRY):
