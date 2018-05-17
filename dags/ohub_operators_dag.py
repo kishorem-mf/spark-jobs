@@ -3,7 +3,6 @@ from datetime import datetime
 
 from airflow.operators.subdag_operator import SubDagOperator
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
-from custom_operators.sftp_verify_operator import SftpVerifyOperator
 
 from airflow.hooks.base_hook import BaseHook
 
@@ -235,12 +234,6 @@ with DAG('ohub_operators', default_args=default_args,
         ssh_conn_id='acm_sftp_ssh',
         operation=SFTPOperation.PUT)
 
-    operators_acm_check = SftpVerifyOperator(
-        task_id='operators_acm_check',
-        remote_filepath='/incoming/temp/ohub_2_test/{}'.format(tmp_file.split('/')[-1]),
-        ssh_conn_id='acm_sftp_ssh'
-    )
-
     update_operators_table = DatabricksSubmitRunOperator(
         task_id='update_operators_table',
         existing_cluster_id=cluster_id,
@@ -254,4 +247,3 @@ with DAG('ohub_operators', default_args=default_args,
     combine_to_create_integrated >> update_golden_records >> update_operators_table >> terminate_cluster
     update_golden_records >> operators_to_acm >> terminate_cluster
     operators_to_acm >> operators_acm_from_wasb >> operators_ftp_to_acm
-    operators_ftp_to_acm >> operators_acm_check
