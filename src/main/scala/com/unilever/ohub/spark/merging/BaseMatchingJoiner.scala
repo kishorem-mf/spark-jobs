@@ -1,5 +1,7 @@
 package com.unilever.ohub.spark.merging
 
+import java.util.UUID
+
 import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.sql.JoinType
@@ -25,7 +27,13 @@ case class DomainEntityJoinConfig(
 
 abstract class BaseMatchingJoiner[T <: DomainEntity: TypeTag] extends SparkJob[DomainEntityJoinConfig] with GoldenRecordPicking[T] {
 
-  private[merging] def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])(entities: Seq[T]): Seq[T]
+  private[merging] def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])(entities: Seq[T]): Seq[T] = {
+    val goldenRecord = pickGoldenRecord(sourcePreference, entities)
+    val groupId = UUID.randomUUID().toString
+    entities.map(e ⇒ markGoldenRecordAndGroup(e, goldenRecord, groupId))
+  }
+
+  private[merging] def markGoldenRecordAndGroup(entity: T, goldenRecord: T, groupId: String): T
 
   def transform(
     spark: SparkSession,
