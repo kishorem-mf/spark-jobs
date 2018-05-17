@@ -14,9 +14,8 @@ The following steps are performed per country:
 - write two dataframes to file: updated integrated data and unmatched data
 """
 import argparse
-from string_matching.entity_delta_matching import \
-    main, \
-    preprocess_contact_persons, postprocess_contact_persons
+from string_matching.entity_matching import preprocess_contact_persons
+from string_matching.entity_delta_matching import main, postprocess_delta_contact_persons
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -38,4 +37,4 @@ if __name__ == '__main__':
                         help='keep N top similarities for each record.')
     args = parser.parse_args()
 
-    main(args, preprocess_contact_persons, postprocess_contact_persons)
+    main(args, preprocess_contact_persons, postprocess_delta_contact_persons)
