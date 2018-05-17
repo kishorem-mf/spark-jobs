@@ -44,7 +44,7 @@ class TestDeltaMatchingOperators(object):
         cities_ = [_[2] for _ in updated]
         assert concats == ['c1', 'c2', 'c4', 'c5', 'c6', 'c7']
         assert ohubIds == ['o1', 'o1', 'o1', 'o1', 'o2', 'o3']
-        assert cities_ == ['', '', '', 'v', '', '', '']
+        assert cities_ == ['', '',  'v', '', '', '']
 
         assert len(unmatched) == 1
         assert unmatched[0][0] == 'c3'
