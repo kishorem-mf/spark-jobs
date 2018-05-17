@@ -13,15 +13,13 @@ The following steps are performed per country:
 - Match ingested data with integrated data
 - write two dataframes to file: updated integrated data and unmatched data
 """
-import argparse
 from pyspark.sql import DataFrame
-from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
-from .utils import start_spark, Timer, save_to_parquet_per_partition
 from .entity_matching import \
-    N_GRAMS, MINIMUM_DOCUMENT_FREQUENCY, VOCABULARY_SIZE, MINIMUM_ENTRIES_PER_COUNTRY
+    N_GRAMS, MINIMUM_DOCUMENT_FREQUENCY, VOCABULARY_SIZE, MINIMUM_ENTRIES_PER_COUNTRY, MIN_LEVENSHTEIN_DISTANCE
+from .utils import start_spark, Timer, save_to_parquet_per_partition
 
 
 def match_delta_entity_for_country(spark, ingested_daily, integrated, n_top, threshold):
@@ -43,7 +41,57 @@ def match_delta_entity_for_country(spark, ingested_daily, integrated, n_top, thr
     return similarity
 
 
-def postprocess_operators(similarity: DataFrame,
+def postprocess_delta_contact_persons(similarity: DataFrame,
+                                ingested_preprocessed: DataFrame,
+                                integrated_preprocessed: DataFrame):
+    """Join back the original columns (street, zip, etc.) after matching and filter matches as follows:
+        - keep only the matches with exactly matching zip code
+            - if no zip code is present: keep match if cities (cleansed) match exactly
+        - keep only the matches where Levenshtein distance between streets (cleansed) is lower than threshold (5)
+    """
+    similarity_filtered = (
+        similarity
+            .join(ingested_preprocessed, similarity['i'] == ingested_preprocessed['name_index'])
+            .selectExpr('j',
+                        'concatId',
+                        'SIMILARITY',
+                        'streetCleansed as sourceStreet',
+                        'zipCodeCleansed as sourceZipCode',
+                        'cityCleansed as sourceCity')
+            .join(integrated_preprocessed, similarity['j'] == integrated_preprocessed['name_index'])
+            .selectExpr('concatId',
+                        'ohubId',
+                        'SIMILARITY',
+                        'sourceStreet', 'streetCleansed as targetStreet',
+                        'sourceZipCode', 'zipCodeCleansed as targetZipCode',
+                        'sourceCity', 'cityCleansed as targetCity')
+            .filter((sf.col('sourceZipCode') == sf.col('targetZipCode')) |
+                    (
+                            sf.isnull('sourceZipCode') &
+                            sf.isnull('targetZipCode') &
+                            (sf.col('sourceCity') == sf.col('targetCity'))
+                    )
+                    )
+            .withColumn('street_lev_distance', sf.levenshtein(sf.col('sourceStreet'), sf.col('targetStreet')))
+            .filter(sf.col('street_lev_distance') < MIN_LEVENSHTEIN_DISTANCE)
+    )
+
+    window = Window.partitionBy('concatId').orderBy(sf.desc('SIMILARITY'), 'ohubId')
+    best_match = (similarity_filtered
+                  .withColumn('rn', sf.row_number().over(window))
+                  .filter(sf.col('rn') == 1)
+                  .drop('rn')
+                  .drop_duplicates()
+                  # Join on name_index to get back the concatId and ohubId
+                  .selectExpr('SIMILARITY',
+                              'concatId',
+                              'ohubId as ohubId_matched')
+                  )
+
+    return best_match
+
+
+def postprocess_delta_operators(similarity: DataFrame,
                           ingested_preprocessed: DataFrame,
                           integrated_preprocessed: DataFrame):
     window = Window.partitionBy('i').orderBy(sf.desc('SIMILARITY'), 'j')
@@ -110,6 +158,8 @@ def apply_delta_matching_on(spark,
                                .sort('ohubId', ascending=True)
                                )
 
+    daily_preprocessed.show()
+    integrated_preprocessed.show()
     return_value = (None, None)
     if (daily_preprocessed.count() >= MINIMUM_ENTRIES_PER_COUNTRY and
             integrated_preprocessed.count() >= MINIMUM_ENTRIES_PER_COUNTRY):
@@ -154,7 +204,7 @@ def main(arguments, preprocess_function, postprocess_function):
 
     t.end_and_log()
     if updated_ingegrated is None or unmatched is None:
-        LOGGER.warn('Matching was unable to run for country {}'.format(arguments.country_code))
+        LOGGER.error('Matching was unable to run for country {}'.format(arguments.country_code))
     else:
         save_to_parquet_per_partition('countryCode', arguments.country_code)(updated_ingegrated,
                                                                              arguments.updated_integrated_output_path,
