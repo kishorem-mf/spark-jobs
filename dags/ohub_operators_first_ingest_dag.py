@@ -23,11 +23,11 @@ default_args.update(
 )
 interval = '@once'
 
-utc_now = datetime.utcnow().strftime('%Y%m%d')
+utc_now = datetime.utcnow().strftime('%Y%m%d_%H%m%S')
+cluster_name = "ohub_operators_{}".format(utc_now)
 
 with DAG('ohub_operators_first_ingest', default_args=default_args,
          schedule_interval=interval) as dag:
-    cluster_name = "ohub_operators_{}".format(utc_now)
 
     create_cluster = DatabricksCreateClusterOperator(
         task_id='create_cluster',

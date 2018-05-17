@@ -1,10 +1,9 @@
 from datetime import datetime
 
 from airflow import DAG
-from airflow.operators.subdag_operator import SubDagOperator
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
-
 from airflow.hooks.base_hook import BaseHook
+from airflow.operators.subdag_operator import SubDagOperator
 
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
@@ -16,8 +15,7 @@ from operators_config import \
     cluster_id, databricks_conn_id, \
     jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_raw_container, wasb_ingested_container, wasb_intermediate_container, \
-    wasb_integrated_container, wasb_export_container, operator_country_codes
+    wasb_export_container, operator_country_codes
 
 default_args.update(
     {'start_date': datetime(2017, 7, 12)}
