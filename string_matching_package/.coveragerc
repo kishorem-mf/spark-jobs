@@ -1,5 +1,5 @@
 [report]
-fail_under = 55
+fail_under = 65
 
 [run]
 omit =
