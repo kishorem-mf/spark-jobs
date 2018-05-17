@@ -97,7 +97,7 @@ with DAG('ohub_operators', default_args=default_args,
                     {'egg': egg}
                 ],
                 spark_python_task={
-                    'python_file': 'dbfs:/libraries/name_matching/join_new_operators_with_persistent_uuid.py',
+                    'python_file': 'dbfs:/libraries/name_matching/delta_operators.py',
                     'parameters': [
                         '--integrated_operators_input_path', integrated_bucket.format(date=two_day_ago, fn='operators'),
                         '--ingested_daily_operators_input_path',
