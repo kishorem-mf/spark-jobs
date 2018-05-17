@@ -3,6 +3,7 @@ from datetime import datetime
 
 from airflow.operators.subdag_operator import SubDagOperator
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
+from custom_operators.sftp_verify_operator import SftpVerifyOperator
 
 from airflow.hooks.base_hook import BaseHook
 
