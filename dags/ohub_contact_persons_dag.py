@@ -123,7 +123,6 @@ with DAG('ohub_contact_persons', default_args=default_args,
         }
     )
 
-
     def matching_sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval):
         sub_dag = DAG(
             '%s.%s' % (parent_dag_name, child_dag_name),
@@ -176,7 +175,6 @@ with DAG('ohub_contact_persons', default_args=default_args,
             match_new >> match_unmatched
 
         return sub_dag
-
 
     match_per_country = SubDagOperator(
         subdag=matching_sub_dag('ohub_contact_persons', 'match_per_country', default_args['start_date'], interval),
@@ -318,7 +316,8 @@ with DAG('ohub_contact_persons', default_args=default_args,
     exact_match_integrated_ingested >> join_fuzzy_and_exact_matched
 
     exact_match_ingested >> join_fuzzy_and_exact_matched
-    exact_match_ingested >> match_per_country >> join_matched_contact_persons >> combine_name_matching_results >> join_fuzzy_and_exact_matched
+    exact_match_ingested >> match_per_country >> join_matched_contact_persons >> combine_name_matching_results
+    combine_name_matching_results >> join_fuzzy_and_exact_matched
 
     join_fuzzy_and_exact_matched >> update_golden_records >> contact_person_referencing >> contact_persons_to_acm
     contact_persons_to_acm >> terminate_cluster
