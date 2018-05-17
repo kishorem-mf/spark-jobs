@@ -127,8 +127,7 @@ object OperatorMatchingJoiner extends SparkJob[DomainEntityJoinConfig] with Gold
         config.matchingInputFile,
         selectColumns = Seq(
           $"sourceId",
-          $"targetId",
-          $"countryCode"
+          $"targetId"
         )
       )
 
