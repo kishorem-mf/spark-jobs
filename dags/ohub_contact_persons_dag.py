@@ -26,7 +26,7 @@ one_day_ago = '2018-04-06'  # should become {{ ds }}
 two_day_ago = '2017-07-12'  # should become {{ yesterday_ds }}
 
 utc_now = datetime.utcnow().strftime('%Y%m%d_%H%m%S')
-cluster_name = "ohub_operators_{}".format(utc_now)
+cluster_name = "ohub_contact_persons_{}".format(utc_now)
 
 with DAG('ohub_contact_persons', default_args=default_args,
          schedule_interval=interval) as dag:
