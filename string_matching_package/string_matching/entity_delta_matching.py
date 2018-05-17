@@ -42,39 +42,39 @@ def match_delta_entity_for_country(spark, ingested_daily, integrated, n_top, thr
 
 
 def postprocess_delta_contact_persons(similarity: DataFrame,
-                                ingested_preprocessed: DataFrame,
-                                integrated_preprocessed: DataFrame):
+                                      ingested_preprocessed: DataFrame,
+                                      integrated_preprocessed: DataFrame):
     """Join back the original columns (street, zip, etc.) after matching and filter matches as follows:
         - keep only the matches with exactly matching zip code
             - if no zip code is present: keep match if cities (cleansed) match exactly
         - keep only the matches where Levenshtein distance between streets (cleansed) is lower than threshold (5)
     """
-    similarity_filtered = (
-        similarity
-            .join(ingested_preprocessed, similarity['i'] == ingested_preprocessed['name_index'])
-            .selectExpr('j',
-                        'concatId',
-                        'SIMILARITY',
-                        'streetCleansed as sourceStreet',
-                        'zipCodeCleansed as sourceZipCode',
-                        'cityCleansed as sourceCity')
-            .join(integrated_preprocessed, similarity['j'] == integrated_preprocessed['name_index'])
-            .selectExpr('concatId',
-                        'ohubId',
-                        'SIMILARITY',
-                        'sourceStreet', 'streetCleansed as targetStreet',
-                        'sourceZipCode', 'zipCodeCleansed as targetZipCode',
-                        'sourceCity', 'cityCleansed as targetCity')
-            .filter((sf.col('sourceZipCode') == sf.col('targetZipCode')) |
-                    (
-                            sf.isnull('sourceZipCode') &
-                            sf.isnull('targetZipCode') &
-                            (sf.col('sourceCity') == sf.col('targetCity'))
-                    )
-                    )
-            .withColumn('street_lev_distance', sf.levenshtein(sf.col('sourceStreet'), sf.col('targetStreet')))
-            .filter(sf.col('street_lev_distance') < MIN_LEVENSHTEIN_DISTANCE)
-    )
+    similarity_filtered = (similarity
+                           .join(ingested_preprocessed, similarity['i'] == ingested_preprocessed['name_index'])
+                           .selectExpr('j',
+                                       'concatId',
+                                       'SIMILARITY',
+                                       'streetCleansed as sourceStreet',
+                                       'zipCodeCleansed as sourceZipCode',
+                                       'cityCleansed as sourceCity')
+                           .join(integrated_preprocessed, similarity['j'] == integrated_preprocessed['name_index'])
+                           .selectExpr('concatId',
+                                       'ohubId',
+                                       'SIMILARITY',
+                                       'sourceStreet', 'streetCleansed as targetStreet',
+                                       'sourceZipCode', 'zipCodeCleansed as targetZipCode',
+                                       'sourceCity', 'cityCleansed as targetCity')
+                           .filter((sf.col('sourceZipCode') == sf.col('targetZipCode')) |
+                                   (
+                                           sf.isnull('sourceZipCode') &
+                                           sf.isnull('targetZipCode') &
+                                           (sf.col('sourceCity') == sf.col('targetCity'))
+                                   )
+                                   )
+                           .withColumn('street_lev_distance',
+                                       sf.levenshtein(sf.col('sourceStreet'), sf.col('targetStreet')))
+                           .filter(sf.col('street_lev_distance') < MIN_LEVENSHTEIN_DISTANCE)
+                           )
 
     window = Window.partitionBy('concatId').orderBy(sf.desc('SIMILARITY'), 'ohubId')
     best_match = (similarity_filtered
@@ -92,8 +92,8 @@ def postprocess_delta_contact_persons(similarity: DataFrame,
 
 
 def postprocess_delta_operators(similarity: DataFrame,
-                          ingested_preprocessed: DataFrame,
-                          integrated_preprocessed: DataFrame):
+                                ingested_preprocessed: DataFrame,
+                                integrated_preprocessed: DataFrame):
     window = Window.partitionBy('i').orderBy(sf.desc('SIMILARITY'), 'j')
     best_match = (similarity
                   .withColumn('rn', sf.row_number().over(window))

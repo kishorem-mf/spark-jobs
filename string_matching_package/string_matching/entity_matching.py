@@ -77,33 +77,33 @@ def postprocess_contact_persons(similarity: DataFrame,
             - if no zip code is present: keep match if cities (cleansed) match exactly
         - keep only the matches where Levenshtein distance between streets (cleansed) is lower than threshold (5)
     """
-    similarity_filtered = (
-        similarity
-            .join(contacts, similarity['i'] == contacts['name_index'],
-                  how='left').drop('name_index')
-            .selectExpr('i', 'j', 'concatId as sourceId',
-                        'similarity', 'matching_string as sourceName',
-                        'streetCleansed as sourceStreet',
-                        'zipCodeCleansed as sourceZipCode',
-                        'cityCleansed as sourceCity')
-            .join(contacts, similarity['j'] == contacts['name_index'],
-                  how='left').drop('name_index')
-            .selectExpr('i', 'j', 'sourceId',
-                        'concatId as targetId', 'similarity',
-                        'sourceName', 'matching_string as targetName',
-                        'sourceStreet', 'streetCleansed as targetStreet',
-                        'sourceZipCode', 'zipCodeCleansed as targetZipCode',
-                        'sourceCity', 'cityCleansed as targetCity')
-            .filter((sf.col('sourceZipCode') == sf.col('targetZipCode')) |
-                    (
-                            sf.isnull('sourceZipCode') &
-                            sf.isnull('targetZipCode') &
-                            (sf.col('sourceCity') == sf.col('targetCity'))
-                    )
-                    )
-            .withColumn('street_lev_distance', sf.levenshtein(sf.col('sourceStreet'), sf.col('targetStreet')))
-            .filter(sf.col('street_lev_distance') < MIN_LEVENSHTEIN_DISTANCE)
-    )
+    similarity_filtered = (similarity
+                           .join(contacts, similarity['i'] == contacts['name_index'],
+                                 how='left').drop('name_index')
+                           .selectExpr('i', 'j', 'concatId as sourceId',
+                                       'similarity', 'matching_string as sourceName',
+                                       'streetCleansed as sourceStreet',
+                                       'zipCodeCleansed as sourceZipCode',
+                                       'cityCleansed as sourceCity')
+                           .join(contacts, similarity['j'] == contacts['name_index'],
+                                 how='left').drop('name_index')
+                           .selectExpr('i', 'j', 'sourceId',
+                                       'concatId as targetId', 'similarity',
+                                       'sourceName', 'matching_string as targetName',
+                                       'sourceStreet', 'streetCleansed as targetStreet',
+                                       'sourceZipCode', 'zipCodeCleansed as targetZipCode',
+                                       'sourceCity', 'cityCleansed as targetCity')
+                           .filter((sf.col('sourceZipCode') == sf.col('targetZipCode')) |
+                                   (
+                                           sf.isnull('sourceZipCode') &
+                                           sf.isnull('targetZipCode') &
+                                           (sf.col('sourceCity') == sf.col('targetCity'))
+                                   )
+                                   )
+                           .withColumn('street_lev_distance',
+                                       sf.levenshtein(sf.col('sourceStreet'), sf.col('targetStreet')))
+                           .filter(sf.col('street_lev_distance') < MIN_LEVENSHTEIN_DISTANCE)
+                           )
     grouped_similarity = group_matches(similarity_filtered)
     return grouped_similarity
 
