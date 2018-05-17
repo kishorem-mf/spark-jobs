@@ -13,7 +13,7 @@ import scopt.OptionParser
 
 import scala.reflect.runtime.universe._
 
-case class MatchingResult(sourceId: String, targetId: String, countryCode: String)
+case class MatchingResult(sourceId: String, targetId: String)
 
 case class DomainEntityJoinConfig(
     matchingInputFile: String = "matching-input-file",
@@ -132,8 +132,7 @@ abstract class BaseMatchingJoiner[T <: DomainEntity: TypeTag] extends SparkJob[D
         config.matchingInputFile,
         selectColumns = Seq(
           $"sourceId",
-          $"targetId",
-          $"countryCode"
+          $"targetId"
         )
       )
 

@@ -22,10 +22,10 @@ class OperatorMatchingJoinerSpec extends SparkJobSpec with TestOperators {
     defaultOperatorWithSourceNameAndCountryCode("y", "US")
   ).toDataset
 
-  private def matchingResultWithSourceName(source: String, target: String, countryCode: String) = {
+  private def matchingResultWithSourceName(source: String, target: String, countryCode: String): MatchingResult = {
     def concat(sourceName: String, cc: String) = s"$cc~$sourceName~${defaultOperator.sourceEntityId}"
 
-    MatchingResult(concat(source, countryCode), concat(target, countryCode), countryCode)
+    MatchingResult(concat(source, countryCode), concat(target, countryCode))
   }
 
   describe("groupMatchedOperators") {
@@ -49,6 +49,7 @@ class OperatorMatchingJoinerSpec extends SparkJobSpec with TestOperators {
       )
     }
   }
+
   describe("findUnmatchedOperators") {
     it("should return all unmatched operators") {
       val matchedOperators: Dataset[Seq[Operator]] = Seq(
