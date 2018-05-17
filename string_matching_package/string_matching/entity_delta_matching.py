@@ -27,15 +27,12 @@ from .entity_matching import \
 def match_delta_entity_for_country(spark, ingested_daily, integrated, n_top, threshold):
     from .spark_string_matching import match_strings
 
-    ingested_daily_1country = ingested_daily.repartition('concatId')
-    integrated_1country = integrated.repartition('ohubId')
-
     similarity = match_strings(
         spark,
-        df=ingested_daily_1country.select('string_index', 'matching_string'),
-        df2=integrated_1country.select('string_index', 'matching_string'),
+        df=ingested_daily.select('name_index', 'matching_string'),
+        df2=integrated.select('name_index', 'matching_string'),
         string_column='matching_string',
-        row_number_column='string_index',
+        row_number_column='name_index',
         n_top=n_top,
         threshold=threshold,
         n_gram=N_GRAMS,
@@ -57,21 +54,20 @@ def postprocess_operators(similarity: DataFrame,
                   .drop_duplicates()
                   )
 
-    # Join on string_index to get back the concatId and ohubId
-    matched_ingested_daily = (
-        best_match
-            .join(ingested_preprocessed, ingested_preprocessed['string_index'] == best_match['i'])
-            .drop('string_index')
-            .selectExpr('j', 'SIMILARITY',
-                        'matching_string as matching_string_new', 'concatId')
-            .join(integrated_preprocessed, sf.col('j') == integrated_preprocessed['string_index'])
-            .drop('string_index')
-            .selectExpr('SIMILARITY',
-                        'matching_string_new',
-                        'matching_string as matching_string_old',
-                        'concatId',
-                        'ohubId as ohubId_matched')
-    )
+    # Join on name_index to get back the concatId and ohubId
+    matched_ingested_daily = (best_match
+                              .join(ingested_preprocessed, ingested_preprocessed['name_index'] == best_match['i'])
+                              .drop('name_index')
+                              .selectExpr('j', 'SIMILARITY',
+                                          'matching_string as matching_string_new', 'concatId')
+                              .join(integrated_preprocessed, sf.col('j') == integrated_preprocessed['name_index'])
+                              .drop('name_index')
+                              .selectExpr('SIMILARITY',
+                                          'matching_string_new',
+                                          'matching_string as matching_string_old',
+                                          'concatId',
+                                          'ohubId as ohubId_matched')
+                              )
     return matched_ingested_daily
 
 
@@ -81,8 +77,7 @@ def recreate_matched_and_unmatched(integrated: DataFrame,
     matched_ingested_daily_full_record = (matched
                                           .select('concatId', 'ohubId_matched')
                                           .join(ingested, on='concatId', how='left')
-                                          .withColumn('ohubId', sf.col('ohubId_matched'))
-                                          .drop('ohubId_matched')
+                                          .withColumnRenamed('ohubId_matched', 'ohubId')
                                           )
 
     updated_integrated = (integrated
