@@ -22,11 +22,11 @@ from operators_config import \
     wasb_export_container, operator_country_codes
 
 default_args.update(
-    {'start_date': datetime(2018, 4, 6)}
+    {'start_date': datetime(2018, 5, 17)}
 )
 
-one_day_ago = '2018-04-06'  # should become {{ ds }}
-two_day_ago = '2017-07-12'  # should become {{ yesterday_ds }}
+one_day_ago = '{{ds}}'
+two_day_ago = '{{yesterday_ds}}'
 interval = '@once'
 wasb_conn_id = 'azure_blob'
 
