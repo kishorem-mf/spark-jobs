@@ -52,7 +52,7 @@ def preprocess_contact_persons(ddf: DataFrame, id_column: str, *args) -> DataFra
 
     filtered = (cleaned
                 # keep only if no email and phone
-                .filter(sf.isnull(sf.col('emailAddress')) & sf.isnull(sf.col('mobilePhoneNumber')))
+                .filter(sf.isnull(sf.col('emailAddress')) & sf.isnull(sf.col('mobileNumber')))
                 # drop if no first name and no last name
                 .na.drop(subset=['firstNameCleansed', 'lastNameCleansed'], how='all')
                 # drop if no street

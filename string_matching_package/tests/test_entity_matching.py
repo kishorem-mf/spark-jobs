@@ -47,7 +47,7 @@ class TestPreprocessingContactPersons(object):
     def create_ddf(self, spark):
         return spark.createDataFrame(self.data).toDF('concatId', 'countryCode', 'firstName', 'lastName',
                                                      'city', 'street', 'houseNumber',
-                                                     'zipCode', 'mobilePhoneNumber', 'emailAddress')
+                                                     'zipCode', 'mobileNumber', 'emailAddress')
 
     def test_should_drop_null_names(self, spark):
         ddf = self.create_ddf(spark)
@@ -102,7 +102,7 @@ class TestMatchingContactPersons(object):
             StructField("lastName", StringType(), True),
             StructField("city", StringType(), True),
             StructField("street", StringType(), True),
-            StructField("mobilePhoneNumber", StringType(), True),
+            StructField("mobileNumber", StringType(), True),
             StructField("emailAddress", StringType(), True),
             StructField("zipCode", StringType(), True),
             StructField("houseNumber", StringType(), True),
