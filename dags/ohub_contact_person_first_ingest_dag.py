@@ -242,6 +242,5 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
 
     create_cluster >> contact_persons_file_interface_to_parquet >> contact_persons_exact_match >> match_per_country
     match_per_country >> merge_contact_persons >> contact_person_combining >> contact_person_referencing
-    contact_person_referencing >> contact_persons_to_acm
-    contact_persons_to_acm >> terminate_cluster
-    contact_persons_to_acm >> contact_persons_acm_from_wasb >> contact_person_ftp_to_acm
+    contact_person_referencing >> contact_persons_to_acm >> contact_persons_acm_from_wasb >> contact_person_ftp_to_acm
+    contact_person_ftp_to_acm >> terminate_cluster
