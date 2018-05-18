@@ -17,9 +17,9 @@ General Flow:
 
 import argparse
 
-from string_matching.initial_load_matching import \
+from string_matching.entity_matching import \
     main, \
-    preprocess_operators, post_process_operators
+    preprocess_operators, postprocess_operators
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -37,4 +37,4 @@ if __name__ == '__main__':
                         help='keep N top similarities for each record.')
     args = parser.parse_args()
 
-    main(args, preprocess_operators, post_process_operators)
+    main(args, preprocess_operators, postprocess_operators)
