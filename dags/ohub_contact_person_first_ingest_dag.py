@@ -72,6 +72,28 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
         }
     )
 
+    contact_persons_exact_match = DatabricksSubmitRunOperator(
+        task_id="contact_persons_exact_match",
+        existing_cluster_id=cluster_id,
+        databricks_conn_id=databricks_conn_id,
+        libraries=[
+            {'jar': jar}
+        ],
+        spark_jar_task={
+            'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonExactMatcher",
+            'parameters': ['--inputFile', ingested_bucket.format(date='{{ds}}',
+                                                                 schema='contactpersons',
+                                                                 channel='file_interface'),
+                           '--outputFile', intermediate_bucket.format(date='{{ds}}',
+                                                                      fn='contactpersons_exact_match',
+                                                                      channel='file_interface'),
+                           '--postgressUrl', postgres_connection.host,
+                           '--postgressUsername', postgres_connection.login,
+                           '--postgressPassword', postgres_connection.password,
+                           '--postgressDB', postgres_connection.schema]
+        }
+    )
+
     def matching_sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval):
         sub_dag = DAG(
             '%s.%s' % (parent_dag_name, child_dag_name),
@@ -127,6 +149,30 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
         }
     )
 
+    contact_person_combining = DatabricksSubmitRunOperator(
+        task_id='contact_person_combining',
+        existing_cluster_id=cluster_id,
+        databricks_conn_id=databricks_conn_id,
+        libraries=[
+            {'jar': jar}
+        ],
+
+        spark_jar_task={
+            'main_class_name': "com.unilever.ohub.spark.combining.ContactPersonCombining",
+            'parameters': ['--integratedUpdated', intermediate_bucket.format(date='{{ds}}',
+                                                                             fn='contactpersons_exact_match'),
+                           '--newGolden', intermediate_bucket.format(date='{{ds}}',
+                                                                     fn='contacts_matched',
+                                                                     channel='*'),
+                           '--combinedEntities', intermediate_bucket.format(date='{{ds}}',
+                                                                            fn='contactpersons_combined'),
+                           '--postgressUrl', postgres_connection.host,
+                           '--postgressUsername', postgres_connection.login,
+                           '--postgressPassword', postgres_connection.password,
+                           '--postgressDB', postgres_connection.schema]
+        }
+    )
+
     contact_person_referencing = DatabricksSubmitRunOperator(
         task_id='contact_person_referencing',
         existing_cluster_id=cluster_id,
@@ -137,7 +183,8 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
 
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonReferencing",
-            'parameters': ['--combinedInputFile', intermediate_bucket.format(date='{{ds}}', fn='contacts_matched'),
+            'parameters': ['--combinedInputFile', intermediate_bucket.format(date='{{ds}}',
+                                                                             fn='contactpersons_combined'),
                            '--operatorInputFile', integrated_bucket.format(date='{{ds}}',
                                                                            fn='operators',
                                                                            channel='*'),
@@ -176,7 +223,8 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
         ssh_conn_id='acm_sftp_ssh',
         operation=SFTPOperation.PUT)
 
-    start_cluster >> uninstall_old_libraries >> contact_persons_file_interface_to_parquet >> match_per_country
-    match_per_country >> merge_contact_persons >> contact_person_referencing >> contact_persons_to_acm
+    start_cluster >> uninstall_old_libraries >> contact_persons_file_interface_to_parquet >> contact_persons_exact_match
+    contact_persons_exact_match >> match_per_country >> merge_contact_persons >> contact_person_combining
+    contact_person_combining >> contact_person_referencing >> contact_persons_to_acm
     contact_persons_to_acm >> terminate_cluster
     contact_persons_to_acm >> contact_person_ftp_to_acm
