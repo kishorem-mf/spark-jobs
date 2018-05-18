@@ -82,7 +82,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonExactMatcher",
             'parameters': ['--inputFile', ingested_bucket.format(date='{{ds}}',
-                                                                 schema='contactpersons',
+                                                                 fn='contactpersons',
                                                                  channel='file_interface'),
                            '--outputFile', intermediate_bucket.format(date='{{ds}}',
                                                                       fn='contactpersons_exact_match',
