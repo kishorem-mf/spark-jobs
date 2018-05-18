@@ -26,9 +26,9 @@ The following steps are performed:
 
 import argparse
 
-from string_matching.initial_load_matching import \
+from string_matching.entity_matching import \
     main, \
-    preprocess_contacts, post_process_contact_persons
+    preprocess_contact_persons, postprocess_contact_persons
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -46,4 +46,4 @@ if __name__ == '__main__':
                         help='keep N top similarities for each record.')
     args = parser.parse_args()
 
-    main(args, preprocess_contacts, post_process_contact_persons)
+    main(args, preprocess_contact_persons, postprocess_contact_persons)
