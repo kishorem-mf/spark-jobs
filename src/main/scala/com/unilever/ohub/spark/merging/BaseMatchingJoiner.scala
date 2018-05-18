@@ -27,28 +27,18 @@ case class DomainEntityJoinConfig(
 
 abstract class BaseMatchingJoiner[T <: DomainEntity: TypeTag] extends SparkJob[DomainEntityJoinConfig] with GoldenRecordPicking[T] {
 
-  private[merging] def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])(entities: Seq[T]): Seq[T] = {
-    val goldenRecord = pickGoldenRecord(sourcePreference, entities)
-    val groupId = UUID.randomUUID().toString
-    entities.map(e ⇒ markGoldenRecordAndGroup(e, goldenRecord, groupId))
-  }
-
-  private[merging] def markGoldenRecordAndGroup(entity: T, goldenRecord: T, groupId: String): T
-
   def transform(
     spark: SparkSession,
     entities: Dataset[T],
     matches: Dataset[MatchingResult],
-    markGoldenRecordsFunction: Seq[T] ⇒ Seq[T]): Dataset[T] = {
+    dataProvider: DomainDataProvider): Dataset[T]
 
-    import spark.implicits._
+  private[merging] def markGoldenAndGroup(entity: T, isGoldenRecord: Boolean, groupId: String): T
 
-    val matchedEntities: Dataset[Seq[T]] = groupMatchedEntities(spark, entities, matches)
-    val unmatchedEntities: Dataset[Seq[T]] = findUnmatchedEntities(spark, entities, matchedEntities)
-
-    matchedEntities
-      .union(unmatchedEntities)
-      .flatMap(markGoldenRecordsFunction)
+  private[merging] def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])(entities: Seq[T]): Seq[T] = {
+    val goldenRecord = pickGoldenRecord(sourcePreference, entities)
+    val groupId = UUID.randomUUID().toString
+    entities.map(cp ⇒ markGoldenAndGroup(cp, cp == goldenRecord, groupId))
   }
 
   private[merging] def groupMatchedEntities(
@@ -136,7 +126,7 @@ abstract class BaseMatchingJoiner[T <: DomainEntity: TypeTag] extends SparkJob[D
         )
       )
 
-    val transformed = transform(spark, entities, matches, markGoldenRecordAndGroupId(dataProvider.sourcePreferences))
+    val transformed = transform(spark, entities, matches, dataProvider)
 
     storage.writeToParquet(transformed, config.outputFile)
   }

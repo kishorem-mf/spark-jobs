@@ -4,6 +4,7 @@ import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
 import org.apache.spark.sql.Dataset
 import com.unilever.ohub.spark.SharedSparkSession.spark
+import com.unilever.ohub.spark.tsv2parquet.TestDomainDataProvider
 
 class OperatorMatchingJoinerSpec extends SparkJobSpec with TestOperators {
   import spark.implicits._
@@ -74,8 +75,7 @@ class OperatorMatchingJoinerSpec extends SparkJobSpec with TestOperators {
   describe("transform") {
     it("should create ohub ids for all matched and unmatched operators") {
       val sourcePreferences = Map("a" -> 1, "b" -> 2, "c" -> 3, "d" -> 4, "x" -> 4, "y" -> 5)
-      val res = OperatorMatchingJoiner.transform(spark, OPERATORS, MATCHES,
-        OperatorMatchingJoiner.markGoldenRecordAndGroupId(sourcePreferences))
+      val res = OperatorMatchingJoiner.transform(spark, OPERATORS, MATCHES, TestDomainDataProvider(sourcePreferences = sourcePreferences))
         .collect
         .sortBy(_.sourceName)
 
