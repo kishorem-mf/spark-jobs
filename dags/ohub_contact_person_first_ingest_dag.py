@@ -8,11 +8,11 @@ from airflow.operators.subdag_operator import SubDagOperator
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
-    DatabricksStartClusterOperator, \
-    DatabricksUninstallLibrariesOperator
+    DatabricksUninstallLibrariesOperator, \
+    DatabricksCreateClusterOperator
 from operators_config import \
     default_args, \
-    cluster_id, databricks_conn_id, \
+    databricks_conn_id, \
     jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
     wasb_export_container, operator_country_codes
@@ -22,23 +22,39 @@ default_args.update(
 )
 interval = '@once'
 
+utc_now = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+cluster_name = "ohub_contact_persons_init_{}".format(utc_now)
+
 with DAG('ohub_contact_person_first_ingest', default_args=default_args,
          schedule_interval=interval) as dag:
-    start_cluster = DatabricksStartClusterOperator(
-        task_id='start_cluster',
-        cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id
+
+    create_cluster = DatabricksCreateClusterOperator(
+        task_id='create_cluster',
+        databricks_conn_id=databricks_conn_id,
+        cluster_config={
+            "cluster_name": cluster_name,
+            "spark_version": "4.0.x-scala2.11",
+            "node_type_id": "Standard_DS5_v2",
+            "autoscale": {
+                "min_workers": 4,
+                "max_workers": 12
+            },
+            "autotermination_minutes": 30,
+            "spark_env_vars": {
+                "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+            },
+        }
     )
 
     terminate_cluster = DatabricksTerminateClusterOperator(
         task_id='terminate_cluster',
-        cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id
     )
 
     uninstall_old_libraries = DatabricksUninstallLibrariesOperator(
         task_id='uninstall_old_libraries',
-        cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries_to_uninstall=[{
             'jar': jar,
@@ -50,7 +66,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
 
     contact_persons_file_interface_to_parquet = DatabricksSubmitRunOperator(
         task_id="contact_persons_file_interface_to_parquet",
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -74,7 +90,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
 
     contact_persons_exact_match = DatabricksSubmitRunOperator(
         task_id="contact_persons_exact_match",
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -105,7 +121,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
             DatabricksSubmitRunOperator(
                 dag=sub_dag,
                 task_id='match_contacts_{}'.format(code),
-                existing_cluster_id=cluster_id,
+                cluster_name=cluster_name,
                 databricks_conn_id=databricks_conn_id,
                 libraries=[
                     {'egg': egg}
@@ -130,7 +146,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
 
     merge_contact_persons = DatabricksSubmitRunOperator(
         task_id='merge_contact_persons',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -151,7 +167,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
 
     contact_person_combining = DatabricksSubmitRunOperator(
         task_id='contact_person_combining',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -175,7 +191,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
 
     contact_person_referencing = DatabricksSubmitRunOperator(
         task_id='contact_person_referencing',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -200,7 +216,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
 
     contact_persons_to_acm = DatabricksSubmitRunOperator(
         task_id="contact_persons_to_acm",
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -223,8 +239,9 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
         ssh_conn_id='acm_sftp_ssh',
         operation=SFTPOperation.PUT)
 
-    start_cluster >> uninstall_old_libraries >> contact_persons_file_interface_to_parquet >> contact_persons_exact_match
-    contact_persons_exact_match >> match_per_country >> merge_contact_persons >> contact_person_combining
-    contact_person_combining >> contact_person_referencing >> contact_persons_to_acm
+    create_cluster >> uninstall_old_libraries >> contact_persons_file_interface_to_parquet
+    contact_persons_file_interface_to_parquet >> contact_persons_exact_match >> match_per_country
+    match_per_country >> merge_contact_persons >> contact_person_combining >> contact_person_referencing
+    contact_person_referencing >> contact_persons_to_acm
     contact_persons_to_acm >> terminate_cluster
     contact_persons_to_acm >> contact_person_ftp_to_acm
