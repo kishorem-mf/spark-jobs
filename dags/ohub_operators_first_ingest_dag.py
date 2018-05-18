@@ -22,7 +22,7 @@ default_args.update(
 )
 interval = '@once'
 
-utc_now = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+utc_now = datetime.utcnow().strftime('%Y%m%d')
 cluster_name = "ohub_operators_{}".format(utc_now)
 
 with DAG('ohub_operators_first_ingest', default_args=default_args,
