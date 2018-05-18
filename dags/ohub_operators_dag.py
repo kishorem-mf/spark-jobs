@@ -145,10 +145,10 @@ with DAG('ohub_operators', default_args=default_args,
             {'jar': jar}
         ],
         spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
+            'main_class_name': "com.unilever.ohub.spark.merging.OperatorMatchingJoiner",
             'parameters': ['--matchingInputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='operators_matched'),
-                           '--operatorInputFile',
+                           '--entityInputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched'),
                            '--outputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='golden_records_new'),
