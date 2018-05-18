@@ -8,8 +8,8 @@ from airflow.operators.subdag_operator import SubDagOperator
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
-    DatabricksUninstallLibrariesOperator, \
     DatabricksCreateClusterOperator
+from custom_operators.file_from_wasb import FileFromWasbOperator
 from operators_config import \
     default_args, \
     databricks_conn_id, \
@@ -22,8 +22,8 @@ default_args.update(
 )
 interval = '@once'
 
-utc_now = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-cluster_name = "ohub_contact_persons_init_{}".format(utc_now)
+utc_now = datetime.utcnow().strftime('%Y%m%d')
+cluster_name = "ohub_contact_persons_first_{}".format(utc_now)
 
 with DAG('ohub_contact_person_first_ingest', default_args=default_args,
          schedule_interval=interval) as dag:
@@ -50,16 +50,6 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
         task_id='terminate_cluster',
         cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id
-    )
-
-    uninstall_old_libraries = DatabricksUninstallLibrariesOperator(
-        task_id='uninstall_old_libraries',
-        cluster_name=cluster_name,
-        databricks_conn_id=databricks_conn_id,
-        libraries_to_uninstall=[{
-            'jar': jar,
-            'egg': egg,
-        }]
     )
 
     postgres_connection = BaseHook.get_connection('postgres_channels')
@@ -212,7 +202,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
         }
     )
 
-    op_file = 'acm/UFS_RECIPIENTS_{{ds_nodash}}000000.csv'
+    cp_file = 'acm/UFS_RECIPIENTS_{{ds_nodash}}000000.csv'
 
     contact_persons_to_acm = DatabricksSubmitRunOperator(
         task_id="contact_persons_to_acm",
@@ -224,7 +214,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.ContactPersonAcmConverter",
             'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn='contactpersons'),
-                           '--outputFile', export_bucket.format(date='{{ds}}', fn=op_file),
+                           '--outputFile', export_bucket.format(date='{{ds}}', fn=cp_file),
                            '--postgressUrl', postgres_connection.host,
                            '--postgressUsername', postgres_connection.login,
                            '--postgressPassword', postgres_connection.password,
@@ -232,16 +222,26 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
         }
     )
 
+    tmp_file = '/tmp/' + cp_file
+
+    contact_persons_acm_from_wasb = FileFromWasbOperator(
+        task_id='contact_persons_acm_from_wasb',
+        file_path=tmp_file,
+        container_name='prod',
+        wasb_conn_id='azure_blob',
+        blob_name=wasb_export_container.format(date='{{ds}}', fn=cp_file)
+    )
+
     contact_person_ftp_to_acm = SFTPOperator(
         task_id='contact_person_ftp_to_acm',
-        local_filepath=wasb_export_container.format(date='{{ds}}', fn=op_file),
-        remote_filepath='/incoming/UFS_upload_folder/',
+        local_filepath=tmp_file,
+        remote_filepath='/incoming/temp/ohub_2_test/{}'.format(tmp_file.split('/')[-1]),
         ssh_conn_id='acm_sftp_ssh',
-        operation=SFTPOperation.PUT)
+        operation=SFTPOperation.PUT
+    )
 
-    create_cluster >> uninstall_old_libraries >> contact_persons_file_interface_to_parquet
-    contact_persons_file_interface_to_parquet >> contact_persons_exact_match >> match_per_country
+    create_cluster >> contact_persons_file_interface_to_parquet >> contact_persons_exact_match >> match_per_country
     match_per_country >> merge_contact_persons >> contact_person_combining >> contact_person_referencing
     contact_person_referencing >> contact_persons_to_acm
     contact_persons_to_acm >> terminate_cluster
-    contact_persons_to_acm >> contact_person_ftp_to_acm
+    contact_persons_to_acm >> contact_persons_acm_from_wasb >> contact_person_ftp_to_acm
