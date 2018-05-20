@@ -18,7 +18,7 @@ from operators_config import \
     wasb_export_container, operator_country_codes
 
 default_args.update(
-    {'start_date': datetime(2018, 5, 17)}
+    {'start_date': datetime(2017, 7, 12)}
 )
 interval = '@once'
 
