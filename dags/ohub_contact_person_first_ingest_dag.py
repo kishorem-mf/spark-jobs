@@ -168,14 +168,10 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
             'parameters': ['--integratedUpdated', intermediate_bucket.format(date='{{ds}}',
                                                                              fn='contactpersons_exact_match'),
                            '--newGolden', intermediate_bucket.format(date='{{ds}}',
-                                                                     fn='contacts_matched',
+                                                                     fn='contactpersons',
                                                                      channel='*'),
                            '--combinedEntities', intermediate_bucket.format(date='{{ds}}',
-                                                                            fn='contactpersons_combined'),
-                           '--postgressUrl', postgres_connection.host,
-                           '--postgressUsername', postgres_connection.login,
-                           '--postgressPassword', postgres_connection.password,
-                           '--postgressDB', postgres_connection.schema]
+                                                                            fn='contactpersons_combined')]
         }
     )
 
@@ -194,11 +190,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
                            '--operatorInputFile', integrated_bucket.format(date='{{ds}}',
                                                                            fn='operators',
                                                                            channel='*'),
-                           '--outputFile', integrated_bucket.format(date='{{ds}}', fn='contactpersons'),
-                           '--postgressUrl', postgres_connection.host,
-                           '--postgressUsername', postgres_connection.login,
-                           '--postgressPassword', postgres_connection.password,
-                           '--postgressDB', postgres_connection.schema]
+                           '--outputFile', integrated_bucket.format(date='{{ds}}', fn='contactpersons')]
         }
     )
 
@@ -214,11 +206,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.ContactPersonAcmConverter",
             'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn='contactpersons'),
-                           '--outputFile', export_bucket.format(date='{{ds}}', fn=cp_file),
-                           '--postgressUrl', postgres_connection.host,
-                           '--postgressUsername', postgres_connection.login,
-                           '--postgressPassword', postgres_connection.password,
-                           '--postgressDB', postgres_connection.schema]
+                           '--outputFile', export_bucket.format(date='{{ds}}', fn=cp_file)]
         }
     )
 
