@@ -8,11 +8,11 @@ from airflow.operators.subdag_operator import SubDagOperator
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
-    DatabricksStartClusterOperator, \
-    DatabricksUninstallLibrariesOperator
+    DatabricksCreateClusterOperator
+from custom_operators.file_from_wasb import FileFromWasbOperator
 from operators_config import \
     default_args, \
-    cluster_id, databricks_conn_id, \
+    databricks_conn_id, \
     jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
     wasb_export_container, operator_country_codes
@@ -22,35 +22,41 @@ default_args.update(
 )
 interval = '@once'
 
+utc_now = datetime.utcnow().strftime('%Y%m%d')
+cluster_name = "ohub_contact_persons_first_{}".format(utc_now)
+
 with DAG('ohub_contact_person_first_ingest', default_args=default_args,
          schedule_interval=interval) as dag:
-    start_cluster = DatabricksStartClusterOperator(
-        task_id='start_cluster',
-        cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id
+
+    create_cluster = DatabricksCreateClusterOperator(
+        task_id='create_cluster',
+        databricks_conn_id=databricks_conn_id,
+        cluster_config={
+            "cluster_name": cluster_name,
+            "spark_version": "4.0.x-scala2.11",
+            "node_type_id": "Standard_DS5_v2",
+            "autoscale": {
+                "min_workers": 4,
+                "max_workers": 12
+            },
+            "autotermination_minutes": 30,
+            "spark_env_vars": {
+                "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+            },
+        }
     )
 
     terminate_cluster = DatabricksTerminateClusterOperator(
         task_id='terminate_cluster',
-        cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id
-    )
-
-    uninstall_old_libraries = DatabricksUninstallLibrariesOperator(
-        task_id='uninstall_old_libraries',
-        cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
-        libraries_to_uninstall=[{
-            'jar': jar,
-            'egg': egg,
-        }]
     )
 
     postgres_connection = BaseHook.get_connection('postgres_channels')
 
     contact_persons_file_interface_to_parquet = DatabricksSubmitRunOperator(
         task_id="contact_persons_file_interface_to_parquet",
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -74,7 +80,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
 
     contact_persons_exact_match = DatabricksSubmitRunOperator(
         task_id="contact_persons_exact_match",
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -105,7 +111,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
             DatabricksSubmitRunOperator(
                 dag=sub_dag,
                 task_id='match_contacts_{}'.format(code),
-                existing_cluster_id=cluster_id,
+                cluster_name=cluster_name,
                 databricks_conn_id=databricks_conn_id,
                 libraries=[
                     {'egg': egg}
@@ -130,7 +136,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
 
     merge_contact_persons = DatabricksSubmitRunOperator(
         task_id='merge_contact_persons',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -151,7 +157,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
 
     contact_person_combining = DatabricksSubmitRunOperator(
         task_id='contact_person_combining',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -162,20 +168,16 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
             'parameters': ['--integratedUpdated', intermediate_bucket.format(date='{{ds}}',
                                                                              fn='contactpersons_exact_match'),
                            '--newGolden', intermediate_bucket.format(date='{{ds}}',
-                                                                     fn='contacts_matched',
+                                                                     fn='contactpersons',
                                                                      channel='*'),
                            '--combinedEntities', intermediate_bucket.format(date='{{ds}}',
-                                                                            fn='contactpersons_combined'),
-                           '--postgressUrl', postgres_connection.host,
-                           '--postgressUsername', postgres_connection.login,
-                           '--postgressPassword', postgres_connection.password,
-                           '--postgressDB', postgres_connection.schema]
+                                                                            fn='contactpersons_combined')]
         }
     )
 
     contact_person_referencing = DatabricksSubmitRunOperator(
         task_id='contact_person_referencing',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -188,19 +190,15 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
                            '--operatorInputFile', integrated_bucket.format(date='{{ds}}',
                                                                            fn='operators',
                                                                            channel='*'),
-                           '--outputFile', integrated_bucket.format(date='{{ds}}', fn='contactpersons'),
-                           '--postgressUrl', postgres_connection.host,
-                           '--postgressUsername', postgres_connection.login,
-                           '--postgressPassword', postgres_connection.password,
-                           '--postgressDB', postgres_connection.schema]
+                           '--outputFile', integrated_bucket.format(date='{{ds}}', fn='contactpersons')]
         }
     )
 
-    op_file = 'acm/UFS_RECIPIENTS_{{ds_nodash}}000000.csv'
+    cp_file = 'acm/UFS_RECIPIENTS_{{ds_nodash}}000000.csv'
 
     contact_persons_to_acm = DatabricksSubmitRunOperator(
         task_id="contact_persons_to_acm",
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -208,23 +206,29 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.ContactPersonAcmConverter",
             'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn='contactpersons'),
-                           '--outputFile', export_bucket.format(date='{{ds}}', fn=op_file),
-                           '--postgressUrl', postgres_connection.host,
-                           '--postgressUsername', postgres_connection.login,
-                           '--postgressPassword', postgres_connection.password,
-                           '--postgressDB', postgres_connection.schema]
+                           '--outputFile', export_bucket.format(date='{{ds}}', fn=cp_file)]
         }
+    )
+
+    tmp_file = '/tmp/' + cp_file
+
+    contact_persons_acm_from_wasb = FileFromWasbOperator(
+        task_id='contact_persons_acm_from_wasb',
+        file_path=tmp_file,
+        container_name='prod',
+        wasb_conn_id='azure_blob',
+        blob_name=wasb_export_container.format(date='{{ds}}', fn=cp_file)
     )
 
     contact_person_ftp_to_acm = SFTPOperator(
         task_id='contact_person_ftp_to_acm',
-        local_filepath=wasb_export_container.format(date='{{ds}}', fn=op_file),
-        remote_filepath='/incoming/UFS_upload_folder/',
+        local_filepath=tmp_file,
+        remote_filepath='/incoming/temp/ohub_2_test/{}'.format(tmp_file.split('/')[-1]),
         ssh_conn_id='acm_sftp_ssh',
-        operation=SFTPOperation.PUT)
+        operation=SFTPOperation.PUT
+    )
 
-    start_cluster >> uninstall_old_libraries >> contact_persons_file_interface_to_parquet >> contact_persons_exact_match
-    contact_persons_exact_match >> match_per_country >> merge_contact_persons >> contact_person_combining
-    contact_person_combining >> contact_person_referencing >> contact_persons_to_acm
-    contact_persons_to_acm >> terminate_cluster
-    contact_persons_to_acm >> contact_person_ftp_to_acm
+    create_cluster >> contact_persons_file_interface_to_parquet >> contact_persons_exact_match >> match_per_country
+    match_per_country >> merge_contact_persons >> contact_person_combining >> contact_person_referencing
+    contact_person_referencing >> contact_persons_to_acm >> contact_persons_acm_from_wasb >> contact_person_ftp_to_acm
+    contact_person_ftp_to_acm >> terminate_cluster

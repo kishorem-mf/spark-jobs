@@ -22,11 +22,11 @@ from operators_config import \
     wasb_export_container, operator_country_codes
 
 default_args.update(
-    {'start_date': datetime(2018, 4, 6)}
+    {'start_date': datetime(2018, 5, 17)}
 )
 
-one_day_ago = '2018-04-06'  # should become {{ ds }}
-two_day_ago = '2017-07-12'  # should become {{ yesterday_ds }}
+one_day_ago = '{{ds}}'
+two_day_ago = '{{yesterday_ds}}'
 interval = '@once'
 wasb_conn_id = 'azure_blob'
 
@@ -145,10 +145,10 @@ with DAG('ohub_operators', default_args=default_args,
             {'jar': jar}
         ],
         spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.merging.OperatorMerging",
+            'main_class_name': "com.unilever.ohub.spark.merging.OperatorMatchingJoiner",
             'parameters': ['--matchingInputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='operators_matched'),
-                           '--operatorInputFile',
+                           '--entityInputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched'),
                            '--outputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='golden_records_new'),

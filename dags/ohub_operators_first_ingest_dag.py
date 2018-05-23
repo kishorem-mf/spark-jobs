@@ -18,11 +18,11 @@ from operators_config import \
     wasb_export_container, operator_country_codes
 
 default_args.update(
-    {'start_date': datetime(2018, 5, 8)}
+    {'start_date': datetime(2018, 5, 17)}
 )
 interval = '@once'
 
-utc_now = datetime.utcnow().strftime('%Y%m%d_%H%m%S')
+utc_now = datetime.utcnow().strftime('%Y%m%d')
 cluster_name = "ohub_operators_{}".format(utc_now)
 
 with DAG('ohub_operators_first_ingest', default_args=default_args,
