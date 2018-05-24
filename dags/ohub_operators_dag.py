@@ -7,6 +7,7 @@ from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 from airflow.hooks.base_hook import BaseHook
 
 from custom_operators.file_from_wasb import FileFromWasbOperator
+from custom_operators.wasb_copy import WasbCopyOperator
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
@@ -20,6 +21,7 @@ from operators_config import \
     wasb_raw_container, wasb_ingested_container, \
     wasb_intermediate_container, wasb_integrated_container, \
     wasb_export_container, operator_country_codes
+from airflow.operators.python_operator import BranchPythonOperator
 
 default_args.update(
     {'start_date': datetime(2018, 5, 17)}
@@ -29,9 +31,34 @@ one_day_ago = '{{ds}}'
 two_day_ago = '{{yesterday_ds}}'
 interval = '@once'
 wasb_conn_id = 'azure_blob'
+blob_name = 'prod'
 
 with DAG('ohub_operators', default_args=default_args,
          schedule_interval=interval) as dag:
+
+    verify_integrated = BranchPythonOperator(
+        task_id='verify_integrated',
+        python_callable=lambda: if WasbHook(wasb_conn_id).check_for_blob(
+            container_name=wasb_raw_container.format(
+                date=one_day_ago,
+                schema='operators',
+                channel='file_interface'
+            ),
+            blob_name=blob_name
+        ):
+            return 'start_cluster'
+        else:
+            return 'copy_integrated'
+    )
+
+    copy_integrated = WasbCopyOperator(
+        task_id='copy_integrated',
+        wasb_conn_id=wasb_conn_id,
+        container_name=wasb_integrated_container.format(date=one_day_ago, fn='operators'),
+        blob_name=blob_name,
+        copy_source=wasb_integrated_container.format(date=two_day_ago, fn='operators')  # url
+    )
+
     start_cluster = DatabricksStartClusterOperator(
         task_id='start_cluster',
         cluster_id=cluster_id,
@@ -223,8 +250,8 @@ with DAG('ohub_operators', default_args=default_args,
         task_id='operators_acm_from_wasb',
         file_path=tmp_file,
         container_name=wasb_export_container.format(date=one_day_ago, fn=op_file),
-        wasb_conn_id='azure_blob',
-        blob_name='prod'
+        wasb_conn_id=wasb_conn_id,
+        blob_name=blob_name
     )
 
     operators_ftp_to_acm = SFTPOperator(
@@ -241,6 +268,8 @@ with DAG('ohub_operators', default_args=default_args,
         notebook_task={'notebook_path': '/Users/tim.vancann@unilever.com/update_integrated_tables'}
     )
 
+    verify_integrated >> start_cluster
+    verify_integrated >> copy_integrated
     start_cluster >> uninstall_old_libraries >> operators_file_interface_to_parquet >> match_per_country
     match_per_country >> combine_to_create_integrated
     match_per_country >> merge_operators >> combine_to_create_integrated

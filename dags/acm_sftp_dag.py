@@ -37,19 +37,19 @@ with DAG('acm_sftp', default_args=default_args,
     fetch_order_lines = SFTPGlobOperator(
         task_id='fetch_ACM_order_lines_for_date',
         local_filepath=local_filepath + "ORDERLINES.csv",
-        remote_filepath=rfp + "UFS_ORDERLINES_" + fds + ".*\.csv",
+        remote_filepath=rfp + "UFS_ORDERLINES_" + fds + ".*\\.csv",
         **task_defaults)
 
     fetch_orders = SFTPGlobOperator(
         task_id='fetch_ACM_orders_for_date',
         local_filepath=local_filepath + "ORDERS.csv",
-        remote_filepath=rfp + "UFS_ORDERS_" + fds + ".*\.csv",
+        remote_filepath=rfp + "UFS_ORDERS_" + fds + ".*\\.csv",
         **task_defaults)
 
     fetch_products = SFTPGlobOperator(
         task_id='fetch_ACM_products_for_date',
         local_filepath=local_filepath + "PRODUCTS.csv",
-        remote_filepath=rfp + "UFS_PRODUCTS_" + fds + ".*\.csv",
+        remote_filepath=rfp + "UFS_PRODUCTS_" + fds + ".*\\.csv",
         **task_defaults)
 
     wasb = FolderToWasbOperator(
