@@ -2,14 +2,26 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.{ DefaultWithDbConfig, SparkJobWithDefaultDbConfig }
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.entity.ContactPerson
+import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import org.apache.spark.sql.functions._
+import scopt.OptionParser
 
-object ContactPersonExactMatcher extends SparkJobWithDefaultDbConfig with GoldenRecordPicking[ContactPerson] {
+case class ExactMatchWithDbConfig(
+    inputFile: String = "path-to-input-file",
+    exactMatchOutputFile: String = "path-to-exact-match-output-file",
+    leftOversOutputFile: String = "path-to-left-overs-output-file",
+    postgressUrl: String = "postgress-url",
+    postgressUsername: String = "postgress-username",
+    postgressPassword: String = "postgress-password",
+    postgressDB: String = "postgress-db"
+) extends SparkJobConfig
+
+object ContactPersonExactMatcher extends SparkJob[ExactMatchWithDbConfig] with GoldenRecordPicking[ContactPerson] {
 
   def markGoldenRecordAndGroupId(sourcePreference: Map[String, Int])(contactPersons: Seq[ContactPerson]): Seq[ContactPerson] = {
     val goldenRecord = pickGoldenRecord(sourcePreference, contactPersons)
@@ -36,18 +48,63 @@ object ContactPersonExactMatcher extends SparkJobWithDefaultDbConfig with Golden
       }
   }
 
-  override def run(spark: SparkSession, config: DefaultWithDbConfig, storage: Storage): Unit = {
+  def leftOversForFuzzyMatching(
+    spark: SparkSession,
+    ingestedContactPersons: Dataset[ContactPerson],
+    exactMatchedContactPersons: Dataset[ContactPerson]
+  ): Dataset[ContactPerson] = {
+    import spark.implicits._
+
+    ingestedContactPersons
+      .join(exactMatchedContactPersons, Seq("concatId"), JoinType.LeftAnti)
+      .as[ContactPerson]
+  }
+
+  override private[spark] def defaultConfig = ExactMatchWithDbConfig()
+
+  override private[spark] def configParser(): OptionParser[ExactMatchWithDbConfig] =
+    new scopt.OptionParser[ExactMatchWithDbConfig]("Spark job default") {
+      head("run a spark job with default config.", "1.0")
+      opt[String]("inputFile") required () action { (x, c) ⇒
+        c.copy(inputFile = x)
+      } text "inputFile is a string property"
+      opt[String]("exactMatchOutputFile") required () action { (x, c) ⇒
+        c.copy(exactMatchOutputFile = x)
+      } text "exactMatchOutputFile is a string property"
+      opt[String]("leftOversOutputFile") required () action { (x, c) ⇒
+        c.copy(leftOversOutputFile = x)
+      } text "leftOversOutputFile is a string property"
+      opt[String]("postgressUrl") required () action { (x, c) ⇒
+        c.copy(postgressUrl = x)
+      } text "postgressUrl is a string property"
+      opt[String]("postgressUsername") required () action { (x, c) ⇒
+        c.copy(postgressUsername = x)
+      } text "postgressUsername is a string property"
+      opt[String]("postgressPassword") required () action { (x, c) ⇒
+        c.copy(postgressPassword = x)
+      } text "postgressPassword is a string property"
+      opt[String]("postgressDB") required () action { (x, c) ⇒
+        c.copy(postgressDB = x)
+      } text "postgressDB is a string property"
+
+      version("1.0")
+      help("help") text "help text"
+    }
+
+  override def run(spark: SparkSession, config: ExactMatchWithDbConfig, storage: Storage): Unit = {
     run(spark, config, storage, DomainDataProvider(spark, config.postgressUrl, config.postgressDB, config.postgressUsername, config.postgressPassword))
   }
 
-  protected[merging] def run(spark: SparkSession, config: DefaultWithDbConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
+  protected[merging] def run(spark: SparkSession, config: ExactMatchWithDbConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     import spark.implicits._
 
-    log.info(s"Exact matching contact persons from [${config.inputFile}] to [${config.outputFile}]")
+    log.info(s"Exact matching contact persons from [${config.inputFile}] to [${config.exactMatchOutputFile}] and left-overs to [${config.leftOversOutputFile}]")
 
     val ingestedContactPersons = storage.readFromParquet[ContactPerson](config.inputFile)
-    val transformed = transform(spark, ingestedContactPersons, dataProvider.sourcePreferences)
+    val exactMatches = transform(spark, ingestedContactPersons, dataProvider.sourcePreferences)
+    val fuzzyMatchContactPersons = leftOversForFuzzyMatching(spark, ingestedContactPersons, exactMatches)
 
-    storage.writeToParquet(transformed, config.outputFile)
+    storage.writeToParquet(exactMatches, config.exactMatchOutputFile)
+    storage.writeToParquet(fuzzyMatchContactPersons, config.leftOversOutputFile)
   }
 }
