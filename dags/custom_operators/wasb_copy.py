@@ -1,7 +1,4 @@
-# from: https://github.com/apache/incubator-airflow/blob/master/
-# airflow/contrib/operators/file_to_wasb.py
 import os
-
 from custom_operators.wasb_hook import WasbHook
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
@@ -23,6 +20,6 @@ class WasbCopyOperator(BaseOperator):
         self.kwargs = kwargs
 
     def execute(self, context):
-        """Upload a file to Azure Blob Storage."""
+        """Copy a file in Azure Blob Storage."""
         hook = WasbHook(wasb_conn_id=self.wasb_conn_id)
         hook.copy_blob(self.container_name, self.blob_name, self.copy_source, **self.kwargs)
