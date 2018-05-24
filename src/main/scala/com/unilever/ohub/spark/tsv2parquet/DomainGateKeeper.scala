@@ -135,11 +135,12 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
 
     handleErrors(config, result)
 
+    // deduplicate incoming domain entities by selecting the 'newest' entity per unique concatId.
     val w = Window.partitionBy($"concatId").orderBy($"dateUpdated".desc_nulls_last)
     val domainEntities: Dataset[DomainType] = result
       .filter(_.isRight).map(_.right.get)
       .withColumn("rn", row_number.over(w))
-      .filter($"rn" === 1) // TODO why do we filter and drop here?
+      .filter($"rn" === 1)
       .drop($"rn")
       .as[DomainType]
 
