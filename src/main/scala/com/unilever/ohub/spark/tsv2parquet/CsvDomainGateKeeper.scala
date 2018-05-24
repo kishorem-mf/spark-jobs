@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.tsv2parquet
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeper.DomainConfig
-import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import org.apache.spark.sql.{ Dataset, Row, SparkSession }
 
 import scala.reflect.runtime.universe._
 

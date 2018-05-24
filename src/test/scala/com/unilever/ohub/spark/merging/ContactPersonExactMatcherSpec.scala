@@ -43,5 +43,15 @@ class ContactPersonExactMatcherSpec extends SparkJobSpec with TestContactPersons
       result.filter(cp ⇒ cp.sourceEntityId == "b" || cp.sourceEntityId == "f").map(_.ohubId).distinct().count() shouldBe 1
       result.filter(cp ⇒ cp.sourceEntityId == "c" || cp.sourceEntityId == "g").map(_.ohubId).distinct().count() shouldBe 1
     }
+
+    it("should determine the left-overs correctly, given a set of exact matches") {
+      val exactMatchContact = ingestedContactPersons.filter(cp ⇒ cp.sourceEntityId != "d")
+
+      val result: Dataset[ContactPerson] = ContactPersonExactMatcher.leftOversForFuzzyMatching(
+        spark, ingestedContactPersons, exactMatchContact
+      )
+
+      result.map(_.sourceEntityId).collect().toSet shouldBe Set("d")
+    }
   }
 }
