@@ -6,6 +6,7 @@ from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 
 from airflow.hooks.base_hook import BaseHook
 
+from custom_operators.wasb_hook import WasbHook
 from custom_operators.file_from_wasb import FileFromWasbOperator
 from custom_operators.wasb_copy import WasbCopyOperator
 from custom_operators.databricks_functions import \
