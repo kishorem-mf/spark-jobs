@@ -19,9 +19,11 @@ from operators_config import \
     cluster_id, databricks_conn_id, \
     jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_raw_container, wasb_ingested_container, \
-    wasb_intermediate_container, wasb_integrated_container, \
-    wasb_export_container, operator_country_codes
+    wasb_raw_container, wasb_ingested_container, wasb_intermediate_container, \
+    wasb_integrated_container, wasb_export_container, \
+    http_raw_container, http_ingested_container, http_intermediate_container, \
+    http_integrated_container, http_export_container, \
+    operator_country_codes
 from airflow.operators.python_operator import BranchPythonOperator
 
 default_args.update(
@@ -57,7 +59,12 @@ with DAG('ohub_operators', default_args=default_args,
         wasb_conn_id=wasb_conn_id,
         container_name=wasb_integrated_container.format(date=one_day_ago, fn='operators'),
         blob_name=blob_name,
-        copy_source=wasb_integrated_container.format(date=two_day_ago, fn='operators')  # url
+        copy_source=http_integrated_container.format(
+            container='ulohub2storedevne',
+            blob=blob_name,
+            date=two_day_ago,
+            fn='operators'
+        )
     )
 
     start_cluster = DatabricksStartClusterOperator(
