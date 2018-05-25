@@ -41,17 +41,14 @@ with DAG('ohub_operators', default_args=default_args,
 
     verify_integrated = BranchPythonOperator(
         task_id='verify_integrated',
-        python_callable=lambda: if WasbHook(wasb_conn_id).check_for_blob(
+        python_callable=lambda: 'start_cluster' if WasbHook(wasb_conn_id).check_for_blob(
             container_name=wasb_raw_container.format(
                 date=one_day_ago,
                 schema='operators',
                 channel='file_interface'
             ),
             blob_name=blob_name
-        ):
-            return 'start_cluster'
-        else:
-            return 'copy_integrated'
+        ) else 'copy_integrated'
     )
 
     copy_integrated = WasbCopyOperator(
