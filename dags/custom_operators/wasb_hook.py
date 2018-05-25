@@ -150,3 +150,6 @@ class WasbHook(BaseHook):
         return self.connection.get_blob_to_text(container_name,
                                                 blob_name,
                                                 **kwargs).content
+
+    def copy_blob(self, container_name, blob_name, copy_source, **kwargs):
+        return self.connection.copy_blob(container_name, blob_name, copy_source, **kwargs)
