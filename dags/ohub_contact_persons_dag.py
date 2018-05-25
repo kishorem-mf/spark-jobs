@@ -90,16 +90,16 @@ with DAG('ohub_contact_persons', default_args=default_args,
             {'jar': jar}
         ],
         spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.??",
-            'parameters': ['--ingested', ingested_bucket.format(date=one_day_ago,
-                                                                fn='contact_persons',
-                                                                channel='file_interface'),
-                           '--integrated', integrated_bucket.format(date=two_day_ago,
-                                                                    fn='contactpersons'),
-                           '--matchedOutputFile', intermediate_bucket.format(date=one_day_ago,
+            'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonIntegratedExactMatch",
+            'parameters': ['--integratedInputFile', ingested_bucket.format(date=one_day_ago,
+                                                                           fn='contact_persons',
+                                                                           channel='file_interface'),
+                           '--deltaInputFile', integrated_bucket.format(date=two_day_ago,
+                                                                        fn='contactpersons'),
+                           '--updatedIntegrated', intermediate_bucket.format(date=one_day_ago,
                                                                              fn='contact_person_updated_exact_matches'),
-                           '--unmatchedOutputFile', intermediate_bucket.format(date=one_day_ago,
-                                                                               fn='contact_person_no_exact_match')
+                           '--unmatchedDeltaOutputFile', intermediate_bucket.format(date=one_day_ago,
+                                                                                    fn='contact_person_no_exact_match')
                            ]
         }
     )
@@ -193,9 +193,8 @@ with DAG('ohub_contact_persons', default_args=default_args,
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonMatchingJoiner",
             'parameters': ['--matchingInputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='contacts_persons_matched'),
-                           '--entityInputFile', ingested_bucket.format(date=one_day_ago,
-                                                                       fn='contact_persons',
-                                                                       channel='*'),
+                           '--entityInputFile', intermediate_bucket.format(date=one_day_ago,
+                                                                           fn='contact_persons_unmatched'),
                            '--outputFile',
                            intermediate_bucket.format(date=one_day_ago,
                                                       fn='contact_persons_golden_records_new')] + postgres_config
@@ -230,10 +229,12 @@ with DAG('ohub_contact_persons', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.??",
             'parameters': ['--nameMatched', intermediate_bucket.format(date=one_day_ago, fn='contacts_persons_matched'),
-                           '--ingestedExactMatched', intermediate_bucket.format(date=one_day_ago,
-                                                                                fn='contact_persons'),
-                           '--integratedExactMatched', intermediate_bucket.format(date=one_day_ago,
-                                                                                  fn='contact_persons'),
+                           '--ingestedExactMatched',
+                           intermediate_bucket.format(date=one_day_ago,
+                                                      fn='contact_person_ingested_exact_match'),
+                           '--integratedExactMatched',
+                           intermediate_bucket.format(date=one_day_ago,
+                                                      fn='contact_person_updated_exact_matches'),
                            '--outputFile',
                            intermediate_bucket.format(date=one_day_ago,
                                                       fn='contact_persons_combined')] + postgres_config
@@ -252,7 +253,8 @@ with DAG('ohub_contact_persons', default_args=default_args,
             'parameters': ['--inputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='contact_persons_combined'),
                            '--outputFile',
-                           integrated_bucket.format(date=one_day_ago, fn='operators')] + postgres_config
+                           intermediate_bucket.format(date=one_day_ago, fn='operators_updated_golden')
+                           ] + postgres_config
         }
     )
 
@@ -266,7 +268,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonReferencing",
             'parameters': ['--combinedInputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_combined'),
+                           intermediate_bucket.format(date=one_day_ago, fn='operators_updated_golden'),
                            '--operatorInputFile', integrated_bucket.format(date=one_day_ago,
                                                                            fn='operators',
                                                                            channel='*'),
@@ -288,8 +290,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.ContactPersonAcmConverter",
             'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn='contact_persons'),
-                           '--outputFile', export_bucket.format(date=one_day_ago, fn=op_file),
-
+                           '--outputFile', export_bucket.format(date=one_day_ago, fn=op_file)
                            ] + postgres_config
         }
     )
