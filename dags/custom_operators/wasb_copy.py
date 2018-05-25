@@ -22,4 +22,4 @@ class WasbCopyOperator(BaseOperator):
     def execute(self, context):
         """Copy a file in Azure Blob Storage."""
         hook = WasbHook(wasb_conn_id=self.wasb_conn_id)
-        hook.copy_blob(self.container_name, self.blob_name, self.copy_source, **self.kwargs)
+        hook.copy_blob(self.container_name, self.blob_name, self.copy_source)
