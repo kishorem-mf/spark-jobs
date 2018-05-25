@@ -57,7 +57,7 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
   def transform(spark: SparkSession, integratedContactPersons: Dataset[ContactPerson], dailyDeltaContactPersons: Dataset[ContactPerson]): (Dataset[ContactPerson], Dataset[ContactPerson]) = {
     import spark.implicits._
 
-    // give these the corresponding ohubId & overwrite new in integrated result
+    // take over exact matches on concatId & copy ohubId (if we don't we might loose an ohubId here)
     val updatedContactPersons = integratedContactPersons
       .joinWith(dailyDeltaContactPersons, integratedContactPersons("concatId") === dailyDeltaContactPersons("concatId"), JoinType.Inner)
       .map { case (integratedCP, deltaCP) ⇒ deltaCP.copy(ohubId = integratedCP.ohubId) } // TODO can we set the ohubId regardless what has changed, what about dates? we might loose info here, is that ok?
@@ -65,7 +65,7 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
     val matchedExact: Dataset[ContactPerson] = determineExactMatches(spark, integratedContactPersons, dailyDeltaContactPersons)
 
     val updatedIntegrated = integratedContactPersons
-      .join(updatedContactPersons, Seq("concatId"), JoinType.LeftAnti)
+      .join(updatedContactPersons, Seq("concatId"), JoinType.LeftAnti) // integrated - updated
       .as[ContactPerson]
       .union(updatedContactPersons)
       .union(matchedExact)
@@ -75,7 +75,6 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
       .join(matchedExact, Seq("concatId"), JoinType.LeftAnti)
       .as[ContactPerson]
 
-    // update integrated with matched delta
     (updatedIntegrated, unmatchedContactPersons)
   }
 

@@ -23,7 +23,7 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
   ).toDataset
 
   private val deltaContactPersons: Dataset[ContactPerson] = Seq(
-    contactPersonA.copy(ohubId = None, firstName = Some("updated-first-name-a")), // should be in integrated with the ohubId of former a
+    contactPersonA.copy(ohubId = None, isGoldenRecord = false, firstName = Some("updated-first-name-a")), // should be in integrated with the ohubId of a
     defaultContactPersonWithSourceEntityId("h").copy(ohubId = None), // should be in integrated with ohubId of a
     defaultContactPersonWithSourceEntityId("i").copy(ohubId = None, mobileNumber = None), // should be in integrated with ohubId of b
     // new contact persons
@@ -39,7 +39,7 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
 
       updatedIntegrated.map(cp ⇒ (cp.sourceEntityId, cp.isGoldenRecord, cp.ohubId, cp.firstName)).collect().toSet shouldBe
         Set(
-          ("a", true, Some("ohub-a"), Some("updated-first-name-a")),
+          ("a", false, Some("ohub-a"), Some("updated-first-name-a")), // a is not a golden record anymore, another job will restore the group's golden record
           ("b", true, Some("ohub-b"), Some("John")),
           ("c", true, Some("ohub-c"), Some("John")),
           ("d", true, Some("ohub-d"), Some("John")),
