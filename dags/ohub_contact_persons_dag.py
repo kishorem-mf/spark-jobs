@@ -77,7 +77,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
                            '--outputFile', ingested_bucket.format(date=one_day_ago,
                                                                   fn='contactpersons',
                                                                   channel='file_interface'),
-                           '--fieldSeparator', u"\u2030",
+                           # '--fieldSeparator', u"\u2030",
                            '--strictIngestion', "false"] + postgres_config
         }
     )
