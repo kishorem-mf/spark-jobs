@@ -36,4 +36,7 @@ docker exec -i ${container_name} airflow connections --add --conn_id "postgres_c
 docker exec -i ${container_name} airflow variables --set "slack_airflow_token" "foo"
 
 sleep 1
-docker exec -i ulohub_airflow_dags airflow list_dags
+string=`docker exec -i ulohub_airflow_dags airflow list_dags`
+echo "$string"
+substring="Error"
+exit `! [[ $string =~ $substring ]]`
