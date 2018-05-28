@@ -39,4 +39,4 @@ sleep 1
 string=`docker exec -i ulohub_airflow_dags airflow list_dags`
 echo "$string"
 substring="Error"
-exit `! [[ $string =~ Error ]]`
+exit `! [[ $string =~ $substring ]]`
