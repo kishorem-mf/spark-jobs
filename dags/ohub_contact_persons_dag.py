@@ -227,17 +227,18 @@ with DAG('ohub_contact_persons', default_args=default_args,
             {'jar': jar}
         ],
         spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.??",
-            'parameters': ['--nameMatched', intermediate_bucket.format(date=one_day_ago, fn='contact_persons_combined'),
-                           '--ingestedExactMatched',
-                           intermediate_bucket.format(date=one_day_ago,
-                                                      fn='contact_person_ingested_exact_match'),
-                           '--integratedExactMatched',
+            'main_class_name': "com.unilever.ohub.spark.combining.ContactPersonCombineExactAndFuzzyMatches",
+            'parameters': ['--updatedExactMatchInputFile',
                            intermediate_bucket.format(date=one_day_ago,
                                                       fn='contact_person_updated_exact_matches'),
-                           '--outputFile',
+                           '--ingestedExactMatchInputFile',
                            intermediate_bucket.format(date=one_day_ago,
-                                                      fn='contact_persons_combined')] + postgres_config
+                                                      fn='contact_person_ingested_exact_match'),
+                           '--fuzzyMatchCombinedInputFile',
+                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_combined'),
+                           '--combinedOutputFile',
+                           intermediate_bucket.format(date=one_day_ago,
+                                                      fn='contact_persons_combined_full')] + postgres_config
         }
     )
 
@@ -251,7 +252,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonUpdateGoldenRecord",
             'parameters': ['--inputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_combined'),
+                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_combined_full'),
                            '--outputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='operators_updated_golden')
                            ] + postgres_config
