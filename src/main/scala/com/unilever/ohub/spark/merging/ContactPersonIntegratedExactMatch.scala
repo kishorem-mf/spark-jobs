@@ -10,7 +10,7 @@ import scopt.OptionParser
 case class ExactMatchIngestedWithDbConfig(
     integratedInputFile: String = "path-to-integrated-input-file",
     deltaInputFile: String = "path-to-delta-input-file",
-    exactMatchOutputFile: String = "path-to-exact-match-output-file",
+    updatedIntegrated: String = "path-to-updated-integrated",
     unmatchedDeltaOutputFile: String = "path-to-unmatched-delta-output-file",
     postgressUrl: String = "postgress-url",
     postgressUsername: String = "postgress-username",
@@ -31,9 +31,9 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
       opt[String]("deltaInputFile") required () action { (x, c) ⇒
         c.copy(deltaInputFile = x)
       } text "deltaInputFile is a string property"
-      opt[String]("exactMatchOutputFile") required () action { (x, c) ⇒
-        c.copy(exactMatchOutputFile = x)
-      } text "exactMatchOutputFile is a string property"
+      opt[String]("updatedIntegrated") required () action { (x, c) ⇒
+        c.copy(updatedIntegrated = x)
+      } text "updatedIntegrated is a string property"
       opt[String]("unmatchedDeltaOutputFile") required () action { (x, c) ⇒
         c.copy(unmatchedDeltaOutputFile = x)
       } text "unmatchedDeltaOutputFile is a string property"
@@ -106,14 +106,14 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
     import spark.implicits._
 
     log.info(s"Integrated vs ingested exact matching contact persons from [${config.integratedInputFile}] and " +
-      s"[${config.deltaInputFile}] to matched output [${config.exactMatchOutputFile}] and unmatched delta output to [${config.unmatchedDeltaOutputFile}]")
+      s"[${config.deltaInputFile}] to updated integrated output [${config.updatedIntegrated}] and unmatched delta output to [${config.unmatchedDeltaOutputFile}]")
 
     val integratedContactPersons = storage.readFromParquet[ContactPerson](config.integratedInputFile)
     val dailyDeltaContactPersons = storage.readFromParquet[ContactPerson](config.deltaInputFile)
 
     val (exactMatches, unmatched) = transform(spark, integratedContactPersons, dailyDeltaContactPersons)
 
-    storage.writeToParquet(exactMatches, config.exactMatchOutputFile)
+    storage.writeToParquet(exactMatches, config.updatedIntegrated)
     storage.writeToParquet(unmatched, config.unmatchedDeltaOutputFile)
   }
 }
