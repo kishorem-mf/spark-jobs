@@ -71,5 +71,10 @@ airflow-webserver-799c7bd695-mbgk8   3/3       Running   0          5d
 kubectl port-forward [podname] [localport]:8080
 ```
 
+Or, in one go:
+```
+kubectl port-forward `kubectl get pods | grep airflow-webserver| awk '{print $1}'` 8080:8080
+```
+
 In this example `[podname]` is `airflow-webserver-799c7bd695-mbgk8`
 - Access the UI in the browser at [http://localhost:[localport]](http://localhost:[localport])
