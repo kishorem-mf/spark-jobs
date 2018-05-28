@@ -23,6 +23,7 @@ __status__ = "Development"
 import math
 import numpy as np
 
+import pyspark
 import pyspark.sql.functions as sf
 
 from pyspark.ml.linalg import Vectors, VectorUDT
@@ -272,12 +273,16 @@ def match_strings(spark, df,
                   max_vocabulary_size,
                   matrix_chunks_rows=500,
                   df2=None):
-    str_vectorizer = (
-        StringVectorizer(input_col=string_column,
-                         n_gram=n_gram,
-                         min_df=min_document_frequency,
-                         vocab_size=max_vocabulary_size).fit(df, df2)
-    )
+    try:
+        str_vectorizer = (
+            StringVectorizer(input_col=string_column,
+                             n_gram=n_gram,
+                             min_df=min_document_frequency,
+                             vocab_size=max_vocabulary_size).fit(df, df2)
+        )
+    except pyspark.sql.utils.IllegalArgumentException:
+        return spark.createDataFrame([], similarity_schema)
+
     vectorized_strings = (str_vectorizer
                           .transform(df)
                           .select([row_number_column, VECTORIZE_STRING_COLUMN_NAME])

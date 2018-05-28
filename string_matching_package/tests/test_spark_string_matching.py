@@ -61,6 +61,23 @@ class TestMatchStrings(object):
         assert ingested == [0, 0, 2, 2, 3]
         assert integrated == [0, 1, 0, 1, 2]
 
+    def test_matching_on_sparse_dataframe(self, spark):
+        data = [(0, 'aa'),
+                (1, 'ab'),
+                (2, 'ac'),
+                ]
+        ddf = self.create_ddf(spark, data)
+        res = victim.match_strings(spark,
+                                   df=ddf,
+                                   string_column='matching_string',
+                                   row_number_column='id',
+                                   n_top=1500,
+                                   threshold=0.8,
+                                   n_gram=2,
+                                   min_document_frequency=2,
+                                   max_vocabulary_size=1500).select('i', 'j').sort('j', 'i').collect()
+        assert len(res) == 0
+
     def test_matching_on_sparse_second_dataframe(self, spark):
         data_delta = [(0, 'ab'),
                       (1, 'ac'),
