@@ -9,7 +9,8 @@ import com.unilever.ohub.spark.generic.StringFunctions
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-object OrderLineAcmConverter extends SparkJobWithDefaultConfig {
+object OrderLineAcmConverter extends SparkJobWithDefaultConfig with AcmConverter {
+
   def transform(spark: SparkSession, orders: Dataset[OrderRecord]): Dataset[UFSOrderLine] = {
     import spark.implicits._
 
@@ -36,6 +37,6 @@ object OrderLineAcmConverter extends SparkJobWithDefaultConfig {
     val transformed = transform(spark, orderLines)
 
     // COUNTRY_CODE is not an existing column, therefore no country partitioning
-    storage.writeToSingleCsv(transformed, config.outputFile)
+    storage.writeToSingleCsv(transformed, config.outputFile, delim = outputCsvDelimiter, quote = outputCsvQuote)
   }
 }

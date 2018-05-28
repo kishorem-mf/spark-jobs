@@ -6,7 +6,7 @@ import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-object ContactPersonAcmConverter extends SparkJobWithDefaultConfig with AcmTransformationFunctions {
+object ContactPersonAcmConverter extends SparkJobWithDefaultConfig with AcmTransformationFunctions with AcmConverter {
 
   def transform(spark: SparkSession, contactPersons: Dataset[ContactPerson]): Dataset[UFSRecipient] = {
     import spark.implicits._
@@ -89,6 +89,8 @@ object ContactPersonAcmConverter extends SparkJobWithDefaultConfig with AcmTrans
     val contactPersons = storage.readFromParquet[ContactPerson](config.inputFile)
     val transformed = transform(spark, contactPersons)
 
-    storage.writeToSingleCsv(transformed, config.outputFile)
+    storage.writeToSingleCsv(
+      ds = transformed, outputFile = config.outputFile, delim = outputCsvDelimiter, quote = outputCsvQuote
+    )
   }
 }
