@@ -6,7 +6,7 @@ import com.unilever.ohub.spark.domain.entity.Product
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-object ProductAcmConverter extends SparkJobWithDefaultConfig with AcmTransformationFunctions {
+object ProductAcmConverter extends SparkJobWithDefaultConfig with AcmTransformationFunctions with AcmConverter {
 
   def transform(spark: SparkSession, products: Dataset[Product]): Dataset[UFSProduct] = {
     import spark.implicits._
@@ -34,6 +34,6 @@ object ProductAcmConverter extends SparkJobWithDefaultConfig with AcmTransformat
 
     val transformed = transform(spark, products)
 
-    storage.writeToSingleCsv(transformed, config.outputFile)
+    storage.writeToSingleCsv(transformed, config.outputFile, delim = outputCsvDelimiter, quote = outputCsvQuote)
   }
 }

@@ -22,7 +22,7 @@ case class DefaultWithDbAndDeltaConfig(
 ) extends SparkJobConfig
 
 object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
-  with DeltaFunctions with AcmTransformationFunctions {
+  with DeltaFunctions with AcmTransformationFunctions with AcmConverter {
 
   def transform(
     spark: SparkSession,
@@ -78,10 +78,9 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     val operators = storage.readFromParquet[Operator](config.inputFile)
     val previousIntegrated = config.previousIntegrated match {
       case Some(s) ⇒ storage.readFromParquet[Operator](s)
-      case None ⇒ {
+      case None ⇒
         log.warn(s"No existing integrated file specified -- regarding as initial load.")
         spark.emptyDataset[Operator]
-      }
     }
     val transformed = transform(spark, channelMappings, operators, previousIntegrated)
 
@@ -169,7 +168,6 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
   }
 
   def writeToCsv(storage: Storage, ds: Dataset[UFSOperator], fileName: String)(implicit log: Logger): Unit = {
-    storage.writeToSingleCsv(ds, fileName, delim = "\u00B6") // todo double check delimiter with Wunderman
+    storage.writeToSingleCsv(ds, fileName, delim = outputCsvDelimiter, quote = outputCsvQuote)
   }
-
 }

@@ -6,7 +6,7 @@ import com.unilever.ohub.spark.data.OrderRecord
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-object OrderAcmConverter extends SparkJobWithDefaultConfig {
+object OrderAcmConverter extends SparkJobWithDefaultConfig with AcmConverter {
   private val dateFormat = "yyyy-MM-dd HH:mm:ss"
 
   def transform(spark: SparkSession, orders: Dataset[OrderRecord]): Dataset[UFSOrder] = {
@@ -43,6 +43,6 @@ object OrderAcmConverter extends SparkJobWithDefaultConfig {
     val orders = storage.readFromParquet[OrderRecord](config.inputFile)
     val transformed = transform(spark, orders)
 
-    storage.writeToSingleCsv(transformed, config.outputFile)
+    storage.writeToSingleCsv(transformed, config.outputFile, delim = outputCsvDelimiter, quote = outputCsvQuote)
   }
 }
