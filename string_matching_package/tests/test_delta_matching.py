@@ -47,6 +47,47 @@ class TestDeltaMatching(object):
         assert len(unmatched) == 1
         assert unmatched[0][0] == 'c3'
 
+    def test_full_matching_operators_replacing_group(self, spark):
+        delta_data = [
+            ('c1', 'NL', 'xx', 'nbar', '', '', ''),
+            ('c2', 'NL', 'xx', 'nfoo', '', '', ''),
+            ('c8', 'NL', 'aa', '', '', '', ''),
+            ('c9', 'NL', 'bb', 'v', '', '', ''),
+        ]
+        integrated_data = [
+            ('c1', 'o1', 'NL', 'xx', 'obar', '', '', ''),
+            ('c2', 'o1', 'NL', 'xx', 'ofoo', '', '', ''),
+            ('c3', 'o2', 'NL', 'xy', '', '', '', ''),
+            ('c4', 'o3', 'NL', 'xz', '', '', '', ''),
+        ]
+        ingested = (spark.createDataFrame(delta_data)
+                    .toDF('concatId', 'countryCode', 'name', 'city', 'street', 'houseNumber', 'zipCode')
+                    )
+        integrated = (spark.createDataFrame(integrated_data)
+                      .toDF('concatId', 'ohubId', 'countryCode', 'name', 'city', 'street', 'houseNumber', 'zipCode')
+                      )
+
+        updated, unmatched = victim.apply_delta_matching_on(spark,
+                                                            ingested,
+                                                            integrated,
+                                                            helper.preprocess_operators,
+                                                            victim.postprocess_delta_operators,
+                                                            1500, 0.2)
+        updated = updated.select('concatId', 'ohubId', 'city').sort('concatId').collect()
+        unmatched = unmatched.select('concatId').sort('concatId').collect()
+
+        assert len(updated) == 4
+        concats = [_[0] for _ in updated]
+        ohubIds = [_[1] for _ in updated]
+        cities_ = [_[2] for _ in updated]
+        assert concats == ['c1', 'c2', 'c3', 'c4']
+        assert ohubIds == ['o1', 'o1', 'o2', 'o3']
+        assert cities_ == ['nbar', 'nfoo', '', '']
+
+        assert len(unmatched) == 2
+        assert unmatched[0][0] == 'c8'
+        assert unmatched[1][0] == 'c9'
+
     def test_full_matching_contact_persons(self, spark):
         schema_delta = StructType([
             StructField("concatId", StringType(), True),
