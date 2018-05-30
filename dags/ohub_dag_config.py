@@ -1,7 +1,7 @@
 from datetime import timedelta
 from config import email_addresses, slack_on_databricks_failure_callback
-from dags.custom_operators.databricks_functions import DatabricksCreateClusterOperator, \
-    DatabricksTerminateClusterOperator
+from custom_operators.databricks_functions import \
+    DatabricksCreateClusterOperator, DatabricksTerminateClusterOperator
 
 operator_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG', 'BH', 'BO', 'BR', 'CA', 'CH',
                           'CL', 'CN', 'CO', 'CR', 'CZ', 'DE', 'DK', 'DO', 'EC', 'EE', 'EG', 'ES', 'FI', 'FR', 'GB',
