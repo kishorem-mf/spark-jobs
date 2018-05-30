@@ -4,9 +4,10 @@ import java.util.UUID
 
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 case class ExactMatchIngestedWithDbConfig(
@@ -92,7 +93,7 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
         .toDF("group", "contactPerson")
         .withColumn("inDelta", lit(true))
 
-    integratedWithExact
+    val allExact = integratedWithExact
       .union(newWithExact)
       .groupBy($"group")
       .agg(collect_list(struct($"contactPerson", $"inDelta")).as("contactPersons"))
@@ -109,14 +110,18 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
             case (contactPerson, inDelta) ⇒ (contactPerson.copy(ohubId = Some(ohubId)), inDelta)
           }
       }
-      .groupByKey { // TODO resolve this
-        case (contactPerson, _) ⇒ contactPerson.concatId
-      }
-      .reduceGroups((left, right) ⇒
-        if (left._2) left else right
-      )
+      .toDF("contactPerson", "inDelta")
+
+    // NOTE: that exact match can contain exact matches from integrated which will be resolved later
+
+    val w = Window.partitionBy($"contactPerson.concatId")
+    allExact
+      .withColumn("count", count("*").over(w))
+      .withColumn("select", when($"count" > 1, $"inDelta").otherwise(lit(true)))
+      .filter($"select")
+      .as[(ContactPerson, Boolean, Long, Boolean)]
       .map {
-        case (_, (contactPerson, _)) ⇒ contactPerson
+        case (contactPerson, _, _, _) => contactPerson
       }
   }
 
