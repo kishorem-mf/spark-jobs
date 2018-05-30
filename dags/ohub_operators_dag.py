@@ -3,24 +3,20 @@ from datetime import datetime
 from airflow import DAG
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 from airflow.hooks.base_hook import BaseHook
-from airflow.operators.python_operator import BranchPythonOperator
 from airflow.operators.subdag_operator import SubDagOperator
 
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
-    DatabricksStartClusterOperator, \
-    DatabricksUninstallLibrariesOperator, DatabricksCreateClusterOperator
+    DatabricksCreateClusterOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
-from custom_operators.wasb_copy import WasbCopyOperator
-from custom_operators.wasb_hook import WasbHook
 from operators_config import \
     default_args, \
     cluster_id, databricks_conn_id, \
     jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_raw_container, wasb_integrated_container, wasb_export_container, \
-    http_integrated_container, operator_country_codes
+    wasb_export_container, \
+    operator_country_codes
 
 default_args.update(
     {'start_date': datetime(2018, 5, 29)}
@@ -250,9 +246,7 @@ with DAG('ohub_operators', default_args=default_args,
         notebook_task={'notebook_path': '/Users/tim.vancann@unilever.com/update_integrated_tables'}
     )
 
-    verify_integrated >> start_cluster
-    verify_integrated >> copy_integrated
-    start_cluster >> uninstall_old_libraries >> operators_file_interface_to_parquet >> match_per_country
+    create_cluster >> operators_file_interface_to_parquet >> match_per_country
     match_per_country >> combine_to_create_integrated
     match_per_country >> merge_operators >> combine_to_create_integrated
     combine_to_create_integrated >> update_golden_records >> update_operators_table >> terminate_cluster
