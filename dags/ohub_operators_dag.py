@@ -53,7 +53,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     terminate_cluster = DatabricksTerminateClusterOperator(
         task_id='terminate_cluster',
-        cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id
     )
 
@@ -61,7 +61,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     operators_file_interface_to_parquet = DatabricksSubmitRunOperator(
         task_id="operators_file_interface_to_parquet",
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -94,7 +94,7 @@ with DAG('ohub_operators', default_args=default_args,
             match_new = DatabricksSubmitRunOperator(
                 dag=sub_dag,
                 task_id=('match_new_operators_with_integrated_operators_{}'.format(code)),
-                existing_cluster_id=cluster_id,
+                cluster_name=cluster_name,
                 databricks_conn_id=databricks_conn_id,
                 libraries=[
                     {'egg': egg}
@@ -118,7 +118,7 @@ with DAG('ohub_operators', default_args=default_args,
             match_unmatched = DatabricksSubmitRunOperator(
                 dag=sub_dag,
                 task_id='match_unmatched_operators_{}'.format(code),
-                existing_cluster_id=cluster_id,
+                cluster_name=cluster_name,
                 databricks_conn_id=databricks_conn_id,
                 libraries=[
                     {'egg': egg}
@@ -144,7 +144,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     merge_operators = DatabricksSubmitRunOperator(
         task_id='merge_operators',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -165,7 +165,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     combine_to_create_integrated = DatabricksSubmitRunOperator(
         task_id='combine_to_create_integrated',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -183,7 +183,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     update_golden_records = DatabricksSubmitRunOperator(
         task_id='update_golden_records',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -205,7 +205,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     operators_to_acm = DatabricksSubmitRunOperator(
         task_id="operators_to_acm",
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -241,7 +241,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     update_operators_table = DatabricksSubmitRunOperator(
         task_id='update_operators_table',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         notebook_task={'notebook_path': '/Users/tim.vancann@unilever.com/update_integrated_tables'}
     )
