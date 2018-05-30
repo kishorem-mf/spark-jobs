@@ -3,7 +3,6 @@ package com.unilever.ohub.spark.merging
 import java.util.UUID
 
 import com.unilever.ohub.spark.domain.entity.ContactPerson
-import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import org.apache.spark.sql.functions._
@@ -11,15 +10,15 @@ import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 case class ExactMatchIngestedWithDbConfig(
-    integratedInputFile: String = "path-to-integrated-input-file",
-    deltaInputFile: String = "path-to-delta-input-file",
-    matchedExact: String = "path-to-matched-exact",
-    unmatchedIntegrated: String = "path-to-unmatched-integrated",
-    unmatchedDelta: String = "path-to-unmatched-delta",
-    postgressUrl: String = "postgress-url",
-    postgressUsername: String = "postgress-username",
-    postgressPassword: String = "postgress-password",
-    postgressDB: String = "postgress-db"
+                                           integratedInputFile: String = "path-to-integrated-input-file",
+                                           deltaInputFile: String = "path-to-delta-input-file",
+                                           matchedExactOutputFile: String = "path-to-matched-exact-output-file",
+                                           unmatchedIntegratedOutputFile: String = "path-to-unmatched-integrated-output-file",
+                                           unmatchedDeltaOutputFile: String = "path-to-unmatched-delta-output-file",
+                                           postgressUrl: String = "postgress-url",
+                                           postgressUsername: String = "postgress-username",
+                                           postgressPassword: String = "postgress-password",
+                                           postgressDB: String = "postgress-db"
 ) extends SparkJobConfig
 
 object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWithDbConfig] {
@@ -35,15 +34,15 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
       opt[String]("deltaInputFile") required () action { (x, c) ⇒
         c.copy(deltaInputFile = x)
       } text "deltaInputFile is a string property"
-      opt[String]("matchedExact") required () action { (x, c) ⇒
-        c.copy(matchedExact = x)
-      } text "matchedExact is a string property"
-      opt[String]("unmatchedIntegrated") required () action { (x, c) ⇒
-        c.copy(unmatchedIntegrated = x)
-      } text "unmatchedIntegrated is a string property"
-      opt[String]("unmatchedDelta") required () action { (x, c) ⇒
-        c.copy(unmatchedDelta = x)
-      } text "unmatchedDelta is a string property"
+      opt[String]("matchedExactOutputFile") required () action { (x, c) ⇒
+        c.copy(matchedExactOutputFile = x)
+      } text "matchedExactOutputFile is a string property"
+      opt[String]("unmatchedIntegratedOutputFile") required () action { (x, c) ⇒
+        c.copy(unmatchedIntegratedOutputFile = x)
+      } text "unmatchedIntegratedOutputFile is a string property"
+      opt[String]("unmatchedDeltaOutputFile") required () action { (x, c) ⇒
+        c.copy(unmatchedDeltaOutputFile = x)
+      } text "unmatchedDeltaOutputFile is a string property"
       opt[String]("postgressUrl") required () action { (x, c) ⇒
         c.copy(postgressUrl = x)
       } text "postgressUrl is a string property"
@@ -67,11 +66,11 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
     val matchedExact: Dataset[ContactPerson] = determineExactMatches(spark, integratedContactPersons, dailyDeltaContactPersons)
 
     val unmatchedIntegrated = integratedContactPersons
-      .join(matchedExact, Seq("concatId"), JoinType.LeftAnti)
+      .filter('emailAddress.isNull && 'mobileNumber.isNull)
       .as[ContactPerson]
 
     val unmatchedDelta = dailyDeltaContactPersons
-      .join(matchedExact, Seq("concatId"), JoinType.LeftAnti)
+      .filter('emailAddress.isNull && 'mobileNumber.isNull)
       .as[ContactPerson]
 
     (matchedExact, unmatchedIntegrated, unmatchedDelta)
@@ -125,16 +124,16 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
     import spark.implicits._
 
     log.info(s"Integrated vs ingested exact matching contact persons from [${config.integratedInputFile}] and " +
-      s"[${config.deltaInputFile}] to matched exact output [${config.matchedExact}], unmatched integrated output to [${config.unmatchedIntegrated}] and" +
-      s"unmatched delta output [${config.unmatchedDelta}]")
+      s"[${config.deltaInputFile}] to matched exact output [${config.matchedExactOutputFile}], unmatched integrated output to [${config.unmatchedIntegratedOutputFile}] and" +
+      s"unmatched delta output [${config.unmatchedDeltaOutputFile}]")
 
     val integratedContactPersons = storage.readFromParquet[ContactPerson](config.integratedInputFile)
     val dailyDeltaContactPersons = storage.readFromParquet[ContactPerson](config.deltaInputFile)
 
     val (matchedExact, unmatchedIntegrated, unmatchedDelta) = transform(spark, integratedContactPersons, dailyDeltaContactPersons)
 
-    storage.writeToParquet(matchedExact, config.matchedExact)
-    storage.writeToParquet(unmatchedIntegrated, config.unmatchedIntegrated)
-    storage.writeToParquet(unmatchedDelta, config.unmatchedDelta)
+    storage.writeToParquet(matchedExact, config.matchedExactOutputFile)
+    storage.writeToParquet(unmatchedIntegrated, config.unmatchedIntegratedOutputFile)
+    storage.writeToParquet(unmatchedDelta, config.unmatchedDeltaOutputFile)
   }
 }

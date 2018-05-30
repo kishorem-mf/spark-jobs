@@ -19,6 +19,8 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
   private val contactPersonA5 = defaultContactPersonWithSourceEntityId("103").copy(isGoldenRecord = false, ohubId = None, firstName = Some("Jan"), emailAddress = Some("jan@server.com"))
   private val contactPersonA6 = defaultContactPersonWithSourceEntityId("200").copy(isGoldenRecord = false, ohubId = Some("AAA"), firstName = Some("Jan"), emailAddress = Some("jan@server.com"))
   private val contactPersonB3 = defaultContactPersonWithSourceEntityId("200").copy(isGoldenRecord = false, ohubId = None, firstName = Some("Kees"), emailAddress = Some("kees@server.com"))
+  private val contactPersonA7 = defaultContactPersonWithSourceEntityId("100").copy(isGoldenRecord = true, ohubId = Some("AAA"), firstName = Some("Jan"), emailAddress = None, mobileNumber = None)
+  private val contactPersonB4 = defaultContactPersonWithSourceEntityId("200").copy(isGoldenRecord = true, ohubId = Some("BBB"), firstName = Some("Piet"), emailAddress = None, mobileNumber = None)
 
   private val COPY_GENERATED = "COPY_GENERATED"
 
@@ -106,7 +108,7 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
     }
 
-    it("should lose ohub id's when ") {
+    it("should lose both ohub id's when both exact match strings have changed") {
       val integratedContactPersons = createDataset(contactPersonA1, contactPersonA6)
       val deltaContactPersons = createDataset(contactPersonB2, contactPersonB3)
 
@@ -119,7 +121,7 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
     }
 
-    it("should lose only one ohub id ") {
+    it("should lose only one ohub id when only one match string changes") {
       val integratedContactPersons = createDataset(contactPersonA1, contactPersonA6)
       val deltaContactPersons = createDataset(contactPersonA3, contactPersonB3)
 
@@ -128,6 +130,17 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
         Result("200", isGoldenRecord = false, Some("COPY_GENERATED"), Some("Kees"), Some("kees@server.com")))
       val expectedUnmatchedIntegrated = Set[Result]()
       val expectedUnmatchedDelta = Set[Result]()
+
+      matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
+    }
+
+    it("a contact person without an exact match string should be in unmatched") {
+      val integratedContactPersons = createDataset(contactPersonA1, contactPersonB4)
+      val deltaContactPersons = createDataset(contactPersonA7)
+
+      val expectedMatchedExact = Set[Result](Result("100",true,Some("AAA"),Some("Jan"),Some("jan@server.com")))
+      val expectedUnmatchedIntegrated = Set[Result](Result("200",true,Some("BBB"),Some("Piet"),None))
+      val expectedUnmatchedDelta = Set[Result](Result("100",true,Some("AAA"),Some("Jan"),None))
 
       matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
     }
@@ -153,9 +166,9 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       }
     }
 
-    assertResults(actualMatchedExact.values.toSeq.toDataset, ohubIdsCopied)
     assertResults(unmatchedIntegrated, expectedUnmatchedIntegrated)
     assertResults(unmatchedDelta, expectedUnmatchedDelta)
+    assertResults(actualMatchedExact.values.toSeq.toDataset, ohubIdsCopied)
   }
 
   private def assertResults(actualDataSet: Dataset[ContactPerson], expectedResults: Set[Result]): Unit =
