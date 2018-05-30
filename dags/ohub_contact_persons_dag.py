@@ -193,7 +193,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
             'parameters': ['--inputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='contact_persons_combined'),
                            '--outputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='operators_updated_golden_records')
+                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_updated_golden_records')
                            ] + postgres_config
         }
     )
@@ -208,7 +208,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonReferencing",
             'parameters': ['--combinedInputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='operators_updated_golden_records'),
+                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_updated_golden_records'),
                            '--operatorInputFile', integrated_bucket.format(date=one_day_ago,
                                                                            fn='operators',
                                                                            channel='*'),
