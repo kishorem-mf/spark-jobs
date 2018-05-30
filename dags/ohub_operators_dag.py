@@ -10,7 +10,7 @@ from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
     DatabricksStartClusterOperator, \
-    DatabricksUninstallLibrariesOperator
+    DatabricksUninstallLibrariesOperator, DatabricksCreateClusterOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
 from custom_operators.wasb_copy import WasbCopyOperator
 from custom_operators.wasb_hook import WasbHook
@@ -32,54 +32,33 @@ interval = '@daily'
 wasb_conn_id = 'azure_blob'
 blob_name = 'prod'
 
+cluster_name = "ohub_operators_{{ds}}"
+
 with DAG('ohub_operators', default_args=default_args,
          schedule_interval=interval) as dag:
 
-    verify_integrated = BranchPythonOperator(
-        task_id='verify_integrated',
-        python_callable=lambda: 'start_cluster' if WasbHook(wasb_conn_id).check_for_blob(
-            container_name=wasb_raw_container.format(
-                date=one_day_ago,
-                schema='operators',
-                channel='file_interface'
-            ),
-            blob_name=blob_name
-        ) else 'copy_integrated'
-    )
-
-    copy_integrated = WasbCopyOperator(
-        task_id='copy_integrated',
-        wasb_conn_id=wasb_conn_id,
-        container_name=wasb_integrated_container.format(date=one_day_ago, fn='operators'),
-        blob_name=blob_name,
-        copy_source=http_integrated_container.format(
-            container='ulohub2storedevne',
-            blob=blob_name,
-            date=two_day_ago,
-            fn='operators'
-        )
-    )
-
-    start_cluster = DatabricksStartClusterOperator(
-        task_id='start_cluster',
-        cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id
+    create_cluster = DatabricksCreateClusterOperator(
+        task_id='create_cluster',
+        databricks_conn_id=databricks_conn_id,
+        cluster_config={
+            "cluster_name": cluster_name,
+            "spark_version": "4.0.x-scala2.11",
+            "node_type_id": "Standard_DS5_v2",
+            "autoscale": {
+                "min_workers": 4,
+                "max_workers": 12
+            },
+            "autotermination_minutes": 30,
+            "spark_env_vars": {
+                "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+            },
+        }
     )
 
     terminate_cluster = DatabricksTerminateClusterOperator(
         task_id='terminate_cluster',
         cluster_id=cluster_id,
         databricks_conn_id=databricks_conn_id
-    )
-
-    uninstall_old_libraries = DatabricksUninstallLibrariesOperator(
-        task_id='uninstall_old_libraries',
-        cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
-        libraries_to_uninstall=[{
-            'jar': jar,
-            'egg': egg,
-        }]
     )
 
     postgres_connection = BaseHook.get_connection('postgres_channels')

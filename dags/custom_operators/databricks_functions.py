@@ -195,6 +195,8 @@ class DatabricksCreateClusterOperator(BaseDatabricksOperator):
     ui_color = '#d5ebc2'
     ui_fgcolor = '#000'
 
+    template_fields = ('cluster_config',)
+
     def __init__(self,
                  cluster_config,
                  databricks_conn_id='databricks_default',
