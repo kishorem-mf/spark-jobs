@@ -41,10 +41,10 @@ with DAG('ohub_operators', default_args=default_args,
             "spark_version": "4.0.x-scala2.11",
             "node_type_id": "Standard_DS5_v2",
             "autoscale": {
-                "min_workers": 4,
-                "max_workers": 12
+                "min_workers": '4',
+                "max_workers": '12'
             },
-            "autotermination_minutes": 30,
+            "autotermination_minutes": '30',
             "spark_env_vars": {
                 "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
             },
