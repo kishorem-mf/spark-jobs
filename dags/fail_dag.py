@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from config import email_addresses, slack_on_databricks_failure_callback
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator
-from operators_config import cluster_id, databricks_conn_id
+from ohub_dag_config import cluster_id, databricks_conn_id
 
 default_args = {
     'owner': 'airflow',

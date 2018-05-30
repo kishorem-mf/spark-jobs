@@ -1,5 +1,7 @@
 from datetime import timedelta
 from config import email_addresses, slack_on_databricks_failure_callback
+from dags.custom_operators.databricks_functions import DatabricksCreateClusterOperator, \
+    DatabricksTerminateClusterOperator
 
 operator_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG', 'BH', 'BO', 'BR', 'CA', 'CH',
                           'CL', 'CN', 'CO', 'CR', 'CZ', 'DE', 'DK', 'DO', 'EC', 'EE', 'EG', 'ES', 'FI', 'FR', 'GB',
@@ -20,8 +22,48 @@ default_args = {
     'on_failure_callback': slack_on_databricks_failure_callback
 }
 
-cluster_id = '0314-131901-shalt605'
+
+def default_cluster_config(cluster_name):
+    return {
+        "cluster_name": cluster_name,
+        "spark_version": "4.0.x-scala2.11",
+        "node_type_id": "Standard_DS5_v2",
+        "autoscale": {
+            "min_workers": '4',
+            "max_workers": '12'
+        },
+        "autotermination_minutes": '30',
+        "spark_env_vars": {
+            "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+        },
+    }
+
+
 databricks_conn_id = 'databricks_azure'
+
+
+def create_cluster(task_id, cluster_config):
+    return DatabricksCreateClusterOperator(
+        task_id=task_id,
+        databricks_conn_id=databricks_conn_id,
+        cluster_config=cluster_config
+    )
+
+
+def terminate_cluster(task_id, cluster_name):
+    return DatabricksTerminateClusterOperator(
+        task_id=task_id,
+        cluster_name=cluster_name,
+        databricks_conn_id=databricks_conn_id
+    )
+
+
+interval = '@daily'
+one_day_ago = '{{ds}}'
+two_day_ago = '{{yesterday_ds}}'
+
+wasb_conn_id = 'azure_blob'
+blob_name = 'prod'
 
 jar = 'dbfs:/libraries/ohub/spark-jobs-assembly-0.2.0.jar'
 egg = 'dbfs:/libraries/name_matching/string_matching.egg'

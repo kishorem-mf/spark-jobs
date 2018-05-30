@@ -10,7 +10,7 @@ from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator, \
     DatabricksCreateClusterOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
-from operators_config import \
+from ohub_dag_config import \
     default_args, \
     databricks_conn_id, \
     jar, egg, \

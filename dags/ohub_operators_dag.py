@@ -10,23 +10,17 @@ from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator, \
     DatabricksCreateClusterOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
-from operators_config import \
+from ohub_dag_config import \
     default_args, \
-    cluster_id, databricks_conn_id, \
+    databricks_conn_id, \
     jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
     wasb_export_container, \
-    operator_country_codes
+    operator_country_codes, default_cluster_config, interval, one_day_ago, two_day_ago, wasb_conn_id, blob_name
 
 default_args.update(
     {'start_date': datetime(2018, 5, 29)}
 )
-
-one_day_ago = '{{ds}}'
-two_day_ago = '{{yesterday_ds}}'
-interval = '@daily'
-wasb_conn_id = 'azure_blob'
-blob_name = 'prod'
 
 cluster_name = "ohub_operators_{{ds}}"
 
@@ -36,19 +30,7 @@ with DAG('ohub_operators', default_args=default_args,
     create_cluster = DatabricksCreateClusterOperator(
         task_id='create_cluster',
         databricks_conn_id=databricks_conn_id,
-        cluster_config={
-            "cluster_name": cluster_name,
-            "spark_version": "4.0.x-scala2.11",
-            "node_type_id": "Standard_DS5_v2",
-            "autoscale": {
-                "min_workers": '4',
-                "max_workers": '12'
-            },
-            "autotermination_minutes": '30',
-            "spark_env_vars": {
-                "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
-            },
-        }
+        cluster_config=default_cluster_config(cluster_name)
     )
 
     terminate_cluster = DatabricksTerminateClusterOperator(
