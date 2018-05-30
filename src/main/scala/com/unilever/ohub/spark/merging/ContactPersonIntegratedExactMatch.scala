@@ -4,22 +4,23 @@ import java.util.UUID
 
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
+import java.sql.Timestamp
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 case class ExactMatchIngestedWithDbConfig(
-                                           integratedInputFile: String = "path-to-integrated-input-file",
-                                           deltaInputFile: String = "path-to-delta-input-file",
-                                           matchedExactOutputFile: String = "path-to-matched-exact-output-file",
-                                           unmatchedIntegratedOutputFile: String = "path-to-unmatched-integrated-output-file",
-                                           unmatchedDeltaOutputFile: String = "path-to-unmatched-delta-output-file",
-                                           postgressUrl: String = "postgress-url",
-                                           postgressUsername: String = "postgress-username",
-                                           postgressPassword: String = "postgress-password",
-                                           postgressDB: String = "postgress-db"
+    integratedInputFile: String = "path-to-integrated-input-file",
+    deltaInputFile: String = "path-to-delta-input-file",
+    matchedExactOutputFile: String = "path-to-matched-exact-output-file",
+    unmatchedIntegratedOutputFile: String = "path-to-unmatched-integrated-output-file",
+    unmatchedDeltaOutputFile: String = "path-to-unmatched-delta-output-file",
+    postgressUrl: String = "postgress-url",
+    postgressUsername: String = "postgress-username",
+    postgressPassword: String = "postgress-password",
+    postgressDB: String = "postgress-db"
 ) extends SparkJobConfig
 
 object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWithDbConfig] {
@@ -98,16 +99,24 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
       .groupBy($"group")
       .agg(collect_list(struct($"contactPerson", $"inDelta")).as("contactPersons"))
       .as[(String, Seq[(ContactPerson, Boolean)])]
-      .flatMap { // first set the proper ohubId
+      .flatMap { // first set the proper ohubId & ohubCreated
         case (_, contactPersonList) ⇒
-          val ohubId: String = contactPersonList.find {
+          val contactPerson: Option[ContactPerson] = contactPersonList.find {
             case (contactPerson, _) ⇒ contactPerson.ohubId.isDefined
-          }.flatMap {
-            case (contactPerson, _) ⇒ contactPerson.ohubId
-          }.getOrElse(UUID.randomUUID().toString)
+          }.map {
+            case (contactPerson, _) ⇒ contactPerson
+          }
+          val ohubId: String = contactPerson.flatMap { _.ohubId }.getOrElse(UUID.randomUUID().toString)
+          val ohubCreated: Option[Timestamp] = contactPerson.map { _.ohubCreated }
 
           contactPersonList.map {
-            case (contactPerson, inDelta) ⇒ (contactPerson.copy(ohubId = Some(ohubId)), inDelta)
+            case (contactPerson, inDelta) ⇒ (
+              contactPerson.copy(
+                ohubId = Some(ohubId), // preserve ohub id
+                ohubCreated = ohubCreated.getOrElse(contactPerson.ohubCreated) // preserve ohub created timestamp
+              ),
+                inDelta
+            )
           }
       }
       .toDF("contactPerson", "inDelta")
@@ -121,7 +130,7 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
       .filter($"select")
       .as[(ContactPerson, Boolean, Long, Boolean)]
       .map {
-        case (contactPerson, _, _, _) => contactPerson
+        case (contactPerson, _, _, _) ⇒ contactPerson
       }
   }
 
