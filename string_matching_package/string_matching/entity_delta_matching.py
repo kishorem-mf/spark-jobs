@@ -134,9 +134,10 @@ def recreate_matched_and_unmatched(integrated: DataFrame,
                                           .drop('ohubId_matched')
                                           )
 
-    updated_integrated = (integrated
+    column_order = integrated.columns
+    updated_integrated = (integrated.select(*column_order)
                           .join(matched_ingested_daily_full_record, on='concatId', how='left_anti')
-                          .union(matched_ingested_daily_full_record)
+                          .union(matched_ingested_daily_full_record.select(*column_order))
                           )
 
     unmatched = (ingested

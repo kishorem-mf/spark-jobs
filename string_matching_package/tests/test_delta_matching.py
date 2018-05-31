@@ -61,6 +61,8 @@ class TestDeltaMatching(object):
                                                             1500, 0.8)
         updated = updated.select('concatId', 'ohubId', 'city').sort('concatId').collect()
         unmatched = unmatched.select('concatId').collect()
+        print(updated)
+        print(unmatched)
 
         assert len(updated) == 6
         concats = [_[0] for _ in updated]
