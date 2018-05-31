@@ -19,9 +19,9 @@ from string_matching.entity_delta_matching import main, postprocess_delta_operat
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--integrated_operators_input_path',
+    parser.add_argument('-f', '--integrated_input_path',
                         help='full path or location of the parquet file with integrated operator data')
-    parser.add_argument('-g', '--ingested_daily_operators_input_path',
+    parser.add_argument('-g', '--ingested_daily_input_path',
                         help='full path or location of the parquet file with ingested daily operator data')
 
     parser.add_argument('-p', '--updated_integrated_output_path', default=None,

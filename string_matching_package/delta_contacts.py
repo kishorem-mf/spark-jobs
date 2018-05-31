@@ -19,9 +19,9 @@ from string_matching.entity_delta_matching import main, postprocess_delta_contac
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--integrated_contact_persons_input_path',
+    parser.add_argument('-f', '--integrated_input_path',
                         help='full path or location of the parquet file with integrated contact person data')
-    parser.add_argument('-g', '--ingested_daily_contact_persons_input_path',
+    parser.add_argument('-g', '--ingested_daily_input_path',
                         help='full path or location of the parquet file with ingested daily contact person data')
 
     parser.add_argument('-p', '--updated_integrated_output_path', default=None,

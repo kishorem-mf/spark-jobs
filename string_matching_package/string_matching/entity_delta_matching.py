@@ -175,14 +175,14 @@ def apply_delta_matching_on(spark,
 
 def main(arguments, preprocess_function, postprocess_function):
     global LOGGER
-    spark, LOGGER = start_spark('Match and join newly ingested operators with persistent ohubId')
+    spark, LOGGER = start_spark('Match and join newly ingested  with persistent ohubId')
 
     t = Timer('Reading for country {}'.format(arguments.country_code), LOGGER)
-    ingested_daily = (spark.read.parquet(arguments.ingested_daily_operators_input_path)
+    ingested_daily = (spark.read.parquet(arguments.ingested_daily_input_path)
                       .filter(sf.col('countryCode') == arguments.country_code)
                       )
 
-    integrated = (spark.read.parquet(arguments.integrated_operators_input_path)
+    integrated = (spark.read.parquet(arguments.integrated_input_path)
                   .filter(sf.col('countryCode') == arguments.country_code)
                   )
     ingested_daily.persist()
