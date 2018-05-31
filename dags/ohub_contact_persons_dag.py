@@ -6,53 +6,28 @@ from airflow.hooks.base_hook import BaseHook
 from airflow.operators.subdag_operator import SubDagOperator
 
 from custom_operators.databricks_functions import \
-    DatabricksTerminateClusterOperator, \
-    DatabricksSubmitRunOperator, \
-    DatabricksCreateClusterOperator
+    DatabricksSubmitRunOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
-from operators_config import \
+from ohub_dag_config import \
     default_args, \
-    cluster_id, databricks_conn_id, \
+    databricks_conn_id, \
     jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_export_container, operator_country_codes
+    wasb_export_container, operator_country_codes, interval, one_day_ago, two_day_ago, create_cluster, \
+    terminate_cluster, default_cluster_config
 
 default_args.update(
-    {'start_date': datetime(2018, 5, 25)}
+    {'start_date': datetime(2018, 5, 29)}
 )
 
-interval = '@once'
-one_day_ago = '{{ds}}'
-two_day_ago = '{{yesterday_ds}}'
-
-utc_now = datetime.utcnow().strftime('%Y%m%d_%H%m%S')
-cluster_name = "ohub_contact_persons_{}".format(utc_now)
+cluster_name = "ohub_contact_persons_{{ds}}"
 
 with DAG('ohub_contact_persons', default_args=default_args,
          schedule_interval=interval) as dag:
-    create_cluster = DatabricksCreateClusterOperator(
-        task_id='create_cluster',
-        databricks_conn_id=databricks_conn_id,
-        cluster_config={
-            "cluster_name": cluster_name,
-            "spark_version": "4.0.x-scala2.11",
-            "node_type_id": "Standard_DS5_v2",
-            "autoscale": {
-                "min_workers": 4,
-                "max_workers": 12
-            },
-            "autotermination_minutes": 30,
-            "spark_env_vars": {
-                "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
-            },
-        }
-    )
-
-    terminate_cluster = DatabricksTerminateClusterOperator(
-        task_id='terminate_cluster',
-        cluster_name=cluster_name,
-        databricks_conn_id=databricks_conn_id
-    )
+    create_cluster_contact_persons = create_cluster('create_clusters_contact_persons',
+                                                    default_cluster_config(cluster_name))
+    terminate_cluster_contact_persons = terminate_cluster('terminate_cluster_contact_persons',
+                                                          cluster_name)
 
     postgres_connection = BaseHook.get_connection('postgres_channels')
     postgres_config = [
@@ -64,7 +39,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
 
     contact_persons_file_interface_to_parquet = DatabricksSubmitRunOperator(
         task_id="contact_persons_file_interface_to_parquet",
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -77,14 +52,13 @@ with DAG('ohub_contact_persons', default_args=default_args,
                            '--outputFile', ingested_bucket.format(date=one_day_ago,
                                                                   fn='contactpersons',
                                                                   channel='file_interface'),
-                           # '--fieldSeparator', u"\u2030",
                            '--strictIngestion', "false"] + postgres_config
         }
     )
 
     exact_match_integrated_ingested = DatabricksSubmitRunOperator(
         task_id="exact_match_integrated_ingested",
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -96,30 +70,12 @@ with DAG('ohub_contact_persons', default_args=default_args,
                            '--deltaInputFile', ingested_bucket.format(date=one_day_ago,
                                                                       fn='contactpersons',
                                                                       channel='*'),
-                           '--updatedIntegrated', intermediate_bucket.format(date=one_day_ago,
-                                                                             fn='contact_person_updated_exact_matches'),
+                           '--matchedExactOutputFile', intermediate_bucket.format(date=one_day_ago,
+                                                                                  fn='contact_person_exact_matches'),
                            '--unmatchedDeltaOutputFile', intermediate_bucket.format(date=one_day_ago,
-                                                                                    fn='contact_person_no_exact_match')
-                           ]
-        }
-    )
-
-    exact_match_ingested = DatabricksSubmitRunOperator(
-        task_id="exact_match_ingested",
-        existing_cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
-        spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonExactMatcher",
-            'parameters': ['--inputFile', intermediate_bucket.format(date=one_day_ago,
-                                                                     fn='contact_person_no_exact_match'),
-                           '--exactMatchOutputFile',
-                           intermediate_bucket.format(date=one_day_ago,
-                                                      fn='contact_person_ingested_exact_match'),
-                           '--leftOversOutputFile', intermediate_bucket.format(date=one_day_ago,
-                                                                               fn='contact_person_left_overs')
+                                                                                    fn='contact_person_unmatched_delta'),
+                           '--unmatchedIntegratedOutputFile', intermediate_bucket.format(date=one_day_ago,
+                                                                                         fn='contact_person_unmatched_integrated')
                            ]
         }
     )
@@ -136,7 +92,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
             match_new = DatabricksSubmitRunOperator(
                 dag=sub_dag,
                 task_id=('match_new_contact_persons_with_integrated_operators_{}'.format(code)),
-                existing_cluster_id=cluster_id,
+                cluster_name=cluster_name,
                 databricks_conn_id=databricks_conn_id,
                 libraries=[
                     {'egg': egg}
@@ -145,21 +101,22 @@ with DAG('ohub_contact_persons', default_args=default_args,
                     'python_file': 'dbfs:/libraries/name_matching/delta_contacts.py',
                     'parameters': [
                         '--integrated_contact_persons_input_path',
-                        integrated_bucket.format(date=two_day_ago, fn='contact_persons'),
+                        intermediate_bucket.format(date=one_day_ago, fn='contact_person_unmatched_integrated'),
                         '--ingested_daily_contact_persons_input_path',
                         intermediate_bucket.format(date=one_day_ago,
-                                                   fn='contact_person_left_overs'),
+                                                   fn='contact_person_unmatched_delta'),
                         '--updated_integrated_output_path',
-                        intermediate_bucket.format(date=one_day_ago, fn='contact_persons_updated_integrated'),
+                        intermediate_bucket.format(date=one_day_ago, fn='contact_persons_fuzzy_matched_delta_integrated'),
                         '--unmatched_output_path',
-                        intermediate_bucket.format(date=one_day_ago, fn='contact_persons_unmatched'),
+                        intermediate_bucket.format(date=one_day_ago, fn='contact_persons_delta_left_overs'),
                         '--country_code', code]
                 }
             )
+
             match_unmatched = DatabricksSubmitRunOperator(
                 dag=sub_dag,
                 task_id='match_unmatched_contact_persons_{}'.format(code),
-                existing_cluster_id=cluster_id,
+                cluster_name=cluster_name,
                 databricks_conn_id=databricks_conn_id,
                 libraries=[
                     {'egg': egg}
@@ -167,9 +124,9 @@ with DAG('ohub_contact_persons', default_args=default_args,
                 spark_python_task={
                     'python_file': 'dbfs:/libraries/name_matching/match_contacts.py',
                     'parameters': ['--input_file',
-                                   intermediate_bucket.format(date=one_day_ago, fn='contact_persons_unmatched'),
+                                   intermediate_bucket.format(date=one_day_ago, fn='contact_persons_delta_left_overs'),
                                    '--output_path',
-                                   intermediate_bucket.format(date=one_day_ago, fn='contact_persons_matched'),
+                                   intermediate_bucket.format(date=one_day_ago, fn='contacts_persons_fuzzy_matched_delta'),
                                    '--country_code', code]
                 }
             )
@@ -184,7 +141,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
 
     join_matched_contact_persons = DatabricksSubmitRunOperator(
         task_id='join_matched_contact_persons',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -192,59 +149,41 @@ with DAG('ohub_contact_persons', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonMatchingJoiner",
             'parameters': ['--matchingInputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='contacts_persons_matched'),
+                           intermediate_bucket.format(date=one_day_ago, fn='contacts_persons_fuzzy_matched_delta'),
                            '--entityInputFile', intermediate_bucket.format(date=one_day_ago,
-                                                                           fn='contact_persons_unmatched'),
+                                                                           fn='contact_persons_delta_left_overs'),
                            '--outputFile',
                            intermediate_bucket.format(date=one_day_ago,
-                                                      fn='contact_persons_golden_records_new')] + postgres_config
-        }
-    )
-
-    combine_name_matching_results = DatabricksSubmitRunOperator(
-        task_id='combine_name_matching_results',
-        existing_cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
-        spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.combining.ContactPersonCombining",
-            'parameters': ['--integratedUpdated',
-                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_updated_integrated'),
-                           '--newGolden',
-                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_golden_records_new'),
-                           '--combinedOperators',
-                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_combined')]
+                                                      fn='contact_persons_delta_golden_records')] + postgres_config
         }
     )
 
     join_fuzzy_and_exact_matched = DatabricksSubmitRunOperator(
         task_id='join_fuzzy_and_exact_matched_contact_persons',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.combining.ContactPersonCombineExactAndFuzzyMatches",
-            'parameters': ['--updatedExactMatchInputFile',
+            'parameters': ['--matchedExactInputFile',
                            intermediate_bucket.format(date=one_day_ago,
-                                                      fn='contact_person_updated_exact_matches'),
+                                                      fn='contact_person_exact_matches'),
                            '--ingestedExactMatchInputFile',
                            intermediate_bucket.format(date=one_day_ago,
-                                                      fn='contact_person_ingested_exact_match'),
+                                                      fn='contact_persons_delta_golden_records'),
                            '--fuzzyMatchCombinedInputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_combined'),
+                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_fuzzy_matched_delta_integrated'),
                            '--combinedOutputFile',
                            intermediate_bucket.format(date=one_day_ago,
-                                                      fn='contact_persons_combined_full')] + postgres_config
+                                                      fn='contact_persons_combined')] + postgres_config
         }
     )
 
     update_golden_records = DatabricksSubmitRunOperator(
         task_id='update_golden_records',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -252,16 +191,16 @@ with DAG('ohub_contact_persons', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonUpdateGoldenRecord",
             'parameters': ['--inputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_combined_full'),
+                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_combined'),
                            '--outputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='operators_updated_golden')
+                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_updated_golden_records')
                            ] + postgres_config
         }
     )
 
     contact_person_referencing = DatabricksSubmitRunOperator(
         task_id='contact_person_referencing',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -269,7 +208,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonReferencing",
             'parameters': ['--combinedInputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='operators_updated_golden'),
+                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_updated_golden_records'),
                            '--operatorInputFile', integrated_bucket.format(date=one_day_ago,
                                                                            fn='operators',
                                                                            channel='*'),
@@ -283,7 +222,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
 
     contact_persons_to_acm = DatabricksSubmitRunOperator(
         task_id="contact_persons_to_acm",
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -314,14 +253,12 @@ with DAG('ohub_contact_persons', default_args=default_args,
         operation=SFTPOperation.PUT
     )
 
-    create_cluster >> contact_persons_file_interface_to_parquet >> exact_match_integrated_ingested
-    exact_match_integrated_ingested >> exact_match_ingested
+    create_cluster_contact_persons >> contact_persons_file_interface_to_parquet >> exact_match_integrated_ingested
+    exact_match_integrated_ingested >> match_per_country
     exact_match_integrated_ingested >> join_fuzzy_and_exact_matched
 
-    exact_match_ingested >> join_fuzzy_and_exact_matched
-    exact_match_ingested >> match_per_country >> join_matched_contact_persons >> combine_name_matching_results
-    combine_name_matching_results >> join_fuzzy_and_exact_matched
+    match_per_country >> join_matched_contact_persons >> join_fuzzy_and_exact_matched
 
     join_fuzzy_and_exact_matched >> update_golden_records >> contact_person_referencing >> contact_persons_to_acm
-    contact_persons_to_acm >> terminate_cluster
+    contact_persons_to_acm >> terminate_cluster_contact_persons
     contact_persons_to_acm >> contact_persons_acm_from_wasb >> contact_persons_ftp_to_acm

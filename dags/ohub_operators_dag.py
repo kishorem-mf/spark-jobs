@@ -1,96 +1,49 @@
-from airflow import DAG
 from datetime import datetime
 
-from airflow.operators.subdag_operator import SubDagOperator
+from airflow import DAG
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
-
 from airflow.hooks.base_hook import BaseHook
+from airflow.operators.subdag_operator import SubDagOperator
 
-from custom_operators.wasb_hook import WasbHook
-from custom_operators.file_from_wasb import FileFromWasbOperator
-from custom_operators.wasb_copy import WasbCopyOperator
 from custom_operators.databricks_functions import \
     DatabricksTerminateClusterOperator, \
     DatabricksSubmitRunOperator, \
-    DatabricksStartClusterOperator, \
-    DatabricksUninstallLibrariesOperator
-from operators_config import \
+    DatabricksCreateClusterOperator
+from custom_operators.file_from_wasb import FileFromWasbOperator
+from ohub_dag_config import \
     default_args, \
-    cluster_id, databricks_conn_id, \
+    databricks_conn_id, \
     jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_raw_container, wasb_ingested_container, wasb_intermediate_container, \
-    wasb_integrated_container, wasb_export_container, \
-    http_raw_container, http_ingested_container, http_intermediate_container, \
-    http_integrated_container, http_export_container, \
-    operator_country_codes
-from airflow.operators.python_operator import BranchPythonOperator
+    wasb_export_container, \
+    operator_country_codes, default_cluster_config, interval, one_day_ago, two_day_ago, wasb_conn_id, blob_name
 
 default_args.update(
-    {'start_date': datetime(2018, 5, 17)}
+    {'start_date': datetime(2018, 5, 29)}
 )
 
-one_day_ago = '{{ds}}'
-two_day_ago = '{{yesterday_ds}}'
-interval = '@once'
-wasb_conn_id = 'azure_blob'
-blob_name = 'prod'
+cluster_name = "ohub_operators_{{ds}}"
 
 with DAG('ohub_operators', default_args=default_args,
          schedule_interval=interval) as dag:
 
-    verify_integrated = BranchPythonOperator(
-        task_id='verify_integrated',
-        python_callable=lambda: 'start_cluster' if WasbHook(wasb_conn_id).check_for_blob(
-            container_name=wasb_raw_container.format(
-                date=one_day_ago,
-                schema='operators',
-                channel='file_interface'
-            ),
-            blob_name=blob_name
-        ) else 'copy_integrated'
-    )
-
-    copy_integrated = WasbCopyOperator(
-        task_id='copy_integrated',
-        wasb_conn_id=wasb_conn_id,
-        container_name=wasb_integrated_container.format(date=one_day_ago, fn='operators'),
-        blob_name=blob_name,
-        copy_source=http_integrated_container.format(
-            container='ulohub2storedevne',
-            blob=blob_name,
-            date=two_day_ago,
-            fn='operators'
-        )
-    )
-
-    start_cluster = DatabricksStartClusterOperator(
-        task_id='start_cluster',
-        cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id
+    create_cluster = DatabricksCreateClusterOperator(
+        task_id='create_cluster',
+        databricks_conn_id=databricks_conn_id,
+        cluster_config=default_cluster_config(cluster_name)
     )
 
     terminate_cluster = DatabricksTerminateClusterOperator(
         task_id='terminate_cluster',
-        cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id
-    )
-
-    uninstall_old_libraries = DatabricksUninstallLibrariesOperator(
-        task_id='uninstall_old_libraries',
-        cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
-        libraries_to_uninstall=[{
-            'jar': jar,
-            'egg': egg,
-        }]
     )
 
     postgres_connection = BaseHook.get_connection('postgres_channels')
 
     operators_file_interface_to_parquet = DatabricksSubmitRunOperator(
         task_id="operators_file_interface_to_parquet",
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -123,7 +76,7 @@ with DAG('ohub_operators', default_args=default_args,
             match_new = DatabricksSubmitRunOperator(
                 dag=sub_dag,
                 task_id=('match_new_operators_with_integrated_operators_{}'.format(code)),
-                existing_cluster_id=cluster_id,
+                cluster_name=cluster_name,
                 databricks_conn_id=databricks_conn_id,
                 libraries=[
                     {'egg': egg}
@@ -140,13 +93,14 @@ with DAG('ohub_operators', default_args=default_args,
                         intermediate_bucket.format(date=one_day_ago, fn='updated_operators_integrated'),
                         '--unmatched_output_path',
                         intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched'),
-                        '--country_code', code]
+                        '--country_code', code,
+                        '--threshold', '0.9']
                 }
             )
             match_unmatched = DatabricksSubmitRunOperator(
                 dag=sub_dag,
                 task_id='match_unmatched_operators_{}'.format(code),
-                existing_cluster_id=cluster_id,
+                cluster_name=cluster_name,
                 databricks_conn_id=databricks_conn_id,
                 libraries=[
                     {'egg': egg}
@@ -157,7 +111,8 @@ with DAG('ohub_operators', default_args=default_args,
                                    intermediate_bucket.format(date=one_day_ago, fn='operators_unmatched'),
                                    '--output_path',
                                    intermediate_bucket.format(date=one_day_ago, fn='operators_matched'),
-                                   '--country_code', code]
+                                   '--country_code', code,
+                                   '--threshold', '0.9']
                 }
             )
             match_new >> match_unmatched
@@ -171,7 +126,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     merge_operators = DatabricksSubmitRunOperator(
         task_id='merge_operators',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -192,7 +147,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     combine_to_create_integrated = DatabricksSubmitRunOperator(
         task_id='combine_to_create_integrated',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -210,7 +165,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     update_golden_records = DatabricksSubmitRunOperator(
         task_id='update_golden_records',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -232,7 +187,7 @@ with DAG('ohub_operators', default_args=default_args,
 
     operators_to_acm = DatabricksSubmitRunOperator(
         task_id="operators_to_acm",
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -268,14 +223,12 @@ with DAG('ohub_operators', default_args=default_args,
 
     update_operators_table = DatabricksSubmitRunOperator(
         task_id='update_operators_table',
-        existing_cluster_id=cluster_id,
+        cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
         notebook_task={'notebook_path': '/Users/tim.vancann@unilever.com/update_integrated_tables'}
     )
 
-    verify_integrated >> start_cluster
-    verify_integrated >> copy_integrated
-    start_cluster >> uninstall_old_libraries >> operators_file_interface_to_parquet >> match_per_country
+    create_cluster >> operators_file_interface_to_parquet >> match_per_country
     match_per_country >> combine_to_create_integrated
     match_per_country >> merge_operators >> combine_to_create_integrated
     combine_to_create_integrated >> update_golden_records >> update_operators_table >> terminate_cluster

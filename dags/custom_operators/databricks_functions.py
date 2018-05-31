@@ -97,7 +97,7 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
     API endpoint.
 
     """
-    template_fields = ('spark_jar_task', 'notebook_task', 'spark_python_task',)
+    template_fields = ('spark_jar_task', 'notebook_task', 'spark_python_task', 'cluster_name',)
     template_ext = ('.j2', '.jinja2',)
 
     def __init__(self,
@@ -195,6 +195,8 @@ class DatabricksCreateClusterOperator(BaseDatabricksOperator):
     ui_color = '#d5ebc2'
     ui_fgcolor = '#000'
 
+    template_fields = ('cluster_config',)
+
     def __init__(self,
                  cluster_config,
                  databricks_conn_id='databricks_default',
@@ -287,6 +289,8 @@ class DatabricksStartClusterOperator(BaseDatabricksOperator):
 class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
     ui_color = '#ffc3bb'
     ui_fgcolor = '#000'
+
+    template_fields = ('cluster_name',)
 
     def __init__(self,
                  cluster_name=None,
