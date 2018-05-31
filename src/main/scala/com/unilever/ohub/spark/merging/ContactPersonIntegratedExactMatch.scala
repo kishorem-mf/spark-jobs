@@ -5,7 +5,6 @@ import java.util.UUID
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
-import java.sql.Timestamp
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{ Dataset, SparkSession }
@@ -99,29 +98,23 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
       .groupBy($"group")
       .agg(collect_list(struct($"contactPerson", $"inDelta")).as("contactPersons"))
       .as[(String, Seq[(ContactPerson, Boolean)])]
-      .flatMap { // first set the proper ohubId & ohubCreated
+      .flatMap { // first set the proper ohubId
         case (_, contactPersonList) ⇒
-          val contactPerson: Option[ContactPerson] = contactPersonList.find {
-            case (contactPerson, _) ⇒ contactPerson.ohubId.isDefined
-          }.map {
-            case (contactPerson, _) ⇒ contactPerson
-          }
+          val contactPerson: Option[ContactPerson] = contactPersonList
+            .map { case (contactPerson, _) ⇒ contactPerson }
+            .find(_.ohubId.isDefined)
+
           val ohubId: String = contactPerson.flatMap { _.ohubId }.getOrElse(UUID.randomUUID().toString)
-          val ohubCreated: Option[Timestamp] = contactPerson.map { _.ohubCreated }
 
           contactPersonList.map {
-            case (contactPerson, inDelta) ⇒ (
-              contactPerson.copy(
-                ohubId = Some(ohubId), // preserve ohub id
-                ohubCreated = ohubCreated.getOrElse(contactPerson.ohubCreated) // preserve ohub created timestamp
-              ),
-                inDelta
-            )
+            case (contactPerson, inDelta) ⇒ (contactPerson.copy(ohubId = Some(ohubId)), inDelta) // preserve ohubId or assign a new one
           }
       }
       .toDF("contactPerson", "inDelta")
 
-    // NOTE: that exact match can contain exact matches from integrated which will be resolved later
+    // NOTE: that allExact can contain exact matches from previous integrated which eventually need to be removed from the integrated result
+
+    // TODO preserve ohubCreated
 
     val w = Window.partitionBy($"contactPerson.concatId")
     allExact
