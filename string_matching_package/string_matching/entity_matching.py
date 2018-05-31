@@ -7,6 +7,7 @@ from .utils import start_spark, Timer, read_parquet, \
     save_to_parquet_per_partition, group_matches, \
     clean_operator_fields, create_operator_matching_string, clean_contactperson_fields, \
     create_contactperson_matching_string
+from .spark_string_matching import similarity_schema
 
 MATRIX_CHUNK_ROWS = 500
 N_GRAMS = 2
@@ -21,6 +22,9 @@ def match_entity_for_country(spark: SparkSession,
                              entities: DataFrame,
                              n_top: int,
                              threshold: float):
+    if not (entities.count() >= MINIMUM_ENTRIES_PER_COUNTRY):
+        return spark.createDataFrame([], similarity_schema)
+
     from .spark_string_matching import match_strings
     """Match entities for a single country"""
     similarity = match_strings(
@@ -147,11 +151,9 @@ def apply_matching_on(records_per_country: DataFrame, spark,
                     .sort('concatId', ascending=True)
                     )
 
-    return_value = None
-    if preprocessed.count() >= MINIMUM_ENTRIES_PER_COUNTRY:
-        similarity = match_entity_for_country(spark, preprocessed, n_top, threshold)
-        matches = post_process_function(similarity, preprocessed)
-        return_value = matches
+    similarity = match_entity_for_country(spark, preprocessed, n_top, threshold)
+    matches = post_process_function(similarity, preprocessed)
+    return_value = matches
     return return_value
 
 
