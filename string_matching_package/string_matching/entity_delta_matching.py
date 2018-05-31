@@ -20,10 +20,15 @@ from pyspark.sql.window import Window
 from .entity_matching import \
     N_GRAMS, MINIMUM_DOCUMENT_FREQUENCY, VOCABULARY_SIZE, MINIMUM_ENTRIES_PER_COUNTRY, MIN_LEVENSHTEIN_DISTANCE
 from .utils import start_spark, Timer, save_to_parquet_per_partition
+from .spark_string_matching import similarity_schema
 
 
 def match_delta_entity_for_country(spark, ingested_daily, integrated, n_top, threshold):
     from .spark_string_matching import match_strings
+
+    if not (ingested_daily.count() >= MINIMUM_ENTRIES_PER_COUNTRY and
+            integrated.count() >= MINIMUM_ENTRIES_PER_COUNTRY):
+        return spark.createDataFrame([], similarity_schema)
 
     similarity = match_strings(
         spark,
@@ -158,18 +163,15 @@ def apply_delta_matching_on(spark,
                                .sort('ohubId', ascending=True)
                                )
 
-    return_value = (None, None)
-    if (daily_preprocessed.count() >= MINIMUM_ENTRIES_PER_COUNTRY and
-            integrated_preprocessed.count() >= MINIMUM_ENTRIES_PER_COUNTRY):
-        similarity = match_delta_entity_for_country(spark,
+    similarity = match_delta_entity_for_country(spark,
                                                     daily_preprocessed,
                                                     integrated_preprocessed,
                                                     n_top,
                                                     threshold)
-        matches = postprocess_function(similarity, daily_preprocessed, integrated_preprocessed)
-        return_value = recreate_matched_and_unmatched(integrated_records_for_country,
-                                                      ingested_records_for_country,
-                                                      matches)
+    matches = postprocess_function(similarity, daily_preprocessed, integrated_preprocessed)
+    return_value = recreate_matched_and_unmatched(integrated_records_for_country,
+                                                  ingested_records_for_country,
+                                                  matches)
     return return_value
 
 
