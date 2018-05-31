@@ -84,8 +84,8 @@ with DAG('ohub_operators', default_args=default_args,
                 spark_python_task={
                     'python_file': 'dbfs:/libraries/name_matching/delta_operators.py',
                     'parameters': [
-                        '--integrated_operators_input_path', integrated_bucket.format(date=two_day_ago, fn='operators'),
-                        '--ingested_daily_operators_input_path',
+                        '--integrated_input_path', integrated_bucket.format(date=two_day_ago, fn='operators'),
+                        '--ingested_daily_input_path',
                         ingested_bucket.format(date=one_day_ago,
                                                fn='operators',
                                                channel='*'),

@@ -100,9 +100,9 @@ with DAG('ohub_contact_persons', default_args=default_args,
                 spark_python_task={
                     'python_file': 'dbfs:/libraries/name_matching/delta_contacts.py',
                     'parameters': [
-                        '--integrated_contact_persons_input_path',
+                        '--integrated_input_path',
                         intermediate_bucket.format(date=one_day_ago, fn='contact_person_unmatched_integrated'),
-                        '--ingested_daily_contact_persons_input_path',
+                        '--ingested_daily_input_path',
                         intermediate_bucket.format(date=one_day_ago,
                                                    fn='contact_person_unmatched_delta'),
                         '--updated_integrated_output_path',
