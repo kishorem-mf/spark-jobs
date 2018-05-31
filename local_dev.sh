@@ -14,5 +14,6 @@ docker run \
 --env AIRFLOW__CORE__EXECUTOR="SequentialExecutor" \
 --env AIRFLOW__CORE__DAGS_FOLDER="/usr/local/airflow/dags" \
 --env AIRFLOW__CORE__BASE_LOG_FOLDER="/usr/local/airflow/logs" \
+-p 8080:8080 \
 ulohubimages.azurecr.io/airflow:${latest_tag} \
-bash /usr/local/airflow/test.sh && airflow webserver
+bash -c 'bash /usr/local/airflow/test.sh && airflow webserver'
