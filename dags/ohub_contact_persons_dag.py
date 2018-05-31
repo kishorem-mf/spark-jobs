@@ -17,7 +17,7 @@ from ohub_dag_config import \
     terminate_cluster, default_cluster_config
 
 default_args.update(
-    {'start_date': datetime(2018, 5, 29)}
+    {'start_date': datetime(2018, 5, 30)}
 )
 
 cluster_name = "ohub_contact_persons_{{ds}}"
