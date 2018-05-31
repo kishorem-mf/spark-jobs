@@ -46,12 +46,10 @@ with DAG('ohub_contact_persons', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.ContactPersonConverter",
-            'parameters': ['--inputFile', raw_bucket.format(date=one_day_ago,
-                                                            schema='contactpersons',
-                                                            channel='file_interface'),
-                           '--outputFile', ingested_bucket.format(date=one_day_ago,
-                                                                  fn='contactpersons',
-                                                                  channel='file_interface'),
+            'parameters': ['--inputFile',
+                           raw_bucket.format(date=one_day_ago, schema='contactpersons', channel='file_interface'),
+                           '--outputFile',
+                           ingested_bucket.format(date=one_day_ago, fn='contactpersons', channel='file_interface'),
                            '--strictIngestion', "false"] + postgres_config
         }
     )
@@ -65,18 +63,17 @@ with DAG('ohub_contact_persons', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonIntegratedExactMatch",
-            'parameters': ['--integratedInputFile', integrated_bucket.format(date=two_day_ago,
-                                                                             fn='contact_persons'),
-                           '--deltaInputFile', ingested_bucket.format(date=one_day_ago,
-                                                                      fn='contactpersons',
-                                                                      channel='*'),
-                           '--matchedExactOutputFile', intermediate_bucket.format(date=one_day_ago,
-                                                                                  fn='contact_person_exact_matches'),
-                           '--unmatchedDeltaOutputFile', intermediate_bucket.format(date=one_day_ago,
-                                                                                    fn='contact_person_unmatched_delta'),
-                           '--unmatchedIntegratedOutputFile', intermediate_bucket.format(date=one_day_ago,
-                                                                                         fn='contact_person_unmatched_integrated')
-                           ]
+            'parameters': ['--integratedInputFile',
+                           integrated_bucket.format(date=two_day_ago, fn='contact_persons'),
+                           '--deltaInputFile',
+                           ingested_bucket.format(date=one_day_ago, fn='contactpersons', channel='*'),
+                           '--matchedExactOutputFile',
+                           intermediate_bucket.format(date=one_day_ago, fn='contact_person_exact_matches'),
+                           '--unmatchedIntegratedOutputFile',
+                           intermediate_bucket.format(date=one_day_ago, fn='contact_person_unmatched_integrated'),
+                           '--unmatchedDeltaOutputFile',
+                           intermediate_bucket.format(date=one_day_ago, fn='contact_person_unmatched_delta')
+                           ] + postgres_config
         }
     )
 
@@ -103,10 +100,10 @@ with DAG('ohub_contact_persons', default_args=default_args,
                         '--integrated_input_path',
                         intermediate_bucket.format(date=one_day_ago, fn='contact_person_unmatched_integrated'),
                         '--ingested_daily_input_path',
-                        intermediate_bucket.format(date=one_day_ago,
-                                                   fn='contact_person_unmatched_delta'),
+                        intermediate_bucket.format(date=one_day_ago, fn='contact_person_unmatched_delta'),
                         '--updated_integrated_output_path',
-                        intermediate_bucket.format(date=one_day_ago, fn='contact_persons_fuzzy_matched_delta_integrated'),
+                        intermediate_bucket.format(date=one_day_ago,
+                                                   fn='contact_persons_fuzzy_matched_delta_integrated'),
                         '--unmatched_output_path',
                         intermediate_bucket.format(date=one_day_ago, fn='contact_persons_delta_left_overs'),
                         '--country_code', code]
@@ -126,7 +123,8 @@ with DAG('ohub_contact_persons', default_args=default_args,
                     'parameters': ['--input_file',
                                    intermediate_bucket.format(date=one_day_ago, fn='contact_persons_delta_left_overs'),
                                    '--output_path',
-                                   intermediate_bucket.format(date=one_day_ago, fn='contacts_persons_fuzzy_matched_delta'),
+                                   intermediate_bucket.format(date=one_day_ago,
+                                                              fn='contacts_persons_fuzzy_matched_delta'),
                                    '--country_code', code]
                 }
             )
@@ -167,17 +165,18 @@ with DAG('ohub_contact_persons', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.combining.ContactPersonCombineExactAndFuzzyMatches",
-            'parameters': ['--matchedExactInputFile',
+            'parameters': ['--contactPersonExactMatchedInputFile',
                            intermediate_bucket.format(date=one_day_ago,
                                                       fn='contact_person_exact_matches'),
-                           '--ingestedExactMatchInputFile',
+                           '--contactPersonFuzzyMatchedDeltaIntegratedInputFile',
+                           intermediate_bucket.format(date=one_day_ago,
+                                                      fn='contact_persons_fuzzy_matched_delta_integrated'),
+                           '--contactPersonsDeltaGoldenRecordsInputFile',
                            intermediate_bucket.format(date=one_day_ago,
                                                       fn='contact_persons_delta_golden_records'),
-                           '--fuzzyMatchCombinedInputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_fuzzy_matched_delta_integrated'),
-                           '--combinedOutputFile',
+                           '--contactPersonsCombinedOutputFile',
                            intermediate_bucket.format(date=one_day_ago,
-                                                      fn='contact_persons_combined')] + postgres_config
+                                                      fn='contact_persons_combined')]
         }
     )
 
