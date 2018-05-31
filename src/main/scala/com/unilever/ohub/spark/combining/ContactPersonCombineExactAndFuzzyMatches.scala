@@ -55,7 +55,7 @@ object ContactPersonCombineExactAndFuzzyMatches extends SparkJob[ExactAndFuzzyMa
     // deduplicate contact persons by selecting the 'newest' one (based on ohubCreated) per unique concatId.
     val w = Window.partitionBy('concatId).orderBy('ohubCreated.desc)
     contactPersonCombined
-      .withColumn("ohubCreated", last($"ohubCreated").over(w)) // TODO fix me
+      //      .withColumn("ohubCreated", last($"ohubCreated").over(w)) // TODO fix me
       .withColumn("rn", row_number.over(w))
       .filter('rn === 1)
       .drop('rn)
