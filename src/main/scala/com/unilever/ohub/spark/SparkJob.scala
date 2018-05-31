@@ -46,7 +46,9 @@ trait SparkJob[Config <: SparkJobConfig] { self ⇒
     configParser().parse(args, defaultConfig) match {
       case Some(config) ⇒
         invokeRunWithConfig(config)
-      case None ⇒ // nothing to do here
+      case None ⇒
+        log.error("No valid config could be parsed.")
+        System.exit(1)
     }
   }
 }
