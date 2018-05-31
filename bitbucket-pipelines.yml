@@ -6,9 +6,17 @@
 
 pipelines:
   default:
-    - step:
+    - step: &syntax
         name: Check PEP8 codestyle and run tests
         image: timvancann/miniconda3-gcc
+        script:
+          - bash ./lint.sh
+    - step: &dags
+        name: Verify DAG integrity
+        image:
+          name: ulohubimages.azurecr.io/airflow:latest
+          username: ulohubimages
+          password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
           - conda env create -f environment.yml
           - source activate airflow-dags
@@ -17,14 +25,8 @@ pipelines:
 
   branches:
     master:
-    - step:
-        name: Check PEP8 codestyle and run tests
-        image: timvancann/miniconda3-gcc
-        script:
-          - conda env create -f environment.yml
-          - source activate airflow-dags
-          - pycodestyle --show-source .
-          - python -m pytest --cov-config .coveragerc --cov=./dags tests
+    - step: *syntax
+    - step: *dags
     - step:
         name: Deploy to azure file share
         image: microsoft/azure-cli
