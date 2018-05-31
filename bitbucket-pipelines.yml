@@ -6,28 +6,29 @@
 
 pipelines:
   default:
-    # - step: &syntax
-    #     name: Check PEP8 codestyle and run tests
-    #     image: timvancann/miniconda3-gcc
-    #     script:
-    #       - bash ./lint.sh
-    - step: &dags
-        name: Verify DAG integrity
-        image:
-          name: ulohubimages.azurecr.io/airflow:latest
-          username: ulohubimages
-          password: $AZ_CONTAINER_REGISTRY_PASSWORD
+    - step:
+        name: Check PEP8 codestyle and run tests
+        image: timvancann/miniconda3-gcc
         script:
-          - bash ./test.sh
+          - conda env create -f environment.yml
+          - source activate airflow-dags
+          - pycodestyle --show-source .
+          - python -m pytest --cov-config .coveragerc --cov=./dags tests
 
   branches:
     master:
-    # - step: *syntax
-    - step: *dags
+    - step:
+        name: Check PEP8 codestyle and run tests
+        image: timvancann/miniconda3-gcc
+        script:
+          - conda env create -f environment.yml
+          - source activate airflow-dags
+          - pycodestyle --show-source .
+          - python -m pytest --cov-config .coveragerc --cov=./dags tests
     - step:
         name: Deploy to azure file share
         image: microsoft/azure-cli
         deployment: production
         script:
           - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
-          - az storage file upload-batch --source dags --destination airflow-dags --account-key ${AZ_AIRFLOW_STORAGE_KEY} --account-name ${AZ_AIRFLOW_STORAGE_ACCOUNT}
+          - az storage file upload-batch --source dags/ --destination airflow-dags --account-key ${AZ_AIRFLOW_STORAGE_KEY} --account-name ${AZ_AIRFLOW_STORAGE_ACCOUNT}
