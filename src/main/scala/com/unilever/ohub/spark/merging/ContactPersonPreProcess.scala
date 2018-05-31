@@ -38,22 +38,18 @@ object ContactPersonPreProcess extends SparkJob[ContactPersonPreProcessConfig] {
   def transform(spark: SparkSession, integratedContactPersons: Dataset[ContactPerson], dailyDeltaContactPersons: Dataset[ContactPerson]): Dataset[ContactPerson] = {
     import spark.implicits._
 
-    val contactPersonCombined = integratedContactPersons
-      .union(dailyDeltaContactPersons)
-      .toDF()
-
     // pre-process contact persons...for each updated contact person...set the correct ohubCreated
     val w = Window.partitionBy('concatId)
     val wAsc = w.orderBy('ohubCreated.asc)
     val wDesc = w.orderBy($"ohubCreated".desc)
 
-    contactPersonCombined
+    integratedContactPersons
+      .union(dailyDeltaContactPersons)
       .withColumn("rn", row_number.over(wDesc))
       .withColumn("ohubCreated", first($"ohubCreated").over(wAsc))
       .filter('rn === 1)
       .drop('rn)
       .as[ContactPerson]
-
   }
 
   override def run(spark: SparkSession, config: ContactPersonPreProcessConfig, storage: Storage): Unit = {
