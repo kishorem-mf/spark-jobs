@@ -2,16 +2,17 @@ package com.unilever.ohub.spark.combining
 
 import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.entity.ContactPerson
-import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 case class ExactAndFuzzyMatchesConfig(
-    updatedExactMatchInputFile: String = "updated-exact-match-input-file",
-    ingestedExactMatchInputFile: String = "ingested-exact-match-input-file",
-    fuzzyMatchCombinedInputFile: String = "fuzzy-match-combined-input-file",
-    combinedOutputFile: String = "combined-output-file"
+    contactPersonExactMatchedInputFile: String = "contact-person-exact-matched-input-file",
+    contactPersonFuzzyMatchedDeltaIntegratedInputFile: String = "contact-person-fuzzy-matched-delta-integrated-input-file",
+    contactPersonsDeltaGoldenRecordsInputFile: String = "contact-persons-delta-golden-records-input-file",
+    contactPersonsCombinedOutputFile: String = "contact-persons-combined-output-file"
 ) extends SparkJobConfig
 
 object ContactPersonCombineExactAndFuzzyMatches extends SparkJob[ExactAndFuzzyMatchesConfig] {
@@ -20,19 +21,19 @@ object ContactPersonCombineExactAndFuzzyMatches extends SparkJob[ExactAndFuzzyMa
 
   override private[spark] def configParser(): OptionParser[ExactAndFuzzyMatchesConfig] =
     new scopt.OptionParser[ExactAndFuzzyMatchesConfig]("Contact person exact and fuzzy matches combiner") {
-      head("combines entities from exact matches and fuzzy matches", "1.0")
-      opt[String]("updatedExactMatchInputFile") required () action { (x, c) ⇒
-        c.copy(updatedExactMatchInputFile = x)
-      } text "updatedExactMatchInputFile is a string property"
-      opt[String]("ingestedExactMatchInputFile") required () action { (x, c) ⇒
-        c.copy(ingestedExactMatchInputFile = x)
-      } text "ingestedExactMatchInputFile is a string property"
-      opt[String]("fuzzyMatchCombinedInputFile") required () action { (x, c) ⇒
-        c.copy(fuzzyMatchCombinedInputFile = x)
-      } text "fuzzyMatchCombinedInputFile is a string property"
-      opt[String]("combinedOutputFile") required () action { (x, c) ⇒
-        c.copy(combinedOutputFile = x)
-      } text "combinedOutputFile is a string property"
+      head("combines contact persons from exact matches and fuzzy matches", "1.0")
+      opt[String]("contactPersonExactMatchedInputFile") required () action { (x, c) ⇒
+        c.copy(contactPersonExactMatchedInputFile = x)
+      } text "contactPersonExactMatchedInputFile is a string property"
+      opt[String]("contactPersonFuzzyMatchedDeltaIntegratedInputFile") required () action { (x, c) ⇒
+        c.copy(contactPersonFuzzyMatchedDeltaIntegratedInputFile = x)
+      } text "contactPersonFuzzyMatchedDeltaIntegratedInputFile is a string property"
+      opt[String]("contactPersonsDeltaGoldenRecordsInputFile") required () action { (x, c) ⇒
+        c.copy(contactPersonsDeltaGoldenRecordsInputFile = x)
+      } text "contactPersonsDeltaGoldenRecordsInputFile is a string property"
+      opt[String]("contactPersonsCombinedOutputFile") required () action { (x, c) ⇒
+        c.copy(contactPersonsCombinedOutputFile = x)
+      } text "contactPersonsCombinedOutputFile is a string property"
 
       version("1.0")
       help("help") text "help text"
@@ -40,33 +41,39 @@ object ContactPersonCombineExactAndFuzzyMatches extends SparkJob[ExactAndFuzzyMa
 
   def transform(
     spark: SparkSession,
-    updatedExactMatchInput: Dataset[ContactPerson],
-    ingestedExactMatchInput: Dataset[ContactPerson],
-    fuzzyMatchCombinedInputFile: Dataset[ContactPerson]
+    contactPersonExactMatches: Dataset[ContactPerson],
+    contactPersonFuzzyMatchesDeltaIntegrated: Dataset[ContactPerson],
+    contactPersonFuzzyMatchesDeltaLeftOvers: Dataset[ContactPerson]
   ): Dataset[ContactPerson] = {
     import spark.implicits._
 
-    val exactMatches = updatedExactMatchInput.union(ingestedExactMatchInput)
+    val contactPersonCombined = contactPersonExactMatches
+      .union(contactPersonFuzzyMatchesDeltaIntegrated)
+      .union(contactPersonFuzzyMatchesDeltaLeftOvers)
+      .toDF()
 
-    val fuzzyMatches = fuzzyMatchCombinedInputFile
-      .join(exactMatches, Seq("concatId"), JoinType.LeftAnti)
+    // deduplicate contact persons by selecting the 'newest' one (based on ohubCreated) per unique concatId.
+    val w = Window.partitionBy('concatId).orderBy('ohubCreated.desc)
+    contactPersonCombined
+      //      .withColumn("ohubCreated", last($"ohubCreated").over(w)) // TODO fix me
+      .withColumn("rn", row_number.over(w))
+      .filter('rn === 1)
+      .drop('rn)
       .as[ContactPerson]
-
-    exactMatches.union(fuzzyMatches)
   }
 
   override def run(spark: SparkSession, config: ExactAndFuzzyMatchesConfig, storage: Storage): Unit = {
     import spark.implicits._
 
-    log.info(s"Combining contact person exact match results from [${config.updatedExactMatchInputFile}] and " +
-      s"[${config.ingestedExactMatchInputFile}] with fuzzy match results [${config.fuzzyMatchCombinedInputFile}] and write results to [${config.combinedOutputFile}]")
+    log.info(s"Combining contact person exact match results from [${config.contactPersonExactMatchedInputFile}] with fuzzy match results from " +
+      s"[${config.contactPersonFuzzyMatchedDeltaIntegratedInputFile}] and [${config.contactPersonsDeltaGoldenRecordsInputFile}] and write results to [${config.contactPersonsCombinedOutputFile}]")
 
-    val updatedExactMatchInput = storage.readFromParquet[ContactPerson](config.updatedExactMatchInputFile)
-    val ingestedExactMatchInput = storage.readFromParquet[ContactPerson](config.ingestedExactMatchInputFile)
-    val fuzzyMatchCombinedInputFile = storage.readFromParquet[ContactPerson](config.fuzzyMatchCombinedInputFile)
+    val contactPersonExactMatches = storage.readFromParquet[ContactPerson](config.contactPersonExactMatchedInputFile)
+    val contactPersonFuzzyMatchesDeltaIntegrated = storage.readFromParquet[ContactPerson](config.contactPersonFuzzyMatchedDeltaIntegratedInputFile)
+    val contactPersonFuzzyMatchesDeltaLeftOvers = storage.readFromParquet[ContactPerson](config.contactPersonsDeltaGoldenRecordsInputFile)
 
-    val result: Dataset[ContactPerson] = transform(spark, updatedExactMatchInput, ingestedExactMatchInput, fuzzyMatchCombinedInputFile)
+    val result: Dataset[ContactPerson] = transform(spark, contactPersonExactMatches, contactPersonFuzzyMatchesDeltaIntegrated, contactPersonFuzzyMatchesDeltaLeftOvers)
 
-    storage.writeToParquet(result, config.combinedOutputFile)
+    storage.writeToParquet(result, config.contactPersonsCombinedOutputFile)
   }
 }
