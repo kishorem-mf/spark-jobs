@@ -11,8 +11,8 @@ import scopt.OptionParser
 case class ExactAndFuzzyMatchesConfig(
     contactPersonExactMatchedInputFile: String = "contact-person-exact-matched-input-file",
     contactPersonFuzzyMatchedDeltaIntegratedInputFile: String = "contact-person-fuzzy-matched-delta-integrated-input-file",
-    contactPersonFuzzyMatchedDeltaLeftOversInputFile: String = "contact-person-fuzzy-matched-delta-left-overs-input-file",
-    contactPersonsDeltaGoldenRecordsOutputFile: String = "contact-persons-delta-golden-records-output-file"
+    contactPersonsDeltaGoldenRecordsInputFile: String = "contact-persons-delta-golden-records-input-file",
+    contactPersonsCombinedOutputFile: String = "contact-persons-combined-output-file"
 ) extends SparkJobConfig
 
 object ContactPersonCombineExactAndFuzzyMatches extends SparkJob[ExactAndFuzzyMatchesConfig] {
@@ -28,12 +28,12 @@ object ContactPersonCombineExactAndFuzzyMatches extends SparkJob[ExactAndFuzzyMa
       opt[String]("contactPersonFuzzyMatchedDeltaIntegratedInputFile") required () action { (x, c) ⇒
         c.copy(contactPersonFuzzyMatchedDeltaIntegratedInputFile = x)
       } text "contactPersonFuzzyMatchedDeltaIntegratedInputFile is a string property"
-      opt[String]("contactPersonFuzzyMatchedDeltaLeftOversInputFile") required () action { (x, c) ⇒
-        c.copy(contactPersonFuzzyMatchedDeltaLeftOversInputFile = x)
-      } text "contactPersonFuzzyMatchedDeltaLeftOversInputFile is a string property"
-      opt[String]("contactPersonsDeltaGoldenRecordsOutputFile") required () action { (x, c) ⇒
-        c.copy(contactPersonsDeltaGoldenRecordsOutputFile = x)
-      } text "contactPersonsDeltaGoldenRecordsOutputFile is a string property"
+      opt[String]("contactPersonsDeltaGoldenRecordsInputFile") required () action { (x, c) ⇒
+        c.copy(contactPersonsDeltaGoldenRecordsInputFile = x)
+      } text "contactPersonsDeltaGoldenRecordsInputFile is a string property"
+      opt[String]("contactPersonsCombinedOutputFile") required () action { (x, c) ⇒
+        c.copy(contactPersonsCombinedOutputFile = x)
+      } text "contactPersonsCombinedOutputFile is a string property"
 
       version("1.0")
       help("help") text "help text"
@@ -66,14 +66,14 @@ object ContactPersonCombineExactAndFuzzyMatches extends SparkJob[ExactAndFuzzyMa
     import spark.implicits._
 
     log.info(s"Combining contact person exact match results from [${config.contactPersonExactMatchedInputFile}] with fuzzy match results from " +
-      s"[${config.contactPersonFuzzyMatchedDeltaIntegratedInputFile}] and [${config.contactPersonFuzzyMatchedDeltaLeftOversInputFile}] and write results to [${config.contactPersonsDeltaGoldenRecordsOutputFile}]")
+      s"[${config.contactPersonFuzzyMatchedDeltaIntegratedInputFile}] and [${config.contactPersonsDeltaGoldenRecordsInputFile}] and write results to [${config.contactPersonsCombinedOutputFile}]")
 
     val contactPersonExactMatches = storage.readFromParquet[ContactPerson](config.contactPersonExactMatchedInputFile)
     val contactPersonFuzzyMatchesDeltaIntegrated = storage.readFromParquet[ContactPerson](config.contactPersonFuzzyMatchedDeltaIntegratedInputFile)
-    val contactPersonFuzzyMatchesDeltaLeftOvers = storage.readFromParquet[ContactPerson](config.contactPersonFuzzyMatchedDeltaLeftOversInputFile)
+    val contactPersonFuzzyMatchesDeltaLeftOvers = storage.readFromParquet[ContactPerson](config.contactPersonsDeltaGoldenRecordsInputFile)
 
     val result: Dataset[ContactPerson] = transform(spark, contactPersonExactMatches, contactPersonFuzzyMatchesDeltaIntegrated, contactPersonFuzzyMatchesDeltaLeftOvers)
 
-    storage.writeToParquet(result, config.contactPersonsDeltaGoldenRecordsOutputFile)
+    storage.writeToParquet(result, config.contactPersonsCombinedOutputFile)
   }
 }
