@@ -4,15 +4,15 @@ import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.row_number
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 case class ExactAndFuzzyMatchesConfig(
-                                       contactPersonExactMatchedInputFile: String = "contact-person-exact-matched-input-file",
-                                       contactPersonFuzzyMatchedDeltaIntegratedInputFile: String = "contact-person-fuzzy-matched-delta-integrated-input-file",
-                                       contactPersonFuzzyMatchedDeltaLeftOversInputFile: String = "contact-person-fuzzy-matched-delta-left-overs-input-file",
-                                       contactPersonsDeltaGoldenRecordsOutputFile: String = "contact-persons-delta-golden-records-output-file"
+    contactPersonExactMatchedInputFile: String = "contact-person-exact-matched-input-file",
+    contactPersonFuzzyMatchedDeltaIntegratedInputFile: String = "contact-person-fuzzy-matched-delta-integrated-input-file",
+    contactPersonFuzzyMatchedDeltaLeftOversInputFile: String = "contact-person-fuzzy-matched-delta-left-overs-input-file",
+    contactPersonsDeltaGoldenRecordsOutputFile: String = "contact-persons-delta-golden-records-output-file"
 ) extends SparkJobConfig
 
 object ContactPersonCombineExactAndFuzzyMatches extends SparkJob[ExactAndFuzzyMatchesConfig] {
@@ -50,15 +50,15 @@ object ContactPersonCombineExactAndFuzzyMatches extends SparkJob[ExactAndFuzzyMa
     val contactPersonCombined = contactPersonExactMatches
       .union(contactPersonFuzzyMatchesDeltaIntegrated)
       .union(contactPersonFuzzyMatchesDeltaLeftOvers)
-
-    // TODO preserve the ohub created from the previous
+      .toDF()
 
     // deduplicate contact persons by selecting the 'newest' one (based on ohubCreated) per unique concatId.
-    val w = Window.partitionBy($"concatId").orderBy($"ohubCreated".desc_nulls_last)
+    val w = Window.partitionBy('concatId).orderBy('ohubCreated.desc)
     contactPersonCombined
+      .withColumn("ohubCreated", last($"ohubCreated").over(w)) // TODO fix me
       .withColumn("rn", row_number.over(w))
-      .filter($"rn" === 1)
-      .drop($"rn")
+      .filter('rn === 1)
+      .drop('rn)
       .as[ContactPerson]
   }
 
