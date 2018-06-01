@@ -63,7 +63,7 @@ one_day_ago = '{{ds}}'
 two_day_ago = '{{yesterday_ds}}'
 
 wasb_conn_id = 'azure_blob'
-blob_name = 'prod'
+container_name = 'prod'
 
 jar = 'dbfs:/libraries/ohub/spark-jobs-assembly-0.2.0.jar'
 egg = 'dbfs:/libraries/name_matching/string_matching.egg'

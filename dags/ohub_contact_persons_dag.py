@@ -10,9 +10,7 @@ from custom_operators.databricks_functions import \
 from custom_operators.file_from_wasb import FileFromWasbOperator
 from custom_operators.empty_fallback import EmptyFallbackOperator
 from ohub_dag_config import \
-    default_args, \
-    databricks_conn_id, \
-    jar, egg, \
+    default_args, databricks_conn_id, jar, egg, container_name, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
     wasb_raw_container, wasb_export_container, operator_country_codes, interval, one_day_ago, two_day_ago, wasb_conn_id, create_cluster, \
     terminate_cluster, default_cluster_config
@@ -40,7 +38,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
 
     empty_fallback = EmptyFallbackOperator(
                                             task_id='empty_fallback',
-                                            container_name='prod',
+                                            container_name=container_name,
                                             file_path=wasb_raw_container.format(date=one_day_ago,
                                                                                 schema='contactpersons',
                                                                                 channel='file_interface'),
@@ -248,7 +246,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
     contact_persons_acm_from_wasb = FileFromWasbOperator(
         task_id='contact_persons_acm_from_wasb',
         file_path=tmp_file,
-        container_name='prod',
+        container_name=container_name,
         wasb_conn_id=wasb_conn_id,
         blob_name=wasb_export_container.format(date='{{ds}}', fn=op_file)
     )
