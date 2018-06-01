@@ -38,11 +38,13 @@ with DAG('ohub_contact_persons', default_args=default_args,
         '--postgressDB', postgres_connection.schema
     ]
 
-    empty_fallback = EmptyFallbackOperator(container_name='prod',
-                                           file_path=wasb_raw_container.format(date=one_day_ago,
-                                                                               schema='contactpersons',
-                                                                               channel='file_interface'),
-                                           wasb_conn_id=wasb_conn_id)
+    empty_fallback = EmptyFallbackOperator(
+                                            task_id='empty_fallback',
+                                            container_name='prod',
+                                            file_path=wasb_raw_container.format(date=one_day_ago,
+                                                                                schema='contactpersons',
+                                                                                channel='file_interface'),
+                                            wasb_conn_id=wasb_conn_id)
 
     contact_persons_file_interface_to_parquet = DatabricksSubmitRunOperator(
         task_id="contact_persons_file_interface_to_parquet",
