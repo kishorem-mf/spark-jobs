@@ -15,7 +15,7 @@ from ohub_dag_config import \
     default_args, databricks_conn_id, jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
     wasb_raw_container, wasb_export_container, \
-    operator_country_codes, default_cluster_config, interval, one_day_ago, two_day_ago, wasb_conn_id, blob_name
+    operator_country_codes, default_cluster_config, interval, one_day_ago, two_day_ago, wasb_conn_id, container_name
 
 default_args.update(
     {'start_date': datetime(2018, 5, 29)}
@@ -216,9 +216,9 @@ with DAG('ohub_operators', default_args=default_args,
     operators_acm_from_wasb = FileFromWasbOperator(
         task_id='operators_acm_from_wasb',
         file_path=tmp_file,
-        container_name=wasb_export_container.format(date=one_day_ago, fn=op_file),
+        container_name=container_name,
         wasb_conn_id=wasb_conn_id,
-        blob_name=blob_name
+        blob_name=wasb_export_container.format(date=one_day_ago, fn=op_file)
     )
 
     operators_ftp_to_acm = SFTPOperator(

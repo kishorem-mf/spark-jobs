@@ -11,9 +11,7 @@ from custom_operators.databricks_functions import \
     DatabricksCreateClusterOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
 from ohub_dag_config import \
-    default_args, \
-    databricks_conn_id, \
-    jar, egg, \
+    default_args, container_name, databricks_conn_id, jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
     wasb_export_container, operator_country_codes
 
@@ -158,7 +156,7 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
     operators_acm_from_wasb = FileFromWasbOperator(
         task_id='operators_acm_from_wasb',
         file_path=tmp_file,
-        container_name='prod',
+        container_name=container_name,
         wasb_conn_id='azure_blob',
         blob_name=wasb_export_container.format(date='{{ds}}', fn=op_file)
     )

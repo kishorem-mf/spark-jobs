@@ -8,6 +8,7 @@ from custom_operators.zip_operator import UnzipOperator
 from custom_operators.folder_to_wasb import FolderToWasbOperator
 from custom_operators.short_circuit_sftp_operator import ShortCircuitSFTPOperator
 from config import country_codes
+from ohub_dag_config import container_name
 
 default_args = {
     'owner': 'airflow',
@@ -49,7 +50,8 @@ with DAG('fuzzit_sftp', default_args=default_args,
     wasb = FolderToWasbOperator(
         task_id='fuzzit_to_wasb',
         folder_path=templated_path_to_unzip_contents,
-        container_name='data/raw/fuzzit/{{ds}}',
+        blob_name='data/raw/fuzzit/{{ds}}',
+        container_name=container_name,
     )
 
     mkdir >> fetch >> unzip >> wasb
