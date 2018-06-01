@@ -14,7 +14,7 @@ from custom_operators.empty_fallback import EmptyFallbackOperator
 from ohub_dag_config import \
     default_args, databricks_conn_id, jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_export_container, \
+    wasb_raw_container, wasb_export_container, \
     operator_country_codes, default_cluster_config, interval, one_day_ago, two_day_ago, wasb_conn_id, blob_name
 
 default_args.update(
