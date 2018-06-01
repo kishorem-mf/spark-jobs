@@ -10,10 +10,9 @@ from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator, \
     DatabricksCreateClusterOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
+from custom_operators.empty_fallback import EmptyFallbackOperator
 from ohub_dag_config import \
-    default_args, \
-    databricks_conn_id, \
-    jar, egg, \
+    default_args, databricks_conn_id, jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
     wasb_export_container, \
     operator_country_codes, default_cluster_config, interval, one_day_ago, two_day_ago, wasb_conn_id, blob_name
@@ -41,6 +40,14 @@ with DAG('ohub_operators', default_args=default_args,
 
     postgres_connection = BaseHook.get_connection('postgres_channels')
 
+    # wasb_raw_container.format(date=one_day_ago, schema='operators', channel='file_interface', fn='*')
+
+    empty_fallback = EmptyFallbackOperator(container_name='prod',
+                                           wasb_raw_container.format(date=one_day_ago,
+                                                                     schema='operators',
+                                                                     channel='file_interface'),
+                                           wasb_conn_id=wasb_conn_id)
+
     operators_file_interface_to_parquet = DatabricksSubmitRunOperator(
         task_id="operators_file_interface_to_parquet",
         cluster_name=cluster_name,
@@ -52,7 +59,8 @@ with DAG('ohub_operators', default_args=default_args,
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
             'parameters': ['--inputFile', raw_bucket.format(date=one_day_ago,
                                                             schema='operators',
-                                                            channel='file_interface'),
+                                                            channel='file_interface',
+                                                            fn='*'),
                            '--outputFile', ingested_bucket.format(date=one_day_ago,
                                                                   fn='operators',
                                                                   channel='file_interface'),
@@ -228,6 +236,7 @@ with DAG('ohub_operators', default_args=default_args,
         notebook_task={'notebook_path': '/Users/tim.vancann@unilever.com/update_integrated_tables'}
     )
 
+    empty_fallback >> operators_file_interface_to_parquet
     create_cluster >> operators_file_interface_to_parquet >> match_per_country
     match_per_country >> combine_to_create_integrated
     match_per_country >> merge_operators >> combine_to_create_integrated

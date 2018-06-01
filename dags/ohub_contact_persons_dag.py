@@ -8,12 +8,13 @@ from airflow.operators.subdag_operator import SubDagOperator
 from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
+from custom_operators.empty_fallback import EmptyFallbackOperator
 from ohub_dag_config import \
     default_args, \
     databricks_conn_id, \
     jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_export_container, operator_country_codes, interval, one_day_ago, two_day_ago, create_cluster, \
+    wasb_export_container, operator_country_codes, interval, one_day_ago, two_day_ago, wasb_conn_id, create_cluster, \
     terminate_cluster, default_cluster_config
 
 default_args.update(
@@ -37,6 +38,12 @@ with DAG('ohub_contact_persons', default_args=default_args,
         '--postgressDB', postgres_connection.schema
     ]
 
+    empty_fallback = EmptyFallbackOperator(container_name='prod',
+                                           wasb_raw_container.format(date=one_day_ago,
+                                                                     schema='operators',
+                                                                     channel='file_interface'),
+                                           wasb_conn_id=wasb_conn_id)
+
     contact_persons_file_interface_to_parquet = DatabricksSubmitRunOperator(
         task_id="contact_persons_file_interface_to_parquet",
         cluster_name=cluster_name,
@@ -47,7 +54,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.ContactPersonConverter",
             'parameters': ['--inputFile',
-                           raw_bucket.format(date=one_day_ago, schema='contactpersons', channel='file_interface'),
+                           raw_bucket.format(date=one_day_ago, schema='contactpersons', channel='file_interface', fn='*'),
                            '--outputFile',
                            ingested_bucket.format(date=one_day_ago, fn='contactpersons', channel='file_interface'),
                            '--strictIngestion', "false"] + postgres_config
@@ -240,7 +247,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
         task_id='contact_persons_acm_from_wasb',
         file_path=tmp_file,
         container_name='prod',
-        wasb_conn_id='azure_blob',
+        wasb_conn_id=wasb_conn_id,
         blob_name=wasb_export_container.format(date='{{ds}}', fn=op_file)
     )
 
@@ -252,6 +259,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
         operation=SFTPOperation.PUT
     )
 
+    empty_fallback >> create_cluster_contact_persons
     create_cluster_contact_persons >> contact_persons_file_interface_to_parquet >> exact_match_integrated_ingested
     exact_match_integrated_ingested >> match_per_country
     exact_match_integrated_ingested >> join_fuzzy_and_exact_matched
