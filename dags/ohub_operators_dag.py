@@ -14,7 +14,7 @@ from custom_operators.empty_fallback import EmptyFallbackOperator
 from ohub_dag_config import \
     default_args, databricks_conn_id, jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_export_container, \
+    wasb_raw_container, wasb_export_container, \
     operator_country_codes, default_cluster_config, interval, one_day_ago, two_day_ago, wasb_conn_id, blob_name
 
 default_args.update(
@@ -43,9 +43,9 @@ with DAG('ohub_operators', default_args=default_args,
     # wasb_raw_container.format(date=one_day_ago, schema='operators', channel='file_interface', fn='*')
 
     empty_fallback = EmptyFallbackOperator(container_name='prod',
-                                           wasb_raw_container.format(date=one_day_ago,
-                                                                     schema='operators',
-                                                                     channel='file_interface'),
+                                           file_path=wasb_raw_container.format(date=one_day_ago,
+                                                                               schema='operators',
+                                                                               channel='file_interface'),
                                            wasb_conn_id=wasb_conn_id)
 
     operators_file_interface_to_parquet = DatabricksSubmitRunOperator(

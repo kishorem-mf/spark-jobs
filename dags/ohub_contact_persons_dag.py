@@ -14,7 +14,7 @@ from ohub_dag_config import \
     databricks_conn_id, \
     jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_export_container, operator_country_codes, interval, one_day_ago, two_day_ago, wasb_conn_id, create_cluster, \
+    wasb_raw_container, wasb_export_container, operator_country_codes, interval, one_day_ago, two_day_ago, wasb_conn_id, create_cluster, \
     terminate_cluster, default_cluster_config
 
 default_args.update(
@@ -39,9 +39,9 @@ with DAG('ohub_contact_persons', default_args=default_args,
     ]
 
     empty_fallback = EmptyFallbackOperator(container_name='prod',
-                                           wasb_raw_container.format(date=one_day_ago,
-                                                                     schema='operators',
-                                                                     channel='file_interface'),
+                                           file_path=wasb_raw_container.format(date=one_day_ago,
+                                                                               schema='contactpersons',
+                                                                               channel='file_interface'),
                                            wasb_conn_id=wasb_conn_id)
 
     contact_persons_file_interface_to_parquet = DatabricksSubmitRunOperator(
