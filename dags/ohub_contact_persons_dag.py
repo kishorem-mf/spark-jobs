@@ -71,7 +71,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonPreProcess",
             'parameters': ['--integratedInputFile',
-                           integrated_bucket.format(date=one_day_ago, schema='contact_persons'),
+                           integrated_bucket.format(date=one_day_ago, schema='contact_persons', fn='*'),
                            '--deltaInputFile',
                            ingested_bucket.format(date=one_day_ago, fn='contactpersons', channel='*'),
                            '--deltaPreProcessedOutputFile',
