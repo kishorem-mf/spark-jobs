@@ -101,20 +101,18 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
       .flatMap { // first set the proper ohubId
         case (_, contactPersonList) ⇒
           val contactPerson: Option[ContactPerson] = contactPersonList
-            .map { case (contactPerson, _) ⇒ contactPerson }
+            .map { case (cp, _) ⇒ cp }
             .find(_.ohubId.isDefined)
 
           val ohubId: String = contactPerson.flatMap { _.ohubId }.getOrElse(UUID.randomUUID().toString)
 
           contactPersonList.map {
-            case (contactPerson, inDelta) ⇒ (contactPerson.copy(ohubId = Some(ohubId)), inDelta) // preserve ohubId or assign a new one
+            case (cp, inDelta) ⇒ (cp.copy(ohubId = Some(ohubId)), inDelta) // preserve ohubId or assign a new one
           }
       }
       .toDF("contactPerson", "inDelta")
 
     // NOTE: that allExact can contain exact matches from previous integrated which eventually need to be removed from the integrated result
-
-    // TODO preserve ohubCreated
 
     val w = Window.partitionBy($"contactPerson.concatId")
     allExact

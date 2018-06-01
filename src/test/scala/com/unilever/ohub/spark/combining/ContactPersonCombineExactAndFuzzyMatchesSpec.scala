@@ -53,6 +53,7 @@ class ContactPersonCombineExactAndFuzzyMatchesSpec extends SparkJobSpec with Tes
         spark, contactPersonExactMatchedInput, contactPersonFuzzyMatchedDeltaIntegratedInput, contactPersonFuzzyMatchedDeltaLeftOversInput
       )
 
+      result.count() shouldBe 6
       result.map(_.sourceEntityId).collect().toSet shouldBe Set("a", "b", "c", "d", "e", "f")
     }
   }
