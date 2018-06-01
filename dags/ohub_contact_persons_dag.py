@@ -61,6 +61,25 @@ with DAG('ohub_contact_persons', default_args=default_args,
         }
     )
 
+    contact_persons_pre_processed = DatabricksSubmitRunOperator(
+        task_id="contact_persons_pre_processed",
+        cluster_name=cluster_name,
+        databricks_conn_id=databricks_conn_id,
+        libraries=[
+            {'jar': jar}
+        ],
+        spark_jar_task={
+            'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonPreProcess",
+            'parameters': ['--integratedInputFile',
+                           integrated_bucket.format(date=one_day_ago, schema='contact_persons'),
+                           '--deltaInputFile',
+                           ingested_bucket.format(date=one_day_ago, fn='contactpersons', channel='*'),
+                           '--deltaPreProcessedOutputFile',
+                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_pre_processed'),
+                           "false"]
+        }
+    )
+
     exact_match_integrated_ingested = DatabricksSubmitRunOperator(
         task_id="exact_match_integrated_ingested",
         cluster_name=cluster_name,
@@ -73,7 +92,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
             'parameters': ['--integratedInputFile',
                            integrated_bucket.format(date=two_day_ago, fn='contact_persons'),
                            '--deltaInputFile',
-                           ingested_bucket.format(date=one_day_ago, fn='contactpersons', channel='*'),
+                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_pre_processed'),
                            '--matchedExactOutputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='contact_person_exact_matches'),
                            '--unmatchedIntegratedOutputFile',
@@ -259,8 +278,9 @@ with DAG('ohub_contact_persons', default_args=default_args,
         operation=SFTPOperation.PUT
     )
 
-    empty_fallback >> create_cluster_contact_persons
-    create_cluster_contact_persons >> contact_persons_file_interface_to_parquet >> exact_match_integrated_ingested
+    empty_fallback >> create_cluster_contact_persons >> contact_persons_file_interface_to_parquet
+    contact_persons_file_interface_to_parquet >> contact_persons_pre_processed >> exact_match_integrated_ingested
+
     exact_match_integrated_ingested >> match_per_country
     exact_match_integrated_ingested >> join_fuzzy_and_exact_matched
 
