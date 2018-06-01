@@ -32,4 +32,4 @@ class EmptyFallbackOperator(BaseOperator):
             # create empty one
             hook.load_string('',
                              self.container_name,
-                             self.file_path.replace('*' ,'empty'))
+                             self.file_path.replace('*', 'empty'))
