@@ -40,8 +40,6 @@ with DAG('ohub_operators', default_args=default_args,
 
     postgres_connection = BaseHook.get_connection('postgres_channels')
 
-    # wasb_raw_container.format(date=one_day_ago, schema='operators', channel='file_interface', fn='*')
-
     empty_fallback = EmptyFallbackOperator(container_name='prod',
                                            file_path=wasb_raw_container.format(date=one_day_ago,
                                                                                schema='operators',
@@ -59,8 +57,7 @@ with DAG('ohub_operators', default_args=default_args,
             'main_class_name': "com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
             'parameters': ['--inputFile', raw_bucket.format(date=one_day_ago,
                                                             schema='operators',
-                                                            channel='file_interface',
-                                                            fn='*'),
+                                                            channel='file_interface'),
                            '--outputFile', ingested_bucket.format(date=one_day_ago,
                                                                   fn='operators',
                                                                   channel='file_interface'),
