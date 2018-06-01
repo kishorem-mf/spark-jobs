@@ -40,11 +40,13 @@ with DAG('ohub_operators', default_args=default_args,
 
     postgres_connection = BaseHook.get_connection('postgres_channels')
 
-    empty_fallback = EmptyFallbackOperator(container_name='prod',
-                                           file_path=wasb_raw_container.format(date=one_day_ago,
-                                                                               schema='operators',
-                                                                               channel='file_interface'),
-                                           wasb_conn_id=wasb_conn_id)
+    empty_fallback = EmptyFallbackOperator(
+                                            task_id='empty_fallback',
+                                            container_name='prod',
+                                            file_path=wasb_raw_container.format(date=one_day_ago,
+                                                                                schema='operators',
+                                                                                channel='file_interface'),
+                                            wasb_conn_id=wasb_conn_id)
 
     operators_file_interface_to_parquet = DatabricksSubmitRunOperator(
         task_id="operators_file_interface_to_parquet",
