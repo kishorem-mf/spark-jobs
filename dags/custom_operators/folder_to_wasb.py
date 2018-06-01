@@ -22,12 +22,13 @@ class FolderToWasbOperator(BaseOperator):
     template_fields = ('folder_path', 'container_name')
 
     @apply_defaults
-    def __init__(self, folder_path, container_name, wasb_conn_id='azure_blob',
-                 load_options=None, *args, **kwargs):
+    def __init__(self, folder_path, blob_name, container_name,
+                 wasb_conn_id='azure_blob', load_options=None, *args, **kwargs):
         super(FolderToWasbOperator, self).__init__(*args, **kwargs)
         if load_options is None:
             load_options = {}
         self.folder_path = folder_path
+        self.blob_name = blob_name
         self.container_name = container_name
         self.wasb_conn_id = wasb_conn_id
         self.load_options = load_options
@@ -37,7 +38,8 @@ class FolderToWasbOperator(BaseOperator):
         hook = WasbHook(wasb_conn_id=self.wasb_conn_id)
         for file in os.listdir(self.folder_path):
             file_path = os.path.join(self.folder_path, file)
+            remote_path = os.path.join(self.blob_name, file)
             self.log.info(
-                'Uploading {file_path} to wasb://{self.container_name} as {file}'.format(**locals())
+                'Uploading {file_path} to wasb://{remote_path}'.format(**locals())
             )
-            hook.load_file(file_path, self.container_name, file, **self.load_options)
+            hook.load_file(file_path, self.container_name, remote_path, **self.load_options)

@@ -10,13 +10,12 @@ from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator, \
     DatabricksCreateClusterOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
+from custom_operators.empty_fallback import EmptyFallbackOperator
 from ohub_dag_config import \
-    default_args, \
-    databricks_conn_id, \
-    jar, egg, \
+    default_args, databricks_conn_id, jar, egg, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_export_container, \
-    operator_country_codes, default_cluster_config, interval, one_day_ago, two_day_ago, wasb_conn_id, blob_name
+    wasb_raw_container, wasb_export_container, \
+    operator_country_codes, default_cluster_config, interval, one_day_ago, two_day_ago, wasb_conn_id, container_name
 
 default_args.update(
     {'start_date': datetime(2018, 5, 29)}
@@ -40,6 +39,14 @@ with DAG('ohub_operators', default_args=default_args,
     )
 
     postgres_connection = BaseHook.get_connection('postgres_channels')
+
+    empty_fallback = EmptyFallbackOperator(
+                                            task_id='empty_fallback',
+                                            container_name='prod',
+                                            file_path=wasb_raw_container.format(date=one_day_ago,
+                                                                                schema='operators',
+                                                                                channel='file_interface'),
+                                            wasb_conn_id=wasb_conn_id)
 
     operators_file_interface_to_parquet = DatabricksSubmitRunOperator(
         task_id="operators_file_interface_to_parquet",
@@ -209,9 +216,9 @@ with DAG('ohub_operators', default_args=default_args,
     operators_acm_from_wasb = FileFromWasbOperator(
         task_id='operators_acm_from_wasb',
         file_path=tmp_file,
-        container_name=wasb_export_container.format(date=one_day_ago, fn=op_file),
+        container_name=container_name,
         wasb_conn_id=wasb_conn_id,
-        blob_name=blob_name
+        blob_name=wasb_export_container.format(date=one_day_ago, fn=op_file)
     )
 
     operators_ftp_to_acm = SFTPOperator(
@@ -228,6 +235,7 @@ with DAG('ohub_operators', default_args=default_args,
         notebook_task={'notebook_path': '/Users/tim.vancann@unilever.com/update_integrated_tables'}
     )
 
+    empty_fallback >> operators_file_interface_to_parquet
     create_cluster >> operators_file_interface_to_parquet >> match_per_country
     match_per_country >> combine_to_create_integrated
     match_per_country >> merge_operators >> combine_to_create_integrated
