@@ -43,9 +43,9 @@ with DAG('ohub_operators', default_args=default_args,
     # wasb_raw_container.format(date=one_day_ago, schema='operators', channel='file_interface', fn='*')
 
     empty_fallback = EmptyFallbackOperator(container_name='prod',
-                                           wasb_raw_container.format(date=one_day_ago,
-                                                                     schema='operators',
-                                                                     channel='file_interface'),
+                                           file_path=wasb_raw_container.format(date=one_day_ago,
+                                                                               schema='operators',
+                                                                               channel='file_interface'),
                                            wasb_conn_id=wasb_conn_id)
 
     operators_file_interface_to_parquet = DatabricksSubmitRunOperator(
