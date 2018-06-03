@@ -75,8 +75,7 @@ with DAG('ohub_contact_persons', default_args=default_args,
                            '--deltaInputFile',
                            ingested_bucket.format(date=one_day_ago, fn='contactpersons', channel='*'),
                            '--deltaPreProcessedOutputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_pre_processed'),
-                           "false"]
+                           intermediate_bucket.format(date=one_day_ago, fn='contact_persons_pre_processed')]
         }
     )
 
