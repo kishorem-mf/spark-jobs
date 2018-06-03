@@ -7,19 +7,19 @@ from string_matching import entity_matching as helper
 
 class TestDeltaMatching(object):
 
-    schema_delta = StructType([
+    # note: both schema's (for integrated & delta) are exactly the same...and they should be
+
+    schema_operators = StructType([
         StructField("concatId", StringType(), True),
+        StructField("ohubId", StringType(), True),
         StructField("countryCode", StringType(), True),
-        StructField("firstName", StringType(), True),
-        StructField("lastName", StringType(), True),
+        StructField("name", StringType(), True),
         StructField("city", StringType(), True),
         StructField("street", StringType(), True),
-        StructField("mobileNumber", StringType(), True),
-        StructField("emailAddress", StringType(), True),
-        StructField("zipCode", StringType(), True),
         StructField("houseNumber", StringType(), True),
+        StructField("zipCode", StringType(), True),
     ])
-    schema_integrated = StructType([
+    schema_contact_persons = StructType([
         StructField("concatId", StringType(), True),
         StructField("ohubId", StringType(), True),
         StructField("countryCode", StringType(), True),
@@ -35,10 +35,10 @@ class TestDeltaMatching(object):
 
     def test_full_matching_operators(self, spark):
         delta_data = [
-            ('c1', 'NL', 'xx', '', '', '', ''),
-            ('c2', 'NL', 'xx', '', '', '', ''),
-            ('c3', 'NL', 'xy', '', '', '', ''),
-            ('c4', 'NL', 'xx', 'v', '', '', ''),
+            ('c1', None, 'NL', 'xx', '', '', '', ''),
+            ('c2', None, 'NL', 'xx', '', '', '', ''),
+            ('c3', None, 'NL', 'xy', '', '', '', ''),
+            ('c4', None, 'NL', 'xx', 'v', '', '', ''),
         ]
         integrated_data = [
             ('c5', 'o1', 'NL', 'xx', '', '', '', ''),
@@ -46,10 +46,10 @@ class TestDeltaMatching(object):
             ('c7', 'o3', 'NL', 'xz', '', '', '', ''),
             ('c4', 'o4', 'NL', 'xx', '', '', '', ''),
         ]
-        ingested = (spark.createDataFrame(delta_data)
-                    .toDF('concatId', 'countryCode', 'name', 'city', 'street', 'houseNumber', 'zipCode')
+        ingested = (spark.createDataFrame(delta_data, self.schema_operators)
+                    .toDF('concatId', 'ohubId', 'countryCode', 'name', 'city', 'street', 'houseNumber', 'zipCode')
                     )
-        integrated = (spark.createDataFrame(integrated_data)
+        integrated = (spark.createDataFrame(integrated_data, self.schema_operators)
                       .toDF('concatId', 'ohubId', 'countryCode', 'name', 'city', 'street', 'houseNumber', 'zipCode')
                       )
 
@@ -77,10 +77,10 @@ class TestDeltaMatching(object):
 
     def test_full_matching_operators_replacing_group(self, spark):
         delta_data = [
-            ('c1', 'NL', 'xx', 'nbar', '', '', ''),
-            ('c2', 'NL', 'xx', 'nfoo', '', '', ''),
-            ('c8', 'NL', 'aa', '', '', '', ''),
-            ('c9', 'NL', 'bb', 'v', '', '', ''),
+            ('c1', None, 'NL', 'xx', 'nbar', '', '', ''),
+            ('c2', None, 'NL', 'xx', 'nfoo', '', '', ''),
+            ('c8', None, 'NL', 'aa', '', '', '', ''),
+            ('c9', None, 'NL', 'bb', 'v', '', '', ''),
         ]
         integrated_data = [
             ('c1', 'o1', 'NL', 'xx', 'obar', '', '', ''),
@@ -88,10 +88,10 @@ class TestDeltaMatching(object):
             ('c3', 'o2', 'NL', 'xy', '', '', '', ''),
             ('c4', 'o3', 'NL', 'xz', '', '', '', ''),
         ]
-        ingested = (spark.createDataFrame(delta_data)
-                    .toDF('concatId', 'countryCode', 'name', 'city', 'street', 'houseNumber', 'zipCode')
+        ingested = (spark.createDataFrame(delta_data, self.schema_operators)
+                    .toDF('concatId', 'ohubId', 'countryCode', 'name', 'city', 'street', 'houseNumber', 'zipCode')
                     )
-        integrated = (spark.createDataFrame(integrated_data)
+        integrated = (spark.createDataFrame(integrated_data, self.schema_operators)
                       .toDF('concatId', 'ohubId', 'countryCode', 'name', 'city', 'street', 'houseNumber', 'zipCode')
                       )
 
@@ -102,6 +102,7 @@ class TestDeltaMatching(object):
                                                             victim.postprocess_delta_operators,
                                                             1500, 0.2)
         updated = updated.select('concatId', 'ohubId', 'city').sort('concatId').collect()
+
         unmatched = unmatched.select('concatId').sort('concatId').collect()
 
         assert len(updated) == 4
@@ -118,10 +119,10 @@ class TestDeltaMatching(object):
 
     def test_full_matching_contact_persons(self, spark):
         delta_data = [
-            ('c1', 'NL', 'x', 'x', '', 'street', None, None, '', ''),
-            ('c2', 'NL', 'x', 'x', '', 'street', None, None, '', ''),
-            ('c3', 'NL', 'x', 'y', '', 'street', None, None, '', ''),
-            ('c4', 'NL', 'x', 'x', 'v', 'street', None, None, '', ''),
+            ('c1', None, 'NL', 'x', 'x', '', 'street', None, None, '', ''),
+            ('c2', None, 'NL', 'x', 'x', '', 'street', None, None, '', ''),
+            ('c3', None, 'NL', 'x', 'y', '', 'street', None, None, '', ''),
+            ('c4', None, 'NL', 'x', 'x', 'v', 'street', None, None, '', ''),
         ]
         integrated_data = [
             ('c5', 'o1', 'NL', 'x', 'x', '', 'street', None, None, '', ''),
@@ -129,8 +130,8 @@ class TestDeltaMatching(object):
             ('c7', 'o3', 'NL', 'x', 'z', '', 'street', None, None, '', ''),
             ('c4', 'o4', 'NL', 'x', 'x', '', 'street', None, None, '', ''),
         ]
-        ingested = spark.createDataFrame(delta_data, self.schema_delta)
-        integrated = spark.createDataFrame(integrated_data, self.schema_integrated)
+        ingested = spark.createDataFrame(delta_data, self.schema_contact_persons)
+        integrated = spark.createDataFrame(integrated_data, self.schema_contact_persons)
 
         updated, unmatched = victim.apply_delta_matching_on(spark,
                                                             ingested,
@@ -154,10 +155,10 @@ class TestDeltaMatching(object):
 
     def test_full_matching_contact_persons_on_empty_delta(self, spark):
         delta_data = [
-            ('c1', 'NL', 'x', 'x', '', '', None, None, '', ''),
-            ('c2', 'NL', 'x', 'x', '', '', None, None, '', ''),
-            ('c3', 'NL', 'x', 'y', '', '', None, None, '', ''),
-            ('c4', 'NL', 'x', 'x', 'v', '', None, None, '', ''),
+            ('c1', None, 'NL', 'x', 'x', '', '', None, None, '', ''),
+            ('c2', None, 'NL', 'x', 'x', '', '', None, None, '', ''),
+            ('c3', None, 'NL', 'x', 'y', '', '', None, None, '', ''),
+            ('c4', None, 'NL', 'x', 'x', 'v', '', None, None, '', ''),
         ]
         integrated_data = [
             ('c5', 'o1', 'NL', 'x', 'x', '', 'street', None, None, '', ''),
@@ -165,8 +166,8 @@ class TestDeltaMatching(object):
             ('c7', 'o3', 'NL', 'x', 'z', '', 'street', None, None, '', ''),
             ('c4', 'o4', 'NL', 'x', 'x', '', 'street', None, None, '', ''),
         ]
-        ingested = spark.createDataFrame(delta_data, self.schema_delta)
-        integrated = spark.createDataFrame(integrated_data, self.schema_integrated)
+        ingested = spark.createDataFrame(delta_data, self.schema_contact_persons)
+        integrated = spark.createDataFrame(integrated_data, self.schema_contact_persons)
 
         updated, unmatched = victim.apply_delta_matching_on(spark,
                                                             ingested,
@@ -182,10 +183,10 @@ class TestDeltaMatching(object):
 
     def test_full_matching_contact_persons_on_empty_integrated(self, spark):
         delta_data = [
-            ('c1', 'NL', 'x', 'x', '', 'street', None, None, '', ''),
-            ('c2', 'NL', 'x', 'x', '', 'street', None, None, '', ''),
-            ('c3', 'NL', 'x', 'y', '', 'street', None, None, '', ''),
-            ('c4', 'NL', 'x', 'x', 'v', 'street', None, None, '', ''),
+            ('c1', None, 'NL', 'x', 'x', '', 'street', None, None, '', ''),
+            ('c2', None, 'NL', 'x', 'x', '', 'street', None, None, '', ''),
+            ('c3', None, 'NL', 'x', 'y', '', 'street', None, None, '', ''),
+            ('c4', None, 'NL', 'x', 'x', 'v', 'street', None, None, '', ''),
         ]
         integrated_data = [
             ('c5', 'o1', 'NL', 'x', 'x', '', '', None, None, '', ''),
@@ -193,8 +194,8 @@ class TestDeltaMatching(object):
             ('c7', 'o3', 'NL', 'x', 'z', '', '', None, None, '', ''),
             ('c4', 'o4', 'NL', 'x', 'x', '', '', None, None, '', ''),
         ]
-        ingested = spark.createDataFrame(delta_data, self.schema_delta)
-        integrated = spark.createDataFrame(integrated_data, self.schema_integrated)
+        ingested = spark.createDataFrame(delta_data, self.schema_contact_persons)
+        integrated = spark.createDataFrame(integrated_data, self.schema_contact_persons)
 
         updated, unmatched = victim.apply_delta_matching_on(spark,
                                                             ingested,

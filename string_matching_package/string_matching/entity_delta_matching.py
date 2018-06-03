@@ -130,14 +130,13 @@ def recreate_matched_and_unmatched(integrated: DataFrame,
     matched_ingested_daily_full_record = (matched
                                           .select('concatId', 'ohubId_matched')
                                           .join(ingested, on='concatId', how='left')
-                                          .withColumn('ohubId', sf.col('ohubId_matched'))
+                                          .withColumn('ohubId', sf.col('ohubId_matched')) # overwrite ohubId with matched ohubId
                                           .drop('ohubId_matched')
                                           )
 
-    column_order = integrated.columns
-    updated_integrated = (integrated.select(*column_order)
+    updated_integrated = (integrated
                           .join(matched_ingested_daily_full_record, on='concatId', how='left_anti')
-                          .union(matched_ingested_daily_full_record.select(*column_order))
+                          .union(matched_ingested_daily_full_record)
                           )
 
     unmatched = (ingested
