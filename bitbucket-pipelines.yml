@@ -18,7 +18,7 @@ pipelines:
           username: ulohubimages
           password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
-          - bash /usr/app/test.sh
+          - bash ./test.sh
 
   branches:
     master:
