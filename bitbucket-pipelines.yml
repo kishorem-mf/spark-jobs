@@ -18,10 +18,7 @@ pipelines:
           username: ulohubimages
           password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
-          - conda env create -f environment.yml
-          - source activate airflow-dags
-          - pycodestyle --show-source .
-          - python -m pytest --cov-config .coveragerc --cov=./dags tests
+          - bash /usr/app/test.sh
 
   branches:
     master:
