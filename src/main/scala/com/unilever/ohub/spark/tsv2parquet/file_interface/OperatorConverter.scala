@@ -3,10 +3,10 @@ package com.unilever.ohub.spark.tsv2parquet.file_interface
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 import com.unilever.ohub.spark.generic.StringFunctions._
-import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
+import com.unilever.ohub.spark.tsv2parquet.{ DomainTransformer, OperatorEmptyParquetWriter }
 import org.apache.spark.sql.Row
 
-object OperatorConverter extends FileDomainGateKeeper[Operator] {
+object OperatorConverter extends FileDomainGateKeeper[Operator] with OperatorEmptyParquetWriter {
 
   override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Operator = { transformer ⇒ row ⇒
     import transformer._

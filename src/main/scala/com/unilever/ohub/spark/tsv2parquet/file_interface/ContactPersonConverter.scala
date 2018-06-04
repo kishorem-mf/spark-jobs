@@ -1,12 +1,12 @@
 package com.unilever.ohub.spark.tsv2parquet.file_interface
 
 import com.unilever.ohub.spark.domain.entity.ContactPerson
-import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
+import com.unilever.ohub.spark.tsv2parquet.{ ContactPersonEmptyParquetWriter, DomainTransformer }
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 import com.unilever.ohub.spark.generic.StringFunctions._
 import org.apache.spark.sql.Row
 
-object ContactPersonConverter extends FileDomainGateKeeper[ContactPerson] {
+object ContactPersonConverter extends FileDomainGateKeeper[ContactPerson] with ContactPersonEmptyParquetWriter {
 
   override def toDomainEntity: DomainTransformer ⇒ Row ⇒ ContactPerson = { transformer ⇒ row ⇒
     import transformer._

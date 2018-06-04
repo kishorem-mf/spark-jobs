@@ -24,7 +24,6 @@ libraryDependencies ++= Seq(
   "org.apache.spark"        %% "spark-sql"           % sparkVersion  % sparkDependencyType,
   "org.apache.spark"        %% "spark-mllib"         % sparkVersion  % sparkDependencyType,
   "org.postgresql"          %  "postgresql"          % "42.2.2",
-  "ru.yandex.qatools.embed" %  "postgresql-embedded" % "2.9",
   "org.apache.commons"      %  "commons-lang3"       % "3.7",
   "io.circe"                %% "circe-core"          % circeVersion,
   "io.circe"                %% "circe-generic"       % circeVersion,

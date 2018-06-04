@@ -80,6 +80,8 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       help("help") text "help text"
     }
 
+  private[spark] def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit
+
   protected def read(spark: SparkSession, storage: Storage, config: DomainConfig): Dataset[RowType]
 
   private def transform(dataProvider: DomainDataProvider)(
@@ -144,6 +146,12 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       .drop($"rn")
       .as[DomainType]
 
-    storage.writeToParquet(domainEntities, config.outputFile, partitionByValue)
+    if (domainEntities.head(1).isEmpty) {
+      // note: add a check on #rows in raw, only if #rows is 0 an empty parquet file should be written
+      log.warn(s"WRITING EMPTY PARQUET FILE FOR '${this.getClass.getName}'")
+      writeEmptyParquet(spark, storage, config.outputFile)
+    } else {
+      storage.writeToParquet(domainEntities, config.outputFile, partitionByValue)
+    }
   }
 }
