@@ -3,8 +3,11 @@ package com.unilever.ohub.spark.tsv2parquet.file_interface
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.ContactPerson
-import com.unilever.ohub.spark.tsv2parquet.CsvDomainGateKeeperSpec
+import com.unilever.ohub.spark.storage.DefaultStorage
+import com.unilever.ohub.spark.tsv2parquet.{ CsvDomainGateKeeperSpec, TestDomainDataProvider }
 import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeper.DomainConfig
+import com.unilever.ohub.spark.SharedSparkSession.spark
+import org.apache.spark.sql.Dataset
 
 class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] {
 
@@ -84,6 +87,20 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
 
         actualContactPerson shouldBe expectedContactPerson
       }
+    }
+
+    it("should write a contact person parquet correctly from an emtpy csv input and remain readable") {
+      import spark.implicits._
+
+      val inputFile = "src/test/resources/empty.csv"
+      val outputFile = "src/test/resources/output/contact_person_with_schema.parquet"
+      val config = DomainConfig(inputFile = inputFile, outputFile = outputFile, fieldSeparator = "‰")
+      val storage = new DefaultStorage(spark)
+
+      SUT.run(spark, config, storage, TestDomainDataProvider())
+
+      val result: Dataset[ContactPerson] = storage.readFromParquet[ContactPerson](outputFile)
+      result.collect().toSeq shouldBe Seq[ContactPerson]()
     }
   }
 }

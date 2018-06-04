@@ -4,10 +4,10 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.generic.StringFunctions._
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
-import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
+import com.unilever.ohub.spark.tsv2parquet.{ ContactPersonEmptyParquetWriter, DomainTransformer }
 import org.apache.spark.sql.Row
 
-object ContactPersonConverter extends EmakinaDomainGateKeeper[ContactPerson] {
+object ContactPersonConverter extends EmakinaDomainGateKeeper[ContactPerson] with ContactPersonEmptyParquetWriter {
 
   override protected[tsv2parquet] def toDomainEntity: DomainTransformer ⇒ Row ⇒ ContactPerson = { transformer ⇒ row ⇒
     import transformer._

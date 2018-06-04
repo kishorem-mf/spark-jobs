@@ -3,11 +3,11 @@ package com.unilever.ohub.spark.tsv2parquet.file_interface
 import java.util.UUID
 
 import com.unilever.ohub.spark.domain.entity.Product
-import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
+import com.unilever.ohub.spark.tsv2parquet.{ DomainTransformer, ProductEmptyParquetWriter }
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 import org.apache.spark.sql.Row
 
-object ProductConverter extends FileDomainGateKeeper[Product] {
+object ProductConverter extends FileDomainGateKeeper[Product] with ProductEmptyParquetWriter {
 
   override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Product = { transformer ⇒ row ⇒
     import transformer._

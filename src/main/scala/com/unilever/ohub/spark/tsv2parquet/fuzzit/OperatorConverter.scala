@@ -4,10 +4,10 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.generic.StringFunctions._
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
-import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
+import com.unilever.ohub.spark.tsv2parquet.{ DomainTransformer, OperatorEmptyParquetWriter }
 import org.apache.spark.sql.Row
 
-object OperatorConverter extends FuzzitDomainGateKeeper[Operator] {
+object OperatorConverter extends FuzzitDomainGateKeeper[Operator] with OperatorEmptyParquetWriter {
 
   val CUSTOMER_UUID = "CUSTOMER_UUID"
   val SALES_ORG = "SALES_ORG"

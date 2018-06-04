@@ -4,10 +4,10 @@ import java.util.UUID
 
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity.Product
-import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
+import com.unilever.ohub.spark.tsv2parquet.{ DomainTransformer, ProductEmptyParquetWriter }
 import org.apache.spark.sql.Row
 
-object ProductConverter extends FuzzitDomainGateKeeper[Product] {
+object ProductConverter extends FuzzitDomainGateKeeper[Product] with ProductEmptyParquetWriter {
 
   val MAT_UID = "MatUID"
   val VALID_FROM = "ValidFrom"

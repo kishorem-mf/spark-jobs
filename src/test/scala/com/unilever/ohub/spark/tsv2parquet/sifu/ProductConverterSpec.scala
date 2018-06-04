@@ -3,10 +3,11 @@ package com.unilever.ohub.spark.tsv2parquet.sifu
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.{ Product, TestProducts }
+import com.unilever.ohub.spark.tsv2parquet.ProductEmptyParquetWriter
 
 class ProductConverterSpec extends SifuDomainGateKeeperDatasetSpec[Product] with TestProducts {
 
-  private[tsv2parquet] override val SUT = new SifuProductConverter {
+  private[tsv2parquet] override val SUT = new SifuProductConverter with ProductEmptyParquetWriter {
     override protected[sifu] def sifuDataProvider: SifuDataProvider = new TestSifuDataProvider()
   }
 
