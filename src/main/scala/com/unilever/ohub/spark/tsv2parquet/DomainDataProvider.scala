@@ -48,7 +48,7 @@ class PostgressDomainDataProvider(spark: SparkSession, dbUrl: String, dbName: St
       .jdbc(dbFullConnectionString, dbTable, connectionProperties)
   }
 
-  override def countries: Map[String, CountryRecord] = {
+  override val countries: Map[String, CountryRecord] = {
     val countries = readJdbcTable(spark, dbUrl, dbName, "all_country_info", userName, userPassword)
 
     countries.select(
@@ -63,7 +63,7 @@ class PostgressDomainDataProvider(spark: SparkSession, dbUrl: String, dbName: St
       .toMap
   }
 
-  override def countrySalesOrg: Map[String, CountrySalesOrg] = {
+  override val countrySalesOrg: Map[String, CountrySalesOrg] = {
     val countrySalesOrgs = readJdbcTable(spark, dbUrl, dbName, "country_codes", userName, userPassword)
 
     countrySalesOrgs.select(
@@ -77,7 +77,7 @@ class PostgressDomainDataProvider(spark: SparkSession, dbUrl: String, dbName: St
       .toMap
   }
 
-  override def sourcePreferences: Map[String, Int] = {
+  override val sourcePreferences: Map[String, Int] = {
     val sourcePreferences = readJdbcTable(spark, dbUrl, dbName, "data_sources", userName, userPassword)
 
     sourcePreferences.select(
