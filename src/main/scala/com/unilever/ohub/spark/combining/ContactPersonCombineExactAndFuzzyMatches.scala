@@ -47,16 +47,12 @@ object ContactPersonCombineExactAndFuzzyMatches extends SparkJob[ExactAndFuzzyMa
   ): Dataset[ContactPerson] = {
     import spark.implicits._
 
-    val cols = contactPersonExactMatches.columns.map(col)
-
-    val contactPersonCombined = contactPersonExactMatches.toDF
-      .union(contactPersonFuzzyMatchesDeltaIntegrated.select(cols: _*))
-      .union(contactPersonFuzzyMatchesDeltaLeftOvers.select(cols: _*))
-
     // deduplicate contact persons by selecting the 'newest' one (based on ohubCreated) per unique concatId.
     val w = Window.partitionBy('concatId).orderBy('ohubCreated.desc)
-    contactPersonCombined
-      //      .withColumn("ohubCreated", last($"ohubCreated").over(w)) // TODO fix me
+
+    contactPersonExactMatches
+      .union(contactPersonFuzzyMatchesDeltaIntegrated)
+      .union(contactPersonFuzzyMatchesDeltaLeftOvers)
       .withColumn("rn", row_number.over(w))
       .filter('rn === 1)
       .drop('rn)
