@@ -20,7 +20,7 @@ interval = '@once'
 schema = 'operators'
 cluster_name = "ohub_operators_initial_load_{{ds}}"
 
-with DAG('ohub_operators_first_ingest', default_args=default_args,
+with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
     operators_create_cluster = create_cluster('{}_create_clusters'.format(schema),
                                               default_cluster_config(cluster_name))
@@ -43,7 +43,7 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         schema=schema,
         cluster_name=cluster_name,
         match_py='dbfs:/libraries/name_matching/match_operators.py',
-        ingested_input=ingested_bucket.format(date='{{ds}}', fn='operators', channel='*')
+        ingested_input=ingested_bucket.format(date='{{ds}}', fn=schema, channel='*')
     )
 
     end_fuzzy_matching = BashOperator(
