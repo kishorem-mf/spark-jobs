@@ -16,7 +16,7 @@ from ohub_dag_config import \
     terminate_cluster, default_cluster_config, ingest_task, postgres_config, delta_fuzzy_matching_tasks
 
 default_args.update(
-    {'start_date': datetime(2018, 5, 30)}
+    {'start_date': datetime(2018, 6, 4)}
 )
 
 schema = 'contactpersons'

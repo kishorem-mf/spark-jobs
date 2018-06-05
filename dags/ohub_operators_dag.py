@@ -15,7 +15,7 @@ from ohub_dag_config import \
     ingest_task, delta_fuzzy_matching_tasks, create_cluster, terminate_cluster, postgres_config
 
 default_args.update(
-    {'start_date': datetime(2018, 5, 29)}
+    {'start_date': datetime(2018, 6, 4)}
 )
 schema = 'operators'
 cluster_name = "ohub_operators_{{ds}}"
