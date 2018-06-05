@@ -14,7 +14,7 @@ from ohub_dag_config import \
     fuzzy_matching_tasks, postgres_config
 
 default_args.update(
-    {'start_date': datetime(2018, 6, 4)}
+    {'start_date': datetime(2018, 6, 3)}
 )
 interval = '@once'
 
