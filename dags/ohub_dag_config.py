@@ -86,6 +86,30 @@ def ingest_task(schema, channel, clazz, cluster_name):
         }
     )
 
+def fuzzy_matching_tasks(schema,
+                         cluster_name,
+                         match_py,
+                         ingested_input):
+    tasks = []
+    for code in ohub_country_codes:
+        t = DatabricksSubmitRunOperator(
+            task_id='match_{}_{}'.format(schema, code),
+            cluster_name=cluster_name,
+            databricks_conn_id=databricks_conn_id,
+            libraries=[
+                {'egg': egg}
+            ],
+            spark_python_task={
+                'python_file': match_py,
+                'parameters': ['--input_file', ingested_input,
+                               '--output_path', intermediate_bucket.format(date='{{ds}}', fn='operators_matched'),
+                               '--country_code', code,
+                               '--threshold', '0.9']
+            }
+        )
+        tasks.append(t)
+
+    return tasks
 
 def delta_fuzzy_matching_tasks(schema,
                                cluster_name,
