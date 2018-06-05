@@ -50,8 +50,7 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
                            '--exactMatchOutputFile', intermediate_bucket.format(date='{{ds}}',
                                                                                 fn='{}_exact_match'.format(schema)),
                            '--leftOversOutputFile', intermediate_bucket.format(date='{{ds}}',
-                                                                               fn='{}_left_overs'.format(schema))]
-                          + postgres_config
+                                                                               fn='{}_left_overs'.format(schema))] + postgres_config
         }
     )
 
