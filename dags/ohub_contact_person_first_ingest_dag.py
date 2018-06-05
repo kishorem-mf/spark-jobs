@@ -13,7 +13,7 @@ from custom_operators.file_from_wasb import FileFromWasbOperator
 from ohub_dag_config import \
     default_args, databricks_conn_id, jar, egg, container_name, \
     raw_bucket, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_export_container, operator_country_codes
+    wasb_export_container, ohub_country_codes
 
 default_args.update(
     {'start_date': datetime(2017, 7, 12)}
@@ -106,7 +106,7 @@ with DAG('ohub_contact_person_first_ingest', default_args=default_args,
             start_date=start_date,
             default_args=default_args
         )
-        for code in operator_country_codes:
+        for code in ohub_country_codes:
             DatabricksSubmitRunOperator(
                 dag=sub_dag,
                 task_id='match_contacts_{}'.format(code),
