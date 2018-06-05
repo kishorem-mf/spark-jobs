@@ -81,7 +81,8 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonMatchingJoiner",
-            'parameters': ['--matchingInputFile', intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(schema)),
+            'parameters': ['--matchingInputFile',
+                           intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(schema)),
                            '--entityInputFile', intermediate_bucket.format(date='{{ds}}',
                                                                            fn='{}_left_overs'.format(schema)),
                            '--outputFile', intermediate_bucket.format(date='{{ds}}', fn=schema)] + postgres_config

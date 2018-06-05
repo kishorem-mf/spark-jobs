@@ -19,7 +19,7 @@ default_args.update(
     {'start_date': datetime(2018, 5, 30)}
 )
 
-schema='contactpersons'
+schema = 'contactpersons'
 cluster_name = "ohub_contactpersons_{{ds}}"
 
 with DAG('ohub_{}'.format(schema), default_args=default_args,

@@ -17,12 +17,11 @@ default_args.update(
     {'start_date': datetime(2018, 5, 17)}
 )
 interval = '@once'
-schema='operators'
+schema = 'operators'
 cluster_name = "ohub_operators_initial_load_{{ds}}"
 
 with DAG('ohub_operators_first_ingest', default_args=default_args,
          schedule_interval=interval) as dag:
-
     operators_create_cluster = create_cluster('{}_create_clusters'.format(schema),
                                               default_cluster_config(cluster_name))
     operators_terminate_cluster = terminate_cluster('{}_terminate_cluster'.format(schema), cluster_name)
@@ -31,7 +30,7 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         schema=schema,
         channel='file_interface',
         clazz="com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
-        field_separator= u"\u2030",
+        field_separator=u"\u2030",
         cluster_name=cluster_name
     )
 
@@ -61,7 +60,8 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorMatchingJoiner",
-            'parameters': ['--matchingInputFile', intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(schema)),
+            'parameters': ['--matchingInputFile',
+                           intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(schema)),
                            '--entityInputFile', ingested_bucket.format(date='{{ds}}', fn=schema, channel='*'),
                            '--outputFile', integrated_bucket.format(date='{{ds}}', fn=schema)] + postgres_config
         }
