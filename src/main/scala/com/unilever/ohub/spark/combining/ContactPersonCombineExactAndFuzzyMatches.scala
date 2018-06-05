@@ -51,8 +51,8 @@ object ContactPersonCombineExactAndFuzzyMatches extends SparkJob[ExactAndFuzzyMa
     val w = Window.partitionBy('concatId).orderBy('ohubCreated.desc)
 
     contactPersonExactMatches
-      .union(contactPersonFuzzyMatchesDeltaIntegrated)
-      .union(contactPersonFuzzyMatchesDeltaLeftOvers)
+      .unionByName(contactPersonFuzzyMatchesDeltaIntegrated)
+      .unionByName(contactPersonFuzzyMatchesDeltaLeftOvers)
       .withColumn("rn", row_number.over(w))
       .filter('rn === 1)
       .drop('rn)

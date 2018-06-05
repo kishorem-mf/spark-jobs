@@ -80,6 +80,6 @@ object ContactPersonReferencing extends SparkJob[ContactPersonRefsConfig] {
 
     val transformed = transform(spark, contactPersons, operatorIdAndRefs)
 
-    storage.writeToParquet(transformed, config.outputFile, partitionBy = Seq("countryCode"))
+    storage.writeToParquet(transformed, config.outputFile)
   }
 }
