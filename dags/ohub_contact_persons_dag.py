@@ -176,9 +176,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
             'parameters': ['--combinedInputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='{}_updated_golden_records'.format(schema)),
                            '--operatorInputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
-                           '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=schema),
-                           '--outputFile',
-                           integrated_bucket.format(date=one_day_ago, fn=schema)] + postgres_config
+                           '--outputFile', integrated_bucket.format(date=one_day_ago, fn=schema)]
         }
     )
 
