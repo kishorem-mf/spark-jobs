@@ -14,7 +14,10 @@ from ohub_dag_config import \
     fuzzy_matching_tasks, postgres_config
 
 default_args.update(
-    {'start_date': datetime(2018, 6, 3)}
+    {
+        'start_date': datetime(2018, 6, 3),
+        'pool': 'ohub_contactpersons_pool'
+    }
 )
 interval = '@once'
 
@@ -50,7 +53,8 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
                            '--exactMatchOutputFile', intermediate_bucket.format(date='{{ds}}',
                                                                                 fn='{}_exact_match'.format(schema)),
                            '--leftOversOutputFile', intermediate_bucket.format(date='{{ds}}',
-                                                                               fn='{}_left_overs'.format(schema))] + postgres_config
+                                                                               fn='{}_left_overs'.format(
+                                                                                   schema))] + postgres_config
         }
     )
 

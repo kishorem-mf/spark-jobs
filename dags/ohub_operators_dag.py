@@ -15,7 +15,10 @@ from ohub_dag_config import \
     ingest_task, delta_fuzzy_matching_tasks, create_cluster, terminate_cluster, postgres_config
 
 default_args.update(
-    {'start_date': datetime(2018, 6, 4)}
+    {
+        'start_date': datetime(2018, 6, 4),
+        'pool': 'ohub_operators_pool'
+    }
 )
 schema = 'operators'
 cluster_name = "ohub_operators_{{ds}}"
@@ -72,7 +75,8 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
                            '--entityInputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='{}_delta_left_overs'.format(schema)),
                            '--outputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='{}_delta_golden_records'.format(schema))] + postgres_config
+                           intermediate_bucket.format(date=one_day_ago,
+                                                      fn='{}_delta_golden_records'.format(schema))] + postgres_config
         })
 
     combine_to_create_integrated = DatabricksSubmitRunOperator(
@@ -123,7 +127,8 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
             'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmConverter",
             'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn=schema),
                            '--outputFile', export_bucket.format(date=one_day_ago, fn=op_file),
-                           '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=schema)] + postgres_config
+                           '--previousIntegrated',
+                           integrated_bucket.format(date=two_day_ago, fn=schema)] + postgres_config
         }
     )
 

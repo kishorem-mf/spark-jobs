@@ -14,7 +14,10 @@ from ohub_dag_config import \
     postgres_config, ingest_task, fuzzy_matching_tasks
 
 default_args.update(
-    {'start_date': datetime(2018, 6, 3)}
+    {
+        'start_date': datetime(2018, 6, 3),
+        'pool': 'ohub_operators_pool'
+    }
 )
 interval = '@once'
 schema = 'operators'
