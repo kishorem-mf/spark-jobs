@@ -145,7 +145,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
     operators_ftp_to_acm = SFTPOperator(
         task_id='{}_ftp_to_acm'.format(schema),
         local_filepath=tmp_file,
-        remote_filepath='/incoming/UFS_upload_folder/',
+        remote_filepath='/incoming/temp/ohub_2_test/{}'.format(tmp_file.split('/')[-1]),
         ssh_conn_id='acm_sftp_ssh',
         operation=SFTPOperation.PUT)
 
