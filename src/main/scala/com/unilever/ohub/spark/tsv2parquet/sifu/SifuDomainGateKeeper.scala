@@ -8,7 +8,7 @@ import org.apache.spark.sql.{ Dataset, SparkSession }
 
 trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T, SifuProductResponse] {
 
-  override protected[tsv2parquet] def partitionByValue: Seq[String] = Seq("countryCode")
+  override protected[tsv2parquet] def partitionByValue: Seq[String] = Seq()
 
   private val countryListEmakina = Array("AE", "AE", "AF", "AF", "AR", "AR", "AT", "AT", "AT", "AT", "AU", "AU",
     "AU", "AU", "AU", "AU", "AU", "AU", "AU", "AZ", "AZ", "BE", "BE", "BG", "BH", "BH", "BR", "BR", "CA",
