@@ -93,7 +93,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
                                                       fn='{}_fuzzy_matched_delta_integrated'.format(schema)),
                            '--newGolden',
                            intermediate_bucket.format(date=one_day_ago, fn='{}_delta_golden_records'.format(schema)),
-                           '--combinedOperators',
+                           '--combinedEntities',
                            intermediate_bucket.format(date=one_day_ago, fn='{}_combined'.format(schema))]
         }
     )

@@ -105,7 +105,7 @@ def fuzzy_matching_tasks(schema,
             spark_python_task={
                 'python_file': match_py,
                 'parameters': ['--input_file', ingested_input,
-                               '--output_path', intermediate_bucket.format(date='{{ds}}', fn='operators_matched'),
+                               '--output_path', intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(schema)),
                                '--country_code', code,
                                '--threshold', '0.9']
             }
