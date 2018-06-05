@@ -1,8 +1,11 @@
 $PWD=(Get-Item -Path ".").FullName
 $container="ulohub_airflow_dags"
-$latest_tag = az acr repository show-tags --name ulohubimages --repository airflow --output tsv | foreach-object { [Int] $_ } | sort -descending | select -first 1
+printf "\n----------- stopping possibly running container --------------\n"
 docker stop $container
+printf "\n-----------       removing old container        --------------\n"
 docker rm $container
+$img='ulohubimages.azurecr.io/airflow:latest'
+docker pull $img
 docker run \
 --env AIRFLOW_HOME="/root/airflow" \
 --env AIRFLOW__CORE__SQL_ALCHEMY_CONN="sqlite:////root/airflow/airflow.db" \
@@ -14,5 +17,5 @@ docker run \
 --entrypoint "" \
 -v $PWD:/usr/app \
 -p 8070:8080 \
-ulohubimages.azurecr.io/airflow:$latest_tag \
-bash -c 'bash .\test.sh && airflow webserver'
+$img \
+bash -c 'bash /usr/app/test.sh && airflow webserver'
