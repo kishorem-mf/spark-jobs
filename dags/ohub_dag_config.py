@@ -70,7 +70,9 @@ postgres_config = [
 ]
 
 
-def ingest_task(schema, channel, clazz, cluster_name):
+def ingest_task(schema, channel, clazz,
+                cluster_name,
+                field_separator=';'):
     return DatabricksSubmitRunOperator(
         task_id="{}_file_interface_to_parquet".format(schema),
         cluster_name=cluster_name,
@@ -82,9 +84,11 @@ def ingest_task(schema, channel, clazz, cluster_name):
             'main_class_name': clazz,
             'parameters': ['--inputFile', raw_bucket.format(date=one_day_ago, schema=schema, channel=channel),
                            '--outputFile', ingested_bucket.format(date=one_day_ago, fn=schema, channel=channel),
+                           '--fieldSeparator', field_separator,
                            '--strictIngestion', "false"] + postgres_config
         }
     )
+
 
 def fuzzy_matching_tasks(schema,
                          cluster_name,
@@ -110,6 +114,7 @@ def fuzzy_matching_tasks(schema,
         tasks.append(t)
 
     return tasks
+
 
 def delta_fuzzy_matching_tasks(schema,
                                cluster_name,

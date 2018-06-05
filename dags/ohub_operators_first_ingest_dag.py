@@ -31,6 +31,7 @@ with DAG('ohub_operators_first_ingest', default_args=default_args,
         schema=schema,
         channel='file_interface',
         clazz="com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
+        field_separator= u"\u2030",
         cluster_name=cluster_name
     )
 
