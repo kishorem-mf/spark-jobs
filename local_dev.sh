@@ -8,8 +8,8 @@ printf "\n-----------       removing old container        --------------\n"
 docker rm ${container_name}
 
 printf "\n-----------      updating image if needed       --------------\n"
-#latest_tag="`az acr repository show-tags --name ulohubimages --repository airflow --output tsv | sort -gr | head -n 1`"
-#docker pull ulohubimages.azurecr.io/airflow:${latest_tag}
+latest_tag="`az acr repository show-tags --name ulohubimages --repository airflow --output tsv | sort -gr | head -n 1`"
+docker pull ulohubimages.azurecr.io/airflow:${latest_tag}
 
 printf "\n-----------      starting airflow at 8070       --------------\n"
 docker run \
