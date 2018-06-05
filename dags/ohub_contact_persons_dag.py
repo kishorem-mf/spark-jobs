@@ -192,8 +192,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.ContactPersonAcmConverter",
             'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn=schema),
-                           '--outputFile', export_bucket.format(date=one_day_ago, fn=op_file)
-                           ] + postgres_config
+                           '--outputFile', export_bucket.format(date=one_day_ago, fn=op_file)]
         }
     )
 
