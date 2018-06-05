@@ -35,7 +35,7 @@ def default_cluster_config(cluster_name):
             "min_workers": '4',
             "max_workers": '12'
         },
-        "autotermination_minutes": '30',
+        "autotermination_minutes": '10',
         "spark_env_vars": {
             "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
         },
