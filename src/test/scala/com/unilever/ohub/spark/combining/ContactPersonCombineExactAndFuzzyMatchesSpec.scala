@@ -3,10 +3,10 @@ package com.unilever.ohub.spark.combining
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.{ContactPerson, TestContactPersons}
+import com.unilever.ohub.spark.domain.entity.{ ContactPerson, TestContactPersons }
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import org.apache.spark.sql.{Dataset, Row}
-import org.apache.spark.sql.types.{DataTypes, StructField, StructType}
+import org.apache.spark.sql.{ Dataset, Row }
+import org.apache.spark.sql.types.{ DataTypes, StructField, StructType }
 
 class ContactPersonCombineExactAndFuzzyMatchesSpec extends SparkJobSpec with TestContactPersons {
   import spark.implicits._
