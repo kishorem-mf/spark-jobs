@@ -1,8 +1,8 @@
 $PWD=(Get-Item -Path ".").FullName
 $container="ulohub_airflow_dags"
-printf "\n----------- stopping possibly running container --------------\n"
+echo "\n----------- stopping possibly running container --------------\n"
 docker stop $container
-printf "\n-----------       removing old container        --------------\n"
+echo "\n-----------       removing old container        --------------\n"
 docker rm $container
 $img='ulohubimages.azurecr.io/airflow:latest'
 docker pull $img
