@@ -21,7 +21,6 @@ docker run \
 --env AIRFLOW__CORE__BASE_LOG_FOLDER="/usr/app/logs" \
 -v $PWD:/usr/app \
 -p 8070:8080 \
---entrypoint 'bash' \
+--entrypoint '' \
 $img \
--c 'echo 123'
-# bash -c 'bash /usr/app/test.sh && airflow webserver'
+bash -c 'bash /usr/app/test.sh && airflow webserver'
