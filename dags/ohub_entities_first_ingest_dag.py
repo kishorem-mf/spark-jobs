@@ -13,13 +13,8 @@ from ohub_dag_config import \
     wasb_export_container, create_cluster, terminate_cluster, default_cluster_config, \
     postgres_config, ingest_task, fuzzy_matching_tasks
 
-interval = '@once'
-schemas = {
-    'products': 'Product',
-    'orders': 'Order',
-    'order_lines': 'OrderLine',
-}
-for schema, clazz in schemas.iteritems():
+def make_first_dag(entity, clazz):
+    interval = '@once'
     default_args.update(
         {
             'start_date': datetime(2018, 6, 3),
