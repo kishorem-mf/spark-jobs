@@ -50,8 +50,7 @@ class ExternalTaskSensorOperator(BaseOperator):
         external_task_id,
         poke_interval=60,
         allowed_states=None,
-        *args,
-        **kwargs):
+        *args, **kwargs):
         super(ExternalTaskSensorOperator, self).__init__(*args, **kwargs)
         self.poke_interval = poke_interval
 
