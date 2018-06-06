@@ -44,13 +44,13 @@ class ExternalTaskSensorOperator(BaseOperator):
     ui_fgcolor = '#fff'
 
     @apply_defaults
-    def __init__(
-        self,
-        external_dag_id,
-        external_task_id,
-        poke_interval=60,
-        allowed_states=None,
-        *args, **kwargs):
+    def __init__(self,
+                 external_dag_id,
+                 external_task_id,
+                 poke_interval=60,
+                 allowed_states=None,
+                 *args,
+                 **kwargs):
         super(ExternalTaskSensorOperator, self).__init__(*args, **kwargs)
         self.poke_interval = poke_interval
 
