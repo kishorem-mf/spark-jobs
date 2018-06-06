@@ -1,7 +1,5 @@
 from future import standard_library
 
-standard_library.install_aliases()
-
 from time import sleep
 
 from airflow import settings
@@ -9,6 +7,8 @@ from airflow.exceptions import AirflowSkipException
 from airflow.models import BaseOperator, TaskInstance
 from airflow.utils.state import State
 from airflow.utils.decorators import apply_defaults
+
+standard_library.install_aliases()
 
 
 class ExternalTaskSensorOperator(BaseOperator):
@@ -52,7 +52,8 @@ class ExternalTaskSensorOperator(BaseOperator):
         allowed_states=None,
         execution_delta=None,
         execution_date_fn=None,
-        *args, **kwargs):
+        *args,
+        **kwargs):
         super(ExternalTaskSensorOperator, self).__init__(*args, **kwargs)
         self.poke_interval = poke_interval
 
@@ -97,13 +98,13 @@ class ExternalTaskSensorOperator(BaseOperator):
             TI.task_id == self.external_task_id,
             TI.state.in_(self.allowed_states),
             TI.execution_date.in_(dttm_filter),
-            ).count()
+        ).count()
         disallowed_count = session.query(TI).filter(
             TI.dag_id == self.external_dag_id,
             TI.task_id == self.external_task_id,
             TI.state.in_(self.disallowed_states),
             TI.execution_date.in_(dttm_filter),
-            ).count()
+        ).count()
         session.close()
 
         retval = self.RUNNING_STATE
@@ -115,7 +116,7 @@ class ExternalTaskSensorOperator(BaseOperator):
 
     def execute(self, context):
         while True:
-            state =  self.poke(context)
+            state = self.poke(context)
             if state == self.FAILED_STATE:
                 raise AirflowSkipException('Snap. Task {} in DAG {} has failed :('.format(self.exernal_task_id,
                                                                                           self.external_dag_id))
