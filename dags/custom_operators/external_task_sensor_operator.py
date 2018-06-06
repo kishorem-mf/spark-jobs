@@ -50,8 +50,6 @@ class ExternalTaskSensorOperator(BaseOperator):
         external_task_id,
         poke_interval=60,
         allowed_states=None,
-        execution_delta=None,
-        execution_date_fn=None,
         *args,
         **kwargs):
         super(ExternalTaskSensorOperator, self).__init__(*args, **kwargs)
@@ -59,13 +57,7 @@ class ExternalTaskSensorOperator(BaseOperator):
 
         self.allowed_states = allowed_states or [State.SUCCESS]
         self.disallowed_states = allowed_states or [State.FAILED, State.UPSTREAM_FAILED]
-        if execution_delta is not None and execution_date_fn is not None:
-            raise ValueError(
-                'Only one of `execution_date` or `execution_date_fn` may'
-                'be provided to ExternalTaskSensor; not both.')
 
-        self.execution_delta = execution_delta
-        self.execution_date_fn = execution_date_fn
         self.external_dag_id = external_dag_id
         self.external_task_id = external_task_id
 
@@ -74,22 +66,13 @@ class ExternalTaskSensorOperator(BaseOperator):
         self.RUNNING_STATE = 'still_running'
 
     def poke(self, context):
-        if self.execution_delta:
-            dttm = context['execution_date'] - self.execution_delta
-        elif self.execution_date_fn:
-            dttm = self.execution_date_fn(context['execution_date'])
-        else:
-            dttm = context['execution_date']
-
-        dttm_filter = dttm if isinstance(dttm, list) else [dttm]
-        serialized_dttm_filter = ','.join(
-            [datetime.isoformat() for datetime in dttm_filter])
+        dttm = context['execution_date'].isoformat()
 
         self.log.info(
             'Poking for '
             '{self.external_dag_id}.'
             '{self.external_task_id} on '
-            '{} ... '.format(serialized_dttm_filter, **locals()))
+            '{self.dttm}'.format(**locals()))
         TI = TaskInstance
 
         session = settings.Session()
@@ -97,20 +80,20 @@ class ExternalTaskSensorOperator(BaseOperator):
             TI.dag_id == self.external_dag_id,
             TI.task_id == self.external_task_id,
             TI.state.in_(self.allowed_states),
-            TI.execution_date.in_(dttm_filter),
+            TI.execution_date == dttm,
         ).count()
         disallowed_count = session.query(TI).filter(
             TI.dag_id == self.external_dag_id,
             TI.task_id == self.external_task_id,
             TI.state.in_(self.disallowed_states),
-            TI.execution_date.in_(dttm_filter),
+            TI.execution_dated == dttm,
         ).count()
         session.close()
 
         retval = self.RUNNING_STATE
-        if allowed_count == len(dttm_filter):
+        if allowed_count == 1:
             retval = self.SUCCEEDED_STATE
-        if disallowed_count == len(dttm_filter):
+        if disallowed_count == 1:
             retval = self.FAILED_STATE
         return retval
 
