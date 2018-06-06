@@ -13,7 +13,7 @@ from ohub_dag_config import \
     wasb_export_container, create_cluster, terminate_cluster, default_cluster_config, \
     postgres_config, ingest_task, fuzzy_matching_tasks
 
-def make_first_dag(entity, clazz):
+def make_first_dag(schema, clazz):
     interval = '@once'
     default_args.update(
         {
