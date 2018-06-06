@@ -41,6 +41,7 @@ class ExternalTaskSensorOperator(BaseOperator):
     :type execution_date_fn: callable
     '''
     ui_color = '#19647e'
+    ui_fgcolor = '#fff'
 
     @apply_defaults
     def __init__(
