@@ -23,4 +23,4 @@ docker run \
 -p 8070:8080 \
 --entrypoint '' \
 $img \
-bash -c 'bash /usr/app/test.sh && airflow webserver'
+bash -c 'bash /usr/app/test.sh && /usr/app/start_airflow.sh'
