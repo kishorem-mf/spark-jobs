@@ -19,7 +19,7 @@ schemas = {
     'orders': 'Order',
     'order_lines': 'OrderLine',
 }
-for schema, clazz in schemas.items():
+for schema, clazz in schemas.iteritems():
     default_args.update(
         {
             'start_date': datetime(2018, 6, 3),
