@@ -8,6 +8,7 @@ from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
 from custom_operators.empty_fallback import EmptyFallbackOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
+from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub_dag_config import \
     default_args, databricks_conn_id, jar, container_name, \
     ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
@@ -147,6 +148,12 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         }
     )
 
+    operators_integrated_sensor = ExternalTaskSensorOperator(
+        task_id='operators_integrated_sensor',
+        external_dag_id='ohub_operators',
+        external_task_id='operators_update_golden_records'
+    )
+
     contact_person_referencing = DatabricksSubmitRunOperator(
         task_id='{}_referencing'.format(schema),
         cluster_name=cluster_name,
@@ -210,6 +217,6 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
 
     end_fuzzy_matching >> join_matched_contact_persons >> join_fuzzy_and_exact_matched
 
-    join_fuzzy_and_exact_matched >> contact_person_referencing >> contact_persons_to_acm
+    join_fuzzy_and_exact_matched >> operators_integrated_sensor >> contact_person_referencing >> contact_persons_to_acm
     contact_persons_to_acm >> contactpersons_terminate_cluster
     contact_persons_to_acm >> contact_persons_acm_from_wasb >> contact_persons_ftp_to_acm

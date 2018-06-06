@@ -67,6 +67,10 @@ class ExternalTaskSensorOperator(BaseOperator):
         self.external_dag_id = external_dag_id
         self.external_task_id = external_task_id
 
+        self.SUCCEEDED_STATE = 'succeeded'
+        self.FAILED_STATE = 'failed'
+        self.RUNNING_STATE = 'still_running'
+
     def poke(self, context):
         if self.execution_delta:
             dttm = context['execution_date'] - self.execution_delta
@@ -101,20 +105,20 @@ class ExternalTaskSensorOperator(BaseOperator):
             ).count()
         session.close()
 
-        retval = 'still_running'
+        retval = self.RUNNING_STATE
         if allowed_count == len(dttm_filter):
-            retval = 'succeeded'
+            retval = self.SUCCEEDED_STATE
         if disallowed_count == len(dttm_filter):
-            retval = 'failed'
+            retval = self.FAILED_STATE
         return retval
 
     def execute(self, context):
         while True:
             state =  self.poke(context)
-            if state == 'failed':
+            if state == self.FAILED_STATE:
                 raise AirflowSkipException('Snap. Task {} in DAG {} has failed :('.format(self.exernal_task_id,
                                                                                           self.external_dag_id))
-            elif state == 'succeeded':
-                self.log('Task {} in DAG {} has successful'.format(self.external_task_id, self.external_dag_id))
+            elif state == self.SUCCEEDED_STATE:
+                self.log.info('Task {} in DAG {} is successful'.format(self.external_task_id, self.external_dag_id))
                 return
             sleep(self.poke_interval)

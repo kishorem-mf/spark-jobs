@@ -18,4 +18,4 @@ docker run \
 -v $PWD:/usr/app \
 -p 8070:8080 \
 $img \
-bash -c 'bash /usr/app/test.sh && airflow webserver'
+bash -c 'bash /usr/app/test.sh && /usr/app/start_airflow.sh'
