@@ -11,7 +11,7 @@ from ohub_dag_config import \
     default_args, container_name, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, \
     export_bucket, \
     wasb_export_container, create_cluster, terminate_cluster, default_cluster_config, \
-    postgres_config, ingest_task, fuzzy_matching_tasks
+    postgres_config, ingest_task, fuzzy_matching_tasks, small_cluster_config
 
 schema = 'orders'
 clazz = 'Order'
@@ -23,12 +23,12 @@ default_args.update(
         'pool': 'ohub_{}_pool'.format(schema)
     }
 )
-cluster_name = "ohub_{}_initial_load_{{ds}}".format(schema)
+cluster_name = "ohub_" + schema + "_initial_load_{{ds}}"
 
 with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         schedule_interval=interval) as dag:
     cluster_up = create_cluster('{}_create_clusters'.format(schema),
-                                default_cluster_config(cluster_name))
+                                small_cluster_config(cluster_name))
     cluster_down = terminate_cluster('{}_terminate_cluster'.format(schema), cluster_name)
 
     file_interface_to_parquet = ingest_task(
@@ -39,7 +39,7 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         cluster_name=cluster_name
     )
 
-    acm_file = 'acm/UFS_{}_{{ds_nodash}}000000.csv'.format(schema)
+    acm_file = 'acm/UFS_' + schema + '_{{ds_nodash}}000000.csv'
 
     convert_to_acm = DatabricksSubmitRunOperator(
         task_id="{}_to_acm".format(schema),
@@ -51,7 +51,7 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.{}AcmConverter".format(clazz),
             'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=schema),
-                        '--outputFile', export_bucket.format(date='{{ds}}', fn=acm_file)] + postgres_config
+                           '--outputFile', export_bucket.format(date='{{ds}}', fn=acm_file)] + postgres_config
         }
     )
 
