@@ -65,13 +65,14 @@ class ExternalTaskSensorOperator(BaseOperator):
         self.RUNNING_STATE = 'still_running'
 
     def poke(self, context):
-        dttm = context['execution_date'].isoformat()
+        dttm = context['execution_date']
+        dttm_serialised = dttm.isoformat()
 
         self.log.info(
             'Poking for '
             '{self.external_dag_id}.'
             '{self.external_task_id} on '
-            '{self.dttm}'.format(**locals()))
+            '{dttm_serialised}'.format(**locals()))
         TI = TaskInstance
 
         session = settings.Session()
