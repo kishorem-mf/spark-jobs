@@ -34,6 +34,6 @@ trait DeltaFunctions {
         case (result, _) ⇒ result
       }
 
-    newIntegrated.union(updated)
+    newIntegrated.unionByName(updated)
   }
 }

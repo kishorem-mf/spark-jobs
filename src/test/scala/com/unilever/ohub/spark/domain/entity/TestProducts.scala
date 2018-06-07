@@ -9,7 +9,7 @@ object TestProducts extends TestProducts
 trait TestProducts {
 
   // format: OFF
-  lazy val defaultProductRecord: Product = Product(
+  lazy val defaultProduct: Product = Product(
     concatId = "country-code~source-name~source-entity-id",
     countryCode = "country-code",
     customerType = Product.customerType,
