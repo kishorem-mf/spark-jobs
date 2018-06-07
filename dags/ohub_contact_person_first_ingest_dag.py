@@ -7,6 +7,7 @@ from airflow.operators.bash_operator import BashOperator
 from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
+from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub_dag_config import \
     default_args, databricks_conn_id, jar, container_name, \
     ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
@@ -112,6 +113,12 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         }
     )
 
+    operators_integrated_sensor = ExternalTaskSensorOperator(
+        task_id='operators_integrated_sensor',
+        external_dag_id='ohub_operators_first_ingest',
+        external_task_id='operators_join'
+    )
+
     contact_person_referencing = DatabricksSubmitRunOperator(
         task_id='{}_referencing'.format(schema),
         cluster_name=cluster_name,
@@ -168,6 +175,6 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
     contactpersons_create_cluster >> contact_persons_file_interface_to_parquet >> contact_persons_exact_match >> begin_fuzzy_matching
     for t in matching_tasks:
         begin_fuzzy_matching >> t >> end_fuzzy_matching
-    end_fuzzy_matching >> join_contact_persons >> contact_person_combining >> contact_person_referencing
+    end_fuzzy_matching >> join_contact_persons >> contact_person_combining >> operators_integrated_sensor >> contact_person_referencing
     contact_person_referencing >> contact_persons_to_acm >> contact_persons_acm_from_wasb >> contact_person_ftp_to_acm
     contact_persons_to_acm >> contactpersons_terminate_cluster

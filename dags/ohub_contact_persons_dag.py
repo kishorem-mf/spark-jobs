@@ -8,6 +8,7 @@ from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
 from custom_operators.empty_fallback import EmptyFallbackOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
+from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub_dag_config import \
     default_args, databricks_conn_id, jar, container_name, \
     ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
@@ -147,21 +148,10 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         }
     )
 
-    update_golden_records = DatabricksSubmitRunOperator(
-        task_id='{}_update_golden_records'.format(schema),
-        cluster_name=cluster_name,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
-        spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonUpdateGoldenRecord",
-            'parameters': ['--inputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='{}_combined'.format(schema)),
-                           '--outputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='{}_updated_golden_records'.format(schema))
-                           ] + postgres_config
-        }
+    operators_integrated_sensor = ExternalTaskSensorOperator(
+        task_id='operators_integrated_sensor',
+        external_dag_id='ohub_operators',
+        external_task_id='operators_update_golden_records'
     )
 
     contact_person_referencing = DatabricksSubmitRunOperator(
@@ -174,11 +164,9 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonReferencing",
             'parameters': ['--combinedInputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='{}_updated_golden_records'.format(schema)),
+                           intermediate_bucket.format(date=one_day_ago, fn='{}_combined'.format(schema)),
                            '--operatorInputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
-                           '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=schema),
-                           '--outputFile',
-                           integrated_bucket.format(date=one_day_ago, fn=schema)] + postgres_config
+                           '--outputFile', integrated_bucket.format(date=one_day_ago, fn=schema)]
         }
     )
 
@@ -194,8 +182,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.ContactPersonAcmConverter",
             'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn=schema),
-                           '--outputFile', export_bucket.format(date=one_day_ago, fn=op_file)
-                           ] + postgres_config
+                           '--outputFile', export_bucket.format(date=one_day_ago, fn=op_file)]
         }
     )
 
@@ -230,6 +217,6 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
 
     end_fuzzy_matching >> join_matched_contact_persons >> join_fuzzy_and_exact_matched
 
-    join_fuzzy_and_exact_matched >> update_golden_records >> contact_person_referencing >> contact_persons_to_acm
+    join_fuzzy_and_exact_matched >> operators_integrated_sensor >> contact_person_referencing >> contact_persons_to_acm
     contact_persons_to_acm >> contactpersons_terminate_cluster
     contact_persons_to_acm >> contact_persons_acm_from_wasb >> contact_persons_ftp_to_acm
