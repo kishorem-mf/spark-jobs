@@ -86,7 +86,7 @@ class ExternalTaskSensorOperator(BaseOperator):
             TI.dag_id == self.external_dag_id,
             TI.task_id == self.external_task_id,
             TI.state.in_(self.disallowed_states),
-            TI.execution_dated == dttm,
+            TI.execution_date == dttm,
         ).count()
         session.close()
 
