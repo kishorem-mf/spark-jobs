@@ -1,13 +1,12 @@
 package com.unilever.ohub.spark.acm
 
-import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.acm.model.UFSOperator
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.domain.entity.Operator
+import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
-import org.apache.log4j.Logger
-import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
@@ -48,7 +47,7 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     }
     val transformed = transform(spark, channelMappings, operators, previousIntegrated)
 
-    storage.writeToSingleCsv(transformed, config.outputFile, delim = outputCsvDelimiter, quote = outputCsvQuote)
+    storage.writeToSingleCsv(transformed, config.outputFile, delim = outputCsvDelimiter, quote = outputCsvQuote)(log)
   }
 
   def createUfsOperators(spark: SparkSession, operators: Dataset[Operator], channelMappings: Dataset[ChannelMapping]): Dataset[UFSOperator] = {
