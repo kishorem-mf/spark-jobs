@@ -65,9 +65,9 @@ class ProductAcmConverterSpec extends SparkJobSpec with TestProducts {
 
       result.length shouldBe 3
       assert(result.head.COUNTRY_CODE == Some("deleted"))
-      assert(result.head.DELETE_FLAG == "Y")
-      assert(result(1).COUNTRY_CODE == s"new")
-      assert(result(2).COUNTRY_CODE == s"updated")
+      assert(result.head.DELETE_FLAG == Some("Y"))
+      assert(result(1).COUNTRY_CODE == Some("new"))
+      assert(result(2).COUNTRY_CODE == Some("updated"))
       assert(result(2).PRODUCT_NAME.contains("Unox"))
     }
   }
