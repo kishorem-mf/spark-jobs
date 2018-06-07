@@ -4,17 +4,17 @@ import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.acm.model.UFSProduct
 import com.unilever.ohub.spark.domain.entity.Product
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 object ProductAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
   with DeltaFunctions with AcmTransformationFunctions with AcmConverter {
 
   def transform(
-                 spark: SparkSession,
-                 operators: Dataset[Product],
-                 previousIntegrated: Dataset[Product]
-               ): Dataset[UFSProduct] = {
+    spark: SparkSession,
+    operators: Dataset[Product],
+    previousIntegrated: Dataset[Product]
+  ): Dataset[UFSProduct] = {
     val dailyUfsProducts = createUfsProducts(spark, operators)
     val allPreviousUfsProducts = createUfsProducts(spark, previousIntegrated)
 
@@ -48,7 +48,7 @@ object ProductAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
 
     products.map { product ⇒
       UFSProduct(
-        COUNTY_CODE = Some(product.countryCode),
+        COUNTRY_CODE = Some(product.countryCode),
         PRODUCT_NAME = Some(product.name),
         PRD_INTEGRATION_ID = product.concatId,
         EAN_CODE = product.eanConsumerUnit,

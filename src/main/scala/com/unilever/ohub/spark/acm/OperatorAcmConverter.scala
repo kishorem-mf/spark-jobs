@@ -7,19 +7,18 @@ import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
-
 
 object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
   with DeltaFunctions with AcmTransformationFunctions with AcmConverter {
 
   def transform(
-                 spark: SparkSession,
-                 channelMappings: Dataset[ChannelMapping],
-                 operators: Dataset[Operator],
-                 previousIntegrated: Dataset[Operator]
-               ): Dataset[UFSOperator] = {
+    spark: SparkSession,
+    channelMappings: Dataset[ChannelMapping],
+    operators: Dataset[Operator],
+    previousIntegrated: Dataset[Operator]
+  ): Dataset[UFSOperator] = {
     val dailyUfsOperators = createUfsOperators(spark, operators, channelMappings)
     val allPreviousUfsOperators = createUfsOperators(spark, previousIntegrated, channelMappings)
 

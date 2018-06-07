@@ -18,7 +18,7 @@ class ProductConverterSpec extends SifuDomainGateKeeperDatasetSpec[Product] with
         actualDataSet.count() shouldBe 229
 
         val actualProduct = actualDataSet.head()
-        val expectedProduct = defaultProductRecord.copy(
+        val expectedProduct = defaultProduct.copy(
           concatId = s"NL~SIFU~${actualProduct.sourceEntityId}",
           countryCode = "NL",
           customerType = Product.customerType,

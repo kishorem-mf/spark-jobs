@@ -19,7 +19,7 @@ class ProductConverterSpec extends CsvDomainGateKeeperSpec[Product] with TestPro
         actualDataSet.count() shouldBe 1
 
         val actualProduct = actualDataSet.head()
-        val expectedProduct = defaultProductRecord.copy(
+        val expectedProduct = defaultProduct.copy(
           concatId = "AU~WUFOO~P1234",
           countryCode = "AU",
           dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00")),
