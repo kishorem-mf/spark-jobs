@@ -1,18 +1,16 @@
 from datetime import datetime
 
 from airflow import DAG
-from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 from airflow.operators.bash_operator import BashOperator
 
 from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
 from custom_operators.empty_fallback import EmptyFallbackOperator
-from custom_operators.file_from_wasb import FileFromWasbOperator
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub_dag_config import \
     default_args, databricks_conn_id, jar, container_name, \
-    ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
-    wasb_raw_container, wasb_export_container, interval, one_day_ago, two_day_ago, wasb_conn_id, \
+    ingested_bucket, intermediate_bucket, integrated_bucket, wasb_raw_container, interval, one_day_ago, two_day_ago, \
+    wasb_conn_id, \
     create_cluster, \
     terminate_cluster, default_cluster_config, ingest_task, postgres_config, delta_fuzzy_matching_tasks, \
     acm_convert_and_move
