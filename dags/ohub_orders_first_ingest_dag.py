@@ -2,7 +2,7 @@ from datetime import datetime
 
 from airflow import DAG
 
-from ohub_dag_config import default_args, initial_load_pipeline_without_matching
+from ohub_dag_config import default_args, pipeline_without_matching
 
 schema = 'orders'
 clazz = 'Order'
@@ -15,7 +15,7 @@ cluster_name = "ohub_orders_initial_load_{{ds}}"
 
 with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
-    initial_load_pipeline_without_matching(
+    pipeline_without_matching(
         schema=schema,
         cluster_name=cluster_name,
         clazz=clazz,
