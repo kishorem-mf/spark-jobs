@@ -14,7 +14,7 @@ object OrderLineConverter extends FileDomainGateKeeper[OrderLine] with ProductEm
     implicit val source: Row = row
 
     val concatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_ORDER_ID")
-    val orderConcatId: String = createConcatId("COUNTRY_CODE", "FUZZIT", "REF_ORDER_ID")
+    val orderConcatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_ORDER_ID")
     val ohubCreated = currentTimestamp()
 
     // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
