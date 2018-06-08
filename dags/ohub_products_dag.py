@@ -3,7 +3,7 @@ from datetime import datetime
 from airflow import DAG
 
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator
-from ohub_dag_config import default_args, initial_load_pipeline_without_matching, databricks_conn_id, jar, \
+from ohub_dag_config import default_args, pipeline_without_matching, databricks_conn_id, jar, \
     intermediate_bucket, one_day_ago, ingested_bucket, integrated_bucket, two_day_ago
 
 schema = 'products'
@@ -17,7 +17,7 @@ cluster_name = "ohub_products_{{ds}}"
 
 with DAG('ohub_{}'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
-    tasks = initial_load_pipeline_without_matching(
+    tasks = pipeline_without_matching(
         schema=schema,
         cluster_name=cluster_name,
         clazz=clazz,

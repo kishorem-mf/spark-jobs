@@ -226,7 +226,7 @@ def acm_convert_and_move(schema, cluster_name, clazz, acm_file_prefix, previous_
     return convert_to_acm
 
 
-def initial_load_pipeline_without_matching(schema, cluster_name, clazz, acm_file_prefix, enable_acm_delta=False):
+def pipeline_without_matching(schema, cluster_name, clazz, acm_file_prefix, enable_acm_delta=False):
     cluster_up = create_cluster(schema, default_cluster_config(cluster_name))
     cluster_down = terminate_cluster(schema, cluster_name)
 
