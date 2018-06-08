@@ -1,10 +1,12 @@
 from datetime import timedelta
 
+from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 from airflow.hooks.base_hook import BaseHook
 
 from config import email_addresses, slack_on_databricks_failure_callback
 from custom_operators.databricks_functions import \
     DatabricksCreateClusterOperator, DatabricksTerminateClusterOperator, DatabricksSubmitRunOperator
+from custom_operators.file_from_wasb import FileFromWasbOperator
 
 ohub_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG', 'BH', 'BO', 'BR', 'CA', 'CH',
                       'CL', 'CN', 'CO', 'CR', 'CZ', 'DE', 'DK', 'DO', 'EC', 'EE', 'EG', 'ES', 'FI', 'FR', 'GB',
@@ -40,6 +42,7 @@ def default_cluster_config(cluster_name):
         },
     }
 
+
 def small_cluster_config(cluster_name):
     return {
         "cluster_name": cluster_name,
@@ -52,20 +55,21 @@ def small_cluster_config(cluster_name):
         },
     }
 
+
 databricks_conn_id = 'databricks_azure'
 
 
-def create_cluster(task_id, cluster_config):
+def create_cluster(schema, cluster_config):
     return DatabricksCreateClusterOperator(
-        task_id=task_id,
+        task_id='{}_create_cluster'.format(schema),
         databricks_conn_id=databricks_conn_id,
         cluster_config=cluster_config
     )
 
 
-def terminate_cluster(task_id, cluster_name):
+def terminate_cluster(schema, cluster_name):
     return DatabricksTerminateClusterOperator(
-        task_id=task_id,
+        task_id='{}_terminate_cluster'.format(schema),
         cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id
     )
@@ -116,7 +120,8 @@ def fuzzy_matching_tasks(schema,
             spark_python_task={
                 'python_file': match_py,
                 'parameters': ['--input_file', ingested_input,
-                               '--output_path', intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(schema)),
+                               '--output_path',
+                               intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(schema)),
                                '--country_code', code,
                                '--threshold', '0.9']
             }
@@ -176,6 +181,71 @@ def delta_fuzzy_matching_tasks(schema,
         match_new >> match_unmatched
 
     return tasks
+
+
+def acm_convert_and_move(schema, cluster_name, clazz, acm_file_prefix, previous_integrated=None,
+                         send_postgres_config=False):
+    acm_file = 'acm/UFS_' + acm_file_prefix + '_{{ds_nodash}}000000.csv'
+
+    delta_params = ['--previousIntegrated', previous_integrated] if previous_integrated else []
+    postgres_config_ = postgres_config if send_postgres_config else []
+    convert_to_acm = DatabricksSubmitRunOperator(
+        task_id="{}_to_acm".format(schema),
+        cluster_name=cluster_name,
+        databricks_conn_id=databricks_conn_id,
+        libraries=[
+            {'jar': jar}
+        ],
+        spark_jar_task={
+            'main_class_name': "com.unilever.ohub.spark.acm.{}AcmConverter".format(clazz),
+            'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=schema),
+                           '--outputFile',
+                           export_bucket.format(date='{{ds}}', fn=acm_file)] + delta_params + postgres_config_
+        }
+    )
+
+    tmp_file = '/tmp/' + acm_file
+
+    acm_from_wasb = FileFromWasbOperator(
+        task_id='{}_acm_from_wasb'.format(schema),
+        file_path=tmp_file,
+        container_name=container_name,
+        wasb_conn_id='azure_blob',
+        blob_name=wasb_export_container.format(date='{{ds}}', fn=acm_file)
+    )
+
+    ftp_to_acm = SFTPOperator(
+        task_id='{}_ftp_to_acm'.format(schema),
+        local_filepath=tmp_file,
+        remote_filepath='/incoming/temp/ohub_2_test/{}'.format(tmp_file.split('/')[-1]),
+        ssh_conn_id='acm_sftp_ssh',
+        operation=SFTPOperation.PUT
+    )
+    convert_to_acm >> acm_from_wasb >> ftp_to_acm
+
+    return convert_to_acm
+
+
+def initial_load_pipeline_without_matching(schema, cluster_name, clazz, acm_file_prefix):
+    cluster_up = create_cluster(schema, default_cluster_config(cluster_name))
+    cluster_down = terminate_cluster(schema, cluster_name)
+
+    file_interface_to_parquet = ingest_task(
+        schema=schema,
+        channel='file_interface',
+        clazz="com.unilever.ohub.spark.tsv2parquet.file_interface.{}Converter".format(clazz),
+        field_separator=u"\u2030",
+        cluster_name=cluster_name
+    )
+
+    convert_to_acm = acm_convert_and_move(
+        schema=schema,
+        cluster_name=cluster_name,
+        clazz=clazz,
+        acm_file_prefix=acm_file_prefix
+    )
+
+    cluster_up >> file_interface_to_parquet >> convert_to_acm >> cluster_down
 
 
 interval = '@daily'
