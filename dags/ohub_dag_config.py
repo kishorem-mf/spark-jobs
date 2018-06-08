@@ -42,6 +42,7 @@ def default_cluster_config(cluster_name):
         },
     }
 
+
 def small_cluster_config(cluster_name):
     return {
         "cluster_name": cluster_name,
@@ -53,6 +54,7 @@ def small_cluster_config(cluster_name):
             "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
         },
     }
+
 
 databricks_conn_id = 'databricks_azure'
 
@@ -118,7 +120,8 @@ def fuzzy_matching_tasks(schema,
             spark_python_task={
                 'python_file': match_py,
                 'parameters': ['--input_file', ingested_input,
-                               '--output_path', intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(schema)),
+                               '--output_path',
+                               intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(schema)),
                                '--country_code', code,
                                '--threshold', '0.9']
             }
@@ -217,6 +220,28 @@ def acm_initial_load_convert_and_move(schema, cluster_name, clazz):
     convert_to_acm >> acm_from_wasb >> ftp_to_acm
 
     return convert_to_acm
+
+
+def initial_load_pipeline_without_matching(schema, cluster_name, clazz):
+    cluster_up = create_cluster('{}_create_clusters'.format(schema), small_cluster_config(cluster_name))
+    cluster_down = terminate_cluster('{}_terminate_cluster'.format(schema), cluster_name)
+
+    file_interface_to_parquet = ingest_task(
+        schema=schema,
+        channel='file_interface',
+        clazz="com.unilever.ohub.spark.tsv2parquet.file_interface.{}Converter".format(clazz),
+        field_separator=u"\u2030",
+        cluster_name=cluster_name
+    )
+
+    convert_to_acm = acm_initial_load_convert_and_move(
+        schema=schema,
+        cluster_name=cluster_name,
+        clazz=clazz
+    )
+
+    cluster_up >> file_interface_to_parquet >> convert_to_acm >> cluster_down
+
 
 interval = '@daily'
 one_day_ago = '{{ds}}'
