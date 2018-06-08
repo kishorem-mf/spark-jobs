@@ -28,9 +28,9 @@ cluster_name = "ohub_contactpersons_{{ds}}"
 
 with DAG('ohub_{}'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
-    contactpersons_create_cluster = create_cluster('{}_create_clusters'.format(schema),
-                                                   default_cluster_config(cluster_name))
-    contactpersons_terminate_cluster = terminate_cluster('{}_terminate_cluster'.format(schema), cluster_name)
+    cluster_up = create_cluster('{}_create_clusters'.format(schema),
+                                default_cluster_config(cluster_name))
+    cluster_down = terminate_cluster('{}_terminate_cluster'.format(schema), cluster_name)
 
     empty_fallback = EmptyFallbackOperator(
         task_id='{}_empty_fallback'.format(schema),
@@ -205,7 +205,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
     )
 
     empty_fallback >> contact_persons_file_interface_to_parquet
-    contactpersons_create_cluster >> contact_persons_file_interface_to_parquet
+    cluster_up >> contact_persons_file_interface_to_parquet
     contact_persons_file_interface_to_parquet >> contact_persons_pre_processed >> exact_match_integrated_ingested
 
     exact_match_integrated_ingested >> begin_fuzzy_matching
@@ -218,5 +218,5 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
     end_fuzzy_matching >> join_matched_contact_persons >> join_fuzzy_and_exact_matched
 
     join_fuzzy_and_exact_matched >> operators_integrated_sensor >> contact_person_referencing >> contact_persons_to_acm
-    contact_persons_to_acm >> contactpersons_terminate_cluster
+    contact_persons_to_acm >> cluster_down
     contact_persons_to_acm >> contact_persons_acm_from_wasb >> contact_persons_ftp_to_acm

@@ -25,9 +25,9 @@ cluster_name = "ohub_operators_{{ds}}"
 
 with DAG('ohub_{}'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
-    operators_create_cluster = create_cluster('{}_create_clusters'.format(schema),
-                                              default_cluster_config(cluster_name))
-    operators_terminate_cluster = terminate_cluster('{}_terminate_cluster'.format(schema), cluster_name)
+    cluster_up = create_cluster('{}_create_clusters'.format(schema),
+                                default_cluster_config(cluster_name))
+    cluster_down = terminate_cluster('{}_terminate_cluster'.format(schema), cluster_name)
 
     empty_fallback = EmptyFallbackOperator(
         task_id='{}_empty_fallback'.format(schema),
@@ -157,12 +157,12 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
     )
 
     empty_fallback >> operators_file_interface_to_parquet
-    operators_create_cluster >> operators_file_interface_to_parquet >> begin_fuzzy_matching
+    cluster_up >> operators_file_interface_to_parquet >> begin_fuzzy_matching
     for t in matching_tasks['in']:
         begin_fuzzy_matching >> t
     for t in matching_tasks['out']:
         t >> end_fuzzy_matching
     end_fuzzy_matching >> join_operators >> combine_to_create_integrated
-    combine_to_create_integrated >> update_golden_records >> update_operators_table >> operators_terminate_cluster
-    update_golden_records >> operators_to_acm >> operators_terminate_cluster
+    combine_to_create_integrated >> update_golden_records >> update_operators_table >> cluster_down
+    update_golden_records >> operators_to_acm >> cluster_down
     operators_to_acm >> operators_acm_from_wasb >> operators_ftp_to_acm

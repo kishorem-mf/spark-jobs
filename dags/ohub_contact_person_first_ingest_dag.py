@@ -27,9 +27,9 @@ cluster_name = "ohub_contactpersons_initial_load_{{ds}}"
 
 with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
-    contactpersons_create_cluster = create_cluster('{}_create_clusters'.format(schema),
-                                                   default_cluster_config(cluster_name))
-    contactpersons_terminate_cluster = terminate_cluster('{}_terminate_cluster'.format(schema), cluster_name)
+    cluster_up = create_cluster('{}_create_clusters'.format(schema),
+                                default_cluster_config(cluster_name))
+    cluster_down = terminate_cluster('{}_terminate_cluster'.format(schema), cluster_name)
 
     contact_persons_file_interface_to_parquet = ingest_task(
         schema=schema,
@@ -172,9 +172,9 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         operation=SFTPOperation.PUT
     )
 
-    contactpersons_create_cluster >> contact_persons_file_interface_to_parquet >> contact_persons_exact_match >> begin_fuzzy_matching
+    cluster_up >> contact_persons_file_interface_to_parquet >> contact_persons_exact_match >> begin_fuzzy_matching
     for t in matching_tasks:
         begin_fuzzy_matching >> t >> end_fuzzy_matching
     end_fuzzy_matching >> join_contact_persons >> contact_person_combining >> operators_integrated_sensor >> contact_person_referencing
     contact_person_referencing >> contact_persons_to_acm >> contact_persons_acm_from_wasb >> contact_person_ftp_to_acm
-    contact_persons_to_acm >> contactpersons_terminate_cluster
+    contact_persons_to_acm >> cluster_down

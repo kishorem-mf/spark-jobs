@@ -25,9 +25,9 @@ cluster_name = "ohub_operators_initial_load_{{ds}}"
 
 with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
-    operators_create_cluster = create_cluster('{}_create_clusters'.format(schema),
-                                              default_cluster_config(cluster_name))
-    operators_terminate_cluster = terminate_cluster('{}_terminate_cluster'.format(schema), cluster_name)
+    cluster_up = create_cluster('{}_create_clusters'.format(schema),
+                                default_cluster_config(cluster_name))
+    cluster_down = terminate_cluster('{}_terminate_cluster'.format(schema), cluster_name)
 
     operators_file_interface_to_parquet = ingest_task(
         schema=schema,
@@ -104,8 +104,8 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         operation=SFTPOperation.PUT
     )
 
-    operators_create_cluster >> operators_file_interface_to_parquet >> begin_fuzzy_matching
+    cluster_up >> operators_file_interface_to_parquet >> begin_fuzzy_matching
     for t in matching_tasks:
         begin_fuzzy_matching >> t >> end_fuzzy_matching
-    end_fuzzy_matching >> merge_operators >> operators_to_acm >> operators_terminate_cluster
+    end_fuzzy_matching >> merge_operators >> operators_to_acm >> cluster_down
     operators_to_acm >> operators_acm_from_wasb >> operators_ftp_to_acm
