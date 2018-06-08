@@ -1,7 +1,5 @@
 package com.unilever.ohub.spark.acm.model
 
-import java.sql.Timestamp
-
 // Data Model: OPR_ORIG_INTEGRATION_ID can be misleading for Ohub 2.0 as this will contain the new
 // OHUB_OPERATOR_ID and OPR_LNKD_INTEGRATION_ID will contain OPERATOR_CONCAT_ID
 case class UFSOperator(
@@ -39,8 +37,8 @@ case class UFSOperator(
     CUST_SEG_KEY_EXT: String,
     CUST_GRP_EXT: String,
     PARENT_SEGMENT: String,
-    DATE_CREATED: Option[Timestamp],
-    DATE_UPDATED: Option[Timestamp],
+    DATE_CREATED: Option[String],
+    DATE_UPDATED: Option[String],
     DELETE_FLAG: String,
     WHOLESALER_OPERATOR_ID: Option[String],
     PRIVATE_HOUSEHOLD: Option[String],
