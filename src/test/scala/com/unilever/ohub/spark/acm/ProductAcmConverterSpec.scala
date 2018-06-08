@@ -57,9 +57,7 @@ class ProductAcmConverterSpec extends SparkJobSpec with TestProducts {
         newRecord
       ))
 
-      val value = SUT.transform(spark, input, previous)
-      value.show
-      val result = value
+      val result = SUT.transform(spark, input, previous)
         .collect()
         .sortBy(_.COUNTRY_CODE)
 
