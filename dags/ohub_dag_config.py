@@ -183,10 +183,11 @@ def delta_fuzzy_matching_tasks(schema,
     return tasks
 
 
-def acm_convert_and_move(schema, cluster_name, clazz, acm_file_prefix, previous_integrated=None):
+def acm_convert_and_move(schema, cluster_name, clazz, acm_file_prefix, previous_integrated=None, send_postgres_config=False):
     acm_file = 'acm/UFS_' + acm_file_prefix + '_{{ds_nodash}}000000.csv'
 
     delta_params = ['--previousIntegrated' , previous_integrated] if previous_integrated else []
+    postgres_config_ = postgres_config if send_postgres_config else []
     convert_to_acm = DatabricksSubmitRunOperator(
         task_id="{}_to_acm".format(schema),
         cluster_name=cluster_name,
@@ -197,7 +198,7 @@ def acm_convert_and_move(schema, cluster_name, clazz, acm_file_prefix, previous_
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.{}AcmConverter".format(clazz),
             'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=schema),
-                           '--outputFile', export_bucket.format(date='{{ds}}', fn=acm_file)] + delta_params + postgres_config
+                           '--outputFile', export_bucket.format(date='{{ds}}', fn=acm_file)] + delta_params + postgres_config_
         }
     )
 

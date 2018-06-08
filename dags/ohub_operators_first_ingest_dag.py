@@ -74,7 +74,8 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         schema=schema,
         cluster_name=cluster_name,
         clazz='ContactPerson',
-        acm_file_prefix='UFS_OPERATORS'
+        acm_file_prefix='UFS_OPERATORS',
+        send_postgres_config=True
     )
 
     cluster_up >> operators_file_interface_to_parquet >> begin_fuzzy_matching

@@ -120,7 +120,8 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         cluster_name=cluster_name,
         clazz='ContactPerson',
         acm_file_prefix='UFS_OPERATORS',
-        previous_integrated=integrated_bucket.format(date=two_day_ago, fn=schema)
+        previous_integrated=integrated_bucket.format(date=two_day_ago, fn=schema),
+        send_postgres_config=True
     )
 
     update_operators_table = DatabricksSubmitRunOperator(
