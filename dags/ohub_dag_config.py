@@ -226,9 +226,11 @@ def acm_convert_and_move(schema, cluster_name, clazz, acm_file_prefix, previous_
     return convert_to_acm
 
 
-def initial_load_pipeline_without_matching(schema, cluster_name, clazz, acm_file_prefix):
+def initial_load_pipeline_without_matching(schema, cluster_name, clazz, acm_file_prefix, enable_acm_delta=False):
     cluster_up = create_cluster(schema, default_cluster_config(cluster_name))
     cluster_down = terminate_cluster(schema, cluster_name)
+
+    previous_integrated = integrated_bucket.format(date=two_day_ago, fn=schema) if enable_acm_delta else None
 
     file_interface_to_parquet = ingest_task(
         schema=schema,
@@ -242,10 +244,17 @@ def initial_load_pipeline_without_matching(schema, cluster_name, clazz, acm_file
         schema=schema,
         cluster_name=cluster_name,
         clazz=clazz,
-        acm_file_prefix=acm_file_prefix
+        acm_file_prefix=acm_file_prefix,
+        previous_integrated=previous_integrated
     )
 
     cluster_up >> file_interface_to_parquet >> convert_to_acm >> cluster_down
+    return {
+        'cluster_up': cluster_up,
+        'file_interface_to_parquet': file_interface_to_parquet,
+        'convert_to_acm': convert_to_acm,
+        'cluster_down': cluster_down
+    }
 
 
 interval = '@daily'
