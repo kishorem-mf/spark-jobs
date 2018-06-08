@@ -6,7 +6,7 @@ from airflow.hooks.base_hook import BaseHook
 from config import email_addresses, slack_on_databricks_failure_callback
 from custom_operators.databricks_functions import \
     DatabricksCreateClusterOperator, DatabricksTerminateClusterOperator, DatabricksSubmitRunOperator
-from dags.custom_operators.file_from_wasb import FileFromWasbOperator
+from custom_operators.file_from_wasb import FileFromWasbOperator
 
 ohub_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG', 'BH', 'BO', 'BR', 'CA', 'CH',
                       'CL', 'CN', 'CO', 'CR', 'CZ', 'DE', 'DK', 'DO', 'EC', 'EE', 'EG', 'ES', 'FI', 'FR', 'GB',
@@ -59,17 +59,17 @@ def small_cluster_config(cluster_name):
 databricks_conn_id = 'databricks_azure'
 
 
-def create_cluster(task_id, cluster_config):
+def create_cluster(schema, cluster_config):
     return DatabricksCreateClusterOperator(
-        task_id=task_id,
+        task_id='{}_create_cluster'.format(schema),
         databricks_conn_id=databricks_conn_id,
         cluster_config=cluster_config
     )
 
 
-def terminate_cluster(task_id, cluster_name):
+def terminate_cluster(schema, cluster_name):
     return DatabricksTerminateClusterOperator(
-        task_id=task_id,
+        task_id='{}_terminate_cluster'.format(schema),
         cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id
     )
@@ -227,8 +227,8 @@ def acm_convert_and_move(schema, cluster_name, clazz, acm_file_prefix, previous_
 
 
 def initial_load_pipeline_without_matching(schema, cluster_name, clazz, acm_file_prefix):
-    cluster_up = create_cluster('{}_create_clusters'.format(schema), small_cluster_config(cluster_name))
-    cluster_down = terminate_cluster('{}_terminate_cluster'.format(schema), cluster_name)
+    cluster_up = create_cluster(schema, default_cluster_config(cluster_name))
+    cluster_down = terminate_cluster(schema, cluster_name)
 
     file_interface_to_parquet = ingest_task(
         schema=schema,

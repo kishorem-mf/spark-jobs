@@ -26,9 +26,8 @@ cluster_name = "ohub_operators_{{ds}}"
 
 with DAG('ohub_{}'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
-    cluster_up = create_cluster('{}_create_clusters'.format(schema),
-                                default_cluster_config(cluster_name))
-    cluster_down = terminate_cluster('{}_terminate_cluster'.format(schema), cluster_name)
+    cluster_up = create_cluster(schema, default_cluster_config(cluster_name))
+    cluster_down = terminate_cluster(schema, cluster_name)
 
     empty_fallback = EmptyFallbackOperator(
         task_id='{}_empty_fallback'.format(schema),

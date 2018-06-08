@@ -27,9 +27,8 @@ cluster_name = "ohub_contactpersons_initial_load_{{ds}}"
 
 with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
-    cluster_up = create_cluster('{}_create_clusters'.format(schema),
-                                default_cluster_config(cluster_name))
-    cluster_down = terminate_cluster('{}_terminate_cluster'.format(schema), cluster_name)
+    cluster_up = create_cluster(schema, default_cluster_config(cluster_name))
+    cluster_down = terminate_cluster(schema, cluster_name)
 
     contact_persons_file_interface_to_parquet = ingest_task(
         schema=schema,
