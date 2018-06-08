@@ -11,7 +11,7 @@ from ohub_dag_config import \
     default_args, container_name, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, \
     export_bucket, \
     wasb_export_container, create_cluster, terminate_cluster, default_cluster_config, \
-    postgres_config, ingest_task, fuzzy_matching_tasks
+    postgres_config, ingest_task, fuzzy_matching_tasks, acm_convert_and_move
 
 default_args.update(
     {
@@ -70,42 +70,14 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         }
     )
 
-    op_file = 'acm/UFS_OPERATORS_{{ds_nodash}}000000.csv'
-
-    operators_to_acm = DatabricksSubmitRunOperator(
-        task_id="{}_to_acm".format(schema),
+    convert_to_acm = acm_convert_and_move(
+        schema=schema,
         cluster_name=cluster_name,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
-        spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmConverter",
-            'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=schema),
-                           '--outputFile', export_bucket.format(date='{{ds}}', fn=op_file)] + postgres_config
-        }
-    )
-
-    tmp_file = '/tmp/' + op_file
-
-    operators_acm_from_wasb = FileFromWasbOperator(
-        task_id='{}_acm_from_wasb'.format(schema),
-        file_path=tmp_file,
-        container_name=container_name,
-        wasb_conn_id='azure_blob',
-        blob_name=wasb_export_container.format(date='{{ds}}', fn=op_file)
-    )
-
-    operators_ftp_to_acm = SFTPOperator(
-        task_id='{}_ftp_to_acm'.format(schema),
-        local_filepath=tmp_file,
-        remote_filepath='/incoming/temp/ohub_2_test/{}'.format(tmp_file.split('/')[-1]),
-        ssh_conn_id='acm_sftp_ssh',
-        operation=SFTPOperation.PUT
+        clazz='ContactPerson',
+        acm_file_prefix='UFS_OPERATORS'
     )
 
     cluster_up >> operators_file_interface_to_parquet >> begin_fuzzy_matching
     for t in matching_tasks:
         begin_fuzzy_matching >> t >> end_fuzzy_matching
-    end_fuzzy_matching >> merge_operators >> operators_to_acm >> cluster_down
-    operators_to_acm >> operators_acm_from_wasb >> operators_ftp_to_acm
+    end_fuzzy_matching >> merge_operators >> convert_to_acm >> cluster_down

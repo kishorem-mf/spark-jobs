@@ -15,4 +15,9 @@ cluster_name = "ohub_products_initial_load_{{ds}}"
 
 with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
-    initial_load_pipeline_without_matching(schema, cluster_name, clazz)
+    initial_load_pipeline_without_matching(
+        schema=schema,
+        cluster_name=cluster_name,
+        clazz=clazz,
+        acm_file_prefix='UFS_PRODUCTS')
+

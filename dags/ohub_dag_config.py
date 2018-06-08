@@ -183,9 +183,10 @@ def delta_fuzzy_matching_tasks(schema,
     return tasks
 
 
-def acm_initial_load_convert_and_move(schema, cluster_name, clazz):
-    acm_file = 'acm/UFS_' + schema + '_{{ds_nodash}}000000.csv'
+def acm_convert_and_move(schema, cluster_name, clazz, acm_file_prefix, previous_integrated=None):
+    acm_file = 'acm/UFS_' + acm_file_prefix + '_{{ds_nodash}}000000.csv'
 
+    delta_params = ['--previousIntegrated' , previous_integrated] if previous_integrated else []
     convert_to_acm = DatabricksSubmitRunOperator(
         task_id="{}_to_acm".format(schema),
         cluster_name=cluster_name,
@@ -196,7 +197,7 @@ def acm_initial_load_convert_and_move(schema, cluster_name, clazz):
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.acm.{}AcmConverter".format(clazz),
             'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=schema),
-                           '--outputFile', export_bucket.format(date='{{ds}}', fn=acm_file)] + postgres_config
+                           '--outputFile', export_bucket.format(date='{{ds}}', fn=acm_file)] + delta_params + postgres_config
         }
     )
 
@@ -222,7 +223,7 @@ def acm_initial_load_convert_and_move(schema, cluster_name, clazz):
     return convert_to_acm
 
 
-def initial_load_pipeline_without_matching(schema, cluster_name, clazz):
+def initial_load_pipeline_without_matching(schema, cluster_name, clazz, acm_file_prefix):
     cluster_up = create_cluster('{}_create_clusters'.format(schema), small_cluster_config(cluster_name))
     cluster_down = terminate_cluster('{}_terminate_cluster'.format(schema), cluster_name)
 
@@ -234,10 +235,11 @@ def initial_load_pipeline_without_matching(schema, cluster_name, clazz):
         cluster_name=cluster_name
     )
 
-    convert_to_acm = acm_initial_load_convert_and_move(
+    convert_to_acm = acm_convert_and_move(
         schema=schema,
         cluster_name=cluster_name,
-        clazz=clazz
+        clazz=clazz,
+        acm_file_prefix=acm_file_prefix
     )
 
     cluster_up >> file_interface_to_parquet >> convert_to_acm >> cluster_down

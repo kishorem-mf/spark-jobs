@@ -12,7 +12,7 @@ from ohub_dag_config import \
     default_args, databricks_conn_id, jar, container_name, \
     ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
     wasb_export_container, create_cluster, default_cluster_config, terminate_cluster, ingest_task, \
-    fuzzy_matching_tasks, postgres_config
+    fuzzy_matching_tasks, postgres_config, acm_convert_and_move
 
 default_args.update(
     {
@@ -138,43 +138,15 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         }
     )
 
-    cp_file = 'acm/UFS_RECIPIENTS_{{ds_nodash}}000000.csv'
-
-    contact_persons_to_acm = DatabricksSubmitRunOperator(
-        task_id="{}_to_acm".format(schema),
+    convert_to_acm = acm_convert_and_move(
+        schema=schema,
         cluster_name=cluster_name,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
-        spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.acm.ContactPersonAcmConverter",
-            'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=schema),
-                           '--outputFile', export_bucket.format(date='{{ds}}', fn=cp_file)]
-        }
-    )
-
-    tmp_file = '/tmp/' + cp_file
-
-    contact_persons_acm_from_wasb = FileFromWasbOperator(
-        task_id='{}_acm_from_wasb'.format(schema),
-        file_path=tmp_file,
-        container_name=container_name,
-        wasb_conn_id='azure_blob',
-        blob_name=wasb_export_container.format(date='{{ds}}', fn=cp_file)
-    )
-
-    contact_person_ftp_to_acm = SFTPOperator(
-        task_id='{}_ftp_to_acm'.format(schema),
-        local_filepath=tmp_file,
-        remote_filepath='/incoming/temp/ohub_2_test/{}'.format(tmp_file.split('/')[-1]),
-        ssh_conn_id='acm_sftp_ssh',
-        operation=SFTPOperation.PUT
+        clazz='ContactPerson',
+        acm_file_prefix='UFS_RECIPIENTS'
     )
 
     cluster_up >> contact_persons_file_interface_to_parquet >> contact_persons_exact_match >> begin_fuzzy_matching
     for t in matching_tasks:
         begin_fuzzy_matching >> t >> end_fuzzy_matching
     end_fuzzy_matching >> join_contact_persons >> contact_person_combining >> operators_integrated_sensor >> contact_person_referencing
-    contact_person_referencing >> contact_persons_to_acm >> contact_persons_acm_from_wasb >> contact_person_ftp_to_acm
-    contact_persons_to_acm >> cluster_down
+    contact_person_referencing >> convert_to_acm >> cluster_down

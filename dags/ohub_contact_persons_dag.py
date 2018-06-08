@@ -14,7 +14,8 @@ from ohub_dag_config import \
     ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
     wasb_raw_container, wasb_export_container, interval, one_day_ago, two_day_ago, wasb_conn_id, \
     create_cluster, \
-    terminate_cluster, default_cluster_config, ingest_task, postgres_config, delta_fuzzy_matching_tasks
+    terminate_cluster, default_cluster_config, ingest_task, postgres_config, delta_fuzzy_matching_tasks, \
+    acm_convert_and_move
 
 default_args.update(
     {
@@ -170,38 +171,12 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         }
     )
 
-    op_file = 'acm/UFS_RECIPIENTS_{{ds_nodash}}000000.csv'
-
-    contact_persons_to_acm = DatabricksSubmitRunOperator(
-        task_id='{}_to_acm'.format(schema),
+    convert_to_acm = acm_convert_and_move(
+        schema=schema,
         cluster_name=cluster_name,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
-        spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.acm.ContactPersonAcmConverter",
-            'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn=schema),
-                           '--outputFile', export_bucket.format(date=one_day_ago, fn=op_file)]
-        }
-    )
-
-    tmp_file = '/tmp/' + op_file
-
-    contact_persons_acm_from_wasb = FileFromWasbOperator(
-        task_id='{}_acm_from_wasb'.format(schema),
-        file_path=tmp_file,
-        container_name=container_name,
-        wasb_conn_id=wasb_conn_id,
-        blob_name=wasb_export_container.format(date='{{ds}}', fn=op_file)
-    )
-
-    contact_persons_ftp_to_acm = SFTPOperator(
-        task_id='{}_ftp_to_acm'.format(schema),
-        local_filepath=tmp_file,
-        remote_filepath='/incoming/temp/ohub_2_test/{}'.format(tmp_file.split('/')[-1]),
-        ssh_conn_id='acm_sftp_ssh',
-        operation=SFTPOperation.PUT
+        clazz='ContactPerson',
+        acm_file_prefix='UFS_RECIPIENTS',
+        previous_integrated=integrated_bucket.format(date=two_day_ago, fn=schema)
     )
 
     empty_fallback >> contact_persons_file_interface_to_parquet
@@ -217,6 +192,4 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
 
     end_fuzzy_matching >> join_matched_contact_persons >> join_fuzzy_and_exact_matched
 
-    join_fuzzy_and_exact_matched >> operators_integrated_sensor >> contact_person_referencing >> contact_persons_to_acm
-    contact_persons_to_acm >> cluster_down
-    contact_persons_to_acm >> contact_persons_acm_from_wasb >> contact_persons_ftp_to_acm
+    join_fuzzy_and_exact_matched >> operators_integrated_sensor >> contact_person_referencing >> convert_to_acm >> cluster_down

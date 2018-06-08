@@ -12,7 +12,8 @@ from ohub_dag_config import \
     default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, export_bucket, \
     wasb_raw_container, wasb_export_container, \
     default_cluster_config, interval, one_day_ago, two_day_ago, wasb_conn_id, container_name, \
-    ingest_task, delta_fuzzy_matching_tasks, create_cluster, terminate_cluster, postgres_config
+    ingest_task, delta_fuzzy_matching_tasks, create_cluster, terminate_cluster, postgres_config, \
+    acm_convert_and_move
 
 default_args.update(
     {
@@ -114,40 +115,13 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         }
     )
 
-    op_file = 'acm/UFS_OPERATORS_{{ds_nodash}}000000.csv'
-
-    operators_to_acm = DatabricksSubmitRunOperator(
-        task_id="{}_to_acm".format(schema),
+    convert_to_acm = acm_convert_and_move(
+        schema=schema,
         cluster_name=cluster_name,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
-        spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.acm.OperatorAcmConverter",
-            'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn=schema),
-                           '--outputFile', export_bucket.format(date=one_day_ago, fn=op_file),
-                           '--previousIntegrated',
-                           integrated_bucket.format(date=two_day_ago, fn=schema)] + postgres_config
-        }
+        clazz='ContactPerson',
+        acm_file_prefix='UFS_OPERATORS',
+        previous_integrated=integrated_bucket.format(date=two_day_ago, fn=schema)
     )
-
-    tmp_file = '/tmp/' + op_file
-
-    operators_acm_from_wasb = FileFromWasbOperator(
-        task_id='{}_acm_from_wasb'.format(schema),
-        file_path=tmp_file,
-        container_name=container_name,
-        wasb_conn_id=wasb_conn_id,
-        blob_name=wasb_export_container.format(date=one_day_ago, fn=op_file)
-    )
-
-    operators_ftp_to_acm = SFTPOperator(
-        task_id='{}_ftp_to_acm'.format(schema),
-        local_filepath=tmp_file,
-        remote_filepath='/incoming/temp/ohub_2_test/{}'.format(tmp_file.split('/')[-1]),
-        ssh_conn_id='acm_sftp_ssh',
-        operation=SFTPOperation.PUT)
 
     update_operators_table = DatabricksSubmitRunOperator(
         task_id='{}_update_table'.format(schema),
@@ -164,5 +138,4 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         t >> end_fuzzy_matching
     end_fuzzy_matching >> join_operators >> combine_to_create_integrated
     combine_to_create_integrated >> update_golden_records >> update_operators_table >> cluster_down
-    update_golden_records >> operators_to_acm >> cluster_down
-    operators_to_acm >> operators_acm_from_wasb >> operators_ftp_to_acm
+    update_golden_records >> convert_to_acm >> cluster_down
