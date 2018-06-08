@@ -69,7 +69,7 @@ class ProductMergingSpec extends SparkJobSpec with TestProducts {
       result(3).countryCode shouldBe "unchanged"
       result(4).countryCode shouldBe "updated"
       result(4).name shouldBe "Unox"
-      result(4).ohubId shouldBe "oldId"
+      result(4).ohubId shouldBe Some("oldId")
     }
   }
 }
