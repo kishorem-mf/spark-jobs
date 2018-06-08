@@ -20,8 +20,7 @@ cluster_name = "ohub_orderlines_initial_load_{{ds}}"
 
 with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         schedule_interval=interval) as dag:
-    cluster_up = create_cluster('{}_create_clusters'.format(schema),
-                                small_cluster_config(cluster_name))
+    cluster_up = create_cluster('{}_create_clusters'.format(schema), small_cluster_config(cluster_name))
     cluster_down = terminate_cluster('{}_terminate_cluster'.format(schema), cluster_name)
 
     file_interface_to_parquet = ingest_task(
