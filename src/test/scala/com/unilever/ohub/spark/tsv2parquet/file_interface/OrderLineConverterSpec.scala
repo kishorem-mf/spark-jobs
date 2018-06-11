@@ -2,13 +2,13 @@ package com.unilever.ohub.spark.tsv2parquet.file_interface
 
 import java.sql.Timestamp
 
-import com.unilever.ohub.spark.domain.entity.{ Product, TestProducts }
+import com.unilever.ohub.spark.domain.entity.{ OrderLine, TestOrderLines }
 import com.unilever.ohub.spark.tsv2parquet.CsvDomainGateKeeperSpec
 import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeper.DomainConfig
 
-class OrderLineConvertorSpec extends CsvDomainGateKeeperSpec[Product] with TestProducts {
+class OrderLineConvertorSpec extends CsvDomainGateKeeperSpec[OrderLine] with TestOrderLines {
 
-  private[tsv2parquet] override val SUT = ProductConverter
+  private[tsv2parquet] override val SUT = OrderLineConverter
 
   describe("file interface product converter") {
     it("should convert a product correctly from a valid file interface csv input") {
@@ -18,32 +18,28 @@ class OrderLineConvertorSpec extends CsvDomainGateKeeperSpec[Product] with TestP
       runJobWith(config) { actualDataSet ⇒
         actualDataSet.count() shouldBe 1
 
-        val actualProduct = actualDataSet.head()
-        val expectedProduct = defaultProduct.copy(
-          concatId = "AU~WUFOO~P1234",
+        val actualOrderLine = actualDataSet.head
+        val expectedOrderLine = defaultOrderLine.copy(
+          concatId = defaultOrderLine.concatId,
           countryCode = "AU",
           dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00")),
           dateUpdated = Some(Timestamp.valueOf("2015-06-30 13:48:00")),
           isActive = true,
           isGoldenRecord = true,
-          ohubId = actualProduct.ohubId,
-          name = "KNORR CHICKEN POWDER(D) 12X1kg",
+          ohubId = actualOrderLine.ohubId,
           sourceEntityId = "P1234",
           sourceName = "WUFOO",
-          ohubCreated = actualProduct.ohubCreated,
-          ohubUpdated = actualProduct.ohubUpdated,
-          code = Some("201119"),
-          codeType = Some("MRDR"),
-          currency = Some("GBP"),
-          eanConsumerUnit = Some("812234000000"),
-          eanDistributionUnit = Some("112234000000"),
-          productId = actualProduct.productId,
-          `type` = Some("Product"),
-          unit = Some("Cases"),
-          unitPrice = Some(BigDecimal(4))
+          ohubCreated = actualOrderLine.ohubCreated,
+          ohubUpdated = actualOrderLine.ohubUpdated,
+          orderConcatId = Some("AU~WUFOO~P1234"),
+          productConcatId = Some("P1234"),
+          quantityOfUnits = Some(6),
+          amount = Some(10),
+          pricePerUnit = Some(5),
+          currency = Some("AUD")
         )
 
-        actualProduct shouldBe expectedProduct
+        actualOrderLine shouldBe expectedOrderLine
       }
     }
   }

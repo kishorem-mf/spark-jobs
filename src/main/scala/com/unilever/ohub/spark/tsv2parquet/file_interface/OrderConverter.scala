@@ -41,7 +41,7 @@ object OrderConverter extends FileDomainGateKeeper[Order] with OrderEmptyParquet
       contactPersonOhubId             = None,
       distributorId                   = None,
       distributorLocation             = None,
-      distributorName                 = None,
+      distributorName                 = optional(  "WHOLESALER",             "distributerName"),
       distributorOperatorId           = None,
       operatorConcatId                = optional(  "REF_OPERATOR_ID",        "operatorConcatId"),
       operatorOhubId                  = None,
