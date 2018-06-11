@@ -50,3 +50,14 @@ trait OrderLineEmptyParquetWriter extends EmptyParquetWriter {
     storage.writeToParquet(orderlines, location)
   }
 }
+
+trait OrderEmptyParquetWriter extends EmptyParquetWriter {
+  override def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit = {
+    import com.unilever.ohub.spark.domain.entity.Order
+    import spark.implicits._
+
+    val orderlines = spark.createDataset[Order](Seq[Order]())
+
+    storage.writeToParquet(orderlines, location)
+  }
+}

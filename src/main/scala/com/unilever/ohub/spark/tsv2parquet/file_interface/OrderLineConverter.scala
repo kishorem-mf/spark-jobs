@@ -22,10 +22,10 @@ object OrderLineConverter extends FileDomainGateKeeper[OrderLine] with OrderLine
     OrderLine(
       concatId                        = concatId,
       countryCode                     = mandatory( "COUNTRY_CODE",              "countryCode"                                       ),
-      customerType                    = Product.customerType                                                                         ,
+      customerType                    = OrderLine.customerType                                                                         ,
       dateCreated                     = optional(  "DATE_CREATED",              "dateCreated",            parseDateTimeStampUnsafe  ),
       dateUpdated                     = optional(  "DATE_MODIFIED",             "dateUpdated",            parseDateTimeStampUnsafe  ),
-      isActive                        = mandatory( "STATUS",                    "isActive",               parseBoolUnsafe           ),
+      isActive                        = true,
       isGoldenRecord                  = true,
       ohubId                          = None,
       sourceEntityId                  = mandatory( "REF_ORDER_ID",            "sourceEntityId"),
