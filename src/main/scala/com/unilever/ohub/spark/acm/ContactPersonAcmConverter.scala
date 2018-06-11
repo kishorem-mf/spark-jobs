@@ -1,14 +1,59 @@
 package com.unilever.ohub.spark.acm
 
-import com.unilever.ohub.spark.{ DefaultConfig, SparkJobWithDefaultConfig }
+import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.acm.model.UFSRecipient
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.Storage
+import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
+import scopt.OptionParser
 
-object ContactPersonAcmConverter extends SparkJobWithDefaultConfig with AcmTransformationFunctions with AcmConverter {
+object ContactPersonAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
+  with DeltaFunctions with AcmTransformationFunctions with AcmConverter {
 
-  def transform(spark: SparkSession, contactPersons: Dataset[ContactPerson]): Dataset[UFSRecipient] = {
+  def transform(
+    spark: SparkSession,
+    contactPersons: Dataset[ContactPerson],
+    previousIntegrated: Dataset[ContactPerson]
+  ): Dataset[UFSRecipient] = {
+    val dailyUfsContactPersons = createUfsContactPersons(spark, contactPersons)
+    val allPreviousUfsContactPersons = createUfsContactPersons(spark, previousIntegrated)
+
+    integrate[UFSRecipient](spark, dailyUfsContactPersons, allPreviousUfsContactPersons, "CP_LNKD_INTEGRATION_ID")
+  }
+
+  override private[spark] def defaultConfig = DefaultWithDbAndDeltaConfig()
+
+  override private[spark] def configParser(): OptionParser[DefaultWithDbAndDeltaConfig] = DefaultWithDbAndDeltaConfigParser()
+
+  override def run(spark: SparkSession, config: DefaultWithDbAndDeltaConfig, storage: Storage): Unit = {
+    import spark.implicits._
+
+    log.info(s"Generating contact person ACM csv file from [$config.inputFile] to [$config.outputFile]")
+
+    val dataProvider = DomainDataProvider(spark, config.postgressUrl, config.postgressDB, config.postgressUsername, config.postgressPassword)
+
+    val contactPersons = storage.readFromParquet[ContactPerson](config.inputFile)
+    val previousIntegrated = config.previousIntegrated match {
+      case Some(s) ⇒ storage.readFromParquet[ContactPerson](s)
+      case None ⇒
+        log.warn(s"No existing integrated file specified -- regarding as initial load.")
+        spark.emptyDataset[ContactPerson]
+    }
+    val transformed = transform(spark, contactPersons, previousIntegrated)
+
+    storage.writeToSingleCsv(
+      ds = transformed,
+      outputFile = config.outputFile,
+      delim = outputCsvDelimiter,
+      quote = outputCsvQuote
+    )
+  }
+
+  def createUfsContactPersons(
+    spark: SparkSession,
+    contactPersons: Dataset[ContactPerson]
+  ): Dataset[UFSRecipient] = {
     import spark.implicits._
 
     contactPersons.filter(_.isGoldenRecord).map { contactPerson ⇒ // TODO check whether the filter is at the right location
@@ -81,16 +126,4 @@ object ContactPersonAcmConverter extends SparkJobWithDefaultConfig with AcmTrans
     }
   }
 
-  override def run(spark: SparkSession, config: DefaultConfig, storage: Storage): Unit = {
-    import spark.implicits._
-
-    log.info(s"Generating contact person ACM csv file from [${config.inputFile}] to [${config.outputFile}]")
-
-    val contactPersons = storage.readFromParquet[ContactPerson](config.inputFile)
-    val transformed = transform(spark, contactPersons)
-
-    storage.writeToSingleCsv(
-      ds = transformed, outputFile = config.outputFile, delim = outputCsvDelimiter, quote = outputCsvQuote
-    )
-  }
 }

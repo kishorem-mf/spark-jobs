@@ -10,12 +10,78 @@ class ContactPersonAcmConverterSpec extends SparkJobSpec with TestContactPersons
 
   private[acm] val SUT = ContactPersonAcmConverter
 
+  describe("contact person acm delta converter") {
+    it("should convert a domain contact person correctly into an acm converter containing only delta records") {
+      import spark.implicits._
+
+      val updatedRecord = defaultContactPerson.copy(
+        isGoldenRecord = true,
+        countryCode = "updated",
+        concatId = s"updated~${defaultContactPerson.sourceName}~${defaultContactPerson.sourceEntityId}",
+        city = Some("Utrecht"))
+
+      val deletedRecord = defaultContactPerson.copy(
+        isGoldenRecord = true,
+        countryCode = "deleted",
+        concatId = s"deleted~${defaultContactPerson.sourceName}~${defaultContactPerson.sourceEntityId}",
+        isActive = true)
+
+      val newRecord = defaultContactPerson.copy(
+        isGoldenRecord = true,
+        countryCode = "new",
+        concatId = s"new~${defaultContactPerson.sourceName}~${defaultContactPerson.sourceEntityId}"
+      )
+
+      val unchangedRecord = defaultContactPerson.copy(
+        isGoldenRecord = true,
+        countryCode = "unchanged",
+        concatId = s"unchanged~${defaultContactPerson.sourceName}~${defaultContactPerson.sourceEntityId}"
+      )
+
+      val notADeltaRecord = defaultContactPerson.copy(
+        isGoldenRecord = true,
+        countryCode = "notADelta",
+        concatId = s"notADelta~${defaultContactPerson.sourceName}~${defaultContactPerson.sourceEntityId}"
+      )
+
+      val previous: Dataset[ContactPerson] = spark.createDataset(Seq(
+        updatedRecord,
+        deletedRecord,
+        unchangedRecord,
+        notADeltaRecord
+      ))
+      val input: Dataset[ContactPerson] = spark.createDataset(Seq(
+        updatedRecord.copy(city = Some("Amsterdam")),
+        deletedRecord.copy(isActive = false),
+        unchangedRecord,
+        newRecord
+      ))
+
+      val result = SUT.transform(spark, input, previous)
+        .collect()
+        .sortBy(_.COUNTRY_CODE)
+
+      // println(result)
+      // result.length shouldBe 15
+      // result shouldBe spark.emptyDataset[ContactPerson]
+      // result.map(_.CP_ORIG_INTEGRATION_ID) shouldBe spark.emptyDataset[ContactPerson]
+      info(result.map(_.CP_ORIG_INTEGRATION_ID))
+      // result.map(_.CP_LNKD_INTEGRATION_ID) shouldBe spark.emptyDataset[ContactPerson]
+      // result.map(_.OPR_ORIG_INTEGRATION_ID) shouldBe spark.emptyDataset[ContactPerson]
+      assert(result.head.COUNTRY_CODE == Some(s"deleted"))
+      assert(result.head.DELETE_FLAG == Some("1"))
+      assert(result(1).COUNTRY_CODE == Some("deleted"))
+      assert(result(2).COUNTRY_CODE == Some("deleted"))
+      assert(result(2).CITY.contains(Some("Melbourne")))
+    }
+  }
+
   describe("contact person acm converter") {
-    it("should convert a domain operator correctly into an acm converter") {
+    it("should convert a domain contact person correctly into an acm converter") {
       import spark.implicits._
 
       val input: Dataset[ContactPerson] = spark.createDataset(Seq(defaultContactPerson.copy(isGoldenRecord = true)))
-      val result = SUT.transform(spark, input)
+      val result = SUT.createUfsContactPersons(spark, input)
 
       result.count() shouldBe 1
 
