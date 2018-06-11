@@ -19,7 +19,7 @@ object ContactPersonAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     val dailyUfsContactPersons = createUfsContactPersons(spark, contactPersons)
     val allPreviousUfsContactPersons = createUfsContactPersons(spark, previousIntegrated)
 
-    integrate[UFSRecipient](spark, dailyUfsContactPersons, allPreviousUfsContactPersons, "CP_LNKD_INTEGRATION_ID")
+    integrate[UFSRecipient](spark, dailyUfsContactPersons, allPreviousUfsContactPersons, "CP_ORIG_INTEGRATION_ID")
   }
 
   override private[spark] def defaultConfig = DefaultWithDbAndDeltaConfig()

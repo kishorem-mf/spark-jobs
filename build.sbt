@@ -15,9 +15,10 @@ depType := {
   println(s"$sparkDependencyType")
 }
 
+val flags = Seq(Tests.Argument("-oD"))
 Defaults.itSettings
-Test / testOptions += Tests.Argument("-oD")
-IntegrationTest / testOptions += Tests.Argument("-oD")
+Test            / testOptions ++= flags
+IntegrationTest / testOptions ++= flags
 
 libraryDependencies ++= Seq(
   "org.apache.spark"        %% "spark-core"          % sparkVersion  % sparkDependencyType excludeAll ExclusionRule(organization = "org.scalatest"),

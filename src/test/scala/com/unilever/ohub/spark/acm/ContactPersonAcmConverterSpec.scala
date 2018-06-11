@@ -61,15 +61,10 @@ class ContactPersonAcmConverterSpec extends SparkJobSpec with TestContactPersons
         .collect()
         .sortBy(_.COUNTRY_CODE)
 
-      // println(result)
-      // result.length shouldBe 15
-      // result shouldBe spark.emptyDataset[ContactPerson]
-      // result.map(_.CP_ORIG_INTEGRATION_ID) shouldBe spark.emptyDataset[ContactPerson]
-      info(result.map(_.CP_ORIG_INTEGRATION_ID))
-      // result.map(_.CP_LNKD_INTEGRATION_ID) shouldBe spark.emptyDataset[ContactPerson]
-      // result.map(_.OPR_ORIG_INTEGRATION_ID) shouldBe spark.emptyDataset[ContactPerson]
-      assert(result.head.COUNTRY_CODE == Some(s"deleted"))
-      assert(result.head.DELETE_FLAG == Some("1"))
+      info(result.toString)
+      result.length shouldBe 3
+      assert(result(0).COUNTRY_CODE == Some(s"deleted"))
+      assert(result(0).DELETE_FLAG == Some("1"))
       assert(result(1).COUNTRY_CODE == Some("deleted"))
       assert(result(2).COUNTRY_CODE == Some("deleted"))
       assert(result(2).CITY.contains(Some("Melbourne")))
