@@ -34,8 +34,19 @@ trait ProductEmptyParquetWriter extends EmptyParquetWriter {
     import com.unilever.ohub.spark.domain.entity.Product
     import spark.implicits._
 
-    val operators = spark.createDataset[Product](Seq[Product]())
+    val products = spark.createDataset[Product](Seq[Product]())
 
-    storage.writeToParquet(operators, location)
+    storage.writeToParquet(products, location)
+  }
+}
+
+trait OrderLineEmptyParquetWriter extends EmptyParquetWriter {
+  override def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit = {
+    import com.unilever.ohub.spark.domain.entity.OrderLine
+    import spark.implicits._
+
+    val orderlines = spark.createDataset[OrderLine](Seq[OrderLine]())
+
+    storage.writeToParquet(orderlines, location)
   }
 }

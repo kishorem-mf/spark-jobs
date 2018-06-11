@@ -1,6 +1,7 @@
 package com.unilever.ohub.spark.tsv2parquet
 
 import java.sql.Timestamp
+import java.util.UUID
 
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
@@ -14,6 +15,14 @@ trait DomainTransformFunctions { self: DomainTransformer ⇒
     val countryCode: String = optionalValue(countryCodeColumn)(row).get
     val sourceName: String = optionalValue(sourceNameColumn)(row).get
     val sourceEntityId: String = optionalValue(sourceEntityIdColumn)(row).get
+
+    DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
+  }
+
+  def generateConcatId(countryCodeColumn: String, sourceNameColumn: String)(implicit row: Row): String = {
+    val countryCode: String = optionalValue(countryCodeColumn)(row).get
+    val sourceName: String = optionalValue(sourceNameColumn)(row).get
+    val sourceEntityId: String = UUID.randomUUID().toString
 
     DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
   }
