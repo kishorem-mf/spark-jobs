@@ -12,7 +12,7 @@ class OrderLineConvertorSpec extends CsvDomainGateKeeperSpec[OrderLine] with Tes
 
   describe("file interface product converter") {
     it("should convert a product correctly from a valid file interface csv input") {
-      val inputFile = "src/test/resources/FILE_PRODUCTS.csv"
+      val inputFile = "src/test/resources/FILE_ORDERS.csv"
       val config = DomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = "‰")
 
       runJobWith(config) { actualDataSet ⇒
@@ -20,22 +20,22 @@ class OrderLineConvertorSpec extends CsvDomainGateKeeperSpec[OrderLine] with Tes
 
         val actualOrderLine = actualDataSet.head
         val expectedOrderLine = defaultOrderLine.copy(
-          concatId = defaultOrderLine.concatId,
+          concatId = "AU~WUFOO~O1234",
           countryCode = "AU",
           dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00")),
           dateUpdated = Some(Timestamp.valueOf("2015-06-30 13:48:00")),
           isActive = true,
           isGoldenRecord = true,
           ohubId = actualOrderLine.ohubId,
-          sourceEntityId = "P1234",
+          sourceEntityId = "O1234",
           sourceName = "WUFOO",
           ohubCreated = actualOrderLine.ohubCreated,
           ohubUpdated = actualOrderLine.ohubUpdated,
-          orderConcatId = Some("AU~WUFOO~P1234"),
+          orderConcatId = Some("AU~WUFOO~O1234"),
           productConcatId = Some("P1234"),
-          quantityOfUnits = Some(6),
-          amount = Some(10),
-          pricePerUnit = Some(5),
+          quantityOfUnits = Some(6L),
+          amount = Some(BigDecimal(10)),
+          pricePerUnit = Some(BigDecimal(5)),
           currency = Some("AUD")
         )
 

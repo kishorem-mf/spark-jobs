@@ -18,6 +18,7 @@ object DomainGateKeeper {
       inputFile: String = "path-to-input-file",
       outputFile: String = "path-to-output-file",
       fieldSeparator: String = "field-separator",
+      deduplicateOnConcatId: Boolean = true,
       strictIngestion: Boolean = true,
       showErrorSummary: Boolean = true,
       postgressUrl: String = "postgress-url",
@@ -59,7 +60,10 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       } text "fieldSeparator is a string property"
       opt[Boolean]("strictIngestion") optional () action { (x, c) ⇒
         c.copy(strictIngestion = x)
-      } text "strictIngestion is a boolean property"
+      } text "fieldSeparator is a string property"
+      opt[Boolean]("deduplicateOnConcatId") optional () action { (x, c) ⇒
+        c.copy(deduplicateOnConcatId = x)
+      } text "deduplicateOnConcatId is a boolean property"
       opt[Boolean]("showErrorSummary") optional () action { (x, c) ⇒
         c.copy(showErrorSummary = x)
       } text "showErrorSummary is a boolean property"
@@ -79,7 +83,6 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       version("1.0")
       help("help") text "help text"
     }
-
   private[spark] def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit
 
   protected def read(spark: SparkSession, storage: Storage, config: DomainConfig): Dataset[RowType]
@@ -139,12 +142,18 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
 
     // deduplicate incoming domain entities by selecting the 'newest' entity per unique concatId.
     val w = Window.partitionBy($"concatId").orderBy($"dateUpdated".desc_nulls_last)
-    val domainEntities: Dataset[DomainType] = result
+    val domainEntitiesMapped: Dataset[DomainType] = result
       .filter(_.isRight).map(_.right.get)
-      .withColumn("rn", row_number.over(w))
-      .filter($"rn" === 1)
-      .drop($"rn")
-      .as[DomainType]
+
+    val domainEntities = if (config.deduplicateOnConcatId) {
+      domainEntitiesMapped
+        .withColumn("rn", row_number.over(w))
+        .filter($"rn" === 1)
+        .drop($"rn")
+        .as[DomainType]
+    } else {
+      domainEntitiesMapped
+    }
 
     if (domainEntities.head(1).isEmpty) {
       // note: add a check on #rows in raw, only if #rows is 0 an empty parquet file should be written

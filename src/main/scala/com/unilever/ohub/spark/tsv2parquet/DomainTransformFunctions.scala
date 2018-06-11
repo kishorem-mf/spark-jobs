@@ -19,14 +19,6 @@ trait DomainTransformFunctions { self: DomainTransformer ⇒
     DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
   }
 
-  def generateConcatId(countryCodeColumn: String, sourceNameColumn: String)(implicit row: Row): String = {
-    val countryCode: String = optionalValue(countryCodeColumn)(row).get
-    val sourceName: String = optionalValue(sourceNameColumn)(row).get
-    val sourceEntityId: String = UUID.randomUUID().toString
-
-    DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
-  }
-
   def currentTimestamp() = new Timestamp(System.currentTimeMillis())
 
   def countryName(countryCode: String): Option[String] = dataProvider.countries.get(countryCode).map(_.countryName)
