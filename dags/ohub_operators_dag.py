@@ -114,7 +114,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
     convert_to_acm = acm_convert_and_move(
         schema=schema,
         cluster_name=cluster_name,
-        clazz='ContactPerson',
+        clazz='Operator',
         acm_file_prefix='UFS_OPERATORS',
         previous_integrated=integrated_bucket.format(date=two_day_ago, fn=schema),
         send_postgres_config=True
