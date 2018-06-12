@@ -26,7 +26,7 @@ case class OrderLine(
     ohubUpdated: Timestamp,
     // specific fields
     orderConcatId: Option[String],
-    productConcatId: Option[String],
+    productConcatId: String,
     quantityOfUnits: Option[Long],
     amount: Option[BigDecimal],
     pricePerUnit: Option[BigDecimal],

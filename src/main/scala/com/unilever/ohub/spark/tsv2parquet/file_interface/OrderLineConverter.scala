@@ -33,7 +33,7 @@ object OrderLineConverter extends FileDomainGateKeeper[OrderLine] with OrderLine
       ohubUpdated                     = ohubCreated,
       // specific fields
       orderConcatId                   = Some(orderConcatId),
-      productConcatId                 = optional(  "REF_PRODUCT_ID",            "productConcatId"),
+      productConcatId                 = mandatory( "REF_PRODUCT_ID",            "productConcatId"),
       comment                         = None,
       quantityOfUnits                 = optional(  "QUANTITY",                  "quantityOfUnits",        parseLongRangeOption).get,
       amount                          = optional(  "ORDER_LINE_VALUE",          "amount",                 parseBigDecimalUnsafe),
