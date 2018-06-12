@@ -32,7 +32,7 @@ class OrderLineConvertorSpec extends CsvDomainGateKeeperSpec[OrderLine] with Tes
           ohubCreated = actualOrderLine.ohubCreated,
           ohubUpdated = actualOrderLine.ohubUpdated,
           orderConcatId = Some("AU~WUFOO~O1234"),
-          productConcatId = Some("P1234"),
+          productConcatId = "P1234",
           quantityOfUnits = Some(6L),
           amount = Some(BigDecimal(10)),
           pricePerUnit = Some(BigDecimal(5)),

@@ -22,7 +22,7 @@ trait TestOrderLines {
     ohubUpdated = new Timestamp(System.currentTimeMillis()),
     // specific fields
     orderConcatId = None,
-    productConcatId = None,
+    productConcatId = "product-concat-id",
     quantityOfUnits= None,
     amount= None,
     pricePerUnit= None,
