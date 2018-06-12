@@ -1,6 +1,7 @@
 package com.unilever.ohub.spark.tsv2parquet
 
 import java.sql.Timestamp
+import java.util.UUID
 
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
