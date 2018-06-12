@@ -48,7 +48,7 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
                                                                  fn=schema,
                                                                  channel='file_interface'),
                            '--exactMatchOutputFile', intermediate_bucket.format(date='{{ds}}',
-                                                                                fn='{}_exact_match'.format(schema)),
+                                                                                fn='{}_exact_matches'.format(schema)),
                            '--leftOversOutputFile', intermediate_bucket.format(date='{{ds}}',
                                                                                fn='{}_left_overs'.format(
                                                                                    schema))] + postgres_config
@@ -100,7 +100,7 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.combining.ContactPersonCombining",
             'parameters': ['--integratedUpdated', intermediate_bucket.format(date='{{ds}}',
-                                                                             fn='{}_exact_match'.format(schema)),
+                                                                             fn='{}_exact_matches'.format(schema)),
                            '--newGolden', intermediate_bucket.format(date='{{ds}}',
                                                                      fn=schema,
                                                                      channel='*'),
@@ -142,6 +142,7 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
     )
 
     cluster_up >> contact_persons_file_interface_to_parquet >> contact_persons_exact_match >> begin_fuzzy_matching
+
     for t in matching_tasks:
         begin_fuzzy_matching >> t >> end_fuzzy_matching
     end_fuzzy_matching >> join_contact_persons >> contact_person_combining >> operators_integrated_sensor >> contact_person_referencing
