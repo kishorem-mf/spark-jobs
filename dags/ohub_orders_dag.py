@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from airflow import DAG
-
+from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator
 from ohub_dag_config import default_args, pipeline_without_matching, databricks_conn_id, jar, \
     intermediate_bucket, one_day_ago, ingested_bucket, integrated_bucket, two_day_ago
@@ -39,4 +39,16 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
                            '--outputFile', integrated_bucket.format(date=one_day_ago, fn=schema)]
         })
 
-    tasks['file_interface_to_parquet'] >> merge >> tasks['convert_to_acm']
+    operators_integrated_sensor = ExternalTaskSensorOperator(
+        task_id='operators_integrated_sensor',
+        external_dag_id='ohub_operators',
+        external_task_id='operators_update_golden_records'
+    )
+
+    contactpersons_integrated_sensor = ExternalTaskSensorOperator(
+        task_id='contactpersons_integrated_sensor',
+        external_dag_id='ohub_contactpersons',
+        external_task_id='contact_person_referencing'
+    )
+
+    tasks['file_interface_to_parquet'] >> operators_integrated_sensor >> contactpersons_integrated_sensor >> merge >> tasks['convert_to_acm']
