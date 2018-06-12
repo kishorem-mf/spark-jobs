@@ -6,9 +6,9 @@ from custom_operators.databricks_functions import DatabricksSubmitRunOperator
 from ohub_dag_config import default_args, pipeline_without_matching, databricks_conn_id, jar, \
     intermediate_bucket, one_day_ago, ingested_bucket, integrated_bucket, two_day_ago
 
-schema = 'products'
-clazz = 'Product'
-acm_tbl = 'PRODUCTS'
+schema = 'order_lines'
+clazz = 'OrderLine'
+acm_tbl = 'ORDERLINES'
 
 interval = '@daily'
 default_args.update(
