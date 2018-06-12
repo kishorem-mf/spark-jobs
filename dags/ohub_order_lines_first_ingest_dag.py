@@ -19,4 +19,5 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         schema=schema,
         cluster_name=cluster_name,
         clazz=clazz,
-        acm_file_prefix='UFS_ORDERLINES')
+        acm_file_prefix='UFS_ORDERLINES',
+        deduplicate_on_concat_id=False)

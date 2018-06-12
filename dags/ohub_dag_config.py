@@ -86,7 +86,10 @@ postgres_config = [
 
 def ingest_task(schema, channel, clazz,
                 cluster_name,
-                field_separator=';'):
+                field_separator=';',
+                deduplicate_on_concat_id=True):
+    dedup = 'true' if deduplicate_on_concat_id else 'false'
+
     return DatabricksSubmitRunOperator(
         task_id="{}_file_interface_to_parquet".format(schema),
         cluster_name=cluster_name,
@@ -99,7 +102,8 @@ def ingest_task(schema, channel, clazz,
             'parameters': ['--inputFile', raw_bucket.format(date=one_day_ago, schema=schema, channel=channel),
                            '--outputFile', ingested_bucket.format(date=one_day_ago, fn=schema, channel=channel),
                            '--fieldSeparator', field_separator,
-                           '--strictIngestion', "false"] + postgres_config
+                           '--strictIngestion', "false",
+                           '--deduplicateOnConcatId', dedup] + postgres_config
         }
     )
 
@@ -226,7 +230,7 @@ def acm_convert_and_move(schema, cluster_name, clazz, acm_file_prefix, previous_
     return convert_to_acm
 
 
-def pipeline_without_matching(schema, cluster_name, clazz, acm_file_prefix, enable_acm_delta=False):
+def pipeline_without_matching(schema, cluster_name, clazz, acm_file_prefix, enable_acm_delta=False, deduplicate_on_concat_id=True):
     cluster_up = create_cluster(schema, default_cluster_config(cluster_name))
     cluster_down = terminate_cluster(schema, cluster_name)
 
@@ -237,7 +241,8 @@ def pipeline_without_matching(schema, cluster_name, clazz, acm_file_prefix, enab
         channel='file_interface',
         clazz="com.unilever.ohub.spark.tsv2parquet.file_interface.{}Converter".format(clazz),
         field_separator=u"\u2030",
-        cluster_name=cluster_name
+        cluster_name=cluster_name,
+        deduplicate_on_concat_id=deduplicate_on_concat_id
     )
 
     convert_to_acm = acm_convert_and_move(
