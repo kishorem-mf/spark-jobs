@@ -46,7 +46,12 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     }
     val transformed = transform(spark, channelMappings, operators, previousIntegrated)
 
-    storage.writeToSingleCsv(transformed, config.outputFile, delim = outputCsvDelimiter, quote = outputCsvQuote)(log)
+    storage.writeToSingleCsv(
+      ds = transformed,
+      outputFile = config.outputFile,
+      delim = outputCsvDelimiter,
+      quote = outputCsvQuote
+    )
   }
 
   def createUfsOperators(spark: SparkSession, operators: Dataset[Operator], channelMappings: Dataset[ChannelMapping]): Dataset[UFSOperator] = {
