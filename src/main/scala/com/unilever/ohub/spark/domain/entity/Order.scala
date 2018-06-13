@@ -26,7 +26,7 @@ case class Order(
     ohubCreated: Timestamp,
     ohubUpdated: Timestamp,
     // specific fields
-    `type`: Option[String],
+    `type`: String,
     campaignCode: Option[String],
     campaignName: Option[String],
     comment: Option[String],
@@ -36,9 +36,9 @@ case class Order(
     distributorLocation: Option[String],
     distributorName: Option[String],
     distributorOperatorId: Option[String],
-    operatorConcatId: Option[String],
+    operatorConcatId: String,
     operatorOhubId: Option[String],
-    transactionDate: Option[Timestamp],
+    transactionDate: Timestamp,
     vat: Option[BigDecimal],
     // other fields
     additionalFields: Map[String, String],

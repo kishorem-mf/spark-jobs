@@ -50,12 +50,16 @@ object OrderLineAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     import spark.implicits._
 
     orderLines.map(orderLine ⇒ UFSOrderLine(
-      ORDER_ID = orderLine.concatId,
-      ORDERLINE_ID = UUID.randomUUID().toString,
-      PRD_INTEGRATION_ID = orderLine.productConcatId,
+      ORDERLINE_ID = orderLine.concatId,
+      ORD_INTEGRATION_ID = orderLine.orderConcatId,
       QUANTITY = orderLine.quantityOfUnits,
-      AMOUNT = orderLine.amount.map(_.setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble),
-      SAMPLE_ID = ""
+      AMOUNT = orderLine.amount, //.map(_.setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble),
+      LOYALTY_POINTS = None, // Some(BigDecimal(0.0))
+      PRD_INTEGRATION_ID = orderLine.productConcatId,
+      SAMPLE_ID = "",
+      CAMPAIGN_LABEL = None,
+      COMMENTS = orderLine.comment,
+      DELETED_FLAG = boolAsString(!orderLine.isActive)
     ))
   }
 

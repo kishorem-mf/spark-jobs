@@ -5,6 +5,7 @@ import com.unilever.ohub.spark.acm.model.UFSOrder
 import com.unilever.ohub.spark.domain.entity.{ Order, OrderLine }
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
+import org.apache.spark.sql.functions._
 import scopt.OptionParser
 
 case class OrderAcmConverterConfig(
@@ -17,6 +18,8 @@ case class OrderAcmConverterConfig(
     postgressPassword: String = "postgress-password",
     postgressDB: String = "postgress-db"
 ) extends SparkJobConfig
+
+case class OrderLineAggregation(id: String, curr: String, total: Double)
 
 trait SparkJobWithOrderAcmConverterConfig extends SparkJob[OrderAcmConverterConfig] {
   override private[spark] def defaultConfig = OrderAcmConverterConfig()
@@ -91,35 +94,55 @@ object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig
   def createUfsOrders(spark: SparkSession, orders: Dataset[Order], orderLines: Dataset[OrderLine]): Dataset[UFSOrder] = {
     import spark.implicits._
 
-    orders.map(order ⇒ {
-      val lines = orderLines.filter(_.orderConcatId == order.concatId)
-      UFSOrder(
-        ORDER_ID = order.concatId,
-        COUNTRY_CODE = Some(order.countryCode),
-        ORDER_TYPE = order.`type`,
-        CP_LNKD_INTEGRATION_ID = order.contactPersonOhubId,
-        OPR_LNKD_INTEGRATION_ID = order.operatorOhubId,
-        CAMPAIGN_CODE = order.campaignCode,
-        CAMPAIGN_NAME = order.campaignName,
-        WHOLESALER = order.distributorId,
-        ORDER_TOKEN = "",
-        TRANSACTION_DATE = order.transactionDate.map(_.formatted(dateFormat)),
-        ORDER_AMOUNT = Some(
-          lines
-            .map(_.amount.getOrElse(BigDecimal(0)))
-            .reduce((a, b) ⇒ a + b)
-            .toDouble
-        ),
-        ORDER_AMOUNT_CURRENCY_CODE = lines.first.currency,
-        DELIVERY_STREET = "",
-        DELIVERY_HOUSENUMBER = "",
-        DELIVERY_ZIPCODE = "",
-        DELIVERY_CITY = "",
-        DELIVERY_STATE = "",
-        DELIVERY_COUNTRY = "",
-        DELIVERY_PHONE = ""
-      )
-    })
+    val aggs = orderLines
+      .groupBy("orderConcatId")
+      .agg(
+        first($"currency").as("curr"),
+        sum($"amount").as("total"))
+      .as[OrderLineAggregation]
+    orders.joinWith(aggs, orders("concatId") === aggs("orderContactId"), "left")
+      .as[(Order, OrderLineAggregation)]
+      .map {
+        case (order, OrderLineAggregation(id, currency, total)) ⇒ UFSOrder(
+          ORDER_ID = order.concatId,
+          REF_ORDER_ID = None,
+          COUNTRY_CODE = order.countryCode,
+          ORDER_TYPE = order.`type`,
+          CP_LNKD_INTEGRATION_ID = order.contactPersonOhubId,
+          OPR_LNKD_INTEGRATION_ID = order.operatorConcatId,
+          CAMPAIGN_CODE = order.campaignCode,
+          CAMPAIGN_NAME = order.campaignName,
+          WHOLESALER = order.distributorId,
+          WHOLESALER_ID = None,
+          WHOLESALER_CUSTOMER_NUMBER = None,
+          WHOLESALER_LOCATION = None,
+          ORDER_TOKEN = None,
+          ORDER_EMAIL_ADDRESS = None,
+          ORDER_PHONE_NUMBER = None,
+          ORDER_MOBILE_PHONE_NUMBER = None,
+          TRANSACTION_DATE = order.transactionDate.formatted(dateFormat),
+          ORDER_AMOUNT = total,
+          ORDER_AMOUNT_CURRENCY_CODE = currency,
+          DELIVERY_STREET = "",
+          DELIVERY_HOUSENUMBER = "",
+          DELIVERY_ZIPCODE = "",
+          DELIVERY_CITY = "",
+          DELIVERY_STATE = "",
+          DELIVERY_COUNTRY = "",
+          DELIVERY_PHONE = "",
+          INVOICE_NAME = None,
+          INVOICE_STREET = None,
+          INVOICE_HOUSE_NUMBER = None,
+          INVOICE_HOUSE_NUMBER_EXT = None,
+          INVOICE_ZIPCODE = None,
+          INVOICE_CITY = None,
+          INVOICE_STATE = None,
+          INVOICE_COUNTRY = None,
+          COMMENTS = order.comment,
+          VAT = order.vat.map(_.toString),
+          DELETED_FLAG = boolAsString(!order.isActive)
+        )
+      }
   }
 
 }
