@@ -23,7 +23,8 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         cluster_name=cluster_name,
         clazz=clazz,
         acm_file_prefix='UFS_{}'.format(acm_tbl),
-        enable_acm_delta=True)
+        enable_acm_delta=True,
+        pars=['--orderLineFile', integrated_bucket.format(date=one_day_ago, fn='order_lines')])
 
     merge = DatabricksSubmitRunOperator(
         task_id='{}_merge'.format(schema),
@@ -51,4 +52,10 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         external_task_id='contact_person_referencing'
     )
 
-    tasks['file_interface_to_parquet'] >> operators_integrated_sensor >> contactpersons_integrated_sensor >> merge >> tasks['convert_to_acm']
+    order_lines_integrated_sensor = ExternalTaskSensorOperator(
+        task_id='order_lines_integrated_sensor',
+        external_dag_id='ohub_order_lines',
+        external_task_id='order_lines_merge'
+    )
+
+    tasks['file_interface_to_parquet'] >> operators_integrated_sensor >> contactpersons_integrated_sensor >> merge >> order_lines_integrated_sensor >> tasks['convert_to_acm']
