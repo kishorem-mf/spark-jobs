@@ -42,13 +42,13 @@ object OrderMerging extends SparkJob[OrderMergingConfig] {
         }
 
     allOrders
-      .joinWith(operators, $"operatorConcatId" === $"concatId", "left")
+      .joinWith(operators, $"operatorConcatId" === operators("concatId"), "left")
       .map {
         case (order, op) ⇒
           if (op == null) order
           else order.copy(operatorOhubId = op.ohubId)
       }
-      .joinWith(contactPersons, $"contactPersonConcatId" === $"concatId", "left")
+      .joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), "left")
       .map {
         case (order, cpn) ⇒
           if (cpn == null) order

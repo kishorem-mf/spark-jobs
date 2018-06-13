@@ -31,40 +31,40 @@ class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators w
         ohubId = Some("oldId"),
         countryCode = "updated",
         concatId = s"updated~${defaultOrder.sourceName}~${defaultOrder.sourceEntityId}",
-        operatorConcatId = Some("op1"),
-        contactPersonConcatId = Some("cpn1"),
+        operatorConcatId = Some("country-code~op1~source-entity-id"),
+        contactPersonConcatId = Some("AU~WUFOO~cpn1"),
         comment = Some("Calve"))
 
       val deletedRecord = defaultOrder.copy(
         isGoldenRecord = true,
         countryCode = "deleted",
         concatId = s"deleted~${defaultOrder.sourceName}~${defaultOrder.sourceEntityId}",
-        operatorConcatId = Some("op2"),
-        contactPersonConcatId = Some("cpn2"),
+        operatorConcatId = Some("country-code~op2~source-entity-id"),
+        contactPersonConcatId = Some("AU~WUFOO~cpn2"),
         isActive = true)
 
       val newRecord = defaultOrder.copy(
         isGoldenRecord = true,
         countryCode = "new",
         concatId = s"new~${defaultOrder.sourceName}~${defaultOrder.sourceEntityId}",
-        operatorConcatId = Some("op3"),
-        contactPersonConcatId = Some("cpn3")
+        operatorConcatId = Some("country-code~op3~source-entity-id"),
+        contactPersonConcatId = Some("AU~WUFOO~cpn3")
       )
 
       val unchangedRecord = defaultOrder.copy(
         isGoldenRecord = true,
         countryCode = "unchanged",
         concatId = s"unchanged~${defaultOrder.sourceName}~${defaultOrder.sourceEntityId}",
-        operatorConcatId = Some("op4"),
-        contactPersonConcatId = Some("cpn4")
+        operatorConcatId = Some("country-code~op4~source-entity-id"),
+        contactPersonConcatId = Some("AU~WUFOO~cpn4")
       )
 
       val notADeltaRecord = defaultOrder.copy(
         isGoldenRecord = true,
         countryCode = "notADelta",
         concatId = s"notADelta~${defaultOrder.sourceName}~${defaultOrder.sourceEntityId}",
-        operatorConcatId = Some("op5"),
-        contactPersonConcatId = Some("cpn5")
+        operatorConcatId = Some("country-code~op5~source-entity-id"),
+        contactPersonConcatId = Some("AU~WUFOO~cpn5")
       )
 
       val previous: Dataset[Order] = spark.createDataset(Seq(
