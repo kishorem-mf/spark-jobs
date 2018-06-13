@@ -12,10 +12,10 @@ object ProductAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
 
   def transform(
     spark: SparkSession,
-    operators: Dataset[Product],
+    products: Dataset[Product],
     previousIntegrated: Dataset[Product]
   ): Dataset[UFSProduct] = {
-    val dailyUfsProducts = createUfsProducts(spark, operators)
+    val dailyUfsProducts = createUfsProducts(spark, products)
     val allPreviousUfsProducts = createUfsProducts(spark, previousIntegrated)
 
     integrate[UFSProduct](spark, dailyUfsProducts, allPreviousUfsProducts, "PRD_INTEGRATION_ID")

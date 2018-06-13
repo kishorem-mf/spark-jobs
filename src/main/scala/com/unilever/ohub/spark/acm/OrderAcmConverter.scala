@@ -9,35 +9,86 @@ import scopt.OptionParser
 
 case class OrderAcmConverterConfig(
     inputFile: String = "path-to-input-file",
+    outputFile: String = "path-to-output-file",
+    previousIntegrated: Option[String] = None,
     orderLineFile: String = "path-to-order-line-file",
-    outputFile: String = "path-to-output-file"
+    postgressUrl: String = "postgress-url",
+    postgressUsername: String = "postgress-username",
+    postgressPassword: String = "postgress-password",
+    postgressDB: String = "postgress-db"
 ) extends SparkJobConfig
 
 trait SparkJobWithOrderAcmConverterConfig extends SparkJob[OrderAcmConverterConfig] {
   override private[spark] def defaultConfig = OrderAcmConverterConfig()
 
   override private[spark] def configParser(): OptionParser[OrderAcmConverterConfig] =
-    new scopt.OptionParser[OrderAcmConverterConfig]("Spark job default") {
-      head("run a spark job with default config.", "1.0")
+    new scopt.OptionParser[OrderAcmConverterConfig]("ACM converter") {
+      head("converts domain entity into ufs entity.", "1.0")
       opt[String]("inputFile") required () action { (x, c) ⇒
         c.copy(inputFile = x)
       } text "inputFile is a string property"
+      opt[String]("previousIntegrated") optional () action { (x, c) ⇒
+        c.copy(previousIntegrated = Option(x))
+      } text "previousIntegrated is a string property"
       opt[String]("orderLineFile") required () action { (x, c) ⇒
         c.copy(orderLineFile = x)
       } text "orderLineFile is a string property"
       opt[String]("outputFile") required () action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
+      opt[String]("postgressUrl") required () action { (x, c) ⇒
+        c.copy(postgressUrl = x)
+      } text "postgressUrl is a string property"
+      opt[String]("postgressUsername") required () action { (x, c) ⇒
+        c.copy(postgressUsername = x)
+      } text "postgressUsername is a string property"
+      opt[String]("postgressPassword") required () action { (x, c) ⇒
+        c.copy(postgressPassword = x)
+      } text "postgressPassword is a string property"
+      opt[String]("postgressDB") required () action { (x, c) ⇒
+        c.copy(postgressDB = x)
+      } text "postgressDB is a string property"
 
       version("1.0")
       help("help") text "help text"
     }
 }
 
-object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig with AcmConverter {
-  private val dateFormat = "yyyy-MM-dd HH:mm:ss"
+object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig
+  with DeltaFunctions with AcmTransformationFunctions with AcmConverter {
 
-  def transform(spark: SparkSession, orders: Dataset[Order], orderLines: Dataset[OrderLine]): Dataset[UFSOrder] = {
+  def transform(
+    spark: SparkSession,
+    orders: Dataset[Order],
+    previousIntegrated: Dataset[Order],
+    orderLines: Dataset[OrderLine]
+  ): Dataset[UFSOrder] = {
+    val dailyUfsOrders = createUfsOrders(spark, orders, orderLines)
+    val allPreviousUfsOrders = createUfsOrders(spark, previousIntegrated, orderLines)
+
+    integrate[UFSOrder](spark, dailyUfsOrders, allPreviousUfsOrders, "ORDERLINE_ID")
+  }
+
+  override def run(spark: SparkSession, config: OrderAcmConverterConfig, storage: Storage): Unit = {
+    import spark.implicits._
+
+    log.info(s"Generating orders ACM csv file from [${config.inputFile}] and [${config.orderLineFile}] to [${config.outputFile}]")
+
+    val orders = storage.readFromParquet[Order](config.inputFile)
+    val orderLines = storage.readFromParquet[OrderLine](config.orderLineFile)
+    val previousIntegrated = config.previousIntegrated match {
+      case Some(s) ⇒ storage.readFromParquet[Order](s)
+      case None ⇒
+        log.warn(s"No existing integrated file specified -- regarding as initial load.")
+        spark.emptyDataset[Order]
+    }
+
+    val transformed = transform(spark, orders, previousIntegrated, orderLines)
+
+    storage.writeToSingleCsv(transformed, config.outputFile, delim = outputCsvDelimiter, quote = outputCsvQuote)(log)
+  }
+
+  def createUfsOrders(spark: SparkSession, orders: Dataset[Order], orderLines: Dataset[OrderLine]): Dataset[UFSOrder] = {
     import spark.implicits._
 
     orders.map(order ⇒ {
@@ -71,15 +122,4 @@ object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig with AcmCon
     })
   }
 
-  override def run(spark: SparkSession, config: OrderAcmConverterConfig, storage: Storage): Unit = {
-    import spark.implicits._
-
-    log.info(s"Generating orders ACM csv file from [${config.inputFile}] and [${config.orderLineFile}] to [${config.outputFile}]")
-
-    val orders = storage.readFromParquet[Order](config.inputFile)
-    val orderLines = storage.readFromParquet[OrderLine](config.orderLineFile)
-    val transformed = transform(spark, orders, orderLines)
-
-    storage.writeToSingleCsv(transformed, config.outputFile, delim = outputCsvDelimiter, quote = outputCsvQuote)
-  }
 }
