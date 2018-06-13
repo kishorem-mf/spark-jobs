@@ -12,7 +12,7 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines {
 
   private val SUT = OrderLineMerging
 
-  describe("product merging") {
+  describe("orderLine merging") {
     it("should take newest data if available while retaining ohubId") {
       val updatedRecord = defaultOrderLine.copy(
         isGoldenRecord = true,
