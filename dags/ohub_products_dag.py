@@ -8,12 +8,13 @@ from ohub_dag_config import default_args, pipeline_without_matching, databricks_
 
 schema = 'products'
 clazz = 'Product'
+acm_tbl = 'PRODUCTS'
 
 interval = '@daily'
 default_args.update(
     {'start_date': datetime(2018, 6, 3)}
 )
-cluster_name = "ohub_products_{{ds}}"
+cluster_name = "ohub_" + schema + "_{{ds}}"
 
 with DAG('ohub_{}'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
@@ -21,10 +22,10 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         schema=schema,
         cluster_name=cluster_name,
         clazz=clazz,
-        acm_file_prefix='UFS_PRODUCTS',
+        acm_file_prefix='UFS_{}'.format(acm_tbl),
         enable_acm_delta=True)
 
-    merge_products = DatabricksSubmitRunOperator(
+    merge = DatabricksSubmitRunOperator(
         task_id='{}_merge'.format(schema),
         cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
@@ -32,10 +33,10 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
             {'jar': jar}
         ],
         spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.merging.ProductMerging",
-            'parameters': ['--products', ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=schema),
+            'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(clazz),
+            'parameters': ['--{}'.format(schema), ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=schema),
                            '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=schema),
                            '--outputFile', integrated_bucket.format(date=one_day_ago, fn=schema)]
         })
 
-    tasks['file_interface_to_parquet'] >> merge_products >> tasks['convert_to_acm']
+    tasks['file_interface_to_parquet'] >> merge >> tasks['convert_to_acm']
