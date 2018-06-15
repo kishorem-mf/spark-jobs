@@ -53,8 +53,8 @@ object OrderLineAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
       ORDERLINE_ID = orderLine.concatId,
       ORD_INTEGRATION_ID = orderLine.orderConcatId,
       QUANTITY = orderLine.quantityOfUnits,
-      AMOUNT = orderLine.amount, //.map(_.setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble),
-      LOYALTY_POINTS = None, // Some(BigDecimal(0.0))
+      AMOUNT = orderLine.amount,
+      LOYALTY_POINTS = None,
       PRD_INTEGRATION_ID = orderLine.productConcatId,
       SAMPLE_ID = "",
       CAMPAIGN_LABEL = None,
