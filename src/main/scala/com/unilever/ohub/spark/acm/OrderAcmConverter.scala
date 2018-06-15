@@ -103,45 +103,50 @@ object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig
 
     orders.joinWith(aggs, orders("concatId") === aggs("orderConcatId"), "left")
       .map {
-        case (order, agg) ⇒ UFSOrder(
-          ORDER_ID = order.concatId,
-          REF_ORDER_ID = order.ohubId,
-          COUNTRY_CODE = order.countryCode,
-          ORDER_TYPE = order.`type`,
-          CP_LNKD_INTEGRATION_ID = order.contactPersonOhubId,
-          OPR_LNKD_INTEGRATION_ID = order.operatorConcatId,
-          CAMPAIGN_CODE = order.campaignCode,
-          CAMPAIGN_NAME = order.campaignName,
-          WHOLESALER = order.distributorId,
-          WHOLESALER_ID = None,
-          WHOLESALER_CUSTOMER_NUMBER = None,
-          WHOLESALER_LOCATION = None,
-          ORDER_TOKEN = None,
-          ORDER_EMAIL_ADDRESS = None,
-          ORDER_PHONE_NUMBER = None,
-          ORDER_MOBILE_PHONE_NUMBER = None,
-          TRANSACTION_DATE = order.transactionDate.formatted(dateFormat),
-          ORDER_AMOUNT = Option(agg).map(_.total).getOrElse(BigDecimal(0)),
-          ORDER_AMOUNT_CURRENCY_CODE = Option(agg).map(_.curr).getOrElse(""),
-          DELIVERY_STREET = "",
-          DELIVERY_HOUSENUMBER = "",
-          DELIVERY_ZIPCODE = "",
-          DELIVERY_CITY = "",
-          DELIVERY_STATE = "",
-          DELIVERY_COUNTRY = "",
-          DELIVERY_PHONE = "",
-          INVOICE_NAME = None,
-          INVOICE_STREET = None,
-          INVOICE_HOUSE_NUMBER = None,
-          INVOICE_HOUSE_NUMBER_EXT = None,
-          INVOICE_ZIPCODE = None,
-          INVOICE_CITY = None,
-          INVOICE_STATE = None,
-          INVOICE_COUNTRY = None,
-          COMMENTS = order.comment,
-          VAT = order.vat.map(_.toString),
-          DELETED_FLAG = boolAsString(!order.isActive)
-        )
+        case (order, agg) ⇒ {
+          if (agg == null) {
+            log.warn("no order lines found for order " + order.concatId)
+          }
+          UFSOrder(
+            ORDER_ID = order.concatId,
+            REF_ORDER_ID = order.ohubId,
+            COUNTRY_CODE = order.countryCode,
+            ORDER_TYPE = order.`type`,
+            CP_LNKD_INTEGRATION_ID = order.contactPersonOhubId,
+            OPR_LNKD_INTEGRATION_ID = order.operatorConcatId,
+            CAMPAIGN_CODE = order.campaignCode,
+            CAMPAIGN_NAME = order.campaignName,
+            WHOLESALER = order.distributorId,
+            WHOLESALER_ID = None,
+            WHOLESALER_CUSTOMER_NUMBER = None,
+            WHOLESALER_LOCATION = None,
+            ORDER_TOKEN = None,
+            ORDER_EMAIL_ADDRESS = None,
+            ORDER_PHONE_NUMBER = None,
+            ORDER_MOBILE_PHONE_NUMBER = None,
+            TRANSACTION_DATE = order.transactionDate.formatted(dateFormat),
+            ORDER_AMOUNT = Option(agg).map(_.total).getOrElse(BigDecimal(0)),
+            ORDER_AMOUNT_CURRENCY_CODE = Option(agg).map(_.curr).getOrElse(""),
+            DELIVERY_STREET = "",
+            DELIVERY_HOUSENUMBER = "",
+            DELIVERY_ZIPCODE = "",
+            DELIVERY_CITY = "",
+            DELIVERY_STATE = "",
+            DELIVERY_COUNTRY = "",
+            DELIVERY_PHONE = "",
+            INVOICE_NAME = None,
+            INVOICE_STREET = None,
+            INVOICE_HOUSE_NUMBER = None,
+            INVOICE_HOUSE_NUMBER_EXT = None,
+            INVOICE_ZIPCODE = None,
+            INVOICE_CITY = None,
+            INVOICE_STATE = None,
+            INVOICE_COUNTRY = None,
+            COMMENTS = order.comment,
+            VAT = order.vat.map(_.toString),
+            DELETED_FLAG = boolAsString(!order.isActive)
+          )
+        }
       }
   }
 
