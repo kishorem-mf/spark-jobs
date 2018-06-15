@@ -40,7 +40,7 @@ object ProductAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
 
     val transformed = transform(spark, products, previousIntegrated)
 
-    storage.writeToSingleCsv(transformed, config.outputFile, delim = outputCsvDelimiter, quote = outputCsvQuote)(log)
+    storage.writeToSingleCsv(transformed, config.outputFile, writeOptions)(log)
   }
 
   def createUfsProducts(spark: SparkSession, products: Dataset[Product]): Dataset[UFSProduct] = {

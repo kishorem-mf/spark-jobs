@@ -43,7 +43,7 @@ object OrderLineAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
 
     val transformed = transform(spark, orderLines, previousIntegrated)
 
-    storage.writeToSingleCsv(transformed, config.outputFile, delim = outputCsvDelimiter, quote = outputCsvQuote)(log)
+    storage.writeToSingleCsv(transformed, config.outputFile, writeOptions)
   }
 
   def createUfsOrderLines(spark: SparkSession, orderLines: Dataset[OrderLine]): Dataset[UFSOrderLine] = {

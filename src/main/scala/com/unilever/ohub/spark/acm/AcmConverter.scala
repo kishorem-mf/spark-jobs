@@ -2,6 +2,9 @@ package com.unilever.ohub.spark.acm
 
 trait AcmConverter {
 
-  val outputCsvDelimiter: String = "\u00B6"
-  val outputCsvQuote: String = ""
+  private val outputCsvDelimiter: String = "\u00B6"
+
+  val writeOptions = Map(
+    "delimiter" -> outputCsvDelimiter
+  )
 }

@@ -88,7 +88,7 @@ object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig
 
     val transformed = transform(spark, orders, previousIntegrated, orderLines)
 
-    storage.writeToSingleCsv(transformed, config.outputFile, delim = outputCsvDelimiter, quote = outputCsvQuote)(log)
+    storage.writeToSingleCsv(transformed, config.outputFile, writeOptions)
   }
 
   def createUfsOrders(spark: SparkSession, orders: Dataset[Order], orderLines: Dataset[OrderLine]): Dataset[UFSOrder] = {

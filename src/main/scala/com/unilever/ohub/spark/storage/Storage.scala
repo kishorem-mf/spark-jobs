@@ -17,8 +17,7 @@ trait Storage {
   def writeToSingleCsv(
     ds: Dataset[_],
     outputFile: String,
-    delim: String = ";",
-    quote: String = "\""
+    options: Map[String, String] = Map()
   )(implicit log: Logger): Unit
 
   def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
@@ -44,8 +43,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   def writeToSingleCsv(
     ds: Dataset[_],
     outputFile: String,
-    delim: String = ";",
-    quote: String = "\""
+    options: Map[String, String] = Map()
   )(implicit log: Logger): Unit = {
 
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
@@ -60,9 +58,6 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .mode(SaveMode.Overwrite)
       .option("encoding", "UTF-8")
       .option("header", "true")
-      .option("quoteAll", "true")
-      .option("delimiter", delim)
-      .option("quote", quote)
       .csv(temporaryPath.toString)
 
     createSingleFileFromPath(fs, outputFilePath, temporaryPath, concatAvailable, getCsvFilePaths)
