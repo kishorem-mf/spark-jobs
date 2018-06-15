@@ -35,7 +35,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(clazz),
-            'parameters': ['--orderInputFile'.format(schema), ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=schema),
+            'parameters': ['--orderInputFile', ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=schema),
                            '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=schema),
                            '--contactPersonInputFile', integrated_bucket.format(date=one_day_ago, fn='contactpersons'),
                            '--operatorInputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
