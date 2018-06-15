@@ -269,12 +269,8 @@ def pipeline_without_matching(
         clazz=clazz,
         acm_file_prefix=acm_file_prefix,
         previous_integrated=previous_integrated,
-<<<<<<< HEAD
-        send_postgres_config=False,
+        send_postgres_config=True,
         pars=pars
-=======
-        send_postgres_config=True
->>>>>>> master
     )
 
     cluster_up >> file_interface_to_parquet >> convert_to_acm >> cluster_down
