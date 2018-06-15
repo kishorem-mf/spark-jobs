@@ -52,16 +52,12 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         external_task_id='contact_person_referencing'
     )
 
-<<<<<<< HEAD
     order_lines_integrated_sensor = ExternalTaskSensorOperator(
         task_id='order_lines_integrated_sensor',
         external_dag_id='ohub_order_lines',
         external_task_id='order_lines_merge'
     )
 
-    tasks['file_interface_to_parquet'] >> operators_integrated_sensor >> contactpersons_integrated_sensor >> merge >> order_lines_integrated_sensor >> tasks['convert_to_acm']
-=======
     tasks['file_interface_to_parquet'] >> operators_integrated_sensor >> merge
     tasks['file_interface_to_parquet'] >> contactpersons_integrated_sensor >> merge
-    merge >> tasks['convert_to_acm']
->>>>>>> master
+    merge >> order_lines_integrated_sensor >> tasks['convert_to_acm']
