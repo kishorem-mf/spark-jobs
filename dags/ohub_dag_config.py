@@ -242,7 +242,8 @@ def pipeline_without_matching(schema, cluster_name, clazz, acm_file_prefix, enab
         clazz="com.unilever.ohub.spark.tsv2parquet.file_interface.{}Converter".format(clazz),
         field_separator=u"\u2030",
         cluster_name=cluster_name,
-        deduplicate_on_concat_id=deduplicate_on_concat_id
+        deduplicate_on_concat_id=deduplicate_on_concat_id,
+        send_postgres_config=True
     )
 
     convert_to_acm = acm_convert_and_move(
