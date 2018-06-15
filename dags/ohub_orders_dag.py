@@ -12,7 +12,7 @@ acm_tbl = 'ORDERS'
 
 interval = '@daily'
 default_args.update(
-    {'start_date': datetime(2018, 6, 3)}
+    {'start_date': datetime(2018, 6, 14)}
 )
 cluster_name = "ohub_" + schema + "_{{ds}}"
 
@@ -51,7 +51,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
     contactpersons_integrated_sensor = ExternalTaskSensorOperator(
         task_id='contactpersons_integrated_sensor',
         external_dag_id='ohub_contactpersons',
-        external_task_id='contact_person_referencing'
+        external_task_id='contact_person_update_golden_records'
     )
 
     order_lines_integrated_sensor = ExternalTaskSensorOperator(
@@ -60,4 +60,6 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         external_task_id='order_lines_merge'
     )
 
-    tasks['file_interface_to_parquet'] >> operators_integrated_sensor >> contactpersons_integrated_sensor >> merge >> order_lines_integrated_sensor >> tasks['convert_to_acm']
+    tasks['file_interface_to_parquet'] >> operators_integrated_sensor >> merge
+    tasks['file_interface_to_parquet'] >> contactpersons_integrated_sensor >> merge
+    merge >> order_lines_integrated_sensor >> tasks['convert_to_acm']
