@@ -18,7 +18,7 @@ case class UFSOrder(
     ORDER_PHONE_NUMBER: Option[String],
     ORDER_MOBILE_PHONE_NUMBER: Option[String],
     TRANSACTION_DATE: String,
-    ORDER_AMOUNT: Double,
+    ORDER_AMOUNT: BigDecimal,
     ORDER_AMOUNT_CURRENCY_CODE: String,
     DELIVERY_STREET: String,
     DELIVERY_HOUSENUMBER: String,

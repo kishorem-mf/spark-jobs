@@ -50,7 +50,7 @@ class OrderAcmConverterSpec extends SparkJobSpec with TestOrders {
         notADeltaRecord
       ))
       val input: Dataset[Order] = spark.createDataset(Seq(
-        updatedRecord.copy(countryCode = "updaaated"),
+        updatedRecord.copy(isGoldenRecord = false),
         deletedRecord.copy(isActive = false),
         unchangedRecord,
         newRecord

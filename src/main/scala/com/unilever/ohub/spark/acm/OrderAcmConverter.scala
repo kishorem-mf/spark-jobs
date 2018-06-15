@@ -19,7 +19,7 @@ case class OrderAcmConverterConfig(
     postgressDB: String = "postgress-db"
 ) extends SparkJobConfig
 
-case class OrderLineAggregation(id: String, curr: String, total: Double)
+case class OrderLineAggregation(orderConcatId: String, curr: String, total: BigDecimal)
 
 trait SparkJobWithOrderAcmConverterConfig extends SparkJob[OrderAcmConverterConfig] {
   override private[spark] def defaultConfig = OrderAcmConverterConfig()
@@ -100,10 +100,10 @@ object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig
         first($"currency").as("curr"),
         sum($"amount").as("total"))
       .as[OrderLineAggregation]
-    orders.joinWith(aggs, orders("concatId") === aggs("orderContactId"), "left")
+    orders.joinWith(aggs, orders("concatId") === aggs("orderConcatId"), "left")
       .as[(Order, OrderLineAggregation)]
       .map {
-        case (order, OrderLineAggregation(id, currency, total)) ⇒ UFSOrder(
+        case (order, OrderLineAggregation(orderConcatId, currency, total)) ⇒ UFSOrder(
           ORDER_ID = order.concatId,
           REF_ORDER_ID = None,
           COUNTRY_CODE = order.countryCode,

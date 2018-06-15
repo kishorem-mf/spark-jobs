@@ -4,11 +4,8 @@ import java.net.{ URI, URL }
 
 import io.circe
 import io.circe.Decoder
-import io.circe.generic.auto._
 import io.circe.parser._
-import io.circe._
 import io.circe.generic.semiauto._
-import io.circe.generic.decoding._
 
 import scala.io.Source
 import scala.util.{ Failure, Success, Try }
@@ -42,7 +39,6 @@ class JsonSifuDataProvider() extends SifuDataProvider {
           case Success(url) ⇒
             val body = getResponseBodyString(url)
             implicit val decodeSifuProductResponse: Decoder[SifuProductResponse] = deriveDecoder[SifuProductResponse]
-            //            implicit val decodeSeqSifuProductResponse: Decoder[Seq[SifuProductResponse]] = deriveDecoder[Seq[SifuProductResponse]]
             decodeJsonString[Seq[SifuProductResponse]](body).right.getOrElse(List.empty)
         }
         acc ++ parsed
