@@ -40,16 +40,4 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
                            '--outputFile', integrated_bucket.format(date=one_day_ago, fn=schema)]
         })
 
-    products_integrated_sensor = ExternalTaskSensorOperator(
-        task_id='products_integrated_sensor',
-        external_dag_id='ohub_products',
-        external_task_id='products_merge'
-    )
-
-    orders_integrated_sensor = ExternalTaskSensorOperator(
-        task_id='orders_integrated_sensor',
-        external_dag_id='ohub_orders',
-        external_task_id='orders_merge'
-    )
-
-    tasks['file_interface_to_parquet'] >> products_integrated_sensor >> orders_integrated_sensor >> merge >> tasks['convert_to_acm']
+    tasks['file_interface_to_parquet'] >> merge >> tasks['convert_to_acm']
