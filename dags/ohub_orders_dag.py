@@ -51,4 +51,6 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         external_task_id='contact_person_referencing'
     )
 
-    tasks['file_interface_to_parquet'] >> operators_integrated_sensor >> contactpersons_integrated_sensor >> merge >> tasks['convert_to_acm']
+    tasks['file_interface_to_parquet'] >> operators_integrated_sensor >> merge
+    tasks['file_interface_to_parquet'] >> contactpersons_integrated_sensor >> merge
+    merge >> tasks['convert_to_acm']
