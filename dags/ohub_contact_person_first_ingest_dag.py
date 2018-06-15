@@ -9,7 +9,7 @@ from custom_operators.external_task_sensor_operator import ExternalTaskSensorOpe
 from ohub_dag_config import \
     default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, create_cluster, \
     default_cluster_config, terminate_cluster, ingest_task, \
-    fuzzy_matching_tasks, postgres_config, acm_convert_and_move
+    fuzzy_matching_tasks, postgres_config, acm_convert_and_move, one_day_ago
 
 default_args.update(
     {
