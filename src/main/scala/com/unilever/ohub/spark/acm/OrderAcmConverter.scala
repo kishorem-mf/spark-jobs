@@ -69,7 +69,7 @@ object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig
     val dailyUfsOrders = createUfsOrders(spark, orders, orderLines)
     val allPreviousUfsOrders = createUfsOrders(spark, previousIntegrated, orderLines)
 
-    integrate[UFSOrder](spark, dailyUfsOrders, allPreviousUfsOrders, "ORDERLINE_ID")
+    integrate[UFSOrder](spark, dailyUfsOrders, allPreviousUfsOrders, "ORDER_ID")
   }
 
   override def run(spark: SparkSession, config: OrderAcmConverterConfig, storage: Storage): Unit = {
@@ -100,12 +100,13 @@ object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig
         first($"currency").as("curr"),
         sum($"amount").as("total"))
       .as[OrderLineAggregation]
+
     orders.joinWith(aggs, orders("concatId") === aggs("orderConcatId"), "left")
       .as[(Order, OrderLineAggregation)]
       .map {
-        case (order, OrderLineAggregation(orderConcatId, currency, total)) ⇒ UFSOrder(
+        case (order, agg) ⇒ UFSOrder(
           ORDER_ID = order.concatId,
-          REF_ORDER_ID = None,
+          REF_ORDER_ID = order.ohubId,
           COUNTRY_CODE = order.countryCode,
           ORDER_TYPE = order.`type`,
           CP_LNKD_INTEGRATION_ID = order.contactPersonOhubId,
@@ -121,8 +122,8 @@ object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig
           ORDER_PHONE_NUMBER = None,
           ORDER_MOBILE_PHONE_NUMBER = None,
           TRANSACTION_DATE = order.transactionDate.formatted(dateFormat),
-          ORDER_AMOUNT = total,
-          ORDER_AMOUNT_CURRENCY_CODE = currency,
+          ORDER_AMOUNT = Option(agg).map(_.total).getOrElse(BigDecimal(0)),
+          ORDER_AMOUNT_CURRENCY_CODE = Option(agg).map(_.curr).getOrElse(""),
           DELIVERY_STREET = "",
           DELIVERY_HOUSENUMBER = "",
           DELIVERY_ZIPCODE = "",

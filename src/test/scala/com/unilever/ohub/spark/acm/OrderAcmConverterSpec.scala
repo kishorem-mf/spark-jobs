@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.acm.model.UFSOrder
 import org.apache.spark.sql.Dataset
-import com.unilever.ohub.spark.domain.entity.{ Order, OrderLine, TestOrders }
+import com.unilever.ohub.spark.domain.entity.{ Order, OrderLine, TestOrders, TestOrderLines }
 
 class OrderAcmConverterSpec extends SparkJobSpec with TestOrders {
 
@@ -49,25 +49,26 @@ class OrderAcmConverterSpec extends SparkJobSpec with TestOrders {
         unchangedRecord,
         notADeltaRecord
       ))
+
       val input: Dataset[Order] = spark.createDataset(Seq(
-        updatedRecord.copy(isGoldenRecord = false),
+        updatedRecord.copy(campaignName = Some("foo")),
         deletedRecord.copy(isActive = false),
         unchangedRecord,
         newRecord
       ))
 
-      val orderLines = spark.emptyDataset[OrderLine]
+      val orderLines = Seq(TestOrderLines.defaultOrderLine).toDS()
 
       val result = SUT.transform(spark, input, previous, orderLines)
         .collect()
         .sortBy(_.COUNTRY_CODE)
 
       result.length shouldBe 3
-      // assert(result.head.COUNTRY_CODE == Some("deleted"))
-      // assert(result.head.DELETE_FLAG == Some("Y"))
-      // assert(result(1).COUNTRY_CODE == Some("new"))
-      // assert(result(2).COUNTRY_CODE == Some("updated"))
-      // assert(result(2).Order_NAME.contains("Unox"))
+      assert(result(0).COUNTRY_CODE == "deleted")
+      assert(result(0).DELETED_FLAG == "Y")
+      assert(result(1).COUNTRY_CODE == "new")
+      assert(result(2).COUNTRY_CODE == "updated")
+      assert(result(2).CAMPAIGN_NAME == Some("foo"))
     }
   }
 
@@ -82,14 +83,14 @@ class OrderAcmConverterSpec extends SparkJobSpec with TestOrders {
 
       val actualUFSOrder = result.head()
       val expectedUFSOrder = UFSOrder(
-        ORDER_ID = "",
-        REF_ORDER_ID = None,
-        COUNTRY_CODE = "",
-        ORDER_TYPE = "",
+        ORDER_ID = "country-code~source-name~source-entity-id",
+        REF_ORDER_ID = Some("ohub-id"),
+        COUNTRY_CODE = "country-code",
+        ORDER_TYPE = "DIRECT",
         CP_LNKD_INTEGRATION_ID = None,
-        OPR_LNKD_INTEGRATION_ID = "",
-        CAMPAIGN_CODE = None,
-        CAMPAIGN_NAME = None,
+        OPR_LNKD_INTEGRATION_ID = "some~operator~id",
+        CAMPAIGN_CODE = Some("UNKNOWN"),
+        CAMPAIGN_NAME = Some("campaign"),
         WHOLESALER = None,
         WHOLESALER_ID = None,
         WHOLESALER_CUSTOMER_NUMBER = None,
@@ -98,7 +99,7 @@ class OrderAcmConverterSpec extends SparkJobSpec with TestOrders {
         ORDER_EMAIL_ADDRESS = None,
         ORDER_PHONE_NUMBER = None,
         ORDER_MOBILE_PHONE_NUMBER = None,
-        TRANSACTION_DATE = "",
+        TRANSACTION_DATE = "yyyy-MM-dd HH:mm:ss",
         ORDER_AMOUNT = 0.0,
         ORDER_AMOUNT_CURRENCY_CODE = "",
         DELIVERY_STREET = "",
