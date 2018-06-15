@@ -57,7 +57,12 @@ class OrderAcmConverterSpec extends SparkJobSpec with TestOrders {
         newRecord
       ))
 
-      val orderLines = Seq(TestOrderLines.defaultOrderLine).toDS()
+      val line = TestOrderLines.defaultOrderLine.copy(
+        orderConcatId = s"updated~${defaultOrder.sourceName}~${defaultOrder.sourceEntityId}",
+        amount = BigDecimal(123),
+        currency = Some("BTC")
+      )
+      val orderLines = Seq(line).toDS()
 
       val result = SUT.transform(spark, input, previous, orderLines)
         .collect()
@@ -66,9 +71,15 @@ class OrderAcmConverterSpec extends SparkJobSpec with TestOrders {
       result.length shouldBe 3
       assert(result(0).COUNTRY_CODE == "deleted")
       assert(result(0).DELETED_FLAG == "Y")
+      assert(result(0).ORDER_AMOUNT == BigDecimal(0))
+      assert(result(0).ORDER_AMOUNT_CURRENCY_CODE == "")
       assert(result(1).COUNTRY_CODE == "new")
+      assert(result(1).ORDER_AMOUNT == BigDecimal(0))
+      assert(result(1).ORDER_AMOUNT_CURRENCY_CODE == "")
       assert(result(2).COUNTRY_CODE == "updated")
       assert(result(2).CAMPAIGN_NAME == Some("foo"))
+      assert(result(2).ORDER_AMOUNT == BigDecimal(123))
+      assert(result(2).ORDER_AMOUNT_CURRENCY_CODE == "BTC")
     }
   }
 
