@@ -242,8 +242,7 @@ def pipeline_without_matching(schema, cluster_name, clazz, acm_file_prefix, enab
         clazz="com.unilever.ohub.spark.tsv2parquet.file_interface.{}Converter".format(clazz),
         field_separator=u"\u2030",
         cluster_name=cluster_name,
-        deduplicate_on_concat_id=deduplicate_on_concat_id,
-        send_postgres_config=True
+        deduplicate_on_concat_id=deduplicate_on_concat_id
     )
 
     convert_to_acm = acm_convert_and_move(
@@ -251,7 +250,8 @@ def pipeline_without_matching(schema, cluster_name, clazz, acm_file_prefix, enab
         cluster_name=cluster_name,
         clazz=clazz,
         acm_file_prefix=acm_file_prefix,
-        previous_integrated=previous_integrated
+        previous_integrated=previous_integrated,
+        send_postgres_config=True
     )
 
     cluster_up >> file_interface_to_parquet >> convert_to_acm >> cluster_down
