@@ -102,7 +102,6 @@ object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig
       .as[OrderLineAggregation]
 
     orders.joinWith(aggs, orders("concatId") === aggs("orderConcatId"), "left")
-      .as[(Order, OrderLineAggregation)]
       .map {
         case (order, agg) ⇒ UFSOrder(
           ORDER_ID = order.concatId,
