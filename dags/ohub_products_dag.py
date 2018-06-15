@@ -12,7 +12,7 @@ acm_tbl = 'PRODUCTS'
 
 interval = '@daily'
 default_args.update(
-    {'start_date': datetime(2018, 6, 3)}
+    {'start_date': datetime(2018, 6, 14)}
 )
 cluster_name = "ohub_" + schema + "_{{ds}}"
 
@@ -34,7 +34,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(clazz),
-            'parameters': ['--{}'.format(schema), ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=schema),
+            'parameters': ['--productsInputFile', ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=schema),
                            '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=schema),
                            '--outputFile', integrated_bucket.format(date=one_day_ago, fn=schema)]
         })

@@ -2,14 +2,14 @@ from datetime import datetime
 
 from airflow import DAG
 
-from ohub_dag_config import default_args, pipeline_without_matching
+from ohub_dag_config import default_args, pipeline_without_matching, integrated_bucket, one_day_ago
 
 schema = 'orderlines'
 clazz = 'OrderLine'
 
 interval = '@once'
 default_args.update(
-    {'start_date': datetime(2018, 6, 3)}
+    {'start_date': datetime(2018, 6, 13)}
 )
 cluster_name = "ohub_orderlines_initial_load_{{ds}}"
 
@@ -20,4 +20,6 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         cluster_name=cluster_name,
         clazz=clazz,
         acm_file_prefix='UFS_ORDERLINES',
-        deduplicate_on_concat_id=False)
+        deduplicate_on_concat_id=False,
+        ingest_input_schema='orders',
+        ingest_output_file=integrated_bucket.format(date=one_day_ago, fn=schema))

@@ -9,7 +9,7 @@ from custom_operators.external_task_sensor_operator import ExternalTaskSensorOpe
 from ohub_dag_config import \
     default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, create_cluster, \
     default_cluster_config, terminate_cluster, ingest_task, \
-    fuzzy_matching_tasks, postgres_config, acm_convert_and_move
+    fuzzy_matching_tasks, postgres_config, acm_convert_and_move, one_day_ago
 
 default_args.update(
     {
@@ -48,7 +48,7 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
                                                                  fn=schema,
                                                                  channel='file_interface'),
                            '--exactMatchOutputFile', intermediate_bucket.format(date='{{ds}}',
-                                                                                fn='{}_exact_match'.format(schema)),
+                                                                                fn='{}_exact_matches'.format(schema)),
                            '--leftOversOutputFile', intermediate_bucket.format(date='{{ds}}',
                                                                                fn='{}_left_overs'.format(
                                                                                    schema))] + postgres_config
@@ -100,7 +100,7 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.combining.ContactPersonCombining",
             'parameters': ['--integratedUpdated', intermediate_bucket.format(date='{{ds}}',
-                                                                             fn='{}_exact_match'.format(schema)),
+                                                                             fn='{}_exact_matches'.format(schema)),
                            '--newGolden', intermediate_bucket.format(date='{{ds}}',
                                                                      fn=schema,
                                                                      channel='*'),
@@ -130,7 +130,23 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
                            '--operatorInputFile', integrated_bucket.format(date='{{ds}}',
                                                                            fn='operators',
                                                                            channel='*'),
-                           '--outputFile', integrated_bucket.format(date='{{ds}}', fn=schema)]
+                           '--outputFile', intermediate_bucket.format(date=one_day_ago, fn='{}_updated_references'.format(schema))]
+        }
+    )
+
+    update_golden_records = DatabricksSubmitRunOperator(
+        task_id='{}_update_golden_records'.format(schema),
+        cluster_name=cluster_name,
+        databricks_conn_id=databricks_conn_id,
+        libraries=[
+            {'jar': jar}
+        ],
+        spark_jar_task={
+            'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonUpdateGoldenRecord",
+            'parameters': ['--inputFile',
+                           intermediate_bucket.format(date=one_day_ago, fn='{}_updated_references'.format(schema)),
+                           '--outputFile',
+                           integrated_bucket.format(date=one_day_ago, fn=schema)] + postgres_config
         }
     )
 
@@ -142,7 +158,8 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
     )
 
     cluster_up >> contact_persons_file_interface_to_parquet >> contact_persons_exact_match >> begin_fuzzy_matching
+
     for t in matching_tasks:
         begin_fuzzy_matching >> t >> end_fuzzy_matching
     end_fuzzy_matching >> join_contact_persons >> contact_person_combining >> operators_integrated_sensor >> contact_person_referencing
-    contact_person_referencing >> convert_to_acm >> cluster_down
+    contact_person_referencing >> update_golden_records >> convert_to_acm >> cluster_down
