@@ -9,7 +9,7 @@ clazz = 'Order'
 
 interval = '@once'
 default_args.update(
-    {'start_date': datetime(2018, 6, 3)}
+    {'start_date': datetime(2018, 6, 13)}
 )
 cluster_name = "ohub_orders_initial_load_{{ds}}"
 
