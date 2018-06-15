@@ -48,7 +48,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
     contactpersons_integrated_sensor = ExternalTaskSensorOperator(
         task_id='contactpersons_integrated_sensor',
         external_dag_id='ohub_contactpersons',
-        external_task_id='contact_person_referencing'
+        external_task_id='contact_person_update_golden_records'
     )
 
     tasks['file_interface_to_parquet'] >> operators_integrated_sensor >> merge
