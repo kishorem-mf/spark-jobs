@@ -45,8 +45,7 @@ object ContactPersonAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     storage.writeToSingleCsv(
       ds = transformed,
       outputFile = config.outputFile,
-      delim = outputCsvDelimiter,
-      quote = outputCsvQuote
+      options = writeOptions
     )
   }
 

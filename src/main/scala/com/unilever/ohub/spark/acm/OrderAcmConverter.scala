@@ -43,6 +43,6 @@ object OrderAcmConverter extends SparkJobWithDefaultConfig with AcmConverter {
     val orders = storage.readFromParquet[OrderRecord](config.inputFile)
     val transformed = transform(spark, orders)
 
-    storage.writeToSingleCsv(transformed, config.outputFile, delim = outputCsvDelimiter, quote = outputCsvQuote)
+    storage.writeToSingleCsv(transformed, config.outputFile, writeOptions)
   }
 }

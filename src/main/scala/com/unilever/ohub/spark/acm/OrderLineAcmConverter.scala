@@ -37,6 +37,6 @@ object OrderLineAcmConverter extends SparkJobWithDefaultConfig with AcmConverter
     val transformed = transform(spark, orderLines)
 
     // COUNTRY_CODE is not an existing column, therefore no country partitioning
-    storage.writeToSingleCsv(transformed, config.outputFile, delim = outputCsvDelimiter, quote = outputCsvQuote)
+    storage.writeToSingleCsv(transformed, config.outputFile, writeOptions)
   }
 }
