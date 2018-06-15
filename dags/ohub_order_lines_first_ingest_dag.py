@@ -2,7 +2,7 @@ from datetime import datetime
 
 from airflow import DAG
 
-from ohub_dag_config import default_args, pipeline_without_matching
+from ohub_dag_config import default_args, pipeline_without_matching, integrated_bucket, one_day_ago
 
 schema = 'orderlines'
 clazz = 'OrderLine'
@@ -20,4 +20,6 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         cluster_name=cluster_name,
         clazz=clazz,
         acm_file_prefix='UFS_ORDERLINES',
-        deduplicate_on_concat_id=False)
+        deduplicate_on_concat_id=False,
+        ingest_input_schema='orders',
+        ingest_output_file=integrated_bucket.format(date=one_day_ago, fn=schema))
