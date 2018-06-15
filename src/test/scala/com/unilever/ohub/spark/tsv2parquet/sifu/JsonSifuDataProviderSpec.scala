@@ -1,7 +1,8 @@
 package com.unilever.ohub.spark.tsv2parquet.sifu
 
 import io.circe
-import io.circe.generic.auto._
+import io.circe.Decoder
+import io.circe.generic.semiauto._
 import org.scalatest.{ FunSpec, Matchers }
 
 class JsonSifuDataProviderSpec extends FunSpec with Matchers {
@@ -21,6 +22,7 @@ class JsonSifuDataProviderSpec extends FunSpec with Matchers {
 
   describe("decoding json string") {
     it("should be parsed into valid case class") {
+      implicit val decodeSifuProductResponse: Decoder[SifuProductResponse] = deriveDecoder[SifuProductResponse]
       val json: Either[circe.Error, SifuProductResponse] = sut.decodeJsonString[SifuProductResponse](jsonString)
 
       json.isRight shouldBe true

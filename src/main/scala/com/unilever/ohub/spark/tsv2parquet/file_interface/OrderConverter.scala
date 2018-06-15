@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.tsv2parquet.file_interface
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.entity.{ Order }
+import com.unilever.ohub.spark.domain.entity.Order
 import com.unilever.ohub.spark.tsv2parquet.{ DomainTransformer, OrderEmptyParquetWriter }
 import com.unilever.ohub.spark.generic.StringFunctions._
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
@@ -33,7 +33,7 @@ object OrderConverter extends FileDomainGateKeeper[Order] with OrderEmptyParquet
       ohubCreated                     = ohubCreated,
       ohubUpdated                     = ohubCreated,
       // specific fields
-      `type`                          = optional(  "ORDER_TYPE",             "type",                  checkEnum(Order.typeEnum)),
+      `type`                          = mandatory( "ORDER_TYPE",             "type",                  checkEnum(Order.typeEnum) _),
       campaignCode                    = optional(  "CAMPAIGN_CODE",          "campaignCode"),
       campaignName                    = optional(  "CAMPAIGN_NAME",          "campaignName"),
       comment                         = None,
@@ -43,9 +43,9 @@ object OrderConverter extends FileDomainGateKeeper[Order] with OrderEmptyParquet
       distributorLocation             = None,
       distributorName                 = optional(  "WHOLESALER",             "distributerName"),
       distributorOperatorId           = None,
-      operatorConcatId                = optional(  "REF_OPERATOR_ID",        "operatorConcatId"),
+      operatorConcatId                = mandatory( "REF_OPERATOR_ID",        "operatorConcatId"),
       operatorOhubId                  = None,
-      transactionDate                 = optional(  "TRANSACTION_DATE",       "transactionDate",       parseDateTimeStampUnsafe),
+      transactionDate                 = mandatory( "TRANSACTION_DATE",       "transactionDate",       parseDateTimeStampUnsafe),
       vat                             = None,
       // other fields
       additionalFields                = additionalFields,

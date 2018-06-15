@@ -31,13 +31,13 @@ class OrderConverterSpec extends CsvDomainGateKeeperSpec[Order] with TestOrders 
           sourceName = "WUFOO",
           ohubCreated = actualOrder.ohubCreated,
           ohubUpdated = actualOrder.ohubUpdated,
-          `type` = Some("UNKNOWN"),
+          `type` = "UNKNOWN",
           campaignCode = Some("E1234"),
           campaignName = Some("Sample campaign"),
           contactPersonConcatId = Some("AB123"),
           distributorName = Some("SLIGRO"),
-          operatorConcatId = Some("E1-1234"),
-          transactionDate = Some(Timestamp.valueOf("2015-09-30 14:23:00"))
+          operatorConcatId = "E1-1234",
+          transactionDate = Timestamp.valueOf("2015-09-30 14:23:00")
         )
 
         actualOrder shouldBe expectedOrder

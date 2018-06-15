@@ -9,6 +9,7 @@ object DeltaFunctions extends DeltaFunctions
 
 trait DeltaFunctions {
 
+  // integrate a delta into an existing dataset, upserting by a given key
   def integrate[T <: Product: TypeTag](
     spark: SparkSession,
     delta: Dataset[T],

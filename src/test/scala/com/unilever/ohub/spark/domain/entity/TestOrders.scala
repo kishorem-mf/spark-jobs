@@ -21,7 +21,7 @@ trait TestOrders {
     ohubCreated = new Timestamp(System.currentTimeMillis()),
     ohubUpdated = new Timestamp(System.currentTimeMillis()),
     // specific fields
-    `type` = Some("DIRECT"),
+    `type` = "DIRECT",
     campaignCode = Some("UNKNOWN"),
     campaignName = Some("campaign"),
     comment = None,
@@ -31,9 +31,9 @@ trait TestOrders {
     distributorLocation = None,
     distributorName = Some("Van der Valk"),
     distributorOperatorId = None,
-    operatorConcatId = Some("some~operator~id"),
+    operatorConcatId = "some~operator~id",
     operatorOhubId = None,
-    transactionDate = Some(new Timestamp(System.currentTimeMillis())),
+    transactionDate = new Timestamp(System.currentTimeMillis()),
     vat = None,
     // other fields
     additionalFields = Map(),

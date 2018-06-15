@@ -6,7 +6,7 @@ import com.unilever.ohub.spark.domain.entity.{ OrderLine, TestOrderLines }
 import com.unilever.ohub.spark.tsv2parquet.CsvDomainGateKeeperSpec
 import com.unilever.ohub.spark.tsv2parquet.DomainGateKeeper.DomainConfig
 
-class OrderLineConvertorSpec extends CsvDomainGateKeeperSpec[OrderLine] with TestOrderLines {
+class OrderLineConverterSpec extends CsvDomainGateKeeperSpec[OrderLine] with TestOrderLines {
 
   private[tsv2parquet] override val SUT = OrderLineConverter
 
@@ -31,10 +31,10 @@ class OrderLineConvertorSpec extends CsvDomainGateKeeperSpec[OrderLine] with Tes
           sourceName = "WUFOO",
           ohubCreated = actualOrderLine.ohubCreated,
           ohubUpdated = actualOrderLine.ohubUpdated,
-          orderConcatId = Some("AU~WUFOO~O1234"),
-          productConcatId = Some("P1234"),
-          quantityOfUnits = Some(6L),
-          amount = Some(BigDecimal(10)),
+          orderConcatId = "AU~WUFOO~O1234",
+          productConcatId = "P1234",
+          quantityOfUnits = 6L,
+          amount = BigDecimal(10),
           pricePerUnit = Some(BigDecimal(5)),
           currency = Some("AUD")
         )
