@@ -194,7 +194,7 @@ def delta_fuzzy_matching_tasks(schema,
 
 
 def acm_convert_and_move(schema, cluster_name, clazz, acm_file_prefix, previous_integrated=None,
-                         send_postgres_config=False):
+                         send_postgres_config=False, pars=[]):
     acm_file = 'acm/UFS_' + acm_file_prefix + '_{{ds_nodash}}000000.csv'
 
     delta_params = ['--previousIntegrated', previous_integrated] if previous_integrated else []
@@ -210,7 +210,7 @@ def acm_convert_and_move(schema, cluster_name, clazz, acm_file_prefix, previous_
             'main_class_name': "com.unilever.ohub.spark.acm.{}AcmConverter".format(clazz),
             'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=schema),
                            '--outputFile',
-                           export_bucket.format(date='{{ds}}', fn=acm_file)] + delta_params + postgres_config_
+                           export_bucket.format(date='{{ds}}', fn=acm_file)] + delta_params + postgres_config_ + pars
         }
     )
 
@@ -244,7 +244,8 @@ def pipeline_without_matching(
         enable_acm_delta=False,
         deduplicate_on_concat_id=True,
         ingest_input_schema=None,
-        ingest_output_file=None):
+        ingest_output_file=None,
+        pars=[]):
 
     cluster_up = create_cluster(schema, small_cluster_config(cluster_name))
     cluster_down = terminate_cluster(schema, cluster_name)
@@ -268,7 +269,8 @@ def pipeline_without_matching(
         clazz=clazz,
         acm_file_prefix=acm_file_prefix,
         previous_integrated=previous_integrated,
-        send_postgres_config=True
+        send_postgres_config=True,
+        pars=pars
     )
 
     cluster_up >> file_interface_to_parquet >> convert_to_acm >> cluster_down

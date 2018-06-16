@@ -25,7 +25,8 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         cluster_name=cluster_name,
         clazz=clazz,
         acm_file_prefix='UFS_{}'.format(acm_tbl),
-        enable_acm_delta=True)
+        enable_acm_delta=True,
+        pars=['--orderLineFile', integrated_bucket.format(date=one_day_ago, fn='order_lines')])
 
     empty_fallback = EmptyFallbackOperator(
         task_id='{}_empty_fallback'.format(schema),
@@ -42,7 +43,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(clazz),
-            'parameters': ['--orderInputFile'.format(schema), ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=schema),
+            'parameters': ['--orderInputFile', ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=schema),
                            '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=schema),
                            '--contactPersonInputFile', integrated_bucket.format(date=one_day_ago, fn='contactpersons'),
                            '--operatorInputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
@@ -61,7 +62,16 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         external_task_id='contact_person_update_golden_records'
     )
 
+<<<<<<< HEAD
     empty_fallback >> tasks['file_interface_to_parquet']
+=======
+    order_lines_integrated_sensor = ExternalTaskSensorOperator(
+        task_id='order_lines_integrated_sensor',
+        external_dag_id='ohub_order_lines',
+        external_task_id='order_lines_merge'
+    )
+
+>>>>>>> 80b494882f4d57387092353f0dfc531120868f5c
     tasks['file_interface_to_parquet'] >> operators_integrated_sensor >> merge
     tasks['file_interface_to_parquet'] >> contactpersons_integrated_sensor >> merge
-    merge >> tasks['convert_to_acm']
+    merge >> order_lines_integrated_sensor >> tasks['convert_to_acm']
