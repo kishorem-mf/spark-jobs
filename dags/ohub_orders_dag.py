@@ -62,16 +62,13 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         external_task_id='contact_person_update_golden_records'
     )
 
-<<<<<<< HEAD
-    empty_fallback >> tasks['file_interface_to_parquet']
-=======
     order_lines_integrated_sensor = ExternalTaskSensorOperator(
         task_id='order_lines_integrated_sensor',
         external_dag_id='ohub_order_lines',
         external_task_id='order_lines_merge'
     )
 
->>>>>>> 80b494882f4d57387092353f0dfc531120868f5c
+    empty_fallback >> tasks['file_interface_to_parquet']
     tasks['file_interface_to_parquet'] >> operators_integrated_sensor >> merge
     tasks['file_interface_to_parquet'] >> contactpersons_integrated_sensor >> merge
     merge >> order_lines_integrated_sensor >> tasks['convert_to_acm']
