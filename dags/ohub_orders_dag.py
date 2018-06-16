@@ -2,9 +2,11 @@ from datetime import datetime
 
 from airflow import DAG
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
+from custom_operators.empty_fallback import EmptyFallbackOperator
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator
 from ohub_dag_config import default_args, pipeline_without_matching, databricks_conn_id, jar, \
-    intermediate_bucket, one_day_ago, ingested_bucket, integrated_bucket, two_day_ago
+    intermediate_bucket, one_day_ago, ingested_bucket, integrated_bucket, two_day_ago, \
+    wasb_raw_container, wasb_conn_id
 
 schema = 'orders'
 clazz = 'Order'
@@ -24,6 +26,12 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         clazz=clazz,
         acm_file_prefix='UFS_{}'.format(acm_tbl),
         enable_acm_delta=True)
+
+    empty_fallback = EmptyFallbackOperator(
+        task_id='{}_empty_fallback'.format(schema),
+        container_name='prod',
+        file_path=wasb_raw_container.format(date=one_day_ago, schema=schema, channel='file_interface'),
+        wasb_conn_id=wasb_conn_id)
 
     merge = DatabricksSubmitRunOperator(
         task_id='{}_merge'.format(schema),
@@ -53,6 +61,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         external_task_id='contact_person_update_golden_records'
     )
 
+    empty_fallback >> tasks['file_interface_to_parquet']
     tasks['file_interface_to_parquet'] >> operators_integrated_sensor >> merge
     tasks['file_interface_to_parquet'] >> contactpersons_integrated_sensor >> merge
     merge >> tasks['convert_to_acm']
