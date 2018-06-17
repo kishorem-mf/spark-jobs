@@ -59,7 +59,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
     contactpersons_integrated_sensor = ExternalTaskSensorOperator(
         task_id='contactpersons_integrated_sensor',
         external_dag_id='ohub_contactpersons',
-        external_task_id='contact_person_update_golden_records'
+        external_task_id='contactpersons_update_golden_records'
     )
 
     order_lines_integrated_sensor = ExternalTaskSensorOperator(
