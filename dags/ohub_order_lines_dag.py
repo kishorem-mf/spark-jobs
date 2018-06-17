@@ -31,7 +31,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
     empty_fallback = EmptyFallbackOperator(
         task_id='{}_empty_fallback'.format(schema),
         container_name='prod',
-        file_path=wasb_raw_container.format(date=one_day_ago, schema=schema, channel='file_interface'),
+        file_path=wasb_raw_container.format(date=one_day_ago, schema='orders', channel='file_interface'),
         wasb_conn_id=wasb_conn_id)
 
     merge = DatabricksSubmitRunOperator(
