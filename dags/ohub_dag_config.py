@@ -49,7 +49,7 @@ def small_cluster_config(cluster_name):
         "spark_version": "4.0.x-scala2.11",
         "node_type_id": "Standard_DS3_v2",
         "num_workers": '2',
-        "autotermination_minutes": '30',
+        "autotermination_minutes": '60',
         "spark_env_vars": {
             "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
         },
@@ -110,7 +110,8 @@ def ingest_task(schema, channel, clazz,
                            '--fieldSeparator', field_separator,
                            '--strictIngestion', "false",
                            '--deduplicateOnConcatId', dedup] + postgres_config
-        }
+        },
+        depends_on_past=True
     )
 
 
