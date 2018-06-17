@@ -2,10 +2,10 @@ from datetime import datetime
 
 from airflow import DAG
 
-from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator
+from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub_dag_config import default_args, pipeline_without_matching, databricks_conn_id, jar, \
-    intermediate_bucket, one_day_ago, ingested_bucket, integrated_bucket, two_day_ago
+    one_day_ago, ingested_bucket, integrated_bucket
 
 schema = 'orders'
 clazz = 'Order'
@@ -22,7 +22,8 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         schema=schema,
         cluster_name=cluster_name,
         clazz=clazz,
-        acm_file_prefix='UFS_ORDERS')
+        acm_file_prefix='UFS_ORDERS',
+        pars=['--orderLineFile', integrated_bucket.format(date=one_day_ago, fn='order_lines')])
 
     merge = DatabricksSubmitRunOperator(
         task_id='{}_merge'.format(schema),
@@ -33,7 +34,8 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(clazz),
-            'parameters': ['--orderInputFile', ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=schema),
+            'parameters': ['--orderInputFile',
+                           ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=schema),
                            '--contactPersonInputFile', integrated_bucket.format(date=one_day_ago, fn='contactpersons'),
                            '--operatorInputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
                            '--outputFile', integrated_bucket.format(date=one_day_ago, fn=schema)]
