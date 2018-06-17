@@ -63,9 +63,9 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
     )
 
     order_lines_integrated_sensor = ExternalTaskSensorOperator(
-        task_id='order_lines_integrated_sensor',
-        external_dag_id='ohub_order_lines',
-        external_task_id='order_lines_merge'
+        task_id='orderlines_integrated_sensor',
+        external_dag_id='ohub_orderlines',
+        external_task_id='orderlines_merge'
     )
 
     empty_fallback >> tasks['file_interface_to_parquet']
