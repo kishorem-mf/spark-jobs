@@ -23,7 +23,7 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         cluster_name=cluster_name,
         clazz=clazz,
         acm_file_prefix='UFS_ORDERS',
-        pars=['--orderLineFile', integrated_bucket.format(date=one_day_ago, fn='order_lines')])
+        pars=['--orderLineFile', integrated_bucket.format(date=one_day_ago, fn='orderlines')])
 
     merge = DatabricksSubmitRunOperator(
         task_id='{}_merge'.format(schema),

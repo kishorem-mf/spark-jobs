@@ -26,7 +26,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         clazz=clazz,
         acm_file_prefix='UFS_{}'.format(acm_tbl),
         enable_acm_delta=True,
-        pars=['--orderLineFile', integrated_bucket.format(date=one_day_ago, fn='order_lines')])
+        pars=['--orderLineFile', integrated_bucket.format(date=one_day_ago, fn='orderlines')])
 
     empty_fallback = EmptyFallbackOperator(
         task_id='{}_empty_fallback'.format(schema),
