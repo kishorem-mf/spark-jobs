@@ -14,7 +14,7 @@ acm_tbl = 'ORDERLINES'
 
 interval = '@daily'
 default_args.update(
-    {'start_date': datetime(2018, 6, 13)}
+    {'start_date': datetime(2018, 6, 14)}
 )
 cluster_name = "ohub_" + schema + "_{{ds}}"
 
