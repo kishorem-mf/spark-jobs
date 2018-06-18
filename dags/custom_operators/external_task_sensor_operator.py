@@ -101,7 +101,7 @@ class ExternalTaskSensorOperator(BaseOperator):
         while True:
             state = self.poke(context)
             if state == self.FAILED_STATE:
-                raise AirflowSkipException('Snap. Task {} in DAG {} has failed :('.format(self.exernal_task_id,
+                raise AirflowSkipException('Snap. Task {} in DAG {} has failed :('.format(self.external_task_id,
                                                                                           self.external_dag_id))
             elif state == self.SUCCEEDED_STATE:
                 self.log.info('Task {} in DAG {} is successful'.format(self.external_task_id, self.external_dag_id))
