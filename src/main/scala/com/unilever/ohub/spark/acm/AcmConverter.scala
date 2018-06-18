@@ -4,7 +4,7 @@ trait AcmConverter {
 
   private val outputCsvDelimiter: String = "\u00B6"
 
-  val writeOptions = Map(
+  val extraWriteOptions = Map(
     "delimiter" -> outputCsvDelimiter
   )
 }

@@ -49,7 +49,7 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     storage.writeToSingleCsv(
       ds = transformed,
       outputFile = config.outputFile,
-      options = writeOptions
+      options = extraWriteOptions
     )
   }
 

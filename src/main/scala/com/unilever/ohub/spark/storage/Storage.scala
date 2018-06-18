@@ -58,6 +58,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .mode(SaveMode.Overwrite)
       .option("encoding", "UTF-8")
       .option("header", "true")
+      .options(options)
       .csv(temporaryPath.toString)
 
     createSingleFileFromPath(fs, outputFilePath, temporaryPath, concatAvailable, getCsvFilePaths)
