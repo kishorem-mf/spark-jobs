@@ -13,7 +13,8 @@ object OrderLineConverter extends FileDomainGateKeeper[OrderLine] with OrderLine
     import transformer._
     implicit val source: Row = row
 
-    val orderConcatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_ORDER_ID")
+    val orderConcatId     : String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_ORDER_ID")
+    val productConcatId   : String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_PRODUCT_ID")
     val ohubCreated = currentTimestamp()
 
     // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
@@ -33,7 +34,7 @@ object OrderLineConverter extends FileDomainGateKeeper[OrderLine] with OrderLine
       ohubUpdated                     = ohubCreated,
       // specific fields
       orderConcatId                   = orderConcatId,
-      productConcatId                 = mandatory( "REF_PRODUCT_ID",            "productConcatId"),
+      productConcatId                 = productConcatId,
       comment                         = None,
       quantityOfUnits                 = mandatory( "QUANTITY",                  "quantityOfUnits",        parseLongRangeOption(_).get),
       amount                          = mandatory( "ORDER_LINE_VALUE",          "amount",                 parseBigDecimalUnsafe),
