@@ -1,6 +1,7 @@
 from datetime import timedelta
 from typing import List
 
+from airflow import AirflowException
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 from airflow.hooks.base_hook import BaseHook
 from airflow.models import BaseOperator
@@ -119,57 +120,6 @@ def ingest_task(schema, channel, clazz,
         depends_on_past=True
     )
 
-def delta_fuzzy_matching_tasks(schema,
-                               cluster_name,
-                               delta_match_py,
-                               match_py,
-                               integrated_input,
-                               ingested_input):
-    tasks = {'in': [], 'out': []}
-    for code in ohub_country_codes:
-        match_new = DatabricksSubmitRunOperator(
-            task_id=('match_new_{}_with_integrated_{}_{}'.format(schema, schema, code)),
-            cluster_name=cluster_name,
-            databricks_conn_id=databricks_conn_id,
-            libraries=[
-                {'egg': egg}
-            ],
-            spark_python_task={
-                'python_file': delta_match_py,
-                'parameters': [
-                    '--integrated_input_path', integrated_input,
-                    '--ingested_daily_input_path', ingested_input,
-                    '--updated_integrated_output_path',
-                    intermediate_bucket.format(date=one_day_ago, fn='{}_fuzzy_matched_delta_integrated'.format(schema)),
-                    '--unmatched_output_path',
-                    intermediate_bucket.format(date=one_day_ago, fn='{}_delta_left_overs'.format(schema)),
-                    '--country_code', code]
-            }
-        )
-
-        match_unmatched = DatabricksSubmitRunOperator(
-            task_id='match_unmatched_{}_{}'.format(schema, code),
-            cluster_name=cluster_name,
-            databricks_conn_id=databricks_conn_id,
-            libraries=[
-                {'egg': egg}
-            ],
-            spark_python_task={
-                'python_file': match_py,
-                'parameters': ['--input_file',
-                               intermediate_bucket.format(date=one_day_ago, fn='{}_delta_left_overs'.format(schema)),
-                               '--output_path',
-                               intermediate_bucket.format(date=one_day_ago, fn='{}_fuzzy_matched_delta'.format(schema)),
-                               '--country_code', code]
-            }
-        )
-
-        tasks['in'].append(match_new)
-        tasks['out'].append(match_unmatched)
-        match_new >> match_unmatched
-
-    return tasks
-
 
 class SubPipeline(object):
     def __init__(self, first_task: BaseOperator, last_task: BaseOperator):
@@ -276,8 +226,22 @@ class GenericPipeline(object):
         return SubPipeline(start_export, end_pipeline)
 
     def construct_fuzzy_matching_pipeline(self,
-                                 ingest_input: str,
-                                 match_py: str) -> SubPipeline:
+                                          ingest_input: str,
+                                          match_py: str,
+                                          integrated_input: str = None,
+                                          delta_match_py: str = None, ) -> SubPipeline:
+
+        if self._is_delta and (not integrated_input or not delta_match_py):
+            raise AirflowException('cannot create delta matching without delta input params')
+        if self._is_delta:
+            return self.__delta_fuzzy_matching(delta_match_py=delta_match_py,
+                                               integrated_input=integrated_input,
+                                               match_py=match_py,
+                                               ingested_input=ingest_input)
+        else:
+            return self.__fuzzy_matching(match_py=match_py, ingest_input=ingest_input)
+
+    def __fuzzy_matching(self, match_py, ingest_input):
         start_matching = BashOperator(
             task_id='start_matching',
             bash_command='echo "start matching"',
@@ -304,6 +268,65 @@ class GenericPipeline(object):
                 }
             )
             start_matching >> t >> end_matching
+
+        return SubPipeline(start_matching, end_matching)
+
+    def __delta_fuzzy_matching(self,
+                               delta_match_py,
+                               match_py,
+                               integrated_input,
+                               ingested_input):
+        start_matching = BashOperator(
+            task_id='start_matching',
+            bash_command='echo "start matching"',
+        )
+        end_matching = BashOperator(
+            task_id='end_matching',
+            bash_command='echo "end matching"',
+        )
+
+        for code in ohub_country_codes:
+            match_new = DatabricksSubmitRunOperator(
+                task_id=('match_new_{}_with_integrated_{}_{}'.format(self._schema, self._schema, code)),
+                cluster_name=self._cluster_name,
+                databricks_conn_id=databricks_conn_id,
+                libraries=[
+                    {'egg': egg}
+                ],
+                spark_python_task={
+                    'python_file': delta_match_py,
+                    'parameters': [
+                        '--integrated_input_path', integrated_input,
+                        '--ingested_daily_input_path', ingested_input,
+                        '--updated_integrated_output_path',
+                        intermediate_bucket.format(date=one_day_ago,
+                                                   fn='{}_fuzzy_matched_delta_integrated'.format(self._schema)),
+                        '--unmatched_output_path',
+                        intermediate_bucket.format(date=one_day_ago, fn='{}_delta_left_overs'.format(self._schema)),
+                        '--country_code', code]
+                }
+            )
+
+            match_unmatched = DatabricksSubmitRunOperator(
+                task_id='match_unmatched_{}_{}'.format(self._schema, code),
+                cluster_name=self._cluster_name,
+                databricks_conn_id=databricks_conn_id,
+                libraries=[
+                    {'egg': egg}
+                ],
+                spark_python_task={
+                    'python_file': match_py,
+                    'parameters': ['--input_file',
+                                   intermediate_bucket.format(date=one_day_ago,
+                                                              fn='{}_delta_left_overs'.format(self._schema)),
+                                   '--output_path',
+                                   intermediate_bucket.format(date=one_day_ago,
+                                                              fn='{}_fuzzy_matched_delta'.format(self._schema)),
+                                   '--country_code', code]
+                }
+            )
+
+            start_matching >> match_new >> match_unmatched >> end_matching
 
         return SubPipeline(start_matching, end_matching)
 
