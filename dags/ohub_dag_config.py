@@ -199,7 +199,8 @@ class GenericPipeline(object):
     def has_ingest_from_file_interface(self,
                                        deduplicate_on_concat_id: bool = True,
                                        alternative_schema: str = None,
-                                       alternative_output_fn: str = None) -> 'GenericPipeline':
+                                       alternative_output_fn: str = None,
+                                       alternative_seperator: str = None) -> 'GenericPipeline':
         channel = 'file_interface'
         ingest_schema = alternative_schema if alternative_schema else self._schema
         input_file = raw_bucket.format(date=one_day_ago, schema=ingest_schema, channel=channel)
@@ -208,6 +209,7 @@ class GenericPipeline(object):
                                                                                                  channel=channel)
         config = {
             'dedup': deduplicate_on_concat_id,
+            'sep': alternative_seperator,
             'input': input_file,
             'output': output_file
         }
@@ -306,11 +308,13 @@ class GenericPipeline(object):
         return SubPipeline(start_matching, end_matching)
 
     def __ingest_file_interface(self, config: dict):
+        sep = config['sep'] if config['sep'] else "\u2030"
+
         file_interface_to_parquet = ingest_task(
             schema=self._schema,
             channel='file_interface',
             clazz="com.unilever.ohub.spark.tsv2parquet.file_interface.{}Converter".format(self._clazz),
-            field_separator=u"\u2030",
+            field_separator=sep,
             cluster_name=self._cluster_name,
             deduplicate_on_concat_id=config['dedup'],
             ingest_input_schema=config['input'],
