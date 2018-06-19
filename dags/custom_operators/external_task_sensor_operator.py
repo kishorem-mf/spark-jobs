@@ -1,3 +1,5 @@
+import datetime
+
 from future import standard_library
 
 from time import sleep
@@ -49,6 +51,7 @@ class ExternalTaskSensorOperator(BaseOperator):
                  external_task_id,
                  poke_interval=60,
                  allowed_states=None,
+                 execution_delta=None,
                  *args,
                  **kwargs):
         super(ExternalTaskSensorOperator, self).__init__(*args, **kwargs)
@@ -57,6 +60,7 @@ class ExternalTaskSensorOperator(BaseOperator):
         self.allowed_states = allowed_states or [State.SUCCESS]
         self.disallowed_states = allowed_states or [State.FAILED, State.UPSTREAM_FAILED]
 
+        self.execution_delta = datetime.timedelta(seconds=0) if not execution_delta else execution_delta
         self.external_dag_id = external_dag_id
         self.external_task_id = external_task_id
 
@@ -66,7 +70,7 @@ class ExternalTaskSensorOperator(BaseOperator):
 
     def poke(self, context):
         dttm = context['execution_date']
-        dttm_serialised = dttm.isoformat()
+        dttm_serialised = (dttm - self.execution_delta).isoformat()
 
         self.log.info(
             'Poking for '
