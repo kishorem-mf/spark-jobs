@@ -159,5 +159,6 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     )
 
     ingest.last_task >> pre_processing >> exact_match_integrated_ingested
-    exact_match_integrated_ingested >> fuzzy_matching.first_task >> join_fuzzy_and_exact_matched
-    join_fuzzy_and_exact_matched >> operators_integrated_sensor >> referencing >> update_golden_records >> export.first_task
+    exact_match_integrated_ingested >> fuzzy_matching.first_task
+    fuzzy_matching.last_task >> join_fuzzy_and_exact_matched >> operators_integrated_sensor
+    operators_integrated_sensor >> referencing >> update_golden_records >> export.first_task

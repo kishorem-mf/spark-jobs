@@ -132,5 +132,5 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
         }
     )
 
-    ingest.last_task >> exact_match >> fuzzy_matching.first_task >> join >> combine
-    combine >> operators_integrated_sensor >> referencing >> update_golden_records >> export.first_task
+    ingest.last_task >> exact_match >> fuzzy_matching.first_task
+    fuzzy_matching.last_task >> join >> combine >> operators_integrated_sensor >> referencing >> update_golden_records >> export.first_task

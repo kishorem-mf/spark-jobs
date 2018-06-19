@@ -32,7 +32,7 @@ class DagConfig(object):
 
     @property
     def dag_id(self):
-        postfix = '_initial_load' if self.is_delta else ''
+        postfix = '_initial_load' if not self.is_delta else ''
         return f'ohub_{self.entity}{postfix}'
 
     @property
