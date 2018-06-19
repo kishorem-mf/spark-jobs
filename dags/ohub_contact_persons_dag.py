@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from airflow import DAG
-from airflow.operators.bash_operator import BashOperator
 
 from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator

@@ -139,8 +139,8 @@ class GenericPipeline(object):
 
         self._is_delta = False
 
-        self._exports: List(SubPipeline) = []
-        self._ingests: List(SubPipeline) = []
+        self._exports: List[SubPipeline] = []
+        self._ingests: List[SubPipeline] = []
 
     def is_delta(self):
         self._is_delta = True
@@ -168,7 +168,7 @@ class GenericPipeline(object):
 
     def has_export_to_acm(self,
                           acm_schema_name: str,
-                          extra_acm_parameters: List(str) = []) -> 'GenericPipeline':
+                          extra_acm_parameters: List[str] = []) -> 'GenericPipeline':
         config = {
             'filename': 'acm/UFS_' + acm_schema_name + '_{{ds_nodash}}000000.csv',
             'extra_acm_parameters': extra_acm_parameters
@@ -179,7 +179,7 @@ class GenericPipeline(object):
     def construct_ingest_pipeline(self) -> SubPipeline:
         cluster_up = create_cluster(self._schema, small_cluster_config(self._cluster_name))
         start_pipeline = BashOperator(
-            task_id='start_{}'.format(self._schema),
+            task_id='start_pipeline',
             bash_command='echo "start pipeline"',
         )
 
@@ -208,12 +208,12 @@ class GenericPipeline(object):
     def construct_export_pipeline(self) -> SubPipeline:
         cluster_down = terminate_cluster(self._schema, self._cluster_name)
         start_export = BashOperator(
-            task_id='start_export'.format(self._schema),
+            task_id='start_export',
             bash_command='echo "start export"',
         )
 
         end_pipeline = BashOperator(
-            task_id='end_ingest',
+            task_id='end_pipeline',
             bash_command='echo "end pipeline"',
         )
 
