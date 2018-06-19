@@ -2,7 +2,7 @@ name: airflow-dags
 channels:
   - defaults
 dependencies:
-  - python=2.7.14
+  - python=3.6
   - pycodestyle==2.3.1
   - pytest>=2.10
   - pytest-cov==2.5.1

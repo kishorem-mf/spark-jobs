@@ -8,7 +8,7 @@ from custom_operators.databricks_functions import \
 from ohub_dag_config import \
     default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, \
     create_cluster, terminate_cluster, default_cluster_config, \
-    postgres_config, ingest_task, fuzzy_matching_tasks, acm_convert_and_move
+    postgres_config, ingest_task, fuzzy_matching_tasks, acm_convert_and_move, GenericPipeline
 
 default_args.update(
     {
@@ -22,8 +22,15 @@ cluster_name = "ohub_operators_initial_load_{{ds}}"
 
 with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
-    cluster_up = create_cluster(schema, default_cluster_config(cluster_name))
-    cluster_down = terminate_cluster(schema, cluster_name)
+
+    generic = (
+        GenericPipeline(schema=schema, cluster_name=cluster_name, clazz='Operator')
+            .has_export_to_acm(acm_schema_name='UFS_OPERATORS')
+            .has_ingest_from_file_interface()
+    )
+
+    ingest: SubPipeline = generic.construct_ingest_pipeline()
+    export: SubPipeline = generic.construct_export_pipeline()
 
     operators_file_interface_to_parquet = ingest_task(
         schema=schema,
