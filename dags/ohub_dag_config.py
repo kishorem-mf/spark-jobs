@@ -29,7 +29,7 @@ default_args = {
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
-    'retry_delay': timedelta(seconds=10),
+    'retry_delay': timedelta(seconds=30),
     'on_failure_callback': slack_on_databricks_failure_callback
 }
 
@@ -38,12 +38,12 @@ def default_cluster_config(cluster_name):
     return {
         "cluster_name": cluster_name,
         "spark_version": "4.0.x-scala2.11",
-        "node_type_id": "Standard_DS5_v2",
+        "node_type_id": "Standard_D16s_v3",
         "autoscale": {
             "min_workers": '4',
             "max_workers": '12'
         },
-        "autotermination_minutes": '10',
+        "autotermination_minutes": '30',
         "spark_env_vars": {
             "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
         },
@@ -55,7 +55,7 @@ def small_cluster_config(cluster_name):
         "cluster_name": cluster_name,
         "spark_version": "4.0.x-scala2.11",
         "node_type_id": "Standard_DS3_v2",
-        "num_workers": '2',
+        "num_workers": '4',
         "autotermination_minutes": '60',
         "spark_env_vars": {
             "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
