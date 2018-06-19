@@ -3,10 +3,9 @@ from datetime import datetime
 from airflow import DAG
 
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator
-from custom_operators.empty_fallback import EmptyFallbackOperator
 from ohub_dag_config import default_args, databricks_conn_id, jar, \
-    intermediate_bucket, one_day_ago, ingested_bucket, integrated_bucket, two_day_ago, \
-    wasb_raw_container, wasb_conn_id, GenericPipeline, SubPipeline
+    one_day_ago, ingested_bucket, integrated_bucket, two_day_ago, \
+    GenericPipeline, SubPipeline
 
 schema = 'products'
 clazz = 'Product'
@@ -22,6 +21,7 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
     generic = (
         GenericPipeline(schema=schema, cluster_name=cluster_name, clazz=clazz)
+            .is_delta()
             .has_export_to_acm(acm_schema_name='UFS_PRODUCTS')
             .has_ingest_from_file_interface()
     )
