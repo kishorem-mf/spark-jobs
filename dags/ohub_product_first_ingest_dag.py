@@ -2,7 +2,7 @@ from datetime import datetime
 
 from airflow import DAG
 
-from ohub_dag_config import default_args, pipeline_without_matching
+from ohub_dag_config import default_args, GenericPipeline, SubPipeline
 
 schema = 'products'
 clazz = 'Product'
@@ -15,8 +15,13 @@ cluster_name = "ohub_products_initial_load_{{ds}}"
 
 with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
-    pipeline_without_matching(
-        schema=schema,
-        cluster_name=cluster_name,
-        clazz=clazz,
-        acm_file_prefix='UFS_PRODUCTS')
+    generic = (
+        GenericPipeline(schema=schema, cluster_name=cluster_name, clazz=clazz)
+            .has_export_to_acm(acm_schema_name='UFS_PRODUCTS')
+            .has_ingest_from_file_interface()
+    )
+
+    ingest: SubPipeline = generic.construct_ingest_pipeline()
+    export: SubPipeline = generic.construct_export_pipeline()
+
+    ingest.last_task >> export.first_task
