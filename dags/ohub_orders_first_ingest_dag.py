@@ -4,8 +4,8 @@ from airflow import DAG
 
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
-from ohub_dag_config import default_args, pipeline_without_matching, databricks_conn_id, jar, \
-    one_day_ago, ingested_bucket, integrated_bucket
+from ohub_dag_config import default_args, databricks_conn_id, jar, \
+    one_day_ago, ingested_bucket, integrated_bucket, GenericPipeline, SubPipeline
 
 schema = 'orders'
 clazz = 'Order'
@@ -18,12 +18,16 @@ cluster_name = "ohub_orders_initial_load_{{ds}}"
 
 with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
-    tasks = pipeline_without_matching(
-        schema=schema,
-        cluster_name=cluster_name,
-        clazz=clazz,
-        acm_file_prefix='UFS_ORDERS',
-        pars=['--orderLineFile', integrated_bucket.format(date=one_day_ago, fn='orderlines')])
+    generic = (
+        GenericPipeline(schema=schema, cluster_name=cluster_name, clazz=clazz)
+            .has_export_to_acm(acm_schema_name='UFS_ORDERS',
+                               extra_acm_parameters=['--orderLineFile',
+                                                     integrated_bucket.format(date=one_day_ago, fn='orderlines')])
+            .has_ingest_from_file_interface()
+    )
+
+    ingest: SubPipeline = generic.construct_ingest_pipeline()
+    export: SubPipeline = generic.construct_export_pipeline()
 
     merge = DatabricksSubmitRunOperator(
         task_id='{}_merge'.format(schema),
@@ -43,16 +47,23 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
 
     operators_integrated_sensor = ExternalTaskSensorOperator(
         task_id='operators_integrated_sensor',
-        external_dag_id='ohub_operators_first_ingest',
-        external_task_id='operators_join'
+        external_dag_id='ohub_operators',
+        external_task_id='operators_update_golden_records'
     )
 
     contactpersons_integrated_sensor = ExternalTaskSensorOperator(
         task_id='contactpersons_integrated_sensor',
-        external_dag_id='ohub_contactpersons_first_ingest',
-        external_task_id='contact_person_update_golden_records'
+        external_dag_id='ohub_contactpersons',
+        external_task_id='contactpersons_update_golden_records'
     )
 
-    tasks['file_interface_to_parquet'] >> operators_integrated_sensor >> merge
-    tasks['file_interface_to_parquet'] >> contactpersons_integrated_sensor >> merge
-    merge >> tasks['convert_to_acm']
+    order_lines_integrated_sensor = ExternalTaskSensorOperator(
+        task_id='orderlines_integrated_sensor',
+        external_dag_id='ohub_orderlines',
+        external_task_id='orderlines_merge'
+    )
+
+    ingest.last_task >> operators_integrated_sensor >> merge
+    ingest.last_task >> contactpersons_integrated_sensor >> merge
+    merge >> order_lines_integrated_sensor >> export.first_task
+

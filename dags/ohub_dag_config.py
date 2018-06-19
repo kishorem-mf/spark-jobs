@@ -1,12 +1,16 @@
 from datetime import timedelta
+from typing import List
 
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 from airflow.hooks.base_hook import BaseHook
+from airflow.models import BaseOperator
+from airflow.operators.bash_operator import BashOperator
 
 from config import email_addresses, slack_on_databricks_failure_callback
 from custom_operators.databricks_functions import \
     DatabricksCreateClusterOperator, DatabricksTerminateClusterOperator, DatabricksSubmitRunOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
+from custom_operators.empty_fallback import EmptyFallbackOperator
 
 ohub_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG', 'BH', 'BO', 'BR', 'CA', 'CH',
                       'CL', 'CN', 'CO', 'CR', 'CZ', 'DE', 'DK', 'DO', 'EC', 'EE', 'EG', 'ES', 'FI', 'FR', 'GB',
@@ -94,7 +98,8 @@ def ingest_task(schema, channel, clazz,
 
     ingest_schema = ingest_input_schema if ingest_input_schema else schema
     input_file = raw_bucket.format(date=one_day_ago, schema=ingest_schema, channel=channel)
-    output_file = ingest_output_file if ingest_output_file else ingested_bucket.format(date=one_day_ago, fn=schema, channel=channel)
+    output_file = ingest_output_file if ingest_output_file else ingested_bucket.format(date=one_day_ago, fn=schema,
+                                                                                       channel=channel)
 
     return DatabricksSubmitRunOperator(
         task_id="{}_file_interface_to_parquet".format(schema),
@@ -113,34 +118,6 @@ def ingest_task(schema, channel, clazz,
         },
         depends_on_past=True
     )
-
-
-def fuzzy_matching_tasks(schema,
-                         cluster_name,
-                         match_py,
-                         ingested_input):
-    tasks = []
-    for code in ohub_country_codes:
-        t = DatabricksSubmitRunOperator(
-            task_id='match_{}_{}'.format(schema, code),
-            cluster_name=cluster_name,
-            databricks_conn_id=databricks_conn_id,
-            libraries=[
-                {'egg': egg}
-            ],
-            spark_python_task={
-                'python_file': match_py,
-                'parameters': ['--input_file', ingested_input,
-                               '--output_path',
-                               intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(schema)),
-                               '--country_code', code,
-                               '--threshold', '0.9']
-            }
-        )
-        tasks.append(t)
-
-    return tasks
-
 
 def delta_fuzzy_matching_tasks(schema,
                                cluster_name,
@@ -194,93 +171,193 @@ def delta_fuzzy_matching_tasks(schema,
     return tasks
 
 
-def acm_convert_and_move(schema, cluster_name, clazz, acm_file_prefix, previous_integrated=None,
-                         send_postgres_config=False, pars=[]):
-    acm_file = 'acm/UFS_' + acm_file_prefix + '_{{ds_nodash}}000000.csv'
+class SubPipeline(object):
+    def __init__(self, first_task: BaseOperator, last_task: BaseOperator):
+        self.first_task = first_task
+        self.last_task = last_task
 
-    delta_params = ['--previousIntegrated', previous_integrated] if previous_integrated else []
-    postgres_config_ = postgres_config if send_postgres_config else []
-    convert_to_acm = DatabricksSubmitRunOperator(
-        task_id="{}_to_acm".format(schema),
-        cluster_name=cluster_name,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
-        spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.acm.{}AcmConverter".format(clazz),
-            'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=schema),
-                           '--outputFile',
-                           export_bucket.format(date='{{ds}}', fn=acm_file)] + delta_params + postgres_config_ + pars
+
+class GenericPipeline(object):
+    def __init__(self,
+                 schema: str,
+                 cluster_name: str,
+                 clazz: str
+                 ):
+        self._schema = schema
+        self._cluster_name = cluster_name
+        self._clazz = clazz
+
+        self._is_delta = False
+
+        self._exports: List(SubPipeline) = []
+        self._ingests: List(SubPipeline) = []
+
+    def is_delta(self):
+        self._is_delta = True
+        return self
+
+    def has_ingest_from_file_interface(self,
+                                       deduplicate_on_concat_id: bool = True,
+                                       alternative_schema: str = None,
+                                       alternative_output_fn: str = None) -> 'GenericPipeline':
+        channel = 'file_interface'
+        ingest_schema = alternative_schema if alternative_schema else self._schema
+        input_file = raw_bucket.format(date=one_day_ago, schema=ingest_schema, channel=channel)
+        output_file = alternative_output_fn if alternative_output_fn else ingested_bucket.format(date=one_day_ago,
+                                                                                                 fn=self._schema,
+                                                                                                 channel=channel)
+        config = {
+            'dedup': deduplicate_on_concat_id,
+            'input': input_file,
+            'output': output_file
         }
-    )
+        self._ingests.append(self.__ingest_file_interface(config))
+        return self
 
-    tmp_file = '/tmp/' + acm_file
+    def has_export_to_acm(self,
+                          acm_schema_name: str,
+                          extra_acm_parameters: List(str) = []) -> 'GenericPipeline':
+        config = {
+            'filename': 'acm/UFS_' + acm_schema_name + '_{{ds_nodash}}000000.csv',
+            'extra_acm_parameters': extra_acm_parameters
+        }
+        self._exports.append(self.__export_acm_pipeline(config))
+        return self
 
-    acm_from_wasb = FileFromWasbOperator(
-        task_id='{}_acm_from_wasb'.format(schema),
-        file_path=tmp_file,
-        container_name=container_name,
-        wasb_conn_id='azure_blob',
-        blob_name=wasb_export_container.format(date='{{ds}}', fn=acm_file)
-    )
+    def construct_ingest_pipeline(self) -> SubPipeline:
+        cluster_up = create_cluster(self._schema, small_cluster_config(self._cluster_name))
+        start_pipeline = BashOperator(
+            task_id='start_{}'.format(self._schema),
+            bash_command='echo "start pipeline"',
+        )
 
-    ftp_to_acm = SFTPOperator(
-        task_id='{}_ftp_to_acm'.format(schema),
-        local_filepath=tmp_file,
-        remote_filepath='/incoming/temp/ohub_2_test/{}'.format(tmp_file.split('/')[-1]),
-        ssh_conn_id='acm_sftp_ssh',
-        operation=SFTPOperation.PUT
-    )
-    convert_to_acm >> acm_from_wasb >> ftp_to_acm
+        end_ingest = BashOperator(
+            task_id='end_ingest',
+            bash_command='echo "end ingesting"',
+        )
 
-    return convert_to_acm
+        if self._is_delta:
+            empty_fallback = EmptyFallbackOperator(
+                task_id='empty_fallback',
+                container_name='prod',
+                file_path=wasb_raw_container.format(date=one_day_ago, schema=self._schema, channel='file_interface'),
+                wasb_conn_id=wasb_conn_id)
+            start_pipeline >> empty_fallback
 
+        start_pipeline >> cluster_up
 
-def pipeline_without_matching(
-        schema,
-        cluster_name,
-        clazz,
-        acm_file_prefix,
-        enable_acm_delta=False,
-        deduplicate_on_concat_id=True,
-        ingest_input_schema=None,
-        ingest_output_file=None,
-        pars=[]):
+        t: SubPipeline
+        for t in self._ingests:
+            cluster_up >> t.first_task
+            t.last_task >> end_ingest
 
-    cluster_up = create_cluster(schema, small_cluster_config(cluster_name))
-    cluster_down = terminate_cluster(schema, cluster_name)
+        return SubPipeline(start_pipeline, end_ingest)
 
-    previous_integrated = integrated_bucket.format(date=two_day_ago, fn=schema) if enable_acm_delta else None
+    def construct_export_pipeline(self) -> SubPipeline:
+        cluster_down = terminate_cluster(self._schema, self._cluster_name)
+        start_export = BashOperator(
+            task_id='start_export'.format(self._schema),
+            bash_command='echo "start export"',
+        )
 
-    file_interface_to_parquet = ingest_task(
-        schema=schema,
-        channel='file_interface',
-        clazz="com.unilever.ohub.spark.tsv2parquet.file_interface.{}Converter".format(clazz),
-        field_separator=u"\u2030",
-        cluster_name=cluster_name,
-        deduplicate_on_concat_id=deduplicate_on_concat_id,
-        ingest_input_schema=ingest_input_schema,
-        ingest_output_file=ingest_output_file
-    )
+        end_pipeline = BashOperator(
+            task_id='end_ingest',
+            bash_command='echo "end pipeline"',
+        )
 
-    convert_to_acm = acm_convert_and_move(
-        schema=schema,
-        cluster_name=cluster_name,
-        clazz=clazz,
-        acm_file_prefix=acm_file_prefix,
-        previous_integrated=previous_integrated,
-        send_postgres_config=True,
-        pars=pars
-    )
+        cluster_down >> end_pipeline
 
-    cluster_up >> file_interface_to_parquet >> convert_to_acm >> cluster_down
-    return {
-        'cluster_up': cluster_up,
-        'file_interface_to_parquet': file_interface_to_parquet,
-        'convert_to_acm': convert_to_acm,
-        'cluster_down': cluster_down
-    }
+        t: SubPipeline
+        for t in self._exports:
+            start_export >> t.first_task
+            t.last_task >> cluster_down
+        return SubPipeline(start_export, end_pipeline)
+
+    def construct_fuzzy_matching_pipeline(self,
+                                 ingest_input: str,
+                                 match_py: str) -> SubPipeline:
+        start_matching = BashOperator(
+            task_id='start_matching',
+            bash_command='echo "start matching"',
+        )
+        end_matching = BashOperator(
+            task_id='end_matching',
+            bash_command='echo "end matching"',
+        )
+        for country_code in ohub_country_codes:
+            t = DatabricksSubmitRunOperator(
+                task_id='match_{}_{}'.format(self._schema, country_code),
+                cluster_name=self._cluster_name,
+                databricks_conn_id=databricks_conn_id,
+                libraries=[
+                    {'egg': egg}
+                ],
+                spark_python_task={
+                    'python_file': match_py,
+                    'parameters': ['--input_file', ingest_input,
+                                   '--output_path',
+                                   intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(self._schema)),
+                                   '--country_code', country_code,
+                                   '--threshold', '0.9']
+                }
+            )
+            start_matching >> t >> end_matching
+
+        return SubPipeline(start_matching, end_matching)
+
+    def __ingest_file_interface(self, config: dict):
+        file_interface_to_parquet = ingest_task(
+            schema=self._schema,
+            channel='file_interface',
+            clazz="com.unilever.ohub.spark.tsv2parquet.file_interface.{}Converter".format(self._clazz),
+            field_separator=u"\u2030",
+            cluster_name=self._cluster_name,
+            deduplicate_on_concat_id=config['dedup'],
+            ingest_input_schema=config['input'],
+            ingest_output_file=config['output']
+        )
+        return SubPipeline(file_interface_to_parquet, file_interface_to_parquet)
+
+    def __export_acm_pipeline(self, config: dict):
+        previous_integrated = integrated_bucket.format(date=two_day_ago, fn=self._schema) if self._is_delta else None
+        delta_params = ['--previousIntegrated', previous_integrated] if previous_integrated else []
+        convert_to_acm = DatabricksSubmitRunOperator(
+            task_id="{}_to_acm".format(self._schema),
+            cluster_name=self._cluster_name,
+            databricks_conn_id=databricks_conn_id,
+            libraries=[
+                {'jar': jar}
+            ],
+            spark_jar_task={
+                'main_class_name': "com.unilever.ohub.spark.acm.{}AcmConverter".format(self._clazz),
+                'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=self._schema),
+                               '--outputFile', export_bucket.format(date='{{ds}}', fn=config['filename'])] +
+                              delta_params +
+                              postgres_config +
+                              config['extra_acm_parameters']
+            }
+        )
+
+        tmp_file = '/tmp/' + config['filename']
+
+        acm_from_wasb = FileFromWasbOperator(
+            task_id='{}_acm_from_wasb'.format(self._schema),
+            file_path=tmp_file,
+            container_name=container_name,
+            wasb_conn_id='azure_blob',
+            blob_name=wasb_export_container.format(date='{{ds}}', fn=config['filename'])
+        )
+
+        ftp_to_acm = SFTPOperator(
+            task_id='{}_ftp_to_acm'.format(self._schema),
+            local_filepath=tmp_file,
+            remote_filepath='/incoming/temp/ohub_2_test/{}'.format(tmp_file.split('/')[-1]),
+            ssh_conn_id='acm_sftp_ssh',
+            operation=SFTPOperation.PUT
+        )
+        convert_to_acm >> acm_from_wasb >> ftp_to_acm
+
+        return SubPipeline(convert_to_acm, ftp_to_acm)
 
 
 interval = '@daily'
