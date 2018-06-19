@@ -1,3 +1,4 @@
+import os
 from datetime import timedelta
 from typing import List
 
@@ -6,6 +7,7 @@ from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 from airflow.hooks.base_hook import BaseHook
 from airflow.models import BaseOperator
 from airflow.operators.bash_operator import BashOperator
+from airflow.operators.python_operator import ShortCircuitOperator
 
 from config import email_addresses, slack_on_databricks_failure_callback
 from custom_operators.databricks_functions import \
@@ -367,6 +369,11 @@ class GenericPipeline(object):
 
         tmp_file = '/tmp/' + config['filename']
 
+        check_file_non_empty = ShortCircuitOperator(
+            task_id='check_file_non_empty',
+            python_callable=lambda: os.stat(tmp_file).st_size > 0
+        )
+
         acm_from_wasb = FileFromWasbOperator(
             task_id='{}_acm_from_wasb'.format(self._schema),
             file_path=tmp_file,
@@ -382,7 +389,7 @@ class GenericPipeline(object):
             ssh_conn_id='acm_sftp_ssh',
             operation=SFTPOperation.PUT
         )
-        convert_to_acm >> acm_from_wasb >> ftp_to_acm
+        convert_to_acm >> acm_from_wasb >> check_file_non_empty >> ftp_to_acm
 
         return SubPipeline(convert_to_acm, ftp_to_acm)
 
