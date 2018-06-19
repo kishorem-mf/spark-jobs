@@ -7,9 +7,8 @@ from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub_dag_config import \
-    default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, create_cluster, \
-    default_cluster_config, terminate_cluster, ingest_task, \
-    fuzzy_matching_tasks, postgres_config, acm_convert_and_move, one_day_ago
+    default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, postgres_config, \
+    one_day_ago, GenericPipeline, SubPipeline
 
 default_args.update(
     {
@@ -24,18 +23,20 @@ cluster_name = "ohub_contactpersons_initial_load_{{ds}}"
 
 with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
-    cluster_up = create_cluster(schema, default_cluster_config(cluster_name))
-    cluster_down = terminate_cluster(schema, cluster_name)
-
-    contact_persons_file_interface_to_parquet = ingest_task(
-        schema=schema,
-        channel='file_interface',
-        clazz="com.unilever.ohub.spark.tsv2parquet.file_interface.ContactPersonConverter",
-        field_separator=u"\u2030",
-        cluster_name=cluster_name
+    generic = (
+        GenericPipeline(schema=schema, cluster_name=cluster_name, clazz='ContactPerson')
+            .has_export_to_acm(acm_schema_name='UFS_RECIPIENTS')
+            .has_ingest_from_file_interface()
     )
 
-    contact_persons_exact_match = DatabricksSubmitRunOperator(
+    ingest: SubPipeline = generic.construct_ingest_pipeline()
+    export: SubPipeline = generic.construct_export_pipeline()
+    fuzzy_matching: SubPipeline = generic.construct_fuzzy_matching_pipeline(
+        match_py='dbfs:/libraries/name_matching/match_contacts.py',
+        ingest_input=intermediate_bucket.format(date='{{ds}}', fn='{}_left_overs'.format(schema)),
+    )
+
+    exact_match = DatabricksSubmitRunOperator(
         task_id="{}_exact_match".format(schema),
         cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
@@ -55,24 +56,7 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         }
     )
 
-    begin_fuzzy_matching = BashOperator(
-        task_id='{}_start_fuzzy_matching'.format(schema),
-        bash_command='echo "start fuzzy matching"',
-    )
-
-    matching_tasks = fuzzy_matching_tasks(
-        schema=schema,
-        cluster_name=cluster_name,
-        match_py='dbfs:/libraries/name_matching/match_contacts.py',
-        ingested_input=intermediate_bucket.format(date='{{ds}}', fn='{}_left_overs'.format(schema)),
-    )
-
-    end_fuzzy_matching = BashOperator(
-        task_id='{}_end_fuzzy_matching'.format(schema),
-        bash_command='echo "end fuzzy matching"',
-    )
-
-    join_contact_persons = DatabricksSubmitRunOperator(
+    join = DatabricksSubmitRunOperator(
         task_id='{}_merge'.format(schema),
         cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
@@ -89,7 +73,7 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         }
     )
 
-    contact_person_combining = DatabricksSubmitRunOperator(
+    combine = DatabricksSubmitRunOperator(
         task_id='{}_combining'.format(schema),
         cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
@@ -115,7 +99,7 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         external_task_id='operators_join'
     )
 
-    contact_person_referencing = DatabricksSubmitRunOperator(
+    referencing = DatabricksSubmitRunOperator(
         task_id='{}_referencing'.format(schema),
         cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id,
@@ -130,7 +114,8 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
                            '--operatorInputFile', integrated_bucket.format(date='{{ds}}',
                                                                            fn='operators',
                                                                            channel='*'),
-                           '--outputFile', intermediate_bucket.format(date=one_day_ago, fn='{}_updated_references'.format(schema))]
+                           '--outputFile',
+                           intermediate_bucket.format(date=one_day_ago, fn='{}_updated_references'.format(schema))]
         }
     )
 
@@ -150,16 +135,5 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         }
     )
 
-    convert_to_acm = acm_convert_and_move(
-        schema=schema,
-        cluster_name=cluster_name,
-        clazz='ContactPerson',
-        acm_file_prefix='UFS_RECIPIENTS'
-    )
-
-    cluster_up >> contact_persons_file_interface_to_parquet >> contact_persons_exact_match >> begin_fuzzy_matching
-
-    for t in matching_tasks:
-        begin_fuzzy_matching >> t >> end_fuzzy_matching
-    end_fuzzy_matching >> join_contact_persons >> contact_person_combining >> operators_integrated_sensor >> contact_person_referencing
-    contact_person_referencing >> update_golden_records >> convert_to_acm >> cluster_down
+    ingest.last_task >> exact_match >> fuzzy_matching.first_task >> join >> combine
+    combine >> operators_integrated_sensor >> referencing >> update_golden_records >> export.first_task
