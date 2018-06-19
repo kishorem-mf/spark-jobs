@@ -12,6 +12,7 @@ from airflow.operators.python_operator import ShortCircuitOperator
 from config import email_addresses, slack_on_databricks_failure_callback
 from custom_operators.databricks_functions import \
     DatabricksCreateClusterOperator, DatabricksTerminateClusterOperator, DatabricksSubmitRunOperator
+from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
 from custom_operators.empty_fallback import EmptyFallbackOperator
 
@@ -21,6 +22,23 @@ ohub_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG'
                       'LB', 'LK', 'LT', 'LU', 'LV', 'MA', 'MM', 'MO', 'MV', 'MX', 'MY', 'NI', 'NL', 'NO', 'NU',
                       'NZ', 'OM', 'PA', 'PE', 'PH', 'PK', 'PL', 'PT', 'QA', 'RO', 'RU', 'SA', 'SE', 'SG', 'SK',
                       'SV', 'TH', 'TR', 'TW', 'US', 'VE', 'VN', 'ZA']
+
+
+class DagConfig(object):
+    def __init__(self, entity: str, is_delta: bool = False):
+        self.entity = entity
+        self.is_delta = is_delta
+        self.schedule = '@daily' if is_delta else '@once'
+
+    @property
+    def dag_id(self):
+        postfix = '_initial_load' if self._is_delta else ''
+        return f'ohub_{self._entity}{postfix}'
+
+    @property
+    def cluster_name(self):
+        return f'{self.dag_id}_{{{{ds}}}}'
+
 
 default_args = {
     'owner': 'airflow',
@@ -131,22 +149,16 @@ class SubPipeline(object):
 
 class GenericPipeline(object):
     def __init__(self,
-                 schema: str,
-                 cluster_name: str,
-                 clazz: str
-                 ):
-        self._schema = schema
-        self._cluster_name = cluster_name
-        self._clazz = clazz
+                 dag_config: DagConfig,
+                 class_prefix: str):
+        self._entity = dag_config.entity
+        self._cluster_name = dag_config.cluster_name
+        self._clazz = class_prefix
 
         self._is_delta = False
 
         self._exports: List[SubPipeline] = []
         self._ingests: List[SubPipeline] = []
-
-    def is_delta(self):
-        self._is_delta = True
-        return self
 
     def has_ingest_from_file_interface(self,
                                        deduplicate_on_concat_id: bool = True,
@@ -154,10 +166,10 @@ class GenericPipeline(object):
                                        alternative_output_fn: str = None,
                                        alternative_seperator: str = None) -> 'GenericPipeline':
         channel = 'file_interface'
-        ingest_schema = alternative_schema if alternative_schema else self._schema
+        ingest_schema = alternative_schema if alternative_schema else self._entity
         input_file = raw_bucket.format(date=one_day_ago, schema=ingest_schema, channel=channel)
         output_file = alternative_output_fn if alternative_output_fn else ingested_bucket.format(date=one_day_ago,
-                                                                                                 fn=self._schema,
+                                                                                                 fn=self._entity,
                                                                                                  channel=channel)
         config = {
             'dedup': deduplicate_on_concat_id,
@@ -179,11 +191,19 @@ class GenericPipeline(object):
         return self
 
     def construct_ingest_pipeline(self) -> SubPipeline:
-        cluster_up = create_cluster(self._schema, small_cluster_config(self._cluster_name))
-        start_pipeline = BashOperator(
-            task_id='start_pipeline',
-            bash_command='echo "start pipeline"',
-        )
+        cluster_up = create_cluster(self._entity, small_cluster_config(self._cluster_name))
+        if self._is_delta:
+            start_pipeline = ExternalTaskSensorOperator(
+                task_id='start_pipeline',
+                external_dag_id='TEST_DAG',
+                external_task_id='All_Tasks_Completed',
+                allowed_states=['success'],
+                execution_delta=timedelta(minutes=30))
+        else:
+            start_pipeline = BashOperator(
+                task_id='start_pipeline',
+                bash_command='echo "start pipeline"',
+            )
 
         end_ingest = BashOperator(
             task_id='end_ingest',
@@ -194,7 +214,7 @@ class GenericPipeline(object):
             empty_fallback = EmptyFallbackOperator(
                 task_id='empty_fallback',
                 container_name='prod',
-                file_path=wasb_raw_container.format(date=one_day_ago, schema=self._schema, channel='file_interface'),
+                file_path=wasb_raw_container.format(date=one_day_ago, schema=self._entity, channel='file_interface'),
                 wasb_conn_id=wasb_conn_id)
             start_pipeline >> empty_fallback
 
@@ -208,7 +228,7 @@ class GenericPipeline(object):
         return SubPipeline(start_pipeline, end_ingest)
 
     def construct_export_pipeline(self) -> SubPipeline:
-        cluster_down = terminate_cluster(self._schema, self._cluster_name)
+        cluster_down = terminate_cluster(self._entity, self._cluster_name)
         start_export = BashOperator(
             task_id='start_export',
             bash_command='echo "start export"',
@@ -254,7 +274,7 @@ class GenericPipeline(object):
         )
         for country_code in ohub_country_codes:
             t = DatabricksSubmitRunOperator(
-                task_id='match_{}_{}'.format(self._schema, country_code),
+                task_id='match_{}_{}'.format(self._entity, country_code),
                 cluster_name=self._cluster_name,
                 databricks_conn_id=databricks_conn_id,
                 libraries=[
@@ -264,7 +284,7 @@ class GenericPipeline(object):
                     'python_file': match_py,
                     'parameters': ['--input_file', ingest_input,
                                    '--output_path',
-                                   intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(self._schema)),
+                                   intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(self._entity)),
                                    '--country_code', country_code,
                                    '--threshold', '0.9']
                 }
@@ -289,7 +309,7 @@ class GenericPipeline(object):
 
         for code in ohub_country_codes:
             match_new = DatabricksSubmitRunOperator(
-                task_id=('match_new_{}_with_integrated_{}_{}'.format(self._schema, self._schema, code)),
+                task_id=('match_new_{}_with_integrated_{}_{}'.format(self._entity, self._entity, code)),
                 cluster_name=self._cluster_name,
                 databricks_conn_id=databricks_conn_id,
                 libraries=[
@@ -302,15 +322,15 @@ class GenericPipeline(object):
                         '--ingested_daily_input_path', ingested_input,
                         '--updated_integrated_output_path',
                         intermediate_bucket.format(date=one_day_ago,
-                                                   fn='{}_fuzzy_matched_delta_integrated'.format(self._schema)),
+                                                   fn='{}_fuzzy_matched_delta_integrated'.format(self._entity)),
                         '--unmatched_output_path',
-                        intermediate_bucket.format(date=one_day_ago, fn='{}_delta_left_overs'.format(self._schema)),
+                        intermediate_bucket.format(date=one_day_ago, fn='{}_delta_left_overs'.format(self._entity)),
                         '--country_code', code]
                 }
             )
 
             match_unmatched = DatabricksSubmitRunOperator(
-                task_id='match_unmatched_{}_{}'.format(self._schema, code),
+                task_id='match_unmatched_{}_{}'.format(self._entity, code),
                 cluster_name=self._cluster_name,
                 databricks_conn_id=databricks_conn_id,
                 libraries=[
@@ -320,10 +340,10 @@ class GenericPipeline(object):
                     'python_file': match_py,
                     'parameters': ['--input_file',
                                    intermediate_bucket.format(date=one_day_ago,
-                                                              fn='{}_delta_left_overs'.format(self._schema)),
+                                                              fn='{}_delta_left_overs'.format(self._entity)),
                                    '--output_path',
                                    intermediate_bucket.format(date=one_day_ago,
-                                                              fn='{}_fuzzy_matched_delta'.format(self._schema)),
+                                                              fn='{}_fuzzy_matched_delta'.format(self._entity)),
                                    '--country_code', code]
                 }
             )
@@ -336,7 +356,7 @@ class GenericPipeline(object):
         sep = config['sep'] if config['sep'] else "\u2030"
 
         file_interface_to_parquet = ingest_task(
-            schema=self._schema,
+            schema=self._entity,
             channel='file_interface',
             clazz="com.unilever.ohub.spark.tsv2parquet.file_interface.{}Converter".format(self._clazz),
             field_separator=sep,
@@ -348,10 +368,10 @@ class GenericPipeline(object):
         return SubPipeline(file_interface_to_parquet, file_interface_to_parquet)
 
     def __export_acm_pipeline(self, config: dict):
-        previous_integrated = integrated_bucket.format(date=two_day_ago, fn=self._schema) if self._is_delta else None
+        previous_integrated = integrated_bucket.format(date=two_day_ago, fn=self._entity) if self._is_delta else None
         delta_params = ['--previousIntegrated', previous_integrated] if previous_integrated else []
         convert_to_acm = DatabricksSubmitRunOperator(
-            task_id="{}_to_acm".format(self._schema),
+            task_id="{}_to_acm".format(self._entity),
             cluster_name=self._cluster_name,
             databricks_conn_id=databricks_conn_id,
             libraries=[
@@ -359,7 +379,7 @@ class GenericPipeline(object):
             ],
             spark_jar_task={
                 'main_class_name': "com.unilever.ohub.spark.acm.{}AcmConverter".format(self._clazz),
-                'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=self._schema),
+                'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=self._entity),
                                '--outputFile', export_bucket.format(date='{{ds}}', fn=config['filename'])] +
                               delta_params +
                               postgres_config +
@@ -375,7 +395,7 @@ class GenericPipeline(object):
         )
 
         acm_from_wasb = FileFromWasbOperator(
-            task_id='{}_acm_from_wasb'.format(self._schema),
+            task_id='{}_acm_from_wasb'.format(self._entity),
             file_path=tmp_file,
             container_name=container_name,
             wasb_conn_id='azure_blob',
@@ -383,7 +403,7 @@ class GenericPipeline(object):
         )
 
         ftp_to_acm = SFTPOperator(
-            task_id='{}_ftp_to_acm'.format(self._schema),
+            task_id='{}_ftp_to_acm'.format(self._entity),
             local_filepath=tmp_file,
             remote_filepath='/incoming/temp/ohub_2_test/{}'.format(tmp_file.split('/')[-1]),
             ssh_conn_id='acm_sftp_ssh',

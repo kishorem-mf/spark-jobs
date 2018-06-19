@@ -6,7 +6,7 @@ from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
 from ohub_dag_config import \
     default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, \
-    postgres_config, GenericPipeline, SubPipeline, one_day_ago
+    postgres_config, GenericPipeline, SubPipeline, one_day_ago, DagConfig
 
 default_args.update(
     {
@@ -14,14 +14,13 @@ default_args.update(
         'pool': 'ohub_operators_pool'
     }
 )
-interval = '@once'
-schema = 'operators'
-cluster_name = "ohub_operators_initial_load_{{ds}}"
 
-with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
-         schedule_interval=interval) as dag:
+entity = 'operators'
+dag_config = DagConfig(entity, is_delta=False)
+
+with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_config.schedule) as dag:
     generic = (
-        GenericPipeline(schema=schema, cluster_name=cluster_name, clazz='Operator')
+        GenericPipeline(dag_config, class_prefix='Operator')
             .has_export_to_acm(acm_schema_name='UFS_OPERATORS')
             .has_ingest_from_file_interface()
     )
@@ -30,12 +29,12 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
     export: SubPipeline = generic.construct_export_pipeline()
     fuzzy_matching: SubPipeline = generic.construct_fuzzy_matching_pipeline(
         match_py='dbfs:/libraries/name_matching/match_operators.py',
-        ingest_input=ingested_bucket.format(date=one_day_ago, fn=schema, channel='*')
+        ingest_input=ingested_bucket.format(date=one_day_ago, fn=entity, channel='*')
     )
 
-    merge_operators = DatabricksSubmitRunOperator(
-        task_id='{}_join'.format(schema),
-        cluster_name=cluster_name,
+    join = DatabricksSubmitRunOperator(
+        task_id='join',
+        cluster_name=dag_config.cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -43,11 +42,11 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.OperatorMatchingJoiner",
             'parameters': ['--matchingInputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='{}_matched'.format(schema)),
-                           '--entityInputFile', ingested_bucket.format(date=one_day_ago, fn=schema, channel='*'),
-                           '--outputFile', integrated_bucket.format(date=one_day_ago, fn=schema)] + postgres_config
+                           intermediate_bucket.format(date=one_day_ago, fn='{}_matched'.format(entity)),
+                           '--entityInputFile', ingested_bucket.format(date=one_day_ago, fn=entity, channel='*'),
+                           '--outputFile', integrated_bucket.format(date=one_day_ago, fn=entity)] + postgres_config
         }
     )
 
     ingest.last_task >> fuzzy_matching.first_task
-    fuzzy_matching.last_task >> merge_operators >> export.first_task
+    fuzzy_matching.last_task >> join >> export.first_task

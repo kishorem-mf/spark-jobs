@@ -4,26 +4,22 @@ from airflow import DAG
 
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
-from ohub_dag_config import SubPipeline
+from ohub_dag_config import SubPipeline, DagConfig
 from ohub_dag_config import default_args, databricks_conn_id, jar, \
     one_day_ago, ingested_bucket, integrated_bucket, two_day_ago, \
     GenericPipeline
 
-schema = 'orders'
-clazz = 'Order'
-acm_tbl = 'ORDERS'
-
-interval = '@daily'
 default_args.update(
     {'start_date': datetime(2018, 6, 14)}
 )
-cluster_name = "ohub_" + schema + "_{{ds}}"
 
-with DAG('ohub_{}'.format(schema), default_args=default_args,
-         schedule_interval=interval) as dag:
+entity = 'orders'
+dag_config = DagConfig(entity, is_delta=True)
+clazz = 'Order'
+
+with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_config.schedule) as dag:
     generic = (
-        GenericPipeline(schema=schema, cluster_name=cluster_name, clazz=clazz)
-            .is_delta()
+        GenericPipeline(dag_config, class_prefix=clazz)
             .has_export_to_acm(acm_schema_name='UFS_ORDERS',
                                extra_acm_parameters=['--orderLineFile',
                                                      integrated_bucket.format(date=one_day_ago, fn='orderlines')])
@@ -34,8 +30,8 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
     export: SubPipeline = generic.construct_export_pipeline()
 
     merge = DatabricksSubmitRunOperator(
-        task_id='{}_merge'.format(schema),
-        cluster_name=cluster_name,
+        task_id='merge',
+        cluster_name=dag_config.cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
@@ -43,11 +39,11 @@ with DAG('ohub_{}'.format(schema), default_args=default_args,
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(clazz),
             'parameters': ['--orderInputFile',
-                           ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=schema),
-                           '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=schema),
+                           ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=entity),
+                           '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=entity),
                            '--contactPersonInputFile', integrated_bucket.format(date=one_day_ago, fn='contactpersons'),
                            '--operatorInputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
-                           '--outputFile', integrated_bucket.format(date=one_day_ago, fn=schema)]
+                           '--outputFile', integrated_bucket.format(date=one_day_ago, fn=entity)]
         })
 
     operators_integrated_sensor = ExternalTaskSensorOperator(
