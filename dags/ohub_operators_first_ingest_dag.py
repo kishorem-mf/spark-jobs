@@ -1,14 +1,12 @@
 from datetime import datetime
 
 from airflow import DAG
-from airflow.operators.bash_operator import BashOperator
 
 from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
 from ohub_dag_config import \
     default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, \
-    create_cluster, terminate_cluster, default_cluster_config, \
-    postgres_config, ingest_task, fuzzy_matching_tasks, acm_convert_and_move, GenericPipeline
+    postgres_config, GenericPipeline, SubPipeline
 
 default_args.update(
     {
@@ -22,7 +20,6 @@ cluster_name = "ohub_operators_initial_load_{{ds}}"
 
 with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
          schedule_interval=interval) as dag:
-
     generic = (
         GenericPipeline(schema=schema, cluster_name=cluster_name, clazz='Operator')
             .has_export_to_acm(acm_schema_name='UFS_OPERATORS')
@@ -31,30 +28,9 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
 
     ingest: SubPipeline = generic.construct_ingest_pipeline()
     export: SubPipeline = generic.construct_export_pipeline()
-
-    operators_file_interface_to_parquet = ingest_task(
-        schema=schema,
-        channel='file_interface',
-        clazz="com.unilever.ohub.spark.tsv2parquet.file_interface.OperatorConverter",
-        field_separator=u"\u2030",
-        cluster_name=cluster_name
-    )
-
-    begin_fuzzy_matching = BashOperator(
-        task_id='{}_start_fuzzy_matching'.format(schema),
-        bash_command='echo "start fuzzy matching"',
-    )
-
-    matching_tasks = fuzzy_matching_tasks(
-        schema=schema,
-        cluster_name=cluster_name,
+    fuzzy_matching: SubPipeline = generic.construct_fuzzy_matching_pipeline(
         match_py='dbfs:/libraries/name_matching/match_operators.py',
-        ingested_input=ingested_bucket.format(date='{{ds}}', fn=schema, channel='*')
-    )
-
-    end_fuzzy_matching = BashOperator(
-        task_id='{}_end_fuzzy_matching'.format(schema),
-        bash_command='echo "end fuzzy matching"',
+        ingest_input=ingested_bucket.format(date='{{ds}}', fn=schema, channel='*')
     )
 
     merge_operators = DatabricksSubmitRunOperator(
@@ -73,15 +49,5 @@ with DAG('ohub_{}_first_ingest'.format(schema), default_args=default_args,
         }
     )
 
-    convert_to_acm = acm_convert_and_move(
-        schema=schema,
-        cluster_name=cluster_name,
-        clazz='ContactPerson',
-        acm_file_prefix='UFS_OPERATORS',
-        send_postgres_config=True
-    )
-
-    cluster_up >> operators_file_interface_to_parquet >> begin_fuzzy_matching
-    for t in matching_tasks:
-        begin_fuzzy_matching >> t >> end_fuzzy_matching
-    end_fuzzy_matching >> merge_operators >> convert_to_acm >> cluster_down
+    ingest.last_task >> fuzzy_matching.first_task
+    fuzzy_matching.last_task >> merge_operators >> export.first_task
