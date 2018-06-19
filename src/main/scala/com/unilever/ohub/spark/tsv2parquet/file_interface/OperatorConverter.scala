@@ -27,7 +27,7 @@ object OperatorConverter extends FileDomainGateKeeper[Operator] with OperatorEmp
       customerType                = Operator.customerType                                                                                              ,
       isActive                    = mandatory ( "STATUS",                   "isActive",                     parseBoolUnsafe                           ),
       isGoldenRecord              = false                                                                                                              ,
-      ohubId                      = Option.empty                                                                                                       ,
+      ohubId                      = Option.empty,  // set in OperatorMatchingJoiner
       name                        = mandatory ( "NAME",                     "name"                                                                    ),
       sourceEntityId              = mandatory ( "REF_OPERATOR_ID",          "sourceEntityId"                                                          ),
       sourceName                  = mandatory ( "SOURCE",                   "sourceName"                                                              ),
