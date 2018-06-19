@@ -32,8 +32,8 @@ class DagConfig(object):
 
     @property
     def dag_id(self):
-        postfix = '_initial_load' if self._is_delta else ''
-        return f'ohub_{self._entity}{postfix}'
+        postfix = '_initial_load' if self.is_delta else ''
+        return f'ohub_{self.entity}{postfix}'
 
     @property
     def cluster_name(self):
@@ -151,11 +151,8 @@ class GenericPipeline(object):
     def __init__(self,
                  dag_config: DagConfig,
                  class_prefix: str):
-        self._entity = dag_config.entity
-        self._cluster_name = dag_config.cluster_name
         self._clazz = class_prefix
-
-        self._is_delta = False
+        self._dag_config = dag_config
 
         self._exports: List[SubPipeline] = []
         self._ingests: List[SubPipeline] = []
@@ -166,10 +163,10 @@ class GenericPipeline(object):
                                        alternative_output_fn: str = None,
                                        alternative_seperator: str = None) -> 'GenericPipeline':
         channel = 'file_interface'
-        ingest_schema = alternative_schema if alternative_schema else self._entity
+        ingest_schema = alternative_schema if alternative_schema else self._dag_config.entity
         input_file = raw_bucket.format(date=one_day_ago, schema=ingest_schema, channel=channel)
         output_file = alternative_output_fn if alternative_output_fn else ingested_bucket.format(date=one_day_ago,
-                                                                                                 fn=self._entity,
+                                                                                                 fn=self._dag_config.entity,
                                                                                                  channel=channel)
         config = {
             'dedup': deduplicate_on_concat_id,
@@ -191,8 +188,8 @@ class GenericPipeline(object):
         return self
 
     def construct_ingest_pipeline(self) -> SubPipeline:
-        cluster_up = create_cluster(self._entity, small_cluster_config(self._cluster_name))
-        if self._is_delta:
+        cluster_up = create_cluster(self._dag_config.entity, small_cluster_config(self._dag_config.cluster_name))
+        if self._dag_config.is_delta:
             start_pipeline = ExternalTaskSensorOperator(
                 task_id='start_pipeline',
                 external_dag_id='TEST_DAG',
@@ -210,11 +207,11 @@ class GenericPipeline(object):
             bash_command='echo "end ingesting"',
         )
 
-        if self._is_delta:
+        if self._dag_config.is_delta:
             empty_fallback = EmptyFallbackOperator(
                 task_id='empty_fallback',
                 container_name='prod',
-                file_path=wasb_raw_container.format(date=one_day_ago, schema=self._entity, channel='file_interface'),
+                file_path=wasb_raw_container.format(date=one_day_ago, schema=self._dag_config.entity, channel='file_interface'),
                 wasb_conn_id=wasb_conn_id)
             start_pipeline >> empty_fallback
 
@@ -228,7 +225,7 @@ class GenericPipeline(object):
         return SubPipeline(start_pipeline, end_ingest)
 
     def construct_export_pipeline(self) -> SubPipeline:
-        cluster_down = terminate_cluster(self._entity, self._cluster_name)
+        cluster_down = terminate_cluster(self._dag_config.entity, self._dag_config.cluster_name)
         start_export = BashOperator(
             task_id='start_export',
             bash_command='echo "start export"',
@@ -253,9 +250,9 @@ class GenericPipeline(object):
                                           integrated_input: str = None,
                                           delta_match_py: str = None, ) -> SubPipeline:
 
-        if self._is_delta and (not integrated_input or not delta_match_py):
+        if self._dag_config.is_delta and (not integrated_input or not delta_match_py):
             raise AirflowException('cannot create delta matching without delta input params')
-        if self._is_delta:
+        if self._dag_config.is_delta:
             return self.__delta_fuzzy_matching(delta_match_py=delta_match_py,
                                                integrated_input=integrated_input,
                                                match_py=match_py,
@@ -274,8 +271,8 @@ class GenericPipeline(object):
         )
         for country_code in ohub_country_codes:
             t = DatabricksSubmitRunOperator(
-                task_id='match_{}_{}'.format(self._entity, country_code),
-                cluster_name=self._cluster_name,
+                task_id='match_{}_{}'.format(self._dag_config.entity, country_code),
+                cluster_name=self._dag_config.cluster_name,
                 databricks_conn_id=databricks_conn_id,
                 libraries=[
                     {'egg': egg}
@@ -284,7 +281,7 @@ class GenericPipeline(object):
                     'python_file': match_py,
                     'parameters': ['--input_file', ingest_input,
                                    '--output_path',
-                                   intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(self._entity)),
+                                   intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(self._dag_config.entity)),
                                    '--country_code', country_code,
                                    '--threshold', '0.9']
                 }
@@ -309,8 +306,8 @@ class GenericPipeline(object):
 
         for code in ohub_country_codes:
             match_new = DatabricksSubmitRunOperator(
-                task_id=('match_new_{}_with_integrated_{}_{}'.format(self._entity, self._entity, code)),
-                cluster_name=self._cluster_name,
+                task_id=('match_new_{}_with_integrated_{}_{}'.format(self._dag_config.entity, self._dag_config.entity, code)),
+                cluster_name=self._dag_config.cluster_name,
                 databricks_conn_id=databricks_conn_id,
                 libraries=[
                     {'egg': egg}
@@ -322,16 +319,16 @@ class GenericPipeline(object):
                         '--ingested_daily_input_path', ingested_input,
                         '--updated_integrated_output_path',
                         intermediate_bucket.format(date=one_day_ago,
-                                                   fn='{}_fuzzy_matched_delta_integrated'.format(self._entity)),
+                                                   fn='{}_fuzzy_matched_delta_integrated'.format(self._dag_config.entity)),
                         '--unmatched_output_path',
-                        intermediate_bucket.format(date=one_day_ago, fn='{}_delta_left_overs'.format(self._entity)),
+                        intermediate_bucket.format(date=one_day_ago, fn='{}_delta_left_overs'.format(self._dag_config.entity)),
                         '--country_code', code]
                 }
             )
 
             match_unmatched = DatabricksSubmitRunOperator(
-                task_id='match_unmatched_{}_{}'.format(self._entity, code),
-                cluster_name=self._cluster_name,
+                task_id='match_unmatched_{}_{}'.format(self._dag_config.entity, code),
+                cluster_name=self._dag_config.cluster_name,
                 databricks_conn_id=databricks_conn_id,
                 libraries=[
                     {'egg': egg}
@@ -340,10 +337,10 @@ class GenericPipeline(object):
                     'python_file': match_py,
                     'parameters': ['--input_file',
                                    intermediate_bucket.format(date=one_day_ago,
-                                                              fn='{}_delta_left_overs'.format(self._entity)),
+                                                              fn='{}_delta_left_overs'.format(self._dag_config.entity)),
                                    '--output_path',
                                    intermediate_bucket.format(date=one_day_ago,
-                                                              fn='{}_fuzzy_matched_delta'.format(self._entity)),
+                                                              fn='{}_fuzzy_matched_delta'.format(self._dag_config.entity)),
                                    '--country_code', code]
                 }
             )
@@ -356,11 +353,11 @@ class GenericPipeline(object):
         sep = config['sep'] if config['sep'] else "\u2030"
 
         file_interface_to_parquet = ingest_task(
-            schema=self._entity,
+            schema=self._dag_config.entity,
             channel='file_interface',
             clazz="com.unilever.ohub.spark.tsv2parquet.file_interface.{}Converter".format(self._clazz),
             field_separator=sep,
-            cluster_name=self._cluster_name,
+            cluster_name=self._dag_config.cluster_name,
             deduplicate_on_concat_id=config['dedup'],
             ingest_input_schema=config['input'],
             ingest_output_file=config['output']
@@ -368,18 +365,18 @@ class GenericPipeline(object):
         return SubPipeline(file_interface_to_parquet, file_interface_to_parquet)
 
     def __export_acm_pipeline(self, config: dict):
-        previous_integrated = integrated_bucket.format(date=two_day_ago, fn=self._entity) if self._is_delta else None
+        previous_integrated = integrated_bucket.format(date=two_day_ago, fn=self._dag_config.entity) if self._dag_config.is_delta else None
         delta_params = ['--previousIntegrated', previous_integrated] if previous_integrated else []
         convert_to_acm = DatabricksSubmitRunOperator(
-            task_id="{}_to_acm".format(self._entity),
-            cluster_name=self._cluster_name,
+            task_id="{}_to_acm".format(self._dag_config.entity),
+            cluster_name=self._dag_config.cluster_name,
             databricks_conn_id=databricks_conn_id,
             libraries=[
                 {'jar': jar}
             ],
             spark_jar_task={
                 'main_class_name': "com.unilever.ohub.spark.acm.{}AcmConverter".format(self._clazz),
-                'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=self._entity),
+                'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=self._dag_config.entity),
                                '--outputFile', export_bucket.format(date='{{ds}}', fn=config['filename'])] +
                               delta_params +
                               postgres_config +
@@ -395,7 +392,7 @@ class GenericPipeline(object):
         )
 
         acm_from_wasb = FileFromWasbOperator(
-            task_id='{}_acm_from_wasb'.format(self._entity),
+            task_id='{}_acm_from_wasb'.format(self._dag_config.entity),
             file_path=tmp_file,
             container_name=container_name,
             wasb_conn_id='azure_blob',
@@ -403,7 +400,7 @@ class GenericPipeline(object):
         )
 
         ftp_to_acm = SFTPOperator(
-            task_id='{}_ftp_to_acm'.format(self._entity),
+            task_id='{}_ftp_to_acm'.format(self._dag_config.entity),
             local_filepath=tmp_file,
             remote_filepath='/incoming/temp/ohub_2_test/{}'.format(tmp_file.split('/')[-1]),
             ssh_conn_id='acm_sftp_ssh',
