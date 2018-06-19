@@ -25,7 +25,7 @@ ohub_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG'
 
 
 class DagConfig(object):
-    def __init__(self, entity: str, is_delta: bool = False):
+    def __init__(self, entity: str, is_delta):
         self.entity = entity
         self.is_delta = is_delta
         self.schedule = '@daily' if is_delta else '@once'
@@ -177,6 +177,16 @@ class GenericPipeline(object):
         self._ingests.append(self.__ingest_file_interface(config))
         return self
 
+    def has_ingest_from_web_event(self):
+        """Placeholder example extension
+        Appending a SubPipeline to the self._ingests list will automatically (and parallel) add the ingest task to the
+        full DAG pipeline.
+        """
+        # channel = 'web_event'
+        # config = {}
+        # self._ingests.append(self.__ingest_web_event(config))
+        return self
+
     def has_export_to_acm(self,
                           acm_schema_name: str,
                           extra_acm_parameters: List[str] = []) -> 'GenericPipeline':
@@ -187,7 +197,21 @@ class GenericPipeline(object):
         self._exports.append(self.__export_acm_pipeline(config))
         return self
 
+    def has_export_to_dispach(self):
+        """Placeholder example extension
+        Appending a SubPipeline to the self._exports list will automatically (and parallel) add the export task to the
+        full DAG pipeline.
+        """
+        # config = {}
+        # self._exports.append(self.__export_dispach_pipeline(config))
+        return self
+
     def construct_ingest_pipeline(self) -> SubPipeline:
+        """
+        Constructs the full ingest pipeline. It will loop over self._ingests and add the tasks as parallel to the DAG.
+        Depending on if the Pipeline is delta or not it will create a SensorOperator that waits for the previous day to be completed
+        This will also boot up a cluster
+        """
         cluster_up = create_cluster(self._dag_config.entity, small_cluster_config(self._dag_config.cluster_name))
         if self._dag_config.is_delta:
             start_pipeline = ExternalTaskSensorOperator(
@@ -224,6 +248,10 @@ class GenericPipeline(object):
         return SubPipeline(start_pipeline, end_ingest)
 
     def construct_export_pipeline(self) -> SubPipeline:
+        """
+        Constructs the full export pipeline. It will loop over self._exports and add the tasks as parallel to the DAG.
+        This will also terminate the cluster
+        """
         cluster_down = terminate_cluster(self._dag_config.entity, self._dag_config.cluster_name)
         start_export = BashOperator(
             task_id='start_export',
