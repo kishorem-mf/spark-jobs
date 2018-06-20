@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.acm
 
 import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
-import com.unilever.ohub.spark.acm.model.UFSOrder
+import com.unilever.ohub.spark.acm.model.AcmOrder
 import com.unilever.ohub.spark.domain.entity.{ Order, OrderLine }
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
@@ -65,11 +65,11 @@ object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig
     orders: Dataset[Order],
     previousIntegrated: Dataset[Order],
     orderLines: Dataset[OrderLine]
-  ): Dataset[UFSOrder] = {
+  ): Dataset[AcmOrder] = {
     val dailyUfsOrders = createUfsOrders(spark, orders, orderLines)
     val allPreviousUfsOrders = createUfsOrders(spark, previousIntegrated, orderLines)
 
-    integrate[UFSOrder](spark, dailyUfsOrders, allPreviousUfsOrders, "ORDER_ID")
+    integrate[AcmOrder](spark, dailyUfsOrders, allPreviousUfsOrders, "ORDER_ID")
   }
 
   override def run(spark: SparkSession, config: OrderAcmConverterConfig, storage: Storage): Unit = {
@@ -91,7 +91,7 @@ object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig
     storage.writeToSingleCsv(transformed, config.outputFile, extraWriteOptions)
   }
 
-  def createUfsOrders(spark: SparkSession, orders: Dataset[Order], orderLines: Dataset[OrderLine]): Dataset[UFSOrder] = {
+  def createUfsOrders(spark: SparkSession, orders: Dataset[Order], orderLines: Dataset[OrderLine]): Dataset[AcmOrder] = {
     import spark.implicits._
 
     val aggs = orderLines
@@ -107,7 +107,7 @@ object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig
           if (agg == null) {
             log.warn("no order lines found for order " + order.concatId)
           }
-          UFSOrder(
+          AcmOrder(
             ORDER_ID = order.concatId,
             REF_ORDER_ID = order.ohubId,
             COUNTRY_CODE = order.countryCode,

@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.acm
 
 import com.unilever.ohub.spark.SparkJob
-import com.unilever.ohub.spark.acm.model.UFSProduct
+import com.unilever.ohub.spark.acm.model.AcmProduct
 import com.unilever.ohub.spark.domain.entity.Product
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
@@ -14,11 +14,11 @@ object ProductAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     spark: SparkSession,
     products: Dataset[Product],
     previousIntegrated: Dataset[Product]
-  ): Dataset[UFSProduct] = {
+  ): Dataset[AcmProduct] = {
     val dailyUfsProducts = createUfsProducts(spark, products)
     val allPreviousUfsProducts = createUfsProducts(spark, previousIntegrated)
 
-    integrate[UFSProduct](spark, dailyUfsProducts, allPreviousUfsProducts, "PRD_INTEGRATION_ID")
+    integrate[AcmProduct](spark, dailyUfsProducts, allPreviousUfsProducts, "PRD_INTEGRATION_ID")
   }
 
   override private[spark] def defaultConfig = DefaultWithDbAndDeltaConfig()
@@ -43,11 +43,11 @@ object ProductAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     storage.writeToSingleCsv(transformed, config.outputFile, extraWriteOptions)(log)
   }
 
-  def createUfsProducts(spark: SparkSession, products: Dataset[Product]): Dataset[UFSProduct] = {
+  def createUfsProducts(spark: SparkSession, products: Dataset[Product]): Dataset[AcmProduct] = {
     import spark.implicits._
 
     products.map { product ⇒
-      UFSProduct(
+      AcmProduct(
         COUNTRY_CODE = Some(product.countryCode),
         PRODUCT_NAME = Some(product.name),
         PRD_INTEGRATION_ID = product.concatId,
