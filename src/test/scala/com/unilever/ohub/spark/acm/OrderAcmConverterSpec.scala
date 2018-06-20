@@ -110,7 +110,7 @@ class OrderAcmConverterSpec extends SparkJobSpec with TestOrders {
         ORDER_EMAIL_ADDRESS = None,
         ORDER_PHONE_NUMBER = None,
         ORDER_MOBILE_PHONE_NUMBER = None,
-        TRANSACTION_DATE = "2018-06-20 13:29:32",
+        TRANSACTION_DATE = "2015-06-30 13:49:00",
         ORDER_AMOUNT = 0.0,
         ORDER_AMOUNT_CURRENCY_CODE = "",
         DELIVERY_STREET = "",
