@@ -197,13 +197,11 @@ class GenericPipeline(object):
         self._exports.append(self.__export_acm_pipeline(config))
         return self
 
-    def has_export_to_dispach(self):
-        """Placeholder example extension
-        Appending a SubPipeline to the self._exports list will automatically (and parallel) add the export task to the
-        full DAG pipeline.
-        """
-        # config = {}
-        # self._exports.append(self.__export_dispach_pipeline(config))
+    def has_export_to_dispatcher_db(self, dispatcher_schema_name: str):
+        config = {
+            'filename': 'dispatcherdb/UFS_DISPATCHER_' + dispatcher_schema_name + '_{{ds_nodash}}000000.csv'
+        }
+        self._exports.append(self.__export_dispatch_pipeline(config))
         return self
 
     def construct_ingest_pipeline(self) -> SubPipeline:
@@ -437,6 +435,26 @@ class GenericPipeline(object):
 
         return SubPipeline(convert_to_acm, ftp_to_acm)
 
+    def __export_dispatch_pipeline(self, config: dict) -> SubPipeline:
+        previous_integrated = integrated_bucket.format(date=two_day_ago, fn=self._dag_config.entity) if self._dag_config.is_delta else None
+        delta_params = ['--previousIntegrated', previous_integrated] if previous_integrated else []
+        convert_to_dispatch = DatabricksSubmitRunOperator(
+            task_id=f"{self._dag_config.entity}_to_dispatcher_db",
+            cluster_name=self._dag_config.cluster_name,
+            databricks_conn_id=databricks_conn_id,
+            libraries=[
+                {'jar': jar}
+            ],
+            spark_jar_task={
+                'main_class_name': "com.unilever.ohub.spark.export.dispatcher.{}DispatcherConverter".format(self._clazz),
+                'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=self._dag_config.entity),
+                               '--outputFile', export_bucket.format(date='{{ds}}', fn=config['filename'])] +
+                              delta_params +
+                              postgres_config +
+                              config['extra_dispatcher_parameters']
+            }
+        )
+        return SubPipeline(convert_to_dispatch, convert_to_dispatch)
 
 interval = '@daily'
 one_day_ago = '{{ds}}'

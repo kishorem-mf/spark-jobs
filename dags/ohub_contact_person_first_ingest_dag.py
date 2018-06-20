@@ -23,6 +23,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     generic = (
         GenericPipeline(dag_config, class_prefix='ContactPerson')
             .has_export_to_acm(acm_schema_name='UFS_RECIPIENTS')
+            .has_export_to_dispatcher_db(dispatcher_schema_name='CONTACT_PERSONS')
             .has_ingest_from_file_interface()
     )
 
