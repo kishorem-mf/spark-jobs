@@ -3,50 +3,41 @@ from datetime import datetime
 from airflow import DAG
 
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator
-from custom_operators.empty_fallback import EmptyFallbackOperator
-from ohub_dag_config import default_args, pipeline_without_matching, databricks_conn_id, jar, \
-    intermediate_bucket, one_day_ago, ingested_bucket, integrated_bucket, two_day_ago, \
-    wasb_raw_container, wasb_conn_id
+from ohub_dag_config import default_args, databricks_conn_id, jar, \
+    one_day_ago, ingested_bucket, integrated_bucket, two_day_ago, \
+    GenericPipeline, SubPipeline, DagConfig
 
-schema = 'products'
-clazz = 'Product'
-acm_tbl = 'PRODUCTS'
-
-interval = '@daily'
 default_args.update(
     {'start_date': datetime(2018, 6, 14)}
 )
-cluster_name = "ohub_" + schema + "_{{ds}}"
 
-with DAG('ohub_{}'.format(schema), default_args=default_args,
-         schedule_interval=interval) as dag:
-    tasks = pipeline_without_matching(
-        schema=schema,
-        cluster_name=cluster_name,
-        clazz=clazz,
-        acm_file_prefix='UFS_{}'.format(acm_tbl),
-        enable_acm_delta=True)
+entity = 'products'
+dag_config = DagConfig(entity, is_delta=False)
+clazz = 'Product'
 
-    empty_fallback = EmptyFallbackOperator(
-        task_id='{}_empty_fallback'.format(schema),
-        container_name='prod',
-        file_path=wasb_raw_container.format(date=one_day_ago, schema=schema, channel='file_interface'),
-        wasb_conn_id=wasb_conn_id)
+with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_config.schedule) as dag:
+    generic = (
+        GenericPipeline(dag_config, class_prefix=clazz)
+            .has_export_to_acm(acm_schema_name='UFS_PRODUCTS')
+            .has_ingest_from_file_interface()
+    )
 
+    ingest: SubPipeline = generic.construct_ingest_pipeline()
+    export: SubPipeline = generic.construct_export_pipeline()
 
     merge = DatabricksSubmitRunOperator(
-        task_id='{}_merge'.format(schema),
-        cluster_name=cluster_name,
+        task_id='merge',
+        cluster_name=dag_config.cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
             {'jar': jar}
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(clazz),
-            'parameters': ['--productsInputFile', ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=schema),
-                           '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=schema),
-                           '--outputFile', integrated_bucket.format(date=one_day_ago, fn=schema)]
+            'parameters': ['--productsInputFile',
+                           ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=entity),
+                           '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=entity),
+                           '--outputFile', integrated_bucket.format(date=one_day_ago, fn=entity)]
         })
 
-    empty_fallback >> tasks['file_interface_to_parquet']
-    tasks['file_interface_to_parquet'] >> merge >> tasks['convert_to_acm']
+    ingest.last_task >> merge >> export.first_task
