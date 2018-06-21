@@ -15,10 +15,10 @@ object ProductAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     products: Dataset[Product],
     previousIntegrated: Dataset[Product]
   ): Dataset[AcmProduct] = {
-    val dailyUfsProducts = createUfsProducts(spark, products)
-    val allPreviousUfsProducts = createUfsProducts(spark, previousIntegrated)
+    val dailyAcmProducts = createAcmProducts(spark, products)
+    val allPreviousAcmProducts = createAcmProducts(spark, previousIntegrated)
 
-    integrate[AcmProduct](spark, dailyUfsProducts, allPreviousUfsProducts, "PRD_INTEGRATION_ID")
+    integrate[AcmProduct](spark, dailyAcmProducts, allPreviousAcmProducts, "PRD_INTEGRATION_ID")
   }
 
   override private[spark] def defaultConfig = DefaultWithDbAndDeltaConfig()
@@ -43,7 +43,7 @@ object ProductAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     storage.writeToSingleCsv(transformed, config.outputFile, extraWriteOptions)(log)
   }
 
-  def createUfsProducts(spark: SparkSession, products: Dataset[Product]): Dataset[AcmProduct] = {
+  def createAcmProducts(spark: SparkSession, products: Dataset[Product]): Dataset[AcmProduct] = {
     import spark.implicits._
 
     products.map { product ⇒
