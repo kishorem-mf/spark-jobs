@@ -51,7 +51,6 @@ class DagConfig(object):
             return f'ohub_{self.entity}{postfix}'
 
 
-
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,

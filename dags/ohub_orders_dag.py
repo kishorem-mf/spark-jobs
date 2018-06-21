@@ -48,7 +48,7 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
     export_orderlines: SubPipeline = orderlines.construct_export_pipeline()
 
     merge_orders = DatabricksSubmitRunOperator(
-        task_id='merge',
+        task_id=f'{orders_entity}_merge',
         cluster_name=orders_dag_config.cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
@@ -65,7 +65,7 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         })
 
     merge_orderlines = DatabricksSubmitRunOperator(
-        task_id='merge',
+        task_id=f'{orderlines_entity}_merge',
         cluster_name=orderslines_dag_config.cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
