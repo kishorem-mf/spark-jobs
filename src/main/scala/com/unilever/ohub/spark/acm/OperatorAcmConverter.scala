@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.acm
 
 import com.unilever.ohub.spark.SparkJob
-import com.unilever.ohub.spark.acm.model.UFSOperator
+import com.unilever.ohub.spark.acm.model.AcmOperator
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.sql.JoinType
@@ -18,11 +18,11 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     channelMappings: Dataset[ChannelMapping],
     operators: Dataset[Operator],
     previousIntegrated: Dataset[Operator]
-  ): Dataset[UFSOperator] = {
-    val dailyUfsOperators = createUfsOperators(spark, operators, channelMappings)
-    val allPreviousUfsOperators = createUfsOperators(spark, previousIntegrated, channelMappings)
+  ): Dataset[AcmOperator] = {
+    val dailyAcmOperators = createAcmOperators(spark, operators, channelMappings)
+    val allPreviousAcmOperators = createAcmOperators(spark, previousIntegrated, channelMappings)
 
-    integrate[UFSOperator](spark, dailyUfsOperators, allPreviousUfsOperators, "OPR_LNKD_INTEGRATION_ID")
+    integrate[AcmOperator](spark, dailyAcmOperators, allPreviousAcmOperators, "OPR_LNKD_INTEGRATION_ID")
   }
 
   override private[spark] def defaultConfig = DefaultWithDbAndDeltaConfig()
@@ -53,12 +53,12 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     )
   }
 
-  def createUfsOperators(spark: SparkSession, operators: Dataset[Operator], channelMappings: Dataset[ChannelMapping]): Dataset[UFSOperator] = {
+  def createAcmOperators(spark: SparkSession, operators: Dataset[Operator], channelMappings: Dataset[ChannelMapping]): Dataset[AcmOperator] = {
     import spark.implicits._
-    val ufsOperatorRecords = operators
+    val AcmOperatorRecords = operators
       .filter(_.isGoldenRecord)
       .map(operator ⇒
-        UFSOperator(
+        AcmOperator(
           OPR_ORIG_INTEGRATION_ID = operator.ohubId.getOrElse("UNKNOWN"),
           OPR_LNKD_INTEGRATION_ID = operator.concatId,
           GOLDEN_RECORD_FLAG = boolAsString(operator.isGoldenRecord),
@@ -112,11 +112,11 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
         )
       )
 
-    ufsOperatorRecords
+    AcmOperatorRecords
       .joinWith(
         channelMappings,
-        channelMappings("originalChannel") === ufsOperatorRecords("CHANNEL") and
-          channelMappings("countryCode") === ufsOperatorRecords("COUNTRY_CODE"),
+        channelMappings("originalChannel") === AcmOperatorRecords("CHANNEL") and
+          channelMappings("countryCode") === AcmOperatorRecords("COUNTRY_CODE"),
         JoinType.Left
       )
       .map {
