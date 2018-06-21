@@ -34,8 +34,8 @@ class OrderLineConverterSpec extends CsvDomainGateKeeperSpec[OrderLine] with Tes
           orderConcatId = "AU~WUFOO~O1234",
           productConcatId = "P1234",
           quantityOfUnits = 6L,
-          amount = BigDecimal(10),
-          pricePerUnit = Some(BigDecimal(5)),
+          amount = BigDecimal(10.0),
+          pricePerUnit = Some(BigDecimal(5.0)),
           currency = Some("AUD")
         )
 
