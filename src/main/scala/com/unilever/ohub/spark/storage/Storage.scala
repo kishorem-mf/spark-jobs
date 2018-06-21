@@ -21,6 +21,7 @@ trait Storage {
   )(implicit log: Logger): Unit
 
   def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
+  def readDataFrameFromParquet(location: String, selectColumns: Seq[Column] = Seq()): DataFrame
 
   def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq()): Unit
 }
@@ -123,6 +124,12 @@ class DefaultStorage(spark: SparkSession) extends Storage {
     }
 
     parquetSelectDF.as[T]
+  }
+
+  override def readDataFrameFromParquet(location: String, selectColumns: Seq[Column] = Seq()): DataFrame = {
+    spark
+      .read
+      .parquet(location)
   }
 
   override def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq()): Unit = {
