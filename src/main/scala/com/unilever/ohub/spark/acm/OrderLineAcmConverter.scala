@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.acm
 import java.util.UUID
 
 import com.unilever.ohub.spark.{ SparkJob, DefaultConfig, SparkJobWithDefaultConfig }
-import com.unilever.ohub.spark.acm.model.UFSOrderLine
+import com.unilever.ohub.spark.acm.model.AcmOrderLine
 import com.unilever.ohub.spark.domain.entity.OrderLine
 import com.unilever.ohub.spark.generic.StringFunctions
 import com.unilever.ohub.spark.storage.Storage
@@ -17,11 +17,11 @@ object OrderLineAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     spark: SparkSession,
     orderLines: Dataset[OrderLine],
     previousIntegrated: Dataset[OrderLine]
-  ): Dataset[UFSOrderLine] = {
-    val dailyUfsOrderLines = createUfsOrderLines(spark, orderLines)
-    val allPreviousUfsOrderLines = createUfsOrderLines(spark, previousIntegrated)
+  ): Dataset[AcmOrderLine] = {
+    val dailyAcmOrderLines = createAcmOrderLines(spark, orderLines)
+    val allPreviousAcmOrderLines = createAcmOrderLines(spark, previousIntegrated)
 
-    integrate[UFSOrderLine](spark, dailyUfsOrderLines, allPreviousUfsOrderLines, "ORDERLINE_ID")
+    integrate[AcmOrderLine](spark, dailyAcmOrderLines, allPreviousAcmOrderLines, "ORDERLINE_ID")
   }
 
   override private[spark] def defaultConfig = DefaultWithDbAndDeltaConfig()
@@ -46,10 +46,10 @@ object OrderLineAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     storage.writeToSingleCsv(transformed, config.outputFile, extraWriteOptions)
   }
 
-  def createUfsOrderLines(spark: SparkSession, orderLines: Dataset[OrderLine]): Dataset[UFSOrderLine] = {
+  def createAcmOrderLines(spark: SparkSession, orderLines: Dataset[OrderLine]): Dataset[AcmOrderLine] = {
     import spark.implicits._
 
-    orderLines.map(orderLine ⇒ UFSOrderLine(
+    orderLines.map(orderLine ⇒ AcmOrderLine(
       ORDERLINE_ID = orderLine.concatId,
       ORD_INTEGRATION_ID = orderLine.orderConcatId,
       QUANTITY = orderLine.quantityOfUnits,

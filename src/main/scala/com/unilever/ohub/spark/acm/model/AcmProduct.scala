@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.acm.model
 
-case class UFSProduct(
+case class AcmProduct(
     // Deliberate misspelling as the consuming system requires it :'(
     COUNTRY_CODE: Option[String],
     PRODUCT_NAME: Option[String],
