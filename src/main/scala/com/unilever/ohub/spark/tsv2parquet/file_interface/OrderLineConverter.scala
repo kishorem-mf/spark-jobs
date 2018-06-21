@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.tsv2parquet.file_interface
 
 import java.util.UUID
 
-import scala.math.BigDecimal.RoundingMode.Value
+import scala.math.BigDecimal.RoundingMode
 import com.unilever.ohub.spark.domain.entity.{ OrderLine, Product }
 import com.unilever.ohub.spark.tsv2parquet.{ DomainTransformer, OrderLineEmptyParquetWriter }
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
