@@ -317,11 +317,11 @@ class GenericPipeline(object):
                                integrated_input,
                                ingested_input):
         start_matching = BashOperator(
-            task_id='start_matching',
+            task_id=f'{self._dag_config.entity}_start_matching',
             bash_command='echo "start matching"',
         )
         end_matching = BashOperator(
-            task_id='end_matching',
+            task_id=f'{self._dag_config.entity}_end_matching',
             bash_command='echo "end matching"',
         )
 
