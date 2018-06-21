@@ -6,7 +6,8 @@ from custom_operators.databricks_functions import DatabricksSubmitRunOperator
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from custom_operators.wasb_copy import WasbCopyOperator
 from ohub_dag_config import default_args, databricks_conn_id, jar, \
-    one_day_ago, ingested_bucket, integrated_bucket, GenericPipeline, SubPipeline, DagConfig, intermediate_bucket
+    one_day_ago, ingested_bucket, integrated_bucket, GenericPipeline, SubPipeline, DagConfig, intermediate_bucket, \
+    wasb_integrated_container, http_intermediate_container
 
 default_args.update(
     {'start_date': datetime(2018, 6, 13)}
@@ -74,11 +75,11 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
     )
 
     copy = WasbCopyOperator(
-        task_id=f'{orderlines_entity}_copy_to_integrated',
+        task_id='copy_to_integrated',
         wasb_conn_id='azure_blob',
         container_name='prod',
-        blob_name=f'data/integrated/{{{{ds}}}}/{orderlines_entity}.parquet',
-        copy_source=f'https://ulohub2storedevne.blob.core.windows.net/prod/data/intermediate/{{{{ds}}}}/{orderlines_entity}_gathered.parquet'
+        blob_name=wasb_integrated_container.format(date=one_day_ago, fn=orderlines_entity),
+        copy_source=http_intermediate_container.format(date=one_day_ago, fn=f'{orderlines_entity}_gathered.parquet')
     )
 
     ingest_orders.last_task >> operators_integrated_sensor >> merge
