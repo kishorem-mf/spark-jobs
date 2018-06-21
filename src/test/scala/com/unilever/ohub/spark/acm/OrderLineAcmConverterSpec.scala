@@ -61,7 +61,7 @@ class OrderLineAcmConverterSpec extends SparkJobSpec with TestOrderLines {
   }
 
   describe("OrderLine acm converter") {
-    it("should convert a domain OrderLine correctly into an acm UFSOrderLine") {
+    it("should convert a domain OrderLine correctly into an acm AcmOrderLine") {
       import spark.implicits._
 
       val input: Dataset[OrderLine] = spark.createDataset(Seq(defaultOrderLine.copy(isGoldenRecord = true)))
@@ -69,8 +69,8 @@ class OrderLineAcmConverterSpec extends SparkJobSpec with TestOrderLines {
 
       result.count() shouldBe 1
 
-      val actualUFSOrderLine = result.head()
-      val expectedUFSOrderLine = UFSOrderLine(
+      val actualAcmOrderLine = result.head()
+      val expectedAcmOrderLine = AcmOrderLine(
         ORDERLINE_ID = "country-code~source-name~source-entity-id",
         ORD_INTEGRATION_ID = "",
         QUANTITY = 0L,
@@ -83,7 +83,7 @@ class OrderLineAcmConverterSpec extends SparkJobSpec with TestOrderLines {
         DELETED_FLAG = "N"
       )
 
-      actualUFSOrderLine shouldBe expectedUFSOrderLine
+      actualAcmOrderLine shouldBe expectedAcmOrderLine
     }
   }
 }

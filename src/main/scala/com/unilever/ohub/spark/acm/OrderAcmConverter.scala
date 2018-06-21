@@ -66,10 +66,10 @@ object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig
     previousIntegrated: Dataset[Order],
     orderLines: Dataset[OrderLine]
   ): Dataset[AcmOrder] = {
-    val dailyUfsOrders = createUfsOrders(spark, orders, orderLines)
-    val allPreviousUfsOrders = createUfsOrders(spark, previousIntegrated, orderLines)
+    val dailyAcmOrders = createAcmOrders(spark, orders, orderLines)
+    val allPreviousAcmOrders = createAcmOrders(spark, previousIntegrated, orderLines)
 
-    integrate[AcmOrder](spark, dailyUfsOrders, allPreviousUfsOrders, "ORDER_ID")
+    integrate[AcmOrder](spark, dailyAcmOrders, allPreviousAcmOrders, "ORDER_ID")
   }
 
   override def run(spark: SparkSession, config: OrderAcmConverterConfig, storage: Storage): Unit = {
@@ -91,7 +91,7 @@ object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig
     storage.writeToSingleCsv(transformed, config.outputFile, extraWriteOptions)
   }
 
-  def createUfsOrders(spark: SparkSession, orders: Dataset[Order], orderLines: Dataset[OrderLine]): Dataset[AcmOrder] = {
+  def createAcmOrders(spark: SparkSession, orders: Dataset[Order], orderLines: Dataset[OrderLine]): Dataset[AcmOrder] = {
     import spark.implicits._
 
     val aggs = orderLines

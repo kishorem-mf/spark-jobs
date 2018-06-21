@@ -84,7 +84,7 @@ class OrderAcmConverterSpec extends SparkJobSpec with TestOrders {
   }
 
   describe("Order acm converter") {
-    it("should convert a domain Order correctly into an acm UFSOrder") {
+    it("should convert a domain Order correctly into an acm AcmOrder") {
       import spark.implicits._
 
       val input: Dataset[Order] = spark.createDataset(Seq(defaultOrder.copy(isGoldenRecord = true)))
@@ -92,8 +92,8 @@ class OrderAcmConverterSpec extends SparkJobSpec with TestOrders {
 
       result.count() shouldBe 1
 
-      val actualUFSOrder = result.head()
-      val expectedUFSOrder = UFSOrder(
+      val actualAcmOrder = result.head()
+      val expectedAcmOrder = AcmOrder(
         ORDER_ID = "country-code~source-name~source-entity-id",
         REF_ORDER_ID = Some("ohub-id"),
         COUNTRY_CODE = "country-code",
@@ -133,7 +133,7 @@ class OrderAcmConverterSpec extends SparkJobSpec with TestOrders {
         DELETED_FLAG = "N"
       )
 
-      actualUFSOrder shouldBe expectedUFSOrder
+      actualAcmOrder shouldBe expectedAcmOrder
     }
   }
 }

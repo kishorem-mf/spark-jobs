@@ -19,10 +19,10 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     operators: Dataset[Operator],
     previousIntegrated: Dataset[Operator]
   ): Dataset[AcmOperator] = {
-    val dailyUfsOperators = createUfsOperators(spark, operators, channelMappings)
-    val allPreviousUfsOperators = createUfsOperators(spark, previousIntegrated, channelMappings)
+    val dailyAcmOperators = createAcmOperators(spark, operators, channelMappings)
+    val allPreviousAcmOperators = createAcmOperators(spark, previousIntegrated, channelMappings)
 
-    integrate[AcmOperator](spark, dailyUfsOperators, allPreviousUfsOperators, "OPR_LNKD_INTEGRATION_ID")
+    integrate[AcmOperator](spark, dailyAcmOperators, allPreviousAcmOperators, "OPR_LNKD_INTEGRATION_ID")
   }
 
   override private[spark] def defaultConfig = DefaultWithDbAndDeltaConfig()
@@ -53,9 +53,9 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     )
   }
 
-  def createUfsOperators(spark: SparkSession, operators: Dataset[Operator], channelMappings: Dataset[ChannelMapping]): Dataset[AcmOperator] = {
+  def createAcmOperators(spark: SparkSession, operators: Dataset[Operator], channelMappings: Dataset[ChannelMapping]): Dataset[AcmOperator] = {
     import spark.implicits._
-    val ufsOperatorRecords = operators
+    val AcmOperatorRecords = operators
       .filter(_.isGoldenRecord)
       .map(operator ⇒
         AcmOperator(
@@ -112,11 +112,11 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
         )
       )
 
-    ufsOperatorRecords
+    AcmOperatorRecords
       .joinWith(
         channelMappings,
-        channelMappings("originalChannel") === ufsOperatorRecords("CHANNEL") and
-          channelMappings("countryCode") === ufsOperatorRecords("COUNTRY_CODE"),
+        channelMappings("originalChannel") === AcmOperatorRecords("CHANNEL") and
+          channelMappings("countryCode") === AcmOperatorRecords("COUNTRY_CODE"),
         JoinType.Left
       )
       .map {

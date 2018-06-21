@@ -18,10 +18,10 @@ object OrderLineAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     orderLines: Dataset[OrderLine],
     previousIntegrated: Dataset[OrderLine]
   ): Dataset[AcmOrderLine] = {
-    val dailyUfsOrderLines = createUfsOrderLines(spark, orderLines)
-    val allPreviousUfsOrderLines = createUfsOrderLines(spark, previousIntegrated)
+    val dailyAcmOrderLines = createAcmOrderLines(spark, orderLines)
+    val allPreviousAcmOrderLines = createAcmOrderLines(spark, previousIntegrated)
 
-    integrate[AcmOrderLine](spark, dailyUfsOrderLines, allPreviousUfsOrderLines, "ORDERLINE_ID")
+    integrate[AcmOrderLine](spark, dailyAcmOrderLines, allPreviousAcmOrderLines, "ORDERLINE_ID")
   }
 
   override private[spark] def defaultConfig = DefaultWithDbAndDeltaConfig()
@@ -46,7 +46,7 @@ object OrderLineAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     storage.writeToSingleCsv(transformed, config.outputFile, extraWriteOptions)
   }
 
-  def createUfsOrderLines(spark: SparkSession, orderLines: Dataset[OrderLine]): Dataset[AcmOrderLine] = {
+  def createAcmOrderLines(spark: SparkSession, orderLines: Dataset[OrderLine]): Dataset[AcmOrderLine] = {
     import spark.implicits._
 
     orderLines.map(orderLine ⇒ AcmOrderLine(

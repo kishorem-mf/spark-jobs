@@ -87,7 +87,7 @@ class OperatorAcmConverterSpec extends SparkJobSpec with TestOperators {
 
       val actualAcmOperator = result.head()
       val expectedAcmOperator =
-        UFSOperator(
+        AcmOperator(
           OPR_ORIG_INTEGRATION_ID = defaultOperator.ohubId.get,
           OPR_LNKD_INTEGRATION_ID = "country-code~source-name~source-entity-id",
           GOLDEN_RECORD_FLAG = "Y",
