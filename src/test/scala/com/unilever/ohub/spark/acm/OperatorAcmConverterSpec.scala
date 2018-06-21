@@ -5,7 +5,7 @@ import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
 import org.apache.spark.sql.Dataset
-import com.unilever.ohub.spark.acm.model.UFSOperator
+import com.unilever.ohub.spark.acm.model.UfsOperator
 
 class OperatorAcmConverterSpec extends SparkJobSpec with TestOperators {
 
