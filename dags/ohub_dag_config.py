@@ -242,7 +242,7 @@ class GenericPipeline(object):
                 {'jar': jar}
             ],
             spark_jar_task={
-                'main_class_name': f'com.unilever.ohub.spark.tsv2parquet.GatherIngestedJob',
+                'main_class_name': f'com.unilever.ohub.spark.tsv2parquet.GatherJob',
                 'parameters': ['--input', ingested_bucket.format(date=one_day_ago, channel='*', fn=self._dag_config.entity),
                                '--output', intermediate_bucket.format(date=one_day_ago, fn=f'{self._dag_config.entity}_gathered')]
             }
