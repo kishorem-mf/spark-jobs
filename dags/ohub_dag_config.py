@@ -132,9 +132,11 @@ class SubPipeline(object):
 class GenericPipeline(object):
     def __init__(self,
                  dag_config: DagConfig,
-                 class_prefix: str):
+                 class_prefix: str,
+                 alternate_dag_id_entity: str = None):
         self._clazz = class_prefix
         self._dag_config = dag_config
+        self._dag_config.entity = alternate_dag_id_entity
 
         self._exports: List[SubPipeline] = []
         self._ingests: List[SubPipeline] = []
