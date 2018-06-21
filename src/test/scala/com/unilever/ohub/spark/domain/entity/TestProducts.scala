@@ -21,8 +21,8 @@ trait TestProducts {
     name = "product-name",
     sourceEntityId = "source-entity-id",
     sourceName = "source-name",
-    ohubCreated = new Timestamp(System.currentTimeMillis()),
-    ohubUpdated = new Timestamp(System.currentTimeMillis()),
+    ohubCreated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
+    ohubUpdated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
     // specific fields
     additives = List.empty,
     allergens = List.empty,
