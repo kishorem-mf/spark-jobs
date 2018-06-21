@@ -18,8 +18,8 @@ trait TestOrders {
     ohubId = Some("ohub-id"),
     sourceEntityId = "source-entity-id",
     sourceName = "source-name",
-    ohubCreated = new Timestamp(System.currentTimeMillis()),
-    ohubUpdated = new Timestamp(System.currentTimeMillis()),
+    ohubCreated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
+    ohubUpdated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
     // specific fields
     `type` = "DIRECT",
     campaignCode = Some("UNKNOWN"),
@@ -33,7 +33,7 @@ trait TestOrders {
     distributorOperatorId = None,
     operatorConcatId = "some~operator~id",
     operatorOhubId = None,
-    transactionDate = new Timestamp(System.currentTimeMillis()),
+    transactionDate = Timestamp.valueOf("2015-06-30 13:49:00.0"),
     vat = None,
     // other fields
     additionalFields = Map(),
