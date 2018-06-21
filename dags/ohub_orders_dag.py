@@ -6,7 +6,7 @@ from custom_operators.databricks_functions import DatabricksSubmitRunOperator
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub_dag_config import SubPipeline, DagConfig, intermediate_bucket
 from ohub_dag_config import default_args, databricks_conn_id, jar, \
-    one_day_ago, ingested_bucket, integrated_bucket, two_day_ago, \
+    one_day_ago, integrated_bucket, two_day_ago, \
     GenericPipeline
 
 default_args.update(

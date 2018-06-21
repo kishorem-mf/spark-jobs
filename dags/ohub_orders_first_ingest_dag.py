@@ -56,7 +56,7 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(orders_clazz),
-            'parameters': ['--orderInputFile', intermediate_bucket.format(date=one_day_ago, fn=f'{entity}_gathered'),
+            'parameters': ['--orderInputFile', intermediate_bucket.format(date=one_day_ago, fn=f'{orders_entity}_gathered'),
                            '--contactPersonInputFile', integrated_bucket.format(date=one_day_ago, fn='contactpersons'),
                            '--operatorInputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
                            '--outputFile', integrated_bucket.format(date=one_day_ago, fn=orders_entity)]
