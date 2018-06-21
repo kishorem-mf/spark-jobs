@@ -1,0 +1,70 @@
+package com.unilever.ohub.spark.dispatcher.model
+
+object DispatcherContactPerson {
+  final val Empty: DispatcherContactPerson = {
+    DispatcherContactPerson(
+      None, None, "", "", None, None, None,
+      None, None, None, Some(true), None, None, None,
+      None, None, None, None, None, None, None,
+      false, false, None, None, None, None, None,
+      None, None, "", None, "", "", None,
+      "", "", None, None, None, None, None,
+      None, None, None, None, None, None, None,
+      None, None
+    )
+  }
+}
+
+case class DispatcherContactPerson(
+    DATE_OF_BIRTH: Option[String],
+    CITY: Option[String],
+    CP_ORIG_INTEGRATION_ID: String,
+    COUNTRY_CODE: String,
+    COUNTRY: Option[String],
+    EMAIL_ADDRESS: Option[String],
+    CONFIRMED_OPT_IN_DATE: Option[String],
+    OPT_IN_DATE: Option[String],
+    FAX_NUMBER: Option[String],
+    GENDER: Option[String],
+    DM_OPT_OUT: Option[Boolean],
+    CONFIRMED_OPT_IN: Option[Boolean],
+    OPT_IN: Option[Boolean],
+    EMAIL_OPT_OUT: Option[Boolean],
+    FAX_OPT_OUT: Option[Boolean],
+    MOB_CONFIRMED_OPT_IN: Option[Boolean],
+    MOB_OPT_IN: Option[Boolean],
+    MOBILE_OPT_OUT: Option[Boolean],
+    FIXED_OPT_OUT: Option[Boolean],
+    HOUSE_NUMBER: Option[String],
+    HOUSE_NUMBER_ADD: Option[String],
+    DELETE_FLAG: Boolean,
+    GOLDEN_RECORD_FLAG: Boolean,
+    KEY_DECISION_MAKER: Option[Boolean],
+    PREFERRED: Option[Boolean],
+    LANGUAGE: Option[String],
+    LAST_NAME: Option[String],
+    MOB_CONFIRMED_OPT_IN_DATE: Option[String],
+    MOBILE_PHONE_NUMBER: Option[String],
+    MOB_OPT_IN_DATE: Option[String],
+    CREATED_AT: String,
+    CP_LNKD_INTEGRATION_ID: Option[String],
+    UPDATED_AT: String,
+    OPR_ORIG_INTEGRATION_ID: String,
+    FIXED_PHONE_NUMBER: Option[String],
+    SOURCE_ID: String,
+    SOURCE: String,
+    SCM: Option[String],
+    STATE: Option[String],
+    STREET: Option[String],
+    TITLE: Option[String],
+    ZIP_CODE: Option[String],
+    MIDDLE_NAME: Option[String],
+    ROLE: Option[String],
+    ORG_FIRST_NAME: Option[String],
+    ORG_LAST_NAME: Option[String],
+    ORG_EMAIL_ADDRESS: Option[String],
+    ORG_FIXED_PHONE_NUMBER: Option[String],
+    ORG_MOBILE_PHONE_NUMBER: Option[String],
+    ORG_FAX_NUMBER: Option[String],
+    MOB_OPT_OUT_DATE: Option[String]
+)
