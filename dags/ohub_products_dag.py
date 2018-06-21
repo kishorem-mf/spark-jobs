@@ -12,7 +12,7 @@ default_args.update(
 )
 
 entity = 'products'
-dag_config = DagConfig(entity, is_delta=False)
+dag_config = DagConfig(entity, is_delta=True)
 clazz = 'Product'
 
 with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_config.schedule) as dag:

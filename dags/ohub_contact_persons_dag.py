@@ -37,7 +37,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     )
 
     pre_processing = DatabricksSubmitRunOperator(
-        task_id="{}_pre_processed".format(entity),
+        task_id="pre_processed",
         cluster_name=dag_config.cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
@@ -55,7 +55,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     )
 
     exact_match_integrated_ingested = DatabricksSubmitRunOperator(
-        task_id="{}_exact_match_integrated_ingested".format(entity),
+        task_id="exact_match_integrated_ingested",
         cluster_name=dag_config.cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
@@ -77,8 +77,8 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
         }
     )
 
-    join_matched_contact_persons = DatabricksSubmitRunOperator(
-        task_id='{}_join_matched'.format(entity),
+    join_fuzzy_matched = DatabricksSubmitRunOperator(
+        task_id='join_matched',
         cluster_name=dag_config.cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
@@ -97,7 +97,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     )
 
     join_fuzzy_and_exact_matched = DatabricksSubmitRunOperator(
-        task_id='{}_join_fuzzy_and_exact_matched'.format(entity),
+        task_id='join_fuzzy_and_exact_matched',
         cluster_name=dag_config.cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
@@ -127,7 +127,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     )
 
     referencing = DatabricksSubmitRunOperator(
-        task_id='{}_referencing'.format(entity),
+        task_id='referencing',
         cluster_name=dag_config.cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
@@ -144,7 +144,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     )
 
     update_golden_records = DatabricksSubmitRunOperator(
-        task_id='{}_update_golden_records'.format(entity),
+        task_id='update_golden_records',
         cluster_name=dag_config.cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
@@ -161,5 +161,5 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
 
     ingest.last_task >> pre_processing >> exact_match_integrated_ingested
     exact_match_integrated_ingested >> fuzzy_matching.first_task
-    fuzzy_matching.last_task >> join_fuzzy_and_exact_matched >> operators_integrated_sensor
+    fuzzy_matching.last_task >> join_fuzzy_matched >> join_fuzzy_and_exact_matched >> operators_integrated_sensor
     operators_integrated_sensor >> referencing >> update_golden_records >> export.first_task
