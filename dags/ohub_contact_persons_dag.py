@@ -47,7 +47,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
             'parameters': ['--integratedInputFile',
                            integrated_bucket.format(date=two_day_ago, fn=entity),
                            '--deltaInputFile',
-                           ingested_bucket.format(date=one_day_ago, fn=entity, channel='*'),
+                           intermediate_bucket.format(date='{{ds}}', fn=f'{entity}_gathered'),
                            '--deltaPreProcessedOutputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='{}_pre_processed'.format(entity))]
         }

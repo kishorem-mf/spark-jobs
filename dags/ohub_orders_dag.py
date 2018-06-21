@@ -4,7 +4,7 @@ from airflow import DAG
 
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
-from ohub_dag_config import SubPipeline, DagConfig
+from ohub_dag_config import SubPipeline, DagConfig, intermediate_bucket
 from ohub_dag_config import default_args, databricks_conn_id, jar, \
     one_day_ago, ingested_bucket, integrated_bucket, two_day_ago, \
     GenericPipeline
@@ -57,7 +57,7 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(orders_clazz),
             'parameters': ['--orderInputFile',
-                           ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=orders_entity),
+                           intermediate_bucket.format(date='{{ds}}', fn=f'{orders_entity}_gathered'),
                            '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=orders_entity),
                            '--contactPersonInputFile', integrated_bucket.format(date=one_day_ago, fn='contactpersons'),
                            '--operatorInputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
@@ -74,8 +74,7 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(orderslines_clazz),
             'parameters': ['--orderLineInputFile',
-                           ingested_bucket.format(date=one_day_ago, channel='file_interface',
-                                                  fn=orderslines_dag_config.entity),
+                           intermediate_bucket.format(date='{{ds}}', fn=f'{orderlines_entity}_gathered'),
                            '--previousIntegrated',
                            integrated_bucket.format(date=two_day_ago, fn=orderslines_dag_config.entity),
                            '--outputFile', integrated_bucket.format(date=one_day_ago, fn=orderslines_dag_config.entity)]

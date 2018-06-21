@@ -5,7 +5,7 @@ from airflow import DAG
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator
 from ohub_dag_config import default_args, databricks_conn_id, jar, \
     one_day_ago, ingested_bucket, integrated_bucket, two_day_ago, \
-    GenericPipeline, SubPipeline, DagConfig
+    GenericPipeline, SubPipeline, DagConfig, intermediate_bucket
 
 default_args.update(
     {'start_date': datetime(2018, 6, 14)}
@@ -34,8 +34,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(clazz),
-            'parameters': ['--productsInputFile',
-                           ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=entity),
+            'parameters': ['--productsInputFile', intermediate_bucket.format(date='{{ds}}', fn=f'{entity}_gathered'),
                            '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=entity),
                            '--outputFile', integrated_bucket.format(date=one_day_ago, fn=entity)]
         })

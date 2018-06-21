@@ -42,9 +42,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonExactMatcher",
-            'parameters': ['--inputFile', ingested_bucket.format(date='{{ds}}',
-                                                                 fn=entity,
-                                                                 channel='file_interface'),
+            'parameters': ['--inputFile', intermediate_bucket.format(date='{{ds}}', fn=f'{entity}_gathered'),
                            '--exactMatchOutputFile', intermediate_bucket.format(date='{{ds}}',
                                                                                 fn='{}_exact_matches'.format(entity)),
                            '--leftOversOutputFile', intermediate_bucket.format(date='{{ds}}',

@@ -16,7 +16,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     generic = (
         GenericPipeline(dag_config, class_prefix=clazz)
             .has_export_to_acm(acm_schema_name='UFS_PRODUCTS')
-            .has_ingest_from_file_interface(alternative_output_fn=integrated_bucket.format(date=one_day_ago, fn=entity))
+            .has_ingest_from_file_interface()
     )
 
     ingest: SubPipeline = generic.construct_ingest_pipeline()

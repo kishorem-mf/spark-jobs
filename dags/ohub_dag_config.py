@@ -233,12 +233,26 @@ class GenericPipeline(object):
                 wasb_conn_id=wasb_conn_id)
             start_pipeline >> empty_fallback
 
+        gather = DatabricksSubmitRunOperator(
+            task_id=f"{self._dag_config.entity}_gather",
+            cluster_name=self._dag_config.cluster_name,
+            databricks_conn_id=databricks_conn_id,
+            libraries=[
+                {'jar': jar}
+            ],
+            spark_jar_task={
+                'main_class_name': f'com.unilever.ohub.spark.tsv2parquet.GatherIngestedJob',
+                'parameters': ['--input', ingested_bucket.format(date=one_day_ago, channel='*', fn=self._dag_config.entity),
+                               '--output', intermediate_bucket.format(date=one_day_ago, fn=f'{self._dag_config.entity}_gathered')]
+            }
+        )
         start_pipeline >> cluster_up
+        gather >> end_ingest
 
         t: SubPipeline
         for t in self._ingests:
             cluster_up >> t.first_task
-            t.last_task >> end_ingest
+            t.last_task >> gather
 
         return SubPipeline(start_pipeline, end_ingest)
 
