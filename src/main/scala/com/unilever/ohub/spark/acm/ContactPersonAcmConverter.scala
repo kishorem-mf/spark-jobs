@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.acm
 
 import com.unilever.ohub.spark.SparkJob
-import com.unilever.ohub.spark.acm.model.UFSRecipient
+import com.unilever.ohub.spark.acm.model.AcmContactPerson
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
@@ -15,11 +15,11 @@ object ContactPersonAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     spark: SparkSession,
     contactPersons: Dataset[ContactPerson],
     previousIntegrated: Dataset[ContactPerson]
-  ): Dataset[UFSRecipient] = {
-    val dailyUfsContactPersons = createUfsContactPersons(spark, contactPersons)
-    val allPreviousUfsContactPersons = createUfsContactPersons(spark, previousIntegrated)
+  ): Dataset[AcmContactPerson] = {
+    val dailyAcmContactPersons = createAcmContactPersons(spark, contactPersons)
+    val allPreviousAcmContactPersons = createAcmContactPersons(spark, previousIntegrated)
 
-    integrate[UFSRecipient](spark, dailyUfsContactPersons, allPreviousUfsContactPersons, "CP_ORIG_INTEGRATION_ID")
+    integrate[AcmContactPerson](spark, dailyAcmContactPersons, allPreviousAcmContactPersons, "CP_ORIG_INTEGRATION_ID")
   }
 
   override private[spark] def defaultConfig = DefaultWithDbAndDeltaConfig()
@@ -49,14 +49,14 @@ object ContactPersonAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     )
   }
 
-  def createUfsContactPersons(
+  def createAcmContactPersons(
     spark: SparkSession,
     contactPersons: Dataset[ContactPerson]
-  ): Dataset[UFSRecipient] = {
+  ): Dataset[AcmContactPerson] = {
     import spark.implicits._
 
     contactPersons.filter(_.isGoldenRecord).map { contactPerson ⇒ // TODO check whether the filter is at the right location
-      UFSRecipient(
+      AcmContactPerson(
         CP_ORIG_INTEGRATION_ID = contactPerson.concatId,
         CP_LNKD_INTEGRATION_ID = contactPerson.ohubId.get, // TODO resolve .get here...what if we don't have an ohubId?
         OPR_ORIG_INTEGRATION_ID = contactPerson.oldIntegrationId, // TODO opr-ohub-id...add to domain (is set in the merging step)
