@@ -437,10 +437,10 @@ class GenericPipeline(object):
 
         tmp_file = '/tmp/' + config['filename']
 
-        check_file_non_empty = CheckFileNonEmptyOperator(
-            task_id=f'{self._dag_config.entity}_check_file_non_empty',
-            file_path=tmp_file
-        )
+        # check_file_non_empty = CheckFileNonEmptyOperator(
+        #     task_id=f'{self._dag_config.entity}_check_file_non_empty',
+        #     file_path=tmp_file
+        # )
 
         acm_from_wasb = FileFromWasbOperator(
             task_id=f'{self._dag_config.entity}_acm_from_wasb',
@@ -457,7 +457,7 @@ class GenericPipeline(object):
             ssh_conn_id='acm_sftp_ssh',
             operation=SFTPOperation.PUT
         )
-        convert_to_acm >> acm_from_wasb >> check_file_non_empty >> ftp_to_acm
+        convert_to_acm >> acm_from_wasb >> ftp_to_acm
 
         return SubPipeline(convert_to_acm, ftp_to_acm)
 
