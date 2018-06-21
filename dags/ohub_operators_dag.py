@@ -28,7 +28,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     ingest: SubPipeline = generic.construct_ingest_pipeline()
     export: SubPipeline = generic.construct_export_pipeline()
     fuzzy_matching: SubPipeline = generic.construct_fuzzy_matching_pipeline(
-        ingest_input=ingested_bucket.format(date=one_day_ago, fn=dag_config.entity, channel='*'),
+        ingest_input=intermediate_bucket.format(date=one_day_ago, fn=f'{entity}_gathered'),
         match_py='dbfs:/libraries/name_matching/match_operators.py',
         integrated_input=integrated_bucket.format(date=two_day_ago, fn=dag_config.entity),
         delta_match_py='dbfs:/libraries/name_matching/delta_operators.py',

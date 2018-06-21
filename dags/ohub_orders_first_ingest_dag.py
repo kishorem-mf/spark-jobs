@@ -4,8 +4,10 @@ from airflow import DAG
 
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
+from custom_operators.wasb_copy import WasbCopyOperator
 from ohub_dag_config import default_args, databricks_conn_id, jar, \
-    one_day_ago, ingested_bucket, integrated_bucket, GenericPipeline, SubPipeline, DagConfig
+    one_day_ago, ingested_bucket, integrated_bucket, GenericPipeline, SubPipeline, DagConfig, intermediate_bucket, \
+    wasb_integrated_container, http_intermediate_container
 
 default_args.update(
     {'start_date': datetime(2018, 6, 13)}
@@ -54,8 +56,7 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(orders_clazz),
-            'parameters': ['--orderInputFile',
-                           ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=orders_entity),
+            'parameters': ['--orderInputFile', intermediate_bucket.format(date=one_day_ago, fn=f'{orders_entity}_gathered'),
                            '--contactPersonInputFile', integrated_bucket.format(date=one_day_ago, fn='contactpersons'),
                            '--operatorInputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
                            '--outputFile', integrated_bucket.format(date=one_day_ago, fn=orders_entity)]
@@ -73,8 +74,16 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         external_task_id='contactpersons_update_golden_records'
     )
 
+    copy = WasbCopyOperator(
+        task_id='copy_to_integrated',
+        wasb_conn_id='azure_blob',
+        container_name='prod',
+        blob_name=wasb_integrated_container.format(date=one_day_ago, fn=orderlines_entity),
+        copy_source=http_intermediate_container.format(container='prod', date=one_day_ago, fn=f'{orderlines_entity}_gathered')
+    )
+
     ingest_orders.last_task >> operators_integrated_sensor >> merge
     ingest_orders.last_task >> contactpersons_integrated_sensor >> merge
-    ingest_orders.last_task >> ingest_orderlines.first_task
-    merge >> ingest_orderlines.last_task >> export_orders.first_task
-    ingest_orderlines.last_task >> export_orderlines.first_task
+    ingest_orders.last_task >> ingest_orderlines.first_task >> copy
+    merge >> copy >> export_orders.first_task
+    copy >> export_orderlines.first_task

@@ -29,7 +29,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     export: SubPipeline = generic.construct_export_pipeline()
     fuzzy_matching: SubPipeline = generic.construct_fuzzy_matching_pipeline(
         match_py='dbfs:/libraries/name_matching/match_operators.py',
-        ingest_input=ingested_bucket.format(date=one_day_ago, fn=entity, channel='*')
+        ingest_input=intermediate_bucket.format(date=one_day_ago, fn=f'{entity}_gathered'),
     )
 
     join = DatabricksSubmitRunOperator(

@@ -1,4 +1,3 @@
-import os
 from custom_operators.wasb_hook import WasbHook
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults

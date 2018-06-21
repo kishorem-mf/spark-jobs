@@ -42,12 +42,10 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonExactMatcher",
-            'parameters': ['--inputFile', ingested_bucket.format(date='{{ds}}',
-                                                                 fn=entity,
-                                                                 channel='file_interface'),
-                           '--exactMatchOutputFile', intermediate_bucket.format(date='{{ds}}',
+            'parameters': ['--inputFile', intermediate_bucket.format(date=one_day_ago, fn=f'{entity}_gathered'),
+                           '--exactMatchOutputFile', intermediate_bucket.format(date=one_day_ago,
                                                                                 fn='{}_exact_matches'.format(entity)),
-                           '--leftOversOutputFile', intermediate_bucket.format(date='{{ds}}',
+                           '--leftOversOutputFile', intermediate_bucket.format(date=one_day_ago,
                                                                                fn='{}_left_overs'.format(
                                                                                    entity))] + postgres_config
         }
@@ -63,10 +61,10 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonMatchingJoiner",
             'parameters': ['--matchingInputFile',
-                           intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(entity)),
-                           '--entityInputFile', intermediate_bucket.format(date='{{ds}}',
+                           intermediate_bucket.format(date=one_day_ago, fn='{}_matched'.format(entity)),
+                           '--entityInputFile', intermediate_bucket.format(date=one_day_ago,
                                                                            fn='{}_left_overs'.format(entity)),
-                           '--outputFile', intermediate_bucket.format(date='{{ds}}', fn=entity)] + postgres_config
+                           '--outputFile', intermediate_bucket.format(date=one_day_ago, fn=entity)] + postgres_config
         }
     )
 
@@ -80,12 +78,12 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
 
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.combining.ContactPersonCombining",
-            'parameters': ['--integratedUpdated', intermediate_bucket.format(date='{{ds}}',
+            'parameters': ['--integratedUpdated', intermediate_bucket.format(date=one_day_ago,
                                                                              fn='{}_exact_matches'.format(entity)),
-                           '--newGolden', intermediate_bucket.format(date='{{ds}}',
+                           '--newGolden', intermediate_bucket.format(date=one_day_ago,
                                                                      fn=entity,
                                                                      channel='*'),
-                           '--combinedEntities', intermediate_bucket.format(date='{{ds}}',
+                           '--combinedEntities', intermediate_bucket.format(date=one_day_ago,
                                                                             fn='{}_combined'.format(entity))]
         }
     )
@@ -106,9 +104,9 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
 
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonReferencing",
-            'parameters': ['--combinedInputFile', intermediate_bucket.format(date='{{ds}}',
+            'parameters': ['--combinedInputFile', intermediate_bucket.format(date=one_day_ago,
                                                                              fn='{}_combined'.format(entity)),
-                           '--operatorInputFile', integrated_bucket.format(date='{{ds}}',
+                           '--operatorInputFile', integrated_bucket.format(date=one_day_ago,
                                                                            fn='operators',
                                                                            channel='*'),
                            '--outputFile',
