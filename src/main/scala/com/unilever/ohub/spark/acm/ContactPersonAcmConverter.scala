@@ -16,10 +16,10 @@ object ContactPersonAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     contactPersons: Dataset[ContactPerson],
     previousIntegrated: Dataset[ContactPerson]
   ): Dataset[AcmContactPerson] = {
-    val dailyUfsContactPersons = createUfsContactPersons(spark, contactPersons)
-    val allPreviousUfsContactPersons = createUfsContactPersons(spark, previousIntegrated)
+    val dailyAcmContactPersons = createAcmContactPersons(spark, contactPersons)
+    val allPreviousAcmContactPersons = createAcmContactPersons(spark, previousIntegrated)
 
-    integrate[AcmContactPerson](spark, dailyUfsContactPersons, allPreviousUfsContactPersons, "CP_ORIG_INTEGRATION_ID")
+    integrate[AcmContactPerson](spark, dailyAcmContactPersons, allPreviousAcmContactPersons, "CP_ORIG_INTEGRATION_ID")
   }
 
   override private[spark] def defaultConfig = DefaultWithDbAndDeltaConfig()
@@ -49,7 +49,7 @@ object ContactPersonAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     )
   }
 
-  def createUfsContactPersons(
+  def createAcmContactPersons(
     spark: SparkSession,
     contactPersons: Dataset[ContactPerson]
   ): Dataset[AcmContactPerson] = {
