@@ -79,7 +79,7 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         wasb_conn_id='azure_blob',
         container_name='prod',
         blob_name=wasb_integrated_container.format(date=one_day_ago, fn=orderlines_entity),
-        copy_source=http_intermediate_container.format(date=one_day_ago, fn=f'{orderlines_entity}_gathered')
+        copy_source=http_intermediate_container.format(container='prod', date=one_day_ago, fn=f'{orderlines_entity}_gathered')
     )
 
     ingest_orders.last_task >> operators_integrated_sensor >> merge
