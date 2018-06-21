@@ -124,7 +124,7 @@ object OrderAcmConverter extends SparkJobWithOrderAcmConverterConfig
             ORDER_EMAIL_ADDRESS = None,
             ORDER_PHONE_NUMBER = None,
             ORDER_MOBILE_PHONE_NUMBER = None,
-            TRANSACTION_DATE = formatWithPattern(order.transactionDate),
+            TRANSACTION_DATE = formatWithPattern()(order.transactionDate),
             ORDER_AMOUNT = Option(agg).map(_.total).getOrElse(BigDecimal(0)),
             ORDER_AMOUNT_CURRENCY_CODE = Option(agg).map(_.curr).getOrElse(""),
             DELIVERY_STREET = "",
