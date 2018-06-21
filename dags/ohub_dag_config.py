@@ -48,7 +48,7 @@ class DagConfig(object):
             return f'{self.dag_id}_{{{{ds}}}}'
         else:
             postfix = '_initial_load' if not self.is_delta else ''
-            return f'ohub_{self.entity}{postfix}'
+            return f'ohub_{self.entity}{postfix}_{{{{ds}}}}'
 
 
 default_args = {
