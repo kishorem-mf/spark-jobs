@@ -20,6 +20,8 @@ Defaults.itSettings
 Test            / testOptions ++= flags
 IntegrationTest / testOptions ++= flags
 
+parallelExecution in Test := false
+
 libraryDependencies ++= Seq(
   "org.apache.spark"        %% "spark-core"          % sparkVersion  % sparkDependencyType excludeAll ExclusionRule(organization = "org.scalatest"),
   "org.apache.spark"        %% "spark-sql"           % sparkVersion  % sparkDependencyType,
