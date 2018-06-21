@@ -25,19 +25,31 @@ ohub_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG'
 
 
 class DagConfig(object):
-    def __init__(self, entity: str, is_delta):
+    def __init__(self,
+                 entity: str,
+                 is_delta,
+                 alternate_DAG_entity: str = None,
+                 use_alternate_entity_as_cluster=False):
+        self.use_alternate_DAG_as_cluster = use_alternate_entity_as_cluster
         self.entity = entity
         self.is_delta = is_delta
+        self.alternate_DAG_entity = alternate_DAG_entity
         self.schedule = '@daily' if is_delta else '@once'
 
     @property
     def dag_id(self):
         postfix = '_initial_load' if not self.is_delta else ''
-        return f'ohub_{self.entity}{postfix}'
+        entity = self.alternate_DAG_entity if self.alternate_DAG_entity else self.entity
+        return f'ohub_{entity}{postfix}'
 
     @property
     def cluster_name(self):
-        return f'{self.dag_id}_{{{{ds}}}}'
+        if self.use_alternate_DAG_as_cluster and self.alternate_DAG_entity:
+            return f'{self.dag_id}_{{{{ds}}}}'
+        else:
+            postfix = '_initial_load' if not self.is_delta else ''
+            return f'ohub_{self.entity}{postfix}'
+
 
 
 default_args = {
@@ -132,11 +144,9 @@ class SubPipeline(object):
 class GenericPipeline(object):
     def __init__(self,
                  dag_config: DagConfig,
-                 class_prefix: str,
-                 alternate_dag_id_entity: str = None):
+                 class_prefix: str):
         self._clazz = class_prefix
         self._dag_config = dag_config
-        self._dag_config.entity = alternate_dag_id_entity
 
         self._exports: List[SubPipeline] = []
         self._ingests: List[SubPipeline] = []
@@ -372,7 +382,7 @@ class GenericPipeline(object):
         dedup = 'true' if config.dedup else 'false'
 
         ingest_to_parquet = DatabricksSubmitRunOperator(
-            task_id=f"{config.channel}_to_parquet",
+            task_id=f"{self._entity}_{config.channel}_to_parquet",
             cluster_name=self._dag_config.cluster_name,
             databricks_conn_id=databricks_conn_id,
             libraries=[

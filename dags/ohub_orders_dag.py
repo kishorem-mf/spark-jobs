@@ -18,7 +18,12 @@ orders_dag_config = DagConfig(orders_entity, is_delta=True)
 orders_clazz = 'Order'
 
 orderlines_entity = 'orderlines'
-orderslines_dag_config = DagConfig(orderlines_entity, is_delta=True)
+orderslines_dag_config = DagConfig(
+    orderlines_entity,
+    is_delta=True,
+    alternate_DAG_entity='orders',
+    use_alternate_entity_as_cluster=False
+)
 orderslines_clazz = 'OrderLine'
 
 with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=orders_dag_config.schedule) as dag:
@@ -92,4 +97,4 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
     ingest_orders.last_task >> operators_integrated_sensor >> merge_orders
     ingest_orders.last_task >> contactpersons_integrated_sensor >> merge_orders
     merge_orders >> ingest_orderlines.last_task >> export_orders.first_task
-    ingest_orderlines.last_task >> merge_orderlines >> export_orders.first_task
+    ingest_orderlines.last_task >> merge_orderlines >> export_orderlines.first_task
