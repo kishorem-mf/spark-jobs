@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.acm.model
 
-case class UFSOrder(
+case class AcmOrder(
     ORDER_ID: String,
     REF_ORDER_ID: Option[String],
     COUNTRY_CODE: String,

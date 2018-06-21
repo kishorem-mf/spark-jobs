@@ -5,7 +5,7 @@ import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
 import org.apache.spark.sql.Dataset
-import com.unilever.ohub.spark.acm.model.UFSOperator
+import com.unilever.ohub.spark.acm.model.AcmOperator
 
 class OperatorAcmConverterSpec extends SparkJobSpec with TestOperators {
 
@@ -87,7 +87,7 @@ class OperatorAcmConverterSpec extends SparkJobSpec with TestOperators {
 
       val actualAcmOperator = result.head()
       val expectedAcmOperator =
-        UFSOperator(
+        AcmOperator(
           OPR_ORIG_INTEGRATION_ID = defaultOperator.ohubId.get,
           OPR_LNKD_INTEGRATION_ID = "country-code~source-name~source-entity-id",
           GOLDEN_RECORD_FLAG = "Y",

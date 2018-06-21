@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.acm.model
 
-case class UFSOrderLine(
+case class AcmOrderLine(
     ORDERLINE_ID: String,
     ORD_INTEGRATION_ID: String,
     QUANTITY: Long,

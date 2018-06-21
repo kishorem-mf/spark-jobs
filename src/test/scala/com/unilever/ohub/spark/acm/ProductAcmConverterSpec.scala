@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.acm
 
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.acm.model.UFSProduct
+import com.unilever.ohub.spark.acm.model.AcmProduct
 import org.apache.spark.sql.Dataset
 import com.unilever.ohub.spark.domain.entity.{ Product, TestProducts }
 
@@ -71,7 +71,7 @@ class ProductAcmConverterSpec extends SparkJobSpec with TestProducts {
   }
 
   describe("product acm converter") {
-    it("should convert a domain Product correctly into an acm UFSProduct") {
+    it("should convert a domain Product correctly into an acm AcmProduct") {
       import spark.implicits._
 
       val input: Dataset[Product] = spark.createDataset(Seq(defaultProduct.copy(isGoldenRecord = true)))
@@ -79,8 +79,8 @@ class ProductAcmConverterSpec extends SparkJobSpec with TestProducts {
 
       result.count() shouldBe 1
 
-      val actualUFSProduct = result.head()
-      val expectedUFSProduct = UFSProduct(
+      val actualAcmProduct = result.head()
+      val expectedAcmProduct = AcmProduct(
         COUNTRY_CODE = Some("country-code"),
         PRODUCT_NAME = Some("product-name"),
         PRD_INTEGRATION_ID = "country-code~source-name~source-entity-id",
@@ -91,7 +91,7 @@ class ProductAcmConverterSpec extends SparkJobSpec with TestProducts {
         DELETE_FLAG = Some("N")
       )
 
-      actualUFSProduct shouldBe expectedUFSProduct
+      actualAcmProduct shouldBe expectedAcmProduct
     }
   }
 }

@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.acm
 
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.acm.model.UFSRecipient
+import com.unilever.ohub.spark.acm.model.AcmContactPerson
 import com.unilever.ohub.spark.domain.entity.{ ContactPerson, TestContactPersons }
 import org.apache.spark.sql.Dataset
 
@@ -75,13 +75,13 @@ class ContactPersonAcmConverterSpec extends SparkJobSpec with TestContactPersons
       import spark.implicits._
 
       val input: Dataset[ContactPerson] = spark.createDataset(Seq(defaultContactPerson.copy(isGoldenRecord = true)))
-      val result = SUT.createUfsContactPersons(spark, input)
+      val result = SUT.createAcmContactPersons(spark, input)
 
       result.count() shouldBe 1
 
       val actualAcmContactPerson = result.head()
       val expectedAcmContactPerson =
-        UFSRecipient(
+        AcmContactPerson(
           CP_ORIG_INTEGRATION_ID = "AU~WUFOO~AB123",
           CP_LNKD_INTEGRATION_ID = defaultContactPerson.ohubId.get,
           OPR_ORIG_INTEGRATION_ID = Some("G1234"),
