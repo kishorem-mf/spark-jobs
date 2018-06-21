@@ -210,24 +210,24 @@ class GenericPipeline(object):
         cluster_up = create_cluster(self._dag_config.entity, small_cluster_config(self._dag_config.cluster_name))
         if self._dag_config.is_delta:
             start_pipeline = ExternalTaskSensorOperator(
-                task_id='start_pipeline',
+                task_id=f'{self._dag_config.entity}_start_pipeline',
                 external_dag_id=self._dag_config.dag_id,
                 external_task_id='end_pipeline',
                 execution_delta=timedelta(days=1))
         else:
             start_pipeline = BashOperator(
-                task_id='start_pipeline',
+                task_id=f'{self._dag_config.entity}_start_pipeline',
                 bash_command='echo "start pipeline"',
             )
 
         end_ingest = BashOperator(
-            task_id='end_ingest',
+            task_id=f'{self._dag_config.entity}_end_ingest',
             bash_command='echo "end ingesting"',
         )
 
         if self._dag_config.is_delta:
             empty_fallback = EmptyFallbackOperator(
-                task_id='empty_fallback',
+                task_id=f'{self._dag_config.entity}_empty_fallback',
                 container_name='prod',
                 file_path=wasb_raw_container.format(date=one_day_ago, schema=self._dag_config.entity,
                                                     channel='file_interface'),
@@ -250,12 +250,12 @@ class GenericPipeline(object):
         """
         cluster_down = terminate_cluster(self._dag_config.entity, self._dag_config.cluster_name)
         start_export = BashOperator(
-            task_id='start_export',
+            task_id=f'{self._dag_config.entity}_start_export',
             bash_command='echo "start export"',
         )
 
         end_pipeline = BashOperator(
-            task_id='end_pipeline',
+            task_id=f'{self._dag_config.entity}_end_pipeline',
             bash_command='echo "end pipeline"',
         )
 
@@ -285,11 +285,11 @@ class GenericPipeline(object):
 
     def __fuzzy_matching(self, match_py, ingest_input):
         start_matching = BashOperator(
-            task_id='start_matching',
+            task_id=f'{self._dag_config.entity}_start_matching',
             bash_command='echo "start matching"',
         )
         end_matching = BashOperator(
-            task_id='end_matching',
+            task_id=f'{self._dag_config.entity}_end_matching',
             bash_command='echo "end matching"',
         )
         for country_code in ohub_country_codes:
@@ -382,7 +382,7 @@ class GenericPipeline(object):
         dedup = 'true' if config.dedup else 'false'
 
         ingest_to_parquet = DatabricksSubmitRunOperator(
-            task_id=f"{self._entity}_{config.channel}_to_parquet",
+            task_id=f"{self._dag_config.entity}_{config.channel}_to_parquet",
             cluster_name=self._dag_config.cluster_name,
             databricks_conn_id=databricks_conn_id,
             libraries=[
@@ -405,7 +405,7 @@ class GenericPipeline(object):
                                                        fn=self._dag_config.entity) if self._dag_config.is_delta else None
         delta_params = ['--previousIntegrated', previous_integrated] if previous_integrated else []
         convert_to_acm = DatabricksSubmitRunOperator(
-            task_id="{}_to_acm".format(self._dag_config.entity),
+            task_id=f"{self._dag_config.entity}_to_acm",
             cluster_name=self._dag_config.cluster_name,
             databricks_conn_id=databricks_conn_id,
             libraries=[
@@ -424,12 +424,12 @@ class GenericPipeline(object):
         tmp_file = '/tmp/' + config['filename']
 
         check_file_non_empty = ShortCircuitOperator(
-            task_id='check_file_non_empty',
+            task_id=f'{self._dag_config.entity}_check_file_non_empty',
             python_callable=lambda: os.stat(tmp_file).st_size > 0
         )
 
         acm_from_wasb = FileFromWasbOperator(
-            task_id='{}_acm_from_wasb'.format(self._dag_config.entity),
+            task_id=f'{self._dag_config.entity}_acm_from_wasb',
             file_path=tmp_file,
             container_name=container_name,
             wasb_conn_id='azure_blob',
@@ -437,7 +437,7 @@ class GenericPipeline(object):
         )
 
         ftp_to_acm = SFTPOperator(
-            task_id='{}_ftp_to_acm'.format(self._dag_config.entity),
+            task_id=f'{self._dag_config.entity}_ftp_to_acm',
             local_filepath=tmp_file,
             remote_filepath='/incoming/temp/ohub_2_test/{}'.format(tmp_file.split('/')[-1]),
             ssh_conn_id='acm_sftp_ssh',
