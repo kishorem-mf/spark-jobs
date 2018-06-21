@@ -459,8 +459,7 @@ class GenericPipeline(object):
                 'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=self._dag_config.entity),
                                '--outputFile', export_bucket.format(date='{{ds}}', fn=config['filename'])] +
                               delta_params +
-                              postgres_config +
-                              config['extra_dispatcher_parameters']
+                              postgres_config
             }
         )
         return SubPipeline(convert_to_dispatch, convert_to_dispatch)
