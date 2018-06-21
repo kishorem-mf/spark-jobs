@@ -15,6 +15,7 @@ from custom_operators.databricks_functions import \
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
 from custom_operators.empty_fallback import EmptyFallbackOperator
+from custom_operators.check_file_non_empty_operator import CheckFileNonEmptyOperator
 
 ohub_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG', 'BH', 'BO', 'BR', 'CA', 'CH',
                       'CL', 'CN', 'CO', 'CR', 'CZ', 'DE', 'DK', 'DO', 'EC', 'EE', 'EG', 'ES', 'FI', 'FR', 'GB',
@@ -422,9 +423,9 @@ class GenericPipeline(object):
 
         tmp_file = '/tmp/' + config['filename']
 
-        check_file_non_empty = ShortCircuitOperator(
+        check_file_non_empty = CheckFileNonEmptyOperator(
             task_id=f'{self._dag_config.entity}_check_file_non_empty',
-            python_callable=lambda: os.stat(tmp_file).st_size > 0
+            file_path=tmp_file
         )
 
         acm_from_wasb = FileFromWasbOperator(
