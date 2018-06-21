@@ -4,6 +4,7 @@ from airflow import DAG
 
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
+from custom_operators.wasb_copy import WasbCopyOperator
 from ohub_dag_config import default_args, databricks_conn_id, jar, \
     one_day_ago, ingested_bucket, integrated_bucket, GenericPipeline, SubPipeline, DagConfig, intermediate_bucket
 
@@ -72,8 +73,16 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         external_task_id='contactpersons_update_golden_records'
     )
 
+    copy = WasbCopyOperator(
+        task_id=f'{orderlines_entity}_copy_to_integrated',
+        wasb_conn_id='azure_blob',
+        container_name='prod',
+        blob_name=f'data/integrated/{{{{ds}}}}/{orderlines_entity}.parquet',
+        copy_source=f'https://ulohub2storedevne.blob.core.windows.net/prod/data/intermediate/{{{{ds}}}}/{orderlines_entity}_gathered.parquet'
+    )
+
     ingest_orders.last_task >> operators_integrated_sensor >> merge
     ingest_orders.last_task >> contactpersons_integrated_sensor >> merge
-    ingest_orders.last_task >> ingest_orderlines.first_task
-    merge >> ingest_orderlines.last_task >> export_orders.first_task
-    ingest_orderlines.last_task >> export_orderlines.first_task
+    ingest_orders.last_task >> ingest_orderlines.first_task >> copy
+    merge >> copy >> export_orders.first_task
+    copy >> export_orderlines.first_task

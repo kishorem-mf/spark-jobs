@@ -2,6 +2,7 @@ from datetime import datetime
 
 from airflow import DAG
 
+from custom_operators.wasb_copy import WasbCopyOperator
 from ohub_dag_config import default_args, GenericPipeline, SubPipeline, integrated_bucket, one_day_ago, DagConfig
 
 default_args.update(
@@ -22,4 +23,12 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     ingest: SubPipeline = generic.construct_ingest_pipeline()
     export: SubPipeline = generic.construct_export_pipeline()
 
-    ingest.last_task >> export.first_task
+    copy = WasbCopyOperator(
+        task_id='copy_to_integrated',
+        wasb_conn_id='azure_blob',
+        container_name='prod',
+        blob_name=f'data/integrated/{{{{ds}}}}/{entity}.parquet',
+        copy_source=f'https://ulohub2storedevne.blob.core.windows.net/prod/data/intermediate/{{{{ds}}}}/{entity}_gathered.parquet'
+    )
+
+    ingest.last_task >> copy >> export.first_task
