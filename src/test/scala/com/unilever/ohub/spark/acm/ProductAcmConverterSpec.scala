@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.acm
 
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.acm.model.UfsProduct
+import com.unilever.ohub.spark.acm.model.AcmProduct
 import org.apache.spark.sql.Dataset
 import com.unilever.ohub.spark.domain.entity.{ Product, TestProducts }
 
