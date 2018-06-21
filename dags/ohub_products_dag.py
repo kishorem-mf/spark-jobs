@@ -34,7 +34,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(clazz),
-            'parameters': ['--productsInputFile', intermediate_bucket.format(date='{{ds}}', fn=f'{entity}_gathered'),
+            'parameters': ['--productsInputFile', intermediate_bucket.format(date=one_day_ago, fn=f'{entity}_gathered'),
                            '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=entity),
                            '--outputFile', integrated_bucket.format(date=one_day_ago, fn=entity)]
         })

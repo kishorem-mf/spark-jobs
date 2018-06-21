@@ -57,7 +57,7 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(orders_clazz),
             'parameters': ['--orderInputFile',
-                           intermediate_bucket.format(date='{{ds}}', fn=f'{orders_entity}_gathered'),
+                           intermediate_bucket.format(date=one_day_ago, fn=f'{orders_entity}_gathered'),
                            '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=orders_entity),
                            '--contactPersonInputFile', integrated_bucket.format(date=one_day_ago, fn='contactpersons'),
                            '--operatorInputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
@@ -74,7 +74,7 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(orderslines_clazz),
             'parameters': ['--orderLineInputFile',
-                           intermediate_bucket.format(date='{{ds}}', fn=f'{orderlines_entity}_gathered'),
+                           intermediate_bucket.format(date=one_day_ago, fn=f'{orderlines_entity}_gathered'),
                            '--previousIntegrated',
                            integrated_bucket.format(date=two_day_ago, fn=orderslines_dag_config.entity),
                            '--outputFile', integrated_bucket.format(date=one_day_ago, fn=orderslines_dag_config.entity)]
