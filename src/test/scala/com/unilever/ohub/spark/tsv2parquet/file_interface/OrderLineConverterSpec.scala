@@ -19,7 +19,6 @@ class OrderLineConverterSpec extends CsvDomainGateKeeperSpec[OrderLine] with Tes
         actualDataSet.count() shouldBe 1
 
         val actualOrderLine = actualDataSet.head
-        actualOrderLine.amount shouldBe BigDecimal(10)
         val expectedOrderLine = defaultOrderLine.copy(
           concatId = "AU~WUFOO~O1234",
           countryCode = "AU",
@@ -33,7 +32,7 @@ class OrderLineConverterSpec extends CsvDomainGateKeeperSpec[OrderLine] with Tes
           ohubCreated = actualOrderLine.ohubCreated,
           ohubUpdated = actualOrderLine.ohubUpdated,
           orderConcatId = "AU~WUFOO~O1234",
-          productConcatId = "P1234",
+          productConcatId = "AU~WUFOO~P1234",
           quantityOfUnits = 6L,
           amount = BigDecimal(10),
           pricePerUnit = Some(BigDecimal(5)),
