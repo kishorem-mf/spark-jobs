@@ -4,7 +4,7 @@ from airflow import DAG
 
 from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
-from ohub_dag_config import \
+from ohub.ohub_dag_config import \
     default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, \
     postgres_config, GenericPipeline, SubPipeline, one_day_ago, DagConfig, large_cluster_config
 
