@@ -1,16 +1,62 @@
-package com.unilever.ohub.spark.dispatcher.model
+package com.unilever.ohub.spark.dispatcher
+package model
+
+import com.unilever.ohub.spark.domain.entity.ContactPerson
 
 object DispatcherContactPerson {
-  final val Empty: DispatcherContactPerson = {
+  def fromContactPerson(cp: ContactPerson): DispatcherContactPerson = {
     DispatcherContactPerson(
-      None, None, "", "", None, None, None,
-      None, None, None, Some(true), None, None, None,
-      None, None, None, None, None, None, None,
-      false, false, None, None, None, None, None,
-      None, None, "", None, "", "", None,
-      "", "", None, None, None, None, None,
-      None, None, None, None, None, None, None,
-      None, None
+      DATE_OF_BIRTH = cp.birthDate.mapWithDefaultPatternOpt,
+      CITY = cp.city,
+      CP_ORIG_INTEGRATION_ID = cp.concatId,
+      COUNTRY_CODE = cp.countryCode,
+      COUNTRY = cp.countryName,
+      EMAIL_ADDRESS = cp.emailAddress,
+      CONFIRMED_OPT_IN_DATE = cp.emailDoubleOptInDate.mapWithDefaultPatternOpt,
+      OPT_IN_DATE = cp.emailOptInDate.mapWithDefaultPatternOpt,
+      FAX_NUMBER = cp.faxNumber,
+      GENDER = cp.gender,
+      DM_OPT_OUT = cp.hasDirectMailOptOut,
+      CONFIRMED_OPT_IN = cp.hasEmailDoubleOptIn,
+      OPT_IN = cp.hasEmailOptIn,
+      EMAIL_OPT_OUT = cp.hasEmailOptOut,
+      FAX_OPT_OUT = cp.hasFaxOptOut,
+      MOB_CONFIRMED_OPT_IN = cp.hasMobileDoubleOptIn,
+      MOB_OPT_IN = cp.hasMobileOptIn,
+      MOBILE_OPT_OUT = cp.hasMobileOptOut,
+      FIXED_OPT_OUT = cp.hasTeleMarketingOptOut,
+      HOUSE_NUMBER = cp.houseNumber,
+      HOUSE_NUMBER_ADD = cp.houseNumberExtension,
+      DELETE_FLAG = cp.isActive.invert,
+      GOLDEN_RECORD_FLAG = cp.isGoldenRecord,
+      KEY_DECISION_MAKER = cp.isKeyDecisionMaker,
+      PREFERRED = cp.isPreferredContact,
+      LANGUAGE = cp.language,
+      LAST_NAME = cp.lastName,
+      MOB_CONFIRMED_OPT_IN_DATE = cp.mobileDoubleOptInDate.mapWithDefaultPatternOpt,
+      MOBILE_PHONE_NUMBER = cp.mobileNumber,
+      MOB_OPT_IN_DATE = cp.mobileOptInDate.mapWithDefaultPatternOpt,
+      CREATED_AT = cp.ohubCreated.mapWithDefaultPattern,
+      CP_LNKD_INTEGRATION_ID = cp.ohubId,
+      UPDATED_AT = cp.ohubUpdated.mapWithDefaultPattern,
+      OPR_ORIG_INTEGRATION_ID = cp.operatorConcatId,
+      FIXED_PHONE_NUMBER = cp.phoneNumber,
+      SOURCE_ID = cp.sourceEntityId,
+      SOURCE = cp.sourceName,
+      SCM = cp.standardCommunicationChannel,
+      STATE = cp.state,
+      STREET = cp.street,
+      TITLE = cp.title,
+      ZIP_CODE = cp.zipCode,
+      MIDDLE_NAME = Option.empty,
+      ROLE = cp.jobTitle,
+      ORG_FIRST_NAME = Option.empty,
+      ORG_LAST_NAME = Option.empty,
+      ORG_EMAIL_ADDRESS = Option.empty,
+      ORG_FIXED_PHONE_NUMBER = Option.empty,
+      ORG_MOBILE_PHONE_NUMBER = Option.empty,
+      ORG_FAX_NUMBER = Option.empty,
+      MOB_OPT_OUT_DATE = Option.empty
     )
   }
 }

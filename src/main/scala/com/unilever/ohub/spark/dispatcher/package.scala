@@ -1,10 +1,9 @@
-package com.unilever.ohub.spark.dispatcher
+package com.unilever.ohub.spark
 
 import java.sql.Timestamp
 import java.time.format.DateTimeFormatter
 
-trait DispatcherTransformationFunctions {
-
+package object dispatcher {
   final val DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"
 
   final val YES = "Y"
@@ -14,6 +13,12 @@ trait DispatcherTransformationFunctions {
   final val UNKNOWN = "U"
 
   final val BOOL_AS_STRING = (bool: Boolean) ⇒ if (bool) YES else NO
+
+  final val OUTPUT_CSV_DELIMITER: String = "\u00B6"
+
+  final val EXTRA_WRITE_OPTIONS = Map(
+    "delimiter" -> OUTPUT_CSV_DELIMITER
+  )
 
   /**
    * Formats the `java.sql.Timestamp` with a date pattern. If no date pattern is given, the default
@@ -107,5 +112,21 @@ trait DispatcherTransformationFunctions {
      * @return Option[String] representation of the default date format
      */
     def mapWithDefaultPatternOpt: Option[String] = Option(mapWithDefaultPattern)
+  }
+
+  implicit class BigDecimalOps(that: BigDecimal) {
+    /**
+     * Formats a bigdecimal with two floating point numbers with rounding half up eg. 125.256 becomes 125.26
+     * @return String representation of the formatted BigDecimal
+     */
+    def formatTwoDecimals: String = f"$that%1.2f"
+  }
+
+  implicit class OptBigDecimalOps(that: Option[BigDecimal]) {
+    /**
+     * Formats a bigdecimal with two floating point numbers with rounding half up eg. 125.256 becomes 125.26
+     * @return Option[String] representation of the formatted BigDecimal
+     */
+    def formatTwoDecimalsOpt: Option[String] = that.map(_.formatTwoDecimals)
   }
 }

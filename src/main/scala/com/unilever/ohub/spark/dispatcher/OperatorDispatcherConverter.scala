@@ -12,7 +12,7 @@ import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 object OperatorDispatcherConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
-  with DeltaFunctions with DispatcherTransformationFunctions with DispatcherConverter {
+  with DeltaFunctions {
 
   def transform(
     spark: SparkSession,
@@ -50,7 +50,7 @@ object OperatorDispatcherConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     storage.writeToSingleCsv(
       ds = transformed,
       outputFile = config.outputFile,
-      options = extraWriteOptions
+      options = EXTRA_WRITE_OPTIONS
     )
   }
 
