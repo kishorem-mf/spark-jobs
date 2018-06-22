@@ -33,46 +33,16 @@ trait TestOperators {
     concatId                    = "country-code~source-name~source-entity-id",
     countryCode                 = "country-code",
     customerType                = Operator.customerType,
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    dateCreated                 = Some(new Timestamp(117, 10, 16, 18, 9, 49, 0)),
-    dateUpdated                 = Some(new Timestamp(117, 10, 16, 18, 9, 49, 0)),
-=======
     dateCreated                 = Some(new Timestamp(2017, 11, 16, 18, 09, 49, 0),
     dateUpdated                 = Some(new Timestamp(2017, 11, 16, 18, 09, 49, 0),
->>>>>>> Stashed changes
-=======
-    dateCreated                 = Some(new Timestamp(2017, 11, 16, 18, 09, 49, 0),
-    dateUpdated                 = Some(new Timestamp(2017, 11, 16, 18, 09, 49, 0),
->>>>>>> Stashed changes
-=======
-    dateCreated                 = Some(new Timestamp(2017, 11, 16, 18, 09, 49, 0),
-    dateUpdated                 = Some(new Timestamp(2017, 11, 16, 18, 09, 49, 0),
->>>>>>> Stashed changes
     isActive                    = true,
     isGoldenRecord              = false,
     ohubId                      = Some(UUID.randomUUID().toString),
     name                        = "operator-name",
     sourceEntityId              = "source-entity-id",
     sourceName                  = "source-name",
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     ohubCreated                 = new Timestamp(117, 10, 16, 18, 9, 49, 0),
     ohubUpdated                 = new Timestamp(117, 10, 16, 18, 9, 49, 0),
-=======
-    ohubCreated                 = new Timestamp(2017, 11, 16, 18, 09, 49, 0),
-    ohubUpdated                 = new Timestamp(2017, 11, 16, 18, 09, 49, 0),
->>>>>>> Stashed changes
-=======
-    ohubCreated                 = new Timestamp(2017, 11, 16, 18, 09, 49, 0),
-    ohubUpdated                 = new Timestamp(2017, 11, 16, 18, 09, 49, 0),
->>>>>>> Stashed changes
-=======
-    ohubCreated                 = new Timestamp(2017, 11, 16, 18, 09, 49, 0),
-    ohubUpdated                 = new Timestamp(2017, 11, 16, 18, 09, 49, 0),
->>>>>>> Stashed changes
     averagePrice                = Some(BigDecimal(12345)),
     chainId                     = Some("chain-id"),
     chainName                   = Some("chain-name"),
