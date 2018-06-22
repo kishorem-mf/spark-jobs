@@ -91,10 +91,11 @@ class DagConfig(object):
                  use_alternate_entity_as_cluster=False):
         self.entity = entity
         self.is_delta = is_delta
-        self.cluster_config = cluster_config.update({'cluster_name': self.cluster_name})
-        self.use_alternate_DAG_as_cluster = use_alternate_entity_as_cluster
+        self.use_alternate_entity_as_cluster = use_alternate_entity_as_cluster
         self.alternate_DAG_entity = alternate_DAG_entity
         self.schedule = '@daily' if is_delta else '@once'
+
+        self.cluster_config = cluster_config.update({'cluster_name': self.cluster_name})
 
     @property
     def dag_id(self):
@@ -104,7 +105,7 @@ class DagConfig(object):
 
     @property
     def cluster_name(self):
-        if self.use_alternate_DAG_as_cluster and self.alternate_DAG_entity:
+        if self.use_alternate_entity_as_cluster and self.alternate_DAG_entity:
             return f'{self.dag_id}_{{{{ds}}}}'
         else:
             postfix = '_initial_load' if not self.is_delta else ''
