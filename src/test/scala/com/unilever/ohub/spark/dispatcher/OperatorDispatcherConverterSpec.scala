@@ -82,7 +82,7 @@ class OperatorDispatcherConverterSpec extends SparkJobSpec with TestOperators {
         SUB_CHANNEL = Some("sub-channel"),
         NUMBER_OF_COVERS = Some(150),
         VAT = Some("vat"),
-        NUMBER_OF_WEEKS_OPEN = Some("web-updater-id"),
+        NUMBER_OF_WEEKS_OPEN = Some(50),
         ZIP_CODE = Some("1234 AB"),
         ROUTE_TO_MARKET = None,
         PREFERRED_PARTNER = None,
