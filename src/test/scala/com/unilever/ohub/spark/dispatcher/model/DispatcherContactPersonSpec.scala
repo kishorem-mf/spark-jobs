@@ -1,4 +1,5 @@
-package com.unilever.ohub.spark.dispatcher.model
+package com.unilever.ohub.spark.dispatcher
+package model
 
 import com.unilever.ohub.spark.SimpleSpec
 import com.unilever.ohub.spark.domain.entity.TestContactPersons
@@ -14,14 +15,14 @@ class DispatcherContactPersonSpec extends SimpleSpec {
   describe("DispatcherContactPerson") {
     it("should map from a ContactPerson") {
       DispatcherContactPerson.fromContactPerson(TEST_CONTACT_PERSON) shouldEqual DispatcherContactPerson(
-        DATE_OF_BIRTH = Some("1975-12-21 00:00:00"),
-        CITY = Some("Melbourne"),
+        DATE_OF_BIRTH = "1975-12-21 00:00:00".some,
+        CITY = "Melbourne".some,
         CP_ORIG_INTEGRATION_ID = "AU~WUFOO~AB123",
         COUNTRY_CODE = "AU",
-        COUNTRY = Some("Australia"),
-        EMAIL_ADDRESS = Some("jwilliams@downunder.au"),
-        CONFIRMED_OPT_IN_DATE = Some("2015-09-30 14:23:03"),
-        OPT_IN_DATE = Some("2015-09-30 14:23:02"),
+        COUNTRY = "Australia".some,
+        EMAIL_ADDRESS = "jwilliams@downunder.au".some,
+        CONFIRMED_OPT_IN_DATE = "2015-09-30 14:23:03".some,
+        OPT_IN_DATE = "2015-09-30 14:23:02".some,
         FAX_NUMBER = Some("61396621812"),
         GENDER = Some("M"),
         DM_OPT_OUT = Some(true),

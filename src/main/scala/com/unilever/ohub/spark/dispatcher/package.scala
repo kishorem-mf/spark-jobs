@@ -129,4 +129,8 @@ package object dispatcher {
      */
     def formatTwoDecimalsOpt: Option[String] = that.map(_.formatTwoDecimals)
   }
+
+  implicit class AnyTypeOpt[A](that: A) {
+    def some: Option[A] = Option(that)
+  }
 }
