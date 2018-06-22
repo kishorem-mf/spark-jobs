@@ -212,7 +212,7 @@ class GenericPipeline(object):
             start_pipeline = ExternalTaskSensorOperator(
                 task_id=f'{self._dag_config.entity}_start_pipeline',
                 external_dag_id=self._dag_config.dag_id,
-                external_task_id='end_pipeline',
+                external_task_id=f'{self._dag_config.entity}_end_pipeline',
                 execution_delta=timedelta(days=1))
         else:
             start_pipeline = BashOperator(
