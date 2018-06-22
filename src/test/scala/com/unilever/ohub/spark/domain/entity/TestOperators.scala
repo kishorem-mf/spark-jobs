@@ -34,8 +34,13 @@ trait TestOperators {
     countryCode                 = "country-code",
     customerType                = Operator.customerType,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     dateCreated                 = Some(new Timestamp(117, 10, 16, 18, 9, 49, 0)),
     dateUpdated                 = Some(new Timestamp(117, 10, 16, 18, 9, 49, 0)),
+=======
+    dateCreated                 = Some(new Timestamp(2017, 11, 16, 18, 09, 49, 0),
+    dateUpdated                 = Some(new Timestamp(2017, 11, 16, 18, 09, 49, 0),
+>>>>>>> Stashed changes
 =======
     dateCreated                 = Some(new Timestamp(2017, 11, 16, 18, 09, 49, 0),
     dateUpdated                 = Some(new Timestamp(2017, 11, 16, 18, 09, 49, 0),
@@ -47,8 +52,13 @@ trait TestOperators {
     sourceEntityId              = "source-entity-id",
     sourceName                  = "source-name",
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     ohubCreated                 = new Timestamp(117, 10, 16, 18, 9, 49, 0),
     ohubUpdated                 = new Timestamp(117, 10, 16, 18, 9, 49, 0),
+=======
+    ohubCreated                 = new Timestamp(2017, 11, 16, 18, 09, 49, 0),
+    ohubUpdated                 = new Timestamp(2017, 11, 16, 18, 09, 49, 0),
+>>>>>>> Stashed changes
 =======
     ohubCreated                 = new Timestamp(2017, 11, 16, 18, 09, 49, 0),
     ohubUpdated                 = new Timestamp(2017, 11, 16, 18, 09, 49, 0),

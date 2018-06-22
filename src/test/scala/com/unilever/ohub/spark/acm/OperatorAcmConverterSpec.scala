@@ -123,8 +123,13 @@ class OperatorAcmConverterSpec extends SparkJobSpec with TestOperators {
           CUST_GRP_EXT = "",
           PARENT_SEGMENT = "",
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
           DATE_CREATED = Some("2017-11-16 18:09:49"),
           DATE_UPDATED = Some("2017-11-16 18:09:49"),
+=======
+          DATE_CREATED = "2017-11-16 18:09:49",
+          DATE_UPDATED = "2017-11-16 18:09:49",
+>>>>>>> Stashed changes
 =======
           DATE_CREATED = "2017-11-16 18:09:49",
           DATE_UPDATED = "2017-11-16 18:09:49",
