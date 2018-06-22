@@ -69,8 +69,8 @@ class ExternalTaskSensorOperator(BaseOperator):
         self.RUNNING_STATE = 'still_running'
 
     def poke(self, context):
-        dttm = context['execution_date']
-        dttm_serialised = (dttm - self.execution_delta).isoformat()
+        dttm = context['execution_date'] - self.execution_delta
+        dttm_serialised = dttm.isoformat()
 
         self.log.info(
             'Poking for '
