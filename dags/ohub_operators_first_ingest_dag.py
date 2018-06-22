@@ -16,7 +16,7 @@ default_args.update(
 )
 
 entity = 'operators'
-dag_config = DagConfig(entity, is_delta=True, cluster_config=large_cluster_config)
+dag_config = DagConfig(entity, is_delta=False, cluster_config=large_cluster_config)
 
 with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_config.schedule) as dag:
     generic = (
