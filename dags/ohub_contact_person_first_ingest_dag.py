@@ -115,7 +115,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     )
 
     update_golden_records = DatabricksSubmitRunOperator(
-        task_id='{}_update_golden_records'.format(entity),
+        task_id='update_golden_records',
         cluster_name=dag_config.cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[
