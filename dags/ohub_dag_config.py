@@ -95,7 +95,8 @@ class DagConfig(object):
         self.alternate_DAG_entity = alternate_DAG_entity
         self.schedule = '@daily' if is_delta else '@once'
 
-        self.cluster_config = cluster_config.update({'cluster_name': self.cluster_name})
+        self.cluster_config = cluster_config
+        cluster_config.update({'cluster_name': self.cluster_name})
 
     @property
     def dag_id(self):
