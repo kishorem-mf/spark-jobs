@@ -1,44 +1,19 @@
-package com.unilever.ohub.spark.dispatcher
+package com.unilever.ohub.spark.dispatcher.model
 
-import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.dispatcher.model.DispatcherContactPerson
-import com.unilever.ohub.spark.domain.entity.{ ContactPerson, TestContactPersons }
-import org.apache.spark.sql.Dataset
+import com.unilever.ohub.spark.SimpleSpec
+import com.unilever.ohub.spark.domain.entity.TestContactPersons
 
-class ContactPersonDispatcherConverterSpec extends SparkJobSpec with TestContactPersons {
+class DispatcherContactPersonSpec extends SimpleSpec {
 
-  private val contactPersonConverter = ContactPersonDispatcherConverter
+  final val TEST_CONTACT_PERSON = {
+    TestContactPersons.defaultContactPerson
+      .copy(isGoldenRecord = true)
+      .copy(ohubId = Some("randomId"))
+  }
 
-  describe("contact person dispatcher converter") {
-    it("should convert a domain contact person correctly into an dispatcher converter") {
-      import spark.implicits._
-
-      /**
-       * Input file containing ContactPerson records
-       */
-      val input: Dataset[ContactPerson] = {
-        spark.createDataset(
-          List(defaultContactPerson)
-            .map(_.copy(isGoldenRecord = true))
-            .map(_.copy(ohubId = Some("randomId")))
-        )
-      }
-
-      /**
-       * There is no previous run containing ContactPerson records, so
-       * we create an empty dataset
-       */
-      val emptyDataset: Dataset[ContactPerson] = spark.emptyDataset[ContactPerson]
-
-      /**
-       * Transformed DispatcherContactPerson
-       */
-      val result: List[DispatcherContactPerson] = {
-        contactPersonConverter.transform(spark, input, emptyDataset).collect().toList
-      }
-
-      result should contain(DispatcherContactPerson(
+  describe("DispatcherContactPerson") {
+    it("should map from a ContactPerson") {
+      DispatcherContactPerson.fromContactPerson(TEST_CONTACT_PERSON) shouldEqual DispatcherContactPerson(
         DATE_OF_BIRTH = Some("1975-12-21 00:00:00"),
         CITY = Some("Melbourne"),
         CP_ORIG_INTEGRATION_ID = "AU~WUFOO~AB123",
@@ -90,7 +65,7 @@ class ContactPersonDispatcherConverterSpec extends SparkJobSpec with TestContact
         ORG_MOBILE_PHONE_NUMBER = None,
         ORG_FAX_NUMBER = None,
         MOB_OPT_OUT_DATE = None
-      ))
+      )
     }
   }
 }

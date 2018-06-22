@@ -4,12 +4,14 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.SimpleSpec
 
-class DispatcherTransformationFunctionsTest extends SimpleSpec with DispatcherTransformationFunctions {
+class DispatcherTransformationFunctionsSpec extends SimpleSpec {
 
   final val CUSTOM_PATTERN = "yyyy-MM-dd"
   final val TIMESTAMP = new Timestamp(117, 10, 16, 18, 9, 49, 0)
   final val FORMATTED_TIMESTAMP = "2017-11-16 18:09:49"
   final val FORMATTED_DATE = "2017-11-16"
+  final val BIG_DECIMAL = BigDecimal(125.256)
+  final val FORMATTED_BIG_DECIMAL = "125.26"
 
   describe("formatWithPattern") {
     it(s"format with default pattern - '$DATE_FORMAT'") {
@@ -69,6 +71,18 @@ class DispatcherTransformationFunctionsTest extends SimpleSpec with DispatcherTr
 
     it("should extend with mapWithDefaultPatternOpt") {
       TIMESTAMP.mapWithDefaultPatternOpt shouldEqual Some(FORMATTED_TIMESTAMP)
+    }
+  }
+
+  describe("BigDecimalOps") {
+    it("should extend with formatTwoDecimals") {
+      BIG_DECIMAL.formatTwoDecimals shouldEqual FORMATTED_BIG_DECIMAL
+    }
+  }
+
+  describe("OptBigDecimalOps") {
+    it("should extend with formatTwoDecimalsOpt") {
+      Option(BIG_DECIMAL).formatTwoDecimalsOpt shouldEqual Option(FORMATTED_BIG_DECIMAL)
     }
   }
 }
