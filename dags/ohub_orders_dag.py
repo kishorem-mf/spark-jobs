@@ -84,13 +84,13 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
     operators_integrated_sensor = ExternalTaskSensorOperator(
         task_id='operators_integrated_sensor',
         external_dag_id='ohub_operators',
-        external_task_id='operators_update_golden_records'
+        external_task_id='update_golden_records'
     )
 
     contactpersons_integrated_sensor = ExternalTaskSensorOperator(
         task_id='contactpersons_integrated_sensor',
         external_dag_id='ohub_contactpersons',
-        external_task_id='contactpersons_update_golden_records'
+        external_task_id='update_golden_records'
     )
 
     ingest_orders.last_task >> ingest_orderlines.first_task
