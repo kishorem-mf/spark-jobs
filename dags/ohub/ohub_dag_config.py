@@ -1,3 +1,18 @@
+"""
+Due to the highly modular nature of the design of the pipelines this file has been created to facilitate
+writing DAGs using this modularity in mind.
+
+Each DAG for the OHUB project will have a few partial pipelines in common, each will have:
+start cluster -> ingest from various channels -> other processing -> export from various channels -> terminate cluster
+
+Therefor the `GenericPipeline` class has been constructed. Using this one can construct partial pipelines (such as
+ingest and export) with single lines of code and with minimal configuration.
+
+All other `other processing` tasks must be constructed manually like any other airflow tasks must. Tying generated
+partial pipelines with other tasks is made easy because each partial pipeline returns an object holding the
+`first_task` and `last_task` of each respective pipeline.
+"""
+
 from datetime import timedelta
 from typing import List
 
@@ -33,7 +48,8 @@ default_args = {
 }
 
 
-def large_cluster_config(cluster_name):
+def large_cluster_config(cluster_name: str):
+    '''Returns a Databricks cluster configuration used for heavy tasks, such as string matching'''
     return {
         "cluster_name": cluster_name,
         "spark_version": "4.0.x-scala2.11",
@@ -50,6 +66,7 @@ def large_cluster_config(cluster_name):
 
 
 def small_cluster_config(cluster_name):
+    '''Returns a Databricks cluster configuration used for simple transformation tasks'''
     return {
         "cluster_name": cluster_name,
         "spark_version": "4.0.x-scala2.11",
@@ -73,28 +90,49 @@ postgres_config = [
 ]
 
 
-def create_cluster(schema, cluster_config):
+def create_cluster(entity: str, cluster_config: dict):
+    '''Returns an Airflow tasks that tells Databricks to construct a cluster
+    Args:
+        entity: The entity (i.e. operators, contactpersons, etc.)
+        cluster_config: A valid databricks cluster configuration
+    '''
     return DatabricksCreateClusterOperator(
-        task_id='{}_create_cluster'.format(schema),
+        task_id='{}_create_cluster'.format(entity),
         databricks_conn_id=databricks_conn_id,
         cluster_config=cluster_config
     )
 
 
-def terminate_cluster(schema, cluster_name):
+def terminate_cluster(entity: str, cluster_name: str):
+    '''Returns an Airflow tasks that tells Databricks to terminate a cluster
+
+    Args:
+        entity: The entity (i.e. operators, contactpersons, etc.)
+        cluster_name: The cluster name
+    '''
     return DatabricksTerminateClusterOperator(
-        task_id='{}_terminate_cluster'.format(schema),
+        task_id='{}_terminate_cluster'.format(entity),
         cluster_name=cluster_name,
         databricks_conn_id=databricks_conn_id
     )
 
 
 class DagConfig(object):
+    """This configuration holds the basic settings for each ohub DAG
+
+    Args:
+        entity: The entity (i.e. operators, contactpersons, etc.)
+        is_delta: Tells the config if the DAG is initial load or if it is a delta process
+        alternate_DAG_entity: Some entities might be part of the same DAG, this tells airflow to use that particular entity as main DAG id
+        use_alternate_entity_as_cluster: Tells the generator to use the given alternate DAG id as cluster name, usually you don't want this
+
+    """
+
     def __init__(self,
                  entity: str,
-                 is_delta,
+                 is_delta: bool,
                  alternate_DAG_entity: str = None,
-                 use_alternate_entity_as_cluster=False):
+                 use_alternate_entity_as_cluster: bool = False):
         self.entity = entity
         self.is_delta = is_delta
         self.use_alternate_entity_as_cluster = use_alternate_entity_as_cluster
@@ -117,6 +155,15 @@ class DagConfig(object):
 
 
 class IngestConfig(object):
+    """Configuration class for ingest tasks
+
+    Args:
+         input_file: The file or directory to read the input from
+         output_file: Where to put the output parquet
+         channel: The channel of the raw files (i.e. `file_interface`, `web_event`, etc)
+         deduplicate_on_concat_id: Whether to deduplicate on `concatId`, in most cases this should be `True`
+         alternative_seperator: The seperator for the CSV files
+    """
     def __init__(self,
                  input_file: str,
                  output_file: str,
@@ -131,16 +178,38 @@ class IngestConfig(object):
 
 
 class SubPipeline(object):
+    """A (case) class holding the first and last task of a pipeline"""
     def __init__(self, first_task: BaseOperator, last_task: BaseOperator):
         self.first_task = first_task
         self.last_task = last_task
 
 
 class GenericPipeline(object):
+    """Generates commonly used partial pipelines. Supported partial pipelines are:
+
+    * ingest, includes cluster creation, from:
+
+      - File interface
+      - Web event
+      - Emakina (not implemented yet)
+      - Sifu (not implemented yet)
+
+    * export, includes cluster termination, to
+
+      - ACM
+      - DispacherDB
+
+    * fuzzy string matching for initial load and delta
+
+    Args:
+        dag_config: The DAG configuration
+        class_prefix: The spark job class prefix (i.e `Operator`, `Product` etc)
+        cluster_config: The configuration for the cluster
+    """
     def __init__(self,
                  dag_config: DagConfig,
                  class_prefix: str,
-                 cluster_config):
+                 cluster_config: dict):
         self._clazz = class_prefix
         self._dag_config = dag_config
         self._cluster_config = cluster_config
@@ -153,6 +222,7 @@ class GenericPipeline(object):
                                        alternative_schema: str = None,
                                        alternative_output_fn: str = None,
                                        alternative_seperator: str = None) -> 'GenericPipeline':
+        '''Marks the pipeline to include ingest from file interface'''
         channel = 'file_interface'
         ingest_schema = alternative_schema if alternative_schema else self._dag_config.entity
         input_file = raw_bucket.format(date=one_day_ago, schema=ingest_schema, channel=channel)
@@ -170,10 +240,7 @@ class GenericPipeline(object):
         return self
 
     def has_ingest_from_web_event(self):
-        """Placeholder example extension
-        Appending a SubPipeline to the self._ingests list will automatically (and parallel) add the ingest task to the
-        full DAG pipeline.
-        """
+        '''Marks the pipeline to include ingest from web event'''
         # channel = 'web_event'
         # config = {}
         # self._ingests.append(self.__ingest_web_event(config))
@@ -182,6 +249,7 @@ class GenericPipeline(object):
     def has_export_to_acm(self,
                           acm_schema_name: str,
                           extra_acm_parameters: List[str] = []) -> 'GenericPipeline':
+        '''Marks the pipeline to include export to ACM'''
         config = {
             'filename': 'acm/UFS_' + acm_schema_name + '_{{ds_nodash}}000000.csv',
             'extra_acm_parameters': extra_acm_parameters
@@ -190,18 +258,19 @@ class GenericPipeline(object):
         return self
 
     def has_export_to_dispach(self):
-        """Placeholder example extension
-        Appending a SubPipeline to the self._exports list will automatically (and parallel) add the export task to the
-        full DAG pipeline.
-        """
+        '''Marks the pipeline to include export to dispatcherDb'''
         # config = {}
         # self._exports.append(self.__export_dispach_pipeline(config))
         return self
 
     def construct_ingest_pipeline(self) -> SubPipeline:
         """
-        Constructs the full ingest pipeline. It will loop over self._ingests and add the tasks as parallel to the DAG.
-        Depending on if the Pipeline is delta or not it will create a SensorOperator that waits for the previous day to be completed
+        Constructs the full ingest pipeline.
+
+        It will loop over `self._ingests` and add the tasks as parallel to the DAG.
+        Depending on if the Pipeline is delta or not it will create a `SensorOperator` that waits for the previous day
+        to be completed.
+
         This will also boot up a cluster
         """
         cluster_up = create_cluster(self._dag_config.entity, self._cluster_config)
@@ -258,7 +327,10 @@ class GenericPipeline(object):
 
     def construct_export_pipeline(self) -> SubPipeline:
         """
-        Constructs the full export pipeline. It will loop over self._exports and add the tasks as parallel to the DAG.
+        Constructs the full export pipeline.
+
+        It will loop over `self._exports` and add the tasks as parallel to the DAG.
+
         This will also terminate the cluster
         """
         cluster_down = terminate_cluster(self._dag_config.entity, self._dag_config.cluster_name)
@@ -285,6 +357,9 @@ class GenericPipeline(object):
                                           match_py: str,
                                           integrated_input: str = None,
                                           delta_match_py: str = None, ) -> SubPipeline:
+        ''' Constructs the fuzzy string matching pipeline, adding tasks PER country.
+        Depending on whether the pipeline `is_delta` is returns the delta or initial load matching partial pipeline
+        '''
 
         if self._dag_config.is_delta and (not integrated_input or not delta_match_py):
             raise AirflowException('cannot create delta matching without delta input params')

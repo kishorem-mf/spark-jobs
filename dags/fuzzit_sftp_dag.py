@@ -1,14 +1,12 @@
 from datetime import datetime
 
-import os
 from airflow import DAG
-from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
+from airflow.contrib.operators.sftp_operator import SFTPOperation
 from airflow.operators.bash_operator import BashOperator
 from custom_operators.zip_operator import UnzipOperator
 from custom_operators.folder_to_wasb import FolderToWasbOperator
 from custom_operators.short_circuit_sftp_operator import ShortCircuitSFTPOperator
-from config import country_codes
-from ohub_dag_config import container_name
+from ohub.ohub_dag_config import container_name
 
 default_args = {
     'owner': 'airflow',

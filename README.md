@@ -34,7 +34,7 @@ Requirements:
 
 Run the `local_dev.sh` script. The airflow UI should now be available at `http://localhost:8070`
 
-To check if DAGs can be loaded properly, you can use
+To check if DAGs can be loaded properly, you can use (this is executed automatically in the aforementioned script)
 ```
 docker exec -i ulohub_airflow_dags airflow list_dags
 ```
@@ -43,7 +43,7 @@ Any errors in any DAG setup will be reported using that command.
 ## Deployment
 Every merge to `master` automatically deploys all dags to a file share in Azure (storage account: `ulohub2sadevne`, fileshare: `airflow-dags`. This fileshare is mounted as volume in the AirFlow kubernetes deployment. Every change on this fileshare is therefore directly picked up by AirFlow. Thus the DAGs are refreshed.
 
-Note: Files deleted in Git are NOT deleted on the fileshare. If DAGs are removed from the master branch they have to be manually removed from the fileshare. Also: removed DAGs will still show up in the AirFlow UI since they are not removed from the AirFlow metadata database. You have to manually do this if you want to.
+Note: Files deleted in Git are NOT deleted on the fileshare. If DAGs are removed from the master branch they have to be manually removed from the fileshare. Also: removed DAGs will still show up in the AirFlow UI since they are not removed from the AirFlow metadata database. You have to manually do this if you want to. For this, there is a handy script called `remove_dag.sh`. It requires the credentials to the Postgres instance on Azure holding the airflow metadata and a dag id.
 
 
 ## Viewing the remote UI on Azure
