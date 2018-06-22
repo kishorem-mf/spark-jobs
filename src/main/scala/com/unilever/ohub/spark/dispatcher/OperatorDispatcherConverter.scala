@@ -106,10 +106,12 @@ object OperatorDispatcherConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
         SUB_CHANNEL = op.subChannel,
         NUMBER_OF_COVERS = op.totalDishes,
         VAT = op.vat,
-        NUMBER_OF_WEEKS_OPEN = op.weeksClosed.map((closed: Int) ⇒ 52 - closed),
+        NUMBER_OF_WEEKS_OPEN = op.weeksClosed.map { weeksClosed ⇒
+          if (52 - weeksClosed < 0) 0 else 52 - weeksClosed
+        },
         ZIP_CODE = op.zipCode,
         ROUTE_TO_MARKET = None,
-        PREFERRED_PARTNER = "-2",
+        PREFERRED_PARTNER = Some("-2"),
         STATUS = None, // "status of the operator, for example: seasonal, D, A, closed
         RESPONSIBLE_EMPLOYEE = None,
         CAM_KEY = None,

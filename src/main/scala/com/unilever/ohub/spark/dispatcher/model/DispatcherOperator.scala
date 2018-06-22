@@ -44,7 +44,7 @@ case class DispatcherOperator(
     SUB_CHANNEL: Option[String],
     NUMBER_OF_COVERS: Option[Int],
     VAT: Option[String],
-    NUMBER_OF_WEEKS_OPEN: Option[String],
+    NUMBER_OF_WEEKS_OPEN: Option[Int],
     ZIP_CODE: Option[String],
     ROUTE_TO_MARKET: Option[String],
     PREFERRED_PARTNER: Option[String],
