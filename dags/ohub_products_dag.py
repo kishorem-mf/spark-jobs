@@ -5,14 +5,14 @@ from airflow import DAG
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator
 from ohub_dag_config import default_args, databricks_conn_id, jar, \
     one_day_ago, integrated_bucket, two_day_ago, \
-    GenericPipeline, SubPipeline, DagConfig, intermediate_bucket
+    GenericPipeline, SubPipeline, DagConfig, intermediate_bucket, small_cluster_config
 
 default_args.update(
     {'start_date': datetime(2018, 6, 14)}
 )
 
 entity = 'products'
-dag_config = DagConfig(entity, is_delta=True)
+dag_config = DagConfig(entity, is_delta=True, cluster_config=small_cluster_config)
 clazz = 'Product'
 
 with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_config.schedule) as dag:

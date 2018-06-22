@@ -7,20 +7,21 @@ from custom_operators.external_task_sensor_operator import ExternalTaskSensorOpe
 from custom_operators.wasb_copy import WasbCopyOperator
 from ohub_dag_config import default_args, databricks_conn_id, jar, \
     one_day_ago, ingested_bucket, integrated_bucket, GenericPipeline, SubPipeline, DagConfig, intermediate_bucket, \
-    wasb_integrated_container, http_intermediate_container
+    wasb_integrated_container, http_intermediate_container, small_cluster_config
 
 default_args.update(
     {'start_date': datetime(2018, 6, 13)}
 )
 
 orders_entity = 'orders'
-orders_dag_config = DagConfig(orders_entity, is_delta=False)
+orders_dag_config = DagConfig(orders_entity, is_delta=False, cluster_config=small_cluster_config)
 orders_clazz = 'Order'
 
 orderlines_entity = 'orderlines'
 orderslines_dag_config = DagConfig(
     orderlines_entity,
     is_delta=False,
+    cluster_config=small_cluster_config,
     alternate_DAG_entity='orders',
     use_alternate_entity_as_cluster=False
 )

@@ -1,4 +1,3 @@
-import os
 from datetime import timedelta
 from typing import List
 
@@ -7,15 +6,13 @@ from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 from airflow.hooks.base_hook import BaseHook
 from airflow.models import BaseOperator
 from airflow.operators.bash_operator import BashOperator
-from airflow.operators.python_operator import ShortCircuitOperator
 
 from config import email_addresses, slack_on_databricks_failure_callback
 from custom_operators.databricks_functions import \
     DatabricksCreateClusterOperator, DatabricksTerminateClusterOperator, DatabricksSubmitRunOperator
+from custom_operators.empty_fallback import EmptyFallbackOperator
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
-from custom_operators.empty_fallback import EmptyFallbackOperator
-from custom_operators.check_file_non_empty_operator import CheckFileNonEmptyOperator
 
 ohub_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG', 'BH', 'BO', 'BR', 'CA', 'CH',
                       'CL', 'CN', 'CO', 'CR', 'CZ', 'DE', 'DK', 'DO', 'EC', 'EE', 'EG', 'ES', 'FI', 'FR', 'GB',
@@ -23,34 +20,6 @@ ohub_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG'
                       'LB', 'LK', 'LT', 'LU', 'LV', 'MA', 'MM', 'MO', 'MV', 'MX', 'MY', 'NI', 'NL', 'NO', 'NU',
                       'NZ', 'OM', 'PA', 'PE', 'PH', 'PK', 'PL', 'PT', 'QA', 'RO', 'RU', 'SA', 'SE', 'SG', 'SK',
                       'SV', 'TH', 'TR', 'TW', 'US', 'VE', 'VN', 'ZA']
-
-
-class DagConfig(object):
-    def __init__(self,
-                 entity: str,
-                 is_delta,
-                 alternate_DAG_entity: str = None,
-                 use_alternate_entity_as_cluster=False):
-        self.use_alternate_DAG_as_cluster = use_alternate_entity_as_cluster
-        self.entity = entity
-        self.is_delta = is_delta
-        self.alternate_DAG_entity = alternate_DAG_entity
-        self.schedule = '@daily' if is_delta else '@once'
-
-    @property
-    def dag_id(self):
-        postfix = '_initial_load' if not self.is_delta else ''
-        entity = self.alternate_DAG_entity if self.alternate_DAG_entity else self.entity
-        return f'ohub_{entity}{postfix}'
-
-    @property
-    def cluster_name(self):
-        if self.use_alternate_DAG_as_cluster and self.alternate_DAG_entity:
-            return f'{self.dag_id}_{{{{ds}}}}'
-        else:
-            postfix = '_initial_load' if not self.is_delta else ''
-            return f'ohub_{self.entity}{postfix}_{{{{ds}}}}'
-
 
 default_args = {
     'owner': 'airflow',
@@ -63,37 +32,38 @@ default_args = {
     'on_failure_callback': slack_on_databricks_failure_callback
 }
 
+large_cluster_config = {
+    "spark_version": "4.0.x-scala2.11",
+    "node_type_id": "Standard_D16s_v3",
+    "autoscale": {
+        "min_workers": '4',
+        "max_workers": '12'
+    },
+    "autotermination_minutes": '30',
+    "spark_env_vars": {
+        "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+}
 
-def default_cluster_config(cluster_name):
-    return {
-        "cluster_name": cluster_name,
-        "spark_version": "4.0.x-scala2.11",
-        "node_type_id": "Standard_D16s_v3",
-        "autoscale": {
-            "min_workers": '4',
-            "max_workers": '12'
-        },
-        "autotermination_minutes": '30',
-        "spark_env_vars": {
-            "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
-        },
-    }
-
-
-def small_cluster_config(cluster_name):
-    return {
-        "cluster_name": cluster_name,
-        "spark_version": "4.0.x-scala2.11",
-        "node_type_id": "Standard_DS3_v2",
-        "num_workers": '4',
-        "autotermination_minutes": '60',
-        "spark_env_vars": {
-            "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
-        },
-    }
-
+small_cluster_config = {
+    "spark_version": "4.0.x-scala2.11",
+    "node_type_id": "Standard_DS3_v2",
+    "num_workers": '4',
+    "autotermination_minutes": '60',
+    "spark_env_vars": {
+        "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+}
 
 databricks_conn_id = 'databricks_azure'
+
+postgres_connection = BaseHook.get_connection('postgres_channels')
+postgres_config = [
+    '--postgressUrl', postgres_connection.host,
+    '--postgressUsername', postgres_connection.login,
+    '--postgressPassword', postgres_connection.password,
+    '--postgressDB', postgres_connection.schema
+]
 
 
 def create_cluster(schema, cluster_config):
@@ -112,13 +82,33 @@ def terminate_cluster(schema, cluster_name):
     )
 
 
-postgres_connection = BaseHook.get_connection('postgres_channels')
-postgres_config = [
-    '--postgressUrl', postgres_connection.host,
-    '--postgressUsername', postgres_connection.login,
-    '--postgressPassword', postgres_connection.password,
-    '--postgressDB', postgres_connection.schema
-]
+class DagConfig(object):
+    def __init__(self,
+                 entity: str,
+                 is_delta,
+                 cluster_config: dict,
+                 alternate_DAG_entity: str = None,
+                 use_alternate_entity_as_cluster=False):
+        self.entity = entity
+        self.is_delta = is_delta
+        self.cluster_config = cluster_config.update({'cluster_name': self.cluster_name})
+        self.use_alternate_DAG_as_cluster = use_alternate_entity_as_cluster
+        self.alternate_DAG_entity = alternate_DAG_entity
+        self.schedule = '@daily' if is_delta else '@once'
+
+    @property
+    def dag_id(self):
+        postfix = '_initial_load' if not self.is_delta else ''
+        entity = self.alternate_DAG_entity if self.alternate_DAG_entity else self.entity
+        return f'ohub_{entity}{postfix}'
+
+    @property
+    def cluster_name(self):
+        if self.use_alternate_DAG_as_cluster and self.alternate_DAG_entity:
+            return f'{self.dag_id}_{{{{ds}}}}'
+        else:
+            postfix = '_initial_load' if not self.is_delta else ''
+            return f'ohub_{self.entity}{postfix}_{{{{ds}}}}'
 
 
 class IngestConfig(object):
@@ -207,7 +197,7 @@ class GenericPipeline(object):
         Depending on if the Pipeline is delta or not it will create a SensorOperator that waits for the previous day to be completed
         This will also boot up a cluster
         """
-        cluster_up = create_cluster(self._dag_config.entity, small_cluster_config(self._dag_config.cluster_name))
+        cluster_up = create_cluster(self._dag_config.entity, self._dag_config.cluster_config)
         if self._dag_config.is_delta:
             start_pipeline = ExternalTaskSensorOperator(
                 task_id=f'{self._dag_config.entity}_start_pipeline',
@@ -243,8 +233,10 @@ class GenericPipeline(object):
             ],
             spark_jar_task={
                 'main_class_name': f'com.unilever.ohub.spark.tsv2parquet.GatherJob',
-                'parameters': ['--input', ingested_bucket.format(date=one_day_ago, channel='*', fn=self._dag_config.entity),
-                               '--output', intermediate_bucket.format(date=one_day_ago, fn=f'{self._dag_config.entity}_gathered')]
+                'parameters': ['--input',
+                               ingested_bucket.format(date=one_day_ago, channel='*', fn=self._dag_config.entity),
+                               '--output',
+                               intermediate_bucket.format(date=one_day_ago, fn=f'{self._dag_config.entity}_gathered')]
             }
         )
         start_pipeline >> cluster_up

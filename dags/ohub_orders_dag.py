@@ -4,7 +4,7 @@ from airflow import DAG
 
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
-from ohub_dag_config import SubPipeline, DagConfig, intermediate_bucket
+from ohub_dag_config import SubPipeline, DagConfig, intermediate_bucket, small_cluster_config
 from ohub_dag_config import default_args, databricks_conn_id, jar, \
     one_day_ago, integrated_bucket, two_day_ago, \
     GenericPipeline
@@ -14,13 +14,14 @@ default_args.update(
 )
 
 orders_entity = 'orders'
-orders_dag_config = DagConfig(orders_entity, is_delta=True)
+orders_dag_config = DagConfig(orders_entity, is_delta=True, cluster_config=small_cluster_config)
 orders_clazz = 'Order'
 
 orderlines_entity = 'orderlines'
 orderslines_dag_config = DagConfig(
     orderlines_entity,
     is_delta=True,
+    cluster_config=small_cluster_config,
     alternate_DAG_entity='orders',
     use_alternate_entity_as_cluster=False
 )

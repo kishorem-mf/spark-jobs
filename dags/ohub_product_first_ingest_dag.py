@@ -4,14 +4,14 @@ from airflow import DAG
 
 from custom_operators.wasb_copy import WasbCopyOperator
 from ohub_dag_config import default_args, GenericPipeline, SubPipeline, integrated_bucket, one_day_ago, DagConfig, \
-    wasb_integrated_container, http_intermediate_container
+    wasb_integrated_container, http_intermediate_container, small_cluster_config
 
 default_args.update(
     {'start_date': datetime(2018, 6, 13)}
 )
 
 entity = 'products'
-dag_config = DagConfig(entity, is_delta=False)
+dag_config = DagConfig(entity, is_delta=False, cluster_config=small_cluster_config)
 clazz = 'Product'
 
 with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_config.schedule) as dag:

@@ -7,7 +7,7 @@ from custom_operators.databricks_functions import \
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub_dag_config import \
     default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, one_day_ago, \
-    two_day_ago, postgres_config, GenericPipeline, SubPipeline, DagConfig
+    two_day_ago, postgres_config, GenericPipeline, SubPipeline, DagConfig, large_cluster_config
 
 default_args.update(
     {
@@ -17,7 +17,7 @@ default_args.update(
 )
 
 entity = 'contactpersons'
-dag_config = DagConfig(entity, is_delta=True)
+dag_config = DagConfig(entity, is_delta=True, cluster_config=large_cluster_config)
 
 with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_config.schedule) as dag:
     generic = (
