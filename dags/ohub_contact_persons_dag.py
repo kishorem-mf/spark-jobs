@@ -122,7 +122,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     operators_integrated_sensor = ExternalTaskSensorOperator(
         task_id='operators_integrated_sensor',
         external_dag_id='ohub_operators',
-        external_task_id='operators_update_golden_records'
+        external_task_id='update_golden_records'
     )
 
     referencing = DatabricksSubmitRunOperator(

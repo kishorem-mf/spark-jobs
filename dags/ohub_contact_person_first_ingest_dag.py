@@ -90,8 +90,8 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
 
     operators_integrated_sensor = ExternalTaskSensorOperator(
         task_id='operators_integrated_sensor',
-        external_dag_id='ohub_operators_first_ingest',
-        external_task_id='operators_join'
+        external_dag_id='ohub_operators_initial_load',
+        external_task_id='join'
     )
 
     referencing = DatabricksSubmitRunOperator(
