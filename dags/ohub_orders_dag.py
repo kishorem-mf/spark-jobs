@@ -14,14 +14,13 @@ default_args.update(
 )
 
 orders_entity = 'orders'
-orders_dag_config = DagConfig(orders_entity, is_delta=True, cluster_config=small_cluster_config)
+orders_dag_config = DagConfig(orders_entity, is_delta=True)
 orders_clazz = 'Order'
 
 orderlines_entity = 'orderlines'
 orderslines_dag_config = DagConfig(
     orderlines_entity,
     is_delta=True,
-    cluster_config=small_cluster_config,
     alternate_DAG_entity='orders',
     use_alternate_entity_as_cluster=False
 )
@@ -29,7 +28,9 @@ orderslines_clazz = 'OrderLine'
 
 with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=orders_dag_config.schedule) as dag:
     orders = (
-        GenericPipeline(orders_dag_config, class_prefix=orders_clazz)
+        GenericPipeline(orders_dag_config,
+                        class_prefix=orders_clazz,
+                        cluster_config=small_cluster_config(orders_dag_config.cluster_name))
             .has_export_to_acm(acm_schema_name='UFS_ORDERS',
                                extra_acm_parameters=['--orderLineFile',
                                                      integrated_bucket.format(date=one_day_ago, fn='orderlines')])

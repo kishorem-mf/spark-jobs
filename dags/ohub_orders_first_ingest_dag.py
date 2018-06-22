@@ -14,14 +14,13 @@ default_args.update(
 )
 
 orders_entity = 'orders'
-orders_dag_config = DagConfig(orders_entity, is_delta=False, cluster_config=small_cluster_config)
+orders_dag_config = DagConfig(orders_entity, is_delta=False)
 orders_clazz = 'Order'
 
 orderlines_entity = 'orderlines'
 orderslines_dag_config = DagConfig(
     orderlines_entity,
     is_delta=False,
-    cluster_config=small_cluster_config,
     alternate_DAG_entity='orders',
     use_alternate_entity_as_cluster=False
 )
@@ -29,7 +28,9 @@ orderslines_clazz = 'OrderLine'
 
 with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=orders_dag_config.schedule) as dag:
     orders = (
-        GenericPipeline(orders_dag_config, class_prefix=orders_clazz)
+        GenericPipeline(orders_dag_config,
+                        class_prefix=orders_clazz,
+                        cluster_config=small_cluster_config(orders_dag_config.cluster_name))
             .has_export_to_acm(acm_schema_name='UFS_ORDERS',
                                extra_acm_parameters=['--orderLineFile',
                                                      integrated_bucket.format(date=one_day_ago, fn='orderlines')])
@@ -37,7 +38,9 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
     )
 
     orderlines = (
-        GenericPipeline(orderslines_dag_config, class_prefix=orderslines_clazz)
+        GenericPipeline(orderslines_dag_config,
+                        class_prefix=orderslines_clazz,
+                        cluster_config=small_cluster_config(orderslines_dag_config.cluster_name))
             .has_export_to_acm(acm_schema_name='UFS_ORDERLINES')
             .has_ingest_from_file_interface(deduplicate_on_concat_id=False, alternative_schema='orders')
     )
@@ -57,7 +60,8 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(orders_clazz),
-            'parameters': ['--orderInputFile', intermediate_bucket.format(date=one_day_ago, fn=f'{orders_entity}_gathered'),
+            'parameters': ['--orderInputFile',
+                           intermediate_bucket.format(date=one_day_ago, fn=f'{orders_entity}_gathered'),
                            '--contactPersonInputFile', integrated_bucket.format(date=one_day_ago, fn='contactpersons'),
                            '--operatorInputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
                            '--outputFile', integrated_bucket.format(date=one_day_ago, fn=orders_entity)]
@@ -80,7 +84,8 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         wasb_conn_id='azure_blob',
         container_name='prod',
         blob_name=wasb_integrated_container.format(date=one_day_ago, fn=orderlines_entity),
-        copy_source=http_intermediate_container.format(container='prod', date=one_day_ago, fn=f'{orderlines_entity}_gathered')
+        copy_source=http_intermediate_container.format(container='prod', date=one_day_ago,
+                                                       fn=f'{orderlines_entity}_gathered')
     )
 
     ingest_orders.last_task >> operators_integrated_sensor >> merge

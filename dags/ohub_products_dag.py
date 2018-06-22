@@ -12,12 +12,14 @@ default_args.update(
 )
 
 entity = 'products'
-dag_config = DagConfig(entity, is_delta=True, cluster_config=small_cluster_config)
+dag_config = DagConfig(entity, is_delta=True)
 clazz = 'Product'
 
 with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_config.schedule) as dag:
     generic = (
-        GenericPipeline(dag_config, class_prefix=clazz)
+        GenericPipeline(dag_config,
+                        class_prefix=clazz,
+                        cluster_config=small_cluster_config(dag_config.cluster_name))
             .has_export_to_acm(acm_schema_name='UFS_PRODUCTS')
             .has_ingest_from_file_interface()
     )

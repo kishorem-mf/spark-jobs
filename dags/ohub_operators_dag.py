@@ -5,7 +5,7 @@ from airflow import DAG
 from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
 from ohub_dag_config import \
-    default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, one_day_ago, \
+    default_args, databricks_conn_id, jar, intermediate_bucket, integrated_bucket, one_day_ago, \
     two_day_ago, postgres_config, \
     GenericPipeline, SubPipeline, DagConfig, large_cluster_config
 
@@ -16,11 +16,13 @@ default_args.update(
     }
 )
 entity = 'operators'
-dag_config = DagConfig(entity, is_delta=True, cluster_config=large_cluster_config)
+dag_config = DagConfig(entity, is_delta=True)
 
 with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_config.schedule) as dag:
     generic = (
-        GenericPipeline(dag_config, class_prefix='Operator')
+        GenericPipeline(dag_config,
+                        class_prefix='Operator',
+                        cluster_config=large_cluster_config(dag_config.cluster_name))
             .has_export_to_acm(acm_schema_name='UFS_OPERATORS')
             .has_ingest_from_file_interface()
     )

@@ -32,28 +32,35 @@ default_args = {
     'on_failure_callback': slack_on_databricks_failure_callback
 }
 
-large_cluster_config = {
-    "spark_version": "4.0.x-scala2.11",
-    "node_type_id": "Standard_D16s_v3",
-    "autoscale": {
-        "min_workers": '4',
-        "max_workers": '12'
-    },
-    "autotermination_minutes": '30',
-    "spark_env_vars": {
-        "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
-    },
-}
 
-small_cluster_config = {
-    "spark_version": "4.0.x-scala2.11",
-    "node_type_id": "Standard_DS3_v2",
-    "num_workers": '4',
-    "autotermination_minutes": '60',
-    "spark_env_vars": {
-        "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
-    },
-}
+def large_cluster_config(cluster_name):
+    return {
+        "cluster_name": cluster_name,
+        "spark_version": "4.0.x-scala2.11",
+        "node_type_id": "Standard_D16s_v3",
+        "autoscale": {
+            "min_workers": '4',
+            "max_workers": '12'
+        },
+        "autotermination_minutes": '30',
+        "spark_env_vars": {
+            "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+        },
+    }
+
+
+def small_cluster_config(cluster_name):
+    return {
+        "cluster_name": cluster_name,
+        "spark_version": "4.0.x-scala2.11",
+        "node_type_id": "Standard_DS3_v2",
+        "num_workers": '4',
+        "autotermination_minutes": '60',
+        "spark_env_vars": {
+            "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+        },
+    }
+
 
 databricks_conn_id = 'databricks_azure'
 
@@ -86,7 +93,6 @@ class DagConfig(object):
     def __init__(self,
                  entity: str,
                  is_delta,
-                 cluster_config: dict,
                  alternate_DAG_entity: str = None,
                  use_alternate_entity_as_cluster=False):
         self.entity = entity
@@ -94,9 +100,6 @@ class DagConfig(object):
         self.use_alternate_entity_as_cluster = use_alternate_entity_as_cluster
         self.alternate_DAG_entity = alternate_DAG_entity
         self.schedule = '@daily' if is_delta else '@once'
-
-        self.cluster_config = cluster_config
-        cluster_config.update({'cluster_name': self.cluster_name})
 
     @property
     def dag_id(self):
@@ -136,9 +139,11 @@ class SubPipeline(object):
 class GenericPipeline(object):
     def __init__(self,
                  dag_config: DagConfig,
-                 class_prefix: str):
+                 class_prefix: str,
+                 cluster_config):
         self._clazz = class_prefix
         self._dag_config = dag_config
+        self._cluster_config = cluster_config
 
         self._exports: List[SubPipeline] = []
         self._ingests: List[SubPipeline] = []
@@ -199,7 +204,7 @@ class GenericPipeline(object):
         Depending on if the Pipeline is delta or not it will create a SensorOperator that waits for the previous day to be completed
         This will also boot up a cluster
         """
-        cluster_up = create_cluster(self._dag_config.entity, self._dag_config.cluster_config)
+        cluster_up = create_cluster(self._dag_config.entity, self._cluster_config)
         if self._dag_config.is_delta:
             start_pipeline = ExternalTaskSensorOperator(
                 task_id=f'{self._dag_config.entity}_start_pipeline',

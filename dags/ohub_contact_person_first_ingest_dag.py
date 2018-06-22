@@ -17,11 +17,13 @@ default_args.update(
 )
 
 entity = 'contactpersons'
-dag_config = DagConfig(entity, is_delta=False, cluster_config=large_cluster_config)
+dag_config = DagConfig(entity, is_delta=False)
 
 with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_config.schedule) as dag:
     generic = (
-        GenericPipeline(dag_config, class_prefix='ContactPerson')
+        GenericPipeline(dag_config,
+                        class_prefix='ContactPerson',
+                        cluster_config=large_cluster_config(dag_config.cluster_name))
             .has_export_to_acm(acm_schema_name='UFS_RECIPIENTS')
             .has_ingest_from_file_interface()
     )
