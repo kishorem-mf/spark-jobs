@@ -4,6 +4,7 @@ import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.dispatcher.model.DispatcherOperator
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.domain.entity.Operator
+import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
@@ -21,7 +22,7 @@ object OperatorDispatcherConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     val dailyUfsOperators = createDispatcherOperators(spark, operators, channelMappings)
     val allPreviousUfsOperators = createDispatcherOperators(spark, previousIntegrated, channelMappings)
 
-    integrate[DispatcherOperator](spark, dailyUfsOperators, allPreviousUfsOperators, "OP_ORIG_INTEGRATION_ID")
+    integrate[DispatcherOperator](spark, dailyUfsOperators, allPreviousUfsOperators, "OPR_ORIG_INTEGRATION_ID")
   }
 
   override private[spark] def defaultConfig = DefaultWithDbAndDeltaConfig()
@@ -126,8 +127,8 @@ object OperatorDispatcherConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     dispatcherOperators
       .joinWith(
         channelMappings,
-        channelMappings("originalChannel") === records("CHANNEL") and
-          channelMappings("countryCode") === records("COUNTRY_CODE"),
+        channelMappings("originalChannel") === dispatcherOperators("CHANNEL") and
+          channelMappings("countryCode") === dispatcherOperators("COUNTRY_CODE"),
         JoinType.Left
       )
       .map {
