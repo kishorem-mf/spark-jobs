@@ -1,6 +1,7 @@
 package com.unilever.ohub.spark.dispatcher
 
 import com.unilever.ohub.spark.SparkJob
+import com.unilever.ohub.spark.export.DeltaFunctions
 import com.unilever.ohub.spark.dispatcher.model.DispatcherOperator
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.domain.entity.Operator
@@ -60,7 +61,7 @@ object OperatorDispatcherConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
   ): Dataset[DispatcherOperator] = {
     import spark.implicits._
 
-    val dispatcherOperators = operators.filter(_.isGoldenRecord).map { op ⇒ // TODO check whether the filter is at the right location
+    val dispatcherOperators = operators.map { op ⇒
       DispatcherOperator(
         AVERAGE_SELLING_PRICE = op.averagePrice,
         CHAIN_KNOTEN = op.chainId,
@@ -105,10 +106,10 @@ object OperatorDispatcherConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
         SUB_CHANNEL = op.subChannel,
         NUMBER_OF_COVERS = op.totalDishes,
         VAT = op.vat,
-        NUMBER_OF_WEEKS_OPEN = op.webUpdaterId,
+        NUMBER_OF_WEEKS_OPEN = op.weeksClosed.map((closed: Int) ⇒ 52 - closed),
         ZIP_CODE = op.zipCode,
         ROUTE_TO_MARKET = None,
-        PREFERRED_PARTNER = None, // "-2"
+        PREFERRED_PARTNER = "-2",
         STATUS = None, // "status of the operator, for example: seasonal, D, A, closed
         RESPONSIBLE_EMPLOYEE = None,
         CAM_KEY = None,
