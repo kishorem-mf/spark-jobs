@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.dispatcher
 
 import com.unilever.ohub.spark.SparkJob
-import com.unilever.ohub.spark.Dispatcher.model.DispatcherOperator
+import com.unilever.ohub.spark.dispatcher.model.DispatcherOperator
 import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.storage.Storage
@@ -76,7 +76,7 @@ object OperatorDispatcherConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
         EMAIL_OPT_OUT = op.hasEmailOptOut,
         FAX_OPT_OUT = op.hasFaxOptOut,
         MOBILE_OPT_OUT = op.hasMobileOptOut,
-        FIXED_OPT_OUT = op.hasTeleMarketingOptOut,
+        FIXED_OPT_OUT = op.hasTelemarketingOptOut,
         HOUSE_NUMBER = op.houseNumber,
         HOUSE_NUMBER_EXT = op.houseNumberExtension,
         DELETE_FLAG = !op.isActive,
@@ -92,9 +92,9 @@ object OperatorDispatcherConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
         KITCHEN_TYPE = op.kitchenType,
         NAME = op.name,
         NPS_POTENTIAL = op.netPromoterScore,
-        CREATED_AT = op.ohubCreated.map(formatWithPattern()),
+        CREATED_AT = formatWithPattern()(op.ohubCreated),
         OPR_LNKD_INTEGRATION_ID = op.ohubId,
-        UPDATED_AT = op.ohubUpdated.map(formatWithPattern()),
+        UPDATED_AT = formatWithPattern()(op.ohubUpdated),
         OTM = op.otm,
         REGION = op.region,
         SOURCE_ID = op.sourceEntityId,
@@ -114,12 +114,12 @@ object OperatorDispatcherConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
         CAM_TEXT = None,
         CHANNEL_KEY = None,
         CHANNEL_TEXT = None,
-        LOCAL_CHANNEL = None,       // set below
-        CHANNEL_USAGE = None,       // set below
-        SOCIAL_COMMERCIAL = None,   // set below
-        STRATEGIC_CHANNEL = None,   // set below
-        GLOBAL_CHANNEL = None,      // set below
-        GLOBAL_SUBCHANNEL = None    // set below
+        LOCAL_CHANNEL = None, // set below
+        CHANNEL_USAGE = None, // set below
+        SOCIAL_COMMERCIAL = None, // set below
+        STRATEGIC_CHANNEL = None, // set below
+        GLOBAL_CHANNEL = None, // set below
+        GLOBAL_SUBCHANNEL = None // set below
       )
     }
 
@@ -133,11 +133,11 @@ object OperatorDispatcherConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
       .map {
         case (operator, maybeChannelMapping) ⇒ Option(maybeChannelMapping).fold(operator) { channelMapping ⇒
           operator.copy(
-            LOCAL_CHANNEL =     Option(channelMapping.localChannel),
-            CHANNEL_USAGE =     Option(channelMapping.channelUsage),
+            LOCAL_CHANNEL = Option(channelMapping.localChannel),
+            CHANNEL_USAGE = Option(channelMapping.channelUsage),
             SOCIAL_COMMERCIAL = Option(channelMapping.socialCommercial),
             STRATEGIC_CHANNEL = Option(channelMapping.strategicChannel),
-            GLOBAL_CHANNEL =    Option(channelMapping.globalChannel),
+            GLOBAL_CHANNEL = Option(channelMapping.globalChannel),
             GLOBAL_SUBCHANNEL = Option(channelMapping.globalSubChannel)
           )
         }
