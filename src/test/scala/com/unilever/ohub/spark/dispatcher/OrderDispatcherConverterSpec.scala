@@ -1,19 +1,51 @@
 package com.unilever.ohub.spark.dispatcher
-package model
 
-import com.unilever.ohub.spark.SimpleSpec
-import com.unilever.ohub.spark.domain.entity.TestOrders
+import com.unilever.ohub.spark.SharedSparkSession.spark
+import com.unilever.ohub.spark.SparkJobSpec
+import com.unilever.ohub.spark.dispatcher.model.DispatcherOrder
+import com.unilever.ohub.spark.domain.entity.{ Order, OrderLine, TestOrderLines, TestOrders }
+import org.apache.spark.sql.Dataset
 
-class DispatcherOrderSpec extends SimpleSpec {
+class OrderDispatcherConverterSpec extends SparkJobSpec with TestOrders with TestOrderLines {
 
-  final val TEST_ORDER = {
-    TestOrders
-      .defaultOrder
-  }
+  private val orderDispatcherConverter = OrderDispatcherConverter
 
-  describe("DispatcherOrder") {
-    it("should map a domain Order") {
-      DispatcherOrder.fromOrder(TEST_ORDER) shouldEqual DispatcherOrder(
+  describe("order dispatcher converter") {
+    it("should convert a domain order correctly into an dispatcher order") {
+      import spark.implicits._
+
+      /**
+       * Input file containing order records
+       */
+      val inputOrders: Dataset[Order] = {
+        spark.createDataset(
+          List(defaultOrder)
+        )
+      }
+
+      /**
+       * Input file containing order line records
+       */
+      val inputOrderLines: Dataset[OrderLine] = {
+        spark.createDataset(
+          List(defaultOrderLine)
+        )
+      }
+
+      /**
+       * There is no previous run containing order records, so
+       * we create an empty dataset
+       */
+      val emptyDataset: Dataset[Order] = spark.emptyDataset[Order]
+
+      /**
+       * Transformed DispatcherOrders
+       */
+      val result: List[DispatcherOrder] = {
+        orderDispatcherConverter.transform(spark, inputOrders, emptyDataset, inputOrderLines).collect().toList
+      }
+
+      result should contain(DispatcherOrder(
         CAMPAIGN_CODE = "UNKNOWN".some,
         CAMPAIGN_NAME = "campaign".some,
         COMMENTS = None,
@@ -57,7 +89,7 @@ class DispatcherOrderSpec extends SimpleSpec {
         INVOICE_CITY = None,
         INVOICE_STATE = None,
         INVOICE_COUNTRY = None
-      )
+      ))
     }
   }
 }

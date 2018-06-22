@@ -11,7 +11,7 @@ class ContactPersonDispatcherConverterSpec extends SparkJobSpec with TestContact
   private val contactPersonConverter = ContactPersonDispatcherConverter
 
   describe("contact person dispatcher converter") {
-    it("should convert a domain contact person correctly into an dispatcher converter") {
+    it("should convert a domain contact person correctly into an dispatcher contact person") {
       import spark.implicits._
 
       /**

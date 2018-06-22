@@ -12,7 +12,7 @@ class ProductDispatcherConverterSpec extends SparkJobSpec with TestProducts {
   private val productDispatcherConverter = ProductDispatcherConverter
 
   describe("product dispatcher converter") {
-    it("should convert a domain product correctly into an dispatcher product converter") {
+    it("should convert a domain product correctly into an dispatcher product") {
       import spark.implicits._
 
       /**
