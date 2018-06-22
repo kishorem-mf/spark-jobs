@@ -5,9 +5,9 @@ from airflow import DAG
 from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
-from ohub_dag_config import \
-    default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, one_day_ago, \
-    two_day_ago, postgres_config, GenericPipeline, SubPipeline, DagConfig
+from ohub.ohub_dag_config import \
+    default_args, databricks_conn_id, jar, intermediate_bucket, integrated_bucket, one_day_ago, \
+    two_day_ago, postgres_config, GenericPipeline, SubPipeline, DagConfig, large_cluster_config
 
 default_args.update(
     {
@@ -21,7 +21,9 @@ dag_config = DagConfig(entity, is_delta=True)
 
 with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_config.schedule) as dag:
     generic = (
-        GenericPipeline(dag_config, class_prefix='ContactPerson')
+        GenericPipeline(dag_config,
+                        class_prefix='ContactPerson',
+                        cluster_config=large_cluster_config(dag_config.cluster_name))
             .has_export_to_acm(acm_schema_name='RECIPIENTS')
             .has_export_to_dispatcher_db(dispatcher_schema_name='CONTACT_PERSONS')
             .has_ingest_from_file_interface()
@@ -48,7 +50,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
             'parameters': ['--integratedInputFile',
                            integrated_bucket.format(date=two_day_ago, fn=entity),
                            '--deltaInputFile',
-                           ingested_bucket.format(date=one_day_ago, fn=entity, channel='*'),
+                           intermediate_bucket.format(date=one_day_ago, fn=f'{entity}_gathered'),
                            '--deltaPreProcessedOutputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='{}_pre_processed'.format(entity))]
         }
@@ -123,7 +125,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     operators_integrated_sensor = ExternalTaskSensorOperator(
         task_id='operators_integrated_sensor',
         external_dag_id='ohub_operators',
-        external_task_id='operators_update_golden_records'
+        external_task_id='update_golden_records'
     )
 
     referencing = DatabricksSubmitRunOperator(

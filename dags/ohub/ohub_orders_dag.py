@@ -4,9 +4,9 @@ from airflow import DAG
 
 from custom_operators.databricks_functions import DatabricksSubmitRunOperator
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
-from ohub_dag_config import SubPipeline, DagConfig
-from ohub_dag_config import default_args, databricks_conn_id, jar, \
-    one_day_ago, ingested_bucket, integrated_bucket, two_day_ago, \
+from ohub.ohub_dag_config import SubPipeline, DagConfig, intermediate_bucket, small_cluster_config
+from ohub.ohub_dag_config import default_args, databricks_conn_id, jar, \
+    one_day_ago, integrated_bucket, two_day_ago, \
     GenericPipeline
 
 default_args.update(
@@ -28,7 +28,9 @@ orderslines_clazz = 'OrderLine'
 
 with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=orders_dag_config.schedule) as dag:
     orders = (
-        GenericPipeline(orders_dag_config, class_prefix=orders_clazz)
+        GenericPipeline(orders_dag_config,
+                        class_prefix=orders_clazz,
+                        cluster_config=small_cluster_config(orders_dag_config.cluster_name))
             .has_export_to_acm(acm_schema_name='ORDERS',
                                extra_acm_parameters=['--orderLineFile',
                                                      integrated_bucket.format(date=one_day_ago, fn='orderlines')])
@@ -36,7 +38,9 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
     )
 
     orderlines = (
-        GenericPipeline(orderslines_dag_config, class_prefix=orderslines_clazz)
+        GenericPipeline(orderslines_dag_config,
+                        class_prefix=orderslines_clazz,
+                        cluster_config=small_cluster_config(orderslines_dag_config.cluster_name))
             .has_export_to_acm(acm_schema_name='UFS_ORDERLINES')
             .has_ingest_from_file_interface(deduplicate_on_concat_id=False, alternative_schema='orders')
     )
@@ -57,7 +61,7 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(orders_clazz),
             'parameters': ['--orderInputFile',
-                           ingested_bucket.format(date=one_day_ago, channel='file_interface', fn=orders_entity),
+                           intermediate_bucket.format(date=one_day_ago, fn=f'{orders_entity}_gathered'),
                            '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=orders_entity),
                            '--contactPersonInputFile', integrated_bucket.format(date=one_day_ago, fn='contactpersons'),
                            '--operatorInputFile', integrated_bucket.format(date=one_day_ago, fn='operators'),
@@ -74,8 +78,7 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(orderslines_clazz),
             'parameters': ['--orderLineInputFile',
-                           ingested_bucket.format(date=one_day_ago, channel='file_interface',
-                                                  fn=orderslines_dag_config.entity),
+                           intermediate_bucket.format(date=one_day_ago, fn=f'{orderlines_entity}_gathered'),
                            '--previousIntegrated',
                            integrated_bucket.format(date=two_day_ago, fn=orderslines_dag_config.entity),
                            '--outputFile', integrated_bucket.format(date=one_day_ago, fn=orderslines_dag_config.entity)]
@@ -84,13 +87,13 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
     operators_integrated_sensor = ExternalTaskSensorOperator(
         task_id='operators_integrated_sensor',
         external_dag_id='ohub_operators',
-        external_task_id='operators_update_golden_records'
+        external_task_id='update_golden_records'
     )
 
     contactpersons_integrated_sensor = ExternalTaskSensorOperator(
         task_id='contactpersons_integrated_sensor',
         external_dag_id='ohub_contactpersons',
-        external_task_id='contactpersons_update_golden_records'
+        external_task_id='update_golden_records'
     )
 
     ingest_orders.last_task >> ingest_orderlines.first_task

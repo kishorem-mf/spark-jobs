@@ -5,9 +5,9 @@ from airflow import DAG
 from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
-from ohub_dag_config import \
-    default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, postgres_config, \
-    one_day_ago, GenericPipeline, SubPipeline, DagConfig
+from ohub.ohub_dag_config import \
+    default_args, databricks_conn_id, jar, intermediate_bucket, integrated_bucket, postgres_config, \
+    one_day_ago, GenericPipeline, SubPipeline, DagConfig, large_cluster_config
 
 default_args.update(
     {
@@ -21,7 +21,9 @@ dag_config = DagConfig(entity, is_delta=False)
 
 with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_config.schedule) as dag:
     generic = (
-        GenericPipeline(dag_config, class_prefix='ContactPerson')
+        GenericPipeline(dag_config,
+                        class_prefix='ContactPerson',
+                        cluster_config=large_cluster_config(dag_config.cluster_name))
             .has_export_to_acm(acm_schema_name='RECIPIENTS')
             .has_export_to_dispatcher_db(dispatcher_schema_name='CONTACT_PERSONS')
             .has_ingest_from_file_interface()
@@ -43,12 +45,10 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
         ],
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonExactMatcher",
-            'parameters': ['--inputFile', ingested_bucket.format(date='{{ds}}',
-                                                                 fn=entity,
-                                                                 channel='file_interface'),
-                           '--exactMatchOutputFile', intermediate_bucket.format(date='{{ds}}',
+            'parameters': ['--inputFile', intermediate_bucket.format(date=one_day_ago, fn=f'{entity}_gathered'),
+                           '--exactMatchOutputFile', intermediate_bucket.format(date=one_day_ago,
                                                                                 fn='{}_exact_matches'.format(entity)),
-                           '--leftOversOutputFile', intermediate_bucket.format(date='{{ds}}',
+                           '--leftOversOutputFile', intermediate_bucket.format(date=one_day_ago,
                                                                                fn='{}_left_overs'.format(
                                                                                    entity))] + postgres_config
         }
@@ -64,10 +64,10 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonMatchingJoiner",
             'parameters': ['--matchingInputFile',
-                           intermediate_bucket.format(date='{{ds}}', fn='{}_matched'.format(entity)),
-                           '--entityInputFile', intermediate_bucket.format(date='{{ds}}',
+                           intermediate_bucket.format(date=one_day_ago, fn='{}_matched'.format(entity)),
+                           '--entityInputFile', intermediate_bucket.format(date=one_day_ago,
                                                                            fn='{}_left_overs'.format(entity)),
-                           '--outputFile', intermediate_bucket.format(date='{{ds}}', fn=entity)] + postgres_config
+                           '--outputFile', intermediate_bucket.format(date=one_day_ago, fn=entity)] + postgres_config
         }
     )
 
@@ -81,20 +81,20 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
 
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.combining.ContactPersonCombining",
-            'parameters': ['--integratedUpdated', intermediate_bucket.format(date='{{ds}}',
+            'parameters': ['--integratedUpdated', intermediate_bucket.format(date=one_day_ago,
                                                                              fn='{}_exact_matches'.format(entity)),
-                           '--newGolden', intermediate_bucket.format(date='{{ds}}',
+                           '--newGolden', intermediate_bucket.format(date=one_day_ago,
                                                                      fn=entity,
                                                                      channel='*'),
-                           '--combinedEntities', intermediate_bucket.format(date='{{ds}}',
+                           '--combinedEntities', intermediate_bucket.format(date=one_day_ago,
                                                                             fn='{}_combined'.format(entity))]
         }
     )
 
     operators_integrated_sensor = ExternalTaskSensorOperator(
         task_id='operators_integrated_sensor',
-        external_dag_id='ohub_operators_first_ingest',
-        external_task_id='operators_join'
+        external_dag_id='ohub_operators_initial_load',
+        external_task_id='join'
     )
 
     referencing = DatabricksSubmitRunOperator(
@@ -107,9 +107,9 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
 
         spark_jar_task={
             'main_class_name': "com.unilever.ohub.spark.merging.ContactPersonReferencing",
-            'parameters': ['--combinedInputFile', intermediate_bucket.format(date='{{ds}}',
+            'parameters': ['--combinedInputFile', intermediate_bucket.format(date=one_day_ago,
                                                                              fn='{}_combined'.format(entity)),
-                           '--operatorInputFile', integrated_bucket.format(date='{{ds}}',
+                           '--operatorInputFile', integrated_bucket.format(date=one_day_ago,
                                                                            fn='operators',
                                                                            channel='*'),
                            '--outputFile',
@@ -118,7 +118,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     )
 
     update_golden_records = DatabricksSubmitRunOperator(
-        task_id='{}_update_golden_records'.format(entity),
+        task_id='update_golden_records',
         cluster_name=dag_config.cluster_name,
         databricks_conn_id=databricks_conn_id,
         libraries=[

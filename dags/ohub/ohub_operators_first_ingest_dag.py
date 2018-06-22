@@ -4,9 +4,9 @@ from airflow import DAG
 
 from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
-from ohub_dag_config import \
+from ohub.ohub_dag_config import \
     default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, \
-    postgres_config, GenericPipeline, SubPipeline, one_day_ago, DagConfig
+    postgres_config, GenericPipeline, SubPipeline, one_day_ago, DagConfig, large_cluster_config
 
 default_args.update(
     {
@@ -20,7 +20,9 @@ dag_config = DagConfig(entity, is_delta=False)
 
 with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_config.schedule) as dag:
     generic = (
-        GenericPipeline(dag_config, class_prefix='Operator')
+        GenericPipeline(dag_config,
+                        class_prefix='Operator',
+                        cluster_config=large_cluster_config(dag_config.cluster_name))
             .has_export_to_acm(acm_schema_name='OPERATORS')
             .has_ingest_from_file_interface()
     )
@@ -29,7 +31,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     export: SubPipeline = generic.construct_export_pipeline()
     fuzzy_matching: SubPipeline = generic.construct_fuzzy_matching_pipeline(
         match_py='dbfs:/libraries/name_matching/match_operators.py',
-        ingest_input=ingested_bucket.format(date=one_day_ago, fn=entity, channel='*')
+        ingest_input=intermediate_bucket.format(date=one_day_ago, fn=f'{entity}_gathered'),
     )
 
     join = DatabricksSubmitRunOperator(

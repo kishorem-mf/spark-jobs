@@ -1,4 +1,18 @@
-import os
+"""
+Due to the highly modular nature of the design of the pipelines this file has been created to facilitate
+writing DAGs using this modularity in mind.
+
+Each DAG for the OHUB project will have a few partial pipelines in common, each will have:
+start cluster -> ingest from various channels -> other processing -> export from various channels -> terminate cluster
+
+Therefor the `GenericPipeline` class has been constructed. Using this one can construct partial pipelines (such as
+ingest and export) with single lines of code and with minimal configuration.
+
+All other `other processing` tasks must be constructed manually like any other airflow tasks must. Tying generated
+partial pipelines with other tasks is made easy because each partial pipeline returns an object holding the
+`first_task` and `last_task` of each respective pipeline.
+"""
+
 from datetime import timedelta
 from typing import List
 
@@ -7,14 +21,13 @@ from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 from airflow.hooks.base_hook import BaseHook
 from airflow.models import BaseOperator
 from airflow.operators.bash_operator import BashOperator
-from airflow.operators.python_operator import ShortCircuitOperator
 
 from config import email_addresses, slack_on_databricks_failure_callback
 from custom_operators.databricks_functions import \
     DatabricksCreateClusterOperator, DatabricksTerminateClusterOperator, DatabricksSubmitRunOperator
+from custom_operators.empty_fallback import EmptyFallbackOperator
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from custom_operators.file_from_wasb import FileFromWasbOperator
-from custom_operators.empty_fallback import EmptyFallbackOperator
 
 ohub_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG', 'BH', 'BO', 'BR', 'CA', 'CH',
                       'CL', 'CN', 'CO', 'CR', 'CZ', 'DE', 'DK', 'DO', 'EC', 'EE', 'EG', 'ES', 'FI', 'FR', 'GB',
@@ -22,34 +35,6 @@ ohub_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG'
                       'LB', 'LK', 'LT', 'LU', 'LV', 'MA', 'MM', 'MO', 'MV', 'MX', 'MY', 'NI', 'NL', 'NO', 'NU',
                       'NZ', 'OM', 'PA', 'PE', 'PH', 'PK', 'PL', 'PT', 'QA', 'RO', 'RU', 'SA', 'SE', 'SG', 'SK',
                       'SV', 'TH', 'TR', 'TW', 'US', 'VE', 'VN', 'ZA']
-
-
-class DagConfig(object):
-    def __init__(self,
-                 entity: str,
-                 is_delta,
-                 alternate_DAG_entity: str = None,
-                 use_alternate_entity_as_cluster=False):
-        self.use_alternate_DAG_as_cluster = use_alternate_entity_as_cluster
-        self.entity = entity
-        self.is_delta = is_delta
-        self.alternate_DAG_entity = alternate_DAG_entity
-        self.schedule = '@daily' if is_delta else '@once'
-
-    @property
-    def dag_id(self):
-        postfix = '_initial_load' if not self.is_delta else ''
-        entity = self.alternate_DAG_entity if self.alternate_DAG_entity else self.entity
-        return f'ohub_{entity}{postfix}'
-
-    @property
-    def cluster_name(self):
-        if self.use_alternate_DAG_as_cluster and self.alternate_DAG_entity:
-            return f'{self.dag_id}_{{{{ds}}}}'
-        else:
-            postfix = '_initial_load' if not self.is_delta else ''
-            return f'ohub_{self.entity}{postfix}_{{{{ds}}}}'
-
 
 default_args = {
     'owner': 'airflow',
@@ -63,7 +48,8 @@ default_args = {
 }
 
 
-def default_cluster_config(cluster_name):
+def large_cluster_config(cluster_name: str):
+    '''Returns a Databricks cluster configuration used for heavy tasks, such as string matching'''
     return {
         "cluster_name": cluster_name,
         "spark_version": "4.0.x-scala2.11",
@@ -80,6 +66,7 @@ def default_cluster_config(cluster_name):
 
 
 def small_cluster_config(cluster_name):
+    '''Returns a Databricks cluster configuration used for simple transformation tasks'''
     return {
         "cluster_name": cluster_name,
         "spark_version": "4.0.x-scala2.11",
@@ -94,23 +81,6 @@ def small_cluster_config(cluster_name):
 
 databricks_conn_id = 'databricks_azure'
 
-
-def create_cluster(schema, cluster_config):
-    return DatabricksCreateClusterOperator(
-        task_id='{}_create_cluster'.format(schema),
-        databricks_conn_id=databricks_conn_id,
-        cluster_config=cluster_config
-    )
-
-
-def terminate_cluster(schema, cluster_name):
-    return DatabricksTerminateClusterOperator(
-        task_id='{}_terminate_cluster'.format(schema),
-        cluster_name=cluster_name,
-        databricks_conn_id=databricks_conn_id
-    )
-
-
 postgres_connection = BaseHook.get_connection('postgres_channels')
 postgres_config = [
     '--postgressUrl', postgres_connection.host,
@@ -120,7 +90,80 @@ postgres_config = [
 ]
 
 
+def create_cluster(entity: str, cluster_config: dict):
+    '''Returns an Airflow tasks that tells Databricks to construct a cluster
+    Args:
+        entity: The entity (i.e. operators, contactpersons, etc.)
+        cluster_config: A valid databricks cluster configuration
+    '''
+    return DatabricksCreateClusterOperator(
+        task_id='{}_create_cluster'.format(entity),
+        databricks_conn_id=databricks_conn_id,
+        cluster_config=cluster_config
+    )
+
+
+def terminate_cluster(entity: str, cluster_name: str):
+    '''Returns an Airflow tasks that tells Databricks to terminate a cluster
+
+    Args:
+        entity: The entity (i.e. operators, contactpersons, etc.)
+        cluster_name: The cluster name
+    '''
+    return DatabricksTerminateClusterOperator(
+        task_id='{}_terminate_cluster'.format(entity),
+        cluster_name=cluster_name,
+        databricks_conn_id=databricks_conn_id
+    )
+
+
+class DagConfig(object):
+    """This configuration holds the basic settings for each ohub DAG
+
+    Args:
+        entity: The entity (i.e. operators, contactpersons, etc.)
+        is_delta: Tells the config if the DAG is initial load or if it is a delta process
+        alternate_DAG_entity: Some entities might be part of the same DAG, this tells airflow to use that particular entity as main DAG id
+        use_alternate_entity_as_cluster: Tells the generator to use the given alternate DAG id as cluster name, usually you don't want this
+
+    """
+
+    def __init__(self,
+                 entity: str,
+                 is_delta: bool,
+                 alternate_DAG_entity: str = None,
+                 use_alternate_entity_as_cluster: bool = False):
+        self.entity = entity
+        self.is_delta = is_delta
+        self.use_alternate_entity_as_cluster = use_alternate_entity_as_cluster
+        self.alternate_DAG_entity = alternate_DAG_entity
+        self.schedule = '@daily' if is_delta else '@once'
+
+    @property
+    def dag_id(self):
+        postfix = '_initial_load' if not self.is_delta else ''
+        entity = self.alternate_DAG_entity if self.alternate_DAG_entity else self.entity
+        return f'ohub_{entity}{postfix}'
+
+    @property
+    def cluster_name(self):
+        if self.use_alternate_entity_as_cluster and self.alternate_DAG_entity:
+            return f'{self.dag_id}_{{{{ds}}}}'
+        else:
+            postfix = '_initial_load' if not self.is_delta else ''
+            return f'ohub_{self.entity}{postfix}_{{{{ds}}}}'
+
+
 class IngestConfig(object):
+    """Configuration class for ingest tasks
+
+    Args:
+         input_file: The file or directory to read the input from
+         output_file: Where to put the output parquet
+         channel: The channel of the raw files (i.e. `file_interface`, `web_event`, etc)
+         deduplicate_on_concat_id: Whether to deduplicate on `concatId`, in most cases this should be `True`
+         alternative_seperator: The seperator for the CSV files
+    """
     def __init__(self,
                  input_file: str,
                  output_file: str,
@@ -135,17 +178,41 @@ class IngestConfig(object):
 
 
 class SubPipeline(object):
+    """A (case) class holding the first and last task of a pipeline"""
     def __init__(self, first_task: BaseOperator, last_task: BaseOperator):
         self.first_task = first_task
         self.last_task = last_task
 
 
 class GenericPipeline(object):
+    """Generates commonly used partial pipelines. Supported partial pipelines are:
+
+    * ingest, includes cluster creation, from:
+
+      - File interface
+      - Web event
+      - Emakina (not implemented yet)
+      - Sifu (not implemented yet)
+
+    * export, includes cluster termination, to
+
+      - ACM
+      - DispacherDB
+
+    * fuzzy string matching for initial load and delta
+
+    Args:
+        dag_config: The DAG configuration
+        class_prefix: The spark job class prefix (i.e `Operator`, `Product` etc)
+        cluster_config: The configuration for the cluster
+    """
     def __init__(self,
                  dag_config: DagConfig,
-                 class_prefix: str):
+                 class_prefix: str,
+                 cluster_config: dict):
         self._clazz = class_prefix
         self._dag_config = dag_config
+        self._cluster_config = cluster_config
 
         self._exports: List[SubPipeline] = []
         self._ingests: List[SubPipeline] = []
@@ -155,6 +222,7 @@ class GenericPipeline(object):
                                        alternative_schema: str = None,
                                        alternative_output_fn: str = None,
                                        alternative_seperator: str = None) -> 'GenericPipeline':
+        '''Marks the pipeline to include ingest from file interface'''
         channel = 'file_interface'
         ingest_schema = alternative_schema if alternative_schema else self._dag_config.entity
         input_file = raw_bucket.format(date=one_day_ago, schema=ingest_schema, channel=channel)
@@ -172,10 +240,7 @@ class GenericPipeline(object):
         return self
 
     def has_ingest_from_web_event(self):
-        """Placeholder example extension
-        Appending a SubPipeline to the self._ingests list will automatically (and parallel) add the ingest task to the
-        full DAG pipeline.
-        """
+        '''Marks the pipeline to include ingest from web event'''
         # channel = 'web_event'
         # config = {}
         # self._ingests.append(self.__ingest_web_event(config))
@@ -184,6 +249,7 @@ class GenericPipeline(object):
     def has_export_to_acm(self,
                           acm_schema_name: str,
                           extra_acm_parameters: List[str] = []) -> 'GenericPipeline':
+        '''Marks the pipeline to include export to ACM'''
         config = {
             'filename': 'acm/UFS_' + acm_schema_name + '_{{ds_nodash}}000000.csv',
             'extra_acm_parameters': extra_acm_parameters
@@ -192,6 +258,7 @@ class GenericPipeline(object):
         return self
 
     def has_export_to_dispatcher_db(self, dispatcher_schema_name: str):
+        '''Marks the pipeline to include export to dispatcherDb'''
         config = {
             'filename': 'dispatcherdb/UFS_DISPATCHER_' + dispatcher_schema_name + '_{{ds_nodash}}000000.csv'
         }
@@ -200,16 +267,20 @@ class GenericPipeline(object):
 
     def construct_ingest_pipeline(self) -> SubPipeline:
         """
-        Constructs the full ingest pipeline. It will loop over self._ingests and add the tasks as parallel to the DAG.
-        Depending on if the Pipeline is delta or not it will create a SensorOperator that waits for the previous day to be completed
+        Constructs the full ingest pipeline.
+
+        It will loop over `self._ingests` and add the tasks as parallel to the DAG.
+        Depending on if the Pipeline is delta or not it will create a `SensorOperator` that waits for the previous day
+        to be completed.
+
         This will also boot up a cluster
         """
-        cluster_up = create_cluster(self._dag_config.entity, small_cluster_config(self._dag_config.cluster_name))
+        cluster_up = create_cluster(self._dag_config.entity, self._cluster_config)
         if self._dag_config.is_delta:
             start_pipeline = ExternalTaskSensorOperator(
                 task_id=f'{self._dag_config.entity}_start_pipeline',
                 external_dag_id=self._dag_config.dag_id,
-                external_task_id='end_pipeline',
+                external_task_id=f'{self._dag_config.entity}_end_pipeline',
                 execution_delta=timedelta(days=1))
         else:
             start_pipeline = BashOperator(
@@ -231,18 +302,37 @@ class GenericPipeline(object):
                 wasb_conn_id=wasb_conn_id)
             start_pipeline >> empty_fallback
 
+        gather = DatabricksSubmitRunOperator(
+            task_id=f"{self._dag_config.entity}_gather",
+            cluster_name=self._dag_config.cluster_name,
+            databricks_conn_id=databricks_conn_id,
+            libraries=[
+                {'jar': jar}
+            ],
+            spark_jar_task={
+                'main_class_name': f'com.unilever.ohub.spark.tsv2parquet.GatherJob',
+                'parameters': ['--input',
+                               ingested_bucket.format(date=one_day_ago, channel='*', fn=self._dag_config.entity),
+                               '--output',
+                               intermediate_bucket.format(date=one_day_ago, fn=f'{self._dag_config.entity}_gathered')]
+            }
+        )
         start_pipeline >> cluster_up
+        gather >> end_ingest
 
         t: SubPipeline
         for t in self._ingests:
             cluster_up >> t.first_task
-            t.last_task >> end_ingest
+            t.last_task >> gather
 
         return SubPipeline(start_pipeline, end_ingest)
 
     def construct_export_pipeline(self) -> SubPipeline:
         """
-        Constructs the full export pipeline. It will loop over self._exports and add the tasks as parallel to the DAG.
+        Constructs the full export pipeline.
+
+        It will loop over `self._exports` and add the tasks as parallel to the DAG.
+
         This will also terminate the cluster
         """
         cluster_down = terminate_cluster(self._dag_config.entity, self._dag_config.cluster_name)
@@ -269,6 +359,9 @@ class GenericPipeline(object):
                                           match_py: str,
                                           integrated_input: str = None,
                                           delta_match_py: str = None, ) -> SubPipeline:
+        ''' Constructs the fuzzy string matching pipeline, adding tasks PER country.
+        Depending on whether the pipeline `is_delta` is returns the delta or initial load matching partial pipeline
+        '''
 
         if self._dag_config.is_delta and (not integrated_input or not delta_match_py):
             raise AirflowException('cannot create delta matching without delta input params')
@@ -420,10 +513,10 @@ class GenericPipeline(object):
 
         tmp_file = '/tmp/' + config['filename']
 
-        check_file_non_empty = ShortCircuitOperator(
-            task_id=f'{self._dag_config.entity}_check_file_non_empty',
-            python_callable=lambda: os.stat(tmp_file).st_size > 0
-        )
+        # check_file_non_empty = CheckFileNonEmptyOperator(
+        #     task_id=f'{self._dag_config.entity}_check_file_non_empty',
+        #     file_path=tmp_file
+        # )
 
         acm_from_wasb = FileFromWasbOperator(
             task_id=f'{self._dag_config.entity}_acm_from_wasb',
@@ -440,7 +533,7 @@ class GenericPipeline(object):
             ssh_conn_id='acm_sftp_ssh',
             operation=SFTPOperation.PUT
         )
-        convert_to_acm >> acm_from_wasb >> check_file_non_empty >> ftp_to_acm
+        convert_to_acm >> acm_from_wasb >> ftp_to_acm
 
         return SubPipeline(convert_to_acm, ftp_to_acm)
 
@@ -488,7 +581,7 @@ wasb_intermediate_container = wasb_root_bucket + 'intermediate/{date}/{fn}.parqu
 wasb_integrated_container = wasb_root_bucket + 'integrated/{date}/{fn}.parquet'
 wasb_export_container = wasb_root_bucket + 'export/{date}/{fn}'
 
-http_root_bucket = 'https://{container}.blob.core.windows.net/{blob}/data/'
+http_root_bucket = 'https://{container}.blob.core.windows.net/data/data/'
 http_raw_container = http_root_bucket + 'raw/{schema}/{date}/{channel}/*.csv'
 http_ingested_container = http_root_bucket + 'ingested/{date}/{fn}.parquet'
 http_intermediate_container = http_root_bucket + 'intermediate/{date}/{fn}.parquet'
