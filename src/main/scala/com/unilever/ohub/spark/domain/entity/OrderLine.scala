@@ -32,6 +32,9 @@ case class OrderLine(
     pricePerUnit: Option[BigDecimal],
     currency: Option[String],
     comment: Option[String],
+    campaignLabel: Option[String],
+    loyaltyPoints: Option[Long],
+    productOhubId: Option[String],
     // other fields
     additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]
