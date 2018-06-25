@@ -12,7 +12,7 @@ object OperatorConverter extends WebEventDomainGateKeeper[Operator] {
     import transformer._
     implicit val source: Row = row
 
-    // val countryCode = mandatoryValue("COUNTRY_CODE", "countryCode")(row)
+    val countryCode = mandatoryValue("countryCode", "countryCode")(row)
     val sourceEntityId = mandatoryValue("operatorRefId", "sourceEntityId")(row)
     val concatId = DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
     val ohubCreated = currentTimestamp()
@@ -22,7 +22,7 @@ object OperatorConverter extends WebEventDomainGateKeeper[Operator] {
     Operator(
       // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
       concatId                    = concatId                                                                                                           ,
-      // countryCode                 = countryCode                                                                                                        ,
+      countryCode                 = countryCode                                                                                                        ,
       customerType                = Operator.customerType                                                                                              ,
       dateCreated                 = Option.empty                                                                                                       ,
       dateUpdated                 = Option.empty                                                                                                       ,
@@ -40,8 +40,8 @@ object OperatorConverter extends WebEventDomainGateKeeper[Operator] {
       channel                     = optional  ( "typeOfBusiness",         "channel"                                                                   ),
       city                        = optional  ( "businessAddress.city",   "city"                                                                      ),
       cookingConvenienceLevel     = None                                                                                                               ,
-      // countryName                 = countryName(countryCode)                                                                                           ,
-      countryName                 = optional  ( "businessAddress.country", "countryName"                                                              ),
+      countryName                 = countryName(countryCode)                                                                                           ,
+      // countryName                 = optional  ( "businessAddress.country", "countryName"                                                              ),
       daysOpen                    = None                                                                                                               ,
       distributorName             = optional  ( "primaryDistributor",     "distributorName"                                                           ),
       distributorOperatorId       = optional  ( "distributorCustomerId",  "distributorOperatorId"                                                     ),
