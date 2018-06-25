@@ -394,7 +394,7 @@ class GenericPipeline(object):
                     'python_file': match_py,
                     'parameters': ['--input_file', ingest_input,
                                    '--output_path',
-                                   intermediate_bucket.format(date='{{ds}}',
+                                   intermediate_bucket.format(date=one_day_ago,
                                                               fn='{}_matched'.format(self._dag_config.entity)),
                                    '--country_code', country_code,
                                    '--threshold', '0.9']
@@ -503,8 +503,8 @@ class GenericPipeline(object):
             ],
             spark_jar_task={
                 'main_class_name': "com.unilever.ohub.spark.acm.{}AcmConverter".format(self._clazz),
-                'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=self._dag_config.entity),
-                               '--outputFile', export_bucket.format(date='{{ds}}', fn=config['filename'])] +
+                'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn=self._dag_config.entity),
+                               '--outputFile', export_bucket.format(date=one_day_ago, fn=config['filename'])] +
                               delta_params +
                               postgres_config +
                               config['extra_acm_parameters']
@@ -523,7 +523,7 @@ class GenericPipeline(object):
             file_path=tmp_file,
             container_name=container_name,
             wasb_conn_id='azure_blob',
-            blob_name=wasb_export_container.format(date='{{ds}}', fn=config['filename'])
+            blob_name=wasb_export_container.format(date=one_day_ago, fn=config['filename'])
         )
 
         ftp_to_acm = SFTPOperator(
@@ -549,8 +549,8 @@ class GenericPipeline(object):
             ],
             spark_jar_task={
                 'main_class_name': "com.unilever.ohub.spark.export.dispatcher.{}DispatcherConverter".format(self._clazz),
-                'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=self._dag_config.entity),
-                               '--outputFile', export_bucket.format(date='{{ds}}', fn=config['filename'])] +
+                'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn=self._dag_config.entity),
+                               '--outputFile', export_bucket.format(date=one_day_ago, fn=config['filename'])] +
                               delta_params +
                               postgres_config
             }
