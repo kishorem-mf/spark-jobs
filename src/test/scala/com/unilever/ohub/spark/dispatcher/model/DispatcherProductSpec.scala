@@ -1,4 +1,5 @@
-package com.unilever.ohub.spark.dispatcher.model
+package com.unilever.ohub.spark.dispatcher
+package model
 
 import com.unilever.ohub.spark.SimpleSpec
 import com.unilever.ohub.spark.domain.entity.TestProducts
@@ -32,7 +33,7 @@ class DispatcherProductSpec extends SimpleSpec {
         SUB_CATEGORY = None,
         ITEM_TYPE = None,
         UNIT = None,
-        UNIT_PRICE = Option(FORMATTED_BIG_DECIMAL),
+        UNIT_PRICE = FORMATTED_BIG_DECIMAL.some,
         CATEGORY = None
       )
     }

@@ -1,4 +1,5 @@
-package com.unilever.ohub.spark.dispatcher.model
+package com.unilever.ohub.spark.dispatcher
+package model
 
 import com.unilever.ohub.spark.SimpleSpec
 import com.unilever.ohub.spark.domain.entity.TestContactPersons
