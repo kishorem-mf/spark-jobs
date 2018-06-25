@@ -17,24 +17,24 @@ class DispatcherProductSpec extends SimpleSpec {
   describe("DispatcherProduct") {
     it("should map a domain Product") {
       DispatcherProduct.fromProduct(TEST_PRODUCT) shouldEqual DispatcherProduct(
-        BRAND = None,
+        BRAND = Option.empty,
         PRD_INTEGRATION_ID = "country-code~source-name~source-entity-id",
         COUNTRY_CODE = "country-code",
-        UNIT_PRICE_CURRENCY = None,
-        EAN_CODE = None,
-        EAN_CODE_DISPATCH_UNIT = None,
+        UNIT_PRICE_CURRENCY = Option.empty,
+        EAN_CODE = Option.empty,
+        EAN_CODE_DISPATCH_UNIT = Option.empty,
         DELETE_FLAG = false,
         PRODUCT_NAME = "product-name",
         CREATED_AT = "2015-06-30 13:49:00",
         UPDATED_AT = "2015-06-30 13:49:00",
-        MRDR_CODE = None,
+        MRDR_CODE = Option.empty,
         SOURCE = "source-name",
-        SUB_BRAND = None,
-        SUB_CATEGORY = None,
-        ITEM_TYPE = None,
-        UNIT = None,
+        SUB_BRAND = Option.empty,
+        SUB_CATEGORY = Option.empty,
+        ITEM_TYPE = Option.empty,
+        UNIT = Option.empty,
         UNIT_PRICE = FORMATTED_BIG_DECIMAL.some,
-        CATEGORY = None
+        CATEGORY = Option.empty
       )
     }
   }

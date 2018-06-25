@@ -7,13 +7,13 @@ object DispatcherOrderLine {
   def fromOrderLine(orderLine: OrderLine): DispatcherOrderLine = {
     DispatcherOrderLine(
       AMOUNT = orderLine.amount,
-      CAMPAIGN_LABEL = None, // not available
+      CAMPAIGN_LABEL = orderLine.campaignLabel,
       COMMENTS = orderLine.comment,
       ODL_INTEGRATION_ID = orderLine.concatId,
       COUNTRY_CODE = orderLine.countryCode,
       UNIT_PRICE_CURRENCY = orderLine.currency,
       DELETE_FLAG = orderLine.isActive.invert,
-      LOYALTY_POINTS = None, // not available
+      LOYALTY_POINTS = orderLine.loyaltyPoints,
       ODS_CREATED = orderLine.ohubCreated.mapWithDefaultPattern,
       ODS_UPDATED = orderLine.ohubUpdated.mapWithDefaultPattern,
       ORD_INTEGRATION_ID = orderLine.orderConcatId,
@@ -33,7 +33,7 @@ case class DispatcherOrderLine(
     COUNTRY_CODE: String,
     UNIT_PRICE_CURRENCY: Option[String],
     DELETE_FLAG: Boolean,
-    LOYALTY_POINTS: Option[String],
+    LOYALTY_POINTS: Option[Long],
     ODS_CREATED: String,
     ODS_UPDATED: String,
     ORD_INTEGRATION_ID: String,

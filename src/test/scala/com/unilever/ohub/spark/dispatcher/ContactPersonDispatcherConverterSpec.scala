@@ -81,15 +81,15 @@ class ContactPersonDispatcherConverterSpec extends SparkJobSpec with TestContact
         STREET = Some("Highstreet"),
         TITLE = Some("Mr"),
         ZIP_CODE = Some("2057"),
-        MIDDLE_NAME = None,
+        MIDDLE_NAME = Option.empty,
         ROLE = Some("Chef"),
-        ORG_FIRST_NAME = None,
-        ORG_LAST_NAME = None,
-        ORG_EMAIL_ADDRESS = None,
-        ORG_FIXED_PHONE_NUMBER = None,
-        ORG_MOBILE_PHONE_NUMBER = None,
-        ORG_FAX_NUMBER = None,
-        MOB_OPT_OUT_DATE = None
+        ORG_FIRST_NAME = Option.empty,
+        ORG_LAST_NAME = Option.empty,
+        ORG_EMAIL_ADDRESS = Option.empty,
+        ORG_FIXED_PHONE_NUMBER = Option.empty,
+        ORG_MOBILE_PHONE_NUMBER = Option.empty,
+        ORG_FAX_NUMBER = Option.empty,
+        MOB_OPT_OUT_DATE = Option.empty
       ))
     }
   }

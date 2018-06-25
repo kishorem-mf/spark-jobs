@@ -17,17 +17,17 @@ class DispatcherOrderLineSpec extends SimpleSpec {
     it("should map from a ContactPerson") {
       DispatcherOrderLine.fromOrderLine(TEST_ORDER_LINE) shouldEqual DispatcherOrderLine(
         AMOUNT = BigDecimal(0),
-        CAMPAIGN_LABEL = None, // not available
-        COMMENTS = None,
+        CAMPAIGN_LABEL = "campaign-label".some,
+        COMMENTS = Option.empty,
         ODL_INTEGRATION_ID = "country-code~source-name~source-entity-id",
         COUNTRY_CODE = "country-code",
-        UNIT_PRICE_CURRENCY = None,
+        UNIT_PRICE_CURRENCY = Option.empty,
         DELETE_FLAG = true,
-        LOYALTY_POINTS = None, // not available
+        LOYALTY_POINTS = 123L.some,
         ODS_CREATED = "2015-06-30 13:49:00",
         ODS_UPDATED = "2015-06-30 13:49:00",
         ORD_INTEGRATION_ID = "order-concat-id",
-        UNIT_PRICE = None,
+        UNIT_PRICE = Option.empty,
         PRD_INTEGRATION_ID = "product-concat-id",
         QUANTITY = 0L,
         SOURCE = "source-name"
