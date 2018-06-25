@@ -85,7 +85,7 @@ class OperatorDispatcherConverterSpec extends SparkJobSpec with TestOperators {
         NUMBER_OF_WEEKS_OPEN = Some(50),
         ZIP_CODE = Some("1234 AB"),
         ROUTE_TO_MARKET = None,
-        PREFERRED_PARTNER = None,
+        PREFERRED_PARTNER = Some("-2"),
         STATUS = None,
         RESPONSIBLE_EMPLOYEE = None,
         CAM_KEY = None,
