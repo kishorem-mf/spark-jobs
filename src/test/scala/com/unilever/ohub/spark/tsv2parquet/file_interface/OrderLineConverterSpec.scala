@@ -10,8 +10,8 @@ class OrderLineConverterSpec extends CsvDomainGateKeeperSpec[OrderLine] with Tes
 
   private[tsv2parquet] override val SUT = OrderLineConverter
 
-  describe("file interface product converter") {
-    it("should convert a product correctly from a valid file interface csv input") {
+  describe("file interface order line converter") {
+    it("should convert an order line correctly from a valid file interface csv input") {
       val inputFile = "src/test/resources/FILE_ORDERS.csv"
       val config = DomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = "‰")
 
@@ -36,7 +36,10 @@ class OrderLineConverterSpec extends CsvDomainGateKeeperSpec[OrderLine] with Tes
           quantityOfUnits = 6L,
           amount = BigDecimal(10),
           pricePerUnit = Some(BigDecimal(5)),
-          currency = Some("AUD")
+          currency = Some("AUD"),
+          campaignLabel = None,
+          loyaltyPoints = None,
+          productOhubId = None
         )
 
         actualOrderLine shouldBe expectedOrderLine
