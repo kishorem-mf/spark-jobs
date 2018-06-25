@@ -3,6 +3,7 @@ package com.unilever.ohub.spark.dispatcher
 import com.unilever.ohub.spark.dispatcher.model.DispatcherOrder
 import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.entity.{ Order, OrderLine }
+import com.unilever.ohub.spark.export.DeltaFunctions
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import org.apache.spark.sql.functions._
@@ -94,12 +95,15 @@ object OrderDispatcherConverter extends SparkJobWithOrderAcmConverterConfig
   def createDispatcherOrders(spark: SparkSession, orders: Dataset[Order], orderLines: Dataset[OrderLine]): Dataset[DispatcherOrder] = {
     import spark.implicits._
 
-    val aggs = orderLines
-      .groupBy("orderConcatId")
-      .agg(
-        first($"currency").as("curr"),
-        sum($"amount").as("total"))
-      .as[OrderLineAggregation]
+    val aggs: Dataset[OrderLineAggregation] = {
+      orderLines
+        .groupBy("orderConcatId")
+        .agg(
+          first($"currency").as("curr"),
+          sum($"amount").as("total"))
+        .as[OrderLineAggregation]
+    }
+
     orders
       .joinWith(aggs, orders("concatId") === aggs("orderConcatId"), "left")
       .map {

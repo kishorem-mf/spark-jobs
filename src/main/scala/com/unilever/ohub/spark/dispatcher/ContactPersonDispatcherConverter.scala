@@ -72,8 +72,6 @@ object ContactPersonDispatcherConverter extends SparkJob[DefaultWithDbAndDeltaCo
   ): Dataset[DispatcherContactPerson] = {
     import spark.implicits._
 
-    contactPersons
-      .filter(_.isGoldenRecord)
-      .map(DispatcherContactPerson.fromContactPerson)
+    contactPersons.map(DispatcherContactPerson.fromContactPerson)
   }
 }
