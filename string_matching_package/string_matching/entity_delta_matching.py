@@ -179,15 +179,17 @@ def apply_delta_matching_on(spark,
 def main(arguments, preprocess_function, postprocess_function):
     """ Main function to start running the name matching. This does globally three things:
 
-    1. Read input files (two: integrated and ingested)
-    2. Name match between integrated and ingested
-    3. Write output files (two: one matched (with domain model schema), one unmatched (with domain model schema))
+    * Read input files (two: integrated and ingested)
+    * Name match between integrated and ingested
+    * Write output files (two: one matched (with domain model schema), one unmatched (with domain model schema))
 
     If for some reason the matching was unable to run (due to data not being there, or too little data), an error is logged but the job is succesful
 
     Args:
-        preprocess_function: Function to preprocess the data, one of `entity_matching.preprocess_operators`, `entity_matching.preprocess_contactpersons`
-        postprocess_function: Function to postprocess the matching results, one of `postprocess_delta_contact_persons`, `postprocess_delta_operators`
+        preprocess_function: Function to preprocess the data, one of
+          `entity_matching.preprocess_operators`, `entity_matching.preprocess_contactpersons`
+        postprocess_function: Function to postprocess the matching results, one of
+          `postprocess_delta_contact_persons`, `postprocess_delta_operators`
     """
     global LOGGER
     spark, LOGGER = start_spark('Match and join newly ingested  with persistent ohubId')
