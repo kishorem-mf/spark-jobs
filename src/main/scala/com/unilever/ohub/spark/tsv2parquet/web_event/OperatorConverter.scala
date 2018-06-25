@@ -41,7 +41,6 @@ object OperatorConverter extends WebEventDomainGateKeeper[Operator] {
       city                        = optional  ( "businessAddress.city",   "city"                                                                      ),
       cookingConvenienceLevel     = None                                                                                                               ,
       countryName                 = countryName(countryCode)                                                                                           ,
-      // countryName                 = optional  ( "businessAddress.country", "countryName"                                                              ),
       daysOpen                    = None                                                                                                               ,
       distributorName             = optional  ( "primaryDistributor",     "distributorName"                                                           ),
       distributorOperatorId       = optional  ( "distributorCustomerId",  "distributorOperatorId"                                                     ),
