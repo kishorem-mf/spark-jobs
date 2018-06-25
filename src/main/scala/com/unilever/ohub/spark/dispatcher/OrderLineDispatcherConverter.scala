@@ -3,6 +3,7 @@ package com.unilever.ohub.spark.dispatcher
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.dispatcher.model.DispatcherOrderLine
 import com.unilever.ohub.spark.domain.entity.OrderLine
+import com.unilever.ohub.spark.export.DeltaFunctions
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
