@@ -41,6 +41,9 @@ object OrderLineConverter extends FileDomainGateKeeper[OrderLine] with OrderLine
       amount                          = mandatory( "ORDER_LINE_VALUE",          "amount",                 parseBigDecimalUnsafe(_).setScale(2, RoundingMode.HALF_DOWN)),
       pricePerUnit                    = optional(  "UNIT_PRICE",                "pricePerUnit",           parseBigDecimalUnsafe(_).setScale(2, RoundingMode.HALF_DOWN)),
       currency                        = optional(  "CURRENCY_CODE",             "currency"),
+      campaignLabel                   = None,
+      loyaltyPoints                   = None,
+      productOhubId                   = None,
       // other fields
       additionalFields                = additionalFields,
       ingestionErrors                 = errors

@@ -54,10 +54,10 @@ object OrderLineAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
       ORD_INTEGRATION_ID = orderLine.orderConcatId,
       QUANTITY = orderLine.quantityOfUnits,
       AMOUNT = orderLine.amount,
-      LOYALTY_POINTS = None,
+      LOYALTY_POINTS = orderLine.loyaltyPoints,
       PRD_INTEGRATION_ID = orderLine.productConcatId,
       SAMPLE_ID = "",
-      CAMPAIGN_LABEL = None,
+      CAMPAIGN_LABEL = orderLine.campaignLabel,
       COMMENTS = orderLine.comment,
       DELETED_FLAG = boolAsString(!orderLine.isActive)
     ))
