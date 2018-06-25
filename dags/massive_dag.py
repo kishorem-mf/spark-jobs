@@ -7,7 +7,7 @@ from custom_operators.databricks_functions import \
 from ohub.ohub_dag_config import \
     default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, one_day_ago, \
     two_day_ago, postgres_config, \
-    GenericPipeline, SubPipeline, DagConfig
+    GenericPipeline, SubPipeline, DagConfig, large_cluster_config
 
 default_args.update(
     {
@@ -47,21 +47,24 @@ orders_dag_config = DagConfig(
 
 with DAG('ohub_massive', default_args=default_args, schedule_interval=operators_dag_config.schedule) as dag:
     operators = (
-        GenericPipeline(operators_dag_config, class_prefix='Operator')
+        GenericPipeline(operators_dag_config, class_prefix='Operator',
+                        cluster_config=large_cluster_config(operators_dag_config.cluster_name))
             .has_export_to_acm(acm_schema_name='OPERATORS')
             .has_export_to_dispatcher_db(dispatcher_schema_name='OPERATORS')
             .has_ingest_from_file_interface()
             .has_ingest_from_web_event()
     )
     contactpersons = (
-        GenericPipeline(contactpersons_dag_config, class_prefix='ContactPerson')
+        GenericPipeline(contactpersons_dag_config, class_prefix='ContactPerson',
+                        cluster_config=large_cluster_config(contactpersons_dag_config.cluster_name))
             .has_export_to_acm(acm_schema_name='RECIPIENTS')
             .has_export_to_dispatcher_db(dispatcher_schema_name='CONTACT_PERSONS')
             .has_ingest_from_file_interface()
     )
 
     orders = (
-        GenericPipeline(orders_dag_config, class_prefix='Order')
+        GenericPipeline(orders_dag_config, class_prefix='Order',
+                        cluster_config=large_cluster_config(orders_dag_config.cluster_name))
             .has_export_to_acm(acm_schema_name='ORDERS',
                                extra_acm_parameters=['--orderLineFile',
                                                      integrated_bucket.format(date=one_day_ago, fn='orderlines')])
@@ -70,14 +73,16 @@ with DAG('ohub_massive', default_args=default_args, schedule_interval=operators_
     )
 
     orderlines = (
-        GenericPipeline(orderlines_dag_config, class_prefix='OrderLine')
+        GenericPipeline(orderlines_dag_config, class_prefix='OrderLine',
+                        cluster_config=large_cluster_config(orderlines_dag_config.cluster_name))
             .has_export_to_acm(acm_schema_name='UFS_ORDERLINES')
             .has_export_to_dispatcher_db(dispatcher_schema_name='ORDERLINES')
             .has_ingest_from_file_interface(deduplicate_on_concat_id=False, alternative_schema='orders')
     )
 
     products = (
-        GenericPipeline(products_dag_config, class_prefix='Product')
+        GenericPipeline(products_dag_config, class_prefix='Product',
+                        cluster_config=large_cluster_config(products_dag_config.cluster_name))
             .has_export_to_acm(acm_schema_name='PRODUCTS')
             .has_export_to_dispatcher_db(dispatcher_schema_name='PRODUCTS')
             .has_ingest_from_file_interface()
