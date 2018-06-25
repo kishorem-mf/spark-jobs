@@ -5,7 +5,7 @@ case class AcmOrderLine(
     ORD_INTEGRATION_ID: String,
     QUANTITY: Long,
     AMOUNT: BigDecimal,
-    LOYALTY_POINTS: Option[BigDecimal],
+    LOYALTY_POINTS: Option[Long],
     PRD_INTEGRATION_ID: String,
     SAMPLE_ID: String,
     CAMPAIGN_LABEL: Option[String],
