@@ -5,8 +5,7 @@ General Flow:
 - Read parquet file
 - Pre-process dataframe to form a string column `name` which will
     contain the strings to be matched.
-- Get countries with more than 100 entries
-- Loop over each of these countries
+- Get countries with more than `n` entries
 - Strings are first tokenized using n-grams from the total corpus.
 - Tokenized vector is normalized.
 - Cosine similarity is calculated by absolute squaring the matrix.

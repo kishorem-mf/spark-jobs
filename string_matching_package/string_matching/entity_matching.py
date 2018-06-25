@@ -158,6 +158,18 @@ def apply_matching_on(records_per_country: DataFrame, spark,
 
 
 def main(arguments, preprocess_function, post_process_function):
+    """ Main function to start running the name matching. This does globally three things:
+
+    1. Read input file (one: ingested)
+    2. Name match between ingested and ingested (cartesian product)
+    3. Write output files (one: one matched (with similarity schema))
+
+    If for some reason the matching was unable to run (due to data not being there, or too little data), an error is logged but the job is succesful
+
+    Args:
+        preprocess_function: Function to preprocess the data, one of `preprocess_operators`, `preprocess_contactpersons`
+        postprocess_function: Function to postprocess the matching results, one of `postprocess_contact_persons`, `postprocess_operators`
+    """
     global LOGGER
     spark, LOGGER = start_spark('Matching')
 

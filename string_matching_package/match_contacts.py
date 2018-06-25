@@ -7,11 +7,10 @@ The following steps are performed:
 - keep only contacts without e-mail AND without mobile phone number
 - remove contacts without first AND without last name (cleansed)
 - remove contacts without a street (cleansed)
-- create a unique ID as COUNTRY_CODE~SOURCE~REF_CONTACT_PERSON_ID
 - create a matching-string: concatenation of first name and last name
 - per country
     - match on matching-string
-    - keep only the matches with similarity above threshold (0.75)
+    - keep only the matches with similarity above threshold
     - keep only the matches with exactly matching zip code
         - if no zip code is present: keep match if cities (cleansed) match exactly
     - keep only the matches where Levenshtein distance between streets (cleansed) is lower than threshold (5)

@@ -8,8 +8,8 @@ This script outputs two dataframes:
   - All records that do not match with integrated data
 
 The following steps are performed per country:
-- Pre-process integrated data to format for joining
-- Pre-process ingested daily data to format for joining
+- Pre-process integrated data to format for matching
+- Pre-process ingested daily data to format for matching
 - Match ingested data with integrated data
 - write two dataframes to file: updated integrated data and unmatched data
 """
