@@ -96,8 +96,8 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         external_task_id='update_golden_records'
     )
 
+    operators_integrated_sensor >> ingest_orders.first_task
+    contactpersons_integrated_sensor >> ingest_orders.first_task
     ingest_orders.last_task >> ingest_orderlines.first_task
-    ingest_orders.last_task >> operators_integrated_sensor >> merge_orders
-    ingest_orders.last_task >> contactpersons_integrated_sensor >> merge_orders
-    merge_orders >> ingest_orderlines.last_task >> export_orders.first_task
+    ingest_orders.last_task >> merge_orders >> ingest_orderlines.last_task >> export_orders.first_task
     ingest_orderlines.last_task >> merge_orderlines >> export_orderlines.first_task
