@@ -183,7 +183,8 @@ def main(arguments, preprocess_function, postprocess_function):
     * Name match between integrated and ingested
     * Write output files (two: one matched (with domain model schema), one unmatched (with domain model schema))
 
-    If for some reason the matching was unable to run (due to data not being there, or too little data), an error is logged but the job is succesful
+    If for some reason the matching was unable to run (due to data not being there, or too little data), an error is
+    logged but the job is succesful
 
     Args:
         preprocess_function: Function to preprocess the data, one of
