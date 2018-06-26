@@ -1,12 +1,13 @@
 package com.unilever.ohub.spark.dispatcher.model
 
 case class DispatcherOperator(
+    OPR_ORIG_INTEGRATION_ID: String,
+    OPR_LNKD_INTEGRATION_ID: Option[String],
     AVERAGE_SELLING_PRICE: Option[BigDecimal],
     CHAIN_KNOTEN: Option[String],
     CHAIN_NAME: Option[String],
     CHANNEL: Option[String],
     CITY: Option[String],
-    OPR_ORIG_INTEGRATION_ID: String,
     CONVENIENCE_LEVEL: Option[String],
     COUNTRY_CODE: String,
     COUNTRY: Option[String],
@@ -33,7 +34,6 @@ case class DispatcherOperator(
     NAME: String,
     NPS_POTENTIAL: Option[BigDecimal],
     CREATED_AT: String,
-    OPR_LNKD_INTEGRATION_ID: Option[String],
     UPDATED_AT: String,
     OTM: Option[String],
     REGION: Option[String],

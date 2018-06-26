@@ -63,12 +63,13 @@ object OperatorDispatcherConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
 
     val dispatcherOperators = operators.map { op ⇒
       DispatcherOperator(
+        OPR_ORIG_INTEGRATION_ID = op.concatId,
+        OPR_LNKD_INTEGRATION_ID = op.ohubId,
         AVERAGE_SELLING_PRICE = op.averagePrice,
         CHAIN_KNOTEN = op.chainId,
         CHAIN_NAME = op.chainName,
         CHANNEL = op.channel,
         CITY = op.city,
-        OPR_ORIG_INTEGRATION_ID = op.concatId,
         CONVENIENCE_LEVEL = op.cookingConvenienceLevel,
         COUNTRY_CODE = op.countryCode,
         COUNTRY = op.countryName,
@@ -95,7 +96,6 @@ object OperatorDispatcherConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
         NAME = op.name,
         NPS_POTENTIAL = op.netPromoterScore,
         CREATED_AT = formatWithPattern()(op.ohubCreated),
-        OPR_LNKD_INTEGRATION_ID = op.ohubId,
         UPDATED_AT = formatWithPattern()(op.ohubUpdated),
         OTM = op.otm,
         REGION = op.region,

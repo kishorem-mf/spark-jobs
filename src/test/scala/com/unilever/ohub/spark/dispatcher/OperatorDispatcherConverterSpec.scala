@@ -39,12 +39,13 @@ class OperatorDispatcherConverterSpec extends SparkJobSpec with TestOperators {
       }
 
       result should contain(DispatcherOperator(
+        OPR_ORIG_INTEGRATION_ID = "country-code~source-name~source-entity-id",
+        OPR_LNKD_INTEGRATION_ID = Some("randomId"),
         AVERAGE_SELLING_PRICE = Some(BigDecimal(12345)),
         CHAIN_KNOTEN = Some("chain-id"),
         CHAIN_NAME = Some("chain-name"),
         CHANNEL = Some("channel"),
         CITY = Some("city"),
-        OPR_ORIG_INTEGRATION_ID = "country-code~source-name~source-entity-id",
         CONVENIENCE_LEVEL = Some("cooking-convenience-level"),
         COUNTRY_CODE = "country-code",
         COUNTRY = Some("country-name"),
@@ -71,7 +72,6 @@ class OperatorDispatcherConverterSpec extends SparkJobSpec with TestOperators {
         NAME = "operator-name",
         NPS_POTENTIAL = Some(BigDecimal(75)),
         CREATED_AT = "2017-11-16 18:09:49",
-        OPR_LNKD_INTEGRATION_ID = Some("randomId"),
         UPDATED_AT = "2017-11-16 18:09:49",
         OTM = Some("D"),
         REGION = Some("region"),
