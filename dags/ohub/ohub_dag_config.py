@@ -547,7 +547,7 @@ class GenericPipeline(object):
                 {'jar': jar}
             ],
             spark_jar_task={
-                'main_class_name': "com.unilever.ohub.spark.export.dispatcher.{}DispatcherConverter".format(self._clazz),
+                'main_class_name': "com.unilever.ohub.spark.dispatcher.{}DispatcherConverter".format(self._clazz),
                 'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn=self._dag_config.entity),
                                '--outputFile', export_bucket.format(date=one_day_ago, fn=config['filename'])] +
                               delta_params +
