@@ -31,9 +31,10 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         GenericPipeline(orders_dag_config,
                         class_prefix=orders_clazz,
                         cluster_config=small_cluster_config(orders_dag_config.cluster_name))
-            .has_export_to_acm(acm_schema_name='UFS_ORDERS',
+            .has_export_to_acm(acm_schema_name='ORDERS',
                                extra_acm_parameters=['--orderLineFile',
                                                      integrated_bucket.format(date=one_day_ago, fn='orderlines')])
+            .has_export_to_dispatcher_db(dispatcher_schema_name='ORDERS')
             .has_ingest_from_file_interface()
     )
 
@@ -41,7 +42,8 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         GenericPipeline(orderslines_dag_config,
                         class_prefix=orderslines_clazz,
                         cluster_config=small_cluster_config(orderslines_dag_config.cluster_name))
-            .has_export_to_acm(acm_schema_name='UFS_ORDERLINES')
+            .has_export_to_acm(acm_schema_name='ORDERLINES')
+            .has_export_to_dispatcher_db(dispatcher_schema_name='ORDER_LINES')
             .has_ingest_from_file_interface(deduplicate_on_concat_id=False, alternative_schema='orders')
     )
 

@@ -257,10 +257,12 @@ class GenericPipeline(object):
         self._exports.append(self.__export_acm_pipeline(config))
         return self
 
-    def has_export_to_dispach(self):
+    def has_export_to_dispatcher_db(self, dispatcher_schema_name: str):
         '''Marks the pipeline to include export to dispatcherDb'''
-        # config = {}
-        # self._exports.append(self.__export_dispach_pipeline(config))
+        config = {
+            'filename': 'dispatcherdb/UFS_DISPATCHER_' + dispatcher_schema_name + '_{{ds_nodash}}000000.csv'
+        }
+        self._exports.append(self.__export_dispatch_pipeline(config))
         return self
 
     def construct_ingest_pipeline(self) -> SubPipeline:
@@ -392,7 +394,7 @@ class GenericPipeline(object):
                     'python_file': match_py,
                     'parameters': ['--input_file', ingest_input,
                                    '--output_path',
-                                   intermediate_bucket.format(date='{{ds}}',
+                                   intermediate_bucket.format(date=one_day_ago,
                                                               fn='{}_matched'.format(self._dag_config.entity)),
                                    '--country_code', country_code,
                                    '--threshold', '0.9']
@@ -408,11 +410,11 @@ class GenericPipeline(object):
                                integrated_input,
                                ingested_input):
         start_matching = BashOperator(
-            task_id='start_matching',
+            task_id=f'{self._dag_config.entity}_start_matching',
             bash_command='echo "start matching"',
         )
         end_matching = BashOperator(
-            task_id='end_matching',
+            task_id=f'{self._dag_config.entity}_end_matching',
             bash_command='echo "end matching"',
         )
 
@@ -501,8 +503,8 @@ class GenericPipeline(object):
             ],
             spark_jar_task={
                 'main_class_name': "com.unilever.ohub.spark.acm.{}AcmConverter".format(self._clazz),
-                'parameters': ['--inputFile', integrated_bucket.format(date='{{ds}}', fn=self._dag_config.entity),
-                               '--outputFile', export_bucket.format(date='{{ds}}', fn=config['filename'])] +
+                'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn=self._dag_config.entity),
+                               '--outputFile', export_bucket.format(date=one_day_ago, fn=config['filename'])] +
                               delta_params +
                               postgres_config +
                               config['extra_acm_parameters']
@@ -521,7 +523,7 @@ class GenericPipeline(object):
             file_path=tmp_file,
             container_name=container_name,
             wasb_conn_id='azure_blob',
-            blob_name=wasb_export_container.format(date='{{ds}}', fn=config['filename'])
+            blob_name=wasb_export_container.format(date=one_day_ago, fn=config['filename'])
         )
 
         ftp_to_acm = SFTPOperator(
@@ -535,6 +537,25 @@ class GenericPipeline(object):
 
         return SubPipeline(convert_to_acm, ftp_to_acm)
 
+    def __export_dispatch_pipeline(self, config: dict) -> SubPipeline:
+        previous_integrated = integrated_bucket.format(date=two_day_ago, fn=self._dag_config.entity) if self._dag_config.is_delta else None
+        delta_params = ['--previousIntegrated', previous_integrated] if previous_integrated else []
+        convert_to_dispatch = DatabricksSubmitRunOperator(
+            task_id=f"{self._dag_config.entity}_to_dispatcher_db",
+            cluster_name=self._dag_config.cluster_name,
+            databricks_conn_id=databricks_conn_id,
+            libraries=[
+                {'jar': jar}
+            ],
+            spark_jar_task={
+                'main_class_name': "com.unilever.ohub.spark.export.dispatcher.{}DispatcherConverter".format(self._clazz),
+                'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn=self._dag_config.entity),
+                               '--outputFile', export_bucket.format(date=one_day_ago, fn=config['filename'])] +
+                              delta_params +
+                              postgres_config
+            }
+        )
+        return SubPipeline(convert_to_dispatch, convert_to_dispatch)
 
 interval = '@daily'
 one_day_ago = '{{ds}}'
