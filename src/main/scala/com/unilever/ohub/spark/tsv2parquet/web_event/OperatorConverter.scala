@@ -40,7 +40,8 @@ object OperatorConverter extends WebEventDomainGateKeeper[Operator] {
       channel                     = optional  ( "typeOfBusiness",         "channel"                                                                   ),
       city                        = optional  ( "businessAddress.city",   "city"                                                                      ),
       cookingConvenienceLevel     = None                                                                                                               ,
-      countryName                 = countryName(countryCode)                                                                                           ,
+      countryName                 = countryName(countryCode)
+      ,
       daysOpen                    = None                                                                                                               ,
       distributorName             = optional  ( "primaryDistributor",     "distributorName"                                                           ),
       distributorOperatorId       = optional  ( "distributorCustomerId",  "distributorOperatorId"                                                     ),

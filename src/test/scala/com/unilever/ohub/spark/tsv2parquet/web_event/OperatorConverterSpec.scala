@@ -18,7 +18,7 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
 
         val actualOperator = actualDataSet.head()
         val expectedOperator = Operator(
-          concatId = "AU~WUFOO~E1-1234",
+          concatId = "AU~WEB_EVENT~E1-1234",
           countryCode = "AU",
           customerType = "OPERATOR",
           dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00.0")),
@@ -26,7 +26,7 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
           isActive = true,
           isGoldenRecord = false,
           name = "Down under",
-          sourceName = "WUFOO",
+          sourceName = "WEB_EVENT",
           sourceEntityId = "E1-1234",
           ohubId = actualOperator.ohubId,
           ohubCreated = actualOperator.ohubCreated,
