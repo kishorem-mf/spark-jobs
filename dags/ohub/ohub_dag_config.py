@@ -219,16 +219,15 @@ class GenericPipeline(object):
 
     def has_ingest_from_file_interface(self,
                                        deduplicate_on_concat_id: bool = True,
-                                       alternative_schema: str = None,
-                                       alternative_output_fn: str = None) -> 'GenericPipeline':
+                                       alternative_schema: str = None) -> 'GenericPipeline':
         '''Marks the pipeline to include ingest from file interface'''
         channel = 'file_interface'
         ingest_schema = alternative_schema if alternative_schema else self._dag_config.entity
         input_file = raw_bucket.format(date=one_day_ago, schema=ingest_schema, channel=channel)
-        output_file = alternative_output_fn if alternative_output_fn else ingested_bucket.format(date=one_day_ago,
-                                                                                                 fn=self._dag_config.entity,
-                                                                                                 channel=channel)
+        output_file = ingested_bucket.format(date=one_day_ago, fn=self._dag_config.entity, channel=channel)
+
         separator = ";" if self._dag_config.is_delta else "\u2030"
+
         config = IngestConfig(
             input_file=input_file,
             output_file=output_file,
