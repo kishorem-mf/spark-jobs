@@ -169,9 +169,9 @@ class IngestConfig(object):
                  output_file: str,
                  channel: str,
                  deduplicate_on_concat_id: bool = True,
-                 alternative_seperator: str = None):
+                 separator: str = None):
         self.dedup = deduplicate_on_concat_id
-        self.sep = alternative_seperator
+        self.separator = separator
         self.input = input_file
         self.output = output_file
         self.channel = channel
@@ -220,8 +220,7 @@ class GenericPipeline(object):
     def has_ingest_from_file_interface(self,
                                        deduplicate_on_concat_id: bool = True,
                                        alternative_schema: str = None,
-                                       alternative_output_fn: str = None,
-                                       alternative_seperator: str = None) -> 'GenericPipeline':
+                                       alternative_output_fn: str = None) -> 'GenericPipeline':
         '''Marks the pipeline to include ingest from file interface'''
         channel = 'file_interface'
         ingest_schema = alternative_schema if alternative_schema else self._dag_config.entity
@@ -229,12 +228,13 @@ class GenericPipeline(object):
         output_file = alternative_output_fn if alternative_output_fn else ingested_bucket.format(date=one_day_ago,
                                                                                                  fn=self._dag_config.entity,
                                                                                                  channel=channel)
+        separator = ";" if self._dag_config.is_delta else "\u2030"
         config = IngestConfig(
             input_file=input_file,
             output_file=output_file,
             channel=channel,
             deduplicate_on_concat_id=deduplicate_on_concat_id,
-            alternative_seperator=alternative_seperator)
+            separator=separator)
 
         self._ingests.append(self.__ingest_from_channel(config))
         return self
@@ -468,7 +468,6 @@ class GenericPipeline(object):
         return SubPipeline(start_matching, end_matching)
 
     def __ingest_from_channel(self, config: IngestConfig):
-        sep = config.sep if config.sep else "\u2030"
         dedup = 'true' if config.dedup else 'false'
 
         ingest_to_parquet = DatabricksSubmitRunOperator(
@@ -482,7 +481,7 @@ class GenericPipeline(object):
                 'main_class_name': f'com.unilever.ohub.spark.tsv2parquet.{config.channel}.{self._clazz}Converter',
                 'parameters': ['--inputFile', config.input,
                                '--outputFile', config.output,
-                               '--fieldSeparator', sep,
+                               '--fieldSeparator', config.separator,
                                '--strictIngestion', "false",
                                '--deduplicateOnConcatId', dedup] + postgres_config
             },
