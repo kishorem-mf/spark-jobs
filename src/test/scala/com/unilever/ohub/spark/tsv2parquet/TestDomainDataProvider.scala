@@ -14,7 +14,8 @@ case class TestDomainDataProvider(
       "WUFOO" -> 1,
       "EMAKINA" -> 2,
       "FUZZIT" -> 3,
-      "SIFU" -> 4
+      "SIFU" -> 4,
+      "WEB_EVENT" -> 5
     ),
     countrySalesOrg: Map[String, CountrySalesOrg] = Map(
       "1030" -> CountrySalesOrg("NL", Some("1030")),
