@@ -3,10 +3,10 @@ package com.unilever.ohub.spark.tsv2parquet.web_event
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
-import com.unilever.ohub.spark.tsv2parquet.DomainTransformer
+import com.unilever.ohub.spark.tsv2parquet.{ DomainTransformer, OperatorEmptyParquetWriter }
 import org.apache.spark.sql.Row
 
-object OperatorConverter extends WebEventDomainGateKeeper[Operator] {
+object OperatorConverter extends WebEventDomainGateKeeper[Operator] with OperatorEmptyParquetWriter {
 
   override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Operator = { transformer ⇒ row ⇒
     import transformer._
