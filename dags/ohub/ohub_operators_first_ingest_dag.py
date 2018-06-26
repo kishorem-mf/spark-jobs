@@ -26,6 +26,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
             .has_export_to_acm(acm_schema_name='OPERATORS')
             .has_export_to_dispatcher_db(dispatcher_schema_name='OPERATORS')
             .has_ingest_from_file_interface()
+            .has_ingest_from_web_event()
     )
 
     ingest: SubPipeline = generic.construct_ingest_pipeline()

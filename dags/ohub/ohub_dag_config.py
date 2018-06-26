@@ -238,11 +238,27 @@ class GenericPipeline(object):
         self._ingests.append(self.__ingest_from_channel(config))
         return self
 
-    def has_ingest_from_web_event(self):
+    def has_ingest_from_web_event(self,
+                                  deduplicate_on_concat_id: bool = True,
+                                  alternative_schema: str = None,
+                                  alternative_output_fn: str = None) -> 'GenericPipeline':
         '''Marks the pipeline to include ingest from web event'''
-        # channel = 'web_event'
-        # config = {}
-        # self._ingests.append(self.__ingest_web_event(config))
+        channel = 'web_event'
+        ingest_schema = alternative_schema if alternative_schema else self._dag_config.entity
+        input_file = raw_bucket.format(date=one_day_ago, schema=ingest_schema, channel=channel)
+        output_file = alternative_output_fn if alternative_output_fn else ingested_bucket.format(date=one_day_ago,
+                                                                                                 fn=self._dag_config.entity,
+                                                                                                 channel=channel)
+        separator = ";"
+        config = IngestConfig(
+            input_file=input_file,
+            output_file=output_file,
+            channel=channel,
+            deduplicate_on_concat_id=deduplicate_on_concat_id,
+            separator=separator)
+
+        self._ingests.append(self.__ingest_from_channel(config))
+
         return self
 
     def has_export_to_acm(self,
