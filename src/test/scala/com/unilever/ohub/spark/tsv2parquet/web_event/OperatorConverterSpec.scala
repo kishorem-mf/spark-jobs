@@ -21,8 +21,8 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
           concatId = "AU~WEB_EVENT~E1-1234",
           countryCode = "AU",
           customerType = "OPERATOR",
-          dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00.0")),
-          dateUpdated = Some(Timestamp.valueOf("2015-06-30 13:48:00.0")),
+          dateCreated = Option.empty,
+          dateUpdated = Option.empty,
           isActive = true,
           isGoldenRecord = false,
           name = "Down under",
@@ -31,32 +31,32 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
           ohubId = actualOperator.ohubId,
           ohubCreated = actualOperator.ohubCreated,
           ohubUpdated = actualOperator.ohubUpdated,
-          averagePrice = Some(BigDecimal(29.95)),
-          chainId = Some("bk123"),
-          chainName = Some("BURGER KING"),
+          averagePrice = Option.empty,
+          chainId = Option.empty,
+          chainName = Option.empty,
           channel = Some("Restaurants"),
           city = Some("Melbourne"),
-          cookingConvenienceLevel = Some("MEDIUM"),
+          cookingConvenienceLevel = Option.empty,
           countryName = Some("Australia"),
-          daysOpen = Some(6),
+          daysOpen = Option.empty,
           distributorName = Some("SLIGRO"),
-          distributorOperatorId = Some("BV4123"),
-          emailAddress = Some("info@downunder.au"),
-          faxNumber = Some("61396621811"),
-          hasDirectMailOptIn = Some(true),
-          hasDirectMailOptOut = Some(true),
-          hasEmailOptIn = Some(true),
-          hasEmailOptOut = Some(true),
-          hasFaxOptIn = Some(true),
-          hasFaxOptOut = Some(true),
-          hasGeneralOptOut = Some(true),
-          hasMobileOptIn = Some(true),
-          hasMobileOptOut = Some(true),
-          hasTelemarketingOptIn = Some(true),
-          hasTelemarketingOptOut = Some(true),
+          distributorOperatorId = Option.empty,
+          emailAddress = Option.empty,
+          faxNumber = Option.empty,
+          hasDirectMailOptIn = Option.empty,
+          hasDirectMailOptOut = Option.empty,
+          hasEmailOptIn = Option.empty,
+          hasEmailOptOut = Option.empty,
+          hasFaxOptIn = Option.empty,
+          hasFaxOptOut = Option.empty,
+          hasGeneralOptOut = Option.empty,
+          hasMobileOptIn = Option.empty,
+          hasMobileOptOut = Option.empty,
+          hasTelemarketingOptIn = Option.empty,
+          hasTelemarketingOptOut = Option.empty,
           houseNumber = Some("134"),
           houseNumberExtension = Some("A"),
-          isNotRecalculatingOtm = Some(true),
+          isNotRecalculatingOtm = Option.empty,
           isOpenOnFriday = Some(true),
           isOpenOnMonday = Some(true),
           isOpenOnSaturday = Some(true),
@@ -66,23 +66,23 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
           isOpenOnWednesday = Some(true),
           isPrivateHousehold = Some(true),
           kitchenType = Some("Japanese"),
-          mobileNumber = Some("61612345678"),
-          netPromoterScore = Some(BigDecimal(44556.0)),
-          oldIntegrationId = Some("I-2345"),
-          otm = Some("A"),
-          otmEnteredBy = Some("Set by sales rep"),
-          phoneNumber = Some("61396621811"),
-          region = Some("Victoria"),
-          salesRepresentative = Some("Hans Jansen"),
+          mobileNumber = Option.empty,
+          netPromoterScore = Option.empty,
+          oldIntegrationId = Option.empty,
+          otm = Option.empty,
+          otmEnteredBy = Option.empty,
+          phoneNumber = Option.empty,
+          region = Option.empty,
+          salesRepresentative = Option.empty,
           state = Some("Alabama"),
           street = Some("Main street"),
-          subChannel = Some("Pub"),
+          subChannel = Option.empty,
           totalDishes = Some(175),
           totalLocations = Some(1),
           totalStaff = Some(25),
           vat = Some("9864758522"),
           webUpdaterId = Option.empty,
-          weeksClosed = Some(1),
+          weeksClosed = Option.empty,
           zipCode = Some("3006"),
           additionalFields = Map(),
           ingestionErrors = Map()
@@ -91,21 +91,23 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
         actualOperator shouldBe expectedOperator
       }
     }
-    it("should select the latest operator based on dateUpdated") {
-      val inputFile = "src/test/resources/WEB_EVENT_OPERATORS_DUPLICATES.csv"
 
-      runJobWith(inputFile) { actualDataSet ⇒
-        actualDataSet.count() shouldBe 2
+    // it("should select the latest operator based on dateUpdated") {
+    //   val inputFile = "src/test/resources/WEB_EVENT_OPERATORS_DUPLICATES.csv"
 
-        val res = actualDataSet.collect
+    //   runJobWith(inputFile) { actualDataSet ⇒
+    //     actualDataSet.count() shouldBe 2
 
-        val emptyDateUpdated = res.filter(_.countryCode == "NZ")
-        emptyDateUpdated.length shouldBe 1
+    //     val res = actualDataSet.collect
 
-        val filledDateUpdated = res.filter(_.countryCode == "AU")
-        filledDateUpdated.length shouldBe 1
-        filledDateUpdated.head.street shouldBe Some("Some street")
-      }
-    }
+    //     val emptyDateUpdated = res.filter(_.countryCode == "NZ")
+    //     emptyDateUpdated.length shouldBe 1
+
+    //     val filledDateUpdated = res.filter(_.countryCode == "AU")
+    //     filledDateUpdated.length shouldBe 1
+    //     filledDateUpdated.head.street shouldBe Some("Some street")
+    //   }
+    // }
+
   }
 }
