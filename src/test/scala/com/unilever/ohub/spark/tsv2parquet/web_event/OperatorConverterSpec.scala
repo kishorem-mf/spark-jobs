@@ -40,7 +40,7 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
           countryName = Some("Australia"),
           daysOpen = Option.empty,
           distributorName = Some("SLIGRO"),
-          distributorOperatorId = Option.empty,
+          distributorOperatorId = Some("BV4123"),
           emailAddress = Option.empty,
           faxNumber = Option.empty,
           hasDirectMailOptIn = Option.empty,
