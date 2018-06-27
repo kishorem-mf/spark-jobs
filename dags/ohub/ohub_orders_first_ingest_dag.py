@@ -90,8 +90,22 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
                                                        fn=f'{orderlines_entity}_gathered')
     )
 
-    ingest_orders.last_task >> operators_integrated_sensor >> merge
-    ingest_orders.last_task >> contactpersons_integrated_sensor >> merge
-    ingest_orders.last_task >> ingest_orderlines.first_task >> copy
-    merge >> copy >> export_orders.first_task
-    copy >> export_orderlines.first_task
+    operators_integrated_sensor >> ingest_orders.first_task
+    contactpersons_integrated_sensor >> ingest_orders.first_task
+    ''' 
+    -------------
+    orderlines is independent from orders, but it MUST have the emtpy fallback operator from orders to be completed
+    to be able to run since they have the same root raw files.
+    However, the BashOperator (empty fallback) should always complete before the CreateCluster has run, so this
+    dependency should not have to be explicitly given in airflow
+    '''
+    operators_integrated_sensor >> ingest_orderlines.first_task
+    contactpersons_integrated_sensor >> ingest_orderlines.first_task
+    '''
+    -------------
+    '''
+
+    ingest_orders.last_task >> merge >> export_orders.first_task
+    copy >> export_orders.first_task
+    ingest_orderlines.last_task >> copy >> export_orderlines.first_task
+

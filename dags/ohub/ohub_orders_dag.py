@@ -100,7 +100,6 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
 
     operators_integrated_sensor >> ingest_orders.first_task
     contactpersons_integrated_sensor >> ingest_orders.first_task
-
     ''' 
     -------------
     orderlines is independent from orders, but it MUST have the emtpy fallback operator from orders to be completed
