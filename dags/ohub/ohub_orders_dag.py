@@ -10,7 +10,7 @@ from ohub.ohub_dag_config import default_args, databricks_conn_id, jar, \
     GenericPipeline
 
 default_args.update(
-    {'start_date': datetime(2018, 6, 14)}
+    {'start_date': datetime(2018, 6, 26)}
 )
 
 orders_entity = 'orders'

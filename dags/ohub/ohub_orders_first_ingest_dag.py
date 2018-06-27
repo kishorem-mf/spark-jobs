@@ -10,7 +10,7 @@ from ohub.ohub_dag_config import default_args, databricks_conn_id, jar, \
     wasb_integrated_container, http_intermediate_container, small_cluster_config
 
 default_args.update(
-    {'start_date': datetime(2018, 6, 13)}
+    {'start_date': datetime(2018, 6, 25)}
 )
 
 orders_entity = 'orders'
