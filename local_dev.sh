@@ -8,7 +8,8 @@ if ! [[ `docker pull ulohubimages.azurecr.io/myns/myrepo:mytag 2>&1` =~ login ]]
     fi
 fi
 container="ulohub_airflow_dags"
-[[ $PWD =~ ^/mnt/ ]] && path=$PWD || path=${PWD:4:${#PWD}}
+[[ $PWD =~ ^/mnt/ ]] && path=${PWD:4:${#PWD}
+} || path=$PWD
 printf "\n----------- stopping possibly running container --------------\n"
 docker stop $container > /dev/null
 printf "\n-----------       removing old container        --------------\n"
