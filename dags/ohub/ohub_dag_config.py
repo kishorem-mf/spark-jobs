@@ -595,7 +595,7 @@ wasb_intermediate_container = wasb_root_bucket + 'intermediate/{date}/{fn}.parqu
 wasb_integrated_container = wasb_root_bucket + 'integrated/{date}/{fn}.parquet'
 wasb_export_container = wasb_root_bucket + 'export/{date}/{fn}'
 
-http_root_bucket = 'https://{container}.blob.core.windows.net/data/data/'
+http_root_bucket = 'https://{storage_account}.blob.core.windows.net/{container}/data/'
 http_raw_container = http_root_bucket + 'raw/{schema}/{date}/{channel}/*.csv'
 http_ingested_container = http_root_bucket + 'ingested/{date}/{fn}.parquet'
 http_intermediate_container = http_root_bucket + 'intermediate/{date}/{fn}.parquet'
