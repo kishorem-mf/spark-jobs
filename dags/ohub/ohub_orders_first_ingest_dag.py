@@ -81,6 +81,9 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
         external_task_id='update_golden_records'
     )
 
+    # We need this CopyOperator for one reason:
+    # The end of the pipeline should always produce an integrated file, since OrderLines has only an ingest step the
+    # result of the ingest is copied to the integrated 'folder'
     copy = WasbCopyOperator(
         task_id='copy_to_integrated',
         wasb_conn_id='azure_blob',

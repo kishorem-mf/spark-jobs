@@ -27,6 +27,9 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     ingest: SubPipeline = generic.construct_ingest_pipeline()
     export: SubPipeline = generic.construct_export_pipeline()
 
+    # We need this CopyOperator for one reason:
+    # The end of the pipeline should always produce an integrated file, since Products has only an ingest step the
+    # result of the ingest is copied to the integrated 'folder'
     copy = WasbCopyOperator(
         task_id='copy_to_integrated',
         wasb_conn_id='azure_blob',
