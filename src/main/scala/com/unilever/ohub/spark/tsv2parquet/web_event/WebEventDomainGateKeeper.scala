@@ -7,5 +7,5 @@ trait WebEventDomainGateKeeper[T <: DomainEntity] extends CsvDomainGateKeeper[T]
   override final val defaultFieldSeparator = ";"
   override final val hasHeaders = true
   override final val partitionByValue = Seq("countryCode")
-  val sourceName = "WEB_EVENT" // TODO: change? update enums to add this?
+  final val SourceName = "EMAKINA"
 }

@@ -6,7 +6,7 @@ import org.apache.spark.sql.Row
 object DomainTransformer {
   def apply(dataProvider: DomainDataProvider): DomainTransformer = new DomainTransformer(dataProvider)
 
-  val ZERO_WIDTH_NO_BREAK_SPACE = "\uFEFF" // see also: http://www.fileformat.info/info/unicode/char/FEFF/index.htm
+  final val ZERO_WIDTH_NO_BREAK_SPACE = "\uFEFF" // see also: http://www.fileformat.info/info/unicode/char/FEFF/index.htm
 }
 
 class DomainTransformer(val dataProvider: DomainDataProvider) extends DomainTransformFunctions with Serializable {
@@ -88,7 +88,7 @@ class DomainTransformer(val dataProvider: DomainDataProvider) extends DomainTran
     Option(row.getString(fieldIndex)).filterNot(_.trim.isEmpty) // treat empty strings as None
   }
 
-  def mandatoryValue(columnName: String, domainFieldName: String)(row: Row): String = {
+  def mandatoryValue(columnName: String, domainFieldName: String)(implicit row: Row): String = {
     val valueOpt = optionalValue(columnName)(row)
 
     if (valueOpt.isEmpty) {
@@ -97,7 +97,7 @@ class DomainTransformer(val dataProvider: DomainDataProvider) extends DomainTran
     valueOpt.get
   }
 
-  private def getFieldIndex(columnName: String, numberOfBomCharsToPrepend: Int = 0)(row: Row): Int =
+  private def getFieldIndex(columnName: String, numberOfBomCharsToPrepend: Int = 0)(implicit row: Row): Int =
     if (headers.isEmpty) {
       try {
         val bomChars = (0 until numberOfBomCharsToPrepend).map(_ ⇒ ZERO_WIDTH_NO_BREAK_SPACE).mkString("")

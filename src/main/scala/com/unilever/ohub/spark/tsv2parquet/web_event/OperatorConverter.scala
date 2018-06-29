@@ -5,6 +5,7 @@ import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 import com.unilever.ohub.spark.tsv2parquet.{ DomainTransformer, OperatorEmptyParquetWriter }
 import org.apache.spark.sql.Row
+import cats.syntax.option._
 
 object OperatorConverter extends WebEventDomainGateKeeper[Operator] with OperatorEmptyParquetWriter {
 
@@ -14,7 +15,7 @@ object OperatorConverter extends WebEventDomainGateKeeper[Operator] with Operato
 
     val countryCode = mandatoryValue("countryCode", "countryCode")(row)
     val sourceEntityId = mandatoryValue("operatorRefId", "sourceEntityId")(row)
-    val concatId = DomainEntity.createConcatIdFromValues(countryCode, sourceName, sourceEntityId)
+    val concatId = DomainEntity.createConcatIdFromValues(countryCode, SourceName, sourceEntityId)
     val ohubCreated = currentTimestamp()
 
     // format: OFF
@@ -24,43 +25,42 @@ object OperatorConverter extends WebEventDomainGateKeeper[Operator] with Operato
       concatId                    = concatId                                                                                                           ,
       countryCode                 = countryCode                                                                                                        ,
       customerType                = Operator.customerType                                                                                              ,
-      dateCreated                 = Option.empty                                                                                                       ,
-      dateUpdated                 = Option.empty                                                                                                       ,
+      dateCreated                 = none                                                                                                       ,
+      dateUpdated                 = none                                                                                                       ,
       isActive                    = true                                                                                                               ,
       isGoldenRecord              = false                                                                                                              ,
-      ohubId                      = None                                                                                                               ,
+      ohubId                      = none                                                                                                               ,
       name                        = mandatory ( "operatorName",           "name"                                                                      ),
       sourceEntityId              = sourceEntityId                                                                                                     ,
-      sourceName                  = sourceName                                                                                                         ,
+      sourceName                  = SourceName                                                                                                         ,
       ohubCreated                 = ohubCreated                                                                                                        ,
       ohubUpdated                 = ohubCreated                                                                                                        ,
-      averagePrice                = None                                                                                                               ,
-      chainId                     = None                                                                                                               ,
-      chainName                   = None                                                                                                               ,
+      averagePrice                = none                                                                                                               ,
+      chainId                     = none                                                                                                               ,
+      chainName                   = none                                                                                                               ,
       channel                     = optional  ( "typeOfBusiness",         "channel"                                                                   ),
       city                        = optional  ( "businessAddress.city",   "city"                                                                      ),
-      cookingConvenienceLevel     = None                                                                                                               ,
-      countryName                 = countryName(countryCode)
-      ,
-      daysOpen                    = None                                                                                                               ,
+      cookingConvenienceLevel     = none                                                                                                               ,
+      countryName                 = countryName(countryCode),
+      daysOpen                    = none                                                                                                               ,
       distributorName             = optional  ( "primaryDistributor",     "distributorName"                                                           ),
       distributorOperatorId       = optional  ( "distributorCustomerId",  "distributorOperatorId"                                                     ),
-      emailAddress                = None                                                                                                               ,
-      faxNumber                   = None                                                                                                               ,
-      hasDirectMailOptIn          = None                                                                                                               ,
-      hasDirectMailOptOut         = None                                                                                                               ,
-      hasEmailOptIn               = None                                                                                                               ,
-      hasEmailOptOut              = None                                                                                                               ,
-      hasFaxOptIn                 = None                                                                                                               ,
-      hasFaxOptOut                = None                                                                                                               ,
-      hasGeneralOptOut            = None                                                                                                               ,
-      hasMobileOptIn              = None                                                                                                               ,
-      hasMobileOptOut             = None                                                                                                               ,
-      hasTelemarketingOptIn       = None                                                                                                               ,
-      hasTelemarketingOptOut      = None                                                                                                               ,
+      emailAddress                = none                                                                                                               ,
+      faxNumber                   = none                                                                                                               ,
+      hasDirectMailOptIn          = none                                                                                                               ,
+      hasDirectMailOptOut         = none                                                                                                               ,
+      hasEmailOptIn               = none                                                                                                               ,
+      hasEmailOptOut              = none                                                                                                               ,
+      hasFaxOptIn                 = none                                                                                                               ,
+      hasFaxOptOut                = none                                                                                                               ,
+      hasGeneralOptOut            = none                                                                                                               ,
+      hasMobileOptIn              = none                                                                                                               ,
+      hasMobileOptOut             = none                                                                                                               ,
+      hasTelemarketingOptIn       = none                                                                                                               ,
+      hasTelemarketingOptOut      = none                                                                                                               ,
       houseNumber                 = optional  ( "businessAddress.houseNumber",  "houseNumber"                                                         ),
       houseNumberExtension        = optional  ( "businessAddress.houseNumberExtension",  "houseNumberExtension"                                       ),
-      isNotRecalculatingOtm       = None                                                                                                               ,
+      isNotRecalculatingOtm       = none                                                                                                               ,
       isOpenOnFriday              = optional  ( "openOnFriday",           "isOpenOnFriday",               parseBoolUnsafe                             ),
       isOpenOnMonday              = optional  ( "openOnMonday",           "isOpenOnMonday",               parseBoolUnsafe                             ),
       isOpenOnSaturday            = optional  ( "openOnSaturday",         "isOpenOnSaturday",             parseBoolUnsafe                             ),
@@ -70,27 +70,28 @@ object OperatorConverter extends WebEventDomainGateKeeper[Operator] with Operato
       isOpenOnWednesday           = optional  ( "openOnWednesday",        "isOpenOnWednesday",            parseBoolUnsafe                             ),
       isPrivateHousehold          = optional  ( "privateHousehold",       "isPrivateHousehold",           parseBoolUnsafe                             ),
       kitchenType                 = optional  ( "typeOfCuisine",          "kitchenType"                                                               ),
-      mobileNumber                = None                                                                                                               ,
-      netPromoterScore            = None                                                                                                               ,
-      oldIntegrationId            = None                                                                                                               ,
-      otm                         = None                                                                                                               ,
-      otmEnteredBy                = None                                                                                                               ,
-      phoneNumber                 = None                                                                                                               ,
-      region                      = None                                                                                                               ,
-      salesRepresentative         = None                                                                                                               ,
+      mobileNumber                = none                                                                                                               ,
+      netPromoterScore            = none                                                                                                               ,
+      oldIntegrationId            = none                                                                                                               ,
+      otm                         = none                                                                                                               ,
+      otmEnteredBy                = none                                                                                                               ,
+      phoneNumber                 = none                                                                                                               ,
+      region                      = none                                                                                                               ,
+      salesRepresentative         = none                                                                                                               ,
       state                       = optional  ( "businessAddress.state",  "state"                                                                     ),
       street                      = optional  ( "businessAddress.street", "street"                                                                    ),
-      subChannel                  = None                                                                                                               ,
+      subChannel                  = none                                                                                                               ,
       totalDishes                 = optional  ( "numberOfCoversPerDay",   "totalDishes",                    parseNumberOrAverageFromRange             ),
       totalLocations              = optional  ( "numberOfLocations",      "totalLocations",                 parseNumberOrAverageFromRange             ),
       totalStaff                  = optional  ( "numberOfKitchenStaff",   "totalStaff",                     parseNumberOrAverageFromRange             ),
       vat                         = optional  ( "VAT",                    "vat"                                                                       ),
-      webUpdaterId                = None                                                                                                               ,
-      weeksClosed                 = None                                                                                                               ,
+      webUpdaterId                = none                                                                                                               ,
+      weeksClosed                 = none                                                                                                               ,
       zipCode                     = optional  ( "businessAddress.postCode",  "zipCode"                                                                ),
       additionalFields            = additionalFields                                                                                                   ,
       ingestionErrors             = errors
     )
+
     // format: ON
   }
 }
