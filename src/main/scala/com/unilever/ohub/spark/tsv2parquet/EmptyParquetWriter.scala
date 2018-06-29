@@ -61,3 +61,14 @@ trait OrderLineEmptyParquetWriter extends EmptyParquetWriter {
     storage.writeToParquet(ds, location)
   }
 }
+
+trait SubscriptionEmptyParquetWriter extends EmptyParquetWriter {
+  override def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit = {
+    import com.unilever.ohub.spark.domain.entity.Subscription
+    import spark.implicits._
+
+    val ds = spark.createDataset[Subscription](Seq[Subscription]())
+
+    storage.writeToParquet(ds, location)
+  }
+}

@@ -10,7 +10,7 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
 
   describe("web event contact person converter") {
     it("should convert an contact person correctly from a valid web event csv input") {
-      val inputFile = "src/test/resources/WEB_EVENT_CONTACT_PERSON.csv"
+      val inputFile = "src/test/resources/WEB_EVENT_CONTACT_PERSONS.csv"
 
       runJobWith(inputFile) { actualDataSet: Dataset[ContactPerson] ⇒
         actualDataSet.count() shouldBe 1
