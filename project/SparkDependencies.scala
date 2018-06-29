@@ -2,13 +2,13 @@ import sbt._
 import sbt.Keys._
 import LibraryVersions._
 
-object SparkDependencyPlugin extends AutoPlugin {
+object SparkDependencies extends AutoPlugin {
   override val trigger = noTrigger
   override val requires = plugins.JvmPlugin
 
   private val sparkDependencyType: String = sys.props.getOrElse("sparkDependencyType", "compile")
 
-  private val sparkDependencies: Seq[ModuleID] = Seq(
+  lazy val sparkDependencies: Seq[ModuleID] = Seq(
     "org.apache.spark"        %% "spark-core"          % SparkVersion  % sparkDependencyType excludeAll ExclusionRule(organization = "org.scalatest"),
     "org.apache.spark"        %% "spark-sql"           % SparkVersion  % sparkDependencyType,
     "org.apache.spark"        %% "spark-mllib"         % SparkVersion  % sparkDependencyType

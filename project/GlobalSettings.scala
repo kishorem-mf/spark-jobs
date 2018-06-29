@@ -1,21 +1,21 @@
-import sbt.{Def, _}
-import sbt.Keys._
 import LibraryVersions._
-import com.typesafe.sbt.SbtScalariform.ScalariformKeys._
-import scalariform.formatter.preferences._
+import com.typesafe.sbt.SbtScalariform
+import sbt.Keys._
+import sbt._
 import sbtassembly.AssemblyKeys.assembly
+import scalariform.formatter.preferences._
 import scoverage.ScoverageKeys._
 
-object ProjectAutoPlugin extends AutoPlugin {
-  override val trigger = noTrigger
+object GlobalSettings extends AutoPlugin {
+  override val trigger = allRequirements
   override val requires = plugins.JvmPlugin
 
-  override val projectSettings = Seq(
+  override val projectSettings: Seq[Setting[_]] = Seq(
     scalaVersion := "2.11.12",
     libraryDependencies ++= projectDependencies
-  )
+  ) ++ testSettings ++ scoverageSettings ++ scalariFormSettings
 
-  val testSettings: Seq[_] = {
+  lazy val testSettings = {
     val flags = Seq(Tests.Argument("-oD"))
     //    Defaults.itSettings
     //    IntegrationTest / testOptions ++= flags
@@ -26,27 +26,28 @@ object ProjectAutoPlugin extends AutoPlugin {
     )
   }
 
-  val formattingSettings = Seq(
-    scalariformPreferences.value
-      .setPreference(AlignParameters, false)
-      .setPreference(AlignSingleLineCaseStatements, true)
-      .setPreference(AlignSingleLineCaseStatements.MaxArrowIndent, 90)
-      .setPreference(DoubleIndentConstructorArguments, true)
-      .setPreference(RewriteArrowSymbols, true)
-      .setPreference(DanglingCloseParenthesis, Preserve)
-      .setPreference(IndentSpaces, 2)
-      .setPreference(IndentWithTabs, false)
-      .setPreference(NewlineAtEndOfFile, true)
+  lazy val scalariFormSettings = Seq(
+    SbtScalariform.autoImport.scalariformPreferences :=
+      SbtScalariform.autoImport.scalariformPreferences.value
+        .setPreference(AlignParameters, false)
+        .setPreference(AlignSingleLineCaseStatements, true)
+        .setPreference(AlignSingleLineCaseStatements.MaxArrowIndent, 90)
+        .setPreference(DoubleIndentConstructorArguments, true)
+        .setPreference(RewriteArrowSymbols, true)
+        .setPreference(DanglingCloseParenthesis, Preserve)
+        .setPreference(IndentSpaces, 2)
+        .setPreference(IndentWithTabs, false)
+        .setPreference(NewlineAtEndOfFile, true)
   )
 
-  private val scoverageSettings: Seq[_] = Seq(
+  lazy val scoverageSettings = Seq(
     // Scoverage settings
     coverageExcludedPackages := "<empty>",
     coverageMinimum := 70.0,
     coverageFailOnMinimum := true
   )
 
-  private val projectDependencies = Seq(
+  lazy val projectDependencies = Seq(
     "org.postgresql" % "postgresql" % "42.2.2",
     "org.apache.commons" % "commons-lang3" % "3.7",
     "io.circe" %% "circe-core" % CirceVersion,
@@ -55,6 +56,6 @@ object ProjectAutoPlugin extends AutoPlugin {
     "com.github.scopt" %% "scopt" % "3.7.0",
     "org.scalatest" %% "scalatest" % "3.0.5" % "test,it",
     "org.scalamock" %% "scalamock" % "4.1.0" % "test,it"
-  ) ++ testSettings ++ scoverageSettings
+  )
 }
 
