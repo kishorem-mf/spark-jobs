@@ -3,6 +3,7 @@ package model
 
 import com.unilever.ohub.spark.SimpleSpec
 import com.unilever.ohub.spark.domain.entity.TestOrders
+import cats.syntax.option._
 
 class DispatcherOrderSpec extends SimpleSpec {
 
@@ -14,16 +15,16 @@ class DispatcherOrderSpec extends SimpleSpec {
   describe("DispatcherOrder") {
     it("should map a domain Order") {
       DispatcherOrder.fromOrder(TEST_ORDER) shouldEqual DispatcherOrder(
-        CAMPAIGN_CODE = "UNKNOWN".some,
-        CAMPAIGN_NAME = "campaign".some,
-        COMMENTS = Option.empty,
+        CAMPAIGN_CODE = "UNKNOWN",
+        CAMPAIGN_NAME = "campaign",
+        COMMENTS = none,
         ORD_INTEGRATION_ID = "country-code~source-name~source-entity-id",
-        CP_ORIG_INTEGRATION_ID = "some~contact~person".some,
+        CP_ORIG_INTEGRATION_ID = "some~contact~person",
         COUNTRY_CODE = "country-code",
-        WHOLESALER_ID = Option.empty,
-        WHOLESALER_LOCATION = Option.empty,
-        WHOLESALER = "Van der Valk".some,
-        WHOLESALER_CUSTOMER_NUMBER = Option.empty,
+        WHOLESALER_ID = none,
+        WHOLESALER_LOCATION = none,
+        WHOLESALER = "Van der Valk",
+        WHOLESALER_CUSTOMER_NUMBER = none,
         DELETED_FLAG = false,
         CREATED_AT = "2015-06-30 13:49:00",
         UPDATED_AT = "2015-06-30 13:49:00",
@@ -32,31 +33,31 @@ class DispatcherOrderSpec extends SimpleSpec {
         SOURCE = "source-name",
         TRANSACTION_DATE = "2015-06-30 13:49:00",
         ORDER_TYPE = "DIRECT",
-        VAT = Option.empty,
-        ORDER_EMAIL_ADDRESS = Option.empty,
-        ORDER_PHONE_NUMBER = Option.empty,
-        ORDER_MOBILE_PHONE_NUMBER = Option.empty,
-        TOTAL_VALUE_ORDER_CURRENCY = Option.empty,
-        TOTAL_VALUE_ORDER_AMOUNT = Option.empty,
-        ORIGIN = Option.empty,
-        WS_DC = Option.empty,
-        ORDER_UID = Option.empty,
-        DELIVERY_STREET = Option.empty,
-        DELIVERY_HOUSE_NUMBER = Option.empty,
-        DELIVERY_HOUSE_NUMBER_EXT = Option.empty,
-        DELIVERY_POST_CODE = Option.empty,
-        DELIVERY_CITY = Option.empty,
-        DELIVERY_STATE = Option.empty,
-        DELIVERY_COUNTRY = Option.empty,
-        DELIVERY_PHONE = Option.empty,
-        INVOICE_NAME = Option.empty,
-        INVOICE_STREET = Option.empty,
-        INVOICE_HOUSE_NUMBER = Option.empty,
-        INVOICE_HOUSE_NUMBER_EXT = Option.empty,
-        INVOICE_ZIPCODE = Option.empty,
-        INVOICE_CITY = Option.empty,
-        INVOICE_STATE = Option.empty,
-        INVOICE_COUNTRY = Option.empty
+        VAT = none,
+        ORDER_EMAIL_ADDRESS = none,
+        ORDER_PHONE_NUMBER = none,
+        ORDER_MOBILE_PHONE_NUMBER = none,
+        TOTAL_VALUE_ORDER_CURRENCY = none,
+        TOTAL_VALUE_ORDER_AMOUNT = none,
+        ORIGIN = none,
+        WS_DC = none,
+        ORDER_UID = none,
+        DELIVERY_STREET = none,
+        DELIVERY_HOUSE_NUMBER = none,
+        DELIVERY_HOUSE_NUMBER_EXT = none,
+        DELIVERY_POST_CODE = none,
+        DELIVERY_CITY = none,
+        DELIVERY_STATE = none,
+        DELIVERY_COUNTRY = none,
+        DELIVERY_PHONE = none,
+        INVOICE_NAME = none,
+        INVOICE_STREET = none,
+        INVOICE_HOUSE_NUMBER = none,
+        INVOICE_HOUSE_NUMBER_EXT = none,
+        INVOICE_ZIPCODE = none,
+        INVOICE_CITY = none,
+        INVOICE_STATE = none,
+        INVOICE_COUNTRY = none
       )
     }
   }
