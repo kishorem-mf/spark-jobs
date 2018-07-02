@@ -24,10 +24,13 @@ trait TestOrderLines {
     orderConcatId = "",
     productConcatId = "product-concat-id",
     quantityOfUnits= 0,
-    amount= BigDecimal(0),
-    pricePerUnit= None,
-    currency= None,
-    comment= None,
+    amount = BigDecimal(0),
+    pricePerUnit = None,
+    currency = None,
+    comment = None,
+    campaignLabel = Some("campaign-label"),
+    loyaltyPoints = Some(123),
+    productOhubId = Some("product-ohub-id"),
     // other fields
     additionalFields = Map(),
     ingestionErrors = Map()

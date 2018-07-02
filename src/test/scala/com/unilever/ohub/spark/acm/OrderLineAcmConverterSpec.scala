@@ -75,10 +75,10 @@ class OrderLineAcmConverterSpec extends SparkJobSpec with TestOrderLines {
         ORD_INTEGRATION_ID = "",
         QUANTITY = 0L,
         AMOUNT = BigDecimal(0.0),
-        LOYALTY_POINTS = None, // Some(BigDecimal(0.0))
+        LOYALTY_POINTS = Some(123),
         PRD_INTEGRATION_ID = "product-concat-id",
         SAMPLE_ID = "",
-        CAMPAIGN_LABEL = None,
+        CAMPAIGN_LABEL = Some("campaign-label"),
         COMMENTS = None,
         DELETED_FLAG = "N"
       )
