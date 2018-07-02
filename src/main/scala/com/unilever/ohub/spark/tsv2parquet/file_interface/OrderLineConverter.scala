@@ -14,8 +14,7 @@ object OrderLineConverter extends FileDomainGateKeeper[OrderLine] with OrderLine
     import transformer._
     implicit val source: Row = row
 
-    val orderLineConcatId : String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_ORDER_ID")
-    // ^ WIP: this `REF_ORDER_ID` field isn't right -- ideas at OHUB-827.
+    val orderLineConcatId : String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_ORDER_ID") + "-" + mandatoryValue("REF_PRODUCT_ID", "orderLineConcatId")
     val orderConcatId     : String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_ORDER_ID")
     val productConcatId   : String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_PRODUCT_ID")
     val ohubCreated = currentTimestamp()
