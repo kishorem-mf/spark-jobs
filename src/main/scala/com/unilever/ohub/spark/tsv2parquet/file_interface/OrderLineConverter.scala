@@ -30,7 +30,7 @@ object OrderLineConverter extends FileDomainGateKeeper[OrderLine] with OrderLine
       isActive                        = true,
       isGoldenRecord                  = true,
       ohubId                          = None, // set in OrderLineMerging
-      sourceEntityId                  = mandatory( "REF_ORDER_ID",              "sourceEntityId"),
+      sourceEntityId                  = mandatoryValue("REF_ORDER_ID", "sourceEntityId")(row) + "_" + mandatoryValue("REF_PRODUCT_ID", "orderLineConcatId")(row),
       sourceName                      = mandatory( "SOURCE",                    "sourceName"),
       ohubCreated                     = ohubCreated,
       ohubUpdated                     = ohubCreated,
