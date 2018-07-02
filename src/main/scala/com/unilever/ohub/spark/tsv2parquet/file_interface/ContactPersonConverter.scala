@@ -5,7 +5,6 @@ import com.unilever.ohub.spark.tsv2parquet.{ ContactPersonEmptyParquetWriter, Do
 import com.unilever.ohub.spark.tsv2parquet.CustomParsers._
 import com.unilever.ohub.spark.generic.StringFunctions._
 import org.apache.spark.sql.Row
-import java.util.UUID
 
 object ContactPersonConverter extends FileDomainGateKeeper[ContactPerson] with ContactPersonEmptyParquetWriter {
 
