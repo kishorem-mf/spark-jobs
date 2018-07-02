@@ -28,7 +28,7 @@ object ContactPersonConverter extends FileDomainGateKeeper[ContactPerson] with C
       customerType                  = ContactPerson.customerType                                                                                          ,
       ohubCreated                   = ohubCreated                                                                                                         ,
       ohubUpdated                   = ohubCreated                                                                                                         ,
-      ohubId                        = Some(UUID.randomUUID().toString)                                                                                    ,
+      ohubId                        = Option.empty, // set in ContactPersonMatchingJoiner, ContactPersonExactMatcher, ContactPersonIntegratedExactMatch
       isGoldenRecord                = false                                                                                                               ,
       sourceEntityId                =   mandatory(  "REF_CONTACT_PERSON_ID",          "sourceEntityId"                                                   ),
       sourceName                    =   mandatory(  "SOURCE",                         "sourceName"                                                       ),
@@ -37,7 +37,7 @@ object ContactPersonConverter extends FileDomainGateKeeper[ContactPerson] with C
       dateUpdated                   =   optional(   "DATE_MODIFIED",                  "dateUpdated",                  parseDateTimeStampUnsafe           ),
       name                          = name                                                                                                                ,
       operatorConcatId              = operatorConcatId                                                                                                    ,
-      operatorOhubId                = None,  // set in ContactPersonMatchingJoiner
+      operatorOhubId                = Option.empty,  // set in ContactPersonMatchingJoiner
       oldIntegrationId              =   optional(   "CP_INTEGRATION_ID",              "oldIntegrationId"                                                 ),
       firstName                     =   optional(   "FIRST_NAME",                     "firstName"                                                        ),
       lastName                      =   optional(   "LAST_NAME",                      "lastName"                                                         ),
