@@ -27,7 +27,7 @@ object OrderConverter extends FileDomainGateKeeper[Order] with OrderEmptyParquet
       dateUpdated                     = optional(  "DATE_MODIFIED",          "dateUpdated",            parseDateTimeStampUnsafe  ),
       isActive                        = mandatory( "STATUS",                 "isActive",               parseBoolUnsafe           ),
       isGoldenRecord                  = true,
-      ohubId                          = None,
+      ohubId                          = None, // set in OrderMerging
       sourceEntityId                  = mandatory( "REF_ORDER_ID",           "sourceEntityId"),
       sourceName                      = mandatory( "SOURCE",                 "sourceName"),
       ohubCreated                     = ohubCreated,
@@ -38,13 +38,13 @@ object OrderConverter extends FileDomainGateKeeper[Order] with OrderEmptyParquet
       campaignName                    = optional(  "CAMPAIGN_NAME",          "campaignName"),
       comment                         = None,
       contactPersonConcatId           = optional(  "REF_CONTACT_PERSON_ID",  "contactPersonConcatId"),
-      contactPersonOhubId             = None,
+      contactPersonOhubId             = None, // set in OrderMerging
       distributorId                   = None,
       distributorLocation             = None,
       distributorName                 = optional(  "WHOLESALER",             "distributerName"),
       distributorOperatorId           = None,
       operatorConcatId                = mandatory( "REF_OPERATOR_ID",        "operatorConcatId"),
-      operatorOhubId                  = None,
+      operatorOhubId                  = None, // set in OrderMerging
       transactionDate                 = mandatory( "TRANSACTION_DATE",       "transactionDate",       parseDateTimeStampUnsafe),
       vat                             = None,
       // other fields
