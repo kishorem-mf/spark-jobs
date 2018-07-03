@@ -20,14 +20,14 @@ class OrderLineConverterSpec extends CsvDomainGateKeeperSpec[OrderLine] with Tes
 
         val actualOrderLine = actualDataSet.head
         val expectedOrderLine = defaultOrderLine.copy(
-          concatId = "AU~WUFOO~O1234",
+          concatId = "AU~WUFOO~O1234_P1234",
           countryCode = "AU",
           dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00")),
           dateUpdated = Some(Timestamp.valueOf("2015-06-30 13:48:00")),
           isActive = true,
           isGoldenRecord = true,
           ohubId = actualOrderLine.ohubId,
-          sourceEntityId = "O1234",
+          sourceEntityId = "O1234_P1234",
           sourceName = "WUFOO",
           ohubCreated = actualOrderLine.ohubCreated,
           ohubUpdated = actualOrderLine.ohubUpdated,
