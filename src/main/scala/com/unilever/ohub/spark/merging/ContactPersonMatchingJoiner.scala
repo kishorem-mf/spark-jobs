@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.domain.entity.ContactPerson
-import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
+import com.unilever.ohub.spark.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
 object ContactPersonMatchingJoiner extends BaseMatchingJoiner[ContactPerson] {

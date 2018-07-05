@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
 import org.apache.spark.sql.Dataset
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.tsv2parquet.TestDomainDataProvider
+import com.unilever.ohub.spark.ingest.TestDomainDataProvider
 
 class OperatorMatchingJoinerSpec extends SparkJobSpec with TestOperators {
   import spark.implicits._

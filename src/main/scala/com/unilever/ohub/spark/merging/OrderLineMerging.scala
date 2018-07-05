@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
-import com.unilever.ohub.spark.domain.entity.{ OrderLine }
+import com.unilever.ohub.spark.domain.entity.OrderLine
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.{ Dataset, SparkSession }

@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.merging
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.entity.{ ContactPerson, TestContactPersons }
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.tsv2parquet.TestDomainDataProvider
+import com.unilever.ohub.spark.ingest.TestDomainDataProvider
 import org.apache.spark.sql.Dataset
 
 class ContactPersonExactMatcherSpec extends SparkJobSpec with TestContactPersons {

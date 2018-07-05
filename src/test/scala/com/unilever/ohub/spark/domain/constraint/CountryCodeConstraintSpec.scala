@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.domain.constraint
 
 import com.unilever.ohub.spark.domain.DomainConstraintViolationException
-import com.unilever.ohub.spark.tsv2parquet.TestDomainDataProvider
+import com.unilever.ohub.spark.ingest.TestDomainDataProvider
 import org.scalatest.{ Matchers, WordSpec }
 
 class CountryCodeConstraintSpec extends WordSpec with Matchers {

@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.constraint.{ ConcatIdConstraint, CountryCodeConstraint, SourceNameConstraint }
-import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
+import com.unilever.ohub.spark.DomainDataProvider
 
 object DomainEntity {
   case class IngestionError(originalColumnName: String, inputValue: Option[String], exceptionMessage: String)

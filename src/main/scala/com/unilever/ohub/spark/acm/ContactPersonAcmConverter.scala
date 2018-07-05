@@ -5,7 +5,7 @@ import com.unilever.ohub.spark.export.DeltaFunctions
 import com.unilever.ohub.spark.acm.model.AcmContactPerson
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
+import com.unilever.ohub.spark.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
