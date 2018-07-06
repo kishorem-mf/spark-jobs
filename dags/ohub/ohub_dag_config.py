@@ -243,7 +243,7 @@ class GenericPipeline(object):
                                   alternative_schema: str = None,
                                   alternative_output_fn: str = None) -> 'GenericPipeline':
         '''Marks the pipeline to include ingest from web event'''
-        channel = 'web_event'
+        channel = 'web_event_interface'
         ingest_schema = alternative_schema if alternative_schema else self._dag_config.entity
         input_file = raw_bucket.format(date=one_day_ago, schema=ingest_schema, channel=channel)
         output_file = alternative_output_fn if alternative_output_fn else ingested_bucket.format(date=one_day_ago,
