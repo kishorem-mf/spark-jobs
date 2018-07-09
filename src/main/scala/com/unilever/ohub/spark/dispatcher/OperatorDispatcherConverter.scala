@@ -7,7 +7,7 @@ import com.unilever.ohub.spark.data.ChannelMapping
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
+import com.unilever.ohub.spark.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 

@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.domain.constraint
 
 import com.unilever.ohub.spark.domain.DomainConstraint
-import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
+import com.unilever.ohub.spark.DomainDataProvider
 
 object SourceNameConstraint {
   def apply(dataProvider: DomainDataProvider): SourceNameConstraint = new SourceNameConstraint(dataProvider)

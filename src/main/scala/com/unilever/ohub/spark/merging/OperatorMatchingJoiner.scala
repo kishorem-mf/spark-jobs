@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.domain.entity.Operator
-import com.unilever.ohub.spark.tsv2parquet.DomainDataProvider
+import com.unilever.ohub.spark.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
 object OperatorMatchingJoiner extends BaseMatchingJoiner[Operator] {

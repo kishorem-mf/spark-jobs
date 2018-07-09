@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.domain.entity
 
 import java.sql.Timestamp
 
-import com.unilever.ohub.spark.tsv2parquet.sifu.SifuProductResponse
+import com.unilever.ohub.spark.ingest.sifu.SifuProductResponse
 
 object TestProducts extends TestProducts
 

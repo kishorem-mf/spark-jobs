@@ -6,6 +6,7 @@ import com.unilever.ohub.spark.dispatcher.model.DispatcherProduct
 import com.unilever.ohub.spark.domain.entity.Product
 import com.unilever.ohub.spark.domain.entity.TestProducts
 import org.apache.spark.sql.Dataset
+import cats.syntax.option._
 
 class ProductDispatcherConverterSpec extends SparkJobSpec with TestProducts {
 
@@ -38,24 +39,24 @@ class ProductDispatcherConverterSpec extends SparkJobSpec with TestProducts {
       }
 
       result should contain(DispatcherProduct(
-        BRAND = None,
+        BRAND = none,
         PRD_INTEGRATION_ID = "country-code~source-name~source-entity-id",
         COUNTRY_CODE = "country-code",
-        UNIT_PRICE_CURRENCY = None,
-        EAN_CODE = None,
-        EAN_CODE_DISPATCH_UNIT = None,
+        UNIT_PRICE_CURRENCY = none,
+        EAN_CODE = none,
+        EAN_CODE_DISPATCH_UNIT = none,
         DELETE_FLAG = false,
         PRODUCT_NAME = "product-name",
         CREATED_AT = "2015-06-30 13:49:00",
         UPDATED_AT = "2015-06-30 13:49:00",
-        MRDR_CODE = None,
+        MRDR_CODE = none,
         SOURCE = "source-name",
-        SUB_BRAND = None,
-        SUB_CATEGORY = None,
-        ITEM_TYPE = None,
-        UNIT = None,
-        UNIT_PRICE = None,
-        CATEGORY = None
+        SUB_BRAND = none,
+        SUB_CATEGORY = none,
+        ITEM_TYPE = none,
+        UNIT = none,
+        UNIT_PRICE = none,
+        CATEGORY = none
       ))
     }
   }

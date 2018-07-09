@@ -3,6 +3,11 @@ package com.unilever.ohub.spark
 import java.sql.Timestamp
 import java.time.format.DateTimeFormatter
 
+import scala.language.implicitConversions
+
+/**
+ * Contains tranformers for DispatcherDB exports
+ */
 package object dispatcher {
   final val DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"
 
@@ -130,7 +135,8 @@ package object dispatcher {
     def formatTwoDecimalsOpt: Option[String] = that.map(_.formatTwoDecimals)
   }
 
-  implicit class AnyTypeOpt[A](that: A) {
-    def some: Option[A] = Option(that)
-  }
+  /**
+   * Automatically convert a value 'A' into an Option[A]
+   */
+  implicit def toOptionOfA[A](that: A): Option[A] = Option(that)
 }
