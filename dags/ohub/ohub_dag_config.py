@@ -325,7 +325,7 @@ class GenericPipeline(object):
                 {'jar': jar}
             ],
             spark_jar_task={
-                'main_class_name': f'com.unilever.ohub.spark.tsv2parquet.GatherJob',
+                'main_class_name': f'com.unilever.ohub.spark.ingest.GatherJob',
                 'parameters': ['--input',
                                ingested_bucket.format(date=one_day_ago, channel='*', fn=self._dag_config.entity),
                                '--output',
@@ -493,7 +493,7 @@ class GenericPipeline(object):
                 {'jar': jar}
             ],
             spark_jar_task={
-                'main_class_name': f'com.unilever.ohub.spark.tsv2parquet.{config.channel}.{self._clazz}Converter',
+                'main_class_name': f'com.unilever.ohub.spark.ingest.{config.channel}.{self._clazz}Converter',
                 'parameters': ['--inputFile', config.input,
                                '--outputFile', config.output,
                                '--fieldSeparator', config.separator,
