@@ -26,8 +26,8 @@ class WasbCopyOperator(BaseOperator):
         print(self.wasb_conn_id)
 
         hook = WasbHook(wasb_conn_id=self.wasb_conn_id)
-        print("hook")
-        print(json.dumps(vars(hook)))
+        # print("hook")
+        # print(json.dumps(vars(hook)))
 
         print("self.container_name")
         print(self.container_name)
@@ -38,7 +38,7 @@ class WasbCopyOperator(BaseOperator):
         print("confirming source")
         assert hook.check_for_blob(self.container_name, self.copy_source)
 
-        print("copying " + self.copy_source +  " in container " + self.container_name + " to " + self.blob_name)
+        print("copying " + self.copy_source + " in container " + self.container_name + " to " + self.blob_name)
         hook.copy_blob(self.container_name, self.blob_name, self.copy_source)
 
         print("confirming destination")
