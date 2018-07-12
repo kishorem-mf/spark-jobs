@@ -1,4 +1,4 @@
-package com.unilever.ohub.spark.ingest.web_event
+package com.unilever.ohub.spark.ingest.web_event_interface
 
 import java.sql.Timestamp
 
