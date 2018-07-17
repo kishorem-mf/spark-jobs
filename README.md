@@ -5,7 +5,7 @@ This repository holds the AirFlow dags for OHUB2.0 and O-Universe.
 To start writing a DAG for AirFlow have a look at the existing DAGs or the [AirFlow tutorial](https://airflow.apache.org/tutorial.html).
 
 ## Development
-Put your DAGS into the `dags` folder, The `dags/custom_operators` is reserved for implementation of operators not present in apache-airflow. Use the word `dag` in the python files that are actual DAGs to separate configuration settings from DAGs. Placing DAGs in subfolders to group them is fine and will be picked up by airflow, however they are not grouped in the UI. To make sure they are grouped in the UI, come up with a prefix for the group and use that in the DAG `id`.
+Put your DAGS into the `dags` folder, The `dags/custom_operators` is reserved for implementation of operators not present in `apache-airflow`. Use the word `dag` in the python files that are actual DAGs to separate configuration settings from DAGs. Placing DAGs in subfolders to group them is fine and will be picked up by airflow, however they are not grouped in the UI. To make sure they are grouped in the UI, come up with a prefix for the group and use that in the DAG `id`.
 
 ### Running tests
 To run tests and  codestyle. Create and activate the python environment:
