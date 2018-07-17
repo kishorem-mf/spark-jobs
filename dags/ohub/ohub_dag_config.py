@@ -257,7 +257,7 @@ class GenericPipeline(object):
             deduplicate_on_concat_id=deduplicate_on_concat_id,
             separator=separator)
 
-        self._ingests.append(self.__ingest_from_channel(config))
+        # self._ingests.append(self.__ingest_from_channel(config))
 
         return self
 
