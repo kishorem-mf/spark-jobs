@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.ingest.web_event_interface
 
 import java.sql.Timestamp
 
-import cats.syntax.option._
+import cats.syntax.option.none
 import com.unilever.ohub.spark.domain.entity.Order
 import com.unilever.ohub.spark.generic.StringFunctions.checkEnum
 import com.unilever.ohub.spark.ingest.CustomParsers.{ parseBigDecimalUnsafe, parseDateTimeStampUnsafe }
