@@ -58,8 +58,8 @@ class CustomParsersSpec extends FunSpec with Matchers {
       assert(parseDateTimeStampUnsafe("2017.12.15 12:13:14").toString == "2017-12-15 12:13:14.0")
     }
 
-    it("should parse 1531819820081 as 2018-07-17 11:30:20.0") {
-      assert(parseDateTimeStampUnsafe("1531819820081").toString == "2018-07-17 11:30:20.0")
+    it("should parse 1531819820081 as 2018-07-17 09:30:20.0 with UTC timezone") {
+      assert(parseDateTimeStampUnsafe("1531819820081").toString == "2018-07-17 09:30:20.0")
     }
 
     it("should return None on other input") {

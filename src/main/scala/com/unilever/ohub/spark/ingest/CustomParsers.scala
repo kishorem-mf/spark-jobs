@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.ingest
 
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
-import java.time.{ Instant, LocalDateTime }
+import java.time._
 import java.time.format.DateTimeFormatter
 
 import org.apache.log4j.Logger
@@ -47,8 +47,9 @@ object CustomParsers {
       case s: String if s.matches("\\d{2}-\\d{2}-\\d{2}") ⇒ // dd-MM-yy
         ("20" + s.takeRight(2) + s.slice(3, 5) + s.take(2)).concat(" 00:00:00")
       case s: String if s.matches("\\d{13}") ⇒ // long timestamp
-        val date = new java.util.Date(s.toLong)
-        new SimpleDateFormat(ufsDate).format(date)
+        val instant = Instant.ofEpochMilli(s.toLong)
+        val date = LocalDateTime.ofInstant(instant, ZoneId.of("UTC"))
+        date.format(DateTimeFormatter.ofPattern(ufsDate))
       case s: String ⇒
         throw new IllegalArgumentException(s"Could not parse [$s] as DateTimeStampOption")
     }
