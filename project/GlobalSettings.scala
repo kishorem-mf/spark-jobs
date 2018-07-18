@@ -13,9 +13,9 @@ object GlobalSettings extends AutoPlugin {
   override val projectSettings: Seq[Setting[_]] = Seq(
     scalaVersion := "2.11.12",
     libraryDependencies ++= projectDependencies
-  ) ++ testSettings ++ scoverageSettings ++ scalariFormSettings
+  ) ++ testSettings ++ scoverageSettings ++ scalariFormSettings ++ forceDepsSettings
 
-  lazy val testSettings = {
+  lazy val testSettings: Seq[Setting[_]] = {
     val flags = Seq(Tests.Argument("-oD"))
     //    Defaults.itSettings
     //    IntegrationTest / testOptions ++= flags
@@ -26,7 +26,7 @@ object GlobalSettings extends AutoPlugin {
     )
   }
 
-  lazy val scalariFormSettings = Seq(
+  lazy val scalariFormSettings: Seq[Setting[_]] = Seq(
     SbtScalariform.autoImport.scalariformPreferences :=
       SbtScalariform.autoImport.scalariformPreferences.value
         .setPreference(AlignParameters, false)
@@ -40,14 +40,14 @@ object GlobalSettings extends AutoPlugin {
         .setPreference(NewlineAtEndOfFile, true)
   )
 
-  lazy val scoverageSettings = Seq(
+  lazy val scoverageSettings: Seq[Setting[_]] = Seq(
     // Scoverage settings
     coverageExcludedPackages := "<empty>",
     coverageMinimum := 70.0,
     coverageFailOnMinimum := true
   )
 
-  lazy val projectDependencies = Seq(
+  lazy val projectDependencies: Seq[ModuleID] = Seq(
     "org.postgresql" % "postgresql" % "42.2.2",
     "org.apache.commons" % "commons-lang3" % "3.7",
     "io.circe" %% "circe-core" % CirceVersion,
@@ -56,6 +56,18 @@ object GlobalSettings extends AutoPlugin {
     "com.github.scopt" %% "scopt" % "3.7.0",
     "org.scalatest" %% "scalatest" % "3.0.5" % "test,it",
     "org.scalamock" %% "scalamock" % "4.1.0" % "test,it"
+  )
+
+  /**
+    * Fixes version conflicts warnings
+    */
+  lazy val forceDepsSettings: Seq[Setting[_]] = Seq(
+    dependencyOverrides ++= Seq(
+      "com.google.code.findbugs" % "jsr305" % "3.0.2",
+      "io.netty" % "netty" % "3.9.9.Final",
+      "commons-net" % "commons-net" % "2.2",
+      "com.google.guava" % "guava" % "11.0.2"
+    )
   )
 }
 
