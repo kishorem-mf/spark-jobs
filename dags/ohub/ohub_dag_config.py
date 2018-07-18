@@ -345,7 +345,6 @@ class GenericPipeline(object):
                 wasb_conn_id=wasb_conn_id)
 
             start_pipeline >> first_ingest_sensor >> start_ingest
-            # start_pipeline >> yesterday_sensor >> empty_fallback >> start_ingest
             start_pipeline >> yesterday_sensor
             yesterday_sensor >> empty_fallback >> start_ingest
         else:
