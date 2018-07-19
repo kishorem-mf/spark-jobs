@@ -2,7 +2,9 @@ FROM continuumio/miniconda:4.5.4
 
 ENV PYTHONDONTWRITEBYTECODE 1
 
-# hadolint ignore=DL3008
+# DL3008 = pin apt-get versions -> we want to install gcc latest
+# DL3015 = --no-install-recommends -> we need gcc to install recommends
+# hadolint ignore=DL3008,DL3015
 RUN set -ex \
     && apt-get update \
     && apt-get install -y gcc \
