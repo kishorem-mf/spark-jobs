@@ -2,4 +2,4 @@
 # https://github.com/hadolint/hadolint#configure
 
 ignored:
-  - SC2102
+  - SC2102  # https://github.com/koalaman/shellcheck/wiki/SC2102

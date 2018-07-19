@@ -4,6 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 
 RUN set -ex \
     && apt-get update \
+    # hadolint ignore=DL3008
     && apt-get install --no-install-recommends -y gcc \
     && pip install --no-cache-dir apache-airflow[crypto,postgres,azure]==1.9.0 \
     && rm -rf /var/lib/apt/lists/*
