@@ -35,6 +35,10 @@ pipelines:
   custom:
     build-airflow-image:
       - step:
-          name: dockerlint
+          name: Dockerlint
           script:
-            - for f in $(find . -name Dockerfile); do docker run --rm -i hadolint/hadolint:v1.10.3 < $f; done
+            - make dockerlint
+      - step:
+          name: Build image
+          script:
+            - docker build -f docker/airflow/Dockerfile .

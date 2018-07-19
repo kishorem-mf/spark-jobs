@@ -1,0 +1,5 @@
+# Hadolint (Dockerfile linter) config file
+# https://github.com/hadolint/hadolint#configure
+
+ignored:
+  - SC2102
