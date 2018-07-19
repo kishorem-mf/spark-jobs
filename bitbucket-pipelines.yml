@@ -37,4 +37,4 @@ pipelines:
       - step:
           name: dockerlint
           script:
-            - find . -name Dockerfile -type f -print0 | xargs -0 -I file sh -c 'docker run --rm -i hadolint/hadolint:v1.10.3 < "file"'
+            - for f in $(find . -name Dockerfile); do docker run --rm -i hadolint/hadolint:v1.10.3 < $f; done
