@@ -1,10 +1,10 @@
 from airflow import configuration
 
-email_addresses = ['timvancann@godatadriven.com',
-                   'Dennis.Vis@unilever.com',
-                   'Tycho.Grouwstra@unilever.com',
-                   'Roderik-von.Maltzahn@unilever.com',
-                   'Gerard.Glind@unilever.com']
+email_addresses = [
+    "Dennis.Vis@unilever.com",
+    "Tycho.Grouwstra@unilever.com",
+    "Roderik-von.Maltzahn@unilever.com",
+]
 
 country_codes = dict(
     AU=149299102,
