@@ -7,6 +7,7 @@ dependencies:
   - azure=1.0.2
   - google-api-python-client=1.6.7
   - pandas-gbq=0.5.0
+  - paramiko=2.4.1
   - pytest=3.6.3
   - python=3.6.6
   - pip:
