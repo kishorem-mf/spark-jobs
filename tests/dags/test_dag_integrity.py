@@ -32,19 +32,9 @@ def test_dag_integrity(dag_file):
 
 
 def _import_file(module_name, module_path):
-    """Helper for importing modules, providing support for Python 3.4."""
+    import importlib.util
 
-    is_python_pre_3_5 = sys.version_info[:2] < (3, 5)
-
-    if is_python_pre_3_5:
-        import imp
-
-        module = imp.load_source(module_name, module_path)
-    else:
-        import importlib.util
-
-        spec = importlib.util.spec_from_file_location(module_name, str(module_path))
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-
+    spec = importlib.util.spec_from_file_location(module_name, str(module_path))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
     return module
