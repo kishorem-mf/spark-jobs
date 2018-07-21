@@ -2,7 +2,7 @@ from datetime import datetime
 
 from airflow import DAG
 
-from custom_operators.wasb_copy import WasbCopyOperator
+from ohub.operators.wasb_operator import WasbCopyOperator
 from ohub.ohub_dag_config import default_args, GenericPipeline, SubPipeline, one_day_ago, DagConfig, \
     wasb_integrated_container, http_intermediate_container, small_cluster_config
 
