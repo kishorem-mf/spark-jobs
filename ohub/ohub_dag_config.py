@@ -22,12 +22,11 @@ from airflow.hooks.base_hook import BaseHook
 from airflow.models import BaseOperator
 from airflow.operators.bash_operator import BashOperator
 
-from config import email_addresses, slack_on_databricks_failure_callback
-from custom_operators.databricks_functions import \
-    DatabricksCreateClusterOperator, DatabricksTerminateClusterOperator, DatabricksSubmitRunOperator
-from custom_operators.empty_fallback import EmptyFallbackOperator
-from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
-from custom_operators.file_from_wasb import FileFromWasbOperator
+from dags.config import email_addresses, slack_on_databricks_failure_callback
+from ohub.operators.databricks_functions import DatabricksCreateClusterOperator, DatabricksTerminateClusterOperator, DatabricksSubmitRunOperator
+from ohub.operators.empty_fallback import EmptyFallbackOperator
+from ohub.operators.external_task_sensor_operator import ExternalTaskSensorOperator
+from ohub.operators.file_from_wasb import FileFromWasbOperator
 
 ohub_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG', 'BH', 'BO', 'BR', 'CA', 'CH',
                       'CL', 'CN', 'CO', 'CR', 'CZ', 'DE', 'DK', 'DO', 'EC', 'EE', 'EG', 'ES', 'FI', 'FR', 'GB',
