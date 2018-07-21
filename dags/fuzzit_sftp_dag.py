@@ -3,9 +3,9 @@ from datetime import datetime
 from airflow import DAG
 from airflow.contrib.operators.sftp_operator import SFTPOperation
 from airflow.operators.bash_operator import BashOperator
-from custom_operators.zip_operator import UnzipOperator
-from custom_operators.folder_to_wasb import FolderToWasbOperator
-from custom_operators.short_circuit_sftp_operator import ShortCircuitSFTPOperator
+from ohub.operators.zip_operator import UnzipOperator
+from ohub.operators.wasb_operator import FolderToWasbOperator
+from ohub.operators.short_circuit_sftp_operator import ShortCircuitSFTPOperator
 from ohub.ohub_dag_config import container_name
 
 default_args = {

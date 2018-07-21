@@ -23,7 +23,7 @@ from airflow.models import BaseOperator
 from airflow.operators.bash_operator import BashOperator
 
 from dags.config import email_addresses, slack_on_databricks_failure_callback
-from ohub.operators.databricks_functions import DatabricksCreateClusterOperator, DatabricksTerminateClusterOperator, DatabricksSubmitRunOperator
+from ohub.operators.databricks_operator import DatabricksCreateClusterOperator, DatabricksTerminateClusterOperator, DatabricksSubmitRunOperator
 from ohub.operators.empty_fallback import EmptyFallbackOperator
 from ohub.operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub.operators.file_from_wasb import FileFromWasbOperator

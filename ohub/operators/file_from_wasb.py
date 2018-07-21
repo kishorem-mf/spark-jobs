@@ -2,7 +2,7 @@
 # airflow/contrib/operators/file_to_wasb.py
 import os
 
-from custom_operators.wasb_hook import WasbHook
+from ohub.vendor.airflow.contrib.hooks.wasb_hook import WasbHook
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 

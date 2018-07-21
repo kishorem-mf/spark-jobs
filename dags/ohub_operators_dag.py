@@ -2,8 +2,7 @@ from datetime import datetime
 
 from airflow import DAG
 
-from custom_operators.databricks_functions import \
-    DatabricksSubmitRunOperator
+from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
 from ohub.ohub_dag_config import \
     default_args, databricks_conn_id, jar, intermediate_bucket, integrated_bucket, one_day_ago, \
     two_day_ago, postgres_config, \

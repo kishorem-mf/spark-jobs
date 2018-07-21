@@ -2,10 +2,9 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 
-from config import email_addresses
-from custom_operators.databricks_functions import \
-    DatabricksTerminateClusterOperator, \
-    DatabricksStartClusterOperator
+from dags.config import email_addresses
+from ohub.operators.databricks_operator import DatabricksTerminateClusterOperator, DatabricksStartClusterOperator
+
 
 default_args = {
     'owner': 'airflow',

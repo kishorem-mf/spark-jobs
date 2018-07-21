@@ -2,8 +2,8 @@ from datetime import datetime
 
 from airflow import DAG
 
-from custom_operators.databricks_functions import DatabricksSubmitRunOperator
-from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
+from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
+from ohub.operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub.ohub_dag_config import SubPipeline, DagConfig, intermediate_bucket, small_cluster_config
 from ohub.ohub_dag_config import default_args, databricks_conn_id, jar, \
     one_day_ago, integrated_bucket, two_day_ago, \
