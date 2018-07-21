@@ -58,40 +58,44 @@ country_codes = dict(
     ES=136477925,
     TR=149299194,
     IE=162648003,
-    GB=136489308)
+    GB=136489308,
+)
 
 
 def slack_on_databricks_failure_callback(context):
     from airflow.operators.slack_operator import SlackAPIPostOperator
     from airflow.models import Variable
 
-    log_link = ('{base_url}/admin/airflow/log?dag_id={dag_id}&task_id={task_id}&execution_date={execution_date}'
-                .format(base_url=configuration.get('webserver', 'BASE_URL'),
-                        dag_id=context['dag'].dag_id,
-                        task_id=context['task_instance'].task_id,
-                        execution_date=context['ts'])
-                )
-    if 'databricks_url' in context:
-        databricks_url = context['databricks_url']
+    log_link = "{base_url}/admin/airflow/log?dag_id={dag_id}&task_id={task_id}&execution_date={execution_date}".format(
+        base_url=configuration.get("webserver", "BASE_URL"),
+        dag_id=context["dag"].dag_id,
+        task_id=context["task_instance"].task_id,
+        execution_date=context["ts"],
+    )
+    if "databricks_url" in context:
+        databricks_url = context["databricks_url"]
     else:
-        databricks_url = 'no url available'
+        databricks_url = "no url available"
 
     template = """
 :skull: An airflow task failed at _{time}_
 It looks like something went wrong with the task *{dag_id}.{task_id}* :anguished:. Better check the logs!
 > <{airflow_log}|airflow logs>
 > <{databricks_log}|databricks logs>
-""".format(task_id=str(context['task'].task_id),
-           dag_id=str(context['dag'].dag_id),
-           time=str(context['ts']),
-           airflow_log=log_link,
-           databricks_log=databricks_url)
+""".format(
+        task_id=str(context["task"].task_id),
+        dag_id=str(context["dag"].dag_id),
+        time=str(context["ts"]),
+        airflow_log=log_link,
+        databricks_log=databricks_url,
+    )
 
-    slack_token = Variable.get('slack_airflow_token')
+    slack_token = Variable.get("slack_airflow_token")
     operator = SlackAPIPostOperator(
-        task_id='slack_failure_notification',
+        task_id="slack_failure_notification",
         token=slack_token,
-        channel='#airflow',
-        text=template)
+        channel="#airflow",
+        text=template,
+    )
 
     return operator.execute(context=context)
