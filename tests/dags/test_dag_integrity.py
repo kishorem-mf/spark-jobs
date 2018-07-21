@@ -21,13 +21,10 @@ DAG_FILES = [
 
 @pytest.mark.parametrize("dag_file", [pytest.param(dag_path) for dag_path in DAG_FILES])
 def test_dag_integrity(dag_file):
-    """Import dag files and check for DAG."""
-
+    """Import DAG files and check for DAG."""
     module_name, _ = path.splitext(dag_file)
     module_path = path.join(DAG_PATH, dag_file)
-
     module = _import_file(module_name, module_path)
-
     assert any(isinstance(var, af_models.DAG) for var in vars(module).values())
 
 
