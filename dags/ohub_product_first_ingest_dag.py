@@ -2,9 +2,10 @@ from datetime import datetime
 
 from airflow import DAG
 
-from ohub.operators.wasb_operator import WasbCopyOperator
-from ohub.ohub_dag_config import default_args, GenericPipeline, SubPipeline, one_day_ago, DagConfig, \
+from ohub.ohub_dag_config import default_args, GenericPipeline, one_day_ago, DagConfig, \
     wasb_integrated_container, http_intermediate_container, small_cluster_config
+from ohub.operators.wasb_operator import WasbCopyOperator
+from ohub.utils.airflow import SubPipeline
 
 default_args.update(
     {'start_date': datetime(2018, 6, 13)}

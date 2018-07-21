@@ -161,7 +161,7 @@ class IngestConfig(object):
          output_file: Where to put the output parquet
          channel: The channel of the raw files (i.e. `file_interface`, `web_event`, etc)
          deduplicate_on_concat_id: Whether to deduplicate on `concatId`, in most cases this should be `True`
-         alternative_seperator: The seperator for the CSV files
+         alternative_seperator: The separator for the CSV files
     """
     def __init__(self,
                  input_file: str,
@@ -174,13 +174,6 @@ class IngestConfig(object):
         self.input = input_file
         self.output = output_file
         self.channel = channel
-
-
-class SubPipeline(object):
-    """A (case) class holding the first and last task of a pipeline"""
-    def __init__(self, first_task: BaseOperator, last_task: BaseOperator):
-        self.first_task = first_task
-        self.last_task = last_task
 
 
 class GenericPipeline(object):
