@@ -3,16 +3,25 @@ from airflow.models import BaseOperator
 
 
 class LazyConnection(object):
-    """Lazy connection class that only fetches connection when accessed."""
+    """Lazy connection class that only fetches connection when accessed.
 
-    def __init__(self, conn_id):
+    :param str conn_id: Airflow connection id.
+    """
+
+    def __init__(self, conn_id: str):
+        self.conn = None
         self._conn_id = conn_id
-        self._conn = None
 
-    def __getattr__(self):
-        if self._conn is None:
-            self._conn = BaseHook.get_connection(self._conn_id)
-        return getattr(self, self._conn)
+    def __getattribute__(self, item):
+        if object.__getattribute__(self, "conn") is None:
+            object.__setattr__(
+                self,
+                "conn",
+                BaseHook.get_connection(
+                    conn_id=object.__getattribute__(self, "_conn_id")
+                ),
+            )
+        return object.__getattribute__(self, item)
 
 
 class SubPipeline(object):
