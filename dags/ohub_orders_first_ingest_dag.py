@@ -5,7 +5,7 @@ from airflow import DAG
 from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
 from ohub.operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub.operators.wasb_operator import WasbCopyOperator
-from ohub.ohub_dag_config import default_args, databricks_conn_id, jar, \
+from dags.ohub_dag_config import default_args, databricks_conn_id, jar, \
     one_day_ago, integrated_bucket, GenericPipeline, SubPipeline, DagConfig, intermediate_bucket, \
     wasb_integrated_container, http_intermediate_container, small_cluster_config
 

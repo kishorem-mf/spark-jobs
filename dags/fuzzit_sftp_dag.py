@@ -6,7 +6,7 @@ from airflow.operators.bash_operator import BashOperator
 from ohub.operators.zip_operator import UnzipOperator
 from ohub.operators.wasb_operator import FolderToWasbOperator
 from ohub.operators.short_circuit_sftp_operator import ShortCircuitSFTPOperator
-from ohub.ohub_dag_config import container_name
+from dags.ohub_dag_config import container_name
 
 default_args = {
     'owner': 'airflow',

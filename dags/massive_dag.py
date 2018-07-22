@@ -3,7 +3,7 @@ from datetime import datetime
 from airflow import DAG
 
 from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
-from ohub.ohub_dag_config import \
+from dags.ohub_dag_config import \
     default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, one_day_ago, \
     two_day_ago, postgres_config, \
     GenericPipeline, DagConfig, large_cluster_config
