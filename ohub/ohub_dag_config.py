@@ -19,7 +19,6 @@ from typing import List
 from airflow import AirflowException
 from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 from airflow.hooks.base_hook import BaseHook
-from airflow.models import BaseOperator
 from airflow.operators.bash_operator import BashOperator
 
 from dags.config import email_addresses, slack_on_databricks_failure_callback
