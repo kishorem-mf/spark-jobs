@@ -601,8 +601,6 @@ class GenericPipeline(object):
                     "false",
                     "--deduplicateOnConcatId",
                     dedup,
-                ]
-                + [
                     "--postgressUrl",
                     "{{ params.postgres_conn.host }}",
                     "--postgressUsername",
