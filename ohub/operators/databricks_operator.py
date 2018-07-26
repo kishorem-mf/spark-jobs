@@ -5,6 +5,8 @@ from airflow import AirflowException
 from airflow.contrib.hooks.databricks_hook import DatabricksHook
 from airflow.models import BaseOperator
 
+from ohub.utils.databricks import find_cluster_id, get_cluster_status
+
 LINE_BREAK = "-" * 80
 
 
@@ -66,7 +68,9 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
         **kwargs,
     ):
 
-        super().__init__(**kwargs)
+        super().__init__(
+            databricks_conn_id, polling_period_seconds, databricks_retry_limit, **kwargs
+        )
         if cluster_name is not None and existing_cluster_id is not None:
             raise AirflowException(
                 "Cannot specify both cluster name and cluster id, choose one but choose wisely"
@@ -103,7 +107,7 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
             self._json["spark_python_task"] = self._spark_python_task
         hook = self.get_hook()
         if self._cluster_name is not None:
-            cluster_id = _find_cluster_id(self._cluster_name, databricks_hook=hook)
+            cluster_id = find_cluster_id(self._cluster_name, databricks_hook=hook)
             logging.info(
                 f'Using Databricks cluster_id {cluster_id} for cluster named "{self._cluster_name}"'
             )
@@ -177,7 +181,7 @@ class DatabricksCreateClusterOperator(BaseDatabricksOperator):
         self.cluster_id = body["cluster_id"]
 
         while True:
-            run_state = _get_cluster_status(self.cluster_id, databricks_hook=hook)
+            run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
             if run_state == "RUNNING":
                 logging.info("{} completed successfully.".format(self.task_id))
                 return
@@ -228,7 +232,7 @@ class DatabricksStartClusterOperator(BaseDatabricksOperator):
         hook = self.get_hook()
         logging.info('Starting Databricks cluster with id %s"', self.cluster_id)
 
-        run_state = _get_cluster_status(self.cluster_id, databricks_hook=hook)
+        run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
         if run_state == "RUNNING":
             logging.info("Cluster already running.".format(self.task_id))
             return
@@ -237,7 +241,7 @@ class DatabricksStartClusterOperator(BaseDatabricksOperator):
             ("POST", "api/2.0/clusters/start"), {"cluster_id": self.cluster_id}
         )
         while True:
-            run_state = _get_cluster_status(self.cluster_id, databricks_hook=hook)
+            run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
             if run_state == "RUNNING":
                 logging.info("{} completed successfully.".format(self.task_id))
                 return
@@ -293,13 +297,13 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
         logging.info('Deleting Databricks cluster with name "%s"', self.cluster_name)
 
         if not self.cluster_id:
-            self.cluster_id = _find_cluster_id(self.cluster_name, databricks_hook=hook)
+            self.cluster_id = find_cluster_id(self.cluster_name, databricks_hook=hook)
         hook._do_api_call(
             ("POST", "api/2.0/clusters/delete"), {"cluster_id": self.cluster_id}
         )
 
         while True:
-            run_state = _get_cluster_status(self.cluster_id, self._databricks_conn_id)
+            run_state = get_cluster_status(self.cluster_id, self._databricks_conn_id)
             if run_state == "TERMINATED":
                 logging.info(
                     "Termination of cluster {} with id {} completed successfully.".format(
@@ -339,7 +343,7 @@ class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
     def execute(self, context):
         hook = self.get_hook()
 
-        run_state = _get_cluster_status(self.cluster_id, databricks_hook=hook)
+        run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
         if run_state != "RUNNING":
             raise AirflowException("Cluster must be running before removing libraries")
 
@@ -355,7 +359,7 @@ class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
 
         time.sleep(10)  # make sure the API is refreshed, reflecting the restarting state
         while True:
-            run_state = _get_cluster_status(self.cluster_id, databricks_hook=hook)
+            run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
             if run_state == "RUNNING":
                 logging.info("{} completed successfully.".format(self.task_id))
                 return
@@ -383,74 +387,3 @@ class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
                 c=self.cluster_id
             )
         )
-
-
-def _find_cluster_id(
-    cluster_name, databricks_conn_id="databricks_default", databricks_hook=None
-):
-    """
-    Finds the `cluster_id` for a running cluster named `cluster_name`.
-    :param cluster_name: the cluster name to look for.
-    :param databricks_conn_id: the connection ID (default: `databricks_default`)
-    :param databricks_hook: a `DatabricksHook` instance to use. Takes precedence over `databricks_conn_id`.
-    :return: a cluster ID
-    :raises AirflowException: if no matching cluster is found.
-    """
-    clusters = _find_running_clusters_by_name(
-        cluster_name, databricks_conn_id, databricks_hook
-    )
-
-    if len(clusters) == 0:
-        raise AirflowException(
-            'Found no running Databricks cluster named "{}".'.format(cluster_name)
-        )
-    elif len(clusters) > 1:
-        logging.warning(
-            'Found more than one running Databricks cluster named "{}", using first match.',
-            cluster_name,
-        )
-
-    cluster_id = clusters[0]["cluster_id"]
-    return cluster_id
-
-
-def _find_running_clusters_by_name(
-    cluster_name, databricks_conn_id="databricks_default", databricks_hook=None
-):
-    """
-    Queries the Databricks API to find all running clusters with the given cluster name.
-    :param cluster_name: the cluster name to look for.
-    :param databricks_conn_id: the connection ID (default: `databricks_default`)
-    :param databricks_hook: a `DatabricksHook` instance to use. Takes precedence over `databricks_conn_id`.
-    :return: a list of ClusterInfo: https://docs.databricks.com/api/latest/clusters.html#clusterclusterinfo
-    """
-    hook = databricks_hook or DatabricksHook(databricks_conn_id=databricks_conn_id)
-    body = hook._do_api_call(("GET", "api/2.0/clusters/list"), {})
-
-    non_terminated_states = ["PENDING", "RUNNING", "RESTARTING", "RESIZING"]
-    return [
-        cluster
-        for cluster in body["clusters"]
-        if cluster_name == cluster["cluster_name"]
-        and cluster["state"] in non_terminated_states
-    ]
-
-
-def _get_cluster_status(
-    cluster_id, databricks_conn_id="databricks_default", databricks_hook=None
-):
-    """
-    Requests databricks for the status of the cluster. For full specification of the return json,
-    see https://docs.databricks.com/api/latest/clusters.html#get
-    :param databricks_conn_id: the connection ID (default: `databricks_default`)
-    :param databricks_hook: a `DatabricksHook` instance to use. Takes precedence over `databricks_conn_id`.
-    :param hook: The hook into databricks
-    :param cluster_id: The cluster id
-    :return: The status of the cluster
-    """
-
-    hook = databricks_hook or DatabricksHook(databricks_conn_id=databricks_conn_id)
-    body = hook._do_api_call(
-        ("GET", "api/2.0/clusters/get?cluster_id={}".format(cluster_id)), {}
-    )
-    return body["state"]

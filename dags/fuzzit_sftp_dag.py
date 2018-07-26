@@ -1,3 +1,5 @@
+"""Ingest Fuzzit data from SFTP"""
+
 from datetime import datetime
 
 from airflow import DAG
@@ -9,10 +11,10 @@ from ohub.operators.wasb_operator import FolderToWasbOperator
 from ohub.operators.short_circuit_sftp_operator import ShortCircuitSFTPOperator
 from dags.config import container_name, dag_default_args
 
-dag_args = {**dag_default_args, **{"start_date": datetime(2018, 3, 2), "retries": 0}}
+DAG_ARGS = {**dag_default_args, **{"start_date": datetime(2018, 3, 2), "retries": 0}}
 
 with DAG(
-    dag_id="fuzzit_sftp", default_args=dag_args, schedule_interval="0 0 1 * *"
+    dag_id="fuzzit_sftp", default_args=DAG_ARGS, schedule_interval="0 0 1 * *"
 ) as dag:
     fds = "{{ macros.ds_format(ds, '%Y-%m-%d', '%Y%m%d') }}"
     remote_filepath = f"/ftp/ftp_ohub20/UFS_Fuzzit_OHUB20_{fds}_1400.zip"
