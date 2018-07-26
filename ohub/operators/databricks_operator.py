@@ -43,10 +43,10 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
     """
 
     template_fields = (
-        "spark_jar_task",
-        "notebook_task",
-        "spark_python_task",
-        "cluster_name",
+        "_spark_jar_task",
+        "_notebook_task",
+        "_spark_python_task",
+        "_cluster_name",
     )
     template_ext = (".j2", ".jinja2")
 
@@ -63,12 +63,10 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
         databricks_conn_id="databricks_default",
         polling_period_seconds=30,
         databricks_retry_limit=3,
-        **kwargs
+        **kwargs,
     ):
 
-        super().__init__(
-            databricks_conn_id, polling_period_seconds, databricks_retry_limit, **kwargs
-        )
+        super().__init__(**kwargs)
         if cluster_name is not None and existing_cluster_id is not None:
             raise AirflowException(
                 "Cannot specify both cluster name and cluster id, choose one but choose wisely"
@@ -94,7 +92,7 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
 
     @staticmethod
     def _log_run_page_url(url):
-        logging.info("View run status, Spark UI, and logs at {}".format(url))
+        logging.info(f"View run status, Spark UI, and logs at {url}")
 
     def execute(self, context):
         if self._spark_jar_task is not None:
@@ -106,7 +104,9 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
         hook = self.get_hook()
         if self._cluster_name is not None:
             cluster_id = _find_cluster_id(self._cluster_name, databricks_hook=hook)
-            logging.info(f'Using Databricks cluster_id {cluster_id} for cluster named "{self._cluster_name}"')
+            logging.info(
+                f'Using Databricks cluster_id {cluster_id} for cluster named "{self._cluster_name}"'
+            )
             self._json["existing_cluster_id"] = cluster_id
 
         self.run_id = hook.submit_run(self._json)
@@ -158,7 +158,7 @@ class DatabricksCreateClusterOperator(BaseDatabricksOperator):
         databricks_conn_id="databricks_default",
         polling_period_seconds=30,
         databricks_retry_limit=3,
-        **kwargs
+        **kwargs,
     ):
         super(DatabricksCreateClusterOperator, self).__init__(
             databricks_conn_id, polling_period_seconds, databricks_retry_limit, **kwargs
@@ -217,7 +217,7 @@ class DatabricksStartClusterOperator(BaseDatabricksOperator):
         databricks_conn_id="databricks_default",
         polling_period_seconds=30,
         databricks_retry_limit=3,
-        **kwargs
+        **kwargs,
     ):
         super(DatabricksStartClusterOperator, self).__init__(
             databricks_conn_id, polling_period_seconds, databricks_retry_limit, **kwargs
@@ -280,7 +280,7 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
         databricks_conn_id="databricks_default",
         polling_period_seconds=30,
         databricks_retry_limit=3,
-        **kwargs
+        **kwargs,
     ):
         super(DatabricksTerminateClusterOperator, self).__init__(
             databricks_conn_id, polling_period_seconds, databricks_retry_limit, **kwargs
@@ -328,7 +328,7 @@ class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
         databricks_conn_id="databricks_default",
         polling_period_seconds=30,
         databricks_retry_limit=3,
-        **kwargs
+        **kwargs,
     ):
         super(DatabricksUninstallLibrariesOperator, self).__init__(
             databricks_conn_id, polling_period_seconds, databricks_retry_limit, **kwargs
