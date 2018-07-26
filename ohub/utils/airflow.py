@@ -12,7 +12,7 @@ from ohub.operators.databricks_operator import (
     DatabricksSubmitRunOperator,
     DatabricksTerminateClusterOperator,
 )
-from ohub.operators.empty_fallback_operator import EmptyFallbackOperator
+from ohub.operators.wasb_operator import EmptyFallbackOperator
 from ohub.operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub.operators.wasb_operator import FileFromWasbOperator
 
