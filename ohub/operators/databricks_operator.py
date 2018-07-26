@@ -334,7 +334,7 @@ class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
         databricks_retry_limit=3,
         **kwargs,
     ):
-        super(DatabricksUninstallLibrariesOperator, self).__init__(
+        super().__init__(
             databricks_conn_id, polling_period_seconds, databricks_retry_limit, **kwargs
         )
         self.cluster_id = cluster_id
@@ -347,7 +347,7 @@ class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
         if run_state != "RUNNING":
             raise AirflowException("Cluster must be running before removing libraries")
 
-        logging.info('Restarting Databricks cluster with id %s"', self.cluster_id)
+        logging.info(f"Restarting Databricks cluster with id {self.cluster_id}")
 
         hook._do_api_call(
             ("POST", "api/2.0/libraries/uninstall"),
@@ -361,20 +361,14 @@ class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
         while True:
             run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
             if run_state == "RUNNING":
-                logging.info("{} completed successfully.".format(self.task_id))
+                logging.info(f"{self.task_id} completed successfully.")
                 return
             elif run_state == "TERMINATED":
-                error_message = "Cluster start failed with terminal state: {s}".format(
-                    s=run_state
-                )
+                error_message = f"Cluster start failed with terminal state: {run_state}"
                 raise AirflowException(error_message)
             else:
-                logging.info(
-                    "Cluster restarting, currently in state: {s}".format(s=run_state)
-                )
-                logging.info(
-                    "Sleeping for {} seconds.".format(self._polling_period_seconds)
-                )
+                logging.info(f"Cluster restarting, currently in state: {run_state}")
+                logging.info(f"Sleeping for {self._polling_period_seconds} seconds.")
                 time.sleep(self._polling_period_seconds)
 
     def on_kill(self):
@@ -383,7 +377,5 @@ class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
             ("POST", "api/2.0/clusters/delete"), {"cluster_id": self.cluster_id}
         )
         logging.info(
-            "Cluster start with id: {c} was requested to be cancelled.".format(
-                c=self.cluster_id
-            )
+            f"Cluster start with id: {self.cluster_id} was requested to be cancelled."
         )
