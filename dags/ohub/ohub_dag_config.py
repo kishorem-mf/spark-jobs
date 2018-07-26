@@ -38,7 +38,8 @@ ohub_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG'
 
 default_args = {
     'owner': 'airflow',
-    'depends_on_past': False,
+    'depends_on_past': True,
+    'wait_for_downstream': True,
     'email': email_addresses,
     'email_on_failure': False,
     'email_on_retry': False,
@@ -291,17 +292,11 @@ class GenericPipeline(object):
         This will also boot up a cluster
         """
         cluster_up = create_cluster(self._dag_config.entity, self._cluster_config)
-        if self._dag_config.is_delta:
-            start_pipeline = ExternalTaskSensorOperator(
-                task_id=f'{self._dag_config.entity}_start_pipeline',
-                external_dag_id=self._dag_config.dag_id,
-                external_task_id=f'{self._dag_config.entity}_end_pipeline',
-                execution_delta=timedelta(days=1))
-        else:
-            start_pipeline = BashOperator(
-                task_id=f'{self._dag_config.entity}_start_pipeline',
-                bash_command='echo "start pipeline"',
-            )
+
+        start_pipeline = BashOperator(
+            task_id=f'{self._dag_config.entity}_start_pipeline',
+            bash_command='echo "start pipeline"',
+        )
 
         end_ingest = BashOperator(
             task_id=f'{self._dag_config.entity}_end_ingest',

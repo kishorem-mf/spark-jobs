@@ -102,3 +102,4 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     fuzzy_matching.last_task >> join >> combine_to_create_integrated >> update_golden_records
     update_golden_records >> update_operators_table
     update_golden_records >> export.first_task
+    ingest.first_task >> export.last_task

@@ -10,6 +10,7 @@ from custom_operators.databricks_functions import \
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
+    'wait_for_downstream': False,
     'start_date': datetime(2018, 4, 13),
     'email': email_addresses,
     'email_on_failure': True,
