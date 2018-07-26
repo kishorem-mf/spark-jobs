@@ -9,6 +9,7 @@ from custom_operators.ga_fetch_operator import GAToGSOperator, LocalGAToWasbOper
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
+    'wait_for_downstream': False,
     'email': email_addresses,
     'email_on_failure': False,
     'email_on_retry': False,

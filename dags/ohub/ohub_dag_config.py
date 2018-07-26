@@ -38,7 +38,8 @@ ohub_country_codes = ['AD', 'AE', 'AF', 'AR', 'AT', 'AU', 'AZ', 'BD', 'BE', 'BG'
 
 default_args = {
     'owner': 'airflow',
-    'depends_on_past': False,
+    'depends_on_past': True,
+    'wait_for_downstream': True,
     'email': email_addresses,
     'email_on_failure': False,
     'email_on_retry': False,
@@ -325,12 +326,6 @@ class GenericPipeline(object):
         )
 
         if self._dag_config.is_delta:
-            yesterday_sensor = ExternalTaskSensorOperator(
-                task_id=f'{entity}_start_pipeline',
-                external_dag_id=self._dag_config.dag_id,
-                external_task_id=f'{entity}_end_pipeline',
-                execution_delta=timedelta(days=1))
-
             first_ingest_sensor = ExternalTaskSensorOperator(
                 task_id=f'{entity}_first_ingest_sensor',
                 external_dag_id=f'ohub_{entity}_initial_load',
@@ -344,9 +339,7 @@ class GenericPipeline(object):
                                                     channel='file_interface'),
                 wasb_conn_id=wasb_conn_id)
 
-            start_pipeline >> first_ingest_sensor >> start_ingest
-            start_pipeline >> yesterday_sensor
-            yesterday_sensor >> empty_fallback >> start_ingest
+            start_pipeline >> first_ingest_sensor >> empty_fallback >> start_ingest
         else:
             start_pipeline >> start_ingest
 

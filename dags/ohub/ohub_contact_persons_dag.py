@@ -165,3 +165,4 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     exact_match_integrated_ingested >> fuzzy_matching.first_task
     fuzzy_matching.last_task >> join_fuzzy_matched >> join_fuzzy_and_exact_matched >> operators_integrated_sensor
     operators_integrated_sensor >> referencing >> update_golden_records >> export.first_task
+    ingest.first_task >> export.last_task
