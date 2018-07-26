@@ -1,10 +1,44 @@
-from airflow import configuration
+from datetime import timedelta
+
+from ohub.utils.airflow import slack_on_databricks_failure_callback
 
 email_addresses = [
     "Dennis.Vis@unilever.com",
     "Tycho.Grouwstra@unilever.com",
     "Roderik-von.Maltzahn@unilever.com",
 ]
+
+dag_default_args = {
+    "owner": "airflow",
+    "depends_on_past": False,
+    "email": email_addresses,
+    "email_on_failure": False,
+    "email_on_retry": False,
+    "retries": 1,
+    "retry_delay": timedelta(seconds=30),
+    "on_failure_callback": slack_on_databricks_failure_callback,
+}
+
+ohub_entities = {
+    "operators": {},
+    "orders": {"spark_class": "Order"},
+    "orderlines": {"spark_class": "OrderLine"},
+    "products": {},
+}
+
+# class OHubEntity(Enum):
+#     OPERATORS = "operators"
+#     ORDERS = "orders"
+#     ORDERLINES = "orderlines"
+#     PRODUCTS = "products"
+
+
+# class OHubEntity(object):
+#     def __init__(self):
+#         self.clazz = None
+#
+#
+# ohub_entities = {"operators": {}, "orders": {}, "orderlines": {}, "products": {}}
 
 country_codes = dict(
     AU=149299102,
@@ -61,41 +95,147 @@ country_codes = dict(
     GB=136489308,
 )
 
+ohub_country_codes = [
+    "AD",
+    "AE",
+    "AF",
+    "AR",
+    "AT",
+    "AU",
+    "AZ",
+    "BD",
+    "BE",
+    "BG",
+    "BH",
+    "BO",
+    "BR",
+    "CA",
+    "CH",
+    "CL",
+    "CN",
+    "CO",
+    "CR",
+    "CZ",
+    "DE",
+    "DK",
+    "DO",
+    "EC",
+    "EE",
+    "EG",
+    "ES",
+    "FI",
+    "FR",
+    "GB",
+    "GE",
+    "GR",
+    "GT",
+    "HK",
+    "HN",
+    "HU",
+    "ID",
+    "IE",
+    "IL",
+    "IN",
+    "IR",
+    "IT",
+    "JO",
+    "KR",
+    "KW",
+    "LB",
+    "LK",
+    "LT",
+    "LU",
+    "LV",
+    "MA",
+    "MM",
+    "MO",
+    "MV",
+    "MX",
+    "MY",
+    "NI",
+    "NL",
+    "NO",
+    "NU",
+    "NZ",
+    "OM",
+    "PA",
+    "PE",
+    "PH",
+    "PK",
+    "PL",
+    "PT",
+    "QA",
+    "RO",
+    "RU",
+    "SA",
+    "SE",
+    "SG",
+    "SK",
+    "SV",
+    "TH",
+    "TR",
+    "TW",
+    "US",
+    "VE",
+    "VN",
+    "ZA",
+]
 
-def slack_on_databricks_failure_callback(context):
-    from airflow.operators.slack_operator import SlackAPIPostOperator
-    from airflow.models import Variable
 
-    log_link = "{base_url}/admin/airflow/log?dag_id={dag_id}&task_id={task_id}&execution_date={execution_date}".format(
-        base_url=configuration.get("webserver", "BASE_URL"),
-        dag_id=context["dag"].dag_id,
-        task_id=context["task_instance"].task_id,
-        execution_date=context["ts"],
-    )
-    if "databricks_url" in context:
-        databricks_url = context["databricks_url"]
-    else:
-        databricks_url = "no url available"
+databricks_conn_id = "databricks_azure"
 
-    template = """
-:skull: An airflow task failed at _{time}_
-It looks like something went wrong with the task *{dag_id}.{task_id}* :anguished:. Better check the logs!
-> <{airflow_log}|airflow logs>
-> <{databricks_log}|databricks logs>
-""".format(
-        task_id=str(context["task"].task_id),
-        dag_id=str(context["dag"].dag_id),
-        time=str(context["ts"]),
-        airflow_log=log_link,
-        databricks_log=databricks_url,
-    )
 
-    slack_token = Variable.get("slack_airflow_token")
-    operator = SlackAPIPostOperator(
-        task_id="slack_failure_notification",
-        token=slack_token,
-        channel="#airflow",
-        text=template,
-    )
+def large_cluster_config(cluster_name: str):
+    """Returns a Databricks cluster configuration used for heavy tasks, such as string matching"""
+    return {
+        "cluster_name": cluster_name,
+        "spark_version": "4.0.x-scala2.11",
+        "node_type_id": "Standard_D16s_v3",
+        "autoscale": {"min_workers": "4", "max_workers": "12"},
+        "autotermination_minutes": "30",
+        "spark_env_vars": {"PYSPARK_PYTHON": "/databricks/python3/bin/python3"},
+    }
 
-    return operator.execute(context=context)
+
+def small_cluster_config(cluster_name: str):
+    """Returns a Databricks cluster configuration used for simple transformation tasks"""
+    return {
+        "cluster_name": cluster_name,
+        "spark_version": "4.0.x-scala2.11",
+        "node_type_id": "Standard_DS3_v2",
+        "num_workers": "4",
+        "autotermination_minutes": "60",
+        "spark_env_vars": {"PYSPARK_PYTHON": "/databricks/python3/bin/python3"},
+    }
+
+
+# interval = "@daily"
+# one_day_ago = "{{ ds }}"
+# two_day_ago = "{{ yesterday_ds }}"
+
+wasb_conn_id = "azure_blob"
+container_name = "prod"
+
+spark_jobs_jar = "dbfs:/libraries/ohub/spark-jobs-assembly-0.2.0.jar"
+string_matching_egg = "dbfs:/libraries/name_matching/string_matching.egg"
+
+dbfs_root_bucket = "dbfs:/mnt/ohub_data/"
+raw_bucket = dbfs_root_bucket + "raw/{schema}/{date}/{channel}/*.csv"
+ingested_bucket = dbfs_root_bucket + "ingested/{date}/{channel}/{fn}.parquet"
+intermediate_bucket = dbfs_root_bucket + "intermediate/{date}/{fn}.parquet"
+integrated_bucket = dbfs_root_bucket + "integrated/{date}/{fn}.parquet"
+export_bucket = dbfs_root_bucket + "export/{date}/{fn}"
+
+wasb_root_bucket = "data/"
+wasb_raw_container = wasb_root_bucket + "raw/{schema}/{date}/{channel}/*.csv"
+wasb_ingested_container = wasb_root_bucket + "ingested/{date}/{fn}.parquet"
+wasb_intermediate_container = wasb_root_bucket + "intermediate/{date}/{fn}.parquet"
+wasb_integrated_container = wasb_root_bucket + "integrated/{date}/{fn}.parquet"
+wasb_export_container = wasb_root_bucket + "export/{date}/{fn}"
+
+http_root_bucket = "https://{storage_account}.blob.core.windows.net/{container}/data/"
+http_raw_container = http_root_bucket + "raw/{schema}/{date}/{channel}/*.csv"
+http_ingested_container = http_root_bucket + "ingested/{date}/{fn}.parquet"
+http_intermediate_container = http_root_bucket + "intermediate/{date}/{fn}.parquet"
+http_integrated_container = http_root_bucket + "integrated/{date}/{fn}.parquet"
+http_export_container = http_root_bucket + "export/{date}/{fn}"

@@ -3,30 +3,24 @@ from datetime import datetime
 from airflow import DAG
 from airflow.contrib.operators.sftp_operator import SFTPOperation
 from airflow.operators.bash_operator import BashOperator
+
 from ohub.operators.zip_operator import UnzipOperator
 from ohub.operators.wasb_operator import FolderToWasbOperator
 from ohub.operators.short_circuit_sftp_operator import ShortCircuitSFTPOperator
-from dags.ohub_dag_config import container_name
+from dags.config import container_name, dag_default_args
 
-default_args = {
-    "owner": "airflow",
-    "depends_on_past": False,
-    "start_date": datetime(2018, 3, 2),
-    "email": ["airflow@airflow.com"],
-    "email_on_failure": False,
-    "email_on_retry": False,
-    "retries": 0,
-}
+dag_args = {**dag_default_args, **{"start_date": datetime(2018, 3, 2), "retries": 0}}
 
-with DAG("fuzzit_sftp", default_args=default_args, schedule_interval="0 0 1 * *") as dag:
+with DAG(
+    dag_id="fuzzit_sftp", default_args=dag_args, schedule_interval="0 0 1 * *"
+) as dag:
     fds = "{{ macros.ds_format(ds, '%Y-%m-%d', '%Y%m%d') }}"
     remote_filepath = f"/ftp/ftp_ohub20/UFS_Fuzzit_OHUB20_{fds}_1400.zip"
     local_filepath = "/tmp/fuzzit/{{ ds }}/UFS_Fuzzit_OHUB20_1400.zip"
     path_to_unzip_contents = "/tmp/fuzzit/{{ ds }}/csv/"
 
     mkdir = BashOperator(
-        bash_command=f"mkdir -p {path_to_unzip_contents}",
-        task_id="mkdir_fuzzit",
+        bash_command=f"mkdir -p {path_to_unzip_contents}", task_id="mkdir_fuzzit"
     )
 
     fetch = ShortCircuitSFTPOperator(

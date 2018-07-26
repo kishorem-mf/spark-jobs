@@ -2,46 +2,72 @@ from datetime import datetime
 
 from airflow import DAG
 
+from dags import config
+from dags.config import small_cluster_config
 from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
-from dags.ohub_dag_config import default_args, databricks_conn_id, jar, \
-    one_day_ago, integrated_bucket, two_day_ago, \
-    GenericPipeline, DagConfig, intermediate_bucket, small_cluster_config
-from ohub.utils.airflow import SubPipeline
+from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline
 
+dag_args = {**config.dag_default_args, **{"start_date": datetime(2018, 6, 14)}}
 
-default_args.update(
-    {'start_date': datetime(2018, 6, 14)}
-)
-
-entity = 'products'
+entity = "products"
 dag_config = DagConfig(entity, is_delta=True)
-clazz = 'Product'
+clazz = "Product"
 
-with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_config.schedule) as dag:
+with DAG(
+    dag_config.dag_id, default_args=dag_args, schedule_interval=dag_config.schedule
+) as dag:
     generic = (
-        GenericPipeline(dag_config,
-                        class_prefix=clazz,
-                        cluster_config=small_cluster_config(dag_config.cluster_name))
-            .has_export_to_acm(acm_schema_name='PRODUCTS')
-            .has_export_to_dispatcher_db(dispatcher_schema_name='ORDER_PRODUCTS')
-            .has_ingest_from_file_interface()
+        GenericPipeline(
+            dag_config,
+            class_prefix=clazz,
+            cluster_config=small_cluster_config(dag_config.cluster_name),
+            databricks_conn_id=config.databricks_conn_id,
+            spark_jobs_jar=config.spark_jobs_jar,
+            wasb_raw_container=config.wasb_raw_container,
+            wasb_conn_id=config.wasb_conn_id,
+            ingested_bucket=config.ingested_bucket,
+            intermediate_bucket=config.intermediate_bucket,
+        )
+        .has_export_to_acm(
+            acm_schema_name="PRODUCTS",
+            integrated_bucket=config.integrated_bucket,
+            export_bucket=config.export_bucket,
+            postgres_conn_id="postgres_channels",
+            container_name=config.container_name,
+            wasb_export_container=config.wasb_export_container,
+        )
+        .has_export_to_dispatcher_db(
+            dispatcher_schema_name="ORDER_PRODUCTS",
+            integrated_bucket=config.integrated_bucket,
+            export_bucket=config.export_bucket,
+            postgres_conn_id="postgres_channels",
+        )
+        .has_ingest_from_file_interface(
+            raw_bucket=config.raw_bucket, postgres_conn_id="postgres_channels"
+        )
     )
 
     ingest: SubPipeline = generic.construct_ingest_pipeline()
     export: SubPipeline = generic.construct_export_pipeline()
 
     merge = DatabricksSubmitRunOperator(
-        task_id='merge',
+        task_id="merge",
         cluster_name=dag_config.cluster_name,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
+        databricks_conn_id=config.databricks_conn_id,
+        libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.merging.{}Merging".format(clazz),
-            'parameters': ['--productsInputFile', intermediate_bucket.format(date=one_day_ago, fn=f'{entity}_gathered'),
-                           '--previousIntegrated', integrated_bucket.format(date=two_day_ago, fn=entity),
-                           '--outputFile', integrated_bucket.format(date=one_day_ago, fn=entity)]
-        })
+            "main_class_name": "com.unilever.ohub.spark.merging.{}Merging".format(clazz),
+            "parameters": [
+                "--productsInputFile",
+                config.intermediate_bucket.format(
+                    date="{{ ds }}", fn=f"{entity}_gathered"
+                ),
+                "--previousIntegrated",
+                config.integrated_bucket.format(date="{{ yesterday_ds }}", fn=entity),
+                "--outputFile",
+                config.integrated_bucket.format(date="{{ ds }}", fn=entity),
+            ],
+        },
+    )
 
     ingest.last_task >> merge >> export.first_task

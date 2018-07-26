@@ -5,7 +5,7 @@ import os
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
-from ohub.vendor.airflow.contrib.hooks.wasb_hook import WasbHook
+from ohub.vendor.airflow import WasbHook
 
 
 class FolderToWasbOperator(BaseOperator):
@@ -60,7 +60,7 @@ class WasbCopyOperator(BaseOperator):
 
     @apply_defaults
     def __init__(self, wasb_conn_id, container_name, blob_name, copy_source, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         self._wasb_conn_id = wasb_conn_id
         self._container_name = container_name
         self._blob_name = blob_name
@@ -99,53 +99,3 @@ class WasbCopyOperator(BaseOperator):
         print("confirming destination")
         assert hook.check_for_blob(self._container_name, self._blob_name)
         print("confirmed destination")
-
-
-class FileFromWasbOperator(BaseOperator):
-    """
-    Downloads a file from Azure Blob Storage.
-    :param str file_path: Path to put the file to download.
-    :param str container_name: Name of the container.
-    :param str blob_name: Name of the blob.
-    :param str wasb_conn_id: Reference to the wasb connection.
-    :param dict load_options: Optional keyword arguments that `WasbHook.load_file()` takes.
-    """
-
-    template_fields = ("_file_path", "_container_name", "_blob_name")
-
-    @apply_defaults
-    def __init__(
-        self,
-        file_path,
-        container_name,
-        blob_name,
-        wasb_conn_id="wasb_default",
-        load_options=None,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        if load_options is None:
-            load_options = {}
-        self._file_path = file_path
-        self._container_name = container_name
-        self._blob_name = blob_name
-        self._wasb_conn_id = wasb_conn_id
-        self._load_options = load_options
-
-    def execute(self, context):
-        """Upload a file to Azure Blob Storage."""
-        hook = WasbHook(wasb_conn_id=self._wasb_conn_id)
-
-        dir = "/".join(self._file_path.split("/")[:-1])
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-
-        # TODO: Replace locals() by something sensible
-        self.log.info(
-            "Downloading {self.file_path} from {self.blob_name} on wasb://{self.container_name}".format(
-                **locals()
-            )
-        )
-        hook.get_file(
-            self._file_path, self._container_name, self._blob_name, **self._load_options
-        )

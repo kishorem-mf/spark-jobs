@@ -2,101 +2,161 @@ from datetime import datetime
 
 from airflow import DAG
 
+from dags import config
 from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
-from dags.ohub_dag_config import \
-    default_args, databricks_conn_id, jar, intermediate_bucket, integrated_bucket, one_day_ago, \
-    two_day_ago, postgres_config, \
-    GenericPipeline, DagConfig, large_cluster_config
-from ohub.utils.airflow import SubPipeline
+from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline, LazyConnection
 
+dag_args = {
+    **config.dag_default_args,
+    **{"start_date": datetime(2018, 6, 4), "pool": "ohub_operators_pool"},
+}
 
-default_args.update(
-    {
-        'start_date': datetime(2018, 6, 4),
-        'pool': 'ohub_operators_pool'
-    }
-)
-entity = 'operators'
+entity = "operators"
 dag_config = DagConfig(entity, is_delta=True)
 
-with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_config.schedule) as dag:
+with DAG(
+    dag_config.dag_id, default_args=dag_args, schedule_interval=dag_config.schedule
+) as dag:
     generic = (
-        GenericPipeline(dag_config,
-                        class_prefix='Operator',
-                        cluster_config=large_cluster_config(dag_config.cluster_name))
-            .has_export_to_acm(acm_schema_name='OPERATORS')
-            .has_export_to_dispatcher_db(dispatcher_schema_name='OPERATORS')
-            .has_ingest_from_file_interface()
-            .has_ingest_from_web_event()
+        GenericPipeline(
+            dag_config,
+            class_prefix="Operator",
+            cluster_config=config.large_cluster_config(dag_config.cluster_name),
+            databricks_conn_id=config.databricks_conn_id,
+            ingested_bucket=config.ingested_bucket,
+            intermediate_bucket=config.intermediate_bucket,
+            spark_jobs_jar=config.spark_jobs_jar,
+            wasb_conn_id=config.wasb_conn_id,
+            wasb_raw_container=config.wasb_raw_container,
+        )
+        .has_export_to_acm(
+            acm_schema_name="OPERATORS",
+            integrated_bucket=config.integrated_bucket,
+            export_bucket=config.export_bucket,
+            postgres_conn_id="postgres_channels",
+            container_name=config.container_name,
+            wasb_export_container=config.wasb_export_container,
+        )
+        .has_export_to_dispatcher_db(
+            dispatcher_schema_name="OPERATORS",
+            integrated_bucket=config.integrated_bucket,
+            export_bucket=config.export_bucket,
+            postgres_conn_id="postgres_channels",
+        )
+        .has_ingest_from_file_interface(
+            raw_bucket=config.raw_bucket, postgres_conn_id="postgres_channels"
+        )
+        .has_ingest_from_web_event(
+            raw_bucket=config.raw_bucket, ingested_bucket=config.ingested_bucket
+        )
     )
 
     ingest: SubPipeline = generic.construct_ingest_pipeline()
     export: SubPipeline = generic.construct_export_pipeline()
     fuzzy_matching: SubPipeline = generic.construct_fuzzy_matching_pipeline(
-        ingest_input=intermediate_bucket.format(date=one_day_ago, fn=f'{entity}_gathered'),
-        match_py='dbfs:/libraries/name_matching/match_operators.py',
-        integrated_input=integrated_bucket.format(date=two_day_ago, fn=dag_config.entity),
-        delta_match_py='dbfs:/libraries/name_matching/delta_operators.py',
+        ingest_input=config.intermediate_bucket.format(
+            date="{{ ds }}", fn=f"{entity}_gathered"
+        ),
+        match_py="dbfs:/libraries/name_matching/match_operators.py",
+        integrated_input=config.integrated_bucket.format(
+            date="{{ yesterday_ds }}", fn=dag_config.entity
+        ),
+        delta_match_py="dbfs:/libraries/name_matching/delta_operators.py",
+        ohub_country_codes=config.ohub_country_codes,
+        string_matching_egg=config.string_matching_egg,
     )
 
     join = DatabricksSubmitRunOperator(
-        task_id='merge',
+        task_id="merge",
         cluster_name=dag_config.cluster_name,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
+        databricks_conn_id=config.databricks_conn_id,
+        libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.merging.OperatorMatchingJoiner",
-            'parameters': ['--matchingInputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='{}_fuzzy_matched_delta'.format(entity)),
-                           '--entityInputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='{}_delta_left_overs'.format(entity)),
-                           '--outputFile',
-                           intermediate_bucket.format(date=one_day_ago,
-                                                      fn='{}_delta_golden_records'.format(entity))] + postgres_config
-        })
+            "main_class_name": "com.unilever.ohub.spark.merging.OperatorMatchingJoiner",
+            "parameters": [
+                "--matchingInputFile",
+                config.intermediate_bucket.format(
+                    date="{{ ds }}", fn="{}_fuzzy_matched_delta".format(entity)
+                ),
+                "--entityInputFile",
+                config.intermediate_bucket.format(
+                    date="{{ ds }}", fn="{}_delta_left_overs".format(entity)
+                ),
+                "--outputFile",
+                config.intermediate_bucket.format(
+                    date="{{ ds }}", fn="{}_delta_golden_records".format(entity)
+                ),
+                "--postgressUrl",
+                "{{ params.postgres_conn.host }}",
+                "--postgressUsername",
+                "{{ params.postgres_conn.login }}",
+                "--postgressPassword",
+                "{{ params.postgres_conn.password }}",
+                "--postgressDB",
+                "{{ params.postgres_conn.schema }}",
+            ],
+        },
+        params={"postgres_conn": LazyConnection("postgres_channels")},
+    )
 
     combine_to_create_integrated = DatabricksSubmitRunOperator(
-        task_id='combine_to_create_integrated',
+        task_id="combine_to_create_integrated",
         cluster_name=dag_config.cluster_name,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
+        databricks_conn_id=config.databricks_conn_id,
+        libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.combining.OperatorCombining",
-            'parameters': ['--integratedUpdated',
-                           intermediate_bucket.format(date=one_day_ago,
-                                                      fn='{}_fuzzy_matched_delta_integrated'.format(entity)),
-                           '--newGolden',
-                           intermediate_bucket.format(date=one_day_ago, fn='{}_delta_golden_records'.format(entity)),
-                           '--combinedEntities',
-                           intermediate_bucket.format(date=one_day_ago, fn='{}_combined'.format(entity))]
-        }
+            "main_class_name": "com.unilever.ohub.spark.combining.OperatorCombining",
+            "parameters": [
+                "--integratedUpdated",
+                config.intermediate_bucket.format(
+                    date="{{ ds }}", fn="{}_fuzzy_matched_delta_integrated".format(entity)
+                ),
+                "--newGolden",
+                config.intermediate_bucket.format(
+                    date="{{ ds }}", fn="{}_delta_golden_records".format(entity)
+                ),
+                "--combinedEntities",
+                config.intermediate_bucket.format(
+                    date="{{ ds }}", fn="{}_combined".format(entity)
+                ),
+            ],
+        },
     )
 
     update_golden_records = DatabricksSubmitRunOperator(
-        task_id='update_golden_records',
+        task_id="update_golden_records",
         cluster_name=dag_config.cluster_name,
-        databricks_conn_id=databricks_conn_id,
-        libraries=[
-            {'jar': jar}
-        ],
+        databricks_conn_id=config.databricks_conn_id,
+        libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={
-            'main_class_name': "com.unilever.ohub.spark.merging.OperatorUpdateGoldenRecord",
-            'parameters': ['--inputFile',
-                           intermediate_bucket.format(date=one_day_ago, fn='{}_combined'.format(entity)),
-                           '--outputFile',
-                           integrated_bucket.format(date=one_day_ago, fn=entity)] + postgres_config
-        }
+            "main_class_name": "com.unilever.ohub.spark.merging.OperatorUpdateGoldenRecord",
+            "parameters": [
+                "--inputFile",
+                config.intermediate_bucket.format(
+                    date="{{ ds }}", fn="{}_combined".format(entity)
+                ),
+                "--outputFile",
+                config.integrated_bucket.format(date="{{ ds }}", fn=entity),
+                "--postgressUrl",
+                "{{ params.postgres_conn.host }}",
+                "--postgressUsername",
+                "{{ params.postgres_conn.login }}",
+                "--postgressPassword",
+                "{{ params.postgres_conn.password }}",
+                "--postgressDB",
+                "{{ params.postgres_conn.schema }}",
+            ],
+        },
+        params={"postgres_conn": LazyConnection("postgres_channels")},
     )
 
     update_operators_table = DatabricksSubmitRunOperator(
-        task_id='update_table',
+        task_id="update_table",
         cluster_name=dag_config.cluster_name,
-        databricks_conn_id=databricks_conn_id,
-        notebook_task={'notebook_path': '/Users/tim.vancann@unilever.com/update_integrated_tables'}
+        databricks_conn_id=config.databricks_conn_id,
+        notebook_task={
+            "notebook_path": "/Users/tim.vancann@unilever.com/update_integrated_tables"  # TODO: remove code from notebooks asap
+        },
     )
 
     ingest.last_task >> fuzzy_matching.first_task
