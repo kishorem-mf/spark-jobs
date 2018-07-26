@@ -18,7 +18,7 @@ class ShortCircuitSFTPOperator(BaseOperator, SkipMixin):
     :param str operation: specify operation 'get' or 'put'
     """
 
-    template_fields = ("local_filepath", "remote_filepath")
+    template_fields = ("_local_filepath", "_remote_filepath")
 
     @apply_defaults
     def __init__(
