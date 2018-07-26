@@ -164,7 +164,7 @@ class DatabricksCreateClusterOperator(BaseDatabricksOperator):
         databricks_retry_limit=3,
         **kwargs,
     ):
-        super(DatabricksCreateClusterOperator, self).__init__(
+        super().__init__(
             databricks_conn_id, polling_period_seconds, databricks_retry_limit, **kwargs
         )
         self.cluster_config = cluster_config
@@ -223,7 +223,7 @@ class DatabricksStartClusterOperator(BaseDatabricksOperator):
         databricks_retry_limit=3,
         **kwargs,
     ):
-        super(DatabricksStartClusterOperator, self).__init__(
+        super().__init__(
             databricks_conn_id, polling_period_seconds, databricks_retry_limit, **kwargs
         )
         self.cluster_id = cluster_id
@@ -286,7 +286,7 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
         databricks_retry_limit=3,
         **kwargs,
     ):
-        super(DatabricksTerminateClusterOperator, self).__init__(
+        super().__init__(
             databricks_conn_id, polling_period_seconds, databricks_retry_limit, **kwargs
         )
         self.cluster_name = cluster_name
