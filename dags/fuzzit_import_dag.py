@@ -14,10 +14,9 @@ from dags.config import container_name, dag_default_args
 DAG_ARGS = {**dag_default_args, **{"start_date": datetime(2018, 3, 2), "retries": 0}}
 
 with DAG(
-    dag_id="fuzzit_sftp", default_args=DAG_ARGS, schedule_interval="0 0 1 * *"
+    dag_id="fuzzit_import", default_args=DAG_ARGS, schedule_interval="0 0 1 * *"
 ) as dag:
-    fds = "{{ macros.ds_format(ds, '%Y-%m-%d', '%Y%m%d') }}"
-    remote_filepath = f"/ftp/ftp_ohub20/UFS_Fuzzit_OHUB20_{fds}_1400.zip"
+    remote_filepath = "/ftp/ftp_ohub20/UFS_Fuzzit_OHUB20_{{ ds_nodash }}_1400.zip"
     local_filepath = "/tmp/fuzzit/{{ ds }}/UFS_Fuzzit_OHUB20_1400.zip"
     path_to_unzip_contents = "/tmp/fuzzit/{{ ds }}/csv/"
 
@@ -26,7 +25,7 @@ with DAG(
     )
 
     fetch = ShortCircuitSFTPOperator(
-        task_id="fetch_fuzzit_files_for_date",
+        task_id="fetch_fuzzit_files",
         ssh_conn_id="fuzzit_sftp_ssh",
         remote_host="apps.systrion.eu",
         local_filepath=local_filepath,
