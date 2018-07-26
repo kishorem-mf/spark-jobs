@@ -26,20 +26,6 @@ ohub_entities = {
     "products": {},
 }
 
-# class OHubEntity(Enum):
-#     OPERATORS = "operators"
-#     ORDERS = "orders"
-#     ORDERLINES = "orderlines"
-#     PRODUCTS = "products"
-
-
-# class OHubEntity(object):
-#     def __init__(self):
-#         self.clazz = None
-#
-#
-# ohub_entities = {"operators": {}, "orders": {}, "orderlines": {}, "products": {}}
-
 country_codes = dict(
     AU=149299102,
     NZ=149386192,
