@@ -116,3 +116,4 @@ with DAG(orders_dag_config.dag_id, default_args=default_args, schedule_interval=
     ingest_orders.last_task >> merge_orders >> export_orders.first_task
     merge_orderlines >> export_orders.first_task
     ingest_orderlines.last_task >> merge_orderlines >> export_orderlines.first_task
+    ingest.first_task >> export.last_task

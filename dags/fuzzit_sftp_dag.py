@@ -11,6 +11,7 @@ from ohub.ohub_dag_config import container_name
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
+    'wait_for_downstream': False,
     'start_date': datetime(2018, 3, 2),
     'email': ['airflow@airflow.com'],
     'email_on_failure': False,

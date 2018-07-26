@@ -43,3 +43,4 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
         })
 
     ingest.last_task >> merge >> export.first_task
+    ingest.first_task >> export.last_task
