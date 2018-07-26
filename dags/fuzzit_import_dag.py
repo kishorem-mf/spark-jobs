@@ -6,10 +6,10 @@ from airflow import DAG
 from airflow.contrib.operators.sftp_operator import SFTPOperation
 from airflow.operators.bash_operator import BashOperator
 
-from ohub.operators.zip_operator import UnzipOperator
-from ohub.operators.wasb_operator import FolderToWasbOperator
-from ohub.operators.short_circuit_sftp_operator import ShortCircuitSFTPOperator
 from dags.config import container_name, dag_default_args
+from ohub.operators.short_circuit_sftp_operator import ShortCircuitSFTPOperator
+from ohub.operators.wasb_operator import FolderToWasbOperator
+from ohub.operators.zip_operator import UnzipOperator
 
 DAG_ARGS = {**dag_default_args, **{"start_date": datetime(2018, 3, 2), "retries": 0}}
 
