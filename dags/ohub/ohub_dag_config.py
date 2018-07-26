@@ -291,26 +291,23 @@ class GenericPipeline(object):
 
         This will also boot up a cluster
         """
-        cluster_up = create_cluster(self._dag_config.entity, self._cluster_config)
+        entity = self._dag_config.entity
+        cluster_up = create_cluster(entity, self._cluster_config)
 
         start_pipeline = BashOperator(
-            task_id=f'{self._dag_config.entity}_start_pipeline',
+            task_id=f'{entity}_start_pipeline',
             bash_command='echo "start pipeline"',
+        )
+        
+        start_ingest = BashOperator(
+            task_id=f'{entity}_start_ingest',
+            bash_command='echo "start ingest"',
         )
 
         end_ingest = BashOperator(
-            task_id=f'{self._dag_config.entity}_end_ingest',
+            task_id=f'{entity}_end_ingest',
             bash_command='echo "end ingesting"',
         )
-
-        if self._dag_config.is_delta:
-            empty_fallback = EmptyFallbackOperator(
-                task_id=f'{self._dag_config.entity}_empty_fallback',
-                container_name='prod',
-                file_path=wasb_raw_container.format(date=one_day_ago, schema=self._dag_config.entity,
-                                                    channel='file_interface'),
-                wasb_conn_id=wasb_conn_id)
-            start_pipeline >> empty_fallback
 
         gather = DatabricksSubmitRunOperator(
             task_id=f"{self._dag_config.entity}_gather",
@@ -327,7 +324,26 @@ class GenericPipeline(object):
                                intermediate_bucket.format(date=one_day_ago, fn=f'{self._dag_config.entity}_gathered')]
             }
         )
-        start_pipeline >> cluster_up
+
+        if self._dag_config.is_delta:
+            first_ingest_sensor = ExternalTaskSensorOperator(
+                task_id=f'{entity}_first_ingest_sensor',
+                external_dag_id=f'ohub_{entity}_initial_load',
+                external_task_id=f'{entity}_end_pipeline'
+            )
+
+            empty_fallback = EmptyFallbackOperator(
+                task_id=f'{self._dag_config.entity}_empty_fallback',
+                container_name='prod',
+                file_path=wasb_raw_container.format(date=one_day_ago, schema=self._dag_config.entity,
+                                                    channel='file_interface'),
+                wasb_conn_id=wasb_conn_id)
+
+            start_pipeline >> first_ingest_sensor >> empty_fallback >> start_ingest
+        else:
+            start_pipeline >> start_ingest
+
+        start_ingest >> cluster_up
         gather >> end_ingest
 
         t: SubPipeline
