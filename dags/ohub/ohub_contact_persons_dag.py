@@ -11,7 +11,8 @@ from ohub.ohub_dag_config import \
 
 default_args.update(
     {
-        'start_date': datetime(2018, 6, 4),
+        'start_date': datetime(2018, 7, 26),
+        'end_date': datetime(2018, 7, 27),
         'pool': 'ohub_contactpersons_pool'
     }
 )
