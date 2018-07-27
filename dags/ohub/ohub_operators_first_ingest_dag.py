@@ -10,7 +10,7 @@ from ohub.ohub_dag_config import \
 
 default_args.update(
     {
-        'start_date': datetime(2018, 6, 3),
+        'start_date': datetime(2018, 7, 25),
         'pool': 'ohub_operators_pool'
     }
 )
