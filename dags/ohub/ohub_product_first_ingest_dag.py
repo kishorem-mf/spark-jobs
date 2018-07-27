@@ -7,7 +7,7 @@ from ohub.ohub_dag_config import default_args, GenericPipeline, SubPipeline, one
     wasb_integrated_container, http_intermediate_container, small_cluster_config
 
 default_args.update(
-    {'start_date': datetime(2018, 6, 13)}
+    {'start_date': datetime(2018, 6, 3)}
 )
 
 entity = 'products'
