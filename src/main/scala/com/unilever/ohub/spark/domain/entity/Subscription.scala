@@ -24,13 +24,7 @@ case class Subscription(
     ohubCreated: Timestamp,
     ohubUpdated: Timestamp,
     // specific fields
-    contactPersonConcatId: String,
-    communicationChannel: String,
-    subscriptionType: String,
-    hasSubscription: Boolean,
-    subscriptionDate: Option[Timestamp],
-    hasConfirmedSubscription: Boolean,
-    confirmedSubscriptionDate: Option[Timestamp],
+    // 
     // other fields
     additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]
