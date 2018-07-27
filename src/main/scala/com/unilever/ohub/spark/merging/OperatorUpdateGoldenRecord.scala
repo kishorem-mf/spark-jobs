@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.merging
 
-import com.unilever.ohub.spark.{ DefaultWithDbConfig, SparkJobWithDefaultDbConfig }
+import com.unilever.ohub.spark.{ DefaultConfig, SparkJobWithDefaultDbConfig }
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.DomainDataProvider
@@ -32,11 +32,11 @@ object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with Golde
       .flatMap(markGoldenRecord(sourcePreference))
   }
 
-  override def run(spark: SparkSession, config: DefaultWithDbConfig, storage: Storage): Unit = {
-    run(spark, config, storage, DomainDataProvider(spark, config.postgressUrl, config.postgressDB, config.postgressUsername, config.postgressPassword))
+  override def run(spark: SparkSession, config: DefaultConfig, storage: Storage): Unit = {
+    run(spark, config, storage, DomainDataProvider(spark))
   }
 
-  protected[merging] def run(spark: SparkSession, config: DefaultWithDbConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
+  protected[merging] def run(spark: SparkSession, config: DefaultConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     import spark.implicits._
 
     val operators = storage.readFromParquet[Operator](config.inputFile)

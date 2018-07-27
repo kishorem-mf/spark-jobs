@@ -14,11 +14,7 @@ import scopt.OptionParser
 case class ExactMatchWithDbConfig(
     inputFile: String = "path-to-input-file",
     exactMatchOutputFile: String = "path-to-exact-match-output-file",
-    leftOversOutputFile: String = "path-to-left-overs-output-file",
-    postgressUrl: String = "postgress-url",
-    postgressUsername: String = "postgress-username",
-    postgressPassword: String = "postgress-password",
-    postgressDB: String = "postgress-db"
+    leftOversOutputFile: String = "path-to-left-overs-output-file"
 ) extends SparkJobConfig
 
 object ContactPersonExactMatcher extends SparkJob[ExactMatchWithDbConfig] with GoldenRecordPicking[ContactPerson] {
@@ -74,25 +70,13 @@ object ContactPersonExactMatcher extends SparkJob[ExactMatchWithDbConfig] with G
       opt[String]("leftOversOutputFile") required () action { (x, c) ⇒
         c.copy(leftOversOutputFile = x)
       } text "leftOversOutputFile is a string property"
-      opt[String]("postgressUrl") required () action { (x, c) ⇒
-        c.copy(postgressUrl = x)
-      } text "postgressUrl is a string property"
-      opt[String]("postgressUsername") required () action { (x, c) ⇒
-        c.copy(postgressUsername = x)
-      } text "postgressUsername is a string property"
-      opt[String]("postgressPassword") required () action { (x, c) ⇒
-        c.copy(postgressPassword = x)
-      } text "postgressPassword is a string property"
-      opt[String]("postgressDB") required () action { (x, c) ⇒
-        c.copy(postgressDB = x)
-      } text "postgressDB is a string property"
 
       version("1.0")
       help("help") text "help text"
     }
 
   override def run(spark: SparkSession, config: ExactMatchWithDbConfig, storage: Storage): Unit = {
-    run(spark, config, storage, DomainDataProvider(spark, config.postgressUrl, config.postgressDB, config.postgressUsername, config.postgressPassword))
+    run(spark, config, storage, DomainDataProvider(spark))
   }
 
   protected[merging] def run(spark: SparkSession, config: ExactMatchWithDbConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {

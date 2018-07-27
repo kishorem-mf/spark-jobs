@@ -8,7 +8,7 @@ import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
-object ProductAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
+object ProductAcmConverter extends SparkJob[DefaultWithDeltaConfig]
   with DeltaFunctions with AcmTransformationFunctions with AcmConverter {
 
   def transform(
@@ -22,11 +22,11 @@ object ProductAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     integrate[AcmProduct](spark, dailyAcmProducts, allPreviousAcmProducts, "PRD_INTEGRATION_ID")
   }
 
-  override private[spark] def defaultConfig = DefaultWithDbAndDeltaConfig()
+  override private[spark] def defaultConfig = DefaultWithDeltaConfig()
 
-  override private[spark] def configParser(): OptionParser[DefaultWithDbAndDeltaConfig] = DefaultWithDbAndDeltaConfigParser()
+  override private[spark] def configParser(): OptionParser[DefaultWithDeltaConfig] = DefaultWithDeltaConfigParser()
 
-  override def run(spark: SparkSession, config: DefaultWithDbAndDeltaConfig, storage: Storage): Unit = {
+  override def run(spark: SparkSession, config: DefaultWithDeltaConfig, storage: Storage): Unit = {
     import spark.implicits._
 
     log.info(s"Generating products ACM csv file from [${config.inputFile}] to [${config.outputFile}]")

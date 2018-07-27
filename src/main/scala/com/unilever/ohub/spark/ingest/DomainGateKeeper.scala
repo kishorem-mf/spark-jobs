@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.ingest
 
-import com.unilever.ohub.spark.{ DomainDataProvider, PostgressDomainDataProvider, SparkJob, SparkJobConfig }
+import com.unilever.ohub.spark.{ DomainDataProvider, InMemDomainDataProvider, SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql._
@@ -20,11 +20,7 @@ object DomainGateKeeper {
       fieldSeparator: String = "field-separator",
       deduplicateOnConcatId: Boolean = true,
       strictIngestion: Boolean = true,
-      showErrorSummary: Boolean = true,
-      postgressUrl: String = "postgress-url",
-      postgressUsername: String = "postgress-username",
-      postgressPassword: String = "postgress-password",
-      postgressDB: String = "postgress-db"
+      showErrorSummary: Boolean = true
   ) extends SparkJobConfig
 
   object implicits {
@@ -67,18 +63,6 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       opt[Boolean]("showErrorSummary") optional () action { (x, c) ⇒
         c.copy(showErrorSummary = x)
       } text "showErrorSummary is a boolean property"
-      opt[String]("postgressUrl") required () action { (x, c) ⇒
-        c.copy(postgressUrl = x)
-      } text "postgressUrl is a string property"
-      opt[String]("postgressUsername") required () action { (x, c) ⇒
-        c.copy(postgressUsername = x)
-      } text "postgressUsername is a string property"
-      opt[String]("postgressPassword") required () action { (x, c) ⇒
-        c.copy(postgressPassword = x)
-      } text "postgressPassword is a string property"
-      opt[String]("postgressDB") required () action { (x, c) ⇒
-        c.copy(postgressDB = x)
-      } text "postgressDB is a string property"
 
       version("1.0")
       help("help") text "help text"
@@ -102,7 +86,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
       }
 
   override def run(spark: SparkSession, config: DomainConfig, storage: Storage): Unit = {
-    val dataProvider = new PostgressDomainDataProvider(spark, config.postgressUrl, config.postgressDB, config.postgressUsername, config.postgressPassword)
+    val dataProvider = new InMemDomainDataProvider(spark)
     run(spark, config, storage, dataProvider)
   }
 

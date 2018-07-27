@@ -48,7 +48,6 @@ object GlobalSettings extends AutoPlugin {
   )
 
   lazy val projectDependencies: Seq[ModuleID] = Seq(
-    "org.postgresql" % "postgresql" % "42.2.2",
     "org.apache.commons" % "commons-lang3" % "3.7",
     "io.circe" %% "circe-core" % CirceVersion,
     "io.circe" %% "circe-generic" % CirceVersion,

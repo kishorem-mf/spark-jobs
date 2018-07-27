@@ -18,11 +18,7 @@ case class MatchingResult(sourceId: String, targetId: String)
 case class DomainEntityJoinConfig(
     matchingInputFile: String = "matching-input-file",
     entityInputFile: String = "entity-input-file",
-    outputFile: String = "path-to-output-file",
-    postgressUrl: String = "postgress-url",
-    postgressUsername: String = "postgress-username",
-    postgressPassword: String = "postgress-password",
-    postgressDB: String = "postgress-db"
+    outputFile: String = "path-to-output-file"
 ) extends SparkJobConfig
 
 abstract class BaseMatchingJoiner[T <: DomainEntity: TypeTag] extends SparkJob[DomainEntityJoinConfig] with GoldenRecordPicking[T] {
@@ -89,25 +85,13 @@ abstract class BaseMatchingJoiner[T <: DomainEntity: TypeTag] extends SparkJob[D
       opt[String]("outputFile") required () action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
-      opt[String]("postgressUrl") required () action { (x, c) ⇒
-        c.copy(postgressUrl = x)
-      } text "postgressUrl is a string property"
-      opt[String]("postgressUsername") required () action { (x, c) ⇒
-        c.copy(postgressUsername = x)
-      } text "postgressUsername is a string property"
-      opt[String]("postgressPassword") required () action { (x, c) ⇒
-        c.copy(postgressPassword = x)
-      } text "postgressPassword is a string property"
-      opt[String]("postgressDB") required () action { (x, c) ⇒
-        c.copy(postgressDB = x)
-      } text "postgressDB is a string property"
 
       version("1.0")
       help("help") text "help text"
     }
 
   override def run(spark: SparkSession, config: DomainEntityJoinConfig, storage: Storage): Unit = {
-    run(spark, config, storage, DomainDataProvider(spark, config.postgressUrl, config.postgressDB, config.postgressUsername, config.postgressPassword))
+    run(spark, config, storage, DomainDataProvider(spark))
   }
 
   protected[merging] def run(spark: SparkSession, config: DomainEntityJoinConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {

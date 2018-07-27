@@ -20,8 +20,73 @@ trait DomainDataProvider {
 }
 
 object DomainDataProvider {
-  def apply(spark: SparkSession, dbUrl: String, dbName: String, userName: String, userPassword: String): DomainDataProvider =
-    new PostgressDomainDataProvider(spark, dbUrl, dbName, userName, userPassword)
+  def apply(spark: SparkSession): DomainDataProvider =
+    new InMemDomainDataProvider(spark)
+}
+
+class InMemDomainDataProvider(spark: SparkSession) extends DomainDataProvider with Serializable {
+  import spark.implicits._
+
+  override val countries: Map[String, CountryRecord] = {
+    Source
+      .fromInputStream(this.getClass.getResourceAsStream("/countries.csv"))
+      .getLines()
+      .toSeq
+      .filter(_.nonEmpty)
+      .map(_.split(","))
+      .map(parts ⇒ CountryRecord(parts(6), parts(2), parts(10)))
+      .filter(cr ⇒ cr.countryCode.nonEmpty && cr.countryName.nonEmpty && cr.currencyCode.nonEmpty)
+      .map(cr ⇒ cr.countryCode -> cr)
+      .toMap
+  }
+
+  override val countrySalesOrg: Map[String, CountrySalesOrg] = {
+    Source
+      .fromInputStream(this.getClass.getResourceAsStream("/country-codes-sales-org.csv"))
+      .getLines()
+      .toSeq
+      .filter(_.nonEmpty)
+      .map(_.split(","))
+      .map(parts ⇒ CountrySalesOrg(parts(0), if (parts.length == 2) Option(parts(1)) else None))
+      .filter(_.salesOrg.nonEmpty)
+      .map(c ⇒ c.salesOrg.get -> c)
+      .toMap
+  }
+
+  override val sourcePreferences: Map[String, Int] = {
+    Source
+      .fromInputStream(this.getClass.getResourceAsStream("/data-sources.csv"))
+      .getLines()
+      .toSeq
+      .filter(_.nonEmpty)
+      .filterNot(_.equals("SOURCE\tPRIORITY"))
+      .map(_.split("\t"))
+      .map(lineParts ⇒ lineParts(0) -> lineParts(1).toInt)
+      .toMap
+  }
+
+  override def channelMappings(): Dataset[ChannelMapping] = {
+    val channelMappingDF = spark.read.csv("/channel-mapping.csv")
+    val channelReferencesDF = spark.read.csv("/channel-references.csv")
+
+    channelMappingDF
+      .join(
+        channelReferencesDF,
+        col("channel_reference_fk") === col("channel_reference_id"),
+        JoinType.Left
+      )
+      .select(
+        $"COUNTRY_CODE" as "countryCode",
+        $"ORIGINAL_CHANNEL" as "originalChannel",
+        $"LOCAL_CHANNEL" as "localChannel",
+        $"CHANNEL_USAGE" as "channelUsage",
+        $"SOCIAL_COMMERCIAL" as "socialCommercial",
+        $"STRATEGIC_CHANNEL" as "strategicChannel",
+        $"GLOBAL_CHANNEL" as "globalChannel",
+        $"GLOBAL_SUBCHANNEL" as "globalSubChannel"
+      )
+      .as[ChannelMapping]
+  }
 }
 
 class PostgressDomainDataProvider(spark: SparkSession, dbUrl: String, dbName: String, userName: String, userPassword: String) extends DomainDataProvider with Serializable {
