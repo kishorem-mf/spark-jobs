@@ -8,7 +8,9 @@ from ohub.ohub_dag_config import default_args, databricks_conn_id, jar, \
     GenericPipeline, SubPipeline, DagConfig, intermediate_bucket, small_cluster_config
 
 default_args.update(
-    {'start_date': datetime(2018, 6, 14)}
+    {
+        'start_date': datetime(2018, 6, 4)
+    }
 )
 
 entity = 'products'
