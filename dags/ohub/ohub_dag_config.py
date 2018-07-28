@@ -80,7 +80,7 @@ def small_cluster_config(cluster_name):
     }
 
 
-databricks_conn_id = 'databricks_azure'
+databricks_conn_id = 'databricks_default'
 
 postgres_connection = BaseHook.get_connection('postgres_channels')
 postgres_config = [
