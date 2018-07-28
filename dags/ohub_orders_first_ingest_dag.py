@@ -154,7 +154,7 @@ with DAG(
 
     operators_integrated_sensor >> ingest_orders.first_task
     contactpersons_integrated_sensor >> ingest_orders.first_task
-    """ 
+    """
     -------------
     orderlines is independent from orders, but it MUST have the emtpy fallback operator from orders to be completed
     to be able to run since they have the same root raw files.
