@@ -1,11 +1,14 @@
-# This is a sample build configuration for Python.
-# Check our guides at https://confluence.atlassian.com/x/x4UWN for more examples.
-# Only use spaces to indent your .yml configuration.
-# -----
-# You can specify a custom docker image from Docker Hub as your build environment.
+# Check https://confluence.atlassian.com/x/x4UWN for more examples.
+# Validator: https://bitbucket-pipelines.atlassian.io/validator
 
 pipelines:
   default:
+    - step: &pylint
+        name: pylint
+        image: python:3.6.6
+        script:
+          - pip install pylint
+          - make lint
     - step: &syntax
         name: Check PEP8 codestyle and run tests
         image: timvancann/miniconda3-gcc
