@@ -49,6 +49,10 @@ The UI has been shielded behind local port forwarding. To access the UI:
 - Login with your user using `az login` 
 - Install [`kubectl` cli](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [OPTIONAL] Install [kubectl completion](https://kubernetes.io/docs/tasks/tools/install-kubectl/#enabling-shell-autocompletion) (highly recommended!)
+- set your Azure CLI to use the right subscription
+```
+az account set --subscription bc41a9ef-b853-4107-aa12-cc8d592c8e91
+```
 - Get the credentials for the Kubernetes cluster: 
 ```
 az aks get-credentials -g bieno-da-s-60072-containers-rg -n ul-ohub2-aks-dev-we

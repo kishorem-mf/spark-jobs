@@ -14,7 +14,8 @@ dag_args = {
     **{
         "start_date": datetime(2018, 3, 26),
         "retry_delay": timedelta(minutes=2),
-        'wait_for_downstream': False,
+        "wait_for_downstream": False,
+        "depends_on_past": False,
     },
 }
 
