@@ -9,7 +9,10 @@ from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline, LazyConn
 
 dag_args = {
     **config.dag_default_args,
-    **{"start_date": datetime(2018, 6, 4), "pool": "ohub_contactpersons_pool"},
+    **{
+        "start_date": datetime(2018, 7, 26),
+        "pool": "ohub_contactpersons_pool"
+    },
 }
 
 entity = "contactpersons"
@@ -245,3 +248,4 @@ with DAG(
     exact_match_integrated_ingested >> fuzzy_matching.first_task
     fuzzy_matching.last_task >> join_fuzzy_matched >> join_fuzzy_and_exact_matched >> operators_integrated_sensor
     operators_integrated_sensor >> referencing >> update_golden_records >> export.first_task
+    ingest.first_task >> export.last_task

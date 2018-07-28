@@ -7,7 +7,9 @@ from dags.config import small_cluster_config
 from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
 from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline
 
-dag_args = {**config.dag_default_args, **{"start_date": datetime(2018, 6, 14)}}
+dag_args = {**config.dag_default_args, **{
+        'start_date': datetime(2018, 7, 26),
+    }}
 
 entity = "products"
 dag_config = DagConfig(entity, is_delta=True)

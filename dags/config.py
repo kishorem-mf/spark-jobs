@@ -10,7 +10,8 @@ email_addresses = [
 
 dag_default_args = {
     "owner": "airflow",
-    "depends_on_past": False,
+    "depends_on_past": True,
+    "wait_for_downstream": True,
     "email": email_addresses,
     "email_on_failure": False,
     "email_on_retry": False,

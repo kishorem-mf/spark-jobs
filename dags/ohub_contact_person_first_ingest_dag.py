@@ -9,7 +9,10 @@ from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline, LazyConn
 
 dag_args = {
     **config.dag_default_args,
-    **{"start_date": datetime(2018, 6, 3), "pool": "ohub_contactpersons_pool"},
+    **{
+        "start_date": datetime(2018, 7, 25),
+        "pool": "ohub_contactpersons_pool",
+    },
 }
 
 entity = "contactpersons"

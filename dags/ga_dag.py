@@ -11,7 +11,11 @@ from ohub.operators.ga_fetch_operator import GAToGSOperator, GSToLocalOperator, 
 
 dag_args = {
     **config.dag_default_args,
-    **{"start_date": datetime(2018, 3, 26), "retry_delay": timedelta(minutes=2)},
+    **{
+        "start_date": datetime(2018, 3, 26),
+        "retry_delay": timedelta(minutes=2),
+        'wait_for_downstream': False,
+    },
 }
 
 local_path = "/tmp/gs_export/"

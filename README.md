@@ -11,18 +11,14 @@ Put your DAGS into the `dags` folder, The `dags/custom_operators` is reserved fo
 To run tests and  codestyle. Create and activate the python environment:
 
 - Download and install [miniconda](https://conda.io/miniconda.html)
-- `cd` into this repo in a terminal
-- Create and activate the `conda` environment with
+- `cd` into this repo in a terminal, then run:
 ```
+# create `conda` environment
 conda env create -f environment.yml
 source activate airflow-dags
-```
-Now you can run the tests with:
-```
+# run tests
 python -m pytest --cov-config .coveragerc --cov=./dags tests
-```
-And check the codestyle with:
-```
+# check codestyle
 pycodestyle --show-source .
 ```
 

@@ -7,7 +7,9 @@ from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
 from ohub.operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline
 
-dag_args = {**config.dag_default_args, **{"start_date": datetime(2018, 6, 26)}}
+dag_args = {**config.dag_default_args, **{
+        "start_date": datetime(2018, 7, 26),
+    }}
 
 orders_dag_config = DagConfig("orders", is_delta=True)
 orderslines_dag_config = DagConfig(
@@ -179,3 +181,7 @@ with DAG(
     ingest_orders.last_task >> merge_orders >> export_orders.first_task
     merge_orderlines >> export_orders.first_task
     ingest_orderlines.last_task >> merge_orderlines >> export_orderlines.first_task
+    ingest_orders.first_task >> export_orders.last_task
+    ingest_orders.first_task >> export_orderlines.last_task
+    ingest_orderlines.first_task >> export_orders.last_task
+    ingest_orderlines.first_task >> export_orderlines.last_task

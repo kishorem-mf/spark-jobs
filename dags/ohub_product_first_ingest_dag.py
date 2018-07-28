@@ -7,7 +7,9 @@ from dags.config import small_cluster_config
 from ohub.operators.wasb_operator import WasbCopyOperator
 from ohub.utils.airflow import SubPipeline, DagConfig, GenericPipeline
 
-dag_args = {**config.dag_default_args, **{"start_date": datetime(2018, 6, 13)}}
+dag_args = {**config.dag_default_args, **{
+        "start_date": datetime(2018, 7, 25),
+    }}
 
 entity = "products"
 dag_config = DagConfig(entity, is_delta=False)

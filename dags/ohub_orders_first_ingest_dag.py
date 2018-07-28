@@ -8,7 +8,9 @@ from ohub.operators.external_task_sensor_operator import ExternalTaskSensorOpera
 from ohub.operators.wasb_operator import WasbCopyOperator
 from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline
 
-dag_args = {**config.dag_default_args, **{"start_date": datetime(2018, 6, 25)}}
+dag_args = {**config.dag_default_args, **{
+        "start_date": datetime(2018, 7, 25),
+    }}
 orders_entity = "orders"
 orders_dag_config = DagConfig(orders_entity, is_delta=False)
 orderlines_entity = "orderlines"
