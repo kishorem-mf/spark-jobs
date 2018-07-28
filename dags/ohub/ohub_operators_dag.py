@@ -11,7 +11,8 @@ from ohub.ohub_dag_config import \
 
 default_args.update(
     {
-        'start_date': datetime(2018, 6, 4),
+        'start_date': datetime(2018, 7, 26),
+        'end_date': datetime(2018, 7, 27),
         'pool': 'ohub_operators_pool'
     }
 )
@@ -102,3 +103,4 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
     fuzzy_matching.last_task >> join >> combine_to_create_integrated >> update_golden_records
     update_golden_records >> update_operators_table
     update_golden_records >> export.first_task
+    ingest.first_task >> export.last_task

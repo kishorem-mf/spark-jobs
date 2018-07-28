@@ -1,3 +1,6 @@
+# Check https://confluence.atlassian.com/x/x4UWN for more examples.
+# Validator: https://bitbucket-pipelines.atlassian.io/validator
+
 clone:
   depth: 1
 
@@ -6,6 +9,12 @@ options:
 
 pipelines:
   default:
+    - step: &pylint
+        name: pylint
+        image: python:3.6.6
+        script:
+          - pip install pylint
+          - make lint
     - step: &syntax
         name: Check PEP8 codestyle and run tests
         image: timvancann/miniconda3-gcc

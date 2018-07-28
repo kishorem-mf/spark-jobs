@@ -8,7 +8,10 @@ from ohub.ohub_dag_config import default_args, databricks_conn_id, jar, \
     GenericPipeline, SubPipeline, DagConfig, intermediate_bucket, small_cluster_config
 
 default_args.update(
-    {'start_date': datetime(2018, 6, 14)}
+    {
+        'start_date': datetime(2018, 7, 26),
+        'end_date': datetime(2018, 7, 27),
+    }
 )
 
 entity = 'products'
@@ -43,3 +46,4 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
         })
 
     ingest.last_task >> merge >> export.first_task
+    ingest.first_task >> export.last_task
