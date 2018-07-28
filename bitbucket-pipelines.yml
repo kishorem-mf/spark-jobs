@@ -28,11 +28,21 @@ pipelines:
           password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
           - bash ./test.sh
+    - step: &dockerlint
+        name: Dockerlint
+        script:
+          - make dockerlint
+    - step: &docker
+        name: Build image
+        script:
+          - docker build -f docker/airflow/Dockerfile .
 
   branches:
     master:
     - step: *syntax
     - step: *dags
+    - step: *dockerlint
+    - step: *docker
     - step:
         name: Deploy to azure file share
         image: microsoft/azure-cli
@@ -40,14 +50,25 @@ pipelines:
         script:
           - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
           - az storage file upload-batch --source dags/ --destination airflow-dags --account-key ${AZ_AIRFLOW_STORAGE_KEY} --account-name ${AZ_AIRFLOW_STORAGE_ACCOUNT}
+    - step:
+        name: Build image for azure
+        image: microsoft/azure-cli
+        script:
+          - docker login ulohubimages.azurecr.io -u ${AZ_CONTAINER_REGISTRY_USER_ID} -p ${AZ_CONTAINER_REGISTRY_PASSWORD}
 
-  custom:
-    build-airflow-image:
-      - step:
-          name: Dockerlint
-          script:
-            - make dockerlint
-      - step:
-          name: Build image
-          script:
-            - docker build -f docker/airflow/Dockerfile .
+          - docker build -t ulohubimages.azurecr.io/airflow:latest .
+          - docker push ulohubimages.azurecr.io/airflow:latest
+
+          - docker build -t ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} .
+          - docker push ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER}
+    - step:
+        name: Deploy Airflow in kubernetes Azure
+        image: microsoft/azure-cli
+        script:
+          - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
+          - az acs kubernetes install-cli
+          - az aks get-credentials -g bieno-da-s-60072-containers-rg -n ul-ohub2-aks-dev-we
+
+          - airflowimage="ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER}"
+          - kubectl set image deployment/airflow-webserver webserver=${airflowimage}
+          - kubectl set image deployment/airflow-scheduler scheduler=${airflowimage}
