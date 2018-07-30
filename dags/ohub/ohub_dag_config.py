@@ -227,7 +227,7 @@ class GenericPipeline(object):
         input_file = raw_bucket.format(date=one_day_ago, schema=ingest_schema, channel=channel)
         output_file = ingested_bucket.format(date=one_day_ago, fn=self._dag_config.entity, channel=channel)
 
-        separator = ";" if self._dag_config.is_delta else "\u2030"
+        separator = ";"
 
         config = IngestConfig(
             input_file=input_file,
