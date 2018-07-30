@@ -82,6 +82,15 @@ def small_cluster_config(cluster_name):
 
 databricks_conn_id = 'databricks_azure'
 
+postgres_connection = BaseHook.get_connection('postgres_channels')
+postgres_config = [
+    '--postgressUrl', postgres_connection.host,
+    '--postgressUsername', postgres_connection.login,
+    '--postgressPassword', postgres_connection.password,
+    '--postgressDB', postgres_connection.schema
+]
+
+
 def create_cluster(entity: str, cluster_config: dict):
     '''Returns an Airflow tasks that tells Databricks to construct a cluster
     Args:
@@ -500,7 +509,7 @@ class GenericPipeline(object):
                                '--outputFile', config.output,
                                '--fieldSeparator', config.separator,
                                '--strictIngestion', "false",
-                               '--deduplicateOnConcatId', dedup]
+                               '--deduplicateOnConcatId', dedup] + postgres_config
             },
         )
 
@@ -522,6 +531,7 @@ class GenericPipeline(object):
                 'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn=self._dag_config.entity),
                                '--outputFile', export_bucket.format(date=one_day_ago, fn=config['filename'])] +
                               delta_params +
+                              postgres_config +
                               config['extra_acm_parameters']
             }
         )
@@ -566,7 +576,8 @@ class GenericPipeline(object):
                 'main_class_name': "com.unilever.ohub.spark.dispatcher.{}DispatcherConverter".format(self._clazz),
                 'parameters': ['--inputFile', integrated_bucket.format(date=one_day_ago, fn=self._dag_config.entity),
                                '--outputFile', export_bucket.format(date=one_day_ago, fn=config['filename'])] +
-                              delta_params
+                              delta_params +
+                              postgres_config
             }
         )
         return SubPipeline(convert_to_dispatch, convert_to_dispatch)

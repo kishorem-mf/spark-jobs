@@ -6,7 +6,8 @@ from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
 from ohub.ohub_dag_config import \
     default_args, databricks_conn_id, jar, intermediate_bucket, integrated_bucket, one_day_ago, \
-    two_day_ago, GenericPipeline, SubPipeline, DagConfig, large_cluster_config
+    two_day_ago, postgres_config, \
+    GenericPipeline, SubPipeline, DagConfig, large_cluster_config
 
 default_args.update(
     {
@@ -53,7 +54,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
                            intermediate_bucket.format(date=one_day_ago, fn='{}_delta_left_overs'.format(entity)),
                            '--outputFile',
                            intermediate_bucket.format(date=one_day_ago,
-                                                      fn='{}_delta_golden_records'.format(entity))]
+                                                      fn='{}_delta_golden_records'.format(entity))] + postgres_config
         })
 
     combine_to_create_integrated = DatabricksSubmitRunOperator(
@@ -87,7 +88,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
             'parameters': ['--inputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='{}_combined'.format(entity)),
                            '--outputFile',
-                           integrated_bucket.format(date=one_day_ago, fn=entity)]
+                           integrated_bucket.format(date=one_day_ago, fn=entity)] + postgres_config
         }
     )
 

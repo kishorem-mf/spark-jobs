@@ -6,7 +6,7 @@ from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
 from ohub.ohub_dag_config import \
     default_args, databricks_conn_id, jar, ingested_bucket, intermediate_bucket, integrated_bucket, \
-    GenericPipeline, SubPipeline, one_day_ago, DagConfig, large_cluster_config
+    postgres_config, GenericPipeline, SubPipeline, one_day_ago, DagConfig, large_cluster_config
 
 default_args.update(
     {
@@ -47,7 +47,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
             'parameters': ['--matchingInputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='{}_matched'.format(entity)),
                            '--entityInputFile', ingested_bucket.format(date=one_day_ago, fn=entity, channel='*'),
-                           '--outputFile', integrated_bucket.format(date=one_day_ago, fn=entity)]
+                           '--outputFile', integrated_bucket.format(date=one_day_ago, fn=entity)] + postgres_config
         }
     )
 
