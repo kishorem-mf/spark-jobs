@@ -6,7 +6,7 @@ from custom_operators.databricks_functions import \
     DatabricksSubmitRunOperator
 from custom_operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub.ohub_dag_config import \
-    default_args, databricks_conn_id, jar, intermediate_bucket, integrated_bucket, postgres_config, \
+    default_args, databricks_conn_id, jar, intermediate_bucket, integrated_bucket, \
     one_day_ago, GenericPipeline, SubPipeline, DagConfig, large_cluster_config
 
 default_args.update(
@@ -50,7 +50,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
                                                                                 fn='{}_exact_matches'.format(entity)),
                            '--leftOversOutputFile', intermediate_bucket.format(date=one_day_ago,
                                                                                fn='{}_left_overs'.format(
-                                                                                   entity))] + postgres_config
+                                                                                   entity))]
         }
     )
 
@@ -67,7 +67,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
                            intermediate_bucket.format(date=one_day_ago, fn='{}_matched'.format(entity)),
                            '--entityInputFile', intermediate_bucket.format(date=one_day_ago,
                                                                            fn='{}_left_overs'.format(entity)),
-                           '--outputFile', intermediate_bucket.format(date=one_day_ago, fn=entity)] + postgres_config
+                           '--outputFile', intermediate_bucket.format(date=one_day_ago, fn=entity)]
         }
     )
 
@@ -129,7 +129,7 @@ with DAG(dag_config.dag_id, default_args=default_args, schedule_interval=dag_con
             'parameters': ['--inputFile',
                            intermediate_bucket.format(date=one_day_ago, fn='{}_updated_references'.format(entity)),
                            '--outputFile',
-                           integrated_bucket.format(date=one_day_ago, fn=entity)] + postgres_config
+                           integrated_bucket.format(date=one_day_ago, fn=entity)]
         }
     )
 
