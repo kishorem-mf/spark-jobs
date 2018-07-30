@@ -187,7 +187,7 @@ class GenericPipeline(object):
             date="{{ ds }}", fn=self._dag_config.entity, channel=channel
         )
 
-        separator = ";" if self._dag_config.is_delta else "\u2030"
+        separator = ";"
 
         config = IngestConfig(
             input_file=input_file,
