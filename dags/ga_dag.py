@@ -24,7 +24,7 @@ remote_bucket = 'digitaldataufs'
 path_in_bucket = 'ga_data'
 
 cluster_id = '0405-082501-flare296'
-databricks_conn_id = 'databricks_azure'
+databricks_conn_id = 'databricks_default'
 
 with DAG('gcp_ga', default_args=default_args, schedule_interval='0 4 * * *') as dag:
     ga_to_gs = GAToGSOperator(
