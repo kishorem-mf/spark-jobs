@@ -3,7 +3,7 @@ package com.unilever.ohub.spark
 import java.util.Properties
 
 import scala.io.Source
-import com.unilever.ohub.spark.data.{ ChannelMapping, CountryRecord, CountrySalesOrg, SourcePreference }
+import com.unilever.ohub.spark.data.{ChannelMapping, CountryRecord, CountrySalesOrg, SourcePreference}
 import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql._
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
@@ -26,6 +26,7 @@ object DomainDataProvider {
 }
 
 class InMemDomainDataProvider(spark: SparkSession) extends DomainDataProvider with Serializable {
+
   import spark.implicits._
 
   override val countries: Map[String, CountryRecord] = {
@@ -67,13 +68,13 @@ class InMemDomainDataProvider(spark: SparkSession) extends DomainDataProvider wi
   }
 
   override def channelMappings(): Dataset[ChannelMapping] = {
-    val channelMappingDF = spark.read.csv("/channel-mapping.csv")
-    val channelReferencesDF = spark.read.csv("/channel-references.csv")
+    val channelMappingDF = spark.read.option("header", "true").option("inferSchema", "true").csv("/channel-mapping.csv")
+    val channelReferencesDF = spark.read.option("header", "true").option("inferSchema", "true").csv("/channel-references.csv")
 
     channelMappingDF
       .join(
         channelReferencesDF,
-        col("channel_reference_fk") === col("channel_reference_id"),
+        col("CHANNEL_REFERENCE_FK") === col("CHANNEL_REFERENCE_ID"),
         JoinType.Left
       )
       .select(
@@ -91,17 +92,18 @@ class InMemDomainDataProvider(spark: SparkSession) extends DomainDataProvider wi
 }
 
 class PostgressDomainDataProvider(spark: SparkSession, dbUrl: String, dbName: String, userName: String, userPassword: String) extends DomainDataProvider with Serializable {
+
   import spark.implicits._
 
   // see also: http://spark.apache.org/docs/latest/sql-programming-guide.html#jdbc-to-other-databases
   private def readJdbcTable(
-    spark: SparkSession,
-    dbUrl: String,
-    dbName: String,
-    dbTable: String,
-    userName: String,
-    userPassword: String
-  ): DataFrame = {
+                             spark: SparkSession,
+                             dbUrl: String,
+                             dbName: String,
+                             dbTable: String,
+                             userName: String,
+                             userPassword: String
+                           ): DataFrame = {
     val dbFullConnectionString = s"jdbc:postgresql://$dbUrl:5432/$dbName?ssl=true"
 
     val connectionProperties = new Properties
