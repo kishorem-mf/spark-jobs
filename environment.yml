@@ -14,5 +14,6 @@ dependencies:
   - pytest-mock=1.10.0
   - pytest=3.6.3
   - python=3.6.6
+  - cython=0.28.4
   - pip:
     - apache-airflow[crypto]==1.9.0
