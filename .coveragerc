@@ -5,8 +5,11 @@ fail_under = 9
 omit =
     ./dags/*dag*.py
     ./dags/*__init__.py
+    ./ohub/*__init__.py
     ./dags/config.py
+    ./dags/config.py
+    ./ohub/vendor/
     ./dags/operators_config.py
 
 include =
-    ./dags/custom_operators/*.py
+    ./ohub/*.py
