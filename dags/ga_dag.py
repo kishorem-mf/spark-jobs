@@ -23,7 +23,6 @@ local_path = "/tmp/gs_export/"
 remote_bucket = "digitaldataufs"
 path_in_bucket = "ga_data"
 cluster_id = "0405-082501-flare296"
-databricks_conn_id = "databricks_azure"
 
 with DAG("gcp_ga", default_args=dag_args, schedule_interval="0 4 * * *") as dag:
     ga_to_gs = GAToGSOperator(
