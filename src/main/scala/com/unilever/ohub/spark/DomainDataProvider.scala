@@ -3,7 +3,7 @@ package com.unilever.ohub.spark
 import java.util.Properties
 
 import scala.io.Source
-import com.unilever.ohub.spark.data.{ChannelMapping, CountryRecord, CountrySalesOrg, SourcePreference}
+import com.unilever.ohub.spark.data._
 import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql._
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
@@ -68,24 +68,50 @@ class InMemDomainDataProvider(spark: SparkSession) extends DomainDataProvider wi
   }
 
   override def channelMappings(): Dataset[ChannelMapping] = {
-    val channelMappingDF = spark.read.option("header", "true").option("inferSchema", "true").csv("/channel-mapping.csv")
-    val channelReferencesDF = spark.read.option("header", "true").option("inferSchema", "true").csv("/channel-references.csv")
+
+    val channelMappingList = Source
+      .fromInputStream(this.getClass.getClassLoader.getResourceAsStream("channel-mapping.csv"))
+      .getLines()
+      .toSeq
+      .filter(_.nonEmpty)
+      .toList
+      .map(_.split(";"))
+      .map(attributes => ChannelMappingRef(attributes(0), attributes(1), attributes(2), attributes(3), attributes(4)))
+
+    val channelReferencesList = Source
+      .fromInputStream(this.getClass.getClassLoader.getResourceAsStream("channel-references.csv"))
+      .getLines()
+      .toSeq
+      .filter(_.nonEmpty)
+      .toList
+      .map(_.split(";"))
+      .map(attributes => ChannelReferencesRef(attributes(0), attributes(1), attributes(2), attributes(3), attributes(4), attributes(5), attributes(6)))
+
+    val channelMappingDF = spark
+      .sparkContext
+      .parallelize(channelMappingList)
+      .toDF()
+
+    val channelReferencesDF = spark
+      .sparkContext
+      .parallelize(channelReferencesList)
+      .toDF()
 
     channelMappingDF
       .join(
         channelReferencesDF,
-        col("CHANNEL_REFERENCE_FK") === col("CHANNEL_REFERENCE_ID"),
+        col("channelReferenceFk") === col("channelReferenceId"),
         JoinType.Left
       )
       .select(
-        $"COUNTRY_CODE" as "countryCode",
-        $"ORIGINAL_CHANNEL" as "originalChannel",
-        $"LOCAL_CHANNEL" as "localChannel",
-        $"CHANNEL_USAGE" as "channelUsage",
-        $"SOCIAL_COMMERCIAL" as "socialCommercial",
-        $"STRATEGIC_CHANNEL" as "strategicChannel",
-        $"GLOBAL_CHANNEL" as "globalChannel",
-        $"GLOBAL_SUBCHANNEL" as "globalSubChannel"
+        $"countryCode" as "countryCode",
+        $"originalChannel" as "originalChannel",
+        $"localChannel" as "localChannel",
+        $"channelUsage" as "channelUsage",
+        $"socialCommercial" as "socialCommercial",
+        $"strategicChannel" as "strategicChannel",
+        $"globalChannel" as "globalChannel",
+        $"globalSubChannel" as "globalSubChannel"
       )
       .as[ChannelMapping]
   }
