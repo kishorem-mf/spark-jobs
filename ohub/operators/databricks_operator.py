@@ -234,7 +234,7 @@ class DatabricksStartClusterOperator(BaseDatabricksOperator):
 
         run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
         if run_state == "RUNNING":
-            logging.info("Cluster already running.".format(self.task_id))
+            logging.info("Cluster already running.")
             return
 
         hook._do_api_call(
