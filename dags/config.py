@@ -169,7 +169,7 @@ ohub_country_codes = [
 ]
 
 
-databricks_conn_id = "databricks_azure"
+databricks_conn_id = "databricks_default"
 
 
 def large_cluster_config(cluster_name: str):
