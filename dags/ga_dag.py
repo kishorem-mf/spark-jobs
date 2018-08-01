@@ -56,19 +56,19 @@ with DAG("gcp_ga", default_args=dag_args, schedule_interval="0 4 * * *") as dag:
     start_cluster = DatabricksStartClusterOperator(
         task_id="start_cluster",
         cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
+        databricks_conn_id=config.databricks_conn_id,
     )
 
     terminate_cluster = DatabricksTerminateClusterOperator(
         task_id="terminate_cluster",
         cluster_id=cluster_id,
-        databricks_conn_id=databricks_conn_id,
+        databricks_conn_id=config.databricks_conn_id,
     )
 
     update_ga_table = DatabricksSubmitRunOperator(
         task_id="update_ga_table",
         existing_cluster_id="0405-082501-flare296",
-        databricks_conn_id=databricks_conn_id,
+        databricks_conn_id=config.databricks_conn_id,
         notebook_task={
             "notebook_path": "/Users/tim.vancann@unilever.com/update_ga_tables"  # TODO: get rid of user tim in the path
         },
