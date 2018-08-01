@@ -8,7 +8,7 @@ import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
-object OrderLineAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
+object OrderLineAcmConverter extends SparkJob[DefaultWithDeltaConfig]
   with DeltaFunctions with AcmTransformationFunctions with AcmConverter {
 
   def transform(
@@ -22,11 +22,11 @@ object OrderLineAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     integrate[AcmOrderLine](spark, dailyAcmOrderLines, allPreviousAcmOrderLines, "ORDERLINE_ID")
   }
 
-  override private[spark] def defaultConfig = DefaultWithDbAndDeltaConfig()
+  override private[spark] def defaultConfig = DefaultWithDeltaConfig()
 
-  override private[spark] def configParser(): OptionParser[DefaultWithDbAndDeltaConfig] = DefaultWithDbAndDeltaConfigParser()
+  override private[spark] def configParser(): OptionParser[DefaultWithDeltaConfig] = DefaultWithDeltaConfigParser()
 
-  override def run(spark: SparkSession, config: DefaultWithDbAndDeltaConfig, storage: Storage): Unit = {
+  override def run(spark: SparkSession, config: DefaultWithDeltaConfig, storage: Storage): Unit = {
     import spark.implicits._
 
     log.info(s"Generating order lines ACM csv file from [${config.inputFile}] to [${config.outputFile}]")

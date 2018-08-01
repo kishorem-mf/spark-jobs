@@ -9,7 +9,7 @@ import com.unilever.ohub.spark.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
-object ContactPersonAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
+object ContactPersonAcmConverter extends SparkJob[DefaultWithDeltaConfig]
   with DeltaFunctions with AcmTransformationFunctions with AcmConverter {
 
   def transform(
@@ -23,16 +23,16 @@ object ContactPersonAcmConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
     integrate[AcmContactPerson](spark, dailyAcmContactPersons, allPreviousAcmContactPersons, "CP_ORIG_INTEGRATION_ID")
   }
 
-  override private[spark] def defaultConfig = DefaultWithDbAndDeltaConfig()
+  override private[spark] def defaultConfig = DefaultWithDeltaConfig()
 
-  override private[spark] def configParser(): OptionParser[DefaultWithDbAndDeltaConfig] = DefaultWithDbAndDeltaConfigParser()
+  override private[spark] def configParser(): OptionParser[DefaultWithDeltaConfig] = DefaultWithDeltaConfigParser()
 
-  override def run(spark: SparkSession, config: DefaultWithDbAndDeltaConfig, storage: Storage): Unit = {
+  override def run(spark: SparkSession, config: DefaultWithDeltaConfig, storage: Storage): Unit = {
     import spark.implicits._
 
     log.info(s"Generating contact person ACM csv file from [$config.inputFile] to [$config.outputFile]")
 
-    val dataProvider = DomainDataProvider(spark, config.postgressUrl, config.postgressDB, config.postgressUsername, config.postgressPassword)
+    val dataProvider = DomainDataProvider(spark)
 
     val contactPersons = storage.readFromParquet[ContactPerson](config.inputFile)
     val previousIntegrated = config.previousIntegrated match {

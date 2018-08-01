@@ -15,11 +15,7 @@ case class ExactMatchIngestedWithDbConfig(
     deltaInputFile: String = "path-to-delta-input-file",
     matchedExactOutputFile: String = "path-to-matched-exact-output-file",
     unmatchedIntegratedOutputFile: String = "path-to-unmatched-integrated-output-file",
-    unmatchedDeltaOutputFile: String = "path-to-unmatched-delta-output-file",
-    postgressUrl: String = "postgress-url",
-    postgressUsername: String = "postgress-username",
-    postgressPassword: String = "postgress-password",
-    postgressDB: String = "postgress-db"
+    unmatchedDeltaOutputFile: String = "path-to-unmatched-delta-output-file"
 ) extends SparkJobConfig
 
 object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWithDbConfig] {
@@ -44,18 +40,6 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
       opt[String]("unmatchedDeltaOutputFile") required () action { (x, c) ⇒
         c.copy(unmatchedDeltaOutputFile = x)
       } text "unmatchedDeltaOutputFile is a string property"
-      opt[String]("postgressUrl") required () action { (x, c) ⇒
-        c.copy(postgressUrl = x)
-      } text "postgressUrl is a string property"
-      opt[String]("postgressUsername") required () action { (x, c) ⇒
-        c.copy(postgressUsername = x)
-      } text "postgressUsername is a string property"
-      opt[String]("postgressPassword") required () action { (x, c) ⇒
-        c.copy(postgressPassword = x)
-      } text "postgressPassword is a string property"
-      opt[String]("postgressDB") required () action { (x, c) ⇒
-        c.copy(postgressDB = x)
-      } text "postgressDB is a string property"
 
       version("1.0")
       help("help") text "help text"

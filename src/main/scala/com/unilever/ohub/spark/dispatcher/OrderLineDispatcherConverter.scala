@@ -8,7 +8,7 @@ import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
-object OrderLineDispatcherConverter extends SparkJob[DefaultWithDbAndDeltaConfig]
+object OrderLineDispatcherConverter extends SparkJob[DefaultWithDeltaConfig]
   with DeltaFunctions {
 
   def transform(
@@ -22,11 +22,11 @@ object OrderLineDispatcherConverter extends SparkJob[DefaultWithDbAndDeltaConfig
     integrate[DispatcherOrderLine](spark, dailyOrderLines, allPreviousOrderLines, "ODL_INTEGRATION_ID")
   }
 
-  override private[spark] def defaultConfig = DefaultWithDbAndDeltaConfig()
+  override private[spark] def defaultConfig = DefaultWithDeltaConfig()
 
-  override private[spark] def configParser(): OptionParser[DefaultWithDbAndDeltaConfig] = DefaultWithDbAndDeltaConfigParser()
+  override private[spark] def configParser(): OptionParser[DefaultWithDeltaConfig] = DefaultWithDeltaConfigParser()
 
-  override def run(spark: SparkSession, config: DefaultWithDbAndDeltaConfig, storage: Storage): Unit = {
+  override def run(spark: SparkSession, config: DefaultWithDeltaConfig, storage: Storage): Unit = {
     import spark.implicits._
 
     log.info(s"Generating order lines dispatcher csv file from [${config.inputFile}] to [${config.outputFile}]")
