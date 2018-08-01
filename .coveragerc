@@ -2,11 +2,4 @@
 fail_under = 9
 
 [run]
-omit =
-    ./dags/*dag*.py
-    ./dags/*__init__.py
-    ./dags/config.py
-    ./dags/operators_config.py
-
-include =
-    ./dags/custom_operators/*.py
+branch = True
