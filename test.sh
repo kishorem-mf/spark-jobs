@@ -6,6 +6,7 @@ AIRFLOW__CORE__EXECUTOR="SequentialExecutor"
 AIRFLOW__CORE__DAGS_FOLDER="./dags"
 AIRFLOW__CORE__BASE_LOG_FOLDER="./logs"
 
+export PYTHONPATH=.
 airflow initdb > /dev/null # first pass, enable connections/variables
 airflow connections --add --conn_id "postgres_channels" --conn_uri "foo"
 airflow variables --set "google_api_key" "foo"

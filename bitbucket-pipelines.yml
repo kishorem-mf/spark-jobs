@@ -49,7 +49,7 @@ pipelines:
         deployment: production
         script:
           - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
-          - az storage file upload-batch --source dags/ --destination airflow-dags --account-key ${AZ_AIRFLOW_STORAGE_KEY} --account-name ${AZ_AIRFLOW_STORAGE_ACCOUNT}
+          - az storage file upload-batch --source . --destination airflow-dags --account-key ${AZ_AIRFLOW_STORAGE_KEY} --account-name ${AZ_AIRFLOW_STORAGE_ACCOUNT}
     - step:
         name: Build image for azure
         image: microsoft/azure-cli
