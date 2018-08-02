@@ -17,7 +17,7 @@ pipelines:
     - step: &dags
         name: Verify DAG integrity
         image:
-          name: ulohubimages.azurecr.io/airflow:latest
+          name: ulohubimages.azurecr.io/airflow:89
           username: ulohubimages
           password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
