@@ -49,7 +49,7 @@ object ProductAcmConverter extends SparkJob[DefaultWithDeltaConfig]
 
     products.map { product ⇒
       AcmProduct(
-        COUNTRY_CODE = Some(product.countryCode),
+        COUNTY_CODE = Some(product.countryCode),
         PRODUCT_NAME = Some(product.name),
         PRD_INTEGRATION_ID = product.concatId,
         EAN_CODE = product.eanConsumerUnit,
