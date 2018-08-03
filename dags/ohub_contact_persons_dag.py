@@ -37,7 +37,6 @@ with DAG(
             acm_schema_name="RECIPIENTS",
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
-            postgres_conn_id="postgres_channels",
             container_name=config.container_name,
             wasb_export_container=config.wasb_export_container,
         )
@@ -45,11 +44,8 @@ with DAG(
             dispatcher_schema_name="CONTACT_PERSONS",
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
-            postgres_conn_id="postgres_channels",
         )
-        .has_ingest_from_file_interface(
-            raw_bucket=config.raw_bucket, postgres_conn_id="postgres_channels"
-        )
+        .has_ingest_from_file_interface(raw_bucket=config.raw_bucket)
     )
 
     ingest: SubPipeline = generic.construct_ingest_pipeline()
@@ -115,17 +111,8 @@ with DAG(
                 config.intermediate_bucket.format(
                     date="{{ ds }}", fn="{}_unmatched_delta".format(entity)
                 ),
-                "--postgressUrl",
-                "{{ params.postgres_conn.host }}",
-                "--postgressUsername",
-                "{{ params.postgres_conn.login }}",
-                "--postgressPassword",
-                "{{ params.postgres_conn.password }}",
-                "--postgressDB",
-                "{{ params.postgres_conn.schema }}",
             ],
         },
-        params={"postgres_conn": LazyConnection("postgres_channels")},
     )
 
     join_fuzzy_matched = DatabricksSubmitRunOperator(
@@ -148,17 +135,8 @@ with DAG(
                 config.intermediate_bucket.format(
                     date="{{ ds }}", fn="{}_delta_golden_records".format(entity)
                 ),
-                "--postgressUrl",
-                "{{ params.postgres_conn.host }}",
-                "--postgressUsername",
-                "{{ params.postgres_conn.login }}",
-                "--postgressPassword",
-                "{{ params.postgres_conn.password }}",
-                "--postgressDB",
-                "{{ params.postgres_conn.schema }}",
             ],
         },
-        params={"postgres_conn": LazyConnection("postgres_channels")},
     )
 
     join_fuzzy_and_exact_matched = DatabricksSubmitRunOperator(
@@ -231,17 +209,8 @@ with DAG(
                 ),
                 "--outputFile",
                 config.integrated_bucket.format(date="{{ ds }}", fn=entity),
-                "--postgressUrl",
-                "{{ params.postgres_conn.host }}",
-                "--postgressUsername",
-                "{{ params.postgres_conn.login }}",
-                "--postgressPassword",
-                "{{ params.postgres_conn.password }}",
-                "--postgressDB",
-                "{{ params.postgres_conn.schema }}",
             ],
         },
-        params={"postgres_conn": LazyConnection("postgres_channels")},
     )
 
     ingest.last_task >> pre_processing >> exact_match_integrated_ingested
