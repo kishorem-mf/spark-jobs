@@ -3,8 +3,8 @@ package com.unilever.ohub.spark.acm.model
 // Data Model: OPR_ORIG_INTEGRATION_ID can be misleading for Ohub 2.0
 // as this will contain the new OHUB_OPERATOR_ID and OPR_LNKD_INTEGRATION_ID will contain OPERATOR_CONCAT_ID
 case class AcmContactPerson(
-    CP_LNKD_INTEGRATION_ID: String,
     CP_ORIG_INTEGRATION_ID: String,
+    CP_LNKD_INTEGRATION_ID: String,
     OPR_ORIG_INTEGRATION_ID: Option[String],
     GOLDEN_RECORD_FLAG: String,
     WEB_CONTACT_ID: String,
