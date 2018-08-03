@@ -36,7 +36,6 @@ with DAG(
             acm_schema_name="OPERATORS",
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
-            postgres_conn_id="postgres_channels",
             container_name=config.container_name,
             wasb_export_container=config.wasb_export_container,
         )
@@ -44,11 +43,8 @@ with DAG(
             dispatcher_schema_name="OPERATORS",
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
-            postgres_conn_id="postgres_channels",
         )
-        .has_ingest_from_file_interface(
-            raw_bucket=config.raw_bucket, postgres_conn_id="postgres_channels"
-        )
+        .has_ingest_from_file_interface(raw_bucket=config.raw_bucket)
         .has_ingest_from_web_event(
             raw_bucket=config.raw_bucket, ingested_bucket=config.ingested_bucket
         )
@@ -89,17 +85,8 @@ with DAG(
                 config.intermediate_bucket.format(
                     date="{{ ds }}", fn="{}_delta_golden_records".format(entity)
                 ),
-                "--postgressUrl",
-                "{{ params.postgres_conn.host }}",
-                "--postgressUsername",
-                "{{ params.postgres_conn.login }}",
-                "--postgressPassword",
-                "{{ params.postgres_conn.password }}",
-                "--postgressDB",
-                "{{ params.postgres_conn.schema }}",
             ],
         },
-        params={"postgres_conn": LazyConnection("postgres_channels")},
     )
 
     combine_to_create_integrated = DatabricksSubmitRunOperator(
@@ -140,17 +127,8 @@ with DAG(
                 ),
                 "--outputFile",
                 config.integrated_bucket.format(date="{{ ds }}", fn=entity),
-                "--postgressUrl",
-                "{{ params.postgres_conn.host }}",
-                "--postgressUsername",
-                "{{ params.postgres_conn.login }}",
-                "--postgressPassword",
-                "{{ params.postgres_conn.password }}",
-                "--postgressDB",
-                "{{ params.postgres_conn.schema }}",
             ],
         },
-        params={"postgres_conn": LazyConnection("postgres_channels")},
     )
 
     update_operators_table = DatabricksSubmitRunOperator(

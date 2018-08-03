@@ -171,7 +171,6 @@ class GenericPipeline(object):
     def has_ingest_from_file_interface(
         self,
         raw_bucket: str,
-        postgres_conn_id: str,
         deduplicate_on_concat_id: bool = True,
         alternative_schema: str = None,
     ) -> "GenericPipeline":
@@ -197,7 +196,7 @@ class GenericPipeline(object):
             separator=separator,
         )
 
-        self._ingests.append(self.__ingest_from_channel(config, postgres_conn_id))
+        self._ingests.append(self.__ingest_from_channel(config))
         return self
 
     def has_ingest_from_web_event(
@@ -241,7 +240,6 @@ class GenericPipeline(object):
         acm_schema_name: str,
         integrated_bucket: str,
         export_bucket: str,
-        postgres_conn_id: str,
         container_name: str,
         wasb_export_container: str,
         extra_acm_parameters: List[str] = None,
@@ -255,7 +253,6 @@ class GenericPipeline(object):
                 integrated_bucket=integrated_bucket,
                 filename=f"acm/UFS_{acm_schema_name}_{{ ds_nodash }}000000.csv",
                 export_bucket=export_bucket,
-                postgres_conn_id=postgres_conn_id,
                 container_name=container_name,
                 wasb_export_container=wasb_export_container,
                 extra_acm_parameters=extra_acm_parameters,
@@ -268,7 +265,6 @@ class GenericPipeline(object):
         dispatcher_schema_name: str,
         integrated_bucket: str,
         export_bucket: str,
-        postgres_conn_id: str,
     ):
         """Marks the pipeline to include export to dispatcherDb"""
         filename = (
@@ -281,7 +277,6 @@ class GenericPipeline(object):
                 filename=filename,
                 integrated_bucket=integrated_bucket,
                 export_bucket=export_bucket,
-                postgres_conn_id=postgres_conn_id,
             )
         )
         return self
@@ -587,7 +582,7 @@ class GenericPipeline(object):
 
         return SubPipeline(start_matching, end_matching)
 
-    def __ingest_from_channel(self, config: IngestConfig, postgres_conn_id: str):
+    def __ingest_from_channel(self, config: IngestConfig):
         dedup = "true" if config.dedup else "false"
 
         ingest_to_parquet = DatabricksSubmitRunOperator(
@@ -608,17 +603,8 @@ class GenericPipeline(object):
                     "false",
                     "--deduplicateOnConcatId",
                     dedup,
-                    "--postgressUrl",
-                    "{{ params.postgres_conn.host }}",
-                    "--postgressUsername",
-                    "{{ params.postgres_conn.login }}",
-                    "--postgressPassword",
-                    "{{ params.postgres_conn.password }}",
-                    "--postgressDB",
-                    "{{ params.postgres_conn.schema }}",
                 ],
             },
-            params={"postgres_conn": LazyConnection(postgres_conn_id)},
         )
 
         return SubPipeline(ingest_to_parquet, ingest_to_parquet)
@@ -628,7 +614,6 @@ class GenericPipeline(object):
         integrated_bucket: str,
         filename: str,
         export_bucket: str,
-        postgres_conn_id: str,
         container_name: str,
         wasb_export_container: str,
         extra_acm_parameters: List[str],
@@ -660,19 +645,8 @@ class GenericPipeline(object):
                     export_bucket.format(date="{{ ds }}", fn=filename),
                 ]
                 + delta_params
-                + extra_acm_parameters
-                + [
-                    "--postgressUrl",
-                    "{{ params.postgres_conn.host }}",
-                    "--postgressUsername",
-                    "{{ params.postgres_conn.login }}",
-                    "--postgressPassword",
-                    "{{ params.postgres_conn.password }}",
-                    "--postgressDB",
-                    "{{ params.postgres_conn.schema }}",
-                ],
+                + extra_acm_parameters,
             },
-            params={"postgres_conn": LazyConnection(postgres_conn_id)},
         )
 
         tmp_file = f"/tmp/{filename}"
@@ -708,7 +682,6 @@ class GenericPipeline(object):
         filename: str,
         integrated_bucket: str,
         export_bucket: str,
-        postgres_conn_id: str,
     ) -> SubPipeline:
         previous_integrated = (
             integrated_bucket.format(
@@ -735,19 +708,8 @@ class GenericPipeline(object):
                     "--outputFile",
                     export_bucket.format(date="{{ ds }}", fn=filename),
                 ]
-                + delta_params
-                + [
-                    "--postgressUrl",
-                    "{{ params.postgres_conn.host }}",
-                    "--postgressUsername",
-                    "{{ params.postgres_conn.login }}",
-                    "--postgressPassword",
-                    "{{ params.postgres_conn.password }}",
-                    "--postgressDB",
-                    "{{ params.postgres_conn.schema }}",
-                ],
+                + delta_params,
             },
-            params={"postgres_conn": LazyConnection(postgres_conn_id)},
         )
         return SubPipeline(convert_to_dispatch, convert_to_dispatch)
 

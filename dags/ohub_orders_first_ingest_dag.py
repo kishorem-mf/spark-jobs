@@ -47,7 +47,6 @@ with DAG(
             ],
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
-            postgres_conn_id="postgres_channels",
             container_name=config.container_name,
             wasb_export_container=config.wasb_export_container,
         )
@@ -55,11 +54,8 @@ with DAG(
             dispatcher_schema_name="ORDERS",
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
-            postgres_conn_id="postgres_channels",
         )
-        .has_ingest_from_file_interface(
-            raw_bucket=config.raw_bucket, postgres_conn_id="postgres_channels"
-        )
+        .has_ingest_from_file_interface(raw_bucket=config.raw_bucket)
     )
 
     orderlines = (
@@ -80,7 +76,6 @@ with DAG(
             acm_schema_name="ORDERLINES",
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
-            postgres_conn_id="postgres_channels",
             container_name=config.container_name,
             wasb_export_container=config.wasb_export_container,
         )
@@ -88,10 +83,11 @@ with DAG(
             dispatcher_schema_name="ORDER_LINES",
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
-            postgres_conn_id="postgres_channels",
         )
         .has_ingest_from_file_interface(
-            deduplicate_on_concat_id=False, alternative_schema="orders", raw_bucket=config.raw_bucket, postgres_conn_id="postgres_channels"
+            deduplicate_on_concat_id=False,
+            alternative_schema="orders",
+            raw_bucket=config.raw_bucket
         )
     )
 
