@@ -3,12 +3,12 @@ from datetime import datetime
 from airflow import DAG
 
 from dags import config
-from dags.config import small_cluster_config
+from dags.config import small_cluster_config, start_date_delta
 from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
 from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline
 
 dag_args = {**config.dag_default_args, **{
-        'start_date': datetime(2018, 7, 26),
+        'start_date': start_date_delta,
     }}
 
 entity = "products"

@@ -3,12 +3,13 @@ from datetime import datetime
 from airflow import DAG
 
 from dags import config
+from dags.config import start_date_delta
 from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
 from ohub.operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline
 
 dag_args = {**config.dag_default_args, **{
-        "start_date": datetime(2018, 7, 26),
+        "start_date": start_date_delta,
     }}
 
 orders_dag_config = DagConfig("orders", is_delta=True)

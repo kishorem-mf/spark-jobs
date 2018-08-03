@@ -3,7 +3,7 @@ from datetime import datetime
 from airflow import DAG
 
 from dags import config
-from dags.config import small_cluster_config
+from dags.config import small_cluster_config, start_date_first
 from ohub.operators.wasb_operator import WasbCopyOperator
 from ohub.utils.airflow import SubPipeline, DagConfig, GenericPipeline
 
