@@ -62,10 +62,10 @@ class ContactPersonAcmConverterSpec extends SparkJobSpec with TestContactPersons
         .sortBy(_.COUNTRY_CODE)
 
       result.length shouldBe 3
-      assert(result(0).COUNTRY_CODE == Some(s"deleted"))
-      assert(result(0).DELETE_FLAG == Some("1"))
-      assert(result(1).COUNTRY_CODE == Some("new"))
-      assert(result(2).COUNTRY_CODE == Some("updated"))
+      assert(result(0).COUNTRY_CODE == "deleted")
+      assert(result(0).DELETE_FLAG == "1")
+      assert(result(1).COUNTRY_CODE == "new")
+      assert(result(2).COUNTRY_CODE == "updated")
       assert(result(2).CITY == Some("Amsterdam"))
     }
   }
@@ -84,17 +84,17 @@ class ContactPersonAcmConverterSpec extends SparkJobSpec with TestContactPersons
         AcmContactPerson(
           CP_ORIG_INTEGRATION_ID = "AU~WUFOO~AB123",
           CP_LNKD_INTEGRATION_ID = defaultContactPerson.ohubId.get,
-          OPR_ORIG_INTEGRATION_ID = Some("G1234"),
+          OPR_ORIG_INTEGRATION_ID = "G1234",
           GOLDEN_RECORD_FLAG = "Y",
-          WEB_CONTACT_ID = "",
+          WEB_CONTACT_ID = Option.empty,
           EMAIL_OPTOUT = Some("Y"),
           PHONE_OPTOUT = Some("Y"),
           FAX_OPTOUT = Some("Y"),
           MOBILE_OPTOUT = Some("Y"),
           DM_OPTOUT = Some("Y"),
-          LAST_NAME = "Williams",
-          FIRST_NAME = "John",
-          MIDDLE_NAME = "",
+          LAST_NAME = Some("Williams"),
+          FIRST_NAME = Some("John"),
+          MIDDLE_NAME = Option.empty,
           TITLE = Some("Mr"),
           GENDER = Some("1"),
           LANGUAGE = Some("en"),
@@ -103,7 +103,7 @@ class ContactPersonAcmConverterSpec extends SparkJobSpec with TestContactPersons
           PHONE_NUMBER = Some("61396621811"),
           FAX_NUMBER = Some("61396621812"),
           STREET = Some("Highstreet"),
-          HOUSENUMBER = "443 A",
+          HOUSENUMBER = Some("443 A"),
           ZIPCODE = Some("2057"),
           CITY = Some("Melbourne"),
           COUNTRY = Some("Australia"),
@@ -112,9 +112,9 @@ class ContactPersonAcmConverterSpec extends SparkJobSpec with TestContactPersons
           DATE_OF_BIRTH = Some("1975-12-21 00:00:00"),
           PREFERRED = Some("Y"),
           ROLE = Some("Chef"),
-          COUNTRY_CODE = Some("AU"),
+          COUNTRY_CODE = "AU",
           SCM = Some("Mobile"),
-          DELETE_FLAG = Some("0"),
+          DELETE_FLAG = "0",
           KEY_DECISION_MAKER = Some("Y"),
           OPT_IN = Some("Y"),
           OPT_IN_DATE = Some("2015-09-30 14:23:02"),
@@ -124,7 +124,7 @@ class ContactPersonAcmConverterSpec extends SparkJobSpec with TestContactPersons
           MOB_OPT_IN_DATE = Some("2015-09-30 14:23:04"),
           MOB_CONFIRMED_OPT_IN = Some("Y"),
           MOB_CONFIRMED_OPT_IN_DATE = Some("2015-09-30 14:23:05"),
-          MOB_OPT_OUT_DATE = "",
+          MOB_OPT_OUT_DATE = Option.empty,
           ORG_FIRST_NAME = Some("John"),
           ORG_LAST_NAME = Some("Williams"),
           ORG_EMAIL_ADDRESS = Some("jwilliams@downunder.au"),

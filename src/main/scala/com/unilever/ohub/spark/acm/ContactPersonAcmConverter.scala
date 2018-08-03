@@ -56,72 +56,64 @@ object ContactPersonAcmConverter extends SparkJob[DefaultWithDeltaConfig]
   ): Dataset[AcmContactPerson] = {
     import spark.implicits._
 
-    contactPersons.filter(_.isGoldenRecord).map { contactPerson ⇒ // TODO check whether the filter is at the right location
+    contactPersons.filter(_.isGoldenRecord).map { cp ⇒ // TODO check whether the filter is at the right location
       AcmContactPerson(
-        CP_ORIG_INTEGRATION_ID = contactPerson.concatId,
-        CP_LNKD_INTEGRATION_ID = contactPerson.ohubId.get, // TODO resolve .get here...what if we don't have an ohubId?
-        OPR_ORIG_INTEGRATION_ID = contactPerson.oldIntegrationId, // TODO opr-ohub-id...add to domain (is set in the merging step)
+        CP_ORIG_INTEGRATION_ID = cp.concatId,
+        CP_LNKD_INTEGRATION_ID = cp.ohubId.getOrElse(""), // TODO what if we don't have an ohubId?
+        OPR_ORIG_INTEGRATION_ID = cp.oldIntegrationId.getOrElse(""), // TODO opr-ohub-id...add to domain (is set in the merging step)
         GOLDEN_RECORD_FLAG = "Y",
-        WEB_CONTACT_ID = "",
-        EMAIL_OPTOUT = contactPerson.hasEmailOptOut.map(boolAsString),
-        PHONE_OPTOUT = contactPerson.hasTeleMarketingOptOut.map(boolAsString),
-        FAX_OPTOUT = contactPerson.hasFaxOptOut.map(boolAsString),
-        MOBILE_OPTOUT = contactPerson.hasMobileOptOut.map(boolAsString),
-        DM_OPTOUT = contactPerson.hasDirectMailOptOut.map(boolAsString),
-        LAST_NAME = cleanNames(
-          contactPerson.firstName.getOrElse(""),
-          contactPerson.lastName.getOrElse(""),
-          false
-        ),
-        FIRST_NAME = cleanNames(
-          contactPerson.firstName.getOrElse(""),
-          contactPerson.lastName.getOrElse(""),
-          true
-        ),
-        MIDDLE_NAME = "",
-        TITLE = contactPerson.title,
-        GENDER = contactPerson.gender.map {
+        WEB_CONTACT_ID = Option.empty,
+        EMAIL_OPTOUT = cp.hasEmailOptOut.map(boolAsString),
+        PHONE_OPTOUT = cp.hasTeleMarketingOptOut.map(boolAsString),
+        FAX_OPTOUT = cp.hasFaxOptOut.map(boolAsString),
+        MOBILE_OPTOUT = cp.hasMobileOptOut.map(boolAsString),
+        DM_OPTOUT = cp.hasDirectMailOptOut.map(boolAsString),
+        LAST_NAME = cp.lastName,
+        FIRST_NAME = Option(cleanNames(
+          cp.firstName.getOrElse(""),
+          cp.lastName.getOrElse("")
+        )),
+        MIDDLE_NAME = Option.empty,
+        TITLE = cp.title,
+        GENDER = cp.gender.map {
           case "M" ⇒ "1"
           case "F" ⇒ "2"
           case _   ⇒ "0"
         },
-        LANGUAGE = contactPerson.language,
-        EMAIL_ADDRESS = contactPerson.emailAddress,
-        MOBILE_PHONE_NUMBER = contactPerson.mobileNumber,
-        PHONE_NUMBER = contactPerson.phoneNumber,
-        FAX_NUMBER = contactPerson.faxNumber,
-        STREET = contactPerson.street.map(clean),
-        HOUSENUMBER =
-          contactPerson.houseNumber.map(clean).getOrElse("") +
-            " " +
-            contactPerson.houseNumberExtension.map(clean).getOrElse(""),
-        ZIPCODE = contactPerson.zipCode.map(clean),
-        CITY = contactPerson.city.map(clean),
-        COUNTRY = contactPerson.countryName,
-        DATE_CREATED = contactPerson.dateCreated.map(formatWithPattern()),
-        DATE_UPDATED = contactPerson.dateUpdated.map(formatWithPattern()),
-        DATE_OF_BIRTH = contactPerson.birthDate.map(formatWithPattern()),
-        PREFERRED = contactPerson.isPreferredContact.map(boolAsString),
-        ROLE = contactPerson.jobTitle,
-        COUNTRY_CODE = Some(contactPerson.countryCode),
-        SCM = contactPerson.standardCommunicationChannel,
-        DELETE_FLAG = if (contactPerson.isActive) Some("0") else Some("1"),
-        KEY_DECISION_MAKER = contactPerson.isKeyDecisionMaker.map(boolAsString),
-        OPT_IN = contactPerson.hasEmailOptIn.map(boolAsString),
-        OPT_IN_DATE = contactPerson.emailOptInDate.map(formatWithPattern()),
-        CONFIRMED_OPT_IN = contactPerson.hasConfirmedRegistration.map(boolAsString),
-        CONFIRMED_OPT_IN_DATE = contactPerson.confirmedRegistrationDate.map(formatWithPattern()),
-        MOB_OPT_IN = contactPerson.hasMobileOptIn.map(boolAsString),
-        MOB_OPT_IN_DATE = contactPerson.mobileOptInDate.map(formatWithPattern()),
-        MOB_CONFIRMED_OPT_IN = contactPerson.hasMobileDoubleOptIn.map(boolAsString),
-        MOB_CONFIRMED_OPT_IN_DATE = contactPerson.mobileDoubleOptInDate.map(formatWithPattern()),
-        MOB_OPT_OUT_DATE = "",
-        ORG_FIRST_NAME = contactPerson.firstName,
-        ORG_LAST_NAME = contactPerson.lastName,
-        ORG_EMAIL_ADDRESS = contactPerson.emailAddress,
-        ORG_FIXED_PHONE_NUMBER = contactPerson.phoneNumber,
-        ORG_MOBILE_PHONE_NUMBER = contactPerson.mobileNumber,
-        ORG_FAX_NUMBER = contactPerson.faxNumber
+        LANGUAGE = cp.language,
+        EMAIL_ADDRESS = cp.emailAddress,
+        MOBILE_PHONE_NUMBER = cp.mobileNumber,
+        PHONE_NUMBER = cp.phoneNumber,
+        FAX_NUMBER = cp.faxNumber,
+        STREET = cp.street.map(clean),
+        HOUSENUMBER = Option(Seq(cp.houseNumber, cp.houseNumberExtension).flatten.map(clean).mkString(" ")),
+        ZIPCODE = cp.zipCode.map(clean),
+        CITY = cp.city.map(clean),
+        COUNTRY = cp.countryName,
+        DATE_CREATED = cp.dateCreated.map(formatWithPattern()),
+        DATE_UPDATED = cp.dateUpdated.map(formatWithPattern()),
+        DATE_OF_BIRTH = cp.birthDate.map(formatWithPattern()),
+        PREFERRED = cp.isPreferredContact.map(boolAsString),
+        ROLE = cp.jobTitle,
+        COUNTRY_CODE = cp.countryCode,
+        SCM = cp.standardCommunicationChannel,
+        DELETE_FLAG = if (cp.isActive) "0" else "1",
+        KEY_DECISION_MAKER = cp.isKeyDecisionMaker.map(boolAsString),
+        OPT_IN = cp.hasEmailOptIn.map(boolAsString),
+        OPT_IN_DATE = cp.emailOptInDate.map(formatWithPattern()),
+        CONFIRMED_OPT_IN = cp.hasConfirmedRegistration.map(boolAsString),
+        CONFIRMED_OPT_IN_DATE = cp.confirmedRegistrationDate.map(formatWithPattern()),
+        MOB_OPT_IN = cp.hasMobileOptIn.map(boolAsString),
+        MOB_OPT_IN_DATE = cp.mobileOptInDate.map(formatWithPattern()),
+        MOB_CONFIRMED_OPT_IN = cp.hasMobileDoubleOptIn.map(boolAsString),
+        MOB_CONFIRMED_OPT_IN_DATE = cp.mobileDoubleOptInDate.map(formatWithPattern()),
+        MOB_OPT_OUT_DATE = Option.empty,
+        ORG_FIRST_NAME = cp.firstName,
+        ORG_LAST_NAME = cp.lastName,
+        ORG_EMAIL_ADDRESS = cp.emailAddress,
+        ORG_FIXED_PHONE_NUMBER = cp.phoneNumber,
+        ORG_MOBILE_PHONE_NUMBER = cp.mobileNumber,
+        ORG_FAX_NUMBER = cp.faxNumber
       )
     }
   }

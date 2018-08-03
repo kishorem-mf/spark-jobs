@@ -13,9 +13,7 @@ trait AcmTransformationFunctions {
 
   val clean = (str: String) ⇒ StringFunctions.removeGenericStrangeChars(str)
 
-  val cleanNames = (firstName: String, lastName: String, isFirstName: Boolean) ⇒ {
-    StringFunctions.fillLastNameOnlyWhenFirstEqualsLastName(firstName, lastName, isFirstName)
-  }
+  val cleanNames = StringFunctions.fillLastNameOnlyWhenFirstEqualsLastName _
 
   def formatWithPattern(dateTimePattern: String = dateFormat)(input: Timestamp): String = {
     val pattern = DateTimeFormatter.ofPattern(dateTimePattern)
