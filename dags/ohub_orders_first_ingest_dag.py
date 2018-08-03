@@ -10,7 +10,6 @@ from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline
 
 dag_args = {**config.dag_default_args, **{
         "start_date": datetime(2018, 7, 25),
-        "end_date": datetime(2018, 7, 25),
     }}
 orders_entity = "orders"
 orders_dag_config = DagConfig(orders_entity, is_delta=False)

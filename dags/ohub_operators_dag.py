@@ -4,7 +4,7 @@ from airflow import DAG
 
 from dags import config
 from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
-from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline, LazyConnection
+from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline
 
 dag_args = {
     **config.dag_default_args,
