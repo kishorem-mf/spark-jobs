@@ -2,11 +2,7 @@ from datetime import timedelta
 
 from ohub.utils.airflow import slack_on_databricks_failure_callback
 
-email_addresses = [
-    "Dennis.Vis@unilever.com",
-    "Tycho.Grouwstra@unilever.com",
-    "Roderik-von.Maltzahn@unilever.com",
-]
+email_addresses = ["ohub-team@ufs.com"]
 
 dag_default_args = {
     "owner": "airflow",
