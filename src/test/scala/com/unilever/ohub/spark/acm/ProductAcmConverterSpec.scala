@@ -59,13 +59,13 @@ class ProductAcmConverterSpec extends SparkJobSpec with TestProducts {
 
       val result = SUT.transform(spark, input, previous)
         .collect()
-        .sortBy(_.COUNTRY_CODE)
+        .sortBy(_.COUNTY_CODE)
 
       result.length shouldBe 3
-      assert(result.head.COUNTRY_CODE == Some("deleted"))
+      assert(result.head.COUNTY_CODE == Some("deleted"))
       assert(result.head.DELETE_FLAG == Some("Y"))
-      assert(result(1).COUNTRY_CODE == Some("new"))
-      assert(result(2).COUNTRY_CODE == Some("updated"))
+      assert(result(1).COUNTY_CODE == Some("new"))
+      assert(result(2).COUNTY_CODE == Some("updated"))
       assert(result(2).PRODUCT_NAME.contains("Unox"))
     }
   }
@@ -81,7 +81,7 @@ class ProductAcmConverterSpec extends SparkJobSpec with TestProducts {
 
       val actualAcmProduct = result.head()
       val expectedAcmProduct = AcmProduct(
-        COUNTRY_CODE = Some("country-code"),
+        COUNTY_CODE = Some("country-code"),
         PRODUCT_NAME = Some("product-name"),
         PRD_INTEGRATION_ID = "country-code~source-name~source-entity-id",
         EAN_CODE = None,
