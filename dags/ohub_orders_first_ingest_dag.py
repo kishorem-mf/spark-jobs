@@ -3,6 +3,7 @@ from datetime import datetime
 from airflow import DAG
 
 from dags import config
+from dags.config import start_date_first
 from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
 from ohub.operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub.operators.wasb_operator import WasbCopyOperator
