@@ -329,7 +329,7 @@ class GenericPipeline(object):
         cluster_up = self.__create_cluster(
             entity=entity,
             cluster_config=self._cluster_config,
-            databricks_conn_id=self._dag_config.cluster_name,
+            databricks_conn_id=self._databricks_conn_id,
         )
 
         start_pipeline = BashOperator(
