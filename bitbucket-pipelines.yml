@@ -23,7 +23,7 @@ pipelines:
     - step: &dags
         name: Verify DAG integrity
         image:
-          name: ulohubimages.azurecr.io/airflow:latest
+          name: ulohubimages.azurecr.io/airflow:97
           username: ulohubimages
           password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
@@ -56,10 +56,8 @@ pipelines:
         script:
           - docker login ulohubimages.azurecr.io -u ${AZ_CONTAINER_REGISTRY_USER_ID} -p ${AZ_CONTAINER_REGISTRY_PASSWORD}
 
-          - docker build -t ulohubimages.azurecr.io/airflow:latest .
+          - docker build -t ulohubimages.azurecr.io/airflow:latest -t ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} .
           - docker push ulohubimages.azurecr.io/airflow:latest
-
-          - docker build -t ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} .
           - docker push ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER}
     - step:
         name: Deploy Airflow in kubernetes Azure
