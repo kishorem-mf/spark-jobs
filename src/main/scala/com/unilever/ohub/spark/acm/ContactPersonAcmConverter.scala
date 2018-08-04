@@ -97,7 +97,7 @@ object ContactPersonAcmConverter extends SparkJob[DefaultWithDeltaConfig]
           DATE_OF_BIRTH = birthDate.map(formatWithPattern()),
           PREFERRED = isPreferredContact.map(boolAsString),
           ROLE = jobTitle,
-          COUNTRY_CODE = Some(countryCode),
+          COUNTRY_CODE = countryCode,
           SCM = standardCommunicationChannel,
           DELETE_FLAG = if (isActive) "0" else "1",
           KEY_DECISION_MAKER = isKeyDecisionMaker.map(boolAsString),
