@@ -124,7 +124,7 @@ object OperatorAcmConverter extends SparkJob[DefaultWithDeltaConfig]
       )
       .map {
         case (operator, maybeChannelMapping) ⇒ Option(maybeChannelMapping).fold(operator) { channelMapping ⇒
-          copy(
+          operator.copy(
             LOCAL_CHANNEL = Option(channelMapping.localChannel),
             CHANNEL_USAGE = Option(channelMapping.channelUsage),
             SOCIAL_COMMERCIAL = Option(channelMapping.socialCommercial),
