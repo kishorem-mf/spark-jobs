@@ -6,6 +6,7 @@ from airflow.contrib.operators.sftp_operator import SFTPOperator, SFTPOperation
 from airflow.hooks.base_hook import BaseHook
 from airflow.models import BaseOperator
 from airflow.operators.bash_operator import BashOperator
+from airflow.utils.trigger_rule import TriggerRule
 
 from ohub.operators.databricks_operator import (
     DatabricksCreateClusterOperator,
@@ -308,6 +309,7 @@ class GenericPipeline(object):
             task_id="{}_terminate_cluster".format(entity),
             cluster_name=cluster_name,
             databricks_conn_id=databricks_conn_id,
+            trigger_rule=TriggerRule.ALL_DONE,
         )
 
     def construct_ingest_pipeline(self) -> SubPipeline:
