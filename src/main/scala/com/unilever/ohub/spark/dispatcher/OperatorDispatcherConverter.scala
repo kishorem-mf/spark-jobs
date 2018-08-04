@@ -62,69 +62,71 @@ object OperatorDispatcherConverter extends SparkJob[DefaultWithDeltaConfig]
     import spark.implicits._
 
     val dispatcherOperators = operators.map { op ⇒
-      DispatcherOperator(
-        OPR_ORIG_INTEGRATION_ID = op.concatId,
-        OPR_LNKD_INTEGRATION_ID = op.ohubId,
-        AVERAGE_SELLING_PRICE = op.averagePrice,
-        CHAIN_KNOTEN = op.chainId,
-        CHAIN_NAME = op.chainName,
-        CHANNEL = op.channel,
-        CITY = op.city,
-        CONVENIENCE_LEVEL = op.cookingConvenienceLevel,
-        COUNTRY_CODE = op.countryCode,
-        COUNTRY = op.countryName,
-        NUMBER_OF_DAYS_OPEN = op.daysOpen,
-        WHOLE_SALER_OPERATOR_ID = op.distributorOperatorId,
-        DM_OPT_OUT = op.hasDirectMailOptOut,
-        EMAIL_OPT_OUT = op.hasEmailOptOut,
-        FAX_OPT_OUT = op.hasFaxOptOut,
-        MOBILE_OPT_OUT = op.hasMobileOptOut,
-        FIXED_OPT_OUT = op.hasTelemarketingOptOut,
-        HOUSE_NUMBER = op.houseNumber,
-        HOUSE_NUMBER_EXT = op.houseNumberExtension,
-        DELETE_FLAG = !op.isActive,
-        GOLDEN_RECORD_FLAG = op.isGoldenRecord,
-        OPEN_ON_FRIDAY = op.isOpenOnFriday,
-        OPEN_ON_MONDAY = op.isOpenOnMonday,
-        OPEN_ON_SATURDAY = op.isOpenOnSaturday,
-        OPEN_ON_SUNDAY = op.isOpenOnSunday,
-        OPEN_ON_THURSDAY = op.isOpenOnThursday,
-        OPEN_ON_TUESDAY = op.isOpenOnTuesday,
-        OPEN_ON_WEDNESDAY = op.isOpenOnWednesday,
-        PRIVATE_HOUSEHOLD = op.isPrivateHousehold,
-        KITCHEN_TYPE = op.kitchenType,
-        NAME = op.name,
-        NPS_POTENTIAL = op.netPromoterScore,
-        CREATED_AT = formatWithPattern()(op.ohubCreated),
-        UPDATED_AT = formatWithPattern()(op.ohubUpdated),
-        OTM = op.otm,
-        REGION = op.region,
-        SOURCE_ID = op.sourceEntityId,
-        SOURCE = op.sourceName,
-        STATE = op.state,
-        STREET = op.street,
-        SUB_CHANNEL = op.subChannel,
-        NUMBER_OF_COVERS = op.totalDishes,
-        VAT = op.vat,
-        NUMBER_OF_WEEKS_OPEN = op.weeksClosed.map { weeksClosed ⇒
-          if (52 - weeksClosed < 0) 0 else 52 - weeksClosed
-        },
-        ZIP_CODE = op.zipCode,
-        ROUTE_TO_MARKET = None,
-        PREFERRED_PARTNER = Some("-2"),
-        STATUS = None, // "status of the operator, for example: seasonal, D, A, closed
-        RESPONSIBLE_EMPLOYEE = None,
-        CAM_KEY = None,
-        CAM_TEXT = None,
-        CHANNEL_KEY = None,
-        CHANNEL_TEXT = None,
-        LOCAL_CHANNEL = None, // set below
-        CHANNEL_USAGE = None, // set below
-        SOCIAL_COMMERCIAL = None, // set below
-        STRATEGIC_CHANNEL = None, // set below
-        GLOBAL_CHANNEL = None, // set below
-        GLOBAL_SUBCHANNEL = None // set below
-      )
+        op match {
+          case Operator(concatId, countryCode, customerType, dateCreated, dateUpdated, isActive, isGoldenRecord, ohubId, name, sourceEntityId, sourceName, ohubCreated, ohubUpdated, averagePrice, chainId, chainName, channel, city, cookingConvenienceLevel, countryName, daysOpen, distributorName, distributorOperatorId, emailAddress, faxNumber, hasDirectMailOptIn, hasDirectMailOptOut, hasEmailOptIn, hasEmailOptOut, hasFaxOptIn, hasFaxOptOut, hasGeneralOptOut, hasMobileOptIn, hasMobileOptOut, hasTelemarketingOptIn, hasTelemarketingOptOut, houseNumber, houseNumberExtension, isNotRecalculatingOtm, isOpenOnFriday, isOpenOnMonday, isOpenOnSaturday, isOpenOnSunday, isOpenOnThursday, isOpenOnTuesday, isOpenOnWednesday, isPrivateHousehold, kitchenType, mobileNumber, netPromoterScore, oldIntegrationId, otm, otmEnteredBy, phoneNumber, region, salesRepresentative, state, street, subChannel, totalDishes, totalLocations, totalStaff, vat, webUpdaterId, weeksClosed, zipCode, additionalFields, ingestionErrors) => DispatcherOperator(
+          OPR_ORIG_INTEGRATION_ID = concatId,
+          OPR_LNKD_INTEGRATION_ID = ohubId,
+          AVERAGE_SELLING_PRICE = averagePrice,
+          CHAIN_KNOTEN = chainId,
+          CHAIN_NAME = chainName,
+          CHANNEL = channel,
+          CITY = city,
+          CONVENIENCE_LEVEL = cookingConvenienceLevel,
+          COUNTRY_CODE = countryCode,
+          COUNTRY = countryName,
+          NUMBER_OF_DAYS_OPEN = daysOpen,
+          WHOLE_SALER_OPERATOR_ID = distributorOperatorId,
+          DM_OPT_OUT = hasDirectMailOptOut,
+          EMAIL_OPT_OUT = hasEmailOptOut,
+          FAX_OPT_OUT = hasFaxOptOut,
+          MOBILE_OPT_OUT = hasMobileOptOut,
+          FIXED_OPT_OUT = hasTelemarketingOptOut,
+          HOUSE_NUMBER = houseNumber,
+          HOUSE_NUMBER_EXT = houseNumberExtension,
+          DELETE_FLAG = !isActive,
+          GOLDEN_RECORD_FLAG = isGoldenRecord,
+          OPEN_ON_FRIDAY = isOpenOnFriday,
+          OPEN_ON_MONDAY = isOpenOnMonday,
+          OPEN_ON_SATURDAY = isOpenOnSaturday,
+          OPEN_ON_SUNDAY = isOpenOnSunday,
+          OPEN_ON_THURSDAY = isOpenOnThursday,
+          OPEN_ON_TUESDAY = isOpenOnTuesday,
+          OPEN_ON_WEDNESDAY = isOpenOnWednesday,
+          PRIVATE_HOUSEHOLD = isPrivateHousehold,
+          KITCHEN_TYPE = kitchenType,
+          NAME = name,
+          NPS_POTENTIAL = netPromoterScore,
+          CREATED_AT = formatWithPattern()(ohubCreated),
+          UPDATED_AT = formatWithPattern()(ohubUpdated),
+          OTM = otm,
+          REGION = region,
+          SOURCE_ID = sourceEntityId,
+          SOURCE = sourceName,
+          STATE = state,
+          STREET = street,
+          SUB_CHANNEL = subChannel,
+          NUMBER_OF_COVERS = totalDishes,
+          VAT = vat,
+          NUMBER_OF_WEEKS_OPEN = weeksClosed.map { weeksClosed ⇒
+            if (52 - weeksClosed < 0) 0 else 52 - weeksClosed
+          },
+          ZIP_CODE = zipCode,
+          ROUTE_TO_MARKET = None,
+          PREFERRED_PARTNER = Some("-2"),
+          STATUS = None, // "status of the operator, for example: seasonal, D, A, closed
+          RESPONSIBLE_EMPLOYEE = None,
+          CAM_KEY = None,
+          CAM_TEXT = None,
+          CHANNEL_KEY = None,
+          CHANNEL_TEXT = None,
+          LOCAL_CHANNEL = None, // set below
+          CHANNEL_USAGE = None, // set below
+          SOCIAL_COMMERCIAL = None, // set below
+          STRATEGIC_CHANNEL = None, // set below
+          GLOBAL_CHANNEL = None, // set below
+          GLOBAL_SUBCHANNEL = None // set below
+        )
+      }
     }
 
     dispatcherOperators
