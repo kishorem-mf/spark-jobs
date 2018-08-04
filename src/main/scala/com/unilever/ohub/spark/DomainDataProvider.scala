@@ -61,8 +61,8 @@ class InMemDomainDataProvider(spark: SparkSession) extends DomainDataProvider wi
       .getLines()
       .toSeq
       .filter(_.nonEmpty)
-      .filterNot(_.equals("SOURCE\tPRIORITY"))
-      .map(_.split("\t"))
+      .drop(1)
+      .map(_.split(","))
       .map(lineParts ⇒ lineParts(0) -> lineParts(1).toInt)
       .toMap
   }
