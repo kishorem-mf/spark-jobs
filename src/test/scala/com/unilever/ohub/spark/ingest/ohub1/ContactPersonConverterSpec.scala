@@ -1,17 +1,21 @@
-package com.unilever.ohub.spark.ingest.emakina
+package com.unilever.ohub.spark.ingest.ohub1
 
 import java.sql.Timestamp
 
+import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.domain.entity.ContactPerson
-import com.unilever.ohub.spark.ingest.CsvDomainGateKeeperSpec
+import com.unilever.ohub.spark.ingest.DomainGateKeeper.DomainConfig
+import com.unilever.ohub.spark.ingest.{CsvDomainGateKeeperSpec, TestDomainDataProvider}
+import com.unilever.ohub.spark.storage.DefaultStorage
+import org.apache.spark.sql.Dataset
 
 class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] {
 
   override val SUT = ContactPersonConverter
 
-  describe("emakina contact person converter") {
-    it("should convert a contact person correctly from a valid emakina csv input") {
-      val inputFile = "src/test/resources/EMAKINA_CONTACT_PERSONS.csv"
+  describe("ohub1 contact person converter") {
+    it("should convert a contact person correctly from a valid ohub1 contact person csv input") {
+      val inputFile = "src/test/resources/OHUB1_CONTACTPERSONS.csv"
 
       runJobWith(inputFile) { actualDataSet ⇒
         actualDataSet.count() shouldBe 1
@@ -19,69 +23,83 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
         val actualContactPerson = actualDataSet.head()
         val expectedContactPerson =
           ContactPerson(
-            concatId = "DE~EMAKINA~b3a6208c-d7f6-44e2-80e2-f26d461f64c0",
-            countryCode = "DE",
+            concatId = "AU~WUFOO~AB123",
+            countryCode = "AU",
             customerType = "CONTACTPERSON",
-            dateCreated = None,
-            dateUpdated = None,
+            dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00.0")),
+            dateUpdated = Some(Timestamp.valueOf("2015-06-30 13:48:00.0")),
             isActive = true,
             isGoldenRecord = false,
             ohubId = None,
-            name = "Anika Henke",
-            sourceEntityId = "b3a6208c-d7f6-44e2-80e2-f26d461f64c0",
-            sourceName = "EMAKINA",
+            name = "John Williams",
+            sourceEntityId = "AB123",
+            sourceName = "WUFOO",
             ohubCreated = actualContactPerson.ohubCreated,
             ohubUpdated = actualContactPerson.ohubUpdated,
-            operatorConcatId = "DE~EMAKINA~my ref id",
+            operatorConcatId = "AU~WUFOO~E1-1234",
             operatorOhubId = None,
-            oldIntegrationId = None,
-            firstName = Some("Anika"),
-            lastName = Some("Henke"),
-            title = Some("my title"),
-            gender = Some("U"),
-            jobTitle = Some("my job title"),
-            language = Some("DE"),
-            birthDate = None,
-            street = Some("Am Schloßhof"),
-            houseNumber = Some("14"),
-            houseNumberExtension = Some("my extension"),
-            city = Some("Berlin"),
-            zipCode = Some("12683"),
-            state = Some("my state"),
-            countryName = Some("Germany"),
-            isPreferredContact = None,
-            isKeyDecisionMaker = None,
-            standardCommunicationChannel = None,
-            emailAddress = Some("anika.henke@gmx.de"),
-            phoneNumber = Some("491735421197"),
-            mobileNumber = Some("49"),
-            faxNumber = Some("49"),
-            hasGeneralOptOut = None,
-            hasConfirmedRegistration = None,
-            confirmedRegistrationDate = None,
-            hasEmailOptIn = None,
-            emailOptInDate = Some(Timestamp.valueOf("2017-05-25 18:41:07.0")),
+            oldIntegrationId = Some("G1234"),
+            firstName = Some("John"),
+            lastName = Some("Williams"),
+            title = Some("Mr"),
+            gender = Some("M"),
+            jobTitle = Some("Chef"),
+            language = Some("en"),
+            birthDate = Some(Timestamp.valueOf("1975-12-21 00:00:00.0")),
+            street = Some("Highstreet"),
+            houseNumber = Some("443"),
+            houseNumberExtension = Some("A"),
+            city = Some("Melbourne"),
+            zipCode = Some("2057"),
+            state = Some("Alabama"),
+            countryName = Some("Australia"),
+            isPreferredContact = Some(true),
+            isKeyDecisionMaker = Some(true),
+            standardCommunicationChannel = Some("Mobile"),
+            emailAddress = Some("jwilliams@downunder.au"),
+            phoneNumber = Some("61396621811"),
+            mobileNumber = Some("61612345678"),
+            faxNumber = Some("61396621811"),
+            hasGeneralOptOut = Some(true),
+            hasConfirmedRegistration = Some(true),
+            confirmedRegistrationDate = Some(Timestamp.valueOf("2015-09-30 14:23:00.0")),
+            hasEmailOptIn = Some(true),
+            emailOptInDate = Some(Timestamp.valueOf("2015-09-30 14:23:00.0")),
             hasEmailDoubleOptIn = Some(true),
-            emailDoubleOptInDate = Some(Timestamp.valueOf("2017-05-25 18:41:07.0")),
-            hasEmailOptOut = None,
-            hasDirectMailOptIn = None,
-            hasDirectMailOptOut = None,
-            hasTeleMarketingOptIn = None,
-            hasTeleMarketingOptOut = None,
-            hasMobileOptIn = None,
-            mobileOptInDate = None,
-            hasMobileDoubleOptIn = None,
-            mobileDoubleOptInDate = None,
-            hasMobileOptOut = None,
-            hasFaxOptIn = None,
-            hasFaxOptOut = None,
-            webUpdaterId = Some("my webupdater id"),
+            emailDoubleOptInDate = Some(Timestamp.valueOf("2015-09-30 14:23:00.0")),
+            hasEmailOptOut = Some(true),
+            hasDirectMailOptIn = Some(true),
+            hasDirectMailOptOut = Some(true),
+            hasTeleMarketingOptIn = Some(true),
+            hasTeleMarketingOptOut = Some(true),
+            hasMobileOptIn = Some(true),
+            mobileOptInDate = Some(Timestamp.valueOf("2015-09-30 14:23:00.0")),
+            hasMobileDoubleOptIn = Some(true),
+            mobileDoubleOptInDate = Some(Timestamp.valueOf("2015-09-30 14:23:00.0")),
+            hasMobileOptOut = Some(true),
+            hasFaxOptIn = Some(true),
+            hasFaxOptOut = Some(true),
+            webUpdaterId = None,
             additionalFields = Map(),
             ingestionErrors = Map()
           )
 
         actualContactPerson shouldBe expectedContactPerson
       }
+    }
+
+    it("should write a contact person parquet correctly from an emtpy csv input and remain readable") {
+      import spark.implicits._
+
+      val inputFile = "src/test/resources/empty.csv"
+      val outputFile = "src/test/resources/output/contact_person_with_schema.parquet"
+      val config = DomainConfig(inputFile = inputFile, outputFile = outputFile, fieldSeparator = "‰")
+      val storage = new DefaultStorage(spark)
+
+      SUT.run(spark, config, storage, TestDomainDataProvider())
+
+      val result: Dataset[ContactPerson] = storage.readFromParquet[ContactPerson](outputFile)
+      result.collect().toSeq shouldBe Seq[ContactPerson]()
     }
   }
 }

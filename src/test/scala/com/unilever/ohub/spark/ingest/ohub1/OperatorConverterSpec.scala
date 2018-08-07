@@ -1,15 +1,18 @@
-package com.unilever.ohub.spark.ingest.emakina
+package com.unilever.ohub.spark.ingest.ohub1
+
+import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.ingest.CsvDomainGateKeeperSpec
+import com.unilever.ohub.spark.ingest.DomainGateKeeper.DomainConfig
 
 class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
 
   override val SUT = OperatorConverter
 
-  describe("emakina operator converter") {
-    it("should convert an operator correctly from a valid emakina csv input") {
-      val inputFile = "src/test/resources/EMAKINA_CONTACT_PERSONS.csv"
+  describe("ohub1 operator converter") {
+    it("should convert an operator correctly from a valid ohub1 csv input") {
+      val inputFile = "src/test/resources/OHUB1_OPERATORS.csv"
 
       runJobWith(inputFile) { actualDataSet ⇒
         actualDataSet.count() shouldBe 1
@@ -17,45 +20,45 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
         val actualOperator = actualDataSet.head()
 
         val expectedOperator = Operator(
-          concatId = "DE~EMAKINA~b3a6208c-d7f6-44e2-80e2-f26d461f64c0",
-          countryCode = "DE",
+          concatId = "AU~WUFOO~E1-1234",
+          countryCode = "AU",
           customerType = "OPERATOR",
-          dateCreated = None,
-          dateUpdated = None,
+          dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00.0")),
+          dateUpdated = Some(Timestamp.valueOf("2015-06-30 13:48:00.0")),
           isActive = true,
           isGoldenRecord = false,
-          name = "Jägerhof",
-          sourceName = "EMAKINA",
-          sourceEntityId = "b3a6208c-d7f6-44e2-80e2-f26d461f64c0",
+          name = "Down under",
+          sourceName = "WUFOO",
+          sourceEntityId = "E1-1234",
           ohubId = actualOperator.ohubId,
           ohubCreated = actualOperator.ohubCreated,
           ohubUpdated = actualOperator.ohubUpdated,
-          averagePrice = None,
-          chainId = None,
-          chainName = None,
-          channel = Some("unknown"),
-          city = None,
-          cookingConvenienceLevel = None,
-          countryName = Some("Germany"),
-          daysOpen = None,
-          distributorName = Some("my primary distributer"),
-          distributorOperatorId = Some("my customer id"),
-          emailAddress = None,
-          faxNumber = None,
-          hasDirectMailOptIn = None,
-          hasDirectMailOptOut = None,
-          hasEmailOptIn = None,
-          hasEmailOptOut = None,
-          hasFaxOptIn = None,
-          hasFaxOptOut = None,
-          hasGeneralOptOut = None,
-          hasMobileOptIn = None,
-          hasMobileOptOut = None,
-          hasTelemarketingOptIn = None,
-          hasTelemarketingOptOut = None,
-          houseNumber = None,
-          houseNumberExtension = None,
-          isNotRecalculatingOtm = None,
+          averagePrice = Some(BigDecimal(29.95)),
+          chainId = Some("bk123"),
+          chainName = Some("BURGER KING"),
+          channel = Some("Restaurants"),
+          city = Some("Melbourne"),
+          cookingConvenienceLevel = Some("MEDIUM"),
+          countryName = Some("Australia"),
+          daysOpen = Some(6),
+          distributorName = Some("SLIGRO"),
+          distributorOperatorId = Some("BV4123"),
+          emailAddress = Some("info@downunder.au"),
+          faxNumber = Some("61396621811"),
+          hasDirectMailOptIn = Some(true),
+          hasDirectMailOptOut = Some(true),
+          hasEmailOptIn = Some(true),
+          hasEmailOptOut = Some(true),
+          hasFaxOptIn = Some(true),
+          hasFaxOptOut = Some(true),
+          hasGeneralOptOut = Some(true),
+          hasMobileOptIn = Some(true),
+          hasMobileOptOut = Some(true),
+          hasTelemarketingOptIn = Some(true),
+          hasTelemarketingOptOut = Some(true),
+          houseNumber = Some("134"),
+          houseNumberExtension = Some("A"),
+          isNotRecalculatingOtm = Some(true),
           isOpenOnFriday = Some(true),
           isOpenOnMonday = Some(true),
           isOpenOnSaturday = Some(true),
@@ -64,25 +67,25 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
           isOpenOnTuesday = Some(true),
           isOpenOnWednesday = Some(true),
           isPrivateHousehold = Some(true),
-          kitchenType = Some("my cuisine type"),
-          mobileNumber = None,
-          netPromoterScore = None,
-          oldIntegrationId = None,
-          otm = None,
-          otmEnteredBy = None,
-          phoneNumber = None,
-          region = None,
-          salesRepresentative = None,
-          state = None,
-          street = None,
-          subChannel = None,
-          totalDishes = Some(100),
-          totalLocations = Some(5),
-          totalStaff = Some(10),
-          vat = Some("my vat"),
-          webUpdaterId = Some("my webupdater id"),
-          weeksClosed = None,
-          zipCode = None,
+          kitchenType = Some("Japanese"),
+          mobileNumber = Some("61612345678"),
+          netPromoterScore = Some(BigDecimal(44556.0)),
+          oldIntegrationId = Some("I-2345"),
+          otm = Some("A"),
+          otmEnteredBy = Some("Set by sales rep"),
+          phoneNumber = Some("61396621811"),
+          region = Some("Victoria"),
+          salesRepresentative = Some("Hans Jansen"),
+          state = Some("Alabama"),
+          street = Some("Main street"),
+          subChannel = Some("Pub"),
+          totalDishes = Some(175),
+          totalLocations = Some(1),
+          totalStaff = Some(25),
+          vat = Some("9864758522"),
+          webUpdaterId = Option.empty,
+          weeksClosed = Some(1),
+          zipCode = Some("3006"),
           additionalFields = Map(),
           ingestionErrors = Map()
         )
@@ -90,5 +93,25 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
         actualOperator shouldBe expectedOperator
       }
     }
+
+    it("should select the latest operator based on dateUpdated") {
+      val inputFile = "src/test/resources/OHUB1_OPERATORS_DUPLICATES.csv"
+      val config = DomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = "‰")
+
+      runJobWith(config) { actualDataSet ⇒
+        actualDataSet.count() shouldBe 2
+
+        val res = actualDataSet.collect
+
+        val emptyDateUpdated = res.filter(_.countryCode == "NZ")
+        emptyDateUpdated.length shouldBe 1
+
+        val filledDateUpdated = res.filter(_.countryCode == "AU")
+        filledDateUpdated.length shouldBe 1
+        filledDateUpdated.head.street shouldBe Some("Some street")
+      }
+    }
+
+
   }
 }
