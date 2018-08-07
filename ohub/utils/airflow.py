@@ -1,4 +1,3 @@
-from datetime import timedelta
 from typing import List
 
 from airflow import configuration, AirflowException
