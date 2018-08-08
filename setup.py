@@ -1,6 +1,6 @@
 import setuptools
 
-REQUIREMENTS = ["apache-airflow[crypto,]~=1.9.0"]
+REQUIREMENTS = ["apache-airflow[crypto]~=1.9.0"]
 
 EXTRAS_REQUIRE = {
     "dev": [
