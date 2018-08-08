@@ -22,6 +22,7 @@ pipelines:
 
   branches:
     master:
+    - step: *pylint
     - step: *syntax
     - step: *pytest
     - step:
