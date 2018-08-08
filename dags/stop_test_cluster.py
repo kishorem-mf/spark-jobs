@@ -1,6 +1,6 @@
 from airflow import DAG
 from datetime import datetime, timedelta
-from dags.config import test_large_cluster_config
+from dags import config
 
 from dags import config
 from ohub.operators.databricks_operator import (
@@ -19,10 +19,10 @@ dag_args = {
 }
 
 with DAG("stop_test_cluster", default_args=dag_args, schedule_interval="0 18 * * *") as dag:
-    config = test_large_cluster_config()
     stop_cluster = DatabricksTerminateClusterOperator(
-        cluster_config=config,
-        cluster_name=config['cluster_name'],
+        task_id="stop_cluster",
+        cluster_config=config.test_large_cluster_config(),
+        cluster_name=config.test_large_cluster_config()['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
     )
     stop_cluster
