@@ -211,13 +211,14 @@ def test_large_cluster_config():
         "spark_version": "4.0.x-scala2.11",
         "node_type_id": "Standard_D16s_v3",
         "autoscale": {"min_workers": "4", "max_workers": "12"},
-        "autotermination_minutes": "1440", # Keep it running for 1 day
+        "autotermination_minutes": "1440",  # Keep it running for 1 day
         "spark_env_vars": {"PYSPARK_PYTHON": "/databricks/python3/bin/python3"},
     }
 
 # interval = "@daily"
 # one_day_ago = "{{ ds }}"
 # two_day_ago = "{{ yesterday_ds }}"
+
 
 wasb_conn_id = "azure_blob"
 container_name = "prod"
