@@ -1,3 +1,5 @@
+"""Utility functions for handling Databricks clusters"""
+
 import logging
 from typing import List
 
@@ -23,9 +25,9 @@ def find_cluster_id(
         cluster_name, databricks_conn_id, databricks_hook
     )
 
-    if len(clusters) == 0:
+    if not clusters:
         raise AirflowException(
-            'Found no running Databricks cluster named "{}".'.format(cluster_name)
+            f'Found no running Databricks cluster named "{cluster_name}".'
         )
     elif len(clusters) > 1:
         logging.warning(
@@ -50,7 +52,10 @@ def find_running_clusters_by_name(
     """
 
     hook = databricks_hook or DatabricksHook(databricks_conn_id=databricks_conn_id)
+    # pylint: disable=protected-access
+    # Will not fix this since it's a call to external code
     body = hook._do_api_call(("GET", "api/2.0/clusters/list"), {})
+    # pylint: enable=protected-access
 
     non_terminated_states = ["PENDING", "RUNNING", "RESTARTING", "RESIZING"]
     return [
@@ -75,7 +80,10 @@ def get_cluster_status(
     """
 
     hook = databricks_hook or DatabricksHook(databricks_conn_id=databricks_conn_id)
+    # pylint: disable=protected-access
+    # Will not fix this since it's a call to external code
     body = hook._do_api_call(
         ("GET", "api/2.0/clusters/get?cluster_id={}".format(cluster_id)), {}
     )
+    # pylint: enable=protected-access
     return body["state"]
