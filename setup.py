@@ -1,5 +1,7 @@
 import setuptools
 
+REQUIREMENTS = ["apache-airflow[crypto,]~=1.9.0"]
+
 EXTRAS_REQUIRE = {
     "dev": [
         "pycodestyle>=2.4.0,<3",
@@ -13,8 +15,9 @@ EXTRAS_REQUIRE = {
 setuptools.setup(
     name="ohub",
     version="0.1",
-    python_requires=">=3.6",
+    python_requires="~=3.6.6",
     description="Unilever OHUB2.0 Airflow",
     packages=setuptools.find_packages(),
+    install_requires=REQUIREMENTS,
     extras_require=EXTRAS_REQUIRE,
 )
