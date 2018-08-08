@@ -9,7 +9,7 @@ lint:
 
 .PHONY: pytest
 pytest:
-	pytest --cov-config .coveragerc --cov=ohub/ tests/ -s
+	pytest --cov-config=.coveragerc --cov=ohub/ tests/ -s
 
 .PHONY: local-ci
 local-ci: | pycodestyle lint pytest
