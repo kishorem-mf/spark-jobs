@@ -14,19 +14,16 @@ pipelines:
         image: timvancann/miniconda3-gcc
         script:
           - bash ./lint.sh
-    - step: &dags
-        name: Verify DAG integrity
-        image:
-          name: ulohubimages.azurecr.io/airflow:89
-          username: ulohubimages
-          password: $AZ_CONTAINER_REGISTRY_PASSWORD
+    - step: &pytest
+        name: Pytest
         script:
-          - bash ./test.sh
+          - pip install .[dev]
+          - make pytest
 
   branches:
     master:
     - step: *syntax
-    - step: *dags
+    - step: *pytest
     - step:
         name: Deploy to azure file share
         image: microsoft/azure-cli
