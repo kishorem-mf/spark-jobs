@@ -1,16 +1,17 @@
 # Check https://confluence.atlassian.com/x/x4UWN for more examples.
 # Validator: https://bitbucket-pipelines.atlassian.io/validator
 
+image: python:3.6.6
+
 pipelines:
   default:
     - step: &pycodestyle
-        name: pycodestyle
+        name: Pycodestyle
         script:
           - pip install .[dev]
           - make pycodestyle
     - step: &pylint
-        name: pylint
-        image: python:3.6.6
+        name: Pylint
         script:
           - pip install pylint
           - make lint
