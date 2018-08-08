@@ -1,7 +1,13 @@
 import setuptools
 
 EXTRAS_REQUIRE = {
-    "dev": ["pytest", "pytest-mock", "pycodestyle>=2.4.0,<3", "pylint>=1.9.2,<2"]
+    "dev": [
+        "pycodestyle>=2.4.0,<3",
+        "pylint>=1.9.2,<2",
+        "pytest-cov>=2.5.1,<3",
+        "pytest-mock",
+        "pytest>=3.7.1,<4",
+    ]
 }
 
 setuptools.setup(
