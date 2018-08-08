@@ -9,7 +9,7 @@ dag_default_args = {
     "depends_on_past": True,
     "wait_for_downstream": True,
     "email": email_addresses,
-    "email_on_failure": False,
+    "email_on_failure": True,
     "email_on_retry": False,
     "retries": 1,
     "retry_delay": timedelta(seconds=30),
