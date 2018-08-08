@@ -1,3 +1,7 @@
+.PHONY: pycodestyle
+pycodestyle:
+	pycodestyle --show-source .
+
 .PHONY: lint
 lint:
 	bash ./scripts/pylint.sh --rcfile=.pylintrc ./ohub
@@ -5,7 +9,7 @@ lint:
 
 .PHONY: pytest
 pytest:
-	pytest tests/ -s
+	pytest --cov-config .coveragerc --cov=ohub/ tests/ -s
 
 .PHONY: local-ci
-local-ci: | lint pytest
+local-ci: | pycodestyle lint pytest

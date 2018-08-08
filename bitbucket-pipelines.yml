@@ -3,17 +3,17 @@
 
 pipelines:
   default:
+    - step: &pycodestyle
+        name: pycodestyle
+        script:
+          - pip install .[dev]
+          - make pycodestyle
     - step: &pylint
         name: pylint
         image: python:3.6.6
         script:
           - pip install pylint
           - make lint
-    - step: &syntax
-        name: Check PEP8 codestyle and run tests
-        image: timvancann/miniconda3-gcc
-        script:
-          - bash ./lint.sh
     - step: &pytest
         name: Pytest
         script:
@@ -22,8 +22,8 @@ pipelines:
 
   branches:
     master:
+    - step: *pycodestyle
     - step: *pylint
-    - step: *syntax
     - step: *pytest
     - step:
         name: Deploy to azure file share

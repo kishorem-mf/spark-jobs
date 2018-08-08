@@ -1,6 +1,6 @@
 import setuptools
 
-EXTRAS_REQUIRE = {"dev": ["pytest", "pytest-mock"]}
+EXTRAS_REQUIRE = {"dev": ["pytest", "pytest-mock", "pycodestyle>=2.4.0,<3"]}
 
 setuptools.setup(
     name="ohub",
