@@ -1,3 +1,5 @@
+# NOTE: this is a copy if the environment.yml file in the docker-airflow project. This one is used for developing on
+#       your local environment; the other one is for the cloud environment. If you change one, you have to change both!
 name: airflow-dags
 channels:
   - defaults
@@ -15,5 +17,6 @@ dependencies:
   - pytest=3.6.3
   - python=3.6.6
   - cython=0.28.4
+  - psycopg2=2.7.5
   - pip:
-    - apache-airflow[crypto]==1.9.0
+    - apache-airflow[crypto,postgres,azure]==1.9.0

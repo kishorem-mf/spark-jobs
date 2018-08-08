@@ -25,6 +25,28 @@ pycodestyle --show-source .
 ```
 
 ### Local UI
+
+#### Running with Docker Compose
+
+This repository includes a Docker Composition that lets you run Airflow locally, with the dags installed. You can bring
+it up with this command:
+
+```bash
+docker-compose up --detach --build
+```
+
+The Airflow webserver is exposed on [localhost:8080](http://localhost:8080/admin).
+
+```bash
+# Pull the logs of the Airflow container
+docker-compose logs --follow webserver
+
+# Get a shell in the Airflow container
+docker-compose exec webserver bash
+```
+
+#### Running on your laptop
+
 Requirements: 
 
 - Ensure that you have logged in to the docker azure registry with `docker login`. You can find the credentials in the Azure Portal -> shared resource group -> container registry -> access keys
