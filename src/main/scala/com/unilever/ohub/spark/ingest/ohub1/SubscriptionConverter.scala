@@ -46,32 +46,5 @@ object SubscriptionConverter extends EmakinaDomainGateKeeper[Subscription] with 
         additionalFields          =   additionalFields,
         ingestionErrors           =   errors
       )
-
-
-//    Subscription(
-//      concatId = "",
-//      countryCode = "",
-//      customerType = Subscription.customerType,
-//      dateCreated = optional("DATE_CREATED", "dateCreated", parseDateTimeStampUnsafe),
-//      dateUpdated = optional("DATE_MODIFIED", "dateUpdated", parseDateTimeStampUnsafe),
-//      isActive = mandatory("STATUS", "isActive", parseBoolUnsafe),
-//      isGoldenRecord = false,
-//      sourceEntityId = mandatory("REF_SUBSCRIPTION_ID", "sourceEntityId"),
-//      sourceName = "abv",
-//      ohubId = Option.empty,
-//      ohubCreated = ohubCreated,
-//      ohubUpdated = ohubCreated,
-//      // specific fields
-//      contactPersonConcatId = contactPersonConcatRefId,
-//      communicationChannel = "acv",
-//      subscriptionType = mandatory("SUBSCRIPTION_TYPE", "subscriptionType"),
-//      hasSubscription=mandatory("SUBSCRIBED", "hasSubscription", parseBoolUnsafe),
-//      subscriptionDate = mandatory("SUBSCRIPTION_DATE","subscriptionDate", parseDateTimeStampUnsafe),
-//      hasConfirmedSubscription = optional("SUBSCRIPTION_CONFIRMED","hasConfirmedSubscription", parseBoolUnsafe),
-//      confirmedSubscriptionDate =   optional("SUBSCRIPTION_CONFIRMED_DATE","confirmedSubscriptionDate",parseDateTimeStampUnsafe),
-//      // other fields
-//      additionalFields= additionalFields,
-//      ingestionErrors= errors
-//    )
   }
 }
