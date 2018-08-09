@@ -11,9 +11,9 @@ lint:
 pytest:
 	pytest --cov-config=.coveragerc --cov=ohub .
 
-.PHONY: local-ci
-local-ci: | pycodestyle lint pytest
-
 .PHONY: clean
 clean:
 	find . -name '__pycache__' | xargs rm -rf
+
+.PHONY: local-ci
+local-ci: | clean pycodestyle lint pytest
