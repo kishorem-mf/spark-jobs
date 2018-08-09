@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.acm.model
 
 case class AcmProduct(
     // Deliberate misspelling as the consuming system requires it :'(
-    COUNTRY_CODE: Option[String],
+    COUNTY_CODE: Option[String],
     PRODUCT_NAME: Option[String],
     PRD_INTEGRATION_ID: String,
     EAN_CODE: Option[String],

@@ -24,8 +24,14 @@ case class Subscription(
     ohubCreated: Timestamp,
     ohubUpdated: Timestamp,
     // specific fields
-    // 
-    // other fields
+    contactPersonConcatId: String,
+    communicationChannel:Option[String],
+    subscriptionType:String,
+    hasSubscription: Boolean,
+    subscriptionDate: Timestamp,
+    hasConfirmedSubscription: Option[Boolean],
+    ConfirmedSubscriptionDate: Option[Timestamp],
+// other fields
     additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]
 ) extends DomainEntity

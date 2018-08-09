@@ -56,73 +56,68 @@ object ContactPersonAcmConverter extends SparkJob[DefaultWithDeltaConfig]
   ): Dataset[AcmContactPerson] = {
     import spark.implicits._
 
-    contactPersons.filter(_.isGoldenRecord).map { contactPerson ⇒ // TODO check whether the filter is at the right location
-      AcmContactPerson(
-        CP_ORIG_INTEGRATION_ID = contactPerson.concatId,
-        CP_LNKD_INTEGRATION_ID = contactPerson.ohubId.get, // TODO resolve .get here...what if we don't have an ohubId?
-        OPR_ORIG_INTEGRATION_ID = contactPerson.oldIntegrationId, // TODO opr-ohub-id...add to domain (is set in the merging step)
-        GOLDEN_RECORD_FLAG = "Y",
-        WEB_CONTACT_ID = "",
-        EMAIL_OPTOUT = contactPerson.hasEmailOptOut.map(boolAsString),
-        PHONE_OPTOUT = contactPerson.hasTeleMarketingOptOut.map(boolAsString),
-        FAX_OPTOUT = contactPerson.hasFaxOptOut.map(boolAsString),
-        MOBILE_OPTOUT = contactPerson.hasMobileOptOut.map(boolAsString),
-        DM_OPTOUT = contactPerson.hasDirectMailOptOut.map(boolAsString),
-        LAST_NAME = cleanNames(
-          contactPerson.firstName.getOrElse(""),
-          contactPerson.lastName.getOrElse(""),
-          false
-        ),
-        FIRST_NAME = cleanNames(
-          contactPerson.firstName.getOrElse(""),
-          contactPerson.lastName.getOrElse(""),
-          true
-        ),
-        MIDDLE_NAME = "",
-        TITLE = contactPerson.title,
-        GENDER = contactPerson.gender.map {
-          case "M" ⇒ "1"
-          case "F" ⇒ "2"
-          case _   ⇒ "0"
-        },
-        LANGUAGE = contactPerson.language,
-        EMAIL_ADDRESS = contactPerson.emailAddress,
-        MOBILE_PHONE_NUMBER = contactPerson.mobileNumber,
-        PHONE_NUMBER = contactPerson.phoneNumber,
-        FAX_NUMBER = contactPerson.faxNumber,
-        STREET = contactPerson.street.map(clean),
-        HOUSENUMBER =
-          contactPerson.houseNumber.map(clean).getOrElse("") +
-            " " +
-            contactPerson.houseNumberExtension.map(clean).getOrElse(""),
-        ZIPCODE = contactPerson.zipCode.map(clean),
-        CITY = contactPerson.city.map(clean),
-        COUNTRY = contactPerson.countryName,
-        DATE_CREATED = contactPerson.dateCreated.map(formatWithPattern()),
-        DATE_UPDATED = contactPerson.dateUpdated.map(formatWithPattern()),
-        DATE_OF_BIRTH = contactPerson.birthDate.map(formatWithPattern()),
-        PREFERRED = contactPerson.isPreferredContact.map(boolAsString),
-        ROLE = contactPerson.jobTitle,
-        COUNTRY_CODE = Some(contactPerson.countryCode),
-        SCM = contactPerson.standardCommunicationChannel,
-        DELETE_FLAG = if (contactPerson.isActive) Some("0") else Some("1"),
-        KEY_DECISION_MAKER = contactPerson.isKeyDecisionMaker.map(boolAsString),
-        OPT_IN = contactPerson.hasEmailOptIn.map(boolAsString),
-        OPT_IN_DATE = contactPerson.emailOptInDate.map(formatWithPattern()),
-        CONFIRMED_OPT_IN = contactPerson.hasConfirmedRegistration.map(boolAsString),
-        CONFIRMED_OPT_IN_DATE = contactPerson.confirmedRegistrationDate.map(formatWithPattern()),
-        MOB_OPT_IN = contactPerson.hasMobileOptIn.map(boolAsString),
-        MOB_OPT_IN_DATE = contactPerson.mobileOptInDate.map(formatWithPattern()),
-        MOB_CONFIRMED_OPT_IN = contactPerson.hasMobileDoubleOptIn.map(boolAsString),
-        MOB_CONFIRMED_OPT_IN_DATE = contactPerson.mobileDoubleOptInDate.map(formatWithPattern()),
-        MOB_OPT_OUT_DATE = "",
-        ORG_FIRST_NAME = contactPerson.firstName,
-        ORG_LAST_NAME = contactPerson.lastName,
-        ORG_EMAIL_ADDRESS = contactPerson.emailAddress,
-        ORG_FIXED_PHONE_NUMBER = contactPerson.phoneNumber,
-        ORG_MOBILE_PHONE_NUMBER = contactPerson.mobileNumber,
-        ORG_FAX_NUMBER = contactPerson.faxNumber
-      )
+    contactPersons.filter(_.isGoldenRecord).map { cp ⇒
+      // TODO check whether the filter is at the right location
+      cp match {
+        case ContactPerson(concatId, countryCode, customerType, dateCreated, dateUpdated, isActive, isGoldenRecord, ohubId, name, sourceEntityId, sourceName, ohubCreated, ohubUpdated, operatorConcatId, operatorOhubId, oldIntegrationId, firstName, lastName, title, gender, jobTitle, language, birthDate, street, houseNumber, houseNumberExtension, city, zipCode, state, countryName, isPreferredContact, isKeyDecisionMaker, standardCommunicationChannel, emailAddress, phoneNumber, mobileNumber, faxNumber, hasGeneralOptOut, hasConfirmedRegistration, confirmedRegistrationDate, hasEmailOptIn, emailOptInDate, hasEmailDoubleOptIn, emailDoubleOptInDate, hasEmailOptOut, hasDirectMailOptIn, hasDirectMailOptOut, hasTeleMarketingOptIn, hasTeleMarketingOptOut, hasMobileOptIn, mobileOptInDate, hasMobileDoubleOptIn, mobileDoubleOptInDate, hasMobileOptOut, hasFaxOptIn, hasFaxOptOut, webUpdaterId, additionalFields, ingestionErrors) => AcmContactPerson(
+          CP_ORIG_INTEGRATION_ID = concatId,
+          CP_LNKD_INTEGRATION_ID = ohubId.get, // TODO resolve .get here...what if we don't have an ohubId?
+          OPR_ORIG_INTEGRATION_ID = oldIntegrationId.get, // TODO opr-ohub-id...add to domain (is set in the merging step)
+          GOLDEN_RECORD_FLAG = "Y",
+          WEB_CONTACT_ID = Option.empty,
+          EMAIL_OPTOUT = hasEmailOptOut.map(boolAsString),
+          PHONE_OPTOUT = hasTeleMarketingOptOut.map(boolAsString),
+          FAX_OPTOUT = hasFaxOptOut.map(boolAsString),
+          MOBILE_OPTOUT = hasMobileOptOut.map(boolAsString),
+          DM_OPTOUT = hasDirectMailOptOut.map(boolAsString),
+          LAST_NAME = lastName,
+          FIRST_NAME = Option(cleanNames(
+            firstName.getOrElse(""),
+            lastName.getOrElse("")
+          )),
+          MIDDLE_NAME = Option.empty,
+          TITLE = title,
+          GENDER = gender.map {
+            case "M" ⇒ "1"
+            case "F" ⇒ "2"
+            case _   ⇒ "0"
+          },
+          LANGUAGE = language,
+          EMAIL_ADDRESS = emailAddress,
+          MOBILE_PHONE_NUMBER = mobileNumber,
+          PHONE_NUMBER = phoneNumber,
+          FAX_NUMBER = faxNumber,
+          STREET = street.map(clean),
+          HOUSENUMBER = Option(Seq(houseNumber, houseNumberExtension).flatten.map(clean).mkString(" ")),
+          ZIPCODE = zipCode.map(clean),
+          CITY = city.map(clean),
+          COUNTRY = countryName,
+          DATE_CREATED = dateCreated.map(formatWithPattern()),
+          DATE_UPDATED = dateUpdated.map(formatWithPattern()),
+          DATE_OF_BIRTH = birthDate.map(formatWithPattern()),
+          PREFERRED = isPreferredContact.map(boolAsString),
+          ROLE = jobTitle,
+          COUNTRY_CODE = countryCode,
+          SCM = standardCommunicationChannel,
+          DELETE_FLAG = if (isActive) "0" else "1",
+          KEY_DECISION_MAKER = isKeyDecisionMaker.map(boolAsString),
+          OPT_IN = hasEmailOptIn.map(boolAsString),
+          OPT_IN_DATE = emailOptInDate.map(formatWithPattern()),
+          CONFIRMED_OPT_IN = hasConfirmedRegistration.map(boolAsString),
+          CONFIRMED_OPT_IN_DATE = confirmedRegistrationDate.map(formatWithPattern()),
+          MOB_OPT_IN = hasMobileOptIn.map(boolAsString),
+          MOB_OPT_IN_DATE = mobileOptInDate.map(formatWithPattern()),
+          MOB_CONFIRMED_OPT_IN = hasMobileDoubleOptIn.map(boolAsString),
+          MOB_CONFIRMED_OPT_IN_DATE = mobileDoubleOptInDate.map(formatWithPattern()),
+          MOB_OPT_OUT_DATE = Option.empty,
+          ORG_FIRST_NAME = firstName,
+          ORG_LAST_NAME = lastName,
+          ORG_EMAIL_ADDRESS = emailAddress,
+          ORG_FIXED_PHONE_NUMBER = phoneNumber,
+          ORG_MOBILE_PHONE_NUMBER = mobileNumber,
+          ORG_FAX_NUMBER = faxNumber
+        )
+      }
     }
   }
 
