@@ -164,17 +164,20 @@ class DatabricksCreateClusterOperator(BaseDatabricksOperator):
 
     def existing_cluster_running(self):
         hook = self.get_hook()
+        cluster_already_running = False
         if self.cluster_config["reuse_cluster"]:
             try:
                 self.cluster_id = find_cluster_id(self.cluster_config["cluster_name"], databricks_hook=hook)
                 run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
-                if run_state != "RUNNING":
+                if run_state == "RUNNING":
+                    cluster_already_running = True
+                else:
                     hook._do_api_call(("POST", "api/2.0/clusters/delete"), {"cluster_id": self.cluster_id})
-                return False
+                    cluster_already_running = False
             except AirflowException:
                 logging.info("Cluster not found or deleting cluster {} failed").format(self.cluster_id)
-                return True
-        return False
+                cluster_already_running = False
+        return cluster_already_running
 
     def execute(self, context):
         hook = self.get_hook()
