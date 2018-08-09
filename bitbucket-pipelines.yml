@@ -28,6 +28,7 @@ pipelines:
 
   branches:
     master:
+    - step: *blackfmt
     - step: *pycodestyle
     - step: *pylint
     - step: *pytest
