@@ -40,7 +40,7 @@ object SubscriptionConverter extends WebEventDomainGateKeeper[Subscription] with
         ohubCreated             =     ohubCreated,
         ohubUpdated             =     ohubCreated,
         contactPersonConcatId   =     contactPersonConcatId,
-        communicationChannel    =     mandatory(  "communicationChannel",     "communicationChannel"),
+        communicationChannel    =     optional(  "communicationChannel",     "communicationChannel"),
         subscriptionType        =     mandatory(  "subscriptionType" ,        "subscriptionType"),
         hasSubscription         =     mandatory(  "subscribed",               "hasSubscription",                    parseBoolUnsafe),
         subscriptionDate        =     mandatory(  "subscribedDate",           "subscriptionDate",                   parseDateTimeStampUnsafe),
