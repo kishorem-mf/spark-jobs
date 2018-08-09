@@ -20,4 +20,4 @@ black:
 	(find . -name '*.py' | xargs black --check) || true
 
 .PHONY: local-ci
-local-ci: | clean pycodestyle lint pytest
+local-ci: | clean black pycodestyle lint pytest
