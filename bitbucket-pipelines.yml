@@ -8,7 +8,7 @@ pipelines:
     - step: &blackfmt
         name: Black formatting
         script:
-          - pip install .[dev]
+          - pip install black
           - make black
     - step: &pycodestyle
         name: Pycodestyle
