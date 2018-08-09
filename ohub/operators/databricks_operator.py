@@ -282,12 +282,11 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
                 run_state = get_cluster_status(self.cluster_id, self._databricks_conn_id)
                 if run_state == "TERMINATED":
                     logging.info(
-                        "Termination of cluster {} with id {} completed successfully.".format(
-                            self.cluster_name, self.cluster_id
-                        )
-                    )
+                        "Termination of cluster %s with id %s completed successfully.",
+                        self.cluster_name,
+                        self.cluster_id)
                     return
                 else:
-                    logging.info("Cluster terminating, currently in state: {s}".format(s=run_state))
-                    logging.info("Sleeping for {} seconds.".format(self._polling_period_seconds))
+                    logging.info("Cluster terminating, currently in state: %s", run_state)
+                    logging.info("Sleeping for %s seconds.", self._polling_period_seconds)
                     time.sleep(self._polling_period_seconds)
