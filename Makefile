@@ -15,5 +15,9 @@ pytest:
 clean:
 	find . -name '__pycache__' | xargs rm -rf
 
+.PHONY: black
+black:
+	(find . -name '*.py' | xargs black --check) || true
+
 .PHONY: local-ci
 local-ci: | clean pycodestyle lint pytest

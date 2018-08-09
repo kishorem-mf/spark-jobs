@@ -5,6 +5,11 @@ image: python:3.6.6
 
 pipelines:
   default:
+    - step: &blackfmt
+        name: Black formatting
+        script:
+          - pip install .[dev]
+          - make black
     - step: &pycodestyle
         name: Pycodestyle
         script:
