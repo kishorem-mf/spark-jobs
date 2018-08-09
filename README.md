@@ -9,7 +9,7 @@ Put your DAGS into the `dags` folder, Use the word `dag` in the python files tha
 
 The `ohub/operators` package is reserved for implementation of operators not present in `apache-airflow`. The `ohub/utils` package contains general utilities. Other subpackages can be created as needed.
 
-### Running tests
+## CI
 With each push, a Bitbucket Pipeline is triggered. There's a bit of overhead from spinning up CI containers. It's faster to ensure all steps run successfully locally first, which you can do with:
 
 ```bash
@@ -17,6 +17,9 @@ make local-ci
 ```
 
 The Bitbucket Pipeline calls tasks in the `Makefile`. All tasks are called in the `local-ci` task.
+
+## CD
+TODO: describe how deployment is done.
 
 ### Local UI
 Requirements: 
