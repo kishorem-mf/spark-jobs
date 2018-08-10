@@ -46,7 +46,8 @@ with DAG(
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
         )
-        .has_ingest_from_file_interface(raw_bucket=config.raw_bucket)
+        #.has_ingest_from_file_interface(raw_bucket=config.raw_bucket)
+        .has_ingest_from_ohub1(raw_bucket=config.raw_bucket)
     )
 
     ingest: SubPipeline = generic.construct_ingest_pipeline()
