@@ -200,6 +200,41 @@ class GenericPipeline(object):
         self._ingests.append(self.__ingest_from_channel(config))
         return self
 
+    def has_ingest_from_ohub1(
+        self,
+        raw_bucket: str,
+        deduplicate_on_concat_id: bool = True,
+        alternative_schema: str = None,
+    ) -> "GenericPipeline":
+        """
+        Marks the pipeline to include ingest from ohub1.
+        :param raw_bucket: raw_bucket path.
+        :param deduplicate_on_concat_id: check duplicates on cancat_id (default: True)
+        :param alternative_schema: alternative_schema. (default: None).
+        :return: Marks the pipeline to include ingest from ohub1
+        """
+        channel = "ohub1"
+        ingest_schema = (
+            alternative_schema if alternative_schema else self._dag_config.entity
+        )
+        input_file = raw_bucket.format(
+            date="{{ ds }}", schema=ingest_schema, channel=channel
+        )
+        output_file = self._ingested_bucket.format(
+            date="{{ ds }}", fn=self._dag_config.entity, channel=channel
+        )
+
+        config = IngestConfig(
+            input_file=input_file,
+            output_file=output_file,
+            channel=channel,
+            deduplicate_on_concat_id=deduplicate_on_concat_id,
+            separator="‰",
+        )
+
+        self._ingests.append(self.__ingest_from_channel(config))
+        return self
+
     def has_ingest_from_web_event(
         self,
         raw_bucket: str,
