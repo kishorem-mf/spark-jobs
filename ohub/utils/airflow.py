@@ -206,7 +206,13 @@ class GenericPipeline(object):
         deduplicate_on_concat_id: bool = True,
         alternative_schema: str = None,
     ) -> "GenericPipeline":
-        """Marks the pipeline to include ingest from ohub1"""
+        """
+        Marks the pipeline to include ingest from ohub1.
+        :param raw_bucket: raw_bucket path.
+        :param deduplicate_on_concat_id: check duplicates on cancat_id (default: True)
+        :param alternative_schema: alternative_schema. (default: None).
+        :return: GenericPipeline  and Marks the pipeline to include ingest from ohub1
+        """
         channel = "ohub1"
         ingest_schema = (
             alternative_schema if alternative_schema else self._dag_config.entity
@@ -218,14 +224,12 @@ class GenericPipeline(object):
             date="{{ ds }}", fn=self._dag_config.entity, channel=channel
         )
 
-        separator = "‰"
-
         config = IngestConfig(
             input_file=input_file,
             output_file=output_file,
             channel=channel,
             deduplicate_on_concat_id=deduplicate_on_concat_id,
-            separator=separator,
+            separator="‰",
         )
 
         self._ingests.append(self.__ingest_from_channel(config))

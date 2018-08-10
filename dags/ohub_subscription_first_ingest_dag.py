@@ -10,7 +10,6 @@ dag_args = {
     **config.dag_default_args,
     **{
         "start_date": start_date_first,
-        "pool": "ohub_operators_pool",
     },
 }
 
