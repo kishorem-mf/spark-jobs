@@ -211,7 +211,7 @@ class GenericPipeline(object):
         :param raw_bucket: raw_bucket path.
         :param deduplicate_on_concat_id: check duplicates on cancat_id (default: True)
         :param alternative_schema: alternative_schema. (default: None).
-        :return: GenericPipeline  and Marks the pipeline to include ingest from ohub1
+        :return: Marks the pipeline to include ingest from ohub1
         """
         channel = "ohub1"
         ingest_schema = (
