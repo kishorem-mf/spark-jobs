@@ -23,8 +23,8 @@ ohub_entities = {
     "products": {},
 }
 
-start_date_first = datetime(2018, 8, 1)
-start_date_delta = datetime(2018, 8, 2)
+start_date_first = datetime(2018, 8, 8)
+start_date_delta = datetime(2018, 8, 9)
 
 country_codes = dict(
     AU=149299102,
