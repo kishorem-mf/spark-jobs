@@ -26,7 +26,10 @@ pipelines:
           - make lint
     - step: &syntax
         name: Check PEP8 codestyle and run tests
-        image: timvancann/miniconda3-gcc
+        image:
+          name: ulohubimages.azurecr.io/airflow_base:109
+          username: ulohubimages
+          password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
           - bash ./lint.sh
     - step: &dags
