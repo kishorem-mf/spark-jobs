@@ -1,4 +1,4 @@
-ARG BASEIMAGE=ulohubimages.azurecr.io/airflow_base:107
+ARG BASEIMAGE=ulohubimages.azurecr.io/airflow_base:109
 FROM $BASEIMAGE
 
 # Install custom library
