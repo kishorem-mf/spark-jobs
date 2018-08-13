@@ -16,7 +16,7 @@ pipelines:
     - step: &docker
         name: Build image
         script:
-        - docker build --tag ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} --label "GIT_HASH=${BITBUCKET_COMMIT}" .
+        - docker build --tag ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} --label "GIT_HASH=${BITBUCKET_COMMIT}" --file docker/airlfow/Dockerfile .
     - step: &pylint
         name: pylint
         image: python:3.6.6
