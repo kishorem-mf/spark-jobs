@@ -19,19 +19,21 @@ pipelines:
         - docker build -t ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} .
     - step: &pylint
         name: pylint
-        image: ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER}
+        image: python:3.6.6
         script:
           - pip install pylint
           - bash ./scripts/pylint.sh --rcfile=.pylintrc ./ohub
     - step: &syntax
         name: Check PEP8 codestyle and run tests
-        image: ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER}
+        image: timvancann/miniconda3-gcc
         script:
           - bash ./lint.sh
     - step: &dags
         name: Verify DAG integrity
         image:
-          name: ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER}
+          name: ulohubimages.azurecr.io/airflow_base:109
+          username: ulohubimages
+          password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
           - bash ./test.sh
 
