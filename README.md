@@ -24,6 +24,20 @@ python -m pytest --cov-config .coveragerc --cov=./dags tests
 pycodestyle --show-source .
 ```
 
+## Adding python dependencies
+
+1. update `./environment.yml`
+2. run `conda env update -f environment.yml`
+3. see if everything works as expected
+4. switch to the [`docker-airflow`](https://bitbucket.org/UFS-nl/docker-airflow/) project
+   a. apply the changes of step 1 to `environment.yml`
+   b. commit and push
+   c. wait for the BitBucket pipeline to complete
+   d. switch back to the `airflow-dags` project
+5. update line 1 of `docker/airflow/Dockerfile` to reference the build number of step 4c as the new base image version
+6. complete whatever changes you need the new dependency for
+7. commit and push
+
 ### Local UI
 
 #### Running with Docker Compose
