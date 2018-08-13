@@ -42,6 +42,7 @@ pipelines:
     master:
     - step: *dockerlint
     - step: *docker
+    - step: *pylint
     - step: *syntax
     - step: *dags
     - step:
