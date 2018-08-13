@@ -84,7 +84,7 @@ The UI has been shielded behind local port forwarding. To access the UI:
 
 - Install the [`az` cli tools](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 - Login with your user using `az login` 
-- Install [`kubectl` cli](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+- Install [`kubectl` cli](https://kubernetes.io/docs/tasks/tools/install-kubectl/). Note: make sure you download 1.10.x version and not 1.11.0 which will be installed by default when using `brew install` there is a known issue with the 1.11 version, see [here](https://github.com/kubernetes/kubernetes/issues/65575)
 - [OPTIONAL] Install [kubectl completion](https://kubernetes.io/docs/tasks/tools/install-kubectl/#enabling-shell-autocompletion) (highly recommended!)
 - set your Azure CLI to use the right subscription
 ```

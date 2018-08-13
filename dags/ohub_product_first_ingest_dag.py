@@ -3,7 +3,7 @@ from datetime import datetime
 from airflow import DAG
 
 from dags import config
-from dags.config import small_cluster_config
+from dags.config import small_cluster_config, start_date_first
 from ohub.operators.wasb_operator import WasbCopyOperator
 from ohub.utils.airflow import SubPipeline, DagConfig, GenericPipeline
 
@@ -34,7 +34,6 @@ with DAG(
             acm_schema_name="PRODUCTS",
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
-            postgres_conn_id="postgres_channels",
             container_name=config.container_name,
             wasb_export_container=config.wasb_export_container,
         )
@@ -42,11 +41,8 @@ with DAG(
             dispatcher_schema_name="ORDER_PRODUCTS",
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
-            postgres_conn_id="postgres_channels",
         )
-        .has_ingest_from_file_interface(
-            raw_bucket=config.raw_bucket, postgres_conn_id="postgres_channels"
-        )
+        .has_ingest_from_file_interface(raw_bucket=config.raw_bucket)
     )
 
     ingest: SubPipeline = generic.construct_ingest_pipeline()

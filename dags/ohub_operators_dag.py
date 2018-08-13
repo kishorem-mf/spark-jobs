@@ -3,13 +3,14 @@ from datetime import datetime
 from airflow import DAG
 
 from dags import config
+from dags.config import start_date_delta
 from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
-from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline, LazyConnection
+from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline
 
 dag_args = {
     **config.dag_default_args,
     **{
-        "start_date": datetime(2018, 7, 26),
+        "start_date": start_date_delta,
         "pool": "ohub_operators_pool",
     },
 }
@@ -36,7 +37,6 @@ with DAG(
             acm_schema_name="OPERATORS",
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
-            postgres_conn_id="postgres_channels",
             container_name=config.container_name,
             wasb_export_container=config.wasb_export_container,
         )
@@ -44,11 +44,8 @@ with DAG(
             dispatcher_schema_name="OPERATORS",
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
-            postgres_conn_id="postgres_channels",
         )
-        .has_ingest_from_file_interface(
-            raw_bucket=config.raw_bucket, postgres_conn_id="postgres_channels"
-        )
+        .has_ingest_from_file_interface(raw_bucket=config.raw_bucket)
         .has_ingest_from_web_event(
             raw_bucket=config.raw_bucket, ingested_bucket=config.ingested_bucket
         )
@@ -89,17 +86,8 @@ with DAG(
                 config.intermediate_bucket.format(
                     date="{{ ds }}", fn="{}_delta_golden_records".format(entity)
                 ),
-                "--postgressUrl",
-                "{{ params.postgres_conn.host }}",
-                "--postgressUsername",
-                "{{ params.postgres_conn.login }}",
-                "--postgressPassword",
-                "{{ params.postgres_conn.password }}",
-                "--postgressDB",
-                "{{ params.postgres_conn.schema }}",
             ],
         },
-        params={"postgres_conn": LazyConnection("postgres_channels")},
     )
 
     combine_to_create_integrated = DatabricksSubmitRunOperator(
@@ -140,17 +128,8 @@ with DAG(
                 ),
                 "--outputFile",
                 config.integrated_bucket.format(date="{{ ds }}", fn=entity),
-                "--postgressUrl",
-                "{{ params.postgres_conn.host }}",
-                "--postgressUsername",
-                "{{ params.postgres_conn.login }}",
-                "--postgressPassword",
-                "{{ params.postgres_conn.password }}",
-                "--postgressDB",
-                "{{ params.postgres_conn.schema }}",
             ],
         },
-        params={"postgres_conn": LazyConnection("postgres_channels")},
     )
 
     update_operators_table = DatabricksSubmitRunOperator(

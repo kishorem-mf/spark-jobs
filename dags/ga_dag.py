@@ -12,7 +12,7 @@ from ohub.operators.ga_fetch_operator import GAToGSOperator, GSToLocalOperator, 
 dag_args = {
     **config.dag_default_args,
     **{
-        "start_date": datetime(2018, 3, 26),
+        "start_date": datetime(2018, 7, 27),
         "retry_delay": timedelta(minutes=2),
         "wait_for_downstream": False,
         "depends_on_past": False,

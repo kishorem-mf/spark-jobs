@@ -1,19 +1,15 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from ohub.utils.airflow import slack_on_databricks_failure_callback
 
-email_addresses = [
-    "Dennis.Vis@unilever.com",
-    "Tycho.Grouwstra@unilever.com",
-    "Roderik-von.Maltzahn@unilever.com",
-]
+email_addresses = ["ohub-team@ufs.com"]
 
 dag_default_args = {
     "owner": "airflow",
     "depends_on_past": True,
     "wait_for_downstream": True,
     "email": email_addresses,
-    "email_on_failure": False,
+    "email_on_failure": True,
     "email_on_retry": False,
     "retries": 1,
     "retry_delay": timedelta(seconds=30),
@@ -26,6 +22,9 @@ ohub_entities = {
     "orderlines": {"spark_class": "OrderLine"},
     "products": {},
 }
+
+start_date_first = datetime(2018, 8, 8)
+start_date_delta = datetime(2018, 8, 9)
 
 country_codes = dict(
     AU=149299102,
@@ -49,7 +48,7 @@ country_codes = dict(
     TW=149647289,
     # KR=,
     CA=136493502,
-    US=136408293,
+    # US=136408293, # often errors with not found
     CZ=149431770,
     SK=155336641,
     EE=163567408,

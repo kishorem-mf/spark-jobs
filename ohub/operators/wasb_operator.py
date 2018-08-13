@@ -142,7 +142,7 @@ class FileFromWasbOperator(BaseOperator):
 
         # TODO: Replace locals() by something sensible
         self.log.info(
-            "Downloading {self.file_path} from {self.blob_name} on wasb://{self.container_name}".format(
+            "Downloading {self._file_path} from {self._blob_name} on wasb://{self._container_name}".format(
                 **locals()
             )
         )
