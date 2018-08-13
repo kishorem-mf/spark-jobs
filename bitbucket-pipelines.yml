@@ -14,7 +14,7 @@ pipelines:
         image: python:3.6.6
         script:
           - pip install pylint
-          - make lint
+          - bash ./scripts/pylint.sh --rcfile=.pylintrc ./ohub
     - step: &syntax
         name: Check PEP8 codestyle and run tests
         image: timvancann/miniconda3-gcc
