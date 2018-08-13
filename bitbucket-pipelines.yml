@@ -9,15 +9,6 @@ options:
 
 pipelines:
   default:
-    - step: &dockerlint
-        name: Dockerlint
-        script:
-        - make dockerlint
-    - step: &docker
-        name: Build image
-        script:
-        - docker login ulohubimages.azurecr.io -u ${AZ_CONTAINER_REGISTRY_USER_ID} -p ${AZ_CONTAINER_REGISTRY_PASSWORD}
-        - docker build --tag ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} --label "GIT_HASH=${BITBUCKET_COMMIT}" --file docker/airflow/Dockerfile .
     - step: &pylint
         name: pylint
         image: python:3.6.6
@@ -40,14 +31,23 @@ pipelines:
           password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
           - bash ./test.sh
+    - step: &dockerlint
+        name: Dockerlint
+        script:
+        - make dockerlint
+    - step: &docker
+        name: Build image
+        script:
+        - docker login ulohubimages.azurecr.io -u ${AZ_CONTAINER_REGISTRY_USER_ID} -p ${AZ_CONTAINER_REGISTRY_PASSWORD}
+        - docker build --tag ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} --label "GIT_HASH=${BITBUCKET_COMMIT}" --file docker/airflow/Dockerfile .
 
   branches:
     master:
-    - step: *dockerlint
-    - step: *docker
     - step: *pylint
     - step: *syntax
     - step: *dags
+    - step: *dockerlint
+    - step: *docker
     - step:
         name: Build image for azure
         image: microsoft/azure-cli
