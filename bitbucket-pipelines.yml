@@ -9,54 +9,44 @@ options:
 
 pipelines:
   default:
+    - step: &dockerlint
+        name: Dockerlint
+        script:
+        - make dockerlint
+    - step: &docker
+        name: Build image
+        script:
+        - docker build -t ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} .
     - step: &pylint
         name: pylint
-        image: python:3.6.6
+        image: ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER}
         script:
           - pip install pylint
           - bash ./scripts/pylint.sh --rcfile=.pylintrc ./ohub
     - step: &syntax
         name: Check PEP8 codestyle and run tests
-        image: timvancann/miniconda3-gcc
+        image: ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER}
         script:
           - bash ./lint.sh
     - step: &dags
         name: Verify DAG integrity
         image:
-          name: ulohubimages.azurecr.io/airflow:98
-          username: ulohubimages
-          password: $AZ_CONTAINER_REGISTRY_PASSWORD
+          name: ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER}
         script:
           - bash ./test.sh
-    - step: &dockerlint
-        name: Dockerlint
-        script:
-          - make dockerlint
-    - step: &docker
-        name: Build image
-        script:
-          - docker build -f docker/airflow/Dockerfile .
 
   branches:
     master:
-    - step: *syntax
-    - step: *dags
     - step: *dockerlint
     - step: *docker
-    - step:
-        name: Deploy to azure file share
-        image: microsoft/azure-cli
-        deployment: production
-        script:
-          - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
-          - az storage file upload-batch --source . --destination airflow-dags --account-key ${AZ_AIRFLOW_STORAGE_KEY} --account-name ${AZ_AIRFLOW_STORAGE_ACCOUNT}
+    - step: *syntax
+    - step: *dags
     - step:
         name: Build image for azure
         image: microsoft/azure-cli
         script:
+          - docker tag ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} ulohubimages.azurecr.io/airflow:latest
           - docker login ulohubimages.azurecr.io -u ${AZ_CONTAINER_REGISTRY_USER_ID} -p ${AZ_CONTAINER_REGISTRY_PASSWORD}
-
-          - docker build -t ulohubimages.azurecr.io/airflow:latest -t ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} .
           - docker push ulohubimages.azurecr.io/airflow:latest
           - docker push ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER}
     - step:

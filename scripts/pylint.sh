@@ -28,14 +28,16 @@ function filter_exit_code() {
     # 32 usage error
     if (( $1 & (1+2+32) )); then
         echo "Exit code $1 looks bad, it's got errors/fatals in there" 1>&2
-        exit 1
+        return 1
     else
         echo "Exit code $1 looks good" 1>&2
-        exit 0
+        return 0
     fi
 }
 
 # Run pylint.
 pylint --output-format=colorized $@
 filter_exit_code $?
-exit $?
+RESULT=$?
+echo "Final exit code: $RESULT" 1>&2
+exit $RESULT
