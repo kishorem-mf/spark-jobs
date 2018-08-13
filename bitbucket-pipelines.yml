@@ -16,6 +16,7 @@ pipelines:
     - step: &docker
         name: Build image
         script:
+        - docker login ulohubimages.azurecr.io -u ${AZ_CONTAINER_REGISTRY_USER_ID} -p ${AZ_CONTAINER_REGISTRY_PASSWORD}
         - docker build --tag ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} --label "GIT_HASH=${BITBUCKET_COMMIT}" --file docker/airflow/Dockerfile .
     - step: &pylint
         name: pylint
