@@ -4,5 +4,5 @@ dockerlint:
 
 .PHONY: lint
 lint:
-	bash ./scripts/pylint.sh --rcfile=.pylintrc --output-format=colorized ./ohub
+	find ./ohub -name '*.py' | grep -v vendor | xargs bash ./scripts/pylint.sh --rcfile=.pylintrc --output-format=colorized
 #	./dags was excluded for the moment because of ton of errors
