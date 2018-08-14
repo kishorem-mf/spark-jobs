@@ -49,6 +49,8 @@ it up with this command:
 docker-compose up --detach --build
 ```
 
+First make sure you build the Docker container specified in the project `docker-airflow` this is used as base image in the `docker-compose.yml`
+
 The Airflow webserver is exposed on [localhost:8080](http://localhost:8080/admin).
 
 ```bash
