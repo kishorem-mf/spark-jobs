@@ -56,7 +56,7 @@ class ExternalTaskSensorOperator(BaseOperator):
         )
         self._external_dag_id = external_dag_id
         self._external_task_id = external_task_id
-        self.succeded_state = "succeeded"
+        self.succeeded_state = "succeeded"
         self.failed_state = "failed"
         self.running_state = "still_running"
 
@@ -102,7 +102,7 @@ class ExternalTaskSensorOperator(BaseOperator):
 
         retval = self.running_state
         if allowed_count == 1:
-            retval = self.succeded_state
+            retval = self.succeeded_state
         if disallowed_count == 1:
             retval = self.failed_state
         return retval
@@ -116,7 +116,7 @@ class ExternalTaskSensorOperator(BaseOperator):
                         self._external_task_id, self._external_dag_id
                     )
                 )
-            elif state == self.succeded_state:
+            elif state == self.succeeded_state:
                 self.log.info(
                     "Task {} in DAG {} is successful".format(
                         self._external_task_id, self._external_dag_id
