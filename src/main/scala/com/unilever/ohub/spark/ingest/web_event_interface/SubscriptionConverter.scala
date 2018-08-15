@@ -36,7 +36,7 @@ object SubscriptionConverter extends WebEventDomainGateKeeper[Subscription] with
         isGoldenRecord          =     true,
         sourceEntityId          =     sourceEntityId,
         sourceName              =     SourceName,
-        ohubId                  =     none,
+        ohubId                  =     none,// set in SubscriptionMerging
         ohubCreated             =     ohubCreated,
         ohubUpdated             =     ohubCreated,
         contactPersonConcatId   =     contactPersonConcatId,

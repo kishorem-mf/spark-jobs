@@ -33,7 +33,7 @@ object SubscriptionConverter extends EmakinaDomainGateKeeper[Subscription] with 
         isGoldenRecord          =     true,
         sourceEntityId          =     mandatory("REF_SUBSCRIPTION_ID", "sourceEntityId"),
         sourceName              =     mandatory("SOURCE", "sourceName"),
-        ohubId                  =     Option.empty,
+        ohubId                  =     Option.empty,// set in SubscriptionMerging
         ohubCreated             =     ohubCreated,
         ohubUpdated             =     ohubCreated,
         contactPersonConcatId   =     contactPersonConcatRefId,
