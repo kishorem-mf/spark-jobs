@@ -25,6 +25,7 @@ case class Subscription(
     ohubUpdated: Timestamp,
     // specific fields
     contactPersonConcatId: String,
+    contactPersonOhubId: Option[String],
     communicationChannel:Option[String],
     subscriptionType:String,
     hasSubscription: Boolean,
