@@ -7,7 +7,7 @@ object TestSubscription extends TestSubscription
 trait TestSubscription {
 
   lazy val defaultSubscription:Subscription = Subscription(
-    concatId                =     "DE~SUBSCRIPTION~b3a6208c-d7f6-44e2-80e2-f26d461f64c0",
+    concatId                =     "DE~EMAKINA~b3a6208c-d7f6-44e2-80e2-f26d461f64c0",
     countryCode             =     "DE",
     customerType            =     "SUBSCRIPTION",
     dateCreated             =     None,
@@ -20,6 +20,7 @@ trait TestSubscription {
     ohubCreated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
     ohubUpdated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
     contactPersonConcatId   =     "DE~SUBSCRIPTION~138175",
+    contactPersonOhubId = None,
     communicationChannel    =     Some("Some channel"),
     subscriptionType        =     "Newsletter",
     hasSubscription         =     true,
