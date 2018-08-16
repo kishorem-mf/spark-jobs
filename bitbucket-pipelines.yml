@@ -1,6 +1,12 @@
 # Check https://confluence.atlassian.com/x/x4UWN for more examples.
 # Validator: https://bitbucket-pipelines.atlassian.io/validator
 
+clone:
+  depth: 1
+
+options:
+  docker: true
+
 pipelines:
   default:
     - step: &pylint
@@ -11,26 +17,53 @@ pipelines:
           - make lint
     - step: &syntax
         name: Check PEP8 codestyle and run tests
-        image: timvancann/miniconda3-gcc
+        image:
+          name: ulohubimages.azurecr.io/airflow_base:111
+          username: ulohubimages
+          password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
           - bash ./lint.sh
     - step: &dags
         name: Verify DAG integrity
         image:
-          name: ulohubimages.azurecr.io/airflow:89
+          name: ulohubimages.azurecr.io/airflow_base:111
           username: ulohubimages
           password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
           - bash ./test.sh
+    - step: &dockerlint
+        name: Dockerlint
+        script:
+        - make dockerlint
+    - step: &docker
+        name: Build image
+        script:
+        - docker login ulohubimages.azurecr.io -u ${AZ_CONTAINER_REGISTRY_USER_ID} -p ${AZ_CONTAINER_REGISTRY_PASSWORD}
+        - docker build --tag ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} --label "GIT_HASH=${BITBUCKET_COMMIT}" --file docker/airflow/Dockerfile .
 
   branches:
     master:
+    - step: *pylint
     - step: *syntax
     - step: *dags
+    - step: *dockerlint
+    - step: *docker
     - step:
-        name: Deploy to azure file share
+        name: Build image for azure
         image: microsoft/azure-cli
-        deployment: production
+        script:
+          - docker tag ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} ulohubimages.azurecr.io/airflow:latest
+          - docker login ulohubimages.azurecr.io -u ${AZ_CONTAINER_REGISTRY_USER_ID} -p ${AZ_CONTAINER_REGISTRY_PASSWORD}
+          - docker push ulohubimages.azurecr.io/airflow:latest
+          - docker push ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER}
+    - step:
+        name: Deploy Airflow in kubernetes Azure
+        image: microsoft/azure-cli
         script:
           - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
-          - az storage file upload-batch --source . --destination airflow-dags --account-key ${AZ_AIRFLOW_STORAGE_KEY} --account-name ${AZ_AIRFLOW_STORAGE_ACCOUNT}
+          - az acs kubernetes install-cli
+          - az aks get-credentials -g bieno-da-s-60072-containers-rg -n ul-ohub2-aks-dev-we
+
+          - airflowimage="ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER}"
+          - kubectl set image deployment/airflow-webserver webserver=${airflowimage}
+          - kubectl set image deployment/airflow-scheduler scheduler=${airflowimage}
