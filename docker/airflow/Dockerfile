@@ -1,4 +1,4 @@
-ARG BASEIMAGE=ulohubimages.azurecr.io/airflow_base:109
+ARG BASEIMAGE=ulohubimages.azurecr.io/airflow_base:111
 # Ignore "always hard-code base image version" because we parameterize this to make both laptop and bitbucket builds work.
 # hadolint ignore=DL3006
 FROM $BASEIMAGE
