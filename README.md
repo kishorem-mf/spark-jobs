@@ -1,4 +1,18 @@
-# Local development
+# Name Matching
+
+This repo contains the name matching logic for UFS O-Hub operators and contact persons.
+
+The actual matching is based on [sparse_dot_topn](https://github.com/ing-bank/sparse_dot_topn),
+a Cython library open-sourced by ING under the Apache 2 license, further elaborated on in a
+[Medium post](https://medium.com/wbaa/https-medium-com-ingwbaa-boosting-selection-of-the-most-similar-entities-in-large-scale-datasets-450b3242e618)
+and [SlideShare](https://www.slideshare.net/godatadriven/pydata-amsterdam-name-matching-at-scale) by GoDataDriven.
+
+The current repository essentially wraps this library to run on our operator and contact data for initial and delta loads.
+
+On a high level, it vectorises the desired columns into trigram representations,
+then uses a [SciPy sparse matrix dot function](https://docs.scipy.org/doc/scipy-0.19.0/reference/generated/scipy.sparse.csr_matrix.dot.html) and a Spark UDF function. Then, the top-n candidates are selected using the NumPy [argpartition](http://%28https//docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.argpartition.html) function.
+
+![`sparse_dot_topn` steps](https://cdn-images-1.medium.com/max/800/1*jElpcnRIU_rkByX2nbmweA.png)
 
 # Local development
 
@@ -36,7 +50,7 @@ find  . -name "*pycache*" | exec rm -rf {} \;
 and rerun the tests. After making changes 
 
 
-# Name-Matching
+# Usage
 
 Requirements for the cluster and Driver:
 

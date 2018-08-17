@@ -28,7 +28,9 @@ bool candidate_cmp(candidate c_i, candidate c_j) { return (c_i.value > c_j.value
 /*
     C++ implementation of sparse_dot_topn
 
-    This function will return a matrxi C in CSR format, where
+    This function will return a matrix C in Compressed Sparse Row format
+    ([CSR](https://www.scipy-lectures.org/advanced/scipy_sparse/csr_matrix.html)),
+    consisting of (indices, ndptr, data), where
     C = [sorted top n results and results > lower_bound for each row of A * B]
 
     Input:
@@ -40,6 +42,15 @@ bool candidate_cmp(candidate c_i, candidate c_j) { return (c_i.value > c_j.value
 
         ntop: n top results
         lower_bound: a threshold that the element of A*B must greater than
+
+        Cp, Cj, Cx: CSR expression of C matrix. Output by reference.
+
+        A_start_i: First row index of matrix A. Useful when
+            performing dot operation in chunks of A.
+        upper_triangular (bool): If to return only the upper triangular
+            matrix. This is useful when the task is deduplication.
+            The upper triangular matrix is defined from the coordenate
+            (start_row, start_row) in the resulting matrix.
 
     Output by reference:
         Cp, Cj, Cx: CSR expression of C matrix
@@ -67,7 +78,7 @@ int sparse_dot_topn_source(int n_row,
 
     std::vector<candidate> candidates;
 
-    int nnz = 0;
+    int nnz = 0; // number of non-zero records
     int indptr = 0;
     // Cp[0] = 0;
 
