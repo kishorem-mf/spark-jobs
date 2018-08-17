@@ -267,7 +267,7 @@ class GenericPipeline(object):
             separator=separator,
         )
 
-        # self._ingests.append(self.__ingest_from_channel(config))
+        self._ingests.append(self.__ingest_from_channel(config))
 
         return self
 

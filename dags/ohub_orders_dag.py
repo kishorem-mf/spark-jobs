@@ -54,6 +54,9 @@ with DAG(
             export_bucket=config.export_bucket,
         )
         .has_ingest_from_file_interface(raw_bucket=config.raw_bucket)
+        .has_ingest_from_web_event(
+            raw_bucket=config.raw_bucket, ingested_bucket=config.ingested_bucket
+        )
     )
 
     orderlines = (
@@ -86,6 +89,9 @@ with DAG(
             raw_bucket=config.raw_bucket,
             deduplicate_on_concat_id=False,
             alternative_schema="orders",
+        )
+        .has_ingest_from_web_event(
+            raw_bucket=config.raw_bucket, ingested_bucket=config.ingested_bucket
         )
     )
 
