@@ -353,7 +353,7 @@ class GenericPipeline(object):
             trigger_rule=TriggerRule.ALL_DONE,
         )
 
-    def construct_ingest_pipeline(self) -> SubPipeline:
+    def construct_ingest_pipeline(self, initial_ingest_date=None) -> SubPipeline:
         """
         Constructs the full ingest pipeline.
 
@@ -409,7 +409,8 @@ class GenericPipeline(object):
             first_ingest_sensor = ExternalTaskSensorOperator(
                 task_id=f'{entity}_first_ingest_sensor',
                 external_dag_id=f'ohub_{entity}_initial_load',
-                external_task_id=f'{entity}_end_pipeline'
+                external_task_id=f'{entity}_end_pipeline',
+                execution_date_fn=lambda dt: initial_ingest_date
             )
 
             empty_fallback = EmptyFallbackOperator(

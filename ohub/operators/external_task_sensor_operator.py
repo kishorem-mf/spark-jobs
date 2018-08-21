@@ -28,6 +28,10 @@ class ExternalTaskSensorOperator(BaseOperator):
     :param Callable execution_date_fn: function that receives the current execution date and returns the desired
         execution dates to query. Either execution_delta or execution_date_fn can be passed to ExternalTaskSensor, but
         not both.
+    :param execution_date_fn: function that receives the current execution date
+        and returns the desired execution dates to query. Either execution_delta
+        or execution_date_fn can be passed to ExternalTaskSensor, but not both.
+    :type execution_date_fn: callable
     """
 
     ui_color = "#19647e"
@@ -41,6 +45,7 @@ class ExternalTaskSensorOperator(BaseOperator):
         poke_interval=60,
         allowed_states=None,
         execution_delta=None,
+        execution_date_fn=None,
         **kwargs
     ):
 
@@ -54,6 +59,7 @@ class ExternalTaskSensorOperator(BaseOperator):
         self._execution_delta = (
             datetime.timedelta(seconds=0) if not execution_delta else execution_delta
         )
+        self._execution_date_fn = execution_date_fn
         self._external_dag_id = external_dag_id
         self._external_task_id = external_task_id
         self.succeeded_state = "succeeded"
@@ -66,7 +72,8 @@ class ExternalTaskSensorOperator(BaseOperator):
         :param context:
         :return:
         """
-        dttm = context["execution_date"] - self._execution_delta
+        exec_date = context["execution_date"]
+        dttm = (exec_date - self._execution_delta) if not self._execution_date_fn else self._execution_date_fn(exec_date)
         dttm_serialised = dttm.isoformat()
 
         self.log.info(
