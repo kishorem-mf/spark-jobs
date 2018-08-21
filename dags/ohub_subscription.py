@@ -3,7 +3,7 @@ from datetime import datetime
 from airflow import DAG
 
 from dags import config
-from dags.config import start_date_first
+from dags.config import start_date_delta
 from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline
 from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
 from ohub.operators.external_task_sensor_operator import ExternalTaskSensorOperator
@@ -11,12 +11,12 @@ from ohub.operators.external_task_sensor_operator import ExternalTaskSensorOpera
 dag_args = {
     **config.dag_default_args,
     **{
-        "start_date": start_date_first,
+        "start_date": start_date_delta,
     },
 }
 
 entity = "subscriptions"
-dag_config = DagConfig(entity, is_delta=False)
+dag_config = DagConfig(entity, is_delta=True)
 
 with DAG(
     dag_config.dag_id, default_args=dag_args, schedule_interval=dag_config.schedule
