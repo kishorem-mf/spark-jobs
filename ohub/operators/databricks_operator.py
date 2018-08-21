@@ -302,6 +302,7 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
             ("POST", "api/2.0/clusters/delete"), {"cluster_id": self.cluster_id}
         )
 
+        i = 1
         while True:
             run_state = get_cluster_status(self.cluster_id, self._databricks_conn_id)
             if run_state == "TERMINATED":
@@ -318,7 +319,8 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
                 logging.info(
                     "Sleeping for {} seconds.".format(self._polling_period_seconds)
                 )
-                time.sleep(self._polling_period_seconds)
+                time.sleep(self._polling_period_seconds * 2 ** i)
+                i += 1
 
 
 class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
@@ -359,6 +361,7 @@ class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
 
         time.sleep(10)  # make sure the API is refreshed, reflecting the restarting state
         while True:
+            i = 1
             run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
             if run_state == "RUNNING":
                 logging.info(f"{self.task_id} completed successfully.")
@@ -369,7 +372,8 @@ class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
             else:
                 logging.info(f"Cluster restarting, currently in state: {run_state}")
                 logging.info(f"Sleeping for {self._polling_period_seconds} seconds.")
-                time.sleep(self._polling_period_seconds)
+                time.sleep(self._polling_period_seconds * 2 ** i)
+                i += 1
 
     def on_kill(self):
         hook = self.get_hook()
