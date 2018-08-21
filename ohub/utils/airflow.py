@@ -235,18 +235,21 @@ class GenericPipeline(object):
         self._ingests.append(self.__ingest_from_channel(config))
         return self
 
-
     def has_ingest_from_web_event(
         self,
         raw_bucket: str,
+        ingested_bucket: str,
         deduplicate_on_concat_id: bool = True,
         alternative_schema: str = None,
+        alternative_output_fn: str = None,
     ) -> "GenericPipeline":
         """
         Marks the pipeline to include ingest from web_event.
         :param raw_bucket: raw_bucket path.
+        :param ingested_bucket: ingested_bucket path.
         :param deduplicate_on_concat_id: check duplicates on cancat_id (default: True)
         :param alternative_schema: alternative_schema. (default: None).
+        :param alternative_output_fn: alternative_output_fn. (default: None).
         :return: Marks the pipeline to include ingest from web_event
         """
         channel = "web_event_interface"
@@ -256,10 +259,13 @@ class GenericPipeline(object):
         input_file = raw_bucket.format(
             date="{{ ds }}", schema=ingest_schema, channel=channel
         )
-        output_file = self._ingested_bucket.format(
-            date="{{ ds }}", fn=self._dag_config.entity, channel=channel
+        output_file = (
+            alternative_output_fn
+            if alternative_output_fn
+            else ingested_bucket.format(
+                date="{{ ds }}", fn=self._dag_config.entity, channel=channel
+            )
         )
-
         config = IngestConfig(
             input_file=input_file,
             output_file=output_file,
