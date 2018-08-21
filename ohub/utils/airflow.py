@@ -243,7 +243,15 @@ class GenericPipeline(object):
         alternative_schema: str = None,
         alternative_output_fn: str = None,
     ) -> "GenericPipeline":
-        """Marks the pipeline to include ingest from web event"""
+        """
+        Marks the pipeline to include ingest from web_event.
+        :param raw_bucket: raw_bucket path.
+        :param ingested_bucket: ingested_bucket path.
+        :param deduplicate_on_concat_id: check duplicates on cancat_id (default: True)
+        :param alternative_schema: alternative_schema. (default: None).
+        :param alternative_output_fn: alternative_output_fn. (default: None).
+        :return: Marks the pipeline to include ingest from web_event
+        """
         channel = "web_event_interface"
         ingest_schema = (
             alternative_schema if alternative_schema else self._dag_config.entity
@@ -258,17 +266,15 @@ class GenericPipeline(object):
                 date="{{ ds }}", fn=self._dag_config.entity, channel=channel
             )
         )
-        separator = ";"
         config = IngestConfig(
             input_file=input_file,
             output_file=output_file,
             channel=channel,
             deduplicate_on_concat_id=deduplicate_on_concat_id,
-            separator=separator,
+            separator=";",
         )
 
-        # self._ingests.append(self.__ingest_from_channel(config))
-
+        self._ingests.append(self.__ingest_from_channel(config))
         return self
 
     def has_export_to_acm(
