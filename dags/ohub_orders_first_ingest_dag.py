@@ -94,7 +94,7 @@ with DAG(
     ingest_orders: SubPipeline = orders.construct_ingest_pipeline()
     export_orders: SubPipeline = orders.construct_export_pipeline()
 
-    ingest_orderlines: SubPipeline = orderlines.construct_ingest_pipeline()
+    ingest_orderlines: SubPipeline = orderlines.construct_ingest_pipeline(start_date_first)
     export_orderlines: SubPipeline = orderlines.construct_export_pipeline()
 
     merge = DatabricksSubmitRunOperator(
