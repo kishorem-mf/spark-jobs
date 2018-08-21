@@ -3,7 +3,7 @@ from datetime import datetime
 from airflow import DAG
 
 from dags import config
-from dags.config import small_cluster_config, start_date_delta
+from dags.config import small_cluster_config, start_date_delta, start_date_first
 from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
 from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline
 
@@ -45,7 +45,7 @@ with DAG(
         .has_ingest_from_file_interface(raw_bucket=config.raw_bucket)
     )
 
-    ingest: SubPipeline = generic.construct_ingest_pipeline()
+    ingest: SubPipeline = generic.construct_ingest_pipeline(start_date_first)
     export: SubPipeline = generic.construct_export_pipeline()
 
     merge = DatabricksSubmitRunOperator(
