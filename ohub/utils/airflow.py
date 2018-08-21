@@ -8,6 +8,7 @@ from airflow.models import BaseOperator
 from airflow.operators.bash_operator import BashOperator
 from airflow.utils.trigger_rule import TriggerRule
 
+from dags.config import start_date_first
 from ohub.operators.databricks_operator import (
     DatabricksCreateClusterOperator,
     DatabricksSubmitRunOperator,
@@ -347,7 +348,7 @@ class GenericPipeline(object):
             trigger_rule=TriggerRule.ALL_DONE,
         )
 
-    def construct_ingest_pipeline(self) -> SubPipeline:
+    def construct_ingest_pipeline(self, context) -> SubPipeline:
         """
         Constructs the full ingest pipeline.
 
@@ -403,7 +404,8 @@ class GenericPipeline(object):
             first_ingest_sensor = ExternalTaskSensorOperator(
                 task_id=f'{entity}_first_ingest_sensor',
                 external_dag_id=f'ohub_{entity}_initial_load',
-                external_task_id=f'{entity}_end_pipeline'
+                external_task_id=f'{entity}_end_pipeline',
+                execution_date_fn=lambda dt: start_date_first
             )
 
             empty_fallback = EmptyFallbackOperator(
