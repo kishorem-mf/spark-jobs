@@ -348,7 +348,7 @@ class GenericPipeline(object):
             trigger_rule=TriggerRule.ALL_DONE,
         )
 
-    def construct_ingest_pipeline(self, context) -> SubPipeline:
+    def construct_ingest_pipeline(self) -> SubPipeline:
         """
         Constructs the full ingest pipeline.
 
