@@ -33,7 +33,9 @@ with DAG(
             wasb_conn_id=config.wasb_conn_id,
             wasb_raw_container=config.wasb_raw_container,
         )
-        .has_ingest_from_ohub1(raw_bucket=config.raw_bucket)
+        .has_ingest_from_web_event(
+            raw_bucket=config.raw_bucket, ingested_bucket=config.ingested_bucket
+        )
     )
 
     ingest: SubPipeline = generic.construct_ingest_pipeline()
@@ -50,6 +52,10 @@ with DAG(
                 config.intermediate_bucket.format(
                     date="{{ ds }}", fn=f"{entity}_gathered"
                 ),
+                "--previousIntegrated",
+                config.integrated_bucket.format(
+                    date="{{ yesterday_ds }}", fn=entity
+                ),
                 "--contactPersonInputFile",
                 config.integrated_bucket.format(date="{{ ds }}", fn="contactpersons"),
                 "--outputFile",
@@ -60,9 +66,10 @@ with DAG(
 
     contactpersons_integrated_sensor = ExternalTaskSensorOperator(
         task_id="contactpersons_integrated_sensor",
-        external_dag_id="ohub_contactpersons_initial_load",
+        external_dag_id="ohub_contactpersons",
         external_task_id="update_golden_records",
     )
 
     contactpersons_integrated_sensor >> ingest.first_task
     ingest.last_task >> merge
+    ingest.first_task >> merge
