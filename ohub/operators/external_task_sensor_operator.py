@@ -73,7 +73,7 @@ class ExternalTaskSensorOperator(BaseOperator):
         :return:
         """
         exec_date = context["execution_date"]
-        dttm = (exec_date - self._execution_delta) if not execution_date_fn else self._execution_date_fn(exec_date)
+        dttm = (exec_date - self._execution_delta) if not self._execution_date_fn else self._execution_date_fn(exec_date)
         dttm_serialised = dttm.isoformat()
 
         self.log.info(
