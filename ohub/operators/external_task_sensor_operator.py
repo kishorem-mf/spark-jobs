@@ -1,7 +1,6 @@
+"""Sensor checking for task completion in a different DAG."""
+
 import datetime
-
-from future import standard_library
-
 from time import sleep
 
 from airflow import settings
@@ -10,10 +9,8 @@ from airflow.models import BaseOperator, TaskInstance
 from airflow.utils.state import State
 from airflow.utils.decorators import apply_defaults
 
-# TODO: Remove and test this
-standard_library.install_aliases()
 
-
+# pylint: disable=too-many-instance-attributes
 class ExternalTaskSensorOperator(BaseOperator):
     """
     Sensor operators are derived from this class an inherit these attributes.
@@ -31,6 +28,10 @@ class ExternalTaskSensorOperator(BaseOperator):
     :param Callable execution_date_fn: function that receives the current execution date and returns the desired
         execution dates to query. Either execution_delta or execution_date_fn can be passed to ExternalTaskSensor, but
         not both.
+    :param execution_date_fn: function that receives the current execution date
+        and returns the desired execution dates to query. Either execution_delta
+        or execution_date_fn can be passed to ExternalTaskSensor, but not both.
+    :type execution_date_fn: callable
     """
 
     ui_color = "#19647e"
@@ -44,74 +45,85 @@ class ExternalTaskSensorOperator(BaseOperator):
         poke_interval=60,
         allowed_states=None,
         execution_delta=None,
+        execution_date_fn=None,
         **kwargs
     ):
 
         super().__init__(**kwargs)
         self._poke_interval = poke_interval
         self._allowed_states = allowed_states or [State.SUCCESS]
-        self._disallowed_states = allowed_states or [State.FAILED, State.UPSTREAM_FAILED]
+        self._disallowed_states = allowed_states or [
+            State.FAILED,
+            State.UPSTREAM_FAILED,
+        ]
         self._execution_delta = (
             datetime.timedelta(seconds=0) if not execution_delta else execution_delta
         )
+        self._execution_date_fn = execution_date_fn
         self._external_dag_id = external_dag_id
         self._external_task_id = external_task_id
-        self.SUCCEEDED_STATE = "succeeded"
-        self.FAILED_STATE = "failed"
-        self.RUNNING_STATE = "still_running"
+        self.succeeded_state = "succeeded"
+        self.failed_state = "failed"
+        self.running_state = "still_running"
 
     def poke(self, context):
-        dttm = context["execution_date"] - self._execution_delta
+        """
+        Execute this after every interval.
+        :param context:
+        :return:
+        """
+        exec_date = context["execution_date"]
+        dttm = (exec_date - self._execution_delta) if not self._execution_date_fn else self._execution_date_fn(exec_date)
         dttm_serialised = dttm.isoformat()
 
         self.log.info(
             "Poking for "
-            "{self.external_dag_id}."
-            "{self.external_task_id} on "
-            "{dttm_serialised}".format(**locals())  # TODO: replace locals() by something more sensible
+            f"{self._external_dag_id}."
+            f"{self._external_task_id} on "
+            f"{dttm_serialised}"
         )
-        TI = TaskInstance
+        task_instance = TaskInstance
 
         session = settings.Session()
         allowed_count = (
-            session.query(TI)
+            session.query(task_instance)
             .filter(
-                TI.dag_id == self._external_dag_id,
-                TI.task_id == self._external_task_id,
-                TI.state.in_(self._allowed_states),
-                TI.execution_date == dttm,
+                task_instance.dag_id == self._external_dag_id,
+                task_instance.task_id == self._external_task_id,
+                task_instance.state.in_(self._allowed_states),
+                task_instance.execution_date == dttm,
             )
             .count()
         )
         disallowed_count = (
-            session.query(TI)
+            session.query(task_instance)
             .filter(
-                TI.dag_id == self._external_dag_id,
-                TI.task_id == self._external_task_id,
-                TI.state.in_(self._disallowed_states),
-                TI.execution_date == dttm,
+                task_instance.dag_id == self._external_dag_id,
+                task_instance.task_id == self._external_task_id,
+                task_instance.state.in_(self._disallowed_states),
+                task_instance.execution_date == dttm,
             )
             .count()
         )
         session.close()
 
-        retval = self.RUNNING_STATE
+        retval = self.running_state
         if allowed_count == 1:
-            retval = self.SUCCEEDED_STATE
+            retval = self.succeeded_state
         if disallowed_count == 1:
-            retval = self.FAILED_STATE
+            retval = self.failed_state
         return retval
 
     def execute(self, context):
         while True:
             state = self.poke(context)
-            if state == self.FAILED_STATE:
+            if state == self.failed_state:
                 raise AirflowSkipException(
                     "Snap. Task {} in DAG {} has failed :(".format(
                         self._external_task_id, self._external_dag_id
                     )
                 )
-            elif state == self.SUCCEEDED_STATE:
+            elif state == self.succeeded_state:
                 self.log.info(
                     "Task {} in DAG {} is successful".format(
                         self._external_task_id, self._external_dag_id

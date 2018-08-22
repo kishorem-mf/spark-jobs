@@ -4,4 +4,12 @@ __pycache__/
 .cache/
 .pytest_cache/
 .coverage
+<<<<<<< HEAD
 ohub.egg-info/
+=======
+
+# Setuptools
+build/
+dist/
+*.egg-info/
+>>>>>>> master
