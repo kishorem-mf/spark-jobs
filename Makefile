@@ -19,5 +19,9 @@ clean:
 black:
 	(find . -name '*.py' | xargs black --check) || true
 
+.PHONY: pycodestyle
+pycodestyle:
+	pycodestyle --show-source .
+
 .PHONY: local-ci
-local-ci: | clean black pycodestyle lint pytest
+local-ci: | black pycodestyle lint pytest
