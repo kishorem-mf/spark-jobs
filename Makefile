@@ -8,8 +8,8 @@ lint:
 #	./dags was excluded for the moment because of ton of errors
 
 .PHONY: pytest
-pytest:
-	pytest --cov-config=.coveragerc --cov=ohub tests/
+pytest: clean
+	pytest --cov=ohub --cov-config=.coveragerc --cov-branch tests/
 
 .PHONY: clean
 clean:
