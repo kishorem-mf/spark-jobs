@@ -76,12 +76,7 @@ class ExternalTaskSensorOperator(BaseOperator):
         dttm = (exec_date - self._execution_delta) if not self._execution_date_fn else self._execution_date_fn(exec_date)
         dttm_serialised = dttm.isoformat()
 
-        self.log.info(
-            "Poking for "
-            f"{self._external_dag_id}."
-            f"{self._external_task_id} on "
-            f"{dttm_serialised}"
-        )
+        self.log.info(f"Poking for {self._external_dag_id}.{self._external_task_id} on {dttm_serialised}")
         task_instance = TaskInstance
 
         session = settings.Session()
