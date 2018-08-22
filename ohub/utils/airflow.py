@@ -200,6 +200,41 @@ class GenericPipeline(object):
         self._ingests.append(self.__ingest_from_channel(config))
         return self
 
+    def has_ingest_from_ohub1(
+        self,
+        raw_bucket: str,
+        deduplicate_on_concat_id: bool = True,
+        alternative_schema: str = None,
+    ) -> "GenericPipeline":
+        """
+        Marks the pipeline to include ingest from ohub1.
+        :param raw_bucket: raw_bucket path.
+        :param deduplicate_on_concat_id: check duplicates on cancat_id (default: True)
+        :param alternative_schema: alternative_schema. (default: None).
+        :return: Marks the pipeline to include ingest from ohub1
+        """
+        channel = "ohub1"
+        ingest_schema = (
+            alternative_schema if alternative_schema else self._dag_config.entity
+        )
+        input_file = raw_bucket.format(
+            date="{{ ds }}", schema=ingest_schema, channel=channel
+        )
+        output_file = self._ingested_bucket.format(
+            date="{{ ds }}", fn=self._dag_config.entity, channel=channel
+        )
+
+        config = IngestConfig(
+            input_file=input_file,
+            output_file=output_file,
+            channel=channel,
+            deduplicate_on_concat_id=deduplicate_on_concat_id,
+            separator="‰",
+        )
+
+        self._ingests.append(self.__ingest_from_channel(config))
+        return self
+
     def has_ingest_from_web_event(
         self,
         raw_bucket: str,
@@ -208,7 +243,15 @@ class GenericPipeline(object):
         alternative_schema: str = None,
         alternative_output_fn: str = None,
     ) -> "GenericPipeline":
-        """Marks the pipeline to include ingest from web event"""
+        """
+        Marks the pipeline to include ingest from web_event.
+        :param raw_bucket: raw_bucket path.
+        :param ingested_bucket: ingested_bucket path.
+        :param deduplicate_on_concat_id: check duplicates on cancat_id (default: True)
+        :param alternative_schema: alternative_schema. (default: None).
+        :param alternative_output_fn: alternative_output_fn. (default: None).
+        :return: Marks the pipeline to include ingest from web_event
+        """
         channel = "web_event_interface"
         ingest_schema = (
             alternative_schema if alternative_schema else self._dag_config.entity
@@ -223,17 +266,15 @@ class GenericPipeline(object):
                 date="{{ ds }}", fn=self._dag_config.entity, channel=channel
             )
         )
-        separator = ";"
         config = IngestConfig(
             input_file=input_file,
             output_file=output_file,
             channel=channel,
             deduplicate_on_concat_id=deduplicate_on_concat_id,
-            separator=separator,
+            separator=";",
         )
 
-        # self._ingests.append(self.__ingest_from_channel(config))
-
+        self._ingests.append(self.__ingest_from_channel(config))
         return self
 
     def has_export_to_acm(
@@ -312,7 +353,7 @@ class GenericPipeline(object):
             trigger_rule=TriggerRule.ALL_DONE,
         )
 
-    def construct_ingest_pipeline(self) -> SubPipeline:
+    def construct_ingest_pipeline(self, initial_ingest_date=None) -> SubPipeline:
         """
         Constructs the full ingest pipeline.
 
@@ -368,7 +409,8 @@ class GenericPipeline(object):
             first_ingest_sensor = ExternalTaskSensorOperator(
                 task_id=f'{entity}_first_ingest_sensor',
                 external_dag_id=f'ohub_{entity}_initial_load',
-                external_task_id=f'{entity}_end_pipeline'
+                external_task_id=f'{entity}_end_pipeline',
+                execution_date_fn=lambda dt: initial_ingest_date
             )
 
             empty_fallback = EmptyFallbackOperator(

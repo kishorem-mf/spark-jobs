@@ -21,7 +21,45 @@ The Bitbucket Pipeline calls tasks in the `Makefile`. All tasks are called in th
 ## CD
 TODO: describe how deployment is done.
 
+## Adding python dependencies
+
+1. update `./environment.yml`
+2. run `conda env update -f environment.yml`
+3. see if everything works as expected
+4. switch to the [`docker-airflow`](https://bitbucket.org/UFS-nl/docker-airflow/) project
+   a. apply the changes of step 1 to `environment.yml`
+   b. commit and push
+   c. wait for the BitBucket pipeline to complete
+   d. switch back to the `airflow-dags` project
+5. update line 1 of `docker/airflow/Dockerfile` to reference the build number of step 4c as the new base image version
+6. complete whatever changes you need the new dependency for
+7. commit and push
+
 ### Local UI
+
+#### Running with Docker Compose
+
+This repository includes a Docker Composition that lets you run Airflow locally, with the dags installed. You can bring
+it up with this command:
+
+```bash
+docker-compose up --detach --build
+```
+
+First make sure you build the Docker container specified in the project `docker-airflow` this is used as base image in the `docker-compose.yml`
+
+The Airflow webserver is exposed on [localhost:8080](http://localhost:8080/admin).
+
+```bash
+# Pull the logs of the Airflow container
+docker-compose logs --follow webserver
+
+# Get a shell in the Airflow container
+docker-compose exec webserver bash
+```
+
+#### Running on your laptop
+
 Requirements: 
 
 - Ensure that you have logged in to the docker azure registry with `docker login`. You can find the credentials in the Azure Portal -> shared resource group -> container registry -> access keys

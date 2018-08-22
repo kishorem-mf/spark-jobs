@@ -1,6 +1,12 @@
 # Check https://confluence.atlassian.com/x/x4UWN for more examples.
 # Validator: https://bitbucket-pipelines.atlassian.io/validator
 
+clone:
+  depth: 1
+
+options:
+  docker: true
+
 image: python:3.6.6
 
 pipelines:
@@ -25,6 +31,19 @@ pipelines:
         script:
           - pip install .[dev]
           - make pytest
+    - step: &dockerlint
+        name: Dockerlint
+        script:
+        - make dockerlint
+    - step: &dockerbuild
+        name: Build image
+        script:
+        - docker login ulohubimages.azurecr.io -u ${AZ_CONTAINER_REGISTRY_USER_ID} -p ${AZ_CONTAINER_REGISTRY_PASSWORD}
+        - docker build --tag ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} --label "GIT_HASH=${BITBUCKET_COMMIT}" --file docker/airflow/Dockerfile .
+        - docker tag ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} ulohubimages.azurecr.io/airflow:latest
+        - docker login ulohubimages.azurecr.io -u ${AZ_CONTAINER_REGISTRY_USER_ID} -p ${AZ_CONTAINER_REGISTRY_PASSWORD}
+        - docker push ulohubimages.azurecr.io/airflow:latest
+        - docker push ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER}
 
   branches:
     master:
@@ -32,10 +51,16 @@ pipelines:
     - step: *pycodestyle
     - step: *pylint
     - step: *pytest
+    - step: *dockerlint
+    - step: *dockerbuild
     - step:
-        name: Deploy to azure file share
+        name: Deploy Airflow in kubernetes Azure
         image: microsoft/azure-cli
-        deployment: production
         script:
           - az login --service-principal -u ${AZ_USER_ID} -p ${AZ_PASSWORD} --tenant ${AZ_TENANT_ID}
-          - az storage file upload-batch --source . --destination airflow-dags --account-key ${AZ_AIRFLOW_STORAGE_KEY} --account-name ${AZ_AIRFLOW_STORAGE_ACCOUNT}
+          - az acs kubernetes install-cli
+          - az aks get-credentials -g bieno-da-s-60072-containers-rg -n ul-ohub2-aks-dev-we
+
+          - airflowimage="ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER}"
+          - kubectl set image deployment/airflow-webserver webserver=${airflowimage}
+          - kubectl set image deployment/airflow-scheduler scheduler=${airflowimage}

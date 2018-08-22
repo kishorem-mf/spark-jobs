@@ -3,7 +3,7 @@ from datetime import datetime
 from airflow import DAG
 
 from dags import config
-from dags.config import start_date_delta
+from dags.config import start_date_delta, start_date_first
 from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
 from ohub.operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline
@@ -54,6 +54,9 @@ with DAG(
             export_bucket=config.export_bucket,
         )
         .has_ingest_from_file_interface(raw_bucket=config.raw_bucket)
+        .has_ingest_from_web_event(
+            raw_bucket=config.raw_bucket, ingested_bucket=config.ingested_bucket
+        )
     )
 
     orderlines = (
@@ -87,12 +90,15 @@ with DAG(
             deduplicate_on_concat_id=False,
             alternative_schema="orders",
         )
+        .has_ingest_from_web_event(
+            raw_bucket=config.raw_bucket, ingested_bucket=config.ingested_bucket
+        )
     )
 
-    ingest_orders: SubPipeline = orders.construct_ingest_pipeline()
+    ingest_orders: SubPipeline = orders.construct_ingest_pipeline(start_date_first)
     export_orders: SubPipeline = orders.construct_export_pipeline()
 
-    ingest_orderlines: SubPipeline = orderlines.construct_ingest_pipeline()
+    ingest_orderlines: SubPipeline = orderlines.construct_ingest_pipeline(start_date_first)
     export_orderlines: SubPipeline = orderlines.construct_export_pipeline()
 
     merge_orders = DatabricksSubmitRunOperator(

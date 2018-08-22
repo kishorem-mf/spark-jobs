@@ -4,4 +4,8 @@ __pycache__/
 .cache/
 .pytest_cache/
 .coverage
-ohub.egg-info/
+
+# Setuptools
+build/
+dist/
+*.egg-info/
