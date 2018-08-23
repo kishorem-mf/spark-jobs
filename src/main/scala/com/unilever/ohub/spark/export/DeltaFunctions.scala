@@ -27,6 +27,7 @@ trait DeltaFunctions {
         previous,
         delta(key) === previous(key),
         JoinType.Inner)
+      // drop unchanged records
       .map {
         case (left, right) ⇒ (left, left != right)
       }
