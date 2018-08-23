@@ -6,7 +6,7 @@ import com.unilever.ohub.spark.domain.entity.ContactPerson
 object DispatcherContactPerson {
   def fromContactPerson(cp: ContactPerson): DispatcherContactPerson = {
     cp match {
-      case ContactPerson(concatId, countryCode, customerType, dateCreated, dateUpdated, isActive, isGoldenRecord, ohubId, name, sourceEntityId, sourceName, ohubCreated, ohubUpdated, operatorConcatId, operatorOhubId, oldIntegrationId, firstName, lastName, title, gender, jobTitle, language, birthDate, street, houseNumber, houseNumberExtension, city, zipCode, state, countryName, isPreferredContact, isKeyDecisionMaker, standardCommunicationChannel, emailAddress, phoneNumber, mobileNumber, faxNumber, hasGeneralOptOut, hasConfirmedRegistration, confirmedRegistrationDate, hasEmailOptIn, emailOptInDate, hasEmailDoubleOptIn, emailDoubleOptInDate, hasEmailOptOut, hasDirectMailOptIn, hasDirectMailOptOut, hasTeleMarketingOptIn, hasTeleMarketingOptOut, hasMobileOptIn, mobileOptInDate, hasMobileDoubleOptIn, mobileDoubleOptInDate, hasMobileOptOut, hasFaxOptIn, hasFaxOptOut, webUpdaterId, additionalFields, ingestionErrors) => DispatcherContactPerson(
+      case ContactPerson(concatId, countryCode, customerType, dateCreated, dateUpdated, isActive, isGoldenRecord, ohubId, name, sourceEntityId, sourceName, ohubCreated, ohubUpdated, operatorConcatId, operatorOhubId, oldIntegrationId, firstName, lastName, title, gender, jobTitle, language, birthDate, street, houseNumber, houseNumberExtension, city, zipCode, state, countryName, isPreferredContact, isKeyDecisionMaker, standardCommunicationChannel, emailAddress, phoneNumber, mobileNumber, faxNumber, hasGeneralOptOut, hasConfirmedRegistration, confirmedRegistrationDate, hasEmailOptIn, emailOptInDate, hasEmailDoubleOptIn, emailDoubleOptInDate, hasEmailOptOut, hasDirectMailOptIn, hasDirectMailOptOut, hasTeleMarketingOptIn, hasTeleMarketingOptOut, hasMobileOptIn, mobileOptInDate, hasMobileDoubleOptIn, mobileDoubleOptInDate, hasMobileOptOut, hasFaxOptIn, hasFaxOptOut, webUpdaterId, additionalFields, ingestionErrors) ⇒ DispatcherContactPerson(
         DATE_OF_BIRTH = birthDate.mapWithDefaultPatternOpt,
         CITY = city,
         CP_ORIG_INTEGRATION_ID = concatId,
@@ -22,6 +22,7 @@ object DispatcherContactPerson {
         OPT_IN = hasEmailOptIn,
         EMAIL_OPT_OUT = hasEmailOptOut,
         FAX_OPT_OUT = hasFaxOptOut,
+        FIRST_NAME = firstName,
         MOB_CONFIRMED_OPT_IN = hasMobileDoubleOptIn,
         MOB_OPT_IN = hasMobileOptIn,
         MOBILE_OPT_OUT = hasMobileOptOut,
@@ -82,6 +83,7 @@ case class DispatcherContactPerson(
     MOB_CONFIRMED_OPT_IN: Option[Boolean],
     MOB_OPT_IN: Option[Boolean],
     MOBILE_OPT_OUT: Option[Boolean],
+    FIRST_NAME: Option[String],
     FIXED_OPT_OUT: Option[Boolean],
     HOUSE_NUMBER: Option[String],
     HOUSE_NUMBER_ADD: Option[String],
