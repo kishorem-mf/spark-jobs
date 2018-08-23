@@ -2,21 +2,20 @@ package com.unilever.ohub.spark.ingest.ohub1
 
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity.Operator
-import com.unilever.ohub.spark.generic.StringFunctions.{checkEmailValidity, checkEnum, cleanPhone}
+import com.unilever.ohub.spark.generic.StringFunctions.{ checkEmailValidity, checkEnum, cleanPhone }
 import com.unilever.ohub.spark.ingest.CustomParsers._
-import com.unilever.ohub.spark.ingest.{DomainTransformer, OperatorEmptyParquetWriter}
+import com.unilever.ohub.spark.ingest.{ DomainTransformer, OperatorEmptyParquetWriter }
 import org.apache.spark.sql.Row
 
 object OperatorConverter extends EmakinaDomainGateKeeper[Operator] with OperatorEmptyParquetWriter {
 
-  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Operator = { transformer ⇒
-    row ⇒
-      import transformer._
-      implicit val source: Row = row
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Operator = { transformer ⇒ row ⇒
+    import transformer._
+    implicit val source: Row = row
 
-      val countryCode = mandatoryValue("COUNTRY_CODE", "countryCode")(row)
-      val concatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_OPERATOR_ID")
-      val ohubCreated = currentTimestamp()
+    val countryCode = mandatoryValue("COUNTRY_CODE", "countryCode")(row)
+    val concatId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_OPERATOR_ID")
+    val ohubCreated = currentTimestamp()
 
       // format: OFF
       // ↓ not so happy with this column (it should be the same as the fieldName), macro?

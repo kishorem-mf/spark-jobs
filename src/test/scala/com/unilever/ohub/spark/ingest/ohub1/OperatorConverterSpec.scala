@@ -112,6 +112,5 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
       }
     }
 
-
   }
 }

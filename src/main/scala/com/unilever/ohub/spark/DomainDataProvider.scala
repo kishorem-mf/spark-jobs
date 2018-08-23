@@ -76,7 +76,7 @@ class InMemDomainDataProvider(spark: SparkSession) extends DomainDataProvider wi
       .filter(_.nonEmpty)
       .toList
       .map(_.split(";"))
-      .map(attributes => ChannelMappingRef(attributes(0), attributes(1), attributes(2), attributes(3), attributes(4)))
+      .map(attributes ⇒ ChannelMappingRef(attributes(0), attributes(1), attributes(2), attributes(3), attributes(4)))
 
     val channelReferencesList = Source
       .fromInputStream(this.getClass.getClassLoader.getResourceAsStream("channel-references.csv"))
@@ -85,7 +85,7 @@ class InMemDomainDataProvider(spark: SparkSession) extends DomainDataProvider wi
       .filter(_.nonEmpty)
       .toList
       .map(_.split(";"))
-      .map(attributes => ChannelReferencesRef(attributes(0), attributes(1), attributes(2), attributes(3), attributes(4), attributes(5), attributes(6)))
+      .map(attributes ⇒ ChannelReferencesRef(attributes(0), attributes(1), attributes(2), attributes(3), attributes(4), attributes(5), attributes(6)))
 
     val channelMappingDF = spark
       .sparkContext
@@ -123,13 +123,13 @@ class PostgressDomainDataProvider(spark: SparkSession, dbUrl: String, dbName: St
 
   // see also: http://spark.apache.org/docs/latest/sql-programming-guide.html#jdbc-to-other-databases
   private def readJdbcTable(
-                             spark: SparkSession,
-                             dbUrl: String,
-                             dbName: String,
-                             dbTable: String,
-                             userName: String,
-                             userPassword: String
-                           ): DataFrame = {
+    spark: SparkSession,
+    dbUrl: String,
+    dbName: String,
+    dbTable: String,
+    userName: String,
+    userPassword: String
+  ): DataFrame = {
     val dbFullConnectionString = s"jdbc:postgresql://$dbUrl:5432/$dbName?ssl=true"
 
     val connectionProperties = new Properties
