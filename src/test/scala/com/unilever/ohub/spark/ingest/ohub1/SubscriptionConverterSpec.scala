@@ -18,7 +18,6 @@ class SubscriptionConverterSpec extends CsvDomainGateKeeperSpec[Subscription] {
 
         val actualSubscription = actualDataSet.head()
 
-
         val expectedSubscription = Subscription(
           concatId                =     "AU~EMAKINA~AU~DEFAULT_NEWSLETTER_OPT_IN",
           countryCode             =     "AU",

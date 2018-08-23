@@ -3,11 +3,11 @@ package com.unilever.ohub.spark.ingest.web_event_interface
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.Subscription
-import com.unilever.ohub.spark.ingest.{DomainTransformer, SubscriptionEmptyParquetWriter}
+import com.unilever.ohub.spark.ingest.{ DomainTransformer, SubscriptionEmptyParquetWriter }
 import org.apache.spark.sql.Row
 import com.unilever.ohub.spark.domain.DomainEntity
 import cats.syntax.option._
-import com.unilever.ohub.spark.ingest.CustomParsers.{parseBoolUnsafe, parseDateTimeStampUnsafe}
+import com.unilever.ohub.spark.ingest.CustomParsers.{ parseBoolUnsafe, parseDateTimeStampUnsafe }
 
 /**
  * Placeholder object for Subscription
@@ -20,7 +20,7 @@ object SubscriptionConverter extends WebEventDomainGateKeeper[Subscription] with
     val sourceEntityId: String = mandatoryValue("sourceId", "sourceEntityId")
     val concatId: String = DomainEntity.createConcatIdFromValues(countryCode, SourceName, sourceEntityId)
     val contactPersonRefId = mandatory("contactPersonRefId", "contactPersonConcatId")
-    val contactPersonConcatId: String = DomainEntity.createConcatIdFromValues(countryCode,sourceEntityId, contactPersonRefId)
+    val contactPersonConcatId: String = DomainEntity.createConcatIdFromValues(countryCode, sourceEntityId, contactPersonRefId)
     val ohubCreated = currentTimestamp()
 
       // format: OFF

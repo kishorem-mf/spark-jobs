@@ -5,7 +5,6 @@ import java.sql.Timestamp
 import com.unilever.ohub.spark.domain.entity.Subscription
 import com.unilever.ohub.spark.ingest.CsvDomainGateKeeperSpec
 
-
 class SubscriptionConverterSpec extends CsvDomainGateKeeperSpec[Subscription] {
   override val SUT = SubscriptionConverter
 
@@ -42,7 +41,7 @@ class SubscriptionConverterSpec extends CsvDomainGateKeeperSpec[Subscription] {
         ingestionErrors           =   Map()
         )
 
-      actualSubscription shouldBe expectedSubscription
+        actualSubscription shouldBe expectedSubscription
 
         // placeholder for unit test
       }

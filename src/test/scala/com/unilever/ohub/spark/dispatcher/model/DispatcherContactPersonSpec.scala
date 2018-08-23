@@ -31,6 +31,7 @@ class DispatcherContactPersonSpec extends SimpleSpec {
         OPT_IN = true,
         EMAIL_OPT_OUT = true,
         FAX_OPT_OUT = true,
+        FIRST_NAME = "John",
         MOB_CONFIRMED_OPT_IN = true,
         MOB_OPT_IN = true,
         MOBILE_OPT_OUT = true,

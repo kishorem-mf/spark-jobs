@@ -5,7 +5,7 @@ import java.sql.Timestamp
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.ingest.DomainGateKeeper.DomainConfig
-import com.unilever.ohub.spark.ingest.{CsvDomainGateKeeperSpec, TestDomainDataProvider}
+import com.unilever.ohub.spark.ingest.{ CsvDomainGateKeeperSpec, TestDomainDataProvider }
 import com.unilever.ohub.spark.storage.DefaultStorage
 import org.apache.spark.sql.Dataset
 

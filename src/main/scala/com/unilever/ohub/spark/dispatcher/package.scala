@@ -19,7 +19,7 @@ package object dispatcher {
 
   final val BOOL_AS_STRING = (bool: Boolean) ⇒ if (bool) YES else NO
 
-  final val OUTPUT_CSV_DELIMITER: String = "\u00B6"
+  final val OUTPUT_CSV_DELIMITER: String = ";"
 
   final val EXTRA_WRITE_OPTIONS = Map(
     "delimiter" -> OUTPUT_CSV_DELIMITER

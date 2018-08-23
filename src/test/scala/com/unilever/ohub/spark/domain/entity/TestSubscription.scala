@@ -31,6 +31,5 @@ trait TestSubscription {
     additionalFields = Map(),
     ingestionErrors = Map()
 
-
   )
 }

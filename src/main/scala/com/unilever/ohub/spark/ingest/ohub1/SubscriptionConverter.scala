@@ -7,20 +7,19 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.entity.Subscription
 import com.unilever.ohub.spark.ingest.CustomParsers._
 import com.unilever.ohub.spark.ingest.web_event_interface.SubscriptionConverter.SourceName
-import com.unilever.ohub.spark.ingest.{DomainTransformer, SubscriptionEmptyParquetWriter}
+import com.unilever.ohub.spark.ingest.{ DomainTransformer, SubscriptionEmptyParquetWriter }
 import org.apache.spark.sql.Row
 
 object SubscriptionConverter extends EmakinaDomainGateKeeper[Subscription] with SubscriptionEmptyParquetWriter {
 
-  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Subscription = { transformer ⇒
-    row ⇒
-      import transformer._
-      implicit val source: Row = row
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Subscription = { transformer ⇒ row ⇒
+    import transformer._
+    implicit val source: Row = row
 
-      val countryCode = mandatoryValue("COUNTRY_CODE", "countryCode")(row)
-      val concatIdRef: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_SUBSCRIPTION_ID")
-      val ohubCreated = currentTimestamp()
-      val contactPersonConcatRefId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_CONTACT_PERSON_ID")
+    val countryCode = mandatoryValue("COUNTRY_CODE", "countryCode")(row)
+    val concatIdRef: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_SUBSCRIPTION_ID")
+    val ohubCreated = currentTimestamp()
+    val contactPersonConcatRefId: String = createConcatId("COUNTRY_CODE", "SOURCE", "REF_CONTACT_PERSON_ID")
 
       Subscription(
         // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)

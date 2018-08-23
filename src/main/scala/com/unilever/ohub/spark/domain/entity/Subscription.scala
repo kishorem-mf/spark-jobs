@@ -26,13 +26,13 @@ case class Subscription(
     // specific fields
     contactPersonConcatId: String,
     contactPersonOhubId: Option[String],
-    communicationChannel:Option[String],
-    subscriptionType:String,
+    communicationChannel: Option[String],
+    subscriptionType: String,
     hasSubscription: Boolean,
     subscriptionDate: Timestamp,
     hasConfirmedSubscription: Option[Boolean],
     ConfirmedSubscriptionDate: Option[Timestamp],
-// other fields
+    // other fields
     additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]
 ) extends DomainEntity
