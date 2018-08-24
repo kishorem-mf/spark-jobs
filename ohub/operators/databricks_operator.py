@@ -296,6 +296,7 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
                     time.sleep(self._polling_period_seconds * 2 ** i)
                     i += 1
 
+
 class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
     ui_color = "#bbf3ff"
     ui_fgcolor = "#000"
