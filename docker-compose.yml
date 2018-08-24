@@ -1,0 +1,29 @@
+# NOTE: This docker-composition is intended for local development. Production configurations can be inspired by this, but shouldn't use it verbatim.
+version: '2.1'
+services:
+    postgres:
+        image: postgres:10
+        environment:
+            - POSTGRES_USER=airflow
+            - POSTGRES_PASSWORD=airflow
+            - POSTGRES_DB=airflow
+    webserver:
+        build:
+          context: .
+          dockerfile: ./docker/airflow/Dockerfile
+          args:
+            BASEIMAGE: ulohubimages.azurecr.io/airflow_base:local
+        image: ulohubimages.azurecr.io/airflow:local
+        restart: always
+        depends_on:
+            - postgres
+        environment:
+            - AIRFLOW_HOME=/airflow
+            - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+            - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+            - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
+            - AIRFLOW__WEBSERVER__SECRET_KEY=svDrZQ8HMiY8LywKYesQezVP
+        ports:
+            - "8080:8080"
+        command: webserver
