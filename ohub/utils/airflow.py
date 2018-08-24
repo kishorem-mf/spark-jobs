@@ -17,22 +17,6 @@ from ohub.operators.external_task_sensor_operator import ExternalTaskSensorOpera
 from ohub.operators.wasb_operator import FileFromWasbOperator
 
 
-class LazyConnection(object):
-    """Lazy connection class that only fetches connection when accessed.
-
-    :param str _conn_id: Airflow connection id.
-    """
-
-    def __init__(self, conn_id: str):
-        self._conn = None
-        self._conn_id = conn_id
-
-    def __getattr__(self, name):
-        if self._conn is None:
-            self._conn = BaseHook.get_connection(conn_id=self._conn_id)
-        return getattr(self._conn, name)
-
-
 class DagConfig(object):
     """This configuration holds the basic settings for each OHUB DAG
 

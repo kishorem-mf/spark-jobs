@@ -14,6 +14,11 @@ NOTE: Use Python 3.6 (3.7 has an issue with Airflow https://issues.apache.org/ji
 ### Running tests
 To run tests and  codestyle. Create and activate the python environment:
 
+```
+conda env update -f environment.yml
+source activate airflow-dags
+```
+
 ## CI
 With each push, a Bitbucket Pipeline is triggered. There's a bit of overhead from spinning up CI containers. It's faster to ensure all steps run successfully locally first, which you can do with:
 
