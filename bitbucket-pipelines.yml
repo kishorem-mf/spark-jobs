@@ -16,20 +16,21 @@ pipelines:
           username: ulohubimages
           password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
-          - pip install pylint pycodestyle pytest
+          - pip install .[dev]
+          - make black
+          - make pycodestyle
           - make lint
-          - bash ./lint.sh
-          - bash ./test.sh
+          - make pytest
           - make dockerlint
     - step: &docker
         name: Build image
         script:
-          - docker login ulohubimages.azurecr.io -u ${AZ_CONTAINER_REGISTRY_USER_ID} -p ${AZ_CONTAINER_REGISTRY_PASSWORD}
-          - docker build --tag ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} --label "GIT_HASH=${BITBUCKET_COMMIT}" --file docker/airflow/Dockerfile .
-          - docker tag ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} ulohubimages.azurecr.io/airflow:latest
-          - docker login ulohubimages.azurecr.io -u ${AZ_CONTAINER_REGISTRY_USER_ID} -p ${AZ_CONTAINER_REGISTRY_PASSWORD}
-          - docker push ulohubimages.azurecr.io/airflow:latest
-          - docker push ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER}
+        - docker login ulohubimages.azurecr.io -u ${AZ_CONTAINER_REGISTRY_USER_ID} -p ${AZ_CONTAINER_REGISTRY_PASSWORD}
+        - docker build --tag ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} --label "GIT_HASH=${BITBUCKET_COMMIT}" --file docker/airflow/Dockerfile .
+        - docker tag ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER} ulohubimages.azurecr.io/airflow:latest
+        - docker login ulohubimages.azurecr.io -u ${AZ_CONTAINER_REGISTRY_USER_ID} -p ${AZ_CONTAINER_REGISTRY_PASSWORD}
+        - docker push ulohubimages.azurecr.io/airflow:latest
+        - docker push ulohubimages.azurecr.io/airflow:${BITBUCKET_BUILD_NUMBER}
 
   branches:
     master:

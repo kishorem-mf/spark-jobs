@@ -48,7 +48,6 @@ def delete_dags(dag_ids, quiet=False, force=False):
                 dag_id, session=session, dag_bag=dag_bag, force=force, quiet=quiet
             )
 
-
         session.commit()
 
 
