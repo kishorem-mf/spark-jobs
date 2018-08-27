@@ -7,31 +7,24 @@ clone:
 options:
   docker: true
 
+image:
+  name: ulohubimages.azurecr.io/airflow_base:118
+  username: ulohubimages
+  password: $AZ_CONTAINER_REGISTRY_PASSWORD
+
 pipelines:
   default:
     - step: &pylint
         name: pylint
-        image:
-          name: ulohubimages.azurecr.io/airflow_base:118
-          username: ulohubimages
-          password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
           - pip install pylint
           - make lint
     - step: &syntax
         name: Check PEP8 codestyle and run tests
-        image:
-          name: ulohubimages.azurecr.io/airflow_base:118
-          username: ulohubimages
-          password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
           - bash ./lint.sh
     - step: &dags
         name: Verify DAG integrity
-        image:
-          name: ulohubimages.azurecr.io/airflow_base:118
-          username: ulohubimages
-          password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
           - bash ./test.sh
     - step: &dockerlint
