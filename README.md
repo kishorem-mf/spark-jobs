@@ -9,8 +9,18 @@ Put your DAGS into the `dags` folder, Use the word `dag` in the python files tha
 
 The `ohub/operators` package is reserved for implementation of operators not present in `apache-airflow`. The `ohub/utils` package contains general utilities. Other subpackages can be created as needed.
 
+NOTE: Use Python 3.6 (3.7 has an issue with Airflow https://issues.apache.org/jira/browse/AIRFLOW-2716)
+
 ### Running tests
-To run tests and  codestyle. Create and activate the python environment:
+To run tests and codestyle, create and activate the python environment:
+
+```
+conda env update -f environment.yml
+source activate airflow-dags
+```
+
+## CI
+With each push, a Bitbucket Pipeline is triggered. There's a bit of overhead from spinning up CI containers. It's faster to ensure all steps run successfully locally first, which you can do with:
 
 - Download and install [miniconda](https://conda.io/miniconda.html)
 - `cd` into this repo in a terminal, then run:
