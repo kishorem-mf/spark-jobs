@@ -16,7 +16,7 @@ pipelines:
           username: ulohubimages
           password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
-          - pip install pylint
+          - pip install pylint pycodestyle pytest
           - make lint
           - bash ./lint.sh
           - bash ./test.sh
