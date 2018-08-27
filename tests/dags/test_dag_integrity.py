@@ -4,7 +4,6 @@ Based on example from https://github.com/danielvdende/data-testing-with-airflow/
 """
 
 import glob
-import sys
 from os import path
 
 import pytest

@@ -1,4 +1,3 @@
-from datetime import timedelta
 from typing import List
 
 from airflow import configuration, AirflowException
@@ -16,22 +15,6 @@ from ohub.operators.databricks_operator import (
 from ohub.operators.wasb_operator import EmptyFallbackOperator
 from ohub.operators.external_task_sensor_operator import ExternalTaskSensorOperator
 from ohub.operators.wasb_operator import FileFromWasbOperator
-
-
-class LazyConnection(object):
-    """Lazy connection class that only fetches connection when accessed.
-
-    :param str _conn_id: Airflow connection id.
-    """
-
-    def __init__(self, conn_id: str):
-        self._conn = None
-        self._conn_id = conn_id
-
-    def __getattr__(self, name):
-        if self._conn is None:
-            self._conn = BaseHook.get_connection(conn_id=self._conn_id)
-        return getattr(self._conn, name)
 
 
 class DagConfig(object):
@@ -338,7 +321,7 @@ class GenericPipeline(object):
         )
 
     def __terminate_cluster(
-        self, entity: str, cluster_name: str, databricks_conn_id: str
+        self, entity: str, cluster_name: str, cluster_config: dict, databricks_conn_id: str
     ):
         """Returns an Airflow tasks that tells Databricks to terminate a cluster
 
@@ -349,6 +332,7 @@ class GenericPipeline(object):
         return DatabricksTerminateClusterOperator(
             task_id="{}_terminate_cluster".format(entity),
             cluster_name=cluster_name,
+            cluster_config=cluster_config,
             databricks_conn_id=databricks_conn_id,
             trigger_rule=TriggerRule.ALL_DONE,
         )
@@ -448,6 +432,7 @@ class GenericPipeline(object):
         cluster_down = self.__terminate_cluster(
             self._dag_config.entity,
             self._dag_config.cluster_name,
+            self._cluster_config,
             databricks_conn_id=self._databricks_conn_id,
         )
 
