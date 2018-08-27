@@ -23,6 +23,6 @@ with DAG("stop_test_cluster", default_args=dag_args, schedule_interval="0 18 * *
         task_id="stop_cluster",
         cluster_config=config,
         cluster_name=config['cluster_name'],
-        databricks_conn_id=config.databricks_conn_id,
+        databricks_conn_id=config.get('databricks_conn_id'),
     )
     stop_cluster
