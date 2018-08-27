@@ -21,7 +21,7 @@ trait TestSubscription {
     ohubUpdated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
     contactPersonConcatId   =     "DE~SUBSCRIPTION~138175",
     contactPersonOhubId = None,
-    communicationChannel    =     Some("Some channel"),
+    communicationChannel    =     Some("all"),
     subscriptionType        =     "Newsletter",
     hasSubscription         =     true,
     subscriptionDate        = Timestamp.valueOf("2015-06-20 13:49:00.0"),

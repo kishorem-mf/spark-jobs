@@ -31,7 +31,7 @@ class SubscriptionConverterSpec extends CsvDomainGateKeeperSpec[Subscription] {
         ohubUpdated             =     actualSubscription.ohubCreated,
         contactPersonConcatId   =     "DE~b3a6208c-d7f6-44e2-80e2-f26d461f64c0~138175",
         contactPersonOhubId = None,
-        communicationChannel    =     Some("Some channel"),
+        communicationChannel    =     Some("all"),
         subscriptionType        =     "Newsletter",
         hasSubscription         =     true,
         subscriptionDate        =    actualSubscription.subscriptionDate,
