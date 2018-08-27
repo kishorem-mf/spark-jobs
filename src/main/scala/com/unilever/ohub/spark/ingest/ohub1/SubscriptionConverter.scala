@@ -36,7 +36,7 @@ object SubscriptionConverter extends EmakinaDomainGateKeeper[Subscription] with 
       ohubCreated = ohubCreated,
       ohubUpdated = ohubCreated,
       contactPersonConcatId = contactPersonConcatRefId,
-      communicationChannel = Some("Some channel"),
+      communicationChannel = Some("all"),
       subscriptionType = mandatory("SUBSCRIPTION_TYPE", "subscriptionType"),
       hasSubscription = mandatory("SUBSCRIBED", "hasSubscription", parseBoolUnsafe),
       subscriptionDate = mandatory("SUBSCRIPTION_DATE", "subscriptionDate", parseDateTimeStampUnsafe),
