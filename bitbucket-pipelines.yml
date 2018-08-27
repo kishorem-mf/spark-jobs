@@ -11,6 +11,7 @@ pipelines:
   default:
     - step: &pylint
         name: pylint
+        image:
           name: ulohubimages.azurecr.io/airflow_base:118
           username: ulohubimages
           password: $AZ_CONTAINER_REGISTRY_PASSWORD
