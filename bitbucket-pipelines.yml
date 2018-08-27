@@ -9,31 +9,17 @@ options:
 
 pipelines:
   default:
-    - step: &pylint
-        name: pylint
-        image: python:3.6.6
+    - step: &test
+        name: test
+        image:
+          name: ulohubimages.azurecr.io/airflow_base:118
+          username: ulohubimages
+          password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
-          - pip install pylint
+          - pip install pylint pycodestyle pytest
           - make lint
-    - step: &syntax
-        name: Check PEP8 codestyle and run tests
-        image:
-          name: ulohubimages.azurecr.io/airflow_base:116
-          username: ulohubimages
-          password: $AZ_CONTAINER_REGISTRY_PASSWORD
-        script:
           - bash ./lint.sh
-    - step: &dags
-        name: Verify DAG integrity
-        image:
-          name: ulohubimages.azurecr.io/airflow_base:116
-          username: ulohubimages
-          password: $AZ_CONTAINER_REGISTRY_PASSWORD
-        script:
           - bash ./test.sh
-    - step: &dockerlint
-        name: Dockerlint
-        script:
           - make dockerlint
     - step: &docker
         name: Build image
@@ -47,10 +33,7 @@ pipelines:
 
   branches:
     master:
-    - step: *pylint
-    - step: *syntax
-    - step: *dags
-    - step: *dockerlint
+    - step: *test
     - step: *docker
     - step:
         name: Deploy Airflow in kubernetes Azure
