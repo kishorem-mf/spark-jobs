@@ -33,13 +33,14 @@ object SubscriptionConverter extends WebEventDomainGateKeeper[Subscription] with
         dateCreated             =     None,
         dateUpdated             =     None,
         isActive                =     true,
-        isGoldenRecord          =     false,
+        isGoldenRecord          =     true,
         sourceEntityId          =     sourceEntityId,
         sourceName              =     SourceName,
-        ohubId                  =     none,
+        ohubId                  =     none,// set in SubscriptionMerging
         ohubCreated             =     ohubCreated,
         ohubUpdated             =     ohubCreated,
         contactPersonConcatId   =     contactPersonConcatId,
+        contactPersonOhubId   =     None, // set in SubscriptionMerging
         communicationChannel    =     optional(  "communicationChannel",     "communicationChannel"),
         subscriptionType        =     mandatory(  "subscriptionType" ,        "subscriptionType"),
         hasSubscription         =     mandatory(  "subscribed",               "hasSubscription",                    parseBoolUnsafe),
