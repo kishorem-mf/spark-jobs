@@ -33,6 +33,7 @@ with DAG(
             wasb_conn_id=config.wasb_conn_id,
             wasb_raw_container=config.wasb_raw_container,
         )
+        .has_ingest_from_file_interface(raw_bucket=config.raw_bucket)
         .has_export_to_acm(
             acm_schema_name="OPERATORS",
             integrated_bucket=config.integrated_bucket,

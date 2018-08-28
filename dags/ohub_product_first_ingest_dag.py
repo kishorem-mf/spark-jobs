@@ -30,6 +30,7 @@ with DAG(
             ingested_bucket=config.ingested_bucket,
             intermediate_bucket=config.intermediate_bucket,
         )
+        .has_ingest_from_file_interface(raw_bucket=config.raw_bucket)
         .has_export_to_acm(
             acm_schema_name="PRODUCTS",
             integrated_bucket=config.integrated_bucket,
