@@ -10,7 +10,7 @@ import com.unilever.ohub.spark.ingest.web_event_interface.SubscriptionConverter.
 import com.unilever.ohub.spark.ingest.{DomainTransformer, SubscriptionEmptyParquetWriter}
 import org.apache.spark.sql.Row
 
-object SubscriptionConverter extends EmakinaDomainGateKeeper[Subscription] with SubscriptionEmptyParquetWriter {
+object SubscriptionConverter extends FileDomainGateKeeper[Subscription] with SubscriptionEmptyParquetWriter {
 
   override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Subscription = { transformer ⇒
     row ⇒
