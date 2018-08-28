@@ -33,7 +33,6 @@ with DAG(
             wasb_conn_id=config.wasb_conn_id,
             wasb_raw_container=config.wasb_raw_container,
         )
-        .has_ingest_from_ohub1(raw_bucket=config.raw_bucket)
     )
 
     ingest: SubPipeline = generic.construct_ingest_pipeline()
