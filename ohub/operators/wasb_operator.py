@@ -86,14 +86,7 @@ class WasbCopyOperator(BaseOperator):
         print("confirming source")
         assert hook.check_for_blob(self._container_name, self._copy_source)
 
-        print(
-            "copying "
-            + self._copy_source
-            + " in container "
-            + self._container_name
-            + " to "
-            + self._blob_name
-        )
+        print(f"copying {self._copy_source} in container {self._container_name} to {self._blob_name}")
         hook.copy_blob(self._container_name, self._blob_name, self._copy_source)
 
         print("confirming destination")
@@ -171,11 +164,13 @@ class EmptyFallbackOperator(BaseOperator):
 
     def execute(self, context):
         """Create an empty placeholder file if there was no file yet already."""
-
+        
+        print(f"ensuring availability of {self._file_path}")
         hook = WasbHook(wasb_conn_id=self._wasb_conn_id)
-        # if no file
         if not hook.check_for_blob(self._container_name, self._file_path):
-            # create empty one
+            print(f"not present yet, creating empty {self._file_path}")
             hook.load_string(
                 "", self._container_name, self._file_path.replace("*", "empty")
             )
+        else:
+            print(f"{self._file_path} already exists")
