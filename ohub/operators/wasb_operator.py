@@ -164,7 +164,7 @@ class EmptyFallbackOperator(BaseOperator):
 
     def execute(self, context):
         """Create an empty placeholder file if there was no file yet already."""
-        
+
         print(f"ensuring availability of {self._file_path}")
         hook = WasbHook(wasb_conn_id=self._wasb_conn_id)
         if not hook.check_for_blob(self._container_name, self._file_path):
