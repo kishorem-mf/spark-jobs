@@ -178,7 +178,7 @@ def large_cluster_config(cluster_name: str):
     else:
         return {
             "cluster_name": cluster_name,
-            "reuse_cluster": 0,
+            "reuse_cluster": '0',
             "spark_version": "4.0.x-scala2.11",
             "node_type_id": "Standard_D16s_v3",
             "autoscale": {"min_workers": "4", "max_workers": "12"},
@@ -194,7 +194,7 @@ def small_cluster_config(cluster_name: str):
     else:
         return {
             "cluster_name": cluster_name,
-            "reuse_cluster": 0,
+            "reuse_cluster": '0',
             "spark_version": "4.0.x-scala2.11",
             "node_type_id": "Standard_DS3_v2",
             "num_workers": "4",
@@ -207,7 +207,7 @@ def test_large_cluster_config():
     """Returns a Databricks test cluster configuration used for testing"""
     return {
         "cluster_name": "test_cluster",
-        "reuse_cluster": 1,
+        "reuse_cluster": '1',   # airflow 1.9 did not yet support templating bools or ints...
         "spark_version": "4.0.x-scala2.11",
         "node_type_id": "Standard_D16s_v3",
         "autoscale": {"min_workers": "4", "max_workers": "12"},
