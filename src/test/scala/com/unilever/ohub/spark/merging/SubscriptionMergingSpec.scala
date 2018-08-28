@@ -5,7 +5,7 @@ import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.entity._
 import org.apache.spark.sql.Dataset
 
-class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription  with TestContactPersons {
+class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with TestContactPersons {
 
   import spark.implicits._
 
