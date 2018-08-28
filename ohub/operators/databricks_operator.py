@@ -165,7 +165,7 @@ class DatabricksCreateClusterOperator(BaseDatabricksOperator):
     def existing_cluster_running(self):
         hook = self.get_hook()
         cluster_already_running = False
-        if self.cluster_config["reuse_cluster"]:
+        if (self.cluster_config["reuse_cluster"] == '1'):
             try:
                 self.cluster_id = find_cluster_id(self.cluster_config["cluster_name"], databricks_hook=hook)
                 run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
@@ -273,7 +273,7 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
         self.cluster_config = cluster_config
 
     def execute(self, context):
-        if not self.cluster_config["reuse_cluster"]:
+        if not (self.cluster_config["reuse_cluster"] == '1'):
             hook = self.get_hook()
             logging.info('Deleting Databricks cluster with name "%s"', self.cluster_name)
 
