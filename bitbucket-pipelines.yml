@@ -12,7 +12,7 @@ pipelines:
     - step: &test
         name: test
         image:
-          name: ulohubimages.azurecr.io/airflow_base:118
+          name: ulohubimages.azurecr.io/airflow_base:120
           username: ulohubimages
           password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
