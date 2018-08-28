@@ -11,28 +11,20 @@ The `ohub/operators` package is reserved for implementation of operators not pre
 
 NOTE: Use Python 3.6 (3.7 has an issue with Airflow https://issues.apache.org/jira/browse/AIRFLOW-2716)
 
-### Running tests
-To run tests and codestyle, create and activate the python environment:
-
-```
-conda env update -f environment.yml
-source activate airflow-dags
-```
-
 ## CI
-With each push, a Bitbucket Pipeline is triggered. There's a bit of overhead from spinning up CI containers. It's faster to ensure all steps run successfully locally first, which you can do with:
+With each push, a Bitbucket Pipeline is triggered.
+There's a bit of overhead from spinning up CI containers.
+It's faster to ensure all steps run successfully locally first, which you can do with:
 
-- Download and install [miniconda](https://conda.io/miniconda.html)
-- `cd` into this repo in a terminal, then run:
+```bash
+make local-ci
 ```
-# create `conda` environment
-conda env create -f environment.yml
-source activate airflow-dags
-# run tests
-python -m pytest --cov-config .coveragerc --cov=./dags tests
-# check codestyle
-pycodestyle --show-source .
-```
+
+The Bitbucket Pipeline calls tasks in the `Makefile`.
+All tasks are called in the `local-ci` task.
+
+## CD
+TODO: describe how deployment is done.
 
 ## Adding python dependencies
 
