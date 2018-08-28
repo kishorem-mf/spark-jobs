@@ -39,6 +39,7 @@ with DAG(
             wasb_conn_id=config.wasb_conn_id,
             wasb_raw_container=config.wasb_raw_container,
         )
+        .has_ingest_from_file_interface(raw_bucket=config.raw_bucket)
         .has_export_to_acm(
             acm_schema_name="ORDERS",
             extra_acm_parameters=[
@@ -55,7 +56,6 @@ with DAG(
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
         )
-        .has_ingest_from_file_interface(raw_bucket=config.raw_bucket)
     )
 
     orderlines = (
@@ -72,6 +72,11 @@ with DAG(
             wasb_conn_id=config.wasb_conn_id,
             wasb_raw_container=config.wasb_raw_container,
         )
+        .has_ingest_from_file_interface(
+            deduplicate_on_concat_id=False,
+            alternative_schema="orders",
+            raw_bucket=config.raw_bucket
+        )
         .has_export_to_acm(
             acm_schema_name="ORDERLINES",
             integrated_bucket=config.integrated_bucket,
@@ -83,11 +88,6 @@ with DAG(
             dispatcher_schema_name="ORDER_LINES",
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
-        )
-        .has_ingest_from_file_interface(
-            deduplicate_on_concat_id=False,
-            alternative_schema="orders",
-            raw_bucket=config.raw_bucket
         )
     )
 
