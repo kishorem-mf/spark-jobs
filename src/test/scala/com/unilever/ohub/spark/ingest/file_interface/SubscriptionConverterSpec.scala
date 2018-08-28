@@ -1,4 +1,4 @@
-package com.unilever.ohub.spark.ingest.ohub1
+package com.unilever.ohub.spark.ingest.file_interface
 
 import java.sql.Timestamp
 
