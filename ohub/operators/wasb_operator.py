@@ -168,9 +168,8 @@ class EmptyFallbackOperator(BaseOperator):
         print(f"ensuring availability of {self._file_path}")
         hook = WasbHook(wasb_conn_id=self._wasb_conn_id)
         if not hook.check_for_blob(self._container_name, self._file_path):
-            print(f"not present yet, creating empty {self._file_path}")
-            hook.load_string(
-                "", self._container_name, self._file_path.replace("*", "empty")
-            )
+            fpath = self._file_path.replace("*", "empty")
+            print(f"not present yet, creating empty {fpath}")
+            hook.load_string("", self._container_name, fpath)
         else:
             print(f"{self._file_path} already exists")

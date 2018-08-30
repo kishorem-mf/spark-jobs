@@ -24,3 +24,5 @@ dependencies:
   - slackclient=1.2.1
   - pip:
     - apache-airflow[crypto,postgres,azure]==1.9.0
+  
+  # environment variables: https://github.com/conda/conda/issues/6649
