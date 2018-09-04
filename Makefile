@@ -9,7 +9,7 @@ lint:
 
 .PHONY: pytest
 pytest: clean
-	pytest --cov=ohub --cov-config=.coveragerc --cov-branch tests/
+	python -m pytest --cov=ohub --cov-config=.coveragerc --cov-branch tests/
 
 .PHONY: clean
 clean:
