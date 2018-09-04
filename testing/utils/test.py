@@ -18,6 +18,7 @@ def test_dag(dag):
     done = set([])
 
     def run(key):
+        print(f'running task {key}...')
         task = dag.task_dict[key]
         for k in task._upstream_task_ids:
             run(k)
