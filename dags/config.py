@@ -171,49 +171,35 @@ databricks_conn_id = "databricks_default"
 use_test_cluster = True
 
 
-def large_cluster_config(cluster_name: str):
-    """Returns a Databricks cluster configuration used for heavy tasks, such as string matching"""
-    if use_test_cluster:
-        return test_large_cluster_config()
-    else:
-        return {
+def cluster_config(cluster_name: str = '', large=False, test=True):
+    """Returns a Databricks cluster configuration.
+    Large clusters are useful for name-matching.
+    Test mode reuses a cluster to save spin-up time, at the expense of separated logs.
+    TODO: use large cluster just for name-matching parts, not for all other operator/cpn steps.
+    """
+    return {
+        **{
+            "spark_version": "4.0.x-scala2.11",
+            "spark_env_vars": {"PYSPARK_PYTHON": "/databricks/python3/bin/python3"},
+        },
+        **({
+            "cluster_name": "test_cluster",
+            "reuse_cluster": '1',   # airflow 1.9 did not yet support templating bools or ints...
+        } if test else {
             "cluster_name": cluster_name,
             "reuse_cluster": '0',
-            "spark_version": "4.0.x-scala2.11",
+        }),
+        **({
             "node_type_id": "Standard_D16s_v3",
             "autoscale": {"min_workers": "4", "max_workers": "12"},
             "autotermination_minutes": "30",
-            "spark_env_vars": {"PYSPARK_PYTHON": "/databricks/python3/bin/python3"},
-        }
-
-
-def small_cluster_config(cluster_name: str):
-    """Returns a Databricks cluster configuration used for simple transformation tasks"""
-    if use_test_cluster:
-        return test_large_cluster_config()
-    else:
-        return {
-            "cluster_name": cluster_name,
-            "reuse_cluster": '0',
-            "spark_version": "4.0.x-scala2.11",
+        } if large else {
             "node_type_id": "Standard_DS3_v2",
             "num_workers": "4",
             "autotermination_minutes": "60",
-            "spark_env_vars": {"PYSPARK_PYTHON": "/databricks/python3/bin/python3"},
-        }
-
-
-def test_large_cluster_config():
-    """Returns a Databricks test cluster configuration used for testing"""
-    return {
-        "cluster_name": "test_cluster",
-        "reuse_cluster": '1',   # airflow 1.9 did not yet support templating bools or ints...
-        "spark_version": "4.0.x-scala2.11",
-        "node_type_id": "Standard_D16s_v3",
-        "autoscale": {"min_workers": "4", "max_workers": "12"},
-        "autotermination_minutes": "1440",  # Keep it running for 1 day
-        "spark_env_vars": {"PYSPARK_PYTHON": "/databricks/python3/bin/python3"},
+        }),
     }
+
 
 # interval = "@daily"
 # one_day_ago = "{{ ds }}"

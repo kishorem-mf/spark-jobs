@@ -31,7 +31,7 @@ with DAG(
         GenericPipeline(
             orders_dag_config,
             class_prefix=config.ohub_entities["orders"]["spark_class"],
-            cluster_config=config.small_cluster_config(orders_dag_config.cluster_name),
+            cluster_config=config.cluster_config(orders_dag_config.cluster_name),
             databricks_conn_id=config.databricks_conn_id,
             ingested_bucket=config.ingested_bucket,
             intermediate_bucket=config.intermediate_bucket,
@@ -62,7 +62,7 @@ with DAG(
         GenericPipeline(
             orderslines_dag_config,
             class_prefix=config.ohub_entities["orderlines"]["spark_class"],
-            cluster_config=config.small_cluster_config(
+            cluster_config=config.cluster_config(
                 orderslines_dag_config.cluster_name
             ),
             databricks_conn_id=config.databricks_conn_id,

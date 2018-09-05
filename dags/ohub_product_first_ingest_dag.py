@@ -3,7 +3,7 @@ from datetime import datetime
 from airflow import DAG
 
 from dags import config
-from dags.config import small_cluster_config, start_date_first
+from dags.config import cluster_config, start_date_first
 from ohub.operators.wasb_operator import WasbCopyOperator
 from ohub.utils.airflow import SubPipeline, DagConfig, GenericPipeline
 
@@ -22,7 +22,7 @@ with DAG(
         GenericPipeline(
             dag_config,
             class_prefix=clazz,
-            cluster_config=small_cluster_config(dag_config.cluster_name),
+            cluster_config=cluster_config(dag_config.cluster_name),
             databricks_conn_id=config.databricks_conn_id,
             spark_jobs_jar=config.spark_jobs_jar,
             wasb_raw_container=config.wasb_raw_container,

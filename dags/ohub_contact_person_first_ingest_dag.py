@@ -26,7 +26,7 @@ with DAG(
         GenericPipeline(
             dag_config,
             class_prefix="ContactPerson",
-            cluster_config=config.large_cluster_config(dag_config.cluster_name),
+            cluster_config=config.cluster_config(dag_config.cluster_name, large=True),
             databricks_conn_id=config.databricks_conn_id,
             ingested_bucket=config.ingested_bucket,
             intermediate_bucket=config.intermediate_bucket,
