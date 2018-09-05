@@ -70,28 +70,28 @@ class WasbCopyOperator(BaseOperator):
     def execute(self, context):
         """Copy a file in Azure Blob Storage."""
 
-        print("self._wasb_conn_id")
-        print(self._wasb_conn_id)
+        self.log.info("self._wasb_conn_id")
+        self.log.info(self._wasb_conn_id)
 
         hook = WasbHook(wasb_conn_id=self._wasb_conn_id)
-        # print("hook")
-        # print(json.dumps(vars(hook)))
+        # self.log.info("hook")
+        # self.log.info(json.dumps(vars(hook)))
 
-        print("self._container_name")
-        print(self._container_name)
+        self.log.info("self._container_name")
+        self.log.info(self._container_name)
 
-        print("self._copy_source")
-        print(self._copy_source)
+        self.log.info("self._copy_source")
+        self.log.info(self._copy_source)
 
-        print("confirming source")
+        self.log.info("confirming source")
         assert hook.check_for_blob(self._container_name, self._copy_source)
 
-        print(f"copying {self._copy_source} in container {self._container_name} to {self._blob_name}")
+        self.log.info(f"copying {self._copy_source} in container {self._container_name} to {self._blob_name}")
         hook.copy_blob(self._container_name, self._blob_name, self._copy_source)
 
-        print("confirming destination")
+        self.log.info("confirming destination")
         assert hook.check_for_blob(self._container_name, self._blob_name)
-        print("confirmed destination")
+        self.log.info("confirmed destination")
 
 
 class FileFromWasbOperator(BaseOperator):
@@ -165,11 +165,11 @@ class EmptyFallbackOperator(BaseOperator):
     def execute(self, context):
         """Create an empty placeholder file if there was no file yet already."""
 
-        print(f"ensuring availability of {self._file_path}")
+        self.log.info(f"ensuring availability of {self._file_path}")
         hook = WasbHook(wasb_conn_id=self._wasb_conn_id)
         if not hook.check_for_blob(self._container_name, self._file_path):
             fpath = self._file_path.replace("*", "empty")
-            print(f"not present yet, creating empty {fpath}")
+            self.log.info(f"not present yet, creating empty {fpath}")
             hook.load_string("", self._container_name, fpath)
         else:
-            print(f"{self._file_path} already exists")
+            self.log.info(f"{self._file_path} already exists")

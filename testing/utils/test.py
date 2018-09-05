@@ -15,6 +15,8 @@ def make_dag(dag_id):
 
 @pytest.fixture
 def test_dag(dag):
+    print(f'\n')
+    dag._schedule_interval = timedelta(days=1)  # override cuz @once gets skipped
     done = set([])
 
     def run(key):

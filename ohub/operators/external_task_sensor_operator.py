@@ -119,10 +119,6 @@ class ExternalTaskSensorOperator(BaseOperator):
                     )
                 )
             elif state == self.succeeded_state:
-                self.log.info(
-                    "Task {} in DAG {} is successful".format(
-                        self._external_task_id, self._external_dag_id
-                    )
-                )
+                self.log.info("Task {self._external_task_id} in DAG {self._external_dag_id} is successful")
                 return
             sleep(self._poke_interval)

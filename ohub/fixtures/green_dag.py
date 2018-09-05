@@ -1,5 +1,5 @@
 from datetime import datetime
-from airflow import DAG, AirflowException
+from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 
 with DAG(dag_id='hi', default_args={'start_date': datetime(2016, 1, 1)}) as dag:
