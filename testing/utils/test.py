@@ -1,6 +1,5 @@
 from airflow import DAG
 from datetime import datetime, timedelta
-from airflow.models import State
 import re
 import pytest
 from unittest import TestCase
@@ -20,11 +19,11 @@ def test_dag(dag):
     done = set([])
 
     def run(key):
-        print(f'running task {key}...')
         task = dag.task_dict[key]
         for k in task._upstream_task_ids:
             run(k)
         if key not in done:
+            print(f'running task {key}...')
             date = dag.default_args['start_date']
             task.run(date, date, ignore_ti_state=True)
             done.add(key)
