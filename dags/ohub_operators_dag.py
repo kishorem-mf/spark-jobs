@@ -21,11 +21,13 @@ dag_config = DagConfig(entity, is_delta=True)
 with DAG(
     dag_config.dag_id, default_args=dag_args, schedule_interval=dag_config.schedule
 ) as dag:
+    cluster_conf = config.cluster_config(dag_config.cluster_name, large=True)
+
     generic = (
         GenericPipeline(
             dag_config,
             class_prefix="Operator",
-            cluster_config=config.cluster_config(dag_config.cluster_name, large=True),
+            cluster_config=cluster_conf,
             databricks_conn_id=config.databricks_conn_id,
             ingested_bucket=config.ingested_bucket,
             intermediate_bucket=config.intermediate_bucket,
@@ -68,7 +70,7 @@ with DAG(
 
     join = DatabricksSubmitRunOperator(
         task_id="merge",
-        cluster_name=dag_config.cluster_name,
+        cluster_name=cluster_conf['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
         libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={
@@ -92,7 +94,7 @@ with DAG(
 
     combine_to_create_integrated = DatabricksSubmitRunOperator(
         task_id="combine_to_create_integrated",
-        cluster_name=dag_config.cluster_name,
+        cluster_name=cluster_conf['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
         libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={
@@ -116,7 +118,7 @@ with DAG(
 
     update_golden_records = DatabricksSubmitRunOperator(
         task_id="update_golden_records",
-        cluster_name=dag_config.cluster_name,
+        cluster_name=cluster_conf['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
         libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={
@@ -134,7 +136,7 @@ with DAG(
 
     update_operators_table = DatabricksSubmitRunOperator(
         task_id="update_table",
-        cluster_name=dag_config.cluster_name,
+        cluster_name=cluster_conf['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
         notebook_task={
             "notebook_path": "/Users/tim.vancann@unilever.com/update_integrated_tables"  # TODO: remove code from notebooks asap
