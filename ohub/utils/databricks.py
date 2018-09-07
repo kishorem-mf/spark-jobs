@@ -6,6 +6,8 @@ from typing import List
 from airflow import AirflowException
 from airflow.contrib.hooks.databricks_hook import DatabricksHook
 
+DATABRICKS_POLLING_PERIOD_SECONDS = 30
+DATABRICKS_RETRY_LIMIT = 3
 
 def find_cluster_id(
     cluster_name: str,

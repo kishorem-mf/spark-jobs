@@ -26,9 +26,6 @@ ohub_entities = {
 start_date_first = datetime(2018, 8, 1)
 start_date_delta = datetime(2018, 8, 2)
 
-DATABRICKS_POLLING_PERIOD_SECONDS = 30
-DATABRICKS_RETRY_LIMIT = 3
-
 country_codes = dict(
     AU=149299102,
     NZ=149386192,

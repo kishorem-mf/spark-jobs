@@ -58,7 +58,7 @@ with DAG(
         wasb_conn_id="azure_blob",
         container_name="prod",
         blob_name=config.wasb_integrated_container.format(date="{{ ds }}", fn=entity),
-        copy_source=config.wasb_intermediate_container.format(
+        copy_source=config.http_intermediate_container.format(
             storage_account="ulohub2storedevne",
             container="prod",
             date="{{ ds }}",

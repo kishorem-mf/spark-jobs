@@ -5,8 +5,7 @@ from airflow import AirflowException
 from airflow.contrib.hooks.databricks_hook import DatabricksHook
 from airflow.models import BaseOperator
 
-from dags.config import DATABRICKS_POLLING_PERIOD_SECONDS, DATABRICKS_RETRY_LIMIT
-from ohub.utils.databricks import find_cluster_id, get_cluster_status
+from ohub.utils.databricks import find_cluster_id, get_cluster_status, DATABRICKS_POLLING_PERIOD_SECONDS, DATABRICKS_RETRY_LIMIT
 
 LINE_BREAK = "-" * 80
 
