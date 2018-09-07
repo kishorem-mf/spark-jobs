@@ -16,7 +16,7 @@ pipelines:
           username: ulohubimages
           password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
-          - find / -name "*.db"
+          - airflow initdb
           - pip install .[dev]
           - make black
           - make pycodestyle
