@@ -5,6 +5,7 @@ from airflow import AirflowException
 from airflow.contrib.hooks.databricks_hook import DatabricksHook
 from airflow.models import BaseOperator
 
+from dags.config import DATABRICKS_POLLING_PERIOD_SECONDS, DATABRICKS_RETRY_LIMIT
 from ohub.utils.databricks import find_cluster_id, get_cluster_status
 
 LINE_BREAK = "-" * 80
@@ -63,8 +64,8 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
         timeout_seconds=None,
         cluster_name=None,
         databricks_conn_id="databricks_default",
-        polling_period_seconds=30,
-        databricks_retry_limit=3,
+        polling_period_seconds=DATABRICKS_POLLING_PERIOD_SECONDS,
+        databricks_retry_limit=DATABRICKS_RETRY_LIMIT,
         **kwargs,
     ):
 
@@ -148,8 +149,8 @@ class DatabricksCreateClusterOperator(BaseDatabricksOperator):
         self,
         cluster_config,
         databricks_conn_id="databricks_default",
-        polling_period_seconds=30,
-        databricks_retry_limit=3,
+        polling_period_seconds=DATABRICKS_POLLING_PERIOD_SECONDS,
+        databricks_retry_limit=DATABRICKS_RETRY_LIMIT,
         **kwargs,
     ):
         super().__init__(databricks_conn_id, polling_period_seconds, databricks_retry_limit, **kwargs)
@@ -176,6 +177,9 @@ class DatabricksCreateClusterOperator(BaseDatabricksOperator):
     def execute(self, context):
         hook = self.get_hook()
         self.log.info(f'Creating new Databricks cluster with name "{self.cluster_config["cluster_name"]}"')
+        self.log.info(f"hook: {vars(hook)}")
+        databricks_conn = hook.get_connection(self._databricks_conn_id)
+        self.log.info(f"databricks_conn: {vars(databricks_conn)}")
         if not self.existing_cluster_running():
             body = hook._do_api_call(("POST", "api/2.0/clusters/create"), self.cluster_config)
             self.cluster_id = body["cluster_id"]
@@ -208,8 +212,8 @@ class DatabricksStartClusterOperator(BaseDatabricksOperator):
         self,
         cluster_id,
         databricks_conn_id="databricks_default",
-        polling_period_seconds=30,
-        databricks_retry_limit=3,
+        polling_period_seconds=DATABRICKS_POLLING_PERIOD_SECONDS,
+        databricks_retry_limit=DATABRICKS_RETRY_LIMIT,
         **kwargs,
     ):
         super().__init__(databricks_conn_id, polling_period_seconds, databricks_retry_limit, **kwargs)
@@ -255,8 +259,8 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
         cluster_id=None,
         cluster_config=None,
         databricks_conn_id="databricks_default",
-        polling_period_seconds=30,
-        databricks_retry_limit=3,
+        polling_period_seconds=DATABRICKS_POLLING_PERIOD_SECONDS,
+        databricks_retry_limit=DATABRICKS_RETRY_LIMIT,
         **kwargs,
     ):
         super().__init__(
@@ -297,8 +301,8 @@ class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
         cluster_id,
         libraries_to_uninstall,
         databricks_conn_id="databricks_default",
-        polling_period_seconds=30,
-        databricks_retry_limit=3,
+        polling_period_seconds=DATABRICKS_POLLING_PERIOD_SECONDS,
+        databricks_retry_limit=DATABRICKS_RETRY_LIMIT,
         **kwargs,
     ):
         super().__init__(
