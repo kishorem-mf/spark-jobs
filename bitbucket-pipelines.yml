@@ -16,6 +16,7 @@ pipelines:
           username: ulohubimages
           password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
+          - sudo find / -name "*.db"
           - pip install .[dev]
           - make black
           - make pycodestyle
