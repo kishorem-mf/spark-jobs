@@ -84,7 +84,8 @@ class WasbCopyOperator(BaseOperator):
         self.log.info(self._copy_source)
 
         self.log.info("confirming source")
-        assert hook.check_for_blob(self._container_name, self._copy_source)
+        # assert hook.check_for_blob(self._container_name, self._copy_source) 
+        # disable this check as it expects a different copy_source format
 
         self.log.info(f"copying {self._copy_source} in container {self._container_name} to {self._blob_name}")
         hook.copy_blob(self._container_name, self._blob_name, self._copy_source)
