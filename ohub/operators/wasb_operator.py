@@ -69,29 +69,12 @@ class WasbCopyOperator(BaseOperator):
 
     def execute(self, context):
         """Copy a file in Azure Blob Storage."""
-
-        print("self._wasb_conn_id")
-        print(self._wasb_conn_id)
-
         hook = WasbHook(wasb_conn_id=self._wasb_conn_id)
-        # print("hook")
-        # print(json.dumps(vars(hook)))
-
-        print("self._container_name")
-        print(self._container_name)
-
-        print("self._copy_source")
-        print(self._copy_source)
-
-        print("confirming source")
-        assert hook.check_for_blob(self._container_name, self._copy_source)
-
-        print(f"copying {self._copy_source} in container {self._container_name} to {self._blob_name}")
-        hook.copy_blob(self._container_name, self._blob_name, self._copy_source)
-
-        print("confirming destination")
-        assert hook.check_for_blob(self._container_name, self._blob_name)
-        print("confirmed destination")
+        self.log.info(f"copying {self._copy_source} in container {self._container_name} to {self._blob_name}")
+        idx = self._copy_source.find('data')
+        for child in hook.connection.list_blobs(self._container_name, self._copy_source[idx:]):
+            dest = self._blob_name + child.name[child.name.rfind('/'):]
+            hook.copy_blob(self._container_name, dest, self._copy_source[:idx] + child.name)
 
 
 class FileFromWasbOperator(BaseOperator):
@@ -133,11 +116,8 @@ class FileFromWasbOperator(BaseOperator):
         if not os.path.exists(dir):
             os.makedirs(dir)
 
-        # TODO: Replace locals() by something sensible
         self.log.info(
-            "Downloading {self._file_path} from {self._blob_name} on wasb://{self._container_name}".format(
-                **locals()
-            )
+            f"Downloading {self._file_path} from {self._blob_name} on wasb://{self._container_name}"
         )
         hook.get_file(
             self._file_path, self._container_name, self._blob_name, **self._load_options
