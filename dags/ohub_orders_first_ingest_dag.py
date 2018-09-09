@@ -9,9 +9,12 @@ from ohub.operators.external_task_sensor_operator import ExternalTaskSensorOpera
 from ohub.operators.wasb_operator import WasbCopyOperator
 from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline
 
-dag_args = {**config.dag_default_args, **{
-        "start_date": datetime(2018, 7, 25),
-    }}
+dag_args = {
+    **config.dag_default_args,
+    **{
+        "start_date": start_date_first,
+    },
+}
 orders_entity = "orders"
 orders_dag_config = DagConfig(orders_entity, is_delta=False)
 orderlines_entity = "orderlines"
@@ -27,11 +30,13 @@ with DAG(
     default_args=dag_args,
     schedule_interval=orders_dag_config.schedule,
 ) as dag:
+    cluster_conf = config.cluster_config(orders_dag_config.cluster_name)
+
     orders = (
         GenericPipeline(
             orders_dag_config,
             class_prefix=config.ohub_entities["orders"]["spark_class"],
-            cluster_config=config.small_cluster_config(orders_dag_config.cluster_name),
+            cluster_config=cluster_conf,
             databricks_conn_id=config.databricks_conn_id,
             ingested_bucket=config.ingested_bucket,
             intermediate_bucket=config.intermediate_bucket,
@@ -62,9 +67,7 @@ with DAG(
         GenericPipeline(
             orderslines_dag_config,
             class_prefix=config.ohub_entities["orderlines"]["spark_class"],
-            cluster_config=config.small_cluster_config(
-                orderslines_dag_config.cluster_name
-            ),
+            cluster_config=cluster_conf,
             databricks_conn_id=config.databricks_conn_id,
             ingested_bucket=config.ingested_bucket,
             intermediate_bucket=config.intermediate_bucket,
@@ -99,7 +102,7 @@ with DAG(
 
     merge = DatabricksSubmitRunOperator(
         task_id=f"{orders_entity}_merge",
-        cluster_name=orders_dag_config.cluster_name,
+        cluster_name=cluster_conf['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
         libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={

@@ -22,11 +22,13 @@ dag_config = DagConfig(entity, is_delta=True)
 with DAG(
     dag_config.dag_id, default_args=dag_args, schedule_interval=dag_config.schedule
 ) as dag:
+    cluster_conf = config.cluster_config(dag_config.cluster_name, large=True)
+
     generic = (
         GenericPipeline(
             dag_config,
             class_prefix="ContactPerson",
-            cluster_config=config.large_cluster_config(dag_config.cluster_name),
+            cluster_config=cluster_conf,
             databricks_conn_id=config.databricks_conn_id,
             ingested_bucket=config.ingested_bucket,
             intermediate_bucket=config.intermediate_bucket,
@@ -69,7 +71,7 @@ with DAG(
 
     pre_processing = DatabricksSubmitRunOperator(
         task_id="pre_processed",
-        cluster_name=dag_config.cluster_name,
+        cluster_name=cluster_conf['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
         libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={
@@ -91,7 +93,7 @@ with DAG(
 
     exact_match_integrated_ingested = DatabricksSubmitRunOperator(
         task_id="exact_match_integrated_ingested",
-        cluster_name=dag_config.cluster_name,
+        cluster_name=cluster_conf['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
         libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={
@@ -121,7 +123,7 @@ with DAG(
 
     join_fuzzy_matched = DatabricksSubmitRunOperator(
         task_id="join_matched",
-        cluster_name=dag_config.cluster_name,
+        cluster_name=cluster_conf['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
         libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={
@@ -145,7 +147,7 @@ with DAG(
 
     join_fuzzy_and_exact_matched = DatabricksSubmitRunOperator(
         task_id="join_fuzzy_and_exact_matched",
-        cluster_name=dag_config.cluster_name,
+        cluster_name=cluster_conf['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
         libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={
@@ -179,7 +181,7 @@ with DAG(
 
     referencing = DatabricksSubmitRunOperator(
         task_id="referencing",
-        cluster_name=dag_config.cluster_name,
+        cluster_name=cluster_conf['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
         libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={
@@ -201,7 +203,7 @@ with DAG(
 
     update_golden_records = DatabricksSubmitRunOperator(
         task_id="update_golden_records",
-        cluster_name=dag_config.cluster_name,
+        cluster_name=cluster_conf['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
         libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={

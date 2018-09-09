@@ -16,6 +16,9 @@ pipelines:
           username: ulohubimages
           password: $AZ_CONTAINER_REGISTRY_PASSWORD
         script:
+          - mkdir -p /root/airflow/
+          - mkdir -p /opt/atlassian/pipelines/agent/build/root/airflow/
+          - airflow initdb
           - pip install .[dev]
           - make black
           - make pycodestyle

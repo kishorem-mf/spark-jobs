@@ -70,32 +70,20 @@ class WasbCopyOperator(BaseOperator):
     def execute(self, context):
         """Copy a file in Azure Blob Storage."""
 
-        print("self._wasb_conn_id")
-        print(self._wasb_conn_id)
+        self.log.info(f"self._wasb_conn_id: {self._wasb_conn_id}")
 
         hook = WasbHook(wasb_conn_id=self._wasb_conn_id)
-        # print("hook")
-        # print(json.dumps(vars(hook)))
+        # self.log.info("hook")
+        # self.log.info(json.dumps(vars(hook)))
 
-        print("self._container_name")
-        print(self._container_name)
-
-        print("self._copy_source")
-        print(self._copy_source)
-
-        print("confirming source")
+        self.log.info(f"self._container_name: {self._container_name}")
+        self.log.info(f"self._copy_source: {self._copy_source}")
+        self.log.info(f"confirming source")
         assert hook.check_for_blob(self._container_name, self._copy_source)
 
-        print(
-            "copying "
-            + self._copy_source
-            + " in container "
-            + self._container_name
-            + " to "
-            + self._blob_name
-        )
+        self.log.info(f"copying : {self._copy_source} in container : {self._container_name} to : {self._blob_name}")
         hook.copy_blob(self._container_name, self._blob_name, self._copy_source)
 
-        print("confirming destination")
+        self.log.info(f"confirming destination")
         assert hook.check_for_blob(self._container_name, self._blob_name)
-        print("confirmed destination")
+        self.log.info(f"confirmed destination")

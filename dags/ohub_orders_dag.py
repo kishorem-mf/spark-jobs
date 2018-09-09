@@ -25,11 +25,13 @@ with DAG(
     default_args=dag_args,
     schedule_interval=orders_dag_config.schedule,
 ) as dag:
+    cluster_conf = config.cluster_config(orders_dag_config.cluster_name)
+
     orders = (
         GenericPipeline(
             orders_dag_config,
             class_prefix=config.ohub_entities["orders"]["spark_class"],
-            cluster_config=config.small_cluster_config(orders_dag_config.cluster_name),
+            cluster_config=cluster_conf,
             databricks_conn_id=config.databricks_conn_id,
             ingested_bucket=config.ingested_bucket,
             intermediate_bucket=config.intermediate_bucket,
@@ -63,8 +65,8 @@ with DAG(
         GenericPipeline(
             orderslines_dag_config,
             class_prefix=config.ohub_entities["orderlines"]["spark_class"],
-            cluster_config=config.small_cluster_config(
-                orderslines_dag_config.cluster_name
+            cluster_config=config.cluster_config(
+                cluster_conf['cluster_name']
             ),
             databricks_conn_id=config.databricks_conn_id,
             ingested_bucket=config.ingested_bucket,
@@ -103,7 +105,7 @@ with DAG(
 
     merge_orders = DatabricksSubmitRunOperator(
         task_id="orders_merge",
-        cluster_name=orders_dag_config.cluster_name,
+        cluster_name=cluster_conf['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
         libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={
@@ -127,7 +129,7 @@ with DAG(
 
     merge_orderlines = DatabricksSubmitRunOperator(
         task_id="orderlines_merge",
-        cluster_name=orderslines_dag_config.cluster_name,
+        cluster_name=cluster_conf['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
         libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={

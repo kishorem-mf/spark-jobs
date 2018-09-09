@@ -282,7 +282,7 @@ class GenericPipeline(object):
         return DatabricksCreateClusterOperator(
             task_id="{}_create_cluster".format(entity),
             databricks_conn_id=databricks_conn_id,
-            cluster_config=cluster_config,
+            cluster_config=self._cluster_config,
         )
 
     def __terminate_cluster(
@@ -297,7 +297,7 @@ class GenericPipeline(object):
         return DatabricksTerminateClusterOperator(
             task_id="{}_terminate_cluster".format(entity),
             cluster_name=cluster_name,
-            cluster_config=cluster_config,
+            cluster_config=self._cluster_config,
             databricks_conn_id=databricks_conn_id,
             trigger_rule=TriggerRule.ALL_DONE,
         )
@@ -336,7 +336,7 @@ class GenericPipeline(object):
 
         gather = DatabricksSubmitRunOperator(
             task_id=f"{self._dag_config.entity}_gather",
-            cluster_name=self._dag_config.cluster_name,
+            cluster_name=self._cluster_config['cluster_name'],
             databricks_conn_id=self._databricks_conn_id,
             libraries=[{"jar": self._spark_jobs_jar}],
             spark_jar_task={
@@ -396,7 +396,7 @@ class GenericPipeline(object):
         """
         cluster_down = self.__terminate_cluster(
             self._dag_config.entity,
-            self._dag_config.cluster_name,
+            self._cluster_config['cluster_name'],
             self._cluster_config,
             databricks_conn_id=self._databricks_conn_id,
         )
@@ -471,7 +471,7 @@ class GenericPipeline(object):
         for country_code in ohub_country_codes:
             t = DatabricksSubmitRunOperator(
                 task_id="match_{}_{}".format(self._dag_config.entity, country_code),
-                cluster_name=self._dag_config.cluster_name,
+                cluster_name=self._cluster_config['cluster_name'],
                 databricks_conn_id=self._databricks_conn_id,
                 libraries=[{"egg": string_matching_egg}],
                 spark_python_task={
@@ -520,7 +520,7 @@ class GenericPipeline(object):
                         self._dag_config.entity, self._dag_config.entity, code
                     )
                 ),
-                cluster_name=self._dag_config.cluster_name,
+                cluster_name=self._cluster_config['cluster_name'],
                 databricks_conn_id=self._databricks_conn_id,
                 libraries=[{"egg": string_matching_egg}],
                 spark_python_task={
@@ -550,7 +550,7 @@ class GenericPipeline(object):
 
             match_unmatched = DatabricksSubmitRunOperator(
                 task_id="match_unmatched_{}_{}".format(self._dag_config.entity, code),
-                cluster_name=self._dag_config.cluster_name,
+                cluster_name=self._cluster_config['cluster_name'],
                 databricks_conn_id=self._databricks_conn_id,
                 libraries=[{"egg": string_matching_egg}],
                 spark_python_task={
@@ -581,7 +581,7 @@ class GenericPipeline(object):
 
         ingest_to_parquet = DatabricksSubmitRunOperator(
             task_id=f"{self._dag_config.entity}_{config.channel}_to_parquet",
-            cluster_name=self._dag_config.cluster_name,
+            cluster_name=self._cluster_config['cluster_name'],
             databricks_conn_id=self._databricks_conn_id,
             libraries=[{"jar": self._spark_jobs_jar}],
             spark_jar_task={
@@ -625,7 +625,7 @@ class GenericPipeline(object):
 
         convert_to_acm = DatabricksSubmitRunOperator(
             task_id=f"{self._dag_config.entity}_to_acm",
-            cluster_name=self._dag_config.cluster_name,
+            cluster_name=self._cluster_config['cluster_name'],
             databricks_conn_id=self._databricks_conn_id,
             libraries=[{"jar": self._spark_jobs_jar}],
             spark_jar_task={
@@ -658,18 +658,18 @@ class GenericPipeline(object):
             blob_name=wasb_export_container.format(date="{{ ds }}", fn=filename),
         )
 
-        ftp_to_acm = SFTPOperator(
-            task_id=f"{self._dag_config.entity}_ftp_to_acm",
-            local_filepath=tmp_file,
-            remote_filepath="/incoming/temp/ohub_2_test/{}".format(
-                tmp_file.split("/")[-1]
-            ),
-            ssh_conn_id="acm_sftp_ssh",
-            operation=SFTPOperation.PUT,
-        )
-        convert_to_acm >> acm_from_wasb >> ftp_to_acm
+        # ftp_to_acm = SFTPOperator(
+        #     task_id=f"{self._dag_config.entity}_ftp_to_acm",
+        #     local_filepath=tmp_file,
+        #     remote_filepath="/incoming/temp/ohub_2_test/{}".format(
+        #         tmp_file.split("/")[-1]
+        #     ),
+        #     ssh_conn_id="acm_sftp_ssh",
+        #     operation=SFTPOperation.PUT,
+        # )
+        convert_to_acm >> acm_from_wasb  # >> ftp_to_acm
 
-        return SubPipeline(convert_to_acm, ftp_to_acm)
+        return SubPipeline(convert_to_acm, acm_from_wasb)
 
     def __export_dispatch_pipeline(
         self,
@@ -689,7 +689,7 @@ class GenericPipeline(object):
         )
         convert_to_dispatch = DatabricksSubmitRunOperator(
             task_id=f"{self._dag_config.entity}_to_dispatcher_db",
-            cluster_name=self._dag_config.cluster_name,
+            cluster_name=self._cluster_config['cluster_name'],
             databricks_conn_id=self._databricks_conn_id,
             libraries=[{"jar": self._spark_jobs_jar}],
             spark_jar_task={

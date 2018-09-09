@@ -1,5 +1,3 @@
-import logging
-
 import os
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
 
@@ -79,8 +77,7 @@ class GAToGSOperator(BaseOperator):
         try:
             ga_country_code = self.country_codes[country_code]
         except Exception as e:
-            logging.error(
-                'No GA code available for country code: {}'.format(country_code), e)
+            self.log.error(f'No GA code available for country code: {country_code}: {e}')
             return
 
         self.fetch_for_date(context,
@@ -127,7 +124,7 @@ class GSToLocalOperator(BaseOperator):
                       bucket,
                       obj):
         """Download a file to local storage"""
-        self.log.info('Downloading {obj} to {fn}'.format(**locals()))
+        self.log.info(f'Downloading {obj} to {fn}')
         operator = GoogleCloudStorageDownloadOperator(
             task_id='download',
             bucket=bucket,
@@ -143,9 +140,8 @@ class GSToLocalOperator(BaseOperator):
 
     def execute(self, context):
         for country_code in self.country_codes.keys():
-            obj = '{}/PARTITION_DATE={}/COUNTRY_CODE={}/{}'.format(self.path_in_bucket, self.date, country_code,
-                                                                   FILE_NAME)
-            file_path = self.path + 'PARTITION_DATE={}/COUNTRY_CODE={}/{}'.format(self.date, country_code, FILE_NAME)
+            obj = f'{self.path_in_bucket}/PARTITION_DATE={self.date}/COUNTRY_CODE={country_code}/{FILE_NAME}'
+            file_path = f'{self.path}PARTITION_DATE={self.date}/COUNTRY_CODE={country_code}/{FILE_NAME}'
             self.download_file(context, self.gcp_conn_id, file_path, self.bucket, obj)
 
 
@@ -179,14 +175,13 @@ class LocalGAToWasbOperator(BaseOperator):
                     blob_name,
                     container_name,
                     file_path):
-        self.log.info('Uploading {file_path} to wasb://{container_name} as {blob_name}'.format(**locals()))
+        self.log.info(f'Uploading {file_path} to wasb://{container_name} as {blob_name}')
         hook.load_file(file_path, container_name, blob_name, **self.load_options)
 
     def execute(self, context):
         """Upload a file to Azure Blob Storage."""
         hook = WasbHook(wasb_conn_id=self.wasb_conn_id)
         for country_code in self.country_codes.keys():
-            blob_name = self.blob_path + 'PARTITION_DATE={}/COUNTRY_CODE={}/{}'.format(self.date, country_code,
-                                                                                       FILE_NAME)
-            file_path = self.path + 'PARTITION_DATE={}/COUNTRY_CODE={}/{}'.format(self.date, country_code, FILE_NAME)
+            blob_name = f'{self.blob_path}PARTITION_DATE={self.date}/COUNTRY_CODE={country_code}/{FILE_NAME}'
+            file_path = f'{self.path}PARTITION_DATE={self.date}/COUNTRY_CODE={country_code}/{FILE_NAME}'
             self.upload_file(hook, blob_name, self.container_name, file_path)

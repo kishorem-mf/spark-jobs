@@ -1,11 +1,11 @@
-import logging
 import time
+import logging
 
 from airflow import AirflowException
 from airflow.contrib.hooks.databricks_hook import DatabricksHook
 from airflow.models import BaseOperator
 
-from ohub.utils.databricks import find_cluster_id, get_cluster_status
+from ohub.utils.databricks import find_cluster_id, get_cluster_status, DATABRICKS_POLLING_PERIOD_SECONDS, DATABRICKS_RETRY_LIMIT
 
 LINE_BREAK = "-" * 80
 
@@ -63,8 +63,8 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
         timeout_seconds=None,
         cluster_name=None,
         databricks_conn_id="databricks_default",
-        polling_period_seconds=30,
-        databricks_retry_limit=3,
+        polling_period_seconds=DATABRICKS_POLLING_PERIOD_SECONDS,
+        databricks_retry_limit=DATABRICKS_RETRY_LIMIT,
         **kwargs,
     ):
 
@@ -106,42 +106,36 @@ class DatabricksSubmitRunOperator(BaseDatabricksOperator):
         hook = self.get_hook()
         if self._cluster_name is not None:
             cluster_id = find_cluster_id(self._cluster_name, databricks_hook=hook)
-            logging.info(
-                f'Using Databricks cluster_id {cluster_id} for cluster named "{self._cluster_name}"'
-            )
+            self.log.info(f'Using Databricks cluster_id {cluster_id} for cluster named "{self._cluster_name}"')
             self._json["existing_cluster_id"] = cluster_id
 
         self.run_id = hook.submit_run(self._json)
         self.run_page_url = hook.get_run_page_url(self.run_id)
-        logging.info(LINE_BREAK)
-        logging.info("Run submitted with run_id: {}".format(self.run_id))
+        self.log.info(LINE_BREAK)
+        self.log.info(f"Run submitted with run_id: {self.run_id}")
         self._log_run_page_url(self.run_page_url)
         context.update({"databricks_url": self.run_page_url})
-        logging.info(LINE_BREAK)
+        self.log.info(LINE_BREAK)
         while True:
             run_state = hook.get_run_state(self.run_id)
             if run_state.is_terminal:
                 if run_state.is_successful:
-                    logging.info("{} completed successfully.".format(self.task_id))
+                    self.log.info(f"{self.task_id} completed successfully.")
                     self._log_run_page_url(self.run_page_url)
                     return
                 else:
                     error_message = "{t} failed with terminal state: {s}".format(t=self.task_id, s=run_state)
                     raise AirflowException(error_message)
             else:
-                logging.info("{t} in run state: {s}".format(t=self.task_id, s=run_state))
+                self.log.info(f"{self.task_id} in run state: {run_state}")
                 self._log_run_page_url(self.run_page_url)
-                logging.info("Sleeping for {} seconds.".format(self._polling_period_seconds))
+                self.log.info(f"Sleeping for {self._polling_period_seconds} seconds.")
                 time.sleep(self._polling_period_seconds)
 
     def on_kill(self):
         hook = self.get_hook()
         hook.cancel_run(self.run_id)
-        logging.info(
-            "Task: {t} with run_id: {r} was requested to be cancelled.".format(
-                t=self.task_id, r=self.run_id
-            )
-        )
+        self.log.info(f"Task: {self.task_id} with run_id: {self.run_id} was requested to be cancelled.")
 
 
 class DatabricksCreateClusterOperator(BaseDatabricksOperator):
@@ -154,8 +148,8 @@ class DatabricksCreateClusterOperator(BaseDatabricksOperator):
         self,
         cluster_config,
         databricks_conn_id="databricks_default",
-        polling_period_seconds=30,
-        databricks_retry_limit=3,
+        polling_period_seconds=DATABRICKS_POLLING_PERIOD_SECONDS,
+        databricks_retry_limit=DATABRICKS_RETRY_LIMIT,
         **kwargs,
     ):
         super().__init__(databricks_conn_id, polling_period_seconds, databricks_retry_limit, **kwargs)
@@ -175,13 +169,16 @@ class DatabricksCreateClusterOperator(BaseDatabricksOperator):
                     hook._do_api_call(("POST", "api/2.0/clusters/delete"), {"cluster_id": self.cluster_id})
                     cluster_already_running = False
             except AirflowException:
-                logging.info("Cluster not found or deleting cluster {} failed").format(self.cluster_id)
+                self.log.info(f"Cluster not found or deleting cluster {self.cluster_id} failed")
                 cluster_already_running = False
         return cluster_already_running
 
     def execute(self, context):
         hook = self.get_hook()
-        logging.info('Creating new Databricks cluster with name "%s"', self.cluster_config["cluster_name"])
+        self.log.info(f'Creating new Databricks cluster with name "{self.cluster_config["cluster_name"]}"')
+        self.log.info(f"hook: {vars(hook)}")
+        databricks_conn = hook.get_connection(self._databricks_conn_id)
+        self.log.info(f"databricks_conn: {vars(databricks_conn)}")
         if not self.existing_cluster_running():
             body = hook._do_api_call(("POST", "api/2.0/clusters/create"), self.cluster_config)
             self.cluster_id = body["cluster_id"]
@@ -189,20 +186,20 @@ class DatabricksCreateClusterOperator(BaseDatabricksOperator):
         while True:
             run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
             if run_state == "RUNNING":
-                logging.info("{} completed successfully.".format(self.task_id))
+                self.log.info(f"{self.task_id} completed successfully.")
                 return
             elif run_state == "TERMINATED":
                 error_message = "Cluster creation failed with terminal state: {s}".format(s=run_state)
                 raise AirflowException(error_message)
             else:
-                logging.info("Cluster provisioning, currently in state: {s}".format(s=run_state))
-                logging.info("Sleeping for {} seconds.".format(self._polling_period_seconds))
+                self.log.info(f"Cluster provisioning, currently in state: {run_state}")
+                self.log.info(f"Sleeping for {self._polling_period_seconds} seconds.")
                 time.sleep(self._polling_period_seconds)
 
     def on_kill(self):
         hook = self.get_hook()
         hook._do_api_call(("POST", "api/2.0/clusters/delete"), {"cluster_id": self.cluster_id})
-        logging.info("Cluster creation with id: {c} was requested to be cancelled.".format(c=self.cluster_id))
+        self.log.info(f"Cluster creation with id: {self.cluster_id} was requested to be cancelled.")
 
 
 # See OHUB-1208
@@ -214,8 +211,8 @@ class DatabricksStartClusterOperator(BaseDatabricksOperator):
         self,
         cluster_id,
         databricks_conn_id="databricks_default",
-        polling_period_seconds=30,
-        databricks_retry_limit=3,
+        polling_period_seconds=DATABRICKS_POLLING_PERIOD_SECONDS,
+        databricks_retry_limit=DATABRICKS_RETRY_LIMIT,
         **kwargs,
     ):
         super().__init__(databricks_conn_id, polling_period_seconds, databricks_retry_limit, **kwargs)
@@ -223,30 +220,30 @@ class DatabricksStartClusterOperator(BaseDatabricksOperator):
 
     def execute(self, context):
         hook = self.get_hook()
-        logging.info('Starting Databricks cluster with id %s"', self.cluster_id)
+        self.log.info(f'Starting Databricks cluster with id "{self.cluster_id}"')
 
         run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
         if run_state == "RUNNING":
-            logging.info("Cluster already running.")
+            self.log.info(f"Cluster already running.")
             return
 
         hook._do_api_call(("POST", "api/2.0/clusters/start"), {"cluster_id": self.cluster_id})
         while True:
             run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
             if run_state == "RUNNING":
-                logging.info("{} completed successfully.".format(self.task_id))
+                self.log.info(f"{self.task_id} completed successfully.")
                 return
             elif run_state == "TERMINATED":
                 raise AirflowException("Cluster start failed with terminal state: {s}".format(s=run_state))
             else:
-                logging.info("Cluster starting, currently in state: {s}".format(s=run_state))
-                logging.info("Sleeping for {} seconds.".format(self._polling_period_seconds))
+                self.log.info(f"Cluster starting, currently in state: {run_state}")
+                self.log.info(f"Sleeping for {self._polling_period_seconds} seconds.")
                 time.sleep(self._polling_period_seconds)
 
     def on_kill(self):
         hook = self.get_hook()
         hook._do_api_call(("POST", "api/2.0/clusters/delete"), {"cluster_id": self.cluster_id})
-        logging.info("Cluster start with id: {c} was requested to be cancelled.".format(c=self.cluster_id))
+        self.log.info(f"Cluster start with id: {self.cluster_id} was requested to be cancelled.")
 
 
 class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
@@ -261,8 +258,8 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
         cluster_id=None,
         cluster_config=None,
         databricks_conn_id="databricks_default",
-        polling_period_seconds=30,
-        databricks_retry_limit=3,
+        polling_period_seconds=DATABRICKS_POLLING_PERIOD_SECONDS,
+        databricks_retry_limit=DATABRICKS_RETRY_LIMIT,
         **kwargs,
     ):
         super().__init__(
@@ -275,7 +272,7 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
     def execute(self, context):
         if not (self.cluster_config["reuse_cluster"] == '1'):
             hook = self.get_hook()
-            logging.info('Deleting Databricks cluster with name "%s"', self.cluster_name)
+            self.log.info(f'Deleting Databricks cluster with name "{self.cluster_name}"')
 
             if not self.cluster_id:
                 self.cluster_id = find_cluster_id(self.cluster_name, databricks_hook=hook)
@@ -285,14 +282,11 @@ class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
             while True:
                 run_state = get_cluster_status(self.cluster_id, self._databricks_conn_id)
                 if run_state == "TERMINATED":
-                    logging.info(
-                        "Termination of cluster %s with id %s completed successfully.",
-                        self.cluster_name,
-                        self.cluster_id)
+                    self.log.info(f"Terminating cluster {self.cluster_name} with id {self.cluster_id} succeeded")
                     return
                 else:
-                    logging.info("Cluster terminating, currently in state: %s", run_state)
-                    logging.info("Sleeping for %s seconds.", self._polling_period_seconds)
+                    self.log.info(f"Cluster terminating, currently in state: {run_state}")
+                    self.log.info(f"Sleeping for {self._polling_period_seconds} seconds.")
                     time.sleep(self._polling_period_seconds * 2 ** i)
                     i += 1
 
@@ -306,8 +300,8 @@ class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
         cluster_id,
         libraries_to_uninstall,
         databricks_conn_id="databricks_default",
-        polling_period_seconds=30,
-        databricks_retry_limit=3,
+        polling_period_seconds=DATABRICKS_POLLING_PERIOD_SECONDS,
+        databricks_retry_limit=DATABRICKS_RETRY_LIMIT,
         **kwargs,
     ):
         super().__init__(
@@ -323,7 +317,7 @@ class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
         if run_state != "RUNNING":
             raise AirflowException("Cluster must be running before removing libraries")
 
-        logging.info(f"Restarting Databricks cluster with id {self.cluster_id}")
+        self.log.info(f"Restarting Databricks cluster with id {self.cluster_id}")
 
         hook._do_api_call(
             ("POST", "api/2.0/libraries/uninstall"),
@@ -338,14 +332,14 @@ class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
             i = 1
             run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
             if run_state == "RUNNING":
-                logging.info(f"{self.task_id} completed successfully.")
+                self.log.info(f"{self.task_id} completed successfully.")
                 return
             elif run_state == "TERMINATED":
                 error_message = f"Cluster start failed with terminal state: {run_state}"
                 raise AirflowException(error_message)
             else:
-                logging.info(f"Cluster restarting, currently in state: {run_state}")
-                logging.info(f"Sleeping for {self._polling_period_seconds} seconds.")
+                self.log.info(f"Cluster restarting, currently in state: {run_state}")
+                self.log.info(f"Sleeping for {self._polling_period_seconds} seconds.")
                 time.sleep(self._polling_period_seconds * 2 ** i)
                 i += 1
 
@@ -354,6 +348,4 @@ class DatabricksUninstallLibrariesOperator(BaseDatabricksOperator):
         hook._do_api_call(
             ("POST", "api/2.0/clusters/delete"), {"cluster_id": self.cluster_id}
         )
-        logging.info(
-            f"Cluster start with id: {self.cluster_id} was requested to be cancelled."
-        )
+        self.log.info(f"Cluster start with id: {self.cluster_id} was requested to be cancelled.")
