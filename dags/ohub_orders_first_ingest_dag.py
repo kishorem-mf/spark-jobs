@@ -9,7 +9,12 @@ from ohub.operators.external_task_sensor_operator import ExternalTaskSensorOpera
 from ohub.operators.wasb_operator import WasbCopyOperator
 from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline
 
-dag_args = config.dag_default_args
+dag_args = {
+    **config.dag_default_args,
+    **{
+        "start_date": start_date_first,
+    },
+}
 orders_entity = "orders"
 orders_dag_config = DagConfig(orders_entity, is_delta=False)
 orderlines_entity = "orderlines"
@@ -138,10 +143,10 @@ with DAG(
         task_id="copy_to_integrated",
         wasb_conn_id="azure_blob",
         container_name="prod",
-        blob_name=config.http_integrated_container.format(
+        blob_name=config.wasb_integrated_container.format(
             date="{{ ds }}", fn=orderlines_entity
         ),
-        copy_source=config.wasb_intermediate_container.format(
+        copy_source=config.http_intermediate_container.format(
             storage_account="ulohub2storedevne",
             container="prod",
             date="{{ ds }}",

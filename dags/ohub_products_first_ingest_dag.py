@@ -7,7 +7,12 @@ from dags.config import cluster_config, start_date_first
 from ohub.operators.wasb_operator import WasbCopyOperator
 from ohub.utils.airflow import SubPipeline, DagConfig, GenericPipeline
 
-dag_args = config.dag_default_args
+dag_args = {
+    **config.dag_default_args,
+    **{
+        "start_date": start_date_first,
+    },
+}
 entity = "products"
 dag_config = DagConfig(entity, is_delta=False)
 clazz = "Product"
