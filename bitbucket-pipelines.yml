@@ -18,7 +18,7 @@ pipelines:
         script:
           - mkdir -p /root/airflow/
           - mkdir -p /opt/atlassian/pipelines/agent/build/root/airflow/
-          - airflow initdb
+          # - airflow initdb
           - pip install .[dev]
           - make black
           - make pycodestyle
