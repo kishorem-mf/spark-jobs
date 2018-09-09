@@ -17,6 +17,7 @@ There's a bit of overhead from spinning up CI containers.
 It's faster to ensure all steps run successfully locally first, which you can do with:
 
 ```bash
+source activate airflow-dags
 make local-ci
 ```
 
