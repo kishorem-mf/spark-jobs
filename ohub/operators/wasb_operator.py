@@ -69,30 +69,12 @@ class WasbCopyOperator(BaseOperator):
 
     def execute(self, context):
         """Copy a file in Azure Blob Storage."""
-
-        self.log.info("self._wasb_conn_id")
-        self.log.info(self._wasb_conn_id)
-
         hook = WasbHook(wasb_conn_id=self._wasb_conn_id)
-        # self.log.info("hook")
-        # self.log.info(json.dumps(vars(hook)))
-
-        self.log.info("self._container_name")
-        self.log.info(self._container_name)
-
-        self.log.info("self._copy_source")
-        self.log.info(self._copy_source)
-
-        self.log.info("confirming source")
-        # assert hook.check_for_blob(self._container_name, self._copy_source) 
-        # disable this check as it expects a different copy_source format
-
         self.log.info(f"copying {self._copy_source} in container {self._container_name} to {self._blob_name}")
-        hook.copy_blob(self._container_name, self._blob_name, self._copy_source)
-
-        self.log.info("confirming destination")
-        assert hook.check_for_blob(self._container_name, self._blob_name)
-        self.log.info("confirmed destination")
+        idx = self._copy_source.find('data')
+        for child in hook.connection.list_blobs(self._container_name, self._copy_source[idx:]):
+            dest = self._blob_name + child.name[child.name.rfind('/'):]
+            hook.copy_blob(self._container_name, dest, self._copy_source[:idx] + child.name)
 
 
 class FileFromWasbOperator(BaseOperator):
@@ -134,11 +116,8 @@ class FileFromWasbOperator(BaseOperator):
         if not os.path.exists(dir):
             os.makedirs(dir)
 
-        # TODO: Replace locals() by something sensible
         self.log.info(
-            "Downloading {self._file_path} from {self._blob_name} on wasb://{self._container_name}".format(
-                **locals()
-            )
+            f"Downloading {self._file_path} from {self._blob_name} on wasb://{self._container_name}"
         )
         hook.get_file(
             self._file_path, self._container_name, self._blob_name, **self._load_options
