@@ -658,18 +658,18 @@ class GenericPipeline(object):
             blob_name=wasb_export_container.format(date="{{ ds }}", fn=filename),
         )
 
-        ftp_to_acm = SFTPOperator(
-            task_id=f"{self._dag_config.entity}_ftp_to_acm",
-            local_filepath=tmp_file,
-            remote_filepath="/incoming/temp/ohub_2_test/{}".format(
-                tmp_file.split("/")[-1]
-            ),
-            ssh_conn_id="acm_sftp_ssh",
-            operation=SFTPOperation.PUT,
-        )
-        convert_to_acm >> acm_from_wasb >> ftp_to_acm
+        # ftp_to_acm = SFTPOperator(
+        #     task_id=f"{self._dag_config.entity}_ftp_to_acm",
+        #     local_filepath=tmp_file,
+        #     remote_filepath="/incoming/temp/ohub_2_test/{}".format(
+        #         tmp_file.split("/")[-1]
+        #     ),
+        #     ssh_conn_id="acm_sftp_ssh",
+        #     operation=SFTPOperation.PUT,
+        # )
+        convert_to_acm >> acm_from_wasb # >> ftp_to_acm
 
-        return SubPipeline(convert_to_acm, ftp_to_acm)
+        return SubPipeline(convert_to_acm, acm_from_wasb)
 
     def __export_dispatch_pipeline(
         self,
