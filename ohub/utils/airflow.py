@@ -241,7 +241,7 @@ class GenericPipeline(object):
         self._exports.append(
             self.__export_acm_pipeline(
                 integrated_bucket=integrated_bucket,
-                filename=f"acm/UFS_{acm_schema_name}_{{ ds_nodash }}000000.csv",
+                filename="acm/UFS_" + acm_schema_name + "_{{ ds_nodash }}000000.csv",
                 export_bucket=export_bucket,
                 container_name=container_name,
                 wasb_export_container=wasb_export_container,
