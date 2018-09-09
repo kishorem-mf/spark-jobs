@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-
+from airflow.configuration import conf
 from ohub.utils.airflow import slack_on_databricks_failure_callback
 
 email_addresses = ["ohub-team@ufs.com"]
@@ -23,8 +23,99 @@ ohub_entities = {
     "products": {},
 }
 
-start_date_first = datetime(2018, 8, 1)
-start_date_delta = datetime(2018, 8, 2)
+if conf.getboolean('core', 'unit_test_mode'):
+    start_date_first = datetime(2018, 7, 25)
+    start_date_delta = datetime(2018, 7, 26)
+    ohub_country_codes = ["DE"]
+else:
+    start_date_first = datetime(2018, 8, 1)
+    start_date_delta = datetime(2018, 8, 2)
+    ohub_country_codes = [
+        "AD",
+        "AE",
+        "AF",
+        "AR",
+        "AT",
+        "AU",
+        "AZ",
+        "BD",
+        "BE",
+        "BG",
+        "BH",
+        "BO",
+        "BR",
+        "CA",
+        "CH",
+        "CL",
+        "CN",
+        "CO",
+        "CR",
+        "CZ",
+        "DE",
+        "DK",
+        "DO",
+        "EC",
+        "EE",
+        "EG",
+        "ES",
+        "FI",
+        "FR",
+        "GB",
+        "GE",
+        "GR",
+        "GT",
+        "HK",
+        "HN",
+        "HU",
+        "ID",
+        "IE",
+        "IL",
+        "IN",
+        "IR",
+        "IT",
+        "JO",
+        "KR",
+        "KW",
+        "LB",
+        "LK",
+        "LT",
+        "LU",
+        "LV",
+        "MA",
+        "MM",
+        "MO",
+        "MV",
+        "MX",
+        "MY",
+        "NI",
+        "NL",
+        "NO",
+        "NU",
+        "NZ",
+        "OM",
+        "PA",
+        "PE",
+        "PH",
+        "PK",
+        "PL",
+        "PT",
+        "QA",
+        "RO",
+        "RU",
+        "SA",
+        "SE",
+        "SG",
+        "SK",
+        "SV",
+        "TH",
+        "TR",
+        "TW",
+        "US",
+        "VE",
+        "VN",
+        "ZA",
+    ]
+
 
 country_codes = dict(
     AU=149299102,
