@@ -138,7 +138,7 @@ with DAG(
         task_id="copy_to_integrated",
         wasb_conn_id="azure_blob",
         container_name="prod",
-        blob_name=config.wasb_integrated_container.format(
+        blob_name=config.http_integrated_container.format(
             date="{{ ds }}", fn=orderlines_entity
         ),
         copy_source=config.wasb_intermediate_container.format(
