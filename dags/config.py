@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
-import os
-
+from airflow.configuration import conf
 from ohub.utils.airflow import slack_on_databricks_failure_callback
 
 email_addresses = ["ohub-team@ufs.com"]
@@ -24,7 +23,7 @@ ohub_entities = {
     "products": {},
 }
 
-if (os.environ['TEST_MODE'] == '1'):
+if conf.getboolean('core', 'unit_test_mode'):
     start_date_first = datetime(2018, 7, 25)
     start_date_delta = datetime(2018, 7, 26)
     ohub_country_codes = ["DE"]
