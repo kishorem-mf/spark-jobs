@@ -667,7 +667,7 @@ class GenericPipeline(object):
         #     ssh_conn_id="acm_sftp_ssh",
         #     operation=SFTPOperation.PUT,
         # )
-        convert_to_acm >> acm_from_wasb # >> ftp_to_acm
+        convert_to_acm >> acm_from_wasb  # >> ftp_to_acm
 
         return SubPipeline(convert_to_acm, acm_from_wasb)
 
