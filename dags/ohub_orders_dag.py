@@ -66,7 +66,7 @@ with DAG(
             orderslines_dag_config,
             class_prefix=config.ohub_entities["orderlines"]["spark_class"],
             cluster_config=config.cluster_config(
-                orderslines_cluster_conf['cluster_name']
+                cluster_conf['cluster_name']
             ),
             databricks_conn_id=config.databricks_conn_id,
             ingested_bucket=config.ingested_bucket,
@@ -105,7 +105,7 @@ with DAG(
 
     merge_orders = DatabricksSubmitRunOperator(
         task_id="orders_merge",
-        cluster_name=orders_cluster_conf['cluster_name'],
+        cluster_name=cluster_conf['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
         libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={
@@ -129,7 +129,7 @@ with DAG(
 
     merge_orderlines = DatabricksSubmitRunOperator(
         task_id="orderlines_merge",
-        cluster_name=orderslines_cluster_conf['cluster_name'],
+        cluster_name=cluster_conf['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
         libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={
