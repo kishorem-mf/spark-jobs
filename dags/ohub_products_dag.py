@@ -3,7 +3,7 @@ from datetime import datetime
 from airflow import DAG
 
 from dags import config
-from dags.config import small_cluster_config, start_date_delta, start_date_first
+from dags.config import cluster_config, start_date_delta, start_date_first
 from ohub.operators.databricks_operator import DatabricksSubmitRunOperator
 from ohub.utils.airflow import DagConfig, GenericPipeline, SubPipeline
 
@@ -18,11 +18,13 @@ clazz = "Product"
 with DAG(
     dag_config.dag_id, default_args=dag_args, schedule_interval=dag_config.schedule
 ) as dag:
+    cluster_conf = cluster_config(dag_config.cluster_name)
+
     generic = (
         GenericPipeline(
             dag_config,
             class_prefix=clazz,
-            cluster_config=small_cluster_config(dag_config.cluster_name),
+            cluster_config=cluster_conf,
             databricks_conn_id=config.databricks_conn_id,
             spark_jobs_jar=config.spark_jobs_jar,
             wasb_raw_container=config.wasb_raw_container,
@@ -50,7 +52,7 @@ with DAG(
 
     merge = DatabricksSubmitRunOperator(
         task_id="merge",
-        cluster_name=dag_config.cluster_name,
+        cluster_name=cluster_conf['cluster_name'],
         databricks_conn_id=config.databricks_conn_id,
         libraries=[{"jar": config.spark_jobs_jar}],
         spark_jar_task={
