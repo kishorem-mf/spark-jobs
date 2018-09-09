@@ -1,13 +1,17 @@
 """Utility functions for handling Databricks clusters"""
-
+import os
 import logging
 from typing import List
 
 from airflow import AirflowException
 from airflow.contrib.hooks.databricks_hook import DatabricksHook
 
-DATABRICKS_POLLING_PERIOD_SECONDS = 30
-DATABRICKS_RETRY_LIMIT = 3
+if (os.environ['TEST_MODE'] == '1'):
+    DATABRICKS_POLLING_PERIOD_SECONDS = 10
+    DATABRICKS_RETRY_LIMIT = 1
+else:
+    DATABRICKS_POLLING_PERIOD_SECONDS = 20
+    DATABRICKS_RETRY_LIMIT = 3
 
 
 def find_cluster_id(
