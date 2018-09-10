@@ -202,50 +202,6 @@ class DatabricksCreateClusterOperator(BaseDatabricksOperator):
         self.log.info(f"Cluster creation with id: {self.cluster_id} was requested to be cancelled.")
 
 
-# See OHUB-1208
-class DatabricksStartClusterOperator(BaseDatabricksOperator):
-    ui_color = "#d5ebc2"
-    ui_fgcolor = "#000"
-
-    def __init__(
-        self,
-        cluster_id,
-        databricks_conn_id="databricks_default",
-        polling_period_seconds=DATABRICKS_POLLING_PERIOD_SECONDS,
-        databricks_retry_limit=DATABRICKS_RETRY_LIMIT,
-        **kwargs,
-    ):
-        super().__init__(databricks_conn_id, polling_period_seconds, databricks_retry_limit, **kwargs)
-        self.cluster_id = cluster_id
-
-    def execute(self, context):
-        hook = self.get_hook()
-        self.log.info(f'Starting Databricks cluster with id "{self.cluster_id}"')
-
-        run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
-        if run_state == "RUNNING":
-            self.log.info(f"Cluster already running.")
-            return
-
-        hook._do_api_call(("POST", "api/2.0/clusters/start"), {"cluster_id": self.cluster_id})
-        while True:
-            run_state = get_cluster_status(self.cluster_id, databricks_hook=hook)
-            if run_state == "RUNNING":
-                self.log.info(f"{self.task_id} completed successfully.")
-                return
-            elif run_state == "TERMINATED":
-                raise AirflowException("Cluster start failed with terminal state: {s}".format(s=run_state))
-            else:
-                self.log.info(f"Cluster starting, currently in state: {run_state}")
-                self.log.info(f"Sleeping for {self._polling_period_seconds} seconds.")
-                time.sleep(self._polling_period_seconds)
-
-    def on_kill(self):
-        hook = self.get_hook()
-        hook._do_api_call(("POST", "api/2.0/clusters/delete"), {"cluster_id": self.cluster_id})
-        self.log.info(f"Cluster start with id: {self.cluster_id} was requested to be cancelled.")
-
-
 class DatabricksTerminateClusterOperator(BaseDatabricksOperator):
     ui_color = "#ffc3bb"
     ui_fgcolor = "#000"

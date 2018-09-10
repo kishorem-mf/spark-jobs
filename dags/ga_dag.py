@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from dags import config
 from ohub.operators.databricks_operator import (
-    DatabricksStartClusterOperator,
+    DatabricksCreateClusterOperator,
     DatabricksTerminateClusterOperator,
     DatabricksSubmitRunOperator,
 )
@@ -53,7 +53,8 @@ with DAG("gcp_ga", default_args=dag_args, schedule_interval="0 4 * * *") as dag:
         blob_path="data/raw/gaData/",
     )
 
-    start_cluster = DatabricksStartClusterOperator(
+    start_cluster = DatabricksCreateClusterOperator(
+        cluster_config=config.cluster_config('reco'),
         task_id="start_cluster",
         cluster_id=cluster_id,
         databricks_conn_id=config.databricks_conn_id,
