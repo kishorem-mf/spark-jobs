@@ -2,7 +2,7 @@
 # from datetime import datetime
 # from ohub.operators.databricks_operator import BaseDatabricksOperator, DatabricksSubmitRunOperator, \
 #                                                DatabricksCreateClusterOperator, DatabricksStartClusterOperator, \
-#                                                DatabricksTerminateClusterOperator, DatabricksUninstallLibrariesOperator
+#                                                DatabricksTerminateClusterOperator
 # from testing.utils.test import make_dag
 # from ohub.utils.databricks import find_cluster_id, get_cluster_status
 
@@ -51,14 +51,6 @@
 #                     libraries=[],
 #                     run_name='DatabricksSubmitRunOperator',
 #                     existing_cluster_id=cluster_id,
-#                     databricks_conn_id=databricks_conn_id,
-#                     polling_period_seconds=polling_period_seconds,
-#                     databricks_retry_limit=databricks_retry_limit,
-#                 ).run(date, date, ignore_ti_state=True)
-
-#                 DatabricksUninstallLibrariesOperator(
-#                     task_id='DatabricksUninstallLibrariesOperator',
-#                     libraries_to_uninstall=[],
 #                     databricks_conn_id=databricks_conn_id,
 #                     polling_period_seconds=polling_period_seconds,
 #                     databricks_retry_limit=databricks_retry_limit,
