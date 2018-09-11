@@ -173,7 +173,6 @@ country_codes = dict(
 )
 
 databricks_conn_id = "databricks_default"
-use_test_cluster = True
 
 
 def cluster_config(cluster_name: str = '', large=False, test=True):
@@ -182,24 +181,24 @@ def cluster_config(cluster_name: str = '', large=False, test=True):
     Test mode reuses a cluster to save spin-up time, at the expense of separated logs.
     TODO: use large cluster just for name-matching parts, not for all other operator/cpn steps.
     """
+    type_id = "Standard_D16s_v3" if large else "Standard_DS3_v2"
     return {
         **{
             "spark_version": "4.0.x-scala2.11",
             "spark_env_vars": {"PYSPARK_PYTHON": "/databricks/python3/bin/python3"},
+            "node_type_id": type_id,
         },
         **({
-            "cluster_name": "test_cluster",
+            "cluster_name": "ohub " + type_id,
             "reuse_cluster": '1',   # airflow 1.9 did not yet support templating bools or ints...
         } if test else {
             "cluster_name": cluster_name,
             "reuse_cluster": '0',
         }),
         **({
-            "node_type_id": "Standard_D16s_v3",
             "autoscale": {"min_workers": "4", "max_workers": "12"},
             "autotermination_minutes": "30",
         } if large else {
-            "node_type_id": "Standard_DS3_v2",
             "num_workers": "4",
             "autotermination_minutes": "60",
         }),
