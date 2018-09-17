@@ -62,7 +62,7 @@ object ContactPersonAcmConverter extends SparkJob[DefaultWithDeltaConfig]
         case ContactPerson(concatId, countryCode, customerType, dateCreated, dateUpdated, isActive, isGoldenRecord, ohubId, name, sourceEntityId, sourceName, ohubCreated, ohubUpdated, operatorConcatId, operatorOhubId, oldIntegrationId, firstName, lastName, title, gender, jobTitle, language, birthDate, street, houseNumber, houseNumberExtension, city, zipCode, state, countryName, isPreferredContact, isKeyDecisionMaker, standardCommunicationChannel, emailAddress, phoneNumber, mobileNumber, faxNumber, hasGeneralOptOut, hasConfirmedRegistration, confirmedRegistrationDate, hasEmailOptIn, emailOptInDate, hasEmailDoubleOptIn, emailDoubleOptInDate, hasEmailOptOut, hasDirectMailOptIn, hasDirectMailOptOut, hasTeleMarketingOptIn, hasTeleMarketingOptOut, hasMobileOptIn, mobileOptInDate, hasMobileDoubleOptIn, mobileDoubleOptInDate, hasMobileOptOut, hasFaxOptIn, hasFaxOptOut, webUpdaterId, additionalFields, ingestionErrors) ⇒ AcmContactPerson(
           CP_ORIG_INTEGRATION_ID = concatId,
           CP_LNKD_INTEGRATION_ID = ohubId.get, // TODO resolve .get here...what if we don't have an ohubId?
-          OPR_ORIG_INTEGRATION_ID = oldIntegrationId.get, // TODO opr-ohub-id...add to domain (is set in the merging step)
+          OPR_ORIG_INTEGRATION_ID = operatorOhubId.get,
           GOLDEN_RECORD_FLAG = "Y",
           WEB_CONTACT_ID = Option.empty,
           EMAIL_OPTOUT = hasEmailOptOut.map(boolAsString),
