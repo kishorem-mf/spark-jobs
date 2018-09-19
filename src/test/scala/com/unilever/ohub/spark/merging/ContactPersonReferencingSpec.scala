@@ -46,10 +46,8 @@ class ContactPersonReferencingSpec extends SparkJobSpec with TestContactPersons 
     it("should fail references from contact person to operator cannot be resolved") {
       intercept[SparkException] {
         val contactPerson3 = defaultContactPersonWithSourceEntityId("c").copy(operatorConcatId = "does-not-exist")
-        val result = ContactPersonReferencing.transform(spark, Seq(contactPerson3).toDataset, operators)
-        val contactPerson = result.head()
 
-        println(contactPerson)
+        ContactPersonReferencing.transform(spark, Seq(contactPerson3).toDataset, operators)
       }
     }
   }
