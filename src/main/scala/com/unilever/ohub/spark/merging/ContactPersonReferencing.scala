@@ -32,11 +32,8 @@ object ContactPersonReferencing extends SparkJob[ContactPersonRefsConfig] {
       )
       .map {
         case (contactPerson, maybeOperator) ⇒
-          if (maybeOperator == null) { // TODO what to do when there is no valid reference to an operator?
-            contactPerson
-          } else {
-            contactPerson.copy(operatorOhubId = maybeOperator.ohubId)
-          }
+          // TODO what to do when there is no valid reference to an operator? probably want to do proper error handling here..for now let it crash
+          contactPerson.copy(operatorOhubId = maybeOperator.ohubId)
       }
   }
 
