@@ -45,7 +45,7 @@ class ContactPersonReferencingSpec extends SparkJobSpec with TestContactPersons 
       val contactPerson3 = contactPersonResult(2)
       contactPerson3.sourceEntityId shouldBe "c"
       contactPerson3.operatorConcatId shouldBe "does-not-exist"
-      contactPerson3.operatorOhubId shouldBe None
+      contactPerson3.operatorOhubId shouldBe Some("1234567890qwertyuiop")
     }
   }
 }

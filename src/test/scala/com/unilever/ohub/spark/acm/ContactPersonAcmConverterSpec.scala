@@ -84,7 +84,7 @@ class ContactPersonAcmConverterSpec extends SparkJobSpec with TestContactPersons
         AcmContactPerson(
           CP_ORIG_INTEGRATION_ID = "AU~WUFOO~AB123",
           CP_LNKD_INTEGRATION_ID = defaultContactPerson.ohubId.get,
-          OPR_ORIG_INTEGRATION_ID = "G1234",
+          OPR_ORIG_INTEGRATION_ID = "1234567890qwertyuiop",
           GOLDEN_RECORD_FLAG = "Y",
           WEB_CONTACT_ID = Option.empty,
           EMAIL_OPTOUT = Some("Y"),
