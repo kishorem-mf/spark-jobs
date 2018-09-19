@@ -30,7 +30,7 @@ trait TestContactPersons {
     ohubCreated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
     ohubUpdated = Timestamp.valueOf("2015-06-30 13:50:00.0"),
     operatorConcatId = "AU~WUFOO~E1-1234",
-    operatorOhubId = None,
+    operatorOhubId = Some("operator-ohub-id"),
     oldIntegrationId = Some("G1234"),
     firstName = Some("John"),
     lastName = Some("Williams"),
