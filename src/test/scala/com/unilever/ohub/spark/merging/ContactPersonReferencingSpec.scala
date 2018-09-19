@@ -47,7 +47,7 @@ class ContactPersonReferencingSpec extends SparkJobSpec with TestContactPersons 
       intercept[SparkException] {
         val contactPerson3 = defaultContactPersonWithSourceEntityId("c").copy(operatorConcatId = "does-not-exist")
 
-        ContactPersonReferencing.transform(spark, Seq(contactPerson3).toDataset, operators)
+        ContactPersonReferencing.transform(spark, Seq(contactPerson3).toDataset, operators).head()
       }
     }
   }
