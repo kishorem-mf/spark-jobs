@@ -1,9 +1,10 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.{ ContactPerson, TestContactPersons, TestOperators }
+import com.unilever.ohub.spark.domain.entity.{ContactPerson, TestContactPersons, TestOperators}
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.merging.ContactPersonReferencing.OHubIdAndRefId
+import org.apache.spark.SparkException
 import org.apache.spark.sql.Dataset
 
 class ContactPersonReferencingSpec extends SparkJobSpec with TestContactPersons with TestOperators {
@@ -14,8 +15,7 @@ class ContactPersonReferencingSpec extends SparkJobSpec with TestContactPersons 
 
   private val contactPersons: Dataset[ContactPerson] = Seq(
     defaultContactPersonWithSourceEntityId("a").copy(operatorConcatId = operator1.concatId),
-    defaultContactPersonWithSourceEntityId("b").copy(operatorConcatId = operator2.concatId),
-    defaultContactPersonWithSourceEntityId("c").copy(operatorConcatId = "does-not-exist")
+    defaultContactPersonWithSourceEntityId("b").copy(operatorConcatId = operator2.concatId)
   ).toDataset
 
   private val operators: Dataset[OHubIdAndRefId] = Seq(
@@ -30,7 +30,7 @@ class ContactPersonReferencingSpec extends SparkJobSpec with TestContactPersons 
       val result = ContactPersonReferencing.transform(spark, contactPersons, operators)
 
       val contactPersonResult = result.collect().toSeq
-      contactPersonResult.size shouldBe 3
+      contactPersonResult.size shouldBe 2
 
       val contactPerson1 = contactPersonResult.head
       contactPerson1.sourceEntityId shouldBe "a"
@@ -41,11 +41,14 @@ class ContactPersonReferencingSpec extends SparkJobSpec with TestContactPersons 
       contactPerson2.sourceEntityId shouldBe "b"
       contactPerson2.operatorConcatId shouldBe operator2.concatId
       contactPerson2.operatorOhubId shouldBe Some("ohub-id-2")
+    }
 
-      val contactPerson3 = contactPersonResult(2)
-      contactPerson3.sourceEntityId shouldBe "c"
-      contactPerson3.operatorConcatId shouldBe "does-not-exist"
-      contactPerson3.operatorOhubId shouldBe Some("1234567890qwertyuiop")
+    it("should fail references from contact person to operator cannot be resolved") {
+      intercept[SparkException] {
+        val contactPerson3 = defaultContactPersonWithSourceEntityId("c").copy(operatorConcatId = "does-not-exist")
+
+        ContactPersonReferencing.transform(spark, Seq(contactPerson3).toDataset, operators).head()
+      }
     }
   }
 }
