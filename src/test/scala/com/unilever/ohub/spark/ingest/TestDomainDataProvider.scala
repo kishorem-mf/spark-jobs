@@ -9,14 +9,16 @@ case class TestDomainDataProvider(
       "AU" -> CountryRecord("AU", "Australia", "AUD"),
       "DE" -> CountryRecord("DE", "Germany", "EUR"),
       "NL" -> CountryRecord("NL", "Netherlands", "EUR"),
-      "NZ" -> CountryRecord("NZ", "New Zealand", "???")
+      "NZ" -> CountryRecord("NZ", "New Zealand", "???"),
+      "TR" -> CountryRecord("TR", "Turkey", "Turkish lira")
     ),
     sourcePreferences: Map[String, Int] = Map(
       "WUFOO" -> 1,
       "EMAKINA" -> 2,
       "FUZZIT" -> 3,
       "SIFU" -> 4,
-      "WEB_EVENT" -> 5
+      "WEB_EVENT" -> 5,
+      "KANGAROO" -> 6
     ),
     countrySalesOrg: Map[String, CountrySalesOrg] = Map(
       "1030" -> CountrySalesOrg("NL", Some("1030")),

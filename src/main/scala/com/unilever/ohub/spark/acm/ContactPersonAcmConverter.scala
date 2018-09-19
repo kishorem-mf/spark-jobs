@@ -58,7 +58,8 @@ object ContactPersonAcmConverter extends SparkJob[DefaultWithDeltaConfig]
 
     contactPersons.filter(_.isGoldenRecord).map {
       // TODO check whether the filter is at the right location
-      cp ⇒ AcmContactPerson(
+      cp ⇒
+        AcmContactPerson(
           CP_ORIG_INTEGRATION_ID = cp.concatId,
           CP_LNKD_INTEGRATION_ID = cp.ohubId.get, // TODO resolve .get here...what if we don't have an ohubId?
           OPR_ORIG_INTEGRATION_ID = cp.operatorOhubId.get,
