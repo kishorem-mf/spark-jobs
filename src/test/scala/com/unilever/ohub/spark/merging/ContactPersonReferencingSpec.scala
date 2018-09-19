@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.{ContactPerson, TestContactPersons, TestOperators}
+import com.unilever.ohub.spark.domain.entity.{ ContactPerson, TestContactPersons, TestOperators }
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.merging.ContactPersonReferencing.OHubIdAndRefId
 import org.apache.spark.SparkException
