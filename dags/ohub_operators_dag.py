@@ -47,6 +47,8 @@ with DAG(
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
         )
+        .has_common_ingest(raw_bucket=config.raw_bucket)
+        # TODO remove these once the common ingest is working properly
         .has_ingest_from_file_interface(raw_bucket=config.raw_bucket)
         .has_ingest_from_web_event(
             raw_bucket=config.raw_bucket, ingested_bucket=config.ingested_bucket
