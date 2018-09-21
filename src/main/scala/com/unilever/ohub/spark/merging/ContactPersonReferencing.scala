@@ -30,10 +30,10 @@ object ContactPersonReferencing extends SparkJob[ContactPersonRefsConfig] {
         operatorIdAndRefs("refId") === contactPersons("operatorConcatId"),
         JoinType.LeftOuter
       )
-      .map {
+      .flatMap {
         case (contactPerson, maybeOperator) ⇒
           // TODO what to do when there is no valid reference to an operator? probably want to do proper error handling here..for now let it crash
-          contactPerson.copy(operatorOhubId = maybeOperator.ohubId)
+          Option(contactPerson).map(_.copy(operatorOhubId = maybeOperator.ohubId))
       }
   }
 
