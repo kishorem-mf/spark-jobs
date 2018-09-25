@@ -1,4 +1,5 @@
-ARG BASEIMAGE=ulohubimages.azurecr.io/airflow_base:116
+ARG BASEIMAGE=ohub2docker.azurecr.io/docker-airflow:latest
+# todo: set back to fixed version for vsts
 # Ignore "always hard-code base image version" because we parameterize this to make both laptop and bitbucket builds work.
 # hadolint ignore=DL3006
 FROM $BASEIMAGE
