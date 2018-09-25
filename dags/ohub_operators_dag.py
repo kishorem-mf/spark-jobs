@@ -136,17 +136,7 @@ with DAG(
         },
     )
 
-    update_operators_table = DatabricksSubmitRunOperator(
-        task_id="update_table",
-        cluster_name=cluster_conf['cluster_name'],
-        databricks_conn_id=config.databricks_conn_id,
-        notebook_task={
-            "notebook_path": "/Users/tim.vancann@unilever.com/update_integrated_tables"  # TODO: remove code from notebooks asap
-        },
-    )
-
     ingest.last_task >> fuzzy_matching.first_task
     fuzzy_matching.last_task >> join >> combine_to_create_integrated >> update_golden_records
-    update_golden_records >> update_operators_table
     update_golden_records >> export.first_task
     ingest.first_task >> export.last_task
