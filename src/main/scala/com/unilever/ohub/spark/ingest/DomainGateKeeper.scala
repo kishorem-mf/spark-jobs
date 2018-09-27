@@ -1,0 +1,151 @@
+package com.unilever.ohub.spark.ingest
+
+import com.unilever.ohub.spark.{ DomainDataProvider, InMemDomainDataProvider, SparkJob, SparkJobConfig }
+import com.unilever.ohub.spark.domain.DomainEntity
+import com.unilever.ohub.spark.storage.Storage
+import org.apache.spark.sql._
+import scopt.OptionParser
+import DomainGateKeeper._
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions._
+
+import scala.reflect.runtime.universe._
+
+object DomainGateKeeper {
+  case class ErrorMessage(error: String, row: String)
+
+  case class DomainConfig(
+      inputFile: String = "path-to-input-file",
+      outputFile: String = "path-to-output-file",
+      fieldSeparator: String = "field-separator",
+      deduplicateOnConcatId: Boolean = true,
+      strictIngestion: Boolean = true,
+      showErrorSummary: Boolean = true
+  ) extends SparkJobConfig
+
+  object implicits {
+    // if we upgrade our scala version, we can probably get rid of this encoder too (because Either has become a Product in scala 2.12)
+    implicit def eitherEncoder[T1, T2]: Encoder[Either[T1, T2]] =
+      Encoders.kryo[Either[T1, T2]]
+  }
+}
+
+abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] extends SparkJob[DomainConfig] {
+
+  import DomainGateKeeper.implicits._
+
+  protected def partitionByValue: Seq[String]
+
+  protected def toDomainEntity: DomainTransformer ⇒ RowType ⇒ DomainType
+
+  protected def postValidate: DomainDataProvider ⇒ DomainEntity ⇒ Unit = dataProvider ⇒ DomainEntity.postConditions(dataProvider)
+
+  private[spark] def defaultConfig: DomainConfig = DomainConfig()
+
+  private[spark] def configParser(): OptionParser[DomainConfig] =
+    new scopt.OptionParser[DomainConfig]("Domain gate keeper") {
+      head("converts a csv into domain entities and writes the result to parquet.", "1.0")
+      opt[String]("inputFile") required () action { (x, c) ⇒
+        c.copy(inputFile = x)
+      } text "inputFile is a string property"
+      opt[String]("outputFile") required () action { (x, c) ⇒
+        c.copy(outputFile = x)
+      } text "outputFile is a string property"
+      opt[String]("fieldSeparator") optional () action { (x, c) ⇒
+        c.copy(fieldSeparator = x)
+      } text "fieldSeparator is a string property"
+      opt[Boolean]("strictIngestion") optional () action { (x, c) ⇒
+        c.copy(strictIngestion = x)
+      } text "fieldSeparator is a string property"
+      opt[Boolean]("deduplicateOnConcatId") optional () action { (x, c) ⇒
+        c.copy(deduplicateOnConcatId = x)
+      } text "deduplicateOnConcatId is a boolean property"
+      opt[Boolean]("showErrorSummary") optional () action { (x, c) ⇒
+        c.copy(showErrorSummary = x)
+      } text "showErrorSummary is a boolean property"
+
+      version("1.0")
+      help("help") text "help text"
+    }
+  private[spark] def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit
+
+  protected def read(spark: SparkSession, storage: Storage, config: DomainConfig): Dataset[RowType]
+
+  private def transform(dataProvider: DomainDataProvider)(
+    transformFn: DomainTransformer ⇒ RowType ⇒ DomainType,
+    postValidateFn: DomainDataProvider ⇒ DomainEntity ⇒ Unit
+  ): RowType ⇒ Either[ErrorMessage, DomainType] =
+    row ⇒
+      try {
+        val entity = transformFn(DomainTransformer(dataProvider))(row)
+        postValidateFn(dataProvider)(entity)
+        Right(entity)
+      } catch {
+        case e: Throwable ⇒
+          Left(ErrorMessage(s"Error parsing row: '$e'", s"$row"))
+      }
+
+  override def run(spark: SparkSession, config: DomainConfig, storage: Storage): Unit = {
+    val dataProvider = new InMemDomainDataProvider(spark)
+    run(spark, config, storage, dataProvider)
+  }
+
+  def run(spark: SparkSession, config: DomainConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
+    import spark.implicits._
+
+    def handleErrors(config: DomainConfig, result: Dataset[Either[ErrorMessage, DomainType]]): Unit = {
+      val errors: Dataset[ErrorMessage] = result.filter(_.isLeft).map(_.left.get)
+      val numberOfErrors = errors.count()
+
+      if (numberOfErrors > 0) { // do something with the errors here
+        if (config.showErrorSummary) { // create a summary report
+          errors
+            .groupByKey(_.error)
+            .count()
+            .toDF("ERROR", "COUNT").show(numRows = 100, truncate = false)
+        } else { // show plain errors
+          errors
+            .toDF("ERROR", "ROW").show(numRows = 100, truncate = false)
+        }
+
+        if (config.strictIngestion) {
+          log.error(s"NO PARQUET FILE WRITTEN, NUMBER OF ERRORS FOUND IS '$numberOfErrors'")
+          System.exit(1) // let's fail fast now
+        } else {
+          log.error(s"WRITE PARQUET FILE ANYWAY, REGARDLESS OF NUMBER OF ERRORS FOUND '$numberOfErrors' (ERRONEOUS ENTITIES ARE NEGLECTED). ")
+        }
+      }
+    }
+
+    val result = read(spark, storage, config)
+      .map {
+        transform(dataProvider)(toDomainEntity, postValidate)
+      }
+
+    handleErrors(config, result)
+
+    // deduplicate incoming domain entities by selecting the 'newest' entity per unique concatId.
+    val w = Window.partitionBy($"concatId").orderBy($"dateUpdated".desc_nulls_last)
+    val domainEntitiesMapped: Dataset[DomainType] = result
+      .filter(_.isRight).map(_.right.get)
+
+    val domainEntities = if (config.deduplicateOnConcatId) {
+      domainEntitiesMapped
+        .withColumn("ohubCreated", min(domainEntitiesMapped("ohubCreated")).over(w))
+        .withColumn("rn", row_number.over(w))
+        .filter($"rn" === 1)
+        .drop($"rn")
+        .as[DomainType]
+    } else {
+      domainEntitiesMapped
+    }
+
+    if (domainEntities.head(1).isEmpty) {
+      // note: add a check on #rows in raw, only if #rows is 0 an empty parquet file should be written
+      log.warn(s"WRITING EMPTY PARQUET FILE FOR '${this.getClass.getName}'")
+      writeEmptyParquet(spark, storage, config.outputFile)
+    } else {
+      storage.writeToParquet(domainEntities, config.outputFile, partitionByValue)
+    }
+  }
+}

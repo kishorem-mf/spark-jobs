@@ -29,3 +29,12 @@ __pycache__/
 build/
 dist/
 *.egg-info/
+.idea/
+target/
+project/target
+project/project
+derby.log
+metastore_db
+src/main/scala/ScratchFile.scala
+*.parquet/
+test_output/

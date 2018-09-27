@@ -1,0 +1,200 @@
+{
+	"variables": [],
+	"info": {
+		"name": "Databricks [Azure]",
+		"_postman_id": "85a52161-3162-e890-424e-4405a620cc88",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "create cluster",
+			"request": {
+				"url": "https://westeurope.azuredatabricks.net/api/2.0/clusters/create",
+				"method": "POST",
+				"header": [
+					{
+
+						"key": "Authorization",
+						"value": "Bearer YOUR_TOKEN",
+						"description": ""
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cluster_name\": \"rest_ohub\",\n    \"spark_version\": \"3.5.x-scala2.11\",\n    \"node_type_id\": \"Standard_DS5_v2\",\n    \"num_workers\": 16,\n    \"spark_conf\": [\n        {\n        \t\"key\": \"fs.azure.account.key.ulohub2storedevne.blob.core.windows.net\",\n        \t\"value\": \"9UmLXLn9TCFMIYHzAVNiqSQqQ9kn7MAotf+b4TRrnICnjd7C8pSiSCm4W2hM3Gxy+LhM4GGrIExKlFR8rnBjBA==\"\n        \t\n        },\n        {\n        \t\"key\": \"fs.azure.account.key.ulohub2sadevne.blob.core.windows.net\",\n        \t\"value\": \"QaVbAdmW1F7ehK2SkcR8ySW0lCPL7Hn2k+R6K8AMqpFr0PfqmchAxr615W3HzFNfWqxwR1V8qTr95y6IVXXzTg==\"\n        }\n    ],\n     \"spark_env_vars\": {\n        \"PYSPARK_PYTHON\": \"/databricks/python3/bin/python3\"\n    },\n    \"autotermination_minutes\": 15\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "list clusters",
+			"request": {
+				"url": "",
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "spark submit scala",
+			"request": {
+				"url": "",
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "spark submit scala (operators)",
+			"request": {
+				"url": "https://westeurope.azuredatabricks.net/api/2.0/jobs/runs/submit",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer YOUR_TOKEN",
+						"description": ""
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"run_name\": \"operators_to_parquet\",\n    \"existing_cluster_id\": \"0314-131901-shalt605\",\n    \"libraries\": [\n    \t{ \n    \t\t\"jar\": \"dbfs:/libraries/spark-jobs-assembly-0.1.jar\" \n    \t}\n    \t],\n    \"spark_jar_task\": {\n    \t\"main_class_name\": \"com.unilever.ohub.spark.tsv2parquet.OperatorConverter\",\n    \t\"parameters\": [\n    \t\t\"wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/raw/OPERATORS/**/*.csv\",\n    \t\t\"wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/processed/operators.parquet/\"\n    \t\t]\n    }\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "spark submit scala (operators merged)",
+			"request": {
+				"url": "https://westeurope.azuredatabricks.net/api/2.0/jobs/runs/submit",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer YOUR_TOKEN",
+						"description": ""
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"run_name\": \"operators_to_parquet\",\n    \"existing_cluster_id\": \"0314-131901-shalt605\",\n    \"libraries\": [\n    \t{ \n    \t\t\"jar\": \"dbfs:/libraries/spark-jobs-assembly-0.1.jar\" \n    \t}\n    \t],\n    \"spark_jar_task\": {\n    \t\"main_class_name\": \"com.unilever.ohub.spark.merging.OperatorMerging\",\n    \t\"parameters\": [\n    \t\t\"wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/raw/OPERATORS/**/*.csv\",\n    \t\t\"wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/processed/operators.parquet/\"\n    \t\t]\n    }\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "spark submit python",
+			"request": {
+				"url": "https://westeurope.azuredatabricks.net/api/2.0/jobs/runs/submit",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer YOUR_TOKEN",
+						"description": ""
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"run_name\": \"operators_matching\",\n    \"existing_cluster_id\": \"0314-150811-dully704\",\n    \"libraries\": [\n    \t{ \n    \t\t\"egg\": \"dbfs:/libraries/string_matching.egg\" \n    \t}\n    \t],\n    \"spark_python_task\": {\n    \t\"python_file\": \"dbfs:/libraries/match_operators.py\",\n    \t\"parameters\": [\n    \t\t\"-f\", \"wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/processed/operators.parquet/\",\n    \t\t\"-c\", \"DK\", \n    \t\t\"-p\", \"wasbs://prod@ulohub2storedevne.blob.core.windows.net/data/processed/operators-matched.parquet/\"\n    \t\t]\n    }\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "get run",
+			"request": {
+				"url": {
+					"raw": "https://westeurope.azuredatabricks.net/api/2.0/jobs/runs/get?run_id=11",
+					"protocol": "https",
+					"host": [
+						"westeurope",
+						"azuredatabricks",
+						"net"
+					],
+					"path": [
+						"api",
+						"2.0",
+						"jobs",
+						"runs",
+						"get"
+					],
+					"query": [
+						{
+							"key": "run_id",
+							"value": "11",
+							"equals": true,
+							"description": ""
+						}
+					],
+					"variable": []
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer YOUR_TOKEN",
+						"description": ""
+					}
+				],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "install libraries",
+			"request": {
+				"url": "https://westeurope.azuredatabricks.net/api/2.0/libraries/install",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer YOUR_TOKEN",
+						"description": ""
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"cluster_id\": \"10201-my-cluster\",\n  \"libraries\": [\n    {\n      \"jar\": \"dbfs:/libraries/universe-prioritisation-assembly-1.0.0-SNAPSHOT.jar\"\n    }\n  ]\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}
