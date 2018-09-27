@@ -35,6 +35,8 @@ with DAG(
             wasb_conn_id=config.wasb_conn_id,
             wasb_raw_container=config.wasb_raw_container,
         )
+        .has_common_ingest(raw_bucket=config.raw_bucket)
+        # TODO remove these once the common ingest is working properly
         .has_ingest_from_web_event(
             raw_bucket=config.raw_bucket, ingested_bucket=config.ingested_bucket
         )
