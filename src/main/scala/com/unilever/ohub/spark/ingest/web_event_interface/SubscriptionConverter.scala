@@ -46,7 +46,7 @@ object SubscriptionConverter extends WebEventDomainGateKeeper[Subscription] with
         hasSubscription         =     mandatory(  "subscribed",               "hasSubscription",                    parseBoolUnsafe),
         subscriptionDate        =     mandatory(  "subscribedDate",           "subscriptionDate",                   parseDateTimeStampUnsafe),
         hasConfirmedSubscription =    optional(   "subscriptionConfirmed",    "hasConfirmedSubscription",           parseBoolUnsafe),
-        ConfirmedSubscriptionDate =   optional(   "subscriptionConfirmedDate", "ConfirmedSubscriptionDate",         parseDateTimeStampUnsafe),
+        confirmedSubscriptionDate =   optional(   "subscriptionConfirmedDate", "ConfirmedSubscriptionDate",         parseDateTimeStampUnsafe),
         additionalFields          =   additionalFields,
         ingestionErrors           =   errors
       )

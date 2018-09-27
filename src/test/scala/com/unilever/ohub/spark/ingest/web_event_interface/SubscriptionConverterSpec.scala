@@ -36,7 +36,7 @@ class SubscriptionConverterSpec extends CsvDomainGateKeeperSpec[Subscription] {
           hasSubscription = true,
           subscriptionDate = actualSubscription.subscriptionDate,
           hasConfirmedSubscription = Some(true),
-          ConfirmedSubscriptionDate = Some(Timestamp.valueOf("2018-07-17 15:51:30.0")),
+          confirmedSubscriptionDate = Some(Timestamp.valueOf("2018-07-17 15:51:30.0")),
           additionalFields = Map(),
           ingestionErrors = Map()
         )
