@@ -1,0 +1,27 @@
+# NOTE: this is a copy if the environment.yml file in the docker-airflow project. This one is used for developing on
+#       your local environment; the other one is for the cloud environment. If you change one, you have to change both!
+name: airflow-dags
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - azure-storage-blob=1.3.1
+  - cython=0.28.4
+  - google-api-python-client=1.6.7
+  - oauth2client=4.1.2
+  - pandas-gbq=0.5.0
+  - paramiko=2.4.1
+  - psycopg2=2.7.5
+  - pycodestyle==2.4.0
+  - pylint=1.9.2
+  - pymssql=2.1.3
+  - pytest-cov==2.5.1
+  - pytest-mock=1.10.0
+  - pytest=3.6.3
+  - python=3.6.6
+  - requests-mock=1.5.2
+  - slackclient=1.2.1
+  - pip:
+    - apache-airflow[crypto,postgres]==1.9.0
+  
+  # environment variables: https://github.com/conda/conda/issues/6649

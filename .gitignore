@@ -17,3 +17,15 @@ __pycache__/
 .cache
 .pytest_cache
 string_matching_package/string_matching/sparse_dot_topn.cpp
+*.pyc
+.idea/
+__pycache__/
+.cache/
+.pytest_cache/
+.coverage
+*.log
+
+# Setuptools
+build/
+dist/
+*.egg-info/
