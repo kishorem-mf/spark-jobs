@@ -47,6 +47,8 @@ with DAG(
             integrated_bucket=config.integrated_bucket,
             export_bucket=config.export_bucket,
         )
+        .has_common_ingest(raw_bucket=config.raw_bucket)
+        # TODO remove these once the common ingest is working properly
         .has_ingest_from_file_interface(raw_bucket=config.raw_bucket)
         .has_ingest_from_web_event(
             raw_bucket=config.raw_bucket, ingested_bucket=config.ingested_bucket
@@ -134,17 +136,7 @@ with DAG(
         },
     )
 
-    update_operators_table = DatabricksSubmitRunOperator(
-        task_id="update_table",
-        cluster_name=cluster_conf['cluster_name'],
-        databricks_conn_id=config.databricks_conn_id,
-        notebook_task={
-            "notebook_path": "/Users/tim.vancann@unilever.com/update_integrated_tables"  # TODO: remove code from notebooks asap
-        },
-    )
-
     ingest.last_task >> fuzzy_matching.first_task
     fuzzy_matching.last_task >> join >> combine_to_create_integrated >> update_golden_records
-    update_golden_records >> update_operators_table
     update_golden_records >> export.first_task
     ingest.first_task >> export.last_task
