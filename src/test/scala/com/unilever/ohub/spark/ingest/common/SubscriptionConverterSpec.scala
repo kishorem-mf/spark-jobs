@@ -1,4 +1,4 @@
-package com.unilever.ohub.spark.ingest.file_interface
+package com.unilever.ohub.spark.ingest.common
 
 import java.sql.Timestamp
 
@@ -9,9 +9,9 @@ class SubscriptionConverterSpec extends CsvDomainGateKeeperSpec[Subscription] {
 
   override val SUT = SubscriptionConverter
 
-  describe("ohub1 subscription converter") {
-    it("should convert an subscription correctly from a valid ohub1 csv input") {
-      val inputFile = "src/test/resources/FILE_SUBSCRIPTION.csv"
+  describe("common subscription converter") {
+    it("should convert a subscription correctly from a valid common csv input") {
+      val inputFile = "src/test/resources/COMMON_SUBSCRIPTION.csv"
 
       runJobWith(inputFile) { actualDataSet ⇒
         actualDataSet.count() shouldBe 1
@@ -33,7 +33,7 @@ class SubscriptionConverterSpec extends CsvDomainGateKeeperSpec[Subscription] {
           ohubCreated = actualSubscription.ohubCreated,
           ohubUpdated = actualSubscription.ohubCreated,
           contactPersonConcatId = "AU~EMAKINA~AB123",
-          communicationChannel = Some("Some channel"),
+          communicationChannel = Some("channel"),
           subscriptionType = "default_newsletter_opt_in",
           hasSubscription = true,
           subscriptionDate = Timestamp.valueOf("2015-06-30 13:47:00.0"),

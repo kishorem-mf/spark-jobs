@@ -1,12 +1,7 @@
 package com.unilever.ohub.spark.ingest.file_interface
 
-import java.sql.Timestamp
-
-import cats.syntax.option.none
-import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.entity.Subscription
 import com.unilever.ohub.spark.ingest.CustomParsers._
-import com.unilever.ohub.spark.ingest.web_event_interface.SubscriptionConverter.SourceName
 import com.unilever.ohub.spark.ingest.{ DomainTransformer, SubscriptionEmptyParquetWriter }
 import org.apache.spark.sql.Row
 
@@ -42,7 +37,7 @@ object SubscriptionConverter extends FileDomainGateKeeper[Subscription] with Sub
       hasSubscription = mandatory("SUBSCRIBED", "hasSubscription", parseBoolUnsafe),
       subscriptionDate = mandatory("SUBSCRIPTION_DATE", "subscriptionDate", parseDateTimeStampUnsafe),
       hasConfirmedSubscription = optional("SUBSCRIPTION_CONFIRMED", "hasConfirmedSubscription", parseBoolUnsafe),
-      ConfirmedSubscriptionDate = optional("SUBSCRIPTION_CONFIRMED_DATE", "confirmedSubscriptionDate", parseDateTimeStampUnsafe),
+      confirmedSubscriptionDate = optional("SUBSCRIPTION_CONFIRMED_DATE", "confirmedSubscriptionDate", parseDateTimeStampUnsafe),
       additionalFields = additionalFields,
       ingestionErrors = errors
     )

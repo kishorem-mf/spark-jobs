@@ -10,8 +10,8 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
 
   override val SUT = OperatorConverter
 
-  describe("file interface operator converter") {
-    it("should convert an operator correctly from a valid file interface csv input") {
+  describe("common operator converter") {
+    it("should convert an operator correctly from a valid common csv input") {
       val inputFile = "src/test/resources/COMMON_OPERATORS.csv"
       val config = DomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = ";")
 

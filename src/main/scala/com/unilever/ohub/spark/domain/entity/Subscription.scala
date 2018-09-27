@@ -31,7 +31,7 @@ case class Subscription(
     hasSubscription: Boolean,
     subscriptionDate: Timestamp,
     hasConfirmedSubscription: Option[Boolean],
-    ConfirmedSubscriptionDate: Option[Timestamp],
+    confirmedSubscriptionDate: Option[Timestamp],
     // other fields
     additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]
