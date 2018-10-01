@@ -6,7 +6,7 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.ingest.DomainGateKeeper.DomainConfig
 import com.unilever.ohub.spark.ingest.TestDomainDataProvider
-import org.apache.spark.sql.Dataset
+import org.apache.spark.sql.{ Dataset, SaveMode }
 
 trait SifuDomainGateKeeperDatasetSpec[DomainType <: DomainEntity] extends SparkJobSpec {
 
@@ -22,8 +22,8 @@ trait SifuDomainGateKeeperDatasetSpec[DomainType <: DomainEntity] extends SparkJ
     val mockStorage = mock[Storage]
 
     // write output data
-    (mockStorage.writeToParquet(_: Dataset[DomainType], _: String, _: Seq[String])) expects where {
-      (resultDataset, _, _) ⇒
+    (mockStorage.writeToParquet(_: Dataset[DomainType], _: String, _: Seq[String], _: SaveMode)) expects where {
+      (resultDataset, _, _, _) ⇒
         assertFn(resultDataset)
         true // let's not fail here, but do proper assertions in the assertion function
     }

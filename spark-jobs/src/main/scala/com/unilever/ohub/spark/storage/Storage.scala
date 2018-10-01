@@ -23,7 +23,7 @@ trait Storage {
   def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
   def readDataFrameFromParquet(location: String, selectColumns: Seq[Column] = Seq()): DataFrame
 
-  def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq()): Unit
+  def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq(), saveMode: SaveMode = SaveMode.Overwrite): Unit
 }
 
 class DefaultStorage(spark: SparkSession) extends Storage {
@@ -133,10 +133,10 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .parquet(location)
   }
 
-  override def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq()): Unit = {
+  override def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq(), saveMode: SaveMode = SaveMode.Overwrite): Unit = {
     ds
       .write
-      .mode(SaveMode.Overwrite)
+      .mode(saveMode)
       .partitionBy(partitionBy: _*)
       .parquet(location)
   }

@@ -5,7 +5,7 @@ import com.unilever.ohub.spark.{ DomainDataProvider, SparkJobSpec }
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.ingest.DomainGateKeeper.DomainConfig
-import org.apache.spark.sql.Dataset
+import org.apache.spark.sql.{ Dataset, SaveMode }
 
 object CsvDomainGateKeeperSpec {
   type InputFile = String
@@ -37,8 +37,8 @@ trait CsvDomainGateKeeperSpec[DomainType <: DomainEntity] extends SparkJobSpec {
       )
 
     // write output data
-    (mockStorage.writeToParquet(_: Dataset[DomainType], _: String, _: Seq[String])) expects where {
-      (resultDataset, _, _) ⇒
+    (mockStorage.writeToParquet(_: Dataset[DomainType], _: String, _: Seq[String], _: SaveMode)) expects where {
+      (resultDataset, _, _, _) ⇒
         assertFn(resultDataset)
         true // let's not fail here, but do proper assertions in the assertion function
     }
