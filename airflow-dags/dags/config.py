@@ -17,10 +17,12 @@ dag_default_args = {
 }
 
 ohub_entities = {
-    "operators": {},
+    "operators": {"spark_class": "Operator"},
+    "contactpersons": {"spark_class": "ContactPerson"},
     "orders": {"spark_class": "Order"},
     "orderlines": {"spark_class": "OrderLine"},
-    "products": {},
+    "products": {"spark_class": "Product"},
+    "subscriptions": {"spark_class": "Subscription"}
 }
 
 if conf.getboolean('core', 'unit_test_mode'):
