@@ -1,74 +1,76 @@
 package com.unilever.ohub.spark.ingest
 
 import com.unilever.ohub.spark.storage.Storage
+import com.unilever.ohub.spark.domain.DomainEntity
+import com.unilever.ohub.spark.domain.entity._
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.Dataset
 
-trait EmptyParquetWriter {
-  def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit
-}
+import scala.reflect.runtime.universe._
 
-trait ContactPersonEmptyParquetWriter extends EmptyParquetWriter {
-  override def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit = {
+trait EmptyParquetWriter[T <: DomainEntity] {
+  def createEmptyDataset(spark: SparkSession): Dataset[T]
+
+  def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit = {
     import com.unilever.ohub.spark.domain.entity.ContactPerson
-    import spark.implicits._
 
-    val contactPersons = spark.createDataset[ContactPerson](Seq[ContactPerson]())
+    val ds = createEmptyDataset(spark)
 
-    storage.writeToParquet(contactPersons, location)
+    storage.writeToParquet(ds, location, saveMode = SaveMode.Ignore) // prevent overwriting existing data
   }
 }
 
-trait OperatorEmptyParquetWriter extends EmptyParquetWriter {
-  override def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit = {
-    import com.unilever.ohub.spark.domain.entity.Operator
+trait ContactPersonEmptyParquetWriter extends EmptyParquetWriter[ContactPerson] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[ContactPerson] = {
     import spark.implicits._
 
-    val operators = spark.createDataset[Operator](Seq[Operator]())
-
-    storage.writeToParquet(operators, location)
+    spark.createDataset[ContactPerson](Seq[ContactPerson]())
   }
 }
 
-trait ProductEmptyParquetWriter extends EmptyParquetWriter {
-  override def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit = {
-    import com.unilever.ohub.spark.domain.entity.Product
+trait OperatorEmptyParquetWriter extends EmptyParquetWriter[Operator] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[Operator] = {
     import spark.implicits._
 
-    val ds = spark.createDataset[Product](Seq[Product]())
-
-    storage.writeToParquet(ds, location)
+    spark.createDataset[Operator](Seq[Operator]())
   }
 }
 
-trait OrderEmptyParquetWriter extends EmptyParquetWriter {
-  override def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit = {
-    import com.unilever.ohub.spark.domain.entity.Order
+trait ProductEmptyParquetWriter extends EmptyParquetWriter[Product] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[Product] = {
     import spark.implicits._
 
-    val ds = spark.createDataset[Order](Seq[Order]())
-
-    storage.writeToParquet(ds, location)
+    spark.createDataset[Product](Seq[Product]())
   }
 }
 
-trait OrderLineEmptyParquetWriter extends EmptyParquetWriter {
-  override def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit = {
-    import com.unilever.ohub.spark.domain.entity.OrderLine
+trait OrderEmptyParquetWriter extends EmptyParquetWriter[Order] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[Order] = {
     import spark.implicits._
 
-    val ds = spark.createDataset[OrderLine](Seq[OrderLine]())
-
-    storage.writeToParquet(ds, location)
+    spark.createDataset[Order](Seq[Order]())
   }
 }
 
-trait SubscriptionEmptyParquetWriter extends EmptyParquetWriter {
-  override def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit = {
-    import com.unilever.ohub.spark.domain.entity.Subscription
+trait OrderLineEmptyParquetWriter extends EmptyParquetWriter[OrderLine] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[OrderLine] = {
     import spark.implicits._
 
-    val ds = spark.createDataset[Subscription](Seq[Subscription]())
+    spark.createDataset[OrderLine](Seq[OrderLine]())
+  }
+}
 
-    storage.writeToParquet(ds, location)
+trait SubscriptionEmptyParquetWriter extends EmptyParquetWriter[Subscription] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[Subscription] = {
+    import spark.implicits._
+
+    spark.createDataset[Subscription](Seq[Subscription]())
   }
 }
