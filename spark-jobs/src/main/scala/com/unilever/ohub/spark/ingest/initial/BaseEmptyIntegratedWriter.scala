@@ -1,4 +1,4 @@
-package com.unilever.ohub.spark.merging
+package com.unilever.ohub.spark.ingest.initial
 
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.ingest._
