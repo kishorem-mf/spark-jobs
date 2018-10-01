@@ -13,5 +13,5 @@ RUN pip install /root/ohub
 
 # Install DAGs
 # match with AIRFLOW__CORE__DAGS_FOLDER
-COPY dags /root/airflow/dags/dags
+COPY dags /airflow/dags
 ENV PYTHONPATH=/airflow
