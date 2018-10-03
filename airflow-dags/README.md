@@ -1,11 +1,11 @@
 # Airflow DAGs
 
-This repository holds the Airflow dags for OHUB2.0 and O-Universe.
+This repository holds the Airflow DAGs and supporting Airflow code for OHUB2.0.
 
 To start writing a DAG for Airflow have a look at the existing DAGs or the [Airflow tutorial](https://airflow.apache.org/tutorial.html).
 
 ## Development
-Put your DAGS into the `dags` folder, Use the word `dag` in the python files that are actual DAGs to separate configuration settings from DAGs. Placing DAGs in subfolders to group them is fine and will be picked up by airflow, however they are not grouped in the UI. To make sure they are grouped in the UI, come up with a prefix for the group and use that in the DAG `id`.
+Put your DAGs into the `dags` folder, Use the word `dag` in the python files that are actual DAGs to separate configuration settings from DAGs. Placing DAGs in subfolders to group them is fine and will be picked up by airflow, however they are not grouped in the UI. To make sure they are grouped in the UI, come up with a prefix for the group and use that in the DAG `id`.
 
 The `ohub/operators` package is reserved for implementation of operators not present in `apache-airflow`. The `ohub/utils` package contains general utilities. Other subpackages can be created as needed.
 
@@ -27,19 +27,13 @@ All tasks are called in the `local-ci` task.
 ## CD
 TODO: describe how deployment is done.
 
-## Adding python dependencies
+## Adding Python dependencies
 
-1. update `./environment.yml`
-2. run `conda env update -f environment.yml`
-3. see if everything works as expected
-4. switch to the [`docker-airflow`](https://bitbucket.org/UFS-nl/docker-airflow/) project
-   a. apply the changes of step 1 to `environment.yml`
-   b. commit and push
-   c. wait for the BitBucket pipeline to complete
-   d. switch back to the `airflow-dags` project
-5. update line 1 of `docker/airflow/Dockerfile` to reference the build number of step 4c as the new base image version
-6. complete whatever changes you need the new dependency for
-7. commit and push
+1. Update `environment.yml` in the [`docker-airflow`](https://bitbucket.org/UFS-nl/docker-airflow/) project
+2. Run `conda env update -f environment.yml -n [your conda env name]`
+3. Rebuild `docker-airflow` and update line 1 of `docker/airflow/Dockerfile` to reference the build number as the new base image version
+
+We chose to have the `environment.yml` in the `docker-airflow` project since this takes a long time to rebuild and is not changed often.
 
 ### Local UI
 
