@@ -26,6 +26,7 @@ object SharedSparkSession {
       .master("local[4]")
       .config("spark.sql.warehouse.dir", warehousePath)
       .config("spark.ui.enabled", "false")
+      .config("spark.driver.memory", "4g")
       .getOrCreate()
     session.sparkContext.setCheckpointDir(checkpointPath)
     session
