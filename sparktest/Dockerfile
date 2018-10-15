@@ -7,7 +7,7 @@ ARG ARTEFACTS_DIR=/usr/local/artefacts/
 RUN mkdir $ARTEFACTS_DIR
 COPY artefacts/* $ARTEFACTS_DIR
 
-# copy test input data TODO USE PROPER TEST DATA
+# copy test input data
 ARG DATA_ROOT_DIR=/usr/local/data/
 # operators
 ARG RAW_OPERATORS_INPUT_PATH=${DATA_ROOT_DIR}raw/operators/common/
@@ -17,6 +17,11 @@ COPY data/operators/* $RAW_OPERATORS_INPUT_PATH
 ARG RAW_CONTACTPERSONS_INPUT_PATH=${DATA_ROOT_DIR}raw/contactpersons/common/
 RUN mkdir -p $RAW_CONTACTPERSONS_INPUT_PATH
 COPY data/contactpersons/* $RAW_CONTACTPERSONS_INPUT_PATH
+
+# copy test scripts
+ARG TEST_SCRIPTS_DIR=/usr/local/it-test/
+RUN mkdir -p $TEST_SCRIPTS_DIR
+COPY it-test $TEST_SCRIPTS_DIR
 
 # start spark cluster with 2 worker nodes
 RUN start-master.sh
@@ -31,7 +36,7 @@ ARG PYTHON_MATCH_OPERATORS=${ARTEFACTS_DIR}match_operators.py
 ARG PYTHON_DELTA_CONTACTS=${ARTEFACTS_DIR}delta_contacts.py
 ARG PYTHON_MATCH_CONTACTS=${ARTEFACTS_DIR}match_contacts.py
 
-# START OPERATORS INTEGRATION TEST
+# === START OPERATORS DATA PIPELINE ====================================================================================
 
 ARG DATA_OPERATORS_INTEGRATED_INPUT=${DATA_ROOT_DIR}input/integrated/operators
 ARG DATA_OPERATORS_RAW=$RAW_OPERATORS_INPUT_PATH*.csv
@@ -56,12 +61,12 @@ RUN $SPARK_SUBMIT   --py-files=$SPARK_JOBS_EGG $PYTHON_DELTA_OPERATORS \
                     --ingested_daily_input_path=$DATA_OPERATORS_INGESTED \
                     --updated_integrated_output_path=$DATA_OPERATORS_UPDATED_INTEGRATED \
                     --unmatched_output_path=$DATA_OPERATORS_DELTA_LEFT_OVERS \
-                    --country_code="TR"
+                    --country_code="DE"
 
 RUN $SPARK_SUBMIT   --py-files=$SPARK_JOBS_EGG $PYTHON_MATCH_OPERATORS \
                     --input_file=$DATA_OPERATORS_DELTA_LEFT_OVERS \
                     --output_path=$DATA_OPERATORS_FUZZY_MATCHED_DELTA \
-                    --country_code="TR"
+                    --country_code="DE"
 
 RUN $SPARK_SUBMIT   --class="com.unilever.ohub.spark.merging.OperatorMatchingJoiner" $SPARK_JOBS_JAR \
                     --matchingInputFile=$DATA_OPERATORS_FUZZY_MATCHED_DELTA \
@@ -77,9 +82,9 @@ RUN $SPARK_SUBMIT   --class="com.unilever.ohub.spark.merging.OperatorUpdateGolde
                     --inputFile=$DATA_OPERATORS_COMBINED \
                     --outputFile=$DATA_OPERATORS_INTEGRATED_OUTPUT
 
-# END OPERATORS INTEGRATION TEST
+# === END OPERATORS DATA PIPELINE ======================================================================================
 
-# START CONTACTPERSONS INTEGRATION TEST
+# === START CONTACTPERSONS DATA PIPELINE ===============================================================================
 
 ARG DATA_CONTACTPERSONS_INTEGRATED_INPUT=${DATA_ROOT_DIR}input/integrated/contactpersons
 ARG DATA_CONTACTPERSONS_RAW=$RAW_CONTACTPERSONS_INPUT_PATH*.csv
@@ -115,7 +120,7 @@ RUN $SPARK_SUBMIT   --class="com.unilever.ohub.spark.merging.ContactPersonPrePro
                     --deltaPreProcessedOutputFile=$DATA_CONTACTPERSONS_PRE_PROCESSED
 
 RUN $SPARK_SUBMIT   --class="com.unilever.ohub.spark.merging.ContactPersonIntegratedExactMatch" $SPARK_JOBS_JAR \
-                    --integratedInputFile=$DATA_CONTACTPERSONS_INGESTED \
+                    --integratedInputFile=$DATA_CONTACTPERSONS_INTEGRATED_INPUT \
                     --deltaInputFile=$DATA_CONTACTPERSONS_PRE_PROCESSED \
                     --matchedExactOutputFile=$DATA_CONTACTPERSONS_EXACT_MATCHES \
                     --unmatchedIntegratedOutputFile=$DATA_CONTACTPERSONS_UNMATCHED_INTEGRATED \
@@ -126,12 +131,12 @@ RUN $SPARK_SUBMIT   --py-files=$SPARK_JOBS_EGG $PYTHON_DELTA_CONTACTS \
                     --ingested_daily_input_path=$DATA_CONTACTPERSONS_UNMATCHED_DELTA \
                     --updated_integrated_output_path=$DATA_CONTACTPERSONS_FUZZY_MATCHED_DELTA_INTEGRATED \
                     --unmatched_output_path=$DATA_CONTACTPERSONS_DELTA_LEFT_OVERS \
-                    --country_code="DE"
+                    --country_code="TH"
 
 RUN $SPARK_SUBMIT   --py-files=$SPARK_JOBS_EGG $PYTHON_MATCH_CONTACTS \
                     --input_file=$DATA_CONTACTPERSONS_DELTA_LEFT_OVERS \
                     --output_path=$DATA_CONTACTPERSONS_FUZZY_MATCHED_DELTA \
-                    --country_code="DE"
+                    --country_code="TH"
 
 RUN $SPARK_SUBMIT   --class="com.unilever.ohub.spark.merging.ContactPersonMatchingJoiner" $SPARK_JOBS_JAR \
                     --matchingInputFile=$DATA_CONTACTPERSONS_FUZZY_MATCHED_DELTA \
@@ -146,7 +151,6 @@ RUN $SPARK_SUBMIT   --class="com.unilever.ohub.spark.combining.ContactPersonComb
 
 RUN $SPARK_SUBMIT   --class="com.unilever.ohub.spark.merging.ContactPersonReferencing" $SPARK_JOBS_JAR \
                     --combinedInputFile=$DATA_CONTACTPERSONS_COMBINED \
-                    # TODO which integrated operators to use here? currently consuming the result of the operators test
                     --operatorInputFile=$DATA_OPERATORS_INTEGRATED_OUTPUT \
                     --outputFile=$DATA_CONTACTPERSONS_UPDATED_REFERENCES
 
@@ -154,4 +158,12 @@ RUN $SPARK_SUBMIT   --class="com.unilever.ohub.spark.merging.ContactPersonUpdate
                     --inputFile=$DATA_CONTACTPERSONS_UPDATED_REFERENCES \
                     --outputFile=$DATA_CONTACTPERSONS_INTEGRATED_OUTPUT
 
-# END CONTACTPERSONS INTEGRATION TEST
+# === END CONTACTPERSONS DATA PIPELINE =================================================================================
+
+# === RUN INTEGRATION TESTS ============================================================================================
+
+RUN conda env create -f ${TEST_SCRIPTS_DIR}environment.yml
+
+RUN pytest ${TEST_SCRIPTS_DIR}tests
+
+CMD ["/bin/bash"]
