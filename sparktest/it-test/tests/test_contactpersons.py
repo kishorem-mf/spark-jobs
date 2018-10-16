@@ -1,96 +1,35 @@
 
 from pyspark.sql.types import *
+from test_utils import assertDataframeCount
 
 class TestContactPersons(object):
 
     def test_full_matching_contact_persons(self, spark):
         # raw contains 1000 records...TODO we currently loose 10 due to countryCode 'TW'
 
-        ingested = (spark
-                    .read
-                    .parquet("/usr/local/data/ingested/common/contactpersons.parquet")
-                    )
+        assertDataframeCount(spark, "/usr/local/data/ingested/common/contactpersons.parquet", 990)
 
-        assert ingested.count() == 990
+        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_pre_processed.parquet", 990)
+
+        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_exact_matches.parquet", 865)
 
         # integrated input is empty
+        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_unmatched_integrated.parquet", 0)
 
-        pre_processed = (spark
-                         .read
-                         .parquet("/usr/local/data/intermediate/contactpersons_pre_processed.parquet")
-                         )
+        # fuzzy matching for TH only (so 122/125 records)...is this correct?
 
-        assert pre_processed.count() == 990
+        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_unmatched_delta.parquet", 125)
 
+        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_fuzzy_matched_delta_integrated.parquet", 0)
 
-        exact_matches = (spark
-                         .read
-                         .parquet("/usr/local/data/intermediate/contactpersons_exact_matches.parquet")
-                         )
+        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_delta_left_overs.parquet", 122)
 
-        assert exact_matches.count() == 865
+        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_fuzzy_matched_delta.parquet", 55)
 
-        unmatched_integrated = (spark
-                                .read
-                                .parquet("/usr/local/data/intermediate/contactpersons_unmatched_integrated.parquet")
-                                )
+        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_delta_golden_records.parquet", 122)
 
-        assert unmatched_integrated.count() == 0
+        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_combined.parquet", 987)
 
-        # fuzzy matching for TH only (so 122/125 records)
+        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_updated_references.parquet", 987)
 
-        unmatched_delta = (spark
-                           .read
-                           .parquet("/usr/local/data/intermediate/contactpersons_unmatched_delta.parquet")
-                           )
-
-        assert unmatched_delta.count() == 125
-
-        fuzzy_matched_delta_integrated = (spark
-                                          .read
-                                          .parquet("/usr/local/data/intermediate/contactpersons_fuzzy_matched_delta_integrated.parquet")
-                                          )
-
-        assert fuzzy_matched_delta_integrated.count() == 0
-
-        delta_left_overs = (spark
-                            .read
-                            .parquet("/usr/local/data/intermediate/contactpersons_delta_left_overs.parquet")
-                           )
-
-        assert delta_left_overs.count() == 122
-
-        fuzzy_matched_delta = (spark
-                               .read
-                               .parquet("/usr/local/data/intermediate/contactpersons_fuzzy_matched_delta.parquet")
-                              )
-
-        assert fuzzy_matched_delta.count() == 55
-
-        delta_golden_records = (spark
-                                .read
-                                .parquet("/usr/local/data/intermediate/contactpersons_delta_golden_records.parquet")
-                               )
-
-        assert delta_golden_records.count() == 122
-
-        combined = (spark
-                    .read
-                    .parquet("/usr/local/data/intermediate/contactpersons_combined.parquet")
-                   )
-
-        assert combined.count() == 987
-
-        references = (spark
-                      .read
-                      .parquet("/usr/local/data/intermediate/contactpersons_updated_references.parquet")
-                     )
-
-        assert references.count() == 987
-
-        integrated_output = (spark
-                             .read
-                             .parquet("/usr/local/data/output/integrated/contactpersons")
-                             )
-
-        assert integrated_output.count() == 987
+        assertDataframeCount(spark, "/usr/local/data/output/integrated/contactpersons", 987)

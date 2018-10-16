@@ -1,59 +1,26 @@
 
 from pyspark.sql.types import *
+from test_utils import assertDataframeCount
 
 class TestOperators(object):
 
     def test_full_matching_operators(self, spark):
         # raw contains 1000 records...TODO we currently loose 10 due to countryCode 'TW'
 
-        ingested = (spark
-                    .read
-                    .parquet("/usr/local/data/ingested/common/operators.parquet")
-                    )
-
-        assert ingested.count() == 990
+        assertDataframeCount(spark, "/usr/local/data/ingested/common/operators.parquet", 990)
 
         # integrated input is empty
 
-        updated_integrated = (spark
-                              .read
-                              .parquet("/usr/local/data/intermediate/operators_fuzzy_matched_delta_integrated.parquet")
-                              )
-
-        assert updated_integrated.count() == 0
+        assertDataframeCount(spark, "/usr/local/data/intermediate/operators_fuzzy_matched_delta_integrated.parquet", 0)
 
         # fuzzy matching for DE only (so 90 records remain)
 
-        delta_left_overs = (spark
-                            .read
-                            .parquet("/usr/local/data/intermediate/operators_delta_left_overs.parquet")
-                            )
+        assertDataframeCount(spark, "/usr/local/data/intermediate/operators_delta_left_overs.parquet", 90)
 
-        assert delta_left_overs.count() == 90
+        assertDataframeCount(spark, "/usr/local/data/intermediate/operators_fuzzy_matched_delta.parquet", 57) # doubt this one
 
-        fuzzy_matched_delta = (spark
-                               .read
-                               .parquet("/usr/local/data/intermediate/operators_fuzzy_matched_delta.parquet")
-                               )
+        assertDataframeCount(spark, "/usr/local/data/intermediate/operators_delta_golden_records.parquet", 90)
 
-        assert fuzzy_matched_delta.count() == 57 # doubt this one
+        assertDataframeCount(spark, "/usr/local/data/intermediate/operators_combined.parquet", 90)
 
-        delta_golden_records = (spark
-                                .read
-                                .parquet("/usr/local/data/intermediate/operators_delta_golden_records.parquet")
-                                )
-        assert delta_golden_records.count() == 90
-
-        combined = (spark
-                    .read
-                    .parquet("/usr/local/data/intermediate/operators_combined.parquet")
-                    )
-
-        assert combined.count() == 90
-
-        integrated_output = (spark
-                             .read
-                             .parquet("/usr/local/data/output/integrated/operators")
-                             )
-
-        assert integrated_output.count() == 90
+        assertDataframeCount(spark, "/usr/local/data/output/integrated/operators", 90)
