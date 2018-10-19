@@ -1,30 +1,31 @@
 
 from pyspark.sql.types import *
 from test_utils import assertDataframeCount
+from pyspark.sql import functions as sf
 
 class TestContactPersons(object):
 
     def test_full_matching_contact_persons(self, spark):
-        # raw contains 1000 records...TODO we currently loose 10 due to countryCode 'TW'
+        # raw contains 1000 records...
 
-        assertDataframeCount(spark, "/usr/local/data/ingested/common/contactpersons.parquet", 990)
+        assertDataframeCount(spark, "/usr/local/data/ingested/common/contactpersons.parquet", 1000)
 
-        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_pre_processed.parquet", 990)
+        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_pre_processed.parquet", 1000)
 
         assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_exact_matches.parquet", 865)
 
         # integrated input is empty
         assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_unmatched_integrated.parquet", 0)
 
-        # fuzzy matching for TH only (so 122/125 records)...is this correct?
+        # fuzzy matching for TH only (so 122/135 records)
 
-        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_unmatched_delta.parquet", 125)
+        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_unmatched_delta.parquet", 135)
 
         assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_fuzzy_matched_delta_integrated.parquet", 0)
 
         assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_delta_left_overs.parquet", 122)
 
-        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_fuzzy_matched_delta.parquet", 55)
+        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_fuzzy_matched_delta.parquet", 46)
 
         assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_delta_golden_records.parquet", 122)
 
@@ -33,3 +34,14 @@ class TestContactPersons(object):
         assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_updated_references.parquet", 987)
 
         assertDataframeCount(spark, "/usr/local/data/output/integrated/contactpersons", 987)
+
+        assert (spark
+                .read
+                .parquet("/usr/local/data/output/integrated/contactpersons")
+                ).select('ohubId').distinct().count() == 541
+
+        # 465 ohubIds from exact matches, 76 from fuzzy matching, 541 ohubIds in total
+        assert(spark
+               .read
+               .parquet("/usr/local/data/output/integrated/contactpersons")
+               ).filter(sf.isnull(sf.col('emailAddress')) & sf.isnull(sf.col('mobileNumber'))).select('ohubId').distinct().count() == 76

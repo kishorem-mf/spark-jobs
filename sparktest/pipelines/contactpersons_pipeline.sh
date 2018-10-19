@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+
+echo "running contactpersons data pipeline"
+
+ARTEFACTS_DIR="/usr/local/artefacts/"
+DATA_ROOT_DIR="/usr/local/data/"
+
+DELTA_CONTACTS=delta_contacts.py
+MATCH_CONTACTS=match_contacts.py
+
+SPARK_JOBS_JAR=${ARTEFACTS_DIR}sparkjobs/spark-jobs-assembly-0.2.0.jar
+SPARK_JOBS_EGG=${ARTEFACTS_DIR}name-matching/egg/string_matching.egg
+PYTHON_DELTA_CONTACTS=${ARTEFACTS_DIR}name-matching/main/${DELTA_CONTACTS}
+PYTHON_MATCH_CONTACTS=${ARTEFACTS_DIR}name-matching/main/${MATCH_CONTACTS}
+
+RAW_CONTACTPERSONS_INPUT_PATH="${DATA_ROOT_DIR}raw/contactpersons/common/"
+
+DATA_OPERATORS_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/operators"
+DATA_CONTACTPERSONS_INTEGRATED_INPUT="${DATA_ROOT_DIR}input/integrated/contactpersons"
+DATA_CONTACTPERSONS_RAW="${RAW_CONTACTPERSONS_INPUT_PATH}*.csv"
+DATA_CONTACTPERSONS_INGESTED="${DATA_ROOT_DIR}ingested/common/contactpersons.parquet"
+DATA_CONTACTPERSONS_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/contactpersons"
+DATA_CONTACTPERSONS_GATHERED="${DATA_ROOT_DIR}intermediate/contactpersons_gathered.parquet"
+DATA_CONTACTPERSONS_PRE_PROCESSED="${DATA_ROOT_DIR}intermediate/contactpersons_pre_processed.parquet"
+DATA_CONTACTPERSONS_EXACT_MATCHES="${DATA_ROOT_DIR}intermediate/contactpersons_exact_matches.parquet"
+DATA_CONTACTPERSONS_UNMATCHED_INTEGRATED="${DATA_ROOT_DIR}intermediate/contactpersons_unmatched_integrated.parquet"
+DATA_CONTACTPERSONS_UNMATCHED_DELTA="${DATA_ROOT_DIR}intermediate/contactpersons_unmatched_delta.parquet"
+DATA_CONTACTPERSONS_FUZZY_MATCHED_DELTA_INTEGRATED="${DATA_ROOT_DIR}intermediate/contactpersons_fuzzy_matched_delta_integrated.parquet"
+DATA_CONTACTPERSONS_DELTA_LEFT_OVERS="${DATA_ROOT_DIR}intermediate/contactpersons_delta_left_overs.parquet"
+DATA_CONTACTPERSONS_FUZZY_MATCHED_DELTA="${DATA_ROOT_DIR}intermediate/contactpersons_fuzzy_matched_delta.parquet"
+DATA_CONTACTPERSONS_DELTA_GOLDEN_RECORDS="${DATA_ROOT_DIR}intermediate/contactpersons_delta_golden_records.parquet"
+DATA_CONTACTPERSONS_COMBINED="${DATA_ROOT_DIR}intermediate/contactpersons_combined.parquet"
+DATA_CONTACTPERSONS_UPDATED_REFERENCES="${DATA_ROOT_DIR}intermediate/contactpersons_updated_references.parquet"
+
+spark-submit   --class="com.unilever.ohub.spark.ingest.initial.ContactPersonEmptyIntegratedWriter" ${SPARK_JOBS_JAR} \
+               --outputFile=${DATA_CONTACTPERSONS_INTEGRATED_INPUT}
+
+spark-submit   --class="com.unilever.ohub.spark.ingest.common.ContactPersonConverter" ${SPARK_JOBS_JAR} \
+               --inputFile=${DATA_CONTACTPERSONS_RAW} \
+               --outputFile=${DATA_CONTACTPERSONS_INGESTED} \
+               --fieldSeparator=";" --strictIngestion="false" --deduplicateOnConcatId="true"
+
+spark-submit   --class="com.unilever.ohub.spark.ingest.GatherJob" ${SPARK_JOBS_JAR} \
+               --input=${DATA_CONTACTPERSONS_INGESTED} \
+               --output=${DATA_CONTACTPERSONS_GATHERED}
+
+spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonPreProcess" ${SPARK_JOBS_JAR} \
+               --integratedInputFile=${DATA_CONTACTPERSONS_INTEGRATED_INPUT} \
+               --deltaInputFile=${DATA_CONTACTPERSONS_GATHERED} \
+               --deltaPreProcessedOutputFile=${DATA_CONTACTPERSONS_PRE_PROCESSED}
+
+spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonIntegratedExactMatch" ${SPARK_JOBS_JAR} \
+               --integratedInputFile=${DATA_CONTACTPERSONS_INTEGRATED_INPUT} \
+               --deltaInputFile=${DATA_CONTACTPERSONS_PRE_PROCESSED} \
+               --matchedExactOutputFile=${DATA_CONTACTPERSONS_EXACT_MATCHES} \
+               --unmatchedIntegratedOutputFile=${DATA_CONTACTPERSONS_UNMATCHED_INTEGRATED} \
+               --unmatchedDeltaOutputFile=${DATA_CONTACTPERSONS_UNMATCHED_DELTA}
+
+spark-submit   --py-files=${SPARK_JOBS_EGG} ${PYTHON_DELTA_CONTACTS} \
+               --integrated_input_path=${DATA_CONTACTPERSONS_UNMATCHED_INTEGRATED} \
+               --ingested_daily_input_path=${DATA_CONTACTPERSONS_UNMATCHED_DELTA} \
+               --updated_integrated_output_path=${DATA_CONTACTPERSONS_FUZZY_MATCHED_DELTA_INTEGRATED} \
+               --unmatched_output_path=${DATA_CONTACTPERSONS_DELTA_LEFT_OVERS} \
+               --country_code="TH"
+
+spark-submit   --py-files=${SPARK_JOBS_EGG} ${PYTHON_MATCH_CONTACTS} \
+               --input_file=${DATA_CONTACTPERSONS_DELTA_LEFT_OVERS} \
+               --output_path=${DATA_CONTACTPERSONS_FUZZY_MATCHED_DELTA} \
+               --country_code="TH"
+
+spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonMatchingJoiner" ${SPARK_JOBS_JAR} \
+               --matchingInputFile=${DATA_CONTACTPERSONS_FUZZY_MATCHED_DELTA} \
+               --entityInputFile=${DATA_CONTACTPERSONS_DELTA_LEFT_OVERS} \
+               --outputFile=${DATA_CONTACTPERSONS_DELTA_GOLDEN_RECORDS}
+
+spark-submit   --class="com.unilever.ohub.spark.combining.ContactPersonCombineExactAndFuzzyMatches" ${SPARK_JOBS_JAR} \
+               --contactPersonExactMatchedInputFile=${DATA_CONTACTPERSONS_EXACT_MATCHES} \
+               --contactPersonFuzzyMatchedDeltaIntegratedInputFile=${DATA_CONTACTPERSONS_FUZZY_MATCHED_DELTA_INTEGRATED} \
+               --contactPersonsDeltaGoldenRecordsInputFile=${DATA_CONTACTPERSONS_DELTA_GOLDEN_RECORDS} \
+               --contactPersonsCombinedOutputFile=${DATA_CONTACTPERSONS_COMBINED}
+
+spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonReferencing" ${SPARK_JOBS_JAR} \
+               --combinedInputFile=${DATA_CONTACTPERSONS_COMBINED} \
+               --operatorInputFile=${DATA_OPERATORS_INTEGRATED_OUTPUT} \
+               --outputFile=${DATA_CONTACTPERSONS_UPDATED_REFERENCES}
+
+spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonUpdateGoldenRecord" ${SPARK_JOBS_JAR} \
+               --inputFile=${DATA_CONTACTPERSONS_UPDATED_REFERENCES} \
+               --outputFile=${DATA_CONTACTPERSONS_INTEGRATED_OUTPUT}

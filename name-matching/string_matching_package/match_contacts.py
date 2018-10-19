@@ -39,7 +39,7 @@ if __name__ == '__main__':
                         help='country code to use (e.g. US). Default all countries.')
     parser.add_argument('-frac', '--fraction', default=1.0, type=float,
                         help='use this fraction of records.')
-    parser.add_argument('-t', '--threshold', default=0.75, type=float,
+    parser.add_argument('-t', '--threshold', default=0.9, type=float,
                         help='drop similarities below this value [0-1].')
     parser.add_argument('-n', '--n_top', default=1500, type=int,
                         help='keep N top similarities for each record.')

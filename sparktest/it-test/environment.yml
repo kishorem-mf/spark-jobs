@@ -1,7 +1,0 @@
-name: it-test
-channels:
-  - defaults
-dependencies:
-  - python=3.5.4
-  - pytest==2.8.5
-  - pytest-runner==4.2.0
