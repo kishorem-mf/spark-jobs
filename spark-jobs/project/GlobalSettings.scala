@@ -48,13 +48,15 @@ object GlobalSettings extends AutoPlugin {
   )
 
   lazy val projectDependencies: Seq[ModuleID] = Seq(
-    "org.apache.commons" % "commons-lang3" % "3.7",
+    "org.apache.commons" % "commons-lang3" % "3.8.1",
+    "org.postgresql" % "postgresql" % "42.2.5",
     "io.circe" %% "circe-core" % CirceVersion,
     "io.circe" %% "circe-generic" % CirceVersion,
     "io.circe" %% "circe-parser" % CirceVersion,
     "com.github.scopt" %% "scopt" % "3.7.0",
     "org.scalatest" %% "scalatest" % "3.0.5" % "test,it",
-    "org.scalamock" %% "scalamock" % "4.1.0" % "test,it"
+    "org.scalamock" %% "scalamock" % "4.1.0" % "test,it",
+    "com.h2database" % "h2" % "1.4.197" % "test,it"
   )
 
   /**

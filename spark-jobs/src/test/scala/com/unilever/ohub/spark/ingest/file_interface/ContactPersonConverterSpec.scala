@@ -4,8 +4,7 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.DefaultStorage
-import com.unilever.ohub.spark.ingest.{ CsvDomainGateKeeperSpec, TestDomainDataProvider }
-import com.unilever.ohub.spark.ingest.DomainGateKeeper.DomainConfig
+import com.unilever.ohub.spark.ingest.{ CsvDomainConfig, CsvDomainGateKeeperSpec, TestDomainDataProvider }
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import org.apache.spark.sql.Dataset
 
@@ -16,7 +15,7 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
   describe("file interface contact person converter") {
     it("should convert a contact person correctly from a valid file interface csv input") {
       val inputFile = "src/test/resources/FILE_CONTACTPERSONS.csv"
-      val config = DomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = "‰")
+      val config = CsvDomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = "‰")
 
       runJobWith(config) { actualDataSet ⇒
         actualDataSet.count() shouldBe 1
@@ -94,7 +93,7 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
 
       val inputFile = "src/test/resources/empty.csv"
       val outputFile = "src/test/resources/output/contact_person_with_schema.parquet"
-      val config = DomainConfig(inputFile = inputFile, outputFile = outputFile, fieldSeparator = "‰")
+      val config = CsvDomainConfig(inputFile = inputFile, outputFile = outputFile, fieldSeparator = "‰")
       val storage = new DefaultStorage(spark)
 
       SUT.run(spark, config, storage, TestDomainDataProvider())

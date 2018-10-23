@@ -3,8 +3,7 @@ package com.unilever.ohub.spark.ingest.file_interface
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.{ Product, TestProducts }
-import com.unilever.ohub.spark.ingest.CsvDomainGateKeeperSpec
-import com.unilever.ohub.spark.ingest.DomainGateKeeper.DomainConfig
+import com.unilever.ohub.spark.ingest.{ CsvDomainConfig, CsvDomainGateKeeperSpec }
 
 class ProductConverterSpec extends CsvDomainGateKeeperSpec[Product] with TestProducts {
 
@@ -13,7 +12,7 @@ class ProductConverterSpec extends CsvDomainGateKeeperSpec[Product] with TestPro
   describe("file interface product converter") {
     it("should convert a product correctly from a valid file interface csv input") {
       val inputFile = "src/test/resources/FILE_PRODUCTS.csv"
-      val config = DomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = "‰")
+      val config = CsvDomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = "‰")
 
       runJobWith(config) { actualDataSet ⇒
         actualDataSet.count() shouldBe 1

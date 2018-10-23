@@ -5,8 +5,16 @@ import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.ingest.DomainGateKeeper
 import com.unilever.ohub.spark.ingest.DomainGateKeeper.DomainConfig
 import org.apache.spark.sql.{ Dataset, SparkSession }
+import scopt.OptionParser
 
-trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T, SifuProductResponse] {
+case class SifuDomainConfig(
+    override val outputFile: String = "path-to-output-file",
+    override val deduplicateOnConcatId: Boolean = true,
+    override val strictIngestion: Boolean = true,
+    override val showErrorSummary: Boolean = true
+) extends DomainConfig
+
+trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T, SifuProductResponse, SifuDomainConfig] {
 
   override protected def partitionByValue: Seq[String] = Seq()
 
@@ -43,15 +51,37 @@ trait SifuDomainGateKeeper[T <: DomainEntity] extends DomainGateKeeper[T, SifuPr
   private val PAGE_SIZE = 100
   private val PAGES = 10
 
+  private[spark] def defaultConfig: SifuDomainConfig = SifuDomainConfig()
+
+  private[spark] def configParser(): OptionParser[SifuDomainConfig] =
+    new scopt.OptionParser[SifuDomainConfig]("Domain gate keeper") {
+      head("converts a csv into domain entities and writes the result to parquet.", "1.0")
+      opt[String]("outputFile") required () action { (x, c) ⇒
+        c.copy(outputFile = x)
+      } text "outputFile is a string property"
+      opt[Boolean]("strictIngestion") optional () action { (x, c) ⇒
+        c.copy(strictIngestion = x)
+      } text "fieldSeparator is a string property"
+      opt[Boolean]("deduplicateOnConcatId") optional () action { (x, c) ⇒
+        c.copy(deduplicateOnConcatId = x)
+      } text "deduplicateOnConcatId is a boolean property"
+      opt[Boolean]("showErrorSummary") optional () action { (x, c) ⇒
+        c.copy(showErrorSummary = x)
+      } text "showErrorSummary is a boolean property"
+
+      version("1.0")
+      help("help") text "help text"
+    }
+
   protected[sifu] def sifuSelection: String
 
   protected[sifu] def sifuDataProvider: SifuDataProvider
 
-  override def read(spark: SparkSession, storage: Storage, config: DomainConfig): Dataset[SifuProductResponse] = {
+  override def read(spark: SparkSession, storage: Storage, config: SifuDomainConfig): Dataset[SifuProductResponse] = {
     read(spark, storage, config, sifuDataProvider)
   }
 
-  protected[sifu] def read(spark: SparkSession, storage: Storage, config: DomainConfig, sifuDataProvider: SifuDataProvider): Dataset[SifuProductResponse] = {
+  protected[sifu] def read(spark: SparkSession, storage: Storage, config: SifuDomainConfig, sifuDataProvider: SifuDataProvider): Dataset[SifuProductResponse] = {
     import spark.implicits._
 
     val jsons = countryAndLanguages

@@ -3,8 +3,7 @@ package com.unilever.ohub.spark.ingest.common
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.Operator
-import com.unilever.ohub.spark.ingest.CsvDomainGateKeeperSpec
-import com.unilever.ohub.spark.ingest.DomainGateKeeper.DomainConfig
+import com.unilever.ohub.spark.ingest.{ CsvDomainConfig, CsvDomainGateKeeperSpec }
 
 class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
 
@@ -13,7 +12,7 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
   describe("common operator converter") {
     it("should convert an operator correctly from a valid common csv input") {
       val inputFile = "src/test/resources/COMMON_OPERATORS.csv"
-      val config = DomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = ";")
+      val config = CsvDomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = ";")
 
       runJobWith(config) { actualDataSet ⇒
         actualDataSet.count() shouldBe 6

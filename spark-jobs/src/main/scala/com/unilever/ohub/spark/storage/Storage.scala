@@ -1,10 +1,11 @@
 package com.unilever.ohub.spark.storage
 
-import java.util.UUID
+import java.util.{ Properties, UUID }
 
 import org.apache.spark.sql._
 import org.apache.hadoop.fs._
 import org.apache.log4j.Logger
+import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 
 trait Storage {
 
@@ -24,6 +25,11 @@ trait Storage {
   def readDataFrameFromParquet(location: String, selectColumns: Seq[Column] = Seq()): DataFrame
 
   def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq(), saveMode: SaveMode = SaveMode.Overwrite): Unit
+
+  def readJdbcTable(dbUrl: String, dbTable: String, userName: String, userPassword: String, jdbcDriverClass: String = "org.postgresql.Driver"): DataFrame
+
+  def writeJdbcTable(df: DataFrame, dbUrl: String, dbTable: String, userName: String, userPassword: String,
+    jdbcDriverClass: String = "org.postgresql.Driver", saveMode: SaveMode = SaveMode.Overwrite): Unit
 }
 
 class DefaultStorage(spark: SparkSession) extends Storage {
@@ -139,5 +145,29 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .mode(saveMode)
       .partitionBy(partitionBy: _*)
       .parquet(location)
+  }
+
+  // see also: http://spark.apache.org/docs/latest/sql-programming-guide.html#jdbc-to-other-databases
+  override def readJdbcTable(dbUrl: String, dbTable: String, userName: String, userPassword: String, jdbcDriverClass: String = "org.postgresql.Driver"): DataFrame = {
+    spark
+      .read
+      .option(JDBCOptions.JDBC_DRIVER_CLASS, jdbcDriverClass)
+      .jdbc(dbUrl, dbTable, connectionProperties(userName, userPassword))
+  }
+
+  override def writeJdbcTable(df: DataFrame, dbUrl: String, dbTable: String, userName: String, userPassword: String,
+    jdbcDriverClass: String = "org.postgresql.Driver", saveMode: SaveMode = SaveMode.Overwrite): Unit = {
+    df
+      .write
+      .mode(saveMode)
+      .option(JDBCOptions.JDBC_DRIVER_CLASS, jdbcDriverClass)
+      .jdbc(dbUrl, dbTable, connectionProperties(userName, userPassword))
+  }
+
+  private def connectionProperties(userName: String, userPassword: String) = {
+    val connectionProperties = new Properties
+    connectionProperties.put("user", userName)
+    connectionProperties.put("password", userPassword)
+    connectionProperties
   }
 }

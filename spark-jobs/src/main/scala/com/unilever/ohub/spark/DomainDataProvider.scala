@@ -117,7 +117,7 @@ class InMemDomainDataProvider(spark: SparkSession) extends DomainDataProvider wi
   }
 }
 
-class PostgressDomainDataProvider(spark: SparkSession, dbUrl: String, dbName: String, userName: String, userPassword: String) extends DomainDataProvider with Serializable {
+class PostgresDomainDataProvider(spark: SparkSession, dbUrl: String, dbName: String, userName: String, userPassword: String) extends DomainDataProvider with Serializable {
 
   import spark.implicits._
 

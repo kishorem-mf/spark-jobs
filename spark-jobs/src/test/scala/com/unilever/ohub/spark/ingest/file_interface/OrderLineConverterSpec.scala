@@ -3,8 +3,7 @@ package com.unilever.ohub.spark.ingest.file_interface
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.{ OrderLine, TestOrderLines }
-import com.unilever.ohub.spark.ingest.CsvDomainGateKeeperSpec
-import com.unilever.ohub.spark.ingest.DomainGateKeeper.DomainConfig
+import com.unilever.ohub.spark.ingest.{ CsvDomainConfig, CsvDomainGateKeeperSpec }
 
 class OrderLineConverterSpec extends CsvDomainGateKeeperSpec[OrderLine] with TestOrderLines {
 
@@ -13,7 +12,7 @@ class OrderLineConverterSpec extends CsvDomainGateKeeperSpec[OrderLine] with Tes
   describe("file interface order line converter") {
     it("should convert an order line correctly from a valid file interface csv input") {
       val inputFile = "src/test/resources/FILE_ORDERS.csv"
-      val config = DomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = "‰")
+      val config = CsvDomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = "‰")
 
       runJobWith(config) { actualDataSet ⇒
         actualDataSet.count() shouldBe 1

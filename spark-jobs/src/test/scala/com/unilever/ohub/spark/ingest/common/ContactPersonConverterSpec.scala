@@ -3,8 +3,7 @@ package com.unilever.ohub.spark.ingest.common
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.ContactPerson
-import com.unilever.ohub.spark.ingest.CsvDomainGateKeeperSpec
-import com.unilever.ohub.spark.ingest.DomainGateKeeper.DomainConfig
+import com.unilever.ohub.spark.ingest.{ CsvDomainConfig, CsvDomainGateKeeperSpec }
 
 class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] {
 
@@ -13,7 +12,7 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
   describe("common contact person converter") {
     it("should convert a contact person correctly from a valid common csv input") {
       val inputFile = "src/test/resources/COMMON_CONTACTPERSONS.csv"
-      val config = DomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = ";")
+      val config = CsvDomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = ";")
 
       runJobWith(config) { actualDataSet ⇒
         actualDataSet.count() shouldBe 1

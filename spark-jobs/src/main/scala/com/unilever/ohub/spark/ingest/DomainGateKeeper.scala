@@ -4,7 +4,6 @@ import com.unilever.ohub.spark.{ DomainDataProvider, InMemDomainDataProvider, Sp
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql._
-import scopt.OptionParser
 import DomainGateKeeper._
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
@@ -14,14 +13,12 @@ import scala.reflect.runtime.universe._
 object DomainGateKeeper {
   case class ErrorMessage(error: String, row: String)
 
-  case class DomainConfig(
-      inputFile: String = "path-to-input-file",
-      outputFile: String = "path-to-output-file",
-      fieldSeparator: String = "field-separator",
-      deduplicateOnConcatId: Boolean = true,
-      strictIngestion: Boolean = true,
-      showErrorSummary: Boolean = true
-  ) extends SparkJobConfig
+  trait DomainConfig extends SparkJobConfig {
+    val outputFile: String = "path-to-output-file"
+    val deduplicateOnConcatId: Boolean = true
+    val strictIngestion: Boolean = true
+    val showErrorSummary: Boolean = true
+  }
 
   object implicits {
     // if we upgrade our scala version, we can probably get rid of this encoder too (because Either has become a Product in scala 2.12)
@@ -30,7 +27,7 @@ object DomainGateKeeper {
   }
 }
 
-abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] extends SparkJob[DomainConfig] {
+abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Config <: DomainConfig] extends SparkJob[Config] {
 
   import DomainGateKeeper.implicits._
 
@@ -40,36 +37,9 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
 
   protected def postValidate: DomainDataProvider ⇒ DomainEntity ⇒ Unit = dataProvider ⇒ DomainEntity.postConditions(dataProvider)
 
-  private[spark] def defaultConfig: DomainConfig = DomainConfig()
-
-  private[spark] def configParser(): OptionParser[DomainConfig] =
-    new scopt.OptionParser[DomainConfig]("Domain gate keeper") {
-      head("converts a csv into domain entities and writes the result to parquet.", "1.0")
-      opt[String]("inputFile") required () action { (x, c) ⇒
-        c.copy(inputFile = x)
-      } text "inputFile is a string property"
-      opt[String]("outputFile") required () action { (x, c) ⇒
-        c.copy(outputFile = x)
-      } text "outputFile is a string property"
-      opt[String]("fieldSeparator") optional () action { (x, c) ⇒
-        c.copy(fieldSeparator = x)
-      } text "fieldSeparator is a string property"
-      opt[Boolean]("strictIngestion") optional () action { (x, c) ⇒
-        c.copy(strictIngestion = x)
-      } text "fieldSeparator is a string property"
-      opt[Boolean]("deduplicateOnConcatId") optional () action { (x, c) ⇒
-        c.copy(deduplicateOnConcatId = x)
-      } text "deduplicateOnConcatId is a boolean property"
-      opt[Boolean]("showErrorSummary") optional () action { (x, c) ⇒
-        c.copy(showErrorSummary = x)
-      } text "showErrorSummary is a boolean property"
-
-      version("1.0")
-      help("help") text "help text"
-    }
   private[spark] def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit
 
-  protected def read(spark: SparkSession, storage: Storage, config: DomainConfig): Dataset[RowType]
+  protected def read(spark: SparkSession, storage: Storage, config: Config): Dataset[RowType]
 
   private def transform(dataProvider: DomainDataProvider)(
     transformFn: DomainTransformer ⇒ RowType ⇒ DomainType,
@@ -85,15 +55,15 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType] ex
           Left(ErrorMessage(s"Error parsing row: '$e'", s"$row"))
       }
 
-  override def run(spark: SparkSession, config: DomainConfig, storage: Storage): Unit = {
+  override def run(spark: SparkSession, config: Config, storage: Storage): Unit = {
     val dataProvider = new InMemDomainDataProvider(spark)
     run(spark, config, storage, dataProvider)
   }
 
-  def run(spark: SparkSession, config: DomainConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
+  def run(spark: SparkSession, config: Config, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     import spark.implicits._
 
-    def handleErrors(config: DomainConfig, result: Dataset[Either[ErrorMessage, DomainType]]): Unit = {
+    def handleErrors(config: Config, result: Dataset[Either[ErrorMessage, DomainType]]): Unit = {
       val errors: Dataset[ErrorMessage] = result.filter(_.isLeft).map(_.left.get)
       val numberOfErrors = errors.count()
 
