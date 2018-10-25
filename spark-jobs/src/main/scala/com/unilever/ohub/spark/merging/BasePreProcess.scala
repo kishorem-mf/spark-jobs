@@ -1,6 +1,7 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.domain.DomainEntity
+import com.unilever.ohub.spark.domain.entity._
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import org.apache.spark.sql.expressions.Window
@@ -9,6 +10,20 @@ import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 import scala.reflect.runtime.universe._
+
+object OperatorPreProcess extends BasePreProcess[Operator]
+
+object ContactPersonPreProcess extends BasePreProcess[ContactPerson]
+
+object SubscriptionPreProcess extends BasePreProcess[Subscription]
+
+object OrderPreProcess extends BasePreProcess[Order]
+
+object OrderLinePreProcess extends BasePreProcess[OrderLine]
+
+object ProductPreProcess extends BasePreProcess[Product]
+
+object RecipePreProcess extends BasePreProcess[Recipe]
 
 case class PreProcessConfig(
     integratedInputFile: String = "path-to-integrated-input-file",
@@ -64,6 +79,7 @@ abstract class BasePreProcess[T <: DomainEntity: TypeTag] extends SparkJob[PrePr
     val dailyDeltaDomainEntities = storage.readFromParquet[T](config.deltaInputFile)
 
     val preProcessedDeltaDomainEntities = transform(spark, integratedDomainEntities, dailyDeltaDomainEntities)
+      .coalesce(10)
 
     storage.writeToParquet(preProcessedDeltaDomainEntities, config.deltaPreProcessedOutputFile)
   }

@@ -32,6 +32,7 @@ with DAG(
             databricks_conn_id=config.databricks_conn_id,
             ingested_bucket=config.ingested_bucket,
             intermediate_bucket=config.intermediate_bucket,
+            integrated_bucket=config.integrated_bucket,
             spark_jobs_jar=config.spark_jobs_jar,
             wasb_conn_id=config.wasb_conn_id,
             wasb_raw_container=config.wasb_raw_container,
@@ -69,28 +70,6 @@ with DAG(
         ),
         ohub_country_codes=config.ohub_country_codes,
         string_matching_egg=config.string_matching_egg,
-    )
-
-    pre_processing = DatabricksSubmitRunOperator(
-        task_id="pre_processed",
-        cluster_name=cluster_conf['cluster_name'],
-        databricks_conn_id=config.databricks_conn_id,
-        libraries=[{"jar": config.spark_jobs_jar}],
-        spark_jar_task={
-            "main_class_name": "com.unilever.ohub.spark.merging.ContactPersonPreProcess",
-            "parameters": [
-                "--integratedInputFile",
-                config.integrated_bucket.format(date="{{ yesterday_ds }}", fn=entity),
-                "--deltaInputFile",
-                config.intermediate_bucket.format(
-                    date="{{ ds }}", fn=f"{entity}_gathered"
-                ),
-                "--deltaPreProcessedOutputFile",
-                config.intermediate_bucket.format(
-                    date="{{ ds }}", fn="{}_pre_processed".format(entity)
-                ),
-            ],
-        },
     )
 
     exact_match_integrated_ingested = DatabricksSubmitRunOperator(
@@ -221,7 +200,7 @@ with DAG(
         },
     )
 
-    ingest.last_task >> pre_processing >> exact_match_integrated_ingested
+    ingest.last_task >> exact_match_integrated_ingested
     exact_match_integrated_ingested >> fuzzy_matching.first_task
     fuzzy_matching.last_task >> join_fuzzy_matched >> join_fuzzy_and_exact_matched >> operators_integrated_sensor
     operators_integrated_sensor >> referencing >> update_golden_records >> export.first_task

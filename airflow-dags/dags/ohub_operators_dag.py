@@ -31,6 +31,7 @@ with DAG(
             databricks_conn_id=config.databricks_conn_id,
             ingested_bucket=config.ingested_bucket,
             intermediate_bucket=config.intermediate_bucket,
+            integrated_bucket=config.integrated_bucket,
             spark_jobs_jar=config.spark_jobs_jar,
             wasb_conn_id=config.wasb_conn_id,
             wasb_raw_container=config.wasb_raw_container,
@@ -59,7 +60,7 @@ with DAG(
     export: SubPipeline = generic.construct_export_pipeline()
     fuzzy_matching: SubPipeline = generic.construct_fuzzy_matching_pipeline(
         ingest_input=config.intermediate_bucket.format(
-            date="{{ ds }}", fn=f"{entity}_gathered"
+            date="{{ ds }}", fn=f"{entity}_pre_processed"
         ),
         match_py="dbfs:/libraries/name_matching/match_operators.py",
         integrated_input=config.integrated_bucket.format(

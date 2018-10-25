@@ -35,6 +35,7 @@ with DAG(
             databricks_conn_id=config.databricks_conn_id,
             ingested_bucket=config.ingested_bucket,
             intermediate_bucket=config.intermediate_bucket,
+            integrated_bucket=config.integrated_bucket,
             spark_jobs_jar=config.spark_jobs_jar,
             wasb_conn_id=config.wasb_conn_id,
             wasb_raw_container=config.wasb_raw_container,
@@ -114,7 +115,7 @@ with DAG(
             ),
             "parameters": [
                 "--orderInputFile",
-                config.intermediate_bucket.format(date="{{ ds }}", fn="orders_gathered"),
+                config.intermediate_bucket.format(date="{{ ds }}", fn="orders_pre_processed"),
                 "--previousIntegrated",
                 config.integrated_bucket.format(date="{{ yesterday_ds }}", fn="orders"),
                 "--contactPersonInputFile",
@@ -139,7 +140,7 @@ with DAG(
             "parameters": [
                 "--orderLineInputFile",
                 config.intermediate_bucket.format(
-                    date="{{ ds }}", fn="orderlines_gathered"
+                    date="{{ ds }}", fn="orderlines_pre_processed"
                 ),
                 "--previousIntegrated",
                 config.integrated_bucket.format(

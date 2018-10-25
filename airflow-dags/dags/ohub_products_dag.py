@@ -31,6 +31,7 @@ with DAG(
             wasb_conn_id=config.wasb_conn_id,
             ingested_bucket=config.ingested_bucket,
             intermediate_bucket=config.intermediate_bucket,
+            integrated_bucket=config.integrated_bucket,
         )
         .has_export_to_acm(
             acm_schema_name="PRODUCTS",
@@ -60,7 +61,7 @@ with DAG(
             "parameters": [
                 "--productsInputFile",
                 config.intermediate_bucket.format(
-                    date="{{ ds }}", fn=f"{entity}_gathered"
+                    date="{{ ds }}", fn=f"{entity}_pre_processed"
                 ),
                 "--previousIntegrated",
                 config.integrated_bucket.format(date="{{ yesterday_ds }}", fn=entity),

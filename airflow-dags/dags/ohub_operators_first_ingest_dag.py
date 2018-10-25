@@ -55,7 +55,7 @@ with DAG(
     fuzzy_matching: SubPipeline = generic.construct_fuzzy_matching_pipeline(
         match_py="dbfs:/libraries/name_matching/match_operators.py",
         ingest_input=config.intermediate_bucket.format(
-            date="{{ ds }}", fn=f"{entity}_gathered"
+            date="{{ ds }}", fn=f"{entity}_pre_processed"
         ),
         ohub_country_codes=config.ohub_country_codes,
         string_matching_egg=config.string_matching_egg,

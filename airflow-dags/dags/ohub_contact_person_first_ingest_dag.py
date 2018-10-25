@@ -72,7 +72,7 @@ with DAG(
             "parameters": [
                 "--inputFile",
                 config.intermediate_bucket.format(
-                    date="{{ ds }}", fn=f"{entity}_gathered"
+                    date="{{ ds }}", fn=f"{entity}_pre_processed"
                 ),
                 "--exactMatchOutputFile",
                 config.intermediate_bucket.format(

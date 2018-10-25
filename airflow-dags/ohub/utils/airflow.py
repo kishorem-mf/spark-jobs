@@ -138,6 +138,7 @@ class GenericPipeline(object):
         wasb_conn_id: str,
         ingested_bucket: str,
         intermediate_bucket: str,
+        integrated_bucket: str,
     ):
         self._clazz = class_prefix
         self._dag_config = dag_config
@@ -148,6 +149,7 @@ class GenericPipeline(object):
         self._wasb_conn_id = wasb_conn_id
         self._ingested_bucket = ingested_bucket
         self._intermediate_bucket = intermediate_bucket
+        self._integrated_bucket = integrated_bucket
 
         self._exports: List[SubPipeline] = []
         self._ingests: List[SubPipeline] = []
@@ -365,21 +367,23 @@ class GenericPipeline(object):
             bash_command='echo "end ingesting"',
         )
 
-        gather = DatabricksSubmitRunOperator(
-            task_id=f"{self._dag_config.entity}_gather",
+        pre_processing = DatabricksSubmitRunOperator(
+            task_id=f"{entity}_pre_processed",
             cluster_name=self._cluster_config['cluster_name'],
             databricks_conn_id=self._databricks_conn_id,
             libraries=[{"jar": self._spark_jobs_jar}],
             spark_jar_task={
-                "main_class_name": f"com.unilever.ohub.spark.ingest.GatherJob",
+                "main_class_name": f"com.unilever.ohub.spark.merging.{self._clazz}PreProcess",
                 "parameters": [
-                    "--input",
+                    "--integratedInputFile",
+                    self._integrated_bucket.format(date="{{ yesterday_ds }}", fn=entity),
+                    "--deltaInputFile",
                     self._ingested_bucket.format(
                         date="{{ ds }}", channel="*", fn=self._dag_config.entity
                     ),
-                    "--output",
+                    "--deltaPreProcessedOutputFile",
                     self._intermediate_bucket.format(
-                        date="{{ ds }}", fn=f"{self._dag_config.entity}_gathered"
+                        date="{{ ds }}", fn=f"{entity}_pre_processed"
                     ),
                 ],
             },
@@ -408,12 +412,12 @@ class GenericPipeline(object):
             start_pipeline >> start_ingest
 
         start_ingest >> cluster_up
-        gather >> end_ingest
+        pre_processing >> end_ingest
 
         t: SubPipeline
         for t in self._ingests:
             cluster_up >> t.first_task
-            t.last_task >> gather
+            t.last_task >> pre_processing
 
         return SubPipeline(start_pipeline, end_ingest)
 

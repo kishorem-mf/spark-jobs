@@ -101,7 +101,6 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
 
     val domainEntities = if (config.deduplicateOnConcatId) {
       domainEntitiesMapped
-        .withColumn("ohubCreated", min(domainEntitiesMapped("ohubCreated")).over(w))
         .withColumn("rn", row_number.over(w))
         .filter($"rn" === 1)
         .drop($"rn")

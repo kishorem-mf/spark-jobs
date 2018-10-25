@@ -112,7 +112,7 @@ with DAG(
             "parameters": [
                 "--orderInputFile",
                 config.intermediate_bucket.format(
-                    date="{{ ds }}", fn=f"{orders_entity}_gathered"
+                    date="{{ ds }}", fn=f"{orders_entity}_pre_processed"
                 ),
                 "--contactPersonInputFile",
                 config.integrated_bucket.format(date="{{ ds }}", fn="contactpersons"),
@@ -150,7 +150,7 @@ with DAG(
             storage_account="ulohub2storedevne",
             container="prod",
             date="{{ ds }}",
-            fn=f"{orderlines_entity}_gathered",
+            fn=f"{orderlines_entity}_pre_processed",
         ),
     )
 

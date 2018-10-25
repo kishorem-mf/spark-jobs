@@ -50,7 +50,7 @@ with DAG(
             "parameters": [
                 "--subscriptionInputFile",
                 config.intermediate_bucket.format(
-                    date="{{ ds }}", fn=f"{entity}_gathered"
+                    date="{{ ds }}", fn=f"{entity}_pre_processed"
                 ),
                 "--contactPersonInputFile",
                 config.integrated_bucket.format(date="{{ ds }}", fn="contactpersons"),

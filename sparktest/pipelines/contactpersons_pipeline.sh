@@ -20,7 +20,6 @@ DATA_CONTACTPERSONS_INTEGRATED_INPUT="${DATA_ROOT_DIR}input/integrated/contactpe
 DATA_CONTACTPERSONS_RAW="${RAW_CONTACTPERSONS_INPUT_PATH}*.csv"
 DATA_CONTACTPERSONS_INGESTED="${DATA_ROOT_DIR}ingested/common/contactpersons.parquet"
 DATA_CONTACTPERSONS_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/contactpersons"
-DATA_CONTACTPERSONS_GATHERED="${DATA_ROOT_DIR}intermediate/contactpersons_gathered.parquet"
 DATA_CONTACTPERSONS_PRE_PROCESSED="${DATA_ROOT_DIR}intermediate/contactpersons_pre_processed.parquet"
 DATA_CONTACTPERSONS_EXACT_MATCHES="${DATA_ROOT_DIR}intermediate/contactpersons_exact_matches.parquet"
 DATA_CONTACTPERSONS_UNMATCHED_INTEGRATED="${DATA_ROOT_DIR}intermediate/contactpersons_unmatched_integrated.parquet"
@@ -40,13 +39,9 @@ spark-submit   --class="com.unilever.ohub.spark.ingest.common.ContactPersonConve
                --outputFile=${DATA_CONTACTPERSONS_INGESTED} \
                --fieldSeparator=";" --strictIngestion="false" --deduplicateOnConcatId="true"
 
-spark-submit   --class="com.unilever.ohub.spark.ingest.GatherJob" ${SPARK_JOBS_JAR} \
-               --input=${DATA_CONTACTPERSONS_INGESTED} \
-               --output=${DATA_CONTACTPERSONS_GATHERED}
-
 spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonPreProcess" ${SPARK_JOBS_JAR} \
                --integratedInputFile=${DATA_CONTACTPERSONS_INTEGRATED_INPUT} \
-               --deltaInputFile=${DATA_CONTACTPERSONS_GATHERED} \
+               --deltaInputFile=${DATA_CONTACTPERSONS_INGESTED} \
                --deltaPreProcessedOutputFile=${DATA_CONTACTPERSONS_PRE_PROCESSED}
 
 spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonIntegratedExactMatch" ${SPARK_JOBS_JAR} \

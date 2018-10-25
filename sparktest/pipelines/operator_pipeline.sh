@@ -18,6 +18,7 @@ PYTHON_MATCH_OPERATORS=${ARTEFACTS_DIR}name-matching/main/$MATCH_OPERATORS
 DATA_OPERATORS_INTEGRATED_INPUT="${DATA_ROOT_DIR}input/integrated/operators"
 DATA_OPERATORS_RAW="${RAW_OPERATORS_INPUT_PATH}*.csv"
 DATA_OPERATORS_INGESTED="${DATA_ROOT_DIR}ingested/common/operators.parquet"
+DATA_OPERATORS_PRE_PROCESSED="${DATA_ROOT_DIR}intermediate/operators_pre_processed.parquet"
 DATA_OPERATORS_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/operators"
 DATA_OPERATORS_UPDATED_INTEGRATED="${DATA_ROOT_DIR}intermediate/operators_fuzzy_matched_delta_integrated.parquet"
 DATA_OPERATORS_DELTA_LEFT_OVERS="${DATA_ROOT_DIR}intermediate/operators_delta_left_overs.parquet"
@@ -33,9 +34,14 @@ spark-submit   --class="com.unilever.ohub.spark.ingest.common.OperatorConverter"
                --outputFile=${DATA_OPERATORS_INGESTED} \
                --fieldSeparator=";" --strictIngestion="false" --deduplicateOnConcatId="true"
 
+spark-submit   --class="com.unilever.ohub.spark.merging.OperatorPreProcess" ${SPARK_JOBS_JAR} \
+               --integratedInputFile=${DATA_OPERATORS_INTEGRATED_INPUT} \
+               --deltaInputFile=${DATA_OPERATORS_INGESTED} \
+               --deltaPreProcessedOutputFile=${DATA_OPERATORS_PRE_PROCESSED}
+
 spark-submit   --py-files=${SPARK_JOBS_EGG} ${PYTHON_DELTA_OPERATORS} \
                --integrated_input_path=${DATA_OPERATORS_INTEGRATED_INPUT} \
-               --ingested_daily_input_path=${DATA_OPERATORS_INGESTED} \
+               --ingested_daily_input_path=${DATA_OPERATORS_PRE_PROCESSED} \
                --updated_integrated_output_path=${DATA_OPERATORS_UPDATED_INTEGRATED} \
                --unmatched_output_path=${DATA_OPERATORS_DELTA_LEFT_OVERS} \
                --country_code="DE"

@@ -64,7 +64,7 @@ with DAG(
             storage_account="ulohub2storedevne",
             container="prod",
             date="{{ ds }}",
-            fn=f"{entity}_gathered",
+            fn=f"{entity}_pre_processed",
         ),
     )
 
