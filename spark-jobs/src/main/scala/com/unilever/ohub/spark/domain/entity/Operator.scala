@@ -4,14 +4,9 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
-import com.unilever.ohub.spark.domain.constraint._
 
 object Operator {
-  val otmEnum = Set("A", "B", "C", "D", "E", "F")
-  val otmConstraint = FiniteDiscreteSetConstraint("otm", otmEnum)
   val customerType = "OPERATOR"
-  val daysOpenRange: Range.Inclusive = Range.inclusive(0, 7)
-  val weeksClosedRange: Range.Inclusive = Range.inclusive(0, 52)
 }
 
 case class Operator(
@@ -86,16 +81,4 @@ case class Operator(
     // other fields
     additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]
-) extends DomainEntity {
-  import Operator._
-
-  // TODO refine...what's the minimal amount of constraints needed before an operator should be accepted
-
-  emailAddress.foreach(EmailAddressConstraint.validate)
-
-  // days open en weeks closed
-  daysOpen.foreach(NumberOfDaysConstraint.validate)
-  weeksClosed.foreach(NumberOfWeeksConstraint.validate)
-
-  otm.foreach(otmConstraint.validate)
-}
+) extends DomainEntity

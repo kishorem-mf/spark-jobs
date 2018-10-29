@@ -8,7 +8,6 @@ import cats.syntax.option._
 
 object Order {
   val customerType = "ORDER"
-  val typeEnum = Set("MERCHANDISE", "DIRECT", "SAMPLE", "EVENT", "SSD", "TRANSFER", "WEB", "BIN", "OTHER", "WEBSHOP", "APPSHOP", "UNKNOWN")
 }
 
 case class Order(
@@ -61,5 +60,4 @@ case class Order(
     // other fields
     additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]
-) extends DomainEntity {
-}
+) extends DomainEntity

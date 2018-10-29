@@ -2,8 +2,11 @@ package com.unilever.ohub.spark.ingest.common
 
 import java.sql.Timestamp
 
+import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.domain.entity.ContactPerson
-import com.unilever.ohub.spark.ingest.{ CsvDomainConfig, CsvDomainGateKeeperSpec }
+import com.unilever.ohub.spark.ingest.{ CsvDomainConfig, CsvDomainGateKeeperSpec, TestDomainDataProvider }
+import com.unilever.ohub.spark.storage.DefaultStorage
+import org.apache.spark.sql.Dataset
 
 class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] {
 
@@ -28,7 +31,6 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
             isActive = true,
             isGoldenRecord = false,
             ohubId = None,
-            name = "John Williams",
             sourceEntityId = "AB123",
             sourceName = "WUFOO",
             ohubCreated = actualContactPerson.ohubCreated,
@@ -54,9 +56,9 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
             isKeyDecisionMaker = Some(true),
             standardCommunicationChannel = Some("Mobile"),
             emailAddress = Some("jwilliams@downunder.au"),
-            phoneNumber = Some("61396621811"),
-            mobileNumber = Some("61612345678"),
-            faxNumber = Some("61396621811"),
+            phoneNumber = Some("+61 3 9662 1811"),
+            mobileNumber = Some("+61 6 1234 5678"),
+            faxNumber = Some("+61 3 9662 1811"),
             hasGeneralOptOut = Some(true),
             hasConfirmedRegistration = Some(true),
             confirmedRegistrationDate = Some(Timestamp.valueOf("2015-09-30 14:23:00.0")),
@@ -83,6 +85,20 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
 
         actualContactPerson shouldBe expectedContactPerson
       }
+    }
+
+    it("should write a contact person parquet correctly from an emtpy csv input and remain readable") {
+      import spark.implicits._
+
+      val inputFile = "src/test/resources/empty.csv"
+      val outputFile = "src/test/resources/output/contact_person_with_schema.parquet"
+      val config = CsvDomainConfig(inputFile = inputFile, outputFile = outputFile, fieldSeparator = "‰")
+      val storage = new DefaultStorage(spark)
+
+      SUT.run(spark, config, storage, TestDomainDataProvider())
+
+      val result: Dataset[ContactPerson] = storage.readFromParquet[ContactPerson](outputFile)
+      result.collect().toSeq shouldBe Seq[ContactPerson]()
     }
   }
 }

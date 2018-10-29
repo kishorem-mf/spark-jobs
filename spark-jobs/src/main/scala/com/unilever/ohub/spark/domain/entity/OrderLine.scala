@@ -38,5 +38,4 @@ case class OrderLine(
     // other fields
     additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]
-) extends DomainEntity {
-}
+) extends DomainEntity

@@ -24,7 +24,6 @@ trait TestContactPersons {
     isActive = true,
     isGoldenRecord = false,
     ohubId = Some(UUID.randomUUID().toString),
-    name = "John Williams",
     sourceEntityId = "AB123",
     sourceName = "WUFOO",
     ohubCreated = Timestamp.valueOf("2015-06-30 13:49:00.0"),

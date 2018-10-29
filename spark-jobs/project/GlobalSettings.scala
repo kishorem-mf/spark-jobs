@@ -43,7 +43,7 @@ object GlobalSettings extends AutoPlugin {
   lazy val scoverageSettings: Seq[Setting[_]] = Seq(
     // Scoverage settings
     coverageExcludedPackages := "<empty>",
-    coverageMinimum := 70.0,
+    coverageMinimum := 60.0,
     coverageFailOnMinimum := true
   )
 

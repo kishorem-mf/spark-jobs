@@ -99,6 +99,4 @@ case class Product(
     // other fields
     additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]
-) extends DomainEntity {
-  // TODO refine...what's the minimal amount of constraints needed before a product should be accepted
-}
+) extends DomainEntity

@@ -68,12 +68,12 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
           isOpenOnWednesday = Some(true),
           isPrivateHousehold = None,
           kitchenType = None,
-          mobileNumber = Some("905356800669"),
+          mobileNumber = Some("05356800669"),
           netPromoterScore = Some(BigDecimal("0")),
           oldIntegrationId = None,
           otm = None,
           otmEnteredBy = None,
-          phoneNumber = Some("902523854478"),
+          phoneNumber = Some("0252 3854478"),
           region = Some("Mugla"),
           salesRepresentative = Some("Bodrum (Vacant)"),
           state = Some("Bodrum"),
@@ -91,6 +91,24 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
         )
 
         actualOperator shouldBe expectedOperator
+      }
+    }
+
+    it("should select the latest operator based on dateUpdated") {
+      val inputFile = "src/test/resources/COMMON_OPERATORS_DUPLICATES.csv"
+      val config = CsvDomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = ";")
+
+      runJobWith(config) { actualDataSet ⇒
+        actualDataSet.count() shouldBe 2
+
+        val res = actualDataSet.collect
+
+        val emptyDateUpdated = res.filter(_.countryCode == "NZ")
+        emptyDateUpdated.length shouldBe 1
+
+        val filledDateUpdated = res.filter(_.countryCode == "AU")
+        filledDateUpdated.length shouldBe 1
+        filledDateUpdated.head.street shouldBe Some("Some street")
       }
     }
   }
