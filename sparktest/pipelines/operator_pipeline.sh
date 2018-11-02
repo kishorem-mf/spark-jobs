@@ -5,7 +5,7 @@ echo "running operator data pipeline"
 ARTEFACTS_DIR="/usr/local/artefacts/"
 DATA_ROOT_DIR="/usr/local/data/"
 
-RAW_OPERATORS_INPUT_PATH="${DATA_ROOT_DIR}raw/operators/common/"
+RAW_OPERATORS_INPUT_PATH="${DATA_ROOT_DIR}raw/operators/"
 
 DELTA_OPERATORS="delta_operators.py"
 MATCH_OPERATORS="match_operators.py"

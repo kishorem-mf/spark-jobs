@@ -50,7 +50,7 @@ class OrderLineDispatcherConverterSpec extends SparkJobSpec with TestOrderLines 
         COUNTRY_CODE = "country-code",
         UNIT_PRICE_CURRENCY = none,
         DELETE_FLAG = true,
-        LOYALTY_POINTS = 123L,
+        LOYALTY_POINTS = BigDecimal("123"),
         ODS_CREATED = "2015-06-30 13:49:00",
         ODS_UPDATED = "2015-06-30 13:49:00",
         ORD_INTEGRATION_ID = "order-concat-id",

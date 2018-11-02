@@ -33,7 +33,7 @@ case class DispatcherOrderLine(
     COUNTRY_CODE: String,
     UNIT_PRICE_CURRENCY: Option[String],
     DELETE_FLAG: Boolean,
-    LOYALTY_POINTS: Option[Long],
+    LOYALTY_POINTS: Option[BigDecimal],
     ODS_CREATED: String,
     ODS_UPDATED: String,
     ORD_INTEGRATION_ID: String,

@@ -4,7 +4,6 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
-import com.unilever.ohub.spark.domain.constraint.ConcatIdConstraintTypes.SourceEntityId
 
 object OrderLine {
   val customerType = "ORDERLINE"
@@ -27,13 +26,13 @@ case class OrderLine(
     // specific fields
     orderConcatId: String,
     productConcatId: String,
-    quantityOfUnits: Long,
+    quantityOfUnits: Int,
     amount: BigDecimal,
     pricePerUnit: Option[BigDecimal],
     currency: Option[String],
     comment: Option[String],
     campaignLabel: Option[String],
-    loyaltyPoints: Option[Long],
+    loyaltyPoints: Option[BigDecimal],
     productOhubId: Option[String],
     // other fields
     additionalFields: Map[String, String],

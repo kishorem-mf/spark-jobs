@@ -14,5 +14,4 @@ Next you can run the docker image with
     sparktest bash -c "/usr/local/pipelines/all_pipelines.sh;pytest /usr/local/it-test/tests/"
 ```
 
-Then it will run the data pipelines for _operators_ and _contactpersons_.
-And finally it runs the integration test suite to verify the results.
+Then it will run all the data pipelines and finally it runs the integration test suite to verify the results.

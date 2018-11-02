@@ -4,7 +4,6 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
-import cats.syntax.option._
 
 object Order {
   val customerType = "ORDER"
@@ -40,23 +39,23 @@ case class Order(
     transactionDate: Timestamp,
     vat: Option[BigDecimal],
     // invoice address
-    invoiceOperatorName: Option[String] = none,
-    invoiceOperatorStreet: Option[String] = none,
-    invoiceOperatorHouseNumber: Option[String] = none,
-    invoiceOperatorHouseNumberExtension: Option[String] = none,
-    invoiceOperatorZipCode: Option[String] = none,
-    invoiceOperatorCity: Option[String] = none,
-    invoiceOperatorState: Option[String] = none,
-    invoiceOperatorCountry: Option[String] = none,
+    invoiceOperatorName: Option[String],
+    invoiceOperatorStreet: Option[String],
+    invoiceOperatorHouseNumber: Option[String],
+    invoiceOperatorHouseNumberExtension: Option[String],
+    invoiceOperatorZipCode: Option[String],
+    invoiceOperatorCity: Option[String],
+    invoiceOperatorState: Option[String],
+    invoiceOperatorCountry: Option[String],
     // delivery address
-    deliveryOperatorName: Option[String] = none,
-    deliveryOperatorStreet: Option[String] = none,
-    deliveryOperatorHouseNumber: Option[String] = none,
-    deliveryOperatorHouseNumberExtension: Option[String] = none,
-    deliveryOperatorZipCode: Option[String] = none,
-    deliveryOperatorCity: Option[String] = none,
-    deliveryOperatorState: Option[String] = none,
-    deliveryOperatorCountry: Option[String] = none,
+    deliveryOperatorName: Option[String],
+    deliveryOperatorStreet: Option[String],
+    deliveryOperatorHouseNumber: Option[String],
+    deliveryOperatorHouseNumberExtension: Option[String],
+    deliveryOperatorZipCode: Option[String],
+    deliveryOperatorCity: Option[String],
+    deliveryOperatorState: Option[String],
+    deliveryOperatorCountry: Option[String],
     // other fields
     additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]

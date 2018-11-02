@@ -13,7 +13,7 @@ SPARK_JOBS_EGG=${ARTEFACTS_DIR}name-matching/egg/string_matching.egg
 PYTHON_DELTA_CONTACTS=${ARTEFACTS_DIR}name-matching/main/${DELTA_CONTACTS}
 PYTHON_MATCH_CONTACTS=${ARTEFACTS_DIR}name-matching/main/${MATCH_CONTACTS}
 
-RAW_CONTACTPERSONS_INPUT_PATH="${DATA_ROOT_DIR}raw/contactpersons/common/"
+RAW_CONTACTPERSONS_INPUT_PATH="${DATA_ROOT_DIR}raw/contactpersons/"
 
 DATA_OPERATORS_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/operators"
 DATA_CONTACTPERSONS_INTEGRATED_INPUT="${DATA_ROOT_DIR}input/integrated/contactpersons"

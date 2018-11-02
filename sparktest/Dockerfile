@@ -17,14 +17,7 @@ RUN mkdir -p $NAME_MATCHING_MAIN_ARTEFACTS_DIR
 
 # copy test input data
 ARG DATA_ROOT_DIR=/usr/local/data/
-# operators
-ARG RAW_OPERATORS_INPUT_PATH=${DATA_ROOT_DIR}raw/operators/common/
-RUN mkdir -p $RAW_OPERATORS_INPUT_PATH
-COPY data/operators/* $RAW_OPERATORS_INPUT_PATH
-# contactpersons
-ARG RAW_CONTACTPERSONS_INPUT_PATH=${DATA_ROOT_DIR}raw/contactpersons/common/
-RUN mkdir -p $RAW_CONTACTPERSONS_INPUT_PATH
-COPY data/contactpersons/* $RAW_CONTACTPERSONS_INPUT_PATH
+COPY data $DATA_ROOT_DIR
 
 # copy data pipelines
 ARG DATA_PIPELINE_SCRIPTS_DIR=/usr/local/pipelines/

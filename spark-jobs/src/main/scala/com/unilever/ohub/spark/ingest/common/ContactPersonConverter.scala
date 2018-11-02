@@ -33,7 +33,7 @@ object ContactPersonConverter extends CommonDomainGateKeeper[ContactPerson] with
       dateCreated                   =   optional(   "dateCreated",                    "dateCreated",                  parseDateTimeUnsafe()              ),
       dateUpdated                   =   optional(   "dateUpdated",                    "dateUpdated",                  parseDateTimeUnsafe()              ),
       operatorConcatId              = operatorConcatId                                                                                                    ,
-      operatorOhubId                = Option.empty,  // set in ContactPersonMatchingJoiner
+      operatorOhubId                = Option.empty,  // set in ContactPersonReferencing
       oldIntegrationId              =   optional(   "oldIntegrationId",               "oldIntegrationId"                                                 ),
       firstName                     =   optional(   "firstName",                      "firstName"                                                        ),
       lastName                      =   optional(   "lastName",                       "lastName"                                                         ),
@@ -75,7 +75,7 @@ object ContactPersonConverter extends CommonDomainGateKeeper[ContactPerson] with
       hasMobileOptOut               =   optional(   "hasMobileOptOut",                "hasMobileOptOut",              toBoolean                          ),
       hasFaxOptIn                   =   optional(   "hasFaxOptIn",                    "hasFaxOptIn",                  toBoolean                          ),
       hasFaxOptOut                  =   optional(   "hasFaxOptOut",                   "hasFaxOptOut",                 toBoolean                          ),
-      webUpdaterId                  = Option.empty,
+      webUpdaterId                  = Option.empty, // TODO what to do with this one?
       additionalFields              = additionalFields,
       ingestionErrors               = errors
     )

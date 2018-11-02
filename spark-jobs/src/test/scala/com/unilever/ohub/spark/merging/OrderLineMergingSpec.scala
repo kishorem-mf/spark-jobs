@@ -1,12 +1,11 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.TestOrderLines
+import com.unilever.ohub.spark.domain.entity.{ OrderLine, Product, TestOrderLines, TestProducts }
 import org.apache.spark.sql.Dataset
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.domain.entity.OrderLine
 
-class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines {
+class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestProducts {
 
   import spark.implicits._
 
@@ -58,7 +57,9 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines {
         newRecord
       ))
 
-      val result = SUT.transform(spark, input, previous)
+      val products: Dataset[Product] = Seq[Product]().toDataset
+
+      val result = SUT.transform(spark, input, previous, products)
         .collect()
         .sortBy(_.countryCode)
 
@@ -70,6 +71,53 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines {
       result(4).countryCode shouldBe "updated"
       result(4).comment shouldBe Some("Unox")
       result(4).ohubId shouldBe Some("oldId")
+    }
+
+    it("should set the reference to the righ productOhubId") {
+      val productConcatId = "NL~SNL~prod1"
+      val productOhubId = "product-ohub-id"
+
+      val recordWithValidProductConcatId = defaultOrderLine.copy(
+        isGoldenRecord = true,
+        ohubId = Some("oldId"),
+        countryCode = "withProductId",
+        concatId = s"withProductId~${defaultOrderLine.sourceName}~${defaultOrderLine.sourceEntityId}",
+        productConcatId = productConcatId,
+        productOhubId = None,
+        comment = Some("Calve"))
+
+      val recordWithUnknownProductConcatId = defaultOrderLine.copy(
+        isGoldenRecord = true,
+        ohubId = Some("oldId"),
+        countryCode = "withoutProductId",
+        concatId = s"withoutProductId~${defaultOrderLine.sourceName}~${defaultOrderLine.sourceEntityId}",
+        productConcatId = "unknown-product-id",
+        productOhubId = None,
+        comment = Some("Calve"))
+
+      val previous: Dataset[OrderLine] = spark.createDataset(Seq())
+      val input: Dataset[OrderLine] = spark.createDataset(Seq(
+        recordWithValidProductConcatId,
+        recordWithUnknownProductConcatId
+      ))
+
+      val products: Dataset[Product] = Seq[Product](
+        defaultProduct.copy(
+          countryCode = "NL",
+          sourceName = "SNL",
+          sourceEntityId = "prod1",
+          concatId = productConcatId,
+          ohubId = Some(productOhubId)
+        )
+      ).toDataset
+
+      SUT
+        .transform(spark, input, previous, products)
+        .collect()
+        .map(r ⇒ r.countryCode -> r.productOhubId).toMap shouldBe Map(
+          "withProductId" -> Some(productOhubId),
+          "withoutProductId" -> None
+        )
     }
   }
 }

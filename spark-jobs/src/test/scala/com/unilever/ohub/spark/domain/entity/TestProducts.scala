@@ -81,7 +81,6 @@ trait TestProducts {
     portionUnit = None,
     preparation = None,
     productCodes = List.empty,
-    productId = None,
     productType = None,
     solutionCopy = None,
     subBrandCode = None,

@@ -11,7 +11,7 @@ import scopt.OptionParser
 
 case class SubscriptionMergingConfig(
     contactPersonInputFile: String = "contact-person-input-file",
-    previousIntegrated: Option[String] = None,
+    previousIntegrated: String = "previous-integrated-subscriptions",
     subscriptionInputFile: String = "subscription-input-file",
     outputFile: String = "path-to-output-file"
 ) extends SparkJobConfig
@@ -62,7 +62,7 @@ object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] {
         c.copy(subscriptionInputFile = x)
       } text "subscriptionInputFile is a string property"
       opt[String]("previousIntegrated") optional () action { (x, c) ⇒
-        c.copy(previousIntegrated = Some(x))
+        c.copy(previousIntegrated = x)
       } text "previousIntegrated is a string property"
       opt[String]("outputFile") required () action { (x, c) ⇒
         c.copy(outputFile = x)
@@ -82,12 +82,7 @@ object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] {
 
     val subscriptionRecords = storage.readFromParquet[Subscription](config.subscriptionInputFile)
     val contactPersonRecords = storage.readFromParquet[ContactPerson](config.contactPersonInputFile)
-    val previousIntegrated = config.previousIntegrated match {
-      case Some(s) ⇒ storage.readFromParquet[Subscription](s)
-      case None ⇒
-        log.warn(s"No existing integrated file specified -- regarding as initial load.")
-        spark.emptyDataset[Subscription]
-    }
+    val previousIntegrated = storage.readFromParquet[Subscription](config.previousIntegrated)
 
     val transformed = transform(spark, subscriptionRecords, previousIntegrated, contactPersonRecords)
 

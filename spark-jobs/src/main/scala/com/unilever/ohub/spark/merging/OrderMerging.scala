@@ -10,7 +10,7 @@ import scopt.OptionParser
 case class OrderMergingConfig(
     contactPersonInputFile: String = "contact-person-input-file",
     operatorInputFile: String = "operator-input-file",
-    previousIntegrated: Option[String] = None,
+    previousIntegrated: String = "previous-integrated-orders",
     orderInputFile: String = "order-input-file",
     outputFile: String = "path-to-output-file"
 ) extends SparkJobConfig
@@ -71,7 +71,7 @@ object OrderMerging extends SparkJob[OrderMergingConfig] {
         c.copy(orderInputFile = x)
       } text "orderInputFile is a string property"
       opt[String]("previousIntegrated") optional () action { (x, c) ⇒
-        c.copy(previousIntegrated = Some(x))
+        c.copy(previousIntegrated = x)
       } text "previousIntegrated is a string property"
       opt[String]("outputFile") required () action { (x, c) ⇒
         c.copy(outputFile = x)
@@ -92,12 +92,7 @@ object OrderMerging extends SparkJob[OrderMergingConfig] {
     val orderRecords = storage.readFromParquet[Order](config.orderInputFile)
     val operatorRecords = storage.readFromParquet[Operator](config.operatorInputFile)
     val contactPersonRecords = storage.readFromParquet[ContactPerson](config.contactPersonInputFile)
-    val previousIntegrated = config.previousIntegrated match {
-      case Some(s) ⇒ storage.readFromParquet[Order](s)
-      case None ⇒
-        log.warn(s"No existing integrated file specified -- regarding as initial load.")
-        spark.emptyDataset[Order]
-    }
+    val previousIntegrated = storage.readFromParquet[Order](config.previousIntegrated)
 
     val transformed = transform(spark, orderRecords, previousIntegrated, operatorRecords, contactPersonRecords)
 
