@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.ingest
 
-import com.unilever.ohub.spark.{ DomainDataProvider, InMemDomainDataProvider, SparkJob, SparkJobConfig }
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql._
@@ -35,20 +35,16 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
 
   protected def toDomainEntity: DomainTransformer ⇒ RowType ⇒ DomainType
 
-  protected def postValidate: DomainDataProvider ⇒ DomainEntity ⇒ Unit = dataProvider ⇒ DomainEntity.postConditions(dataProvider)
-
   private[spark] def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit
 
   protected def read(spark: SparkSession, storage: Storage, config: Config): Dataset[RowType]
 
-  private def transform(dataProvider: DomainDataProvider)(
-    transformFn: DomainTransformer ⇒ RowType ⇒ DomainType,
-    postValidateFn: DomainDataProvider ⇒ DomainEntity ⇒ Unit
+  private def transform(
+    transformFn: DomainTransformer ⇒ RowType ⇒ DomainType
   ): RowType ⇒ Either[ErrorMessage, DomainType] =
     row ⇒
       try {
-        val entity = transformFn(DomainTransformer(dataProvider))(row)
-        postValidateFn(dataProvider)(entity)
+        val entity = transformFn(DomainTransformer())(row)
         Right(entity)
       } catch {
         case e: Throwable ⇒
@@ -56,11 +52,6 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
       }
 
   override def run(spark: SparkSession, config: Config, storage: Storage): Unit = {
-    val dataProvider = new InMemDomainDataProvider(spark)
-    run(spark, config, storage, dataProvider)
-  }
-
-  def run(spark: SparkSession, config: Config, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     import spark.implicits._
 
     def handleErrors(config: Config, result: Dataset[Either[ErrorMessage, DomainType]]): Unit = {
@@ -89,7 +80,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
 
     val result = read(spark, storage, config)
       .map {
-        transform(dataProvider)(toDomainEntity, postValidate)
+        transform(toDomainEntity)
       }
 
     handleErrors(config, result)

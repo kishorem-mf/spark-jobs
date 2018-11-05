@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.domain.entity.ContactPerson
-import com.unilever.ohub.spark.ingest.{ CsvDomainConfig, CsvDomainGateKeeperSpec, TestDomainDataProvider }
+import com.unilever.ohub.spark.ingest.{ CsvDomainConfig, CsvDomainGateKeeperSpec }
 import com.unilever.ohub.spark.storage.DefaultStorage
 import org.apache.spark.sql.Dataset
 
@@ -95,7 +95,7 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
       val config = CsvDomainConfig(inputFile = inputFile, outputFile = outputFile, fieldSeparator = "‰")
       val storage = new DefaultStorage(spark)
 
-      SUT.run(spark, config, storage, TestDomainDataProvider())
+      SUT.run(spark, config, storage)
 
       val result: Dataset[ContactPerson] = storage.readFromParquet[ContactPerson](outputFile)
       result.collect().toSeq shouldBe Seq[ContactPerson]()

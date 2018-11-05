@@ -15,7 +15,6 @@ object ContactPersonConverter extends CommonDomainGateKeeper[ContactPerson] with
 
     val countryCode       = mandatoryValue("countryCode", "countryCode")(row)
     val concatId          = createConcatId("countryCode", "sourceName", "sourceEntityId")
-    val operatorConcatId  = createConcatId("countryCode", "sourceName", "operatorRefId")
     val ohubCreated       = currentTimestamp()
 
     // fieldName                        mandatory   sourceFieldName                   targetFieldName                 transformationFunction (unsafe)
@@ -32,7 +31,7 @@ object ContactPersonConverter extends CommonDomainGateKeeper[ContactPerson] with
       isActive                      =   mandatory(	"isActive",                       "isActive",                     toBoolean                          ),
       dateCreated                   =   optional(   "dateCreated",                    "dateCreated",                  parseDateTimeUnsafe()              ),
       dateUpdated                   =   optional(   "dateUpdated",                    "dateUpdated",                  parseDateTimeUnsafe()              ),
-      operatorConcatId              = operatorConcatId                                                                                                    ,
+      operatorConcatId              =   mandatory(  "operatorConcatId",               "operatorConcatId"                                                 ),
       operatorOhubId                = Option.empty,  // set in ContactPersonReferencing
       oldIntegrationId              =   optional(   "oldIntegrationId",               "oldIntegrationId"                                                 ),
       firstName                     =   optional(   "firstName",                      "firstName"                                                        ),

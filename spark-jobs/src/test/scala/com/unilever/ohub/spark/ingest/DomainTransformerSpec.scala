@@ -11,7 +11,7 @@ import com.unilever.ohub.spark.ingest.DomainTransformer.ZERO_WIDTH_NO_BREAK_SPAC
 
 class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
 
-  val domainTransformer = DomainTransformer(TestDomainDataProvider())
+  val domainTransformer = DomainTransformer()
   val domainFieldName = "domain-field-name"
   val originalColumnName = "original"
 

@@ -2,13 +2,10 @@ package com.unilever.ohub.spark.ingest
 
 import java.sql.Timestamp
 
-import com.unilever.ohub.spark.DomainDataProvider
 import com.unilever.ohub.spark.domain.DomainEntity
 import org.apache.spark.sql.Row
 
 trait DomainTransformFunctions { self: DomainTransformer ⇒
-
-  def dataProvider: DomainDataProvider
 
   def createConcatId(countryCodeColumn: String, sourceNameColumn: String, sourceEntityIdColumn: String)(implicit row: Row): String = {
     val countryCode: String = optionalValue(countryCodeColumn)(row).get
