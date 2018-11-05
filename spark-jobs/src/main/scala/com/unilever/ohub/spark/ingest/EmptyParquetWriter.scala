@@ -74,3 +74,30 @@ trait SubscriptionEmptyParquetWriter extends EmptyParquetWriter[Subscription] {
     spark.createDataset[Subscription](Seq[Subscription]())
   }
 }
+
+trait QuestionEmptyParquetWriter extends EmptyParquetWriter[Question] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[Question] = {
+    import spark.implicits._
+
+    spark.createDataset[Question](Seq[Question]())
+  }
+}
+
+trait ActivityEmptyParquetWriter extends EmptyParquetWriter[Activity] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[Activity] = {
+    import spark.implicits._
+
+    spark.createDataset[Activity](Seq[Activity]())
+  }
+}
+
+trait AnswerEmptyParquetWriter extends EmptyParquetWriter[Answer] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[Answer] = {
+    import spark.implicits._
+
+    spark.createDataset[Answer](Seq[Answer]())
+  }
+}

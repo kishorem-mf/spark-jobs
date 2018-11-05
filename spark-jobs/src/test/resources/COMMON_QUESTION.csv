@@ -1,0 +1,2 @@
+countryCode;sourceName;sourceEntityId;concatId;activityConcatId;customerType;dateCreated;dateUpdated;isActive;questionType
+DE;EMAKINA;123;DE~EMAKINA~123;DE~EMAKINA~456;CONTACTPERSON;20171218 10:33:54;20171218 10:33:54;true;question
