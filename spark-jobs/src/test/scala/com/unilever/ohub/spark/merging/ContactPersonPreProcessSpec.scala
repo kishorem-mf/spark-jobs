@@ -23,7 +23,7 @@ class ContactPersonPreProcessSpec extends SparkJobSpec with TestContactPersons {
   private val contactPersonIntegratedInput: Dataset[ContactPerson] =
     Seq(
       personB1,
-      personC2,
+      personC1,
       personD
     ).toDataset
 
@@ -31,7 +31,7 @@ class ContactPersonPreProcessSpec extends SparkJobSpec with TestContactPersons {
     Seq(
       personA,
       personB2,
-      personC1
+      personC2
     ).toDataset
 
   describe("ContactPersonPreProcess") {
@@ -40,14 +40,13 @@ class ContactPersonPreProcessSpec extends SparkJobSpec with TestContactPersons {
         spark, contactPersonIntegratedInput, contactPersonDeltaInput
       )
 
-      result.count() shouldBe 4
+      result.count() shouldBe 3
 
       result.map(cp ⇒ (cp.sourceEntityId, cp.ohubCreated, cp.ohubUpdated)).collect.toSet shouldBe
         Set(
           ("a", Timestamp.valueOf("2018-05-30 20:50:00"), Timestamp.valueOf("2018-05-30 20:50:00")),
-          ("b", Timestamp.valueOf("2018-05-29 20:50:00"), Timestamp.valueOf("2018-05-30 20:50:00")),
-          ("c", Timestamp.valueOf("2018-05-29 20:50:00"), Timestamp.valueOf("2018-05-30 20:50:00")),
-          ("d", Timestamp.valueOf("2018-05-29 20:50:00"), Timestamp.valueOf("2018-05-29 20:50:00"))
+          ("b", Timestamp.valueOf("2018-05-29 20:50:00"), Timestamp.valueOf("2018-05-29 20:50:00")),
+          ("c", Timestamp.valueOf("2018-05-29 20:50:00"), Timestamp.valueOf("2018-05-30 20:50:00"))
         )
     }
   }

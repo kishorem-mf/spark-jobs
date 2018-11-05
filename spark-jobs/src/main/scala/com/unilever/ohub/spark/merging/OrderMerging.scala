@@ -37,7 +37,7 @@ object OrderMerging extends SparkJob[OrderMergingConfig] {
             } else if (integrated == null) {
               order
             } else {
-              order.copy(ohubId = integrated.ohubId, ohubCreated = integrated.ohubCreated)
+              order.copy(ohubId = integrated.ohubId)
             }
         }
 

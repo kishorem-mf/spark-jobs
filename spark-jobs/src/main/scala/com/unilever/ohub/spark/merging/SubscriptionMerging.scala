@@ -6,6 +6,8 @@ import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.entity.{ ContactPerson, Subscription }
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.sql.JoinType
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions.{ collect_list, row_number }
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
@@ -16,8 +18,19 @@ case class SubscriptionMergingConfig(
     outputFile: String = "path-to-output-file"
 ) extends SparkJobConfig
 
+case class ContactPersonConcatIdAndRecord(contactPersonConcatId: String, subscription: Subscription)
+
 // Technically not really subscription MERGING, but we need to update foreign key IDs in the other records
 object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] {
+
+  def setOhubId: Seq[Subscription] ⇒ Seq[Subscription] = subscriptions ⇒ {
+    val ohubId: String = subscriptions
+      .find(_.ohubId.isDefined)
+      .flatMap(_.ohubId)
+      .getOrElse(UUID.randomUUID().toString)
+
+    subscriptions.map(_.copy(ohubId = Some(ohubId)))
+  }
 
   def transform(
     spark: SparkSession,
@@ -35,14 +48,29 @@ object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] {
             if (subscriptions == null) {
               integrated
             } else if (integrated == null) {
-              subscriptions.copy(ohubId = Some(UUID.randomUUID().toString))
+              subscriptions
             } else {
-              subscriptions.copy(ohubId = integrated.ohubId, ohubCreated = integrated.ohubCreated)
+              subscriptions.copy(ohubId = integrated.ohubId) // preserve ohubId's
             }
         }
 
-    allSubscriptions
-      .joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), "left")
+    val w = Window.partitionBy($"contactPersonConcatId").orderBy($"dateUpdated".desc_nulls_last)
+
+    val allSubscriptionsGrouped =
+      allSubscriptions
+        .withColumn("rn", row_number.over(w))
+        .withColumn("isGoldenRecord", $"rn" === 1)
+        .drop($"rn")
+        .as[Subscription]
+        .map(s ⇒ ContactPersonConcatIdAndRecord(s.contactPersonConcatId, s))
+        .groupBy("contactPersonConcatId")
+        .agg(collect_list("subscription").as("subscriptions"))
+        .as[(String, Seq[Subscription])]
+        .map(_._2)
+        .flatMap(setOhubId)
+
+    allSubscriptionsGrouped
+      .joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), JoinType.Left)
       .map {
         case (subscription, cpn) ⇒
           if (cpn == null) subscription

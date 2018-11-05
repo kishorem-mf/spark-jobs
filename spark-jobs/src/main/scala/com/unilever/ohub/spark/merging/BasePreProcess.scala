@@ -56,16 +56,16 @@ abstract class BasePreProcess[T <: DomainEntity: TypeTag] extends SparkJob[PrePr
     import spark.implicits._
 
     // pre-process domain entities...for each updated domain entity...set the correct ohubCreated
-    val w = Window.partitionBy('concatId)
-    val wAsc = w.orderBy('ohubCreated.asc)
-    val wDesc = w.orderBy($"ohubCreated".desc)
+    val w = Window.partitionBy('concatId).orderBy('ohubCreated.asc)
 
-    integratedDomainEntities
-      .union(dailyDeltaDomainEntities)
-      .withColumn("rn", row_number.over(wDesc))
-      .withColumn("ohubCreated", first($"ohubCreated").over(wAsc))
-      .filter('rn === 1)
-      .drop('rn)
+    val integrated = integratedDomainEntities.withColumn("inDelta", lit(false))
+    val delta = dailyDeltaDomainEntities.withColumn("inDelta", lit(true))
+
+    integrated
+      .union(delta)
+      .withColumn("ohubCreated", first('ohubCreated).over(w))
+      .filter('inDelta === true)
+      .drop('inDelta)
       .as[T]
   }
 
@@ -79,7 +79,7 @@ abstract class BasePreProcess[T <: DomainEntity: TypeTag] extends SparkJob[PrePr
     val dailyDeltaDomainEntities = storage.readFromParquet[T](config.deltaInputFile)
 
     val preProcessedDeltaDomainEntities = transform(spark, integratedDomainEntities, dailyDeltaDomainEntities)
-      .coalesce(10)
+      .coalesce(24) // dividable by 2, 3, 4, 6 & 8
 
     storage.writeToParquet(preProcessedDeltaDomainEntities, config.deltaPreProcessedOutputFile)
   }

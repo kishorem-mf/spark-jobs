@@ -31,7 +31,7 @@ object ProductMerging extends SparkJob[ProductMergingConfig] {
           } else if (integrated == null) {
             product
           } else {
-            product.copy(ohubId = integrated.ohubId, ohubCreated = integrated.ohubCreated)
+            product.copy(ohubId = integrated.ohubId)
           }
       }
   }
