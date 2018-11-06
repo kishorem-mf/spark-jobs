@@ -23,7 +23,7 @@ case class ContactPersonConcatIdAndRecord(contactPersonConcatId: String, subscri
 // Technically not really subscription MERGING, but we need to update foreign key IDs in the other records
 object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] {
 
-  def setOhubId: Seq[Subscription] ⇒ Seq[Subscription] = subscriptions ⇒ {
+  def groupWithOhubId: Seq[Subscription] ⇒ Seq[Subscription] = subscriptions ⇒ {
     val ohubId: String = subscriptions
       .find(_.ohubId.isDefined)
       .flatMap(_.ohubId)
@@ -44,13 +44,13 @@ object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] {
       previousIntegrated
         .joinWith(subscriptions, previousIntegrated("concatId") === subscriptions("concatId"), JoinType.FullOuter)
         .map {
-          case (integrated, subscriptions) ⇒
-            if (subscriptions == null) {
+          case (integrated, delta) ⇒
+            if (delta == null) {
               integrated
             } else if (integrated == null) {
-              subscriptions
+              delta
             } else {
-              subscriptions.copy(ohubId = integrated.ohubId) // preserve ohubId's
+              delta.copy(ohubId = integrated.ohubId) // preserve ohubId's
             }
         }
 
@@ -67,7 +67,7 @@ object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] {
         .agg(collect_list("subscription").as("subscriptions"))
         .as[(String, Seq[Subscription])]
         .map(_._2)
-        .flatMap(setOhubId)
+        .flatMap(groupWithOhubId)
 
     allSubscriptionsGrouped
       .joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), JoinType.Left)

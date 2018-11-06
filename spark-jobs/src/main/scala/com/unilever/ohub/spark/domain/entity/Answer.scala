@@ -8,26 +8,26 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 case class Answer(
     // generic fields
     // mandatory fields
-    val concatId: String,
-    val countryCode: String,
-    val customerType: String,
-    val sourceEntityId: String,
-    val sourceName: String,
-    val isActive: Boolean,
-    val ohubCreated: Timestamp,
-    val ohubUpdated: Timestamp,
+    concatId: String,
+    countryCode: String,
+    customerType: String,
+    sourceEntityId: String,
+    sourceName: String,
+    isActive: Boolean,
+    ohubCreated: Timestamp,
+    ohubUpdated: Timestamp,
     // optional fields
-    val dateCreated: Option[Timestamp],
-    val dateUpdated: Option[Timestamp],
+    dateCreated: Option[Timestamp],
+    dateUpdated: Option[Timestamp],
     // used for grouping and marking the golden record within the group
-    val ohubId: Option[String],
-    val isGoldenRecord: Boolean,
+    ohubId: Option[String],
+    isGoldenRecord: Boolean,
 
     // specific fields
-    val answer: Option[String],
-    val questionConcatId: String,
+    answer: Option[String],
+    questionConcatId: String,
 
     // other fields
-    val additionalFields: Map[String, String],
-    val ingestionErrors: Map[String, IngestionError]
+    additionalFields: Map[String, String],
+    ingestionErrors: Map[String, IngestionError]
 ) extends DomainEntity {}

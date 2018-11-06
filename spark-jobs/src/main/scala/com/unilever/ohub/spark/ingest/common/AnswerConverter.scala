@@ -21,7 +21,7 @@ object AnswerConverter extends CommonDomainGateKeeper[Answer] with AnswerEmptyPa
       concatId                    = mandatory(                  "concatId",                   "concatId"),
       countryCode                 = mandatory(                  "countryCode",                "countryCode"),
       customerType                = mandatory(                  "customerType",               "customerType"),
-      isActive                    = mandatory(                  "isActive",                   "isActive", toBoolean _),
+      isActive                    = mandatory(                  "isActive",                   "isActive", toBoolean),
       sourceEntityId              = mandatory(                  "sourceEntityId",             "sourceEntityId"),
       sourceName                  = mandatory(                  "sourceName",                 "sourceName"),
       ohubCreated                 = ohubCreated,

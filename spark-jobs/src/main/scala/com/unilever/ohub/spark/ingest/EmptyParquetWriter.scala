@@ -7,14 +7,10 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.Dataset
 
-import scala.reflect.runtime.universe._
-
 trait EmptyParquetWriter[T <: DomainEntity] {
   def createEmptyDataset(spark: SparkSession): Dataset[T]
 
   def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit = {
-    import com.unilever.ohub.spark.domain.entity.ContactPerson
-
     val ds = createEmptyDataset(spark)
 
     storage.writeToParquet(ds, location, saveMode = SaveMode.Ignore) // prevent overwriting existing data

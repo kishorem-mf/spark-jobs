@@ -153,7 +153,7 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
   }
 
   private def expectColumnNameNotFound(row: Row) = {
-    for (i ← (0 until 100)) {
+    for (i ← 0 until 100) {
       val bomChars = (0 until i + 1).map(_ ⇒ ZERO_WIDTH_NO_BREAK_SPACE).mkString("")
       val newColumnName = if (i == 0) originalColumnName else bomChars + "\"" + originalColumnName + "\""
 

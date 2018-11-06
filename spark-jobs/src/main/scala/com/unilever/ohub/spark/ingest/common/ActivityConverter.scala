@@ -23,7 +23,7 @@ object ActivityConverter extends CommonDomainGateKeeper[Activity] with ActivityE
       customerType                = mandatory(                  "customerType",               "customerType"),
       dateCreated                 = optional(                   "dateCreated",                "dateCreated", parseDateTimeUnsafe()),
       dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated", parseDateTimeUnsafe()),
-      isActive                    = mandatory(                  "isActive",                   "isActive", toBoolean _),
+      isActive                    = mandatory(                  "isActive",                   "isActive", toBoolean ),
       isGoldenRecord              = false,
       sourceEntityId              = mandatory(                  "sourceEntityId",             "sourceEntityId"),
       sourceName                  = mandatory(                  "sourceName",                 "sourceName"),

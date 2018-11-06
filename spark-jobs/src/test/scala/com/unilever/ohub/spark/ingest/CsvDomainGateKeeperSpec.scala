@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.ingest
 
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.{ SparkJobSpec }
+import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SaveMode }

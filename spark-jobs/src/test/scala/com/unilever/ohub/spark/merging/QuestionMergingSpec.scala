@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.{ TestQuestions }
+import com.unilever.ohub.spark.domain.entity.TestQuestions
 import org.apache.spark.sql.Dataset
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.domain.entity.Question
