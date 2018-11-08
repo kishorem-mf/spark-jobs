@@ -52,3 +52,9 @@ object ProductEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Product] w
 object OrderEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Order] with OrderEmptyParquetWriter
 
 object OrderLineEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[OrderLine] with OrderLineEmptyParquetWriter
+
+object ActivityEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Activity] with ActivityEmptyParquetWriter
+
+object AnswerEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Answer] with AnswerEmptyParquetWriter
+
+object QuestionEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Question] with QuestionEmptyParquetWriter
