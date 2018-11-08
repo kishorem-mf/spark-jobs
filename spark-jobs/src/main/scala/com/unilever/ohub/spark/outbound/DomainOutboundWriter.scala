@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.outbound
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{ SparkSession, DataFrame }
 import scopt.OptionParser
 
 import scala.reflect.runtime.universe._
@@ -44,6 +44,15 @@ abstract class DomainOutboundWriter[DomainType <: DomainEntity: TypeTag] extends
       help("help") text "help text"
     }
 
+  def camelToSnake(str: String): String = {
+    val snake = "([A-Z])".r.replaceAllIn(str, m ⇒ "_" + m.group(1).toLowerCase)
+    "(^_)|(_$)".r.replaceAllIn(snake, _ ⇒ "")
+  }
+
+  def snakeColumns(df: DataFrame): DataFrame = {
+    df.toDF(df.columns.toSeq.map(camelToSnake): _*)
+  }
+
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     import spark.implicits._
 
@@ -52,6 +61,6 @@ abstract class DomainOutboundWriter[DomainType <: DomainEntity: TypeTag] extends
     val integratedEntities = storage.readFromParquet[DomainType](config.integratedInputFile)
       .drop("additionalFields", "ingestionErrors")
 
-    storage.writeJdbcTable(integratedEntities, config.dbUrl, config.dbTable, config.dbUsername, config.dbPassword)
+    storage.writeJdbcTable(snakeColumns(integratedEntities), config.dbUrl, config.dbTable, config.dbUsername, config.dbPassword)
   }
 }

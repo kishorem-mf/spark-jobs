@@ -28,7 +28,7 @@ class ContactPersonOutboundWriterSpec extends SparkJobSpec with TestContactPerso
 
       SUT.run(spark, config, storage)
 
-      val expectedResult = contactpersons.drop("additionalFields", "ingestionErrors")
+      val expectedResult = SUT.snakeColumns(contactpersons.drop("additionalFields", "ingestionErrors"))
       val actualResult = storage.readJdbcTable(
         config.dbUrl,
         config.dbTable,
