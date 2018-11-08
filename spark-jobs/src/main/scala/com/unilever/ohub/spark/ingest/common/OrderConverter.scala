@@ -38,7 +38,7 @@ object OrderConverter extends CommonDomainGateKeeper[Order] with OrderEmptyParqu
       contactPersonOhubId                   = None, // set in OrderMerging
       distributorId                         = optional(  "distributorId",                         "distributorId"),
       distributorLocation                   = optional(  "distributorLocation",                   "distributorLocation"),
-      distributorName                       = optional(  "distributerName",                       "distributerName"),
+      distributorName                       = optional(  "distributorName",                       "distributorName"),
       distributorOperatorId                 = optional(  "distributorOperatorId",                 "distributorOperatorId"),
       operatorConcatId                      = mandatory( "operatorConcatId",                      "operatorConcatId"),
       operatorOhubId                        = None, // set in OrderMerging
