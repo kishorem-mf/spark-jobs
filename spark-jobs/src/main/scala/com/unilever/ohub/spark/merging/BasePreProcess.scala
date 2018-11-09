@@ -25,6 +25,12 @@ object ProductPreProcess extends BasePreProcess[Product]
 
 object RecipePreProcess extends BasePreProcess[Recipe]
 
+object ActivityPreProcess extends BasePreProcess[Activity]
+
+object AnswerPreProcess extends BasePreProcess[Answer]
+
+object QuestionPreProcess extends BasePreProcess[Question]
+
 case class PreProcessConfig(
     integratedInputFile: String = "path-to-integrated-input-file",
     deltaInputFile: String = "path-to-delta-input-file",
