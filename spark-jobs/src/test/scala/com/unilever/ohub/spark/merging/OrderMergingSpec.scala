@@ -1,10 +1,9 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.{ TestOrders, TestOperators, TestContactPersons }
+import com.unilever.ohub.spark.domain.entity._
 import org.apache.spark.sql.Dataset
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.domain.entity.Order
 
 class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators with TestContactPersons {
 
@@ -13,6 +12,27 @@ class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators w
   private val SUT = OrderMerging
 
   describe("order merging") {
+    it("a new order should get an ohubId and be marked golden record") {
+      val newRecord = defaultOrder.copy(
+        isGoldenRecord = false,
+        concatId = "new"
+      )
+
+      val input = Seq[Order](
+        newRecord
+      ).toDataset
+      val previous = Seq[Order]().toDataset
+      val operators = Seq[Operator]().toDataset
+      val contactPersons = Seq[ContactPerson]().toDataset
+
+      val result = SUT.transform(spark, input, previous, operators, contactPersons)
+        .collect()
+
+      result.size shouldBe 1
+      result.head.isGoldenRecord shouldBe true
+      result.head.ohubId shouldBe defined
+    }
+
     it("should take newest data if available while retaining ohubId") {
       val operators = Seq(
         defaultOperatorWithSourceName("op1").copy(ohubId = Some("ohubOp1")),

@@ -24,7 +24,7 @@ class OrderConverterSpec extends CsvDomainGateKeeperSpec[Order] with TestOrders 
           dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00")),
           dateUpdated = Some(Timestamp.valueOf("2015-06-30 13:48:00")),
           isActive = true,
-          isGoldenRecord = true,
+          isGoldenRecord = false,
           ohubId = actualOrder.ohubId,
           sourceEntityId = "O1234",
           sourceName = "WUFOO",

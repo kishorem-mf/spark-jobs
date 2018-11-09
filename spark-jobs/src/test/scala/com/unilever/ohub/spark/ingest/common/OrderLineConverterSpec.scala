@@ -24,7 +24,7 @@ class OrderLineConverterSpec extends CsvDomainGateKeeperSpec[OrderLine] with Tes
           dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00")),
           dateUpdated = Some(Timestamp.valueOf("2015-06-30 13:48:00")),
           isActive = true,
-          isGoldenRecord = true,
+          isGoldenRecord = false,
           ohubId = actualOrderLine.ohubId,
           sourceEntityId = "O1234",
           sourceName = "WUFOO",

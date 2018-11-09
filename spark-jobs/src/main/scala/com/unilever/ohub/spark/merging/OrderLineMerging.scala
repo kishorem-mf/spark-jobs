@@ -1,9 +1,13 @@
 package com.unilever.ohub.spark.merging
 
+import java.util.UUID
+
 import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.entity.{ OrderLine, Product }
-import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.sql.JoinType
+import com.unilever.ohub.spark.storage.Storage
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions.{ collect_list, first }
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
@@ -14,19 +18,30 @@ case class OrderLineMergingConfig(
     outputFile: String = "path-to-output-file"
 ) extends SparkJobConfig
 
+case class OrderLineConcatIdAndRecord(orderConcatId: String, orderLine: OrderLine)
+
 // Technically not really order MERGING, but we need to update foreign key IDs in the other records
 object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
 
+  def markGoldenRecordAndSetOhubId(orderLines: Seq[OrderLine]): Seq[OrderLine] = {
+    val ohubId: String = orderLines
+      .find(_.ohubId.isDefined)
+      .flatMap(_.ohubId)
+      .getOrElse(UUID.randomUUID().toString)
+
+    orderLines.map(l ⇒ l.copy(isGoldenRecord = true, ohubId = Some(ohubId)))
+  }
+
   def transform(
     spark: SparkSession,
-    orders: Dataset[OrderLine],
+    orderLines: Dataset[OrderLine],
     previousIntegrated: Dataset[OrderLine],
     products: Dataset[Product]
   ): Dataset[OrderLine] = {
     import spark.implicits._
 
     val allOrderLines = previousIntegrated
-      .joinWith(orders, previousIntegrated("concatId") === orders("concatId"), JoinType.FullOuter)
+      .joinWith(orderLines, previousIntegrated("concatId") === orderLines("concatId"), JoinType.FullOuter)
       .map {
         case (integrated, orderLine) ⇒
           if (orderLine == null) {
@@ -38,7 +53,24 @@ object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
           }
       }
 
-    allOrderLines
+    val w = Window.partitionBy($"orderConcatId").orderBy($"ohubUpdated".desc_nulls_last)
+    val w2 = Window.partitionBy($"orderConcatId").orderBy($"ohubId".desc_nulls_last)
+
+    val allOrderLinesGrouped =
+      allOrderLines
+        .withColumn("firstOhubUpdated", first('ohubUpdated).over(w))
+        .withColumn("ohubId", first('ohubId).over(w2))
+        .filter($"firstOhubUpdated" === $"ohubUpdated")
+        .drop($"firstOhubUpdated")
+        .as[OrderLine]
+        .map(l ⇒ OrderLineConcatIdAndRecord(l.orderConcatId, l))
+        .groupBy($"orderConcatId")
+        .agg(collect_list("orderLine").as("orderlines"))
+        .as[(String, Seq[OrderLine])]
+        .map(_._2)
+        .flatMap(markGoldenRecordAndSetOhubId)
+
+    allOrderLinesGrouped
       .joinWith(products, $"productConcatId" === products("concatId"), "left")
       .map {
         case (order, product) ⇒

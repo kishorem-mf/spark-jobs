@@ -25,7 +25,7 @@ object OrderLineConverter extends CommonDomainGateKeeper[OrderLine] with OrderLi
       dateCreated                     = optional(  "dateCreated",              "dateCreated",            parseDateTimeUnsafe()  ),
       dateUpdated                     = optional(  "dateUpdated",              "dateUpdated",            parseDateTimeUnsafe()  ),
       isActive                        = true,
-      isGoldenRecord                  = true,
+      isGoldenRecord                  = false, // set in OrderLineMerging
       ohubId                          = None, // set in OrderLineMerging
       sourceEntityId                  = mandatoryValue("sourceEntityId",       "sourceEntityId")(row),
       sourceName                      = mandatory( "sourceName",               "sourceName"),

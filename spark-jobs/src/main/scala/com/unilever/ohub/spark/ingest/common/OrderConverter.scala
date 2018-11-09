@@ -20,10 +20,10 @@ object OrderConverter extends CommonDomainGateKeeper[Order] with OrderEmptyParqu
       concatId                              = concatId, // TODO OHUB-1784 INBOUND PROVIDES THIS TOO, BUT SHOULD IT (IT DOES NOT FOR OTHER ENTITIES)?
       countryCode                           = mandatory( "countryCode",                           "countryCode"                                  ),
       customerType                          = Order.customerType,
-      dateCreated                           = optional(  "dateCreated",                           "dateCreated",                            parseDateTimeUnsafe()), // TODO OHUB-1784 NOT PROVIDED BY INBOUND (YET)
-      dateUpdated                           = optional(  "dateUpdated",                           "dateUpdated",                            parseDateTimeUnsafe()), // TODO OHUB-1784 NOT PROVIDED BY INBOUND (YET)
+      dateCreated                           = optional(  "dateCreated",                           "dateCreated",                            parseDateTimeUnsafe()),
+      dateUpdated                           = optional(  "dateUpdated",                           "dateUpdated",                            parseDateTimeUnsafe()),
       isActive                              = mandatory( "isActive",                              "isActive",                               toBoolean            ),
-      isGoldenRecord                        = true,
+      isGoldenRecord                        = false, // set in OrderMerging
       ohubId                                = None, // set in OrderMerging
       sourceEntityId                        = mandatory( "sourceEntityId",                        "sourceEntityId"),
       sourceName                            = mandatory( "sourceName",                            "sourceName"),
@@ -34,7 +34,7 @@ object OrderConverter extends CommonDomainGateKeeper[Order] with OrderEmptyParqu
       campaignCode                          = optional(  "campaignCode",                          "campaignCode"),
       campaignName                          = optional(  "campaignName",                          "campaignName"),
       comment                               = optional(  "comment",                               "comment"),
-      contactPersonConcatId                 = optional(  "contactPersonConcatId",                 "contactPersonConcatId"), // TODO OHUB-1784 NOT PROVIDED BY INBOUND (YET)
+      contactPersonConcatId                 = optional(  "contactPersonConcatId",                 "contactPersonConcatId"),
       contactPersonOhubId                   = None, // set in OrderMerging
       distributorId                         = optional(  "distributorId",                         "distributorId"),
       distributorLocation                   = optional(  "distributorLocation",                   "distributorLocation"),

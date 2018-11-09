@@ -1,5 +1,7 @@
 package com.unilever.ohub.spark.merging
 
+import java.sql.Timestamp
+
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.entity.{ OrderLine, Product, TestOrderLines, TestProducts }
 import org.apache.spark.sql.Dataset
@@ -12,36 +14,183 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
   private val SUT = OrderLineMerging
 
   describe("orderLine merging") {
-    it("should take newest data if available while retaining ohubId") {
-      val updatedRecord = defaultOrderLine.copy(
+
+    it("a single orderline should get an ohubId and be marked as golden record") {
+      val singleOrderLine = defaultOrderLine.copy(
+        isGoldenRecord = false,
+        orderConcatId = "order-1",
+        ohubUpdated = Timestamp.valueOf("2018-10-05 10:30:45"),
+        ohubId = None,
+        concatId = "single-line",
+        isActive = true)
+
+      val input: Dataset[OrderLine] = Seq(
+        singleOrderLine
+      ).toDataset
+
+      val previous: Dataset[OrderLine] = Seq[OrderLine]().toDataset
+
+      val products: Dataset[Product] = Seq[Product]().toDataset
+
+      val result = SUT.transform(spark, input, previous, products)
+        .collect()
+        .map(l ⇒ l.concatId -> (l.ohubId, l.isGoldenRecord)).toMap
+
+      result("single-line")._1 shouldBe defined
+      result("single-line")._2 shouldBe true
+    }
+
+    it("two orderlines of the same order should get the same ohubId") {
+      val orderLine1 = defaultOrderLine.copy(
+        isGoldenRecord = false,
+        orderConcatId = "order-1",
+        ohubUpdated = Timestamp.valueOf("2018-10-05 10:30:45"),
+        ohubId = None,
+        concatId = "line-1",
+        isActive = true)
+
+      val orderLine2 = defaultOrderLine.copy(
+        isGoldenRecord = false,
+        orderConcatId = "order-1",
+        ohubUpdated = Timestamp.valueOf("2018-10-05 10:30:45"),
+        ohubId = None,
+        concatId = "line-2",
+        isActive = true)
+
+      val input: Dataset[OrderLine] = Seq(
+        orderLine1,
+        orderLine2
+      ).toDataset
+
+      val previous: Dataset[OrderLine] = Seq[OrderLine]().toDataset
+
+      val products: Dataset[Product] = Seq[Product]().toDataset
+
+      val result = SUT.transform(spark, input, previous, products)
+        .collect()
+        .map(l ⇒ l.concatId -> (l.ohubId, l.isGoldenRecord)).toMap
+
+      result.size shouldBe 2
+      result("line-1")._1 shouldBe defined
+      result("line-1")._2 shouldBe true
+      result("line-2")._2 shouldBe true
+
+      result("line-1")._1 shouldBe result("line-2")._1
+    }
+
+    it("two orderlines of two distinct orders should get a different ohubId") {
+      val orderLine1 = defaultOrderLine.copy(
+        isGoldenRecord = false,
+        orderConcatId = "order-1",
+        ohubUpdated = Timestamp.valueOf("2018-10-05 10:30:45"),
+        ohubId = None,
+        concatId = "line-1",
+        isActive = true)
+
+      val orderLine2 = defaultOrderLine.copy(
+        isGoldenRecord = false,
+        orderConcatId = "order-2",
+        ohubUpdated = Timestamp.valueOf("2017-09-01 10:30:45"),
+        ohubId = None,
+        concatId = "line-2",
+        isActive = true)
+
+      val input: Dataset[OrderLine] = Seq(
+        orderLine1,
+        orderLine2
+      ).toDataset
+
+      val previous: Dataset[OrderLine] = Seq[OrderLine]().toDataset
+
+      val products: Dataset[Product] = Seq[Product]().toDataset
+
+      val result = SUT.transform(spark, input, previous, products)
+        .collect()
+        .map(l ⇒ l.concatId -> (l.ohubId, l.isGoldenRecord)).toMap
+
+      result.size shouldBe 2
+      result("line-1")._1 shouldBe defined
+      result("line-1")._2 shouldBe true
+
+      result("line-1")._1 should not be result("line-2")._1
+    }
+
+    it("the most recent orderlines should be preserved and marked as golden record") {
+      val newest1Record = defaultOrderLine.copy(
+        isGoldenRecord = false,
+        orderConcatId = "order-1",
+        ohubUpdated = Timestamp.valueOf("2018-10-05 10:30:45"),
+        concatId = "newest1",
+        isActive = true)
+
+      val newest2Record = defaultOrderLine.copy(
+        isGoldenRecord = false,
+        orderConcatId = "order-1",
+        ohubUpdated = Timestamp.valueOf("2018-10-05 10:30:45"),
+        concatId = "newest2",
+        isActive = true)
+
+      val oldestRecord = defaultOrderLine.copy(
         isGoldenRecord = true,
+        orderConcatId = "order-1",
+        ohubUpdated = Timestamp.valueOf("2018-09-05 10:30:45"),
+        ohubId = Some("ohub-order-1"),
+        concatId = "oldest",
+        isActive = true)
+
+      val goldenRecordWithoutDateUpdated = defaultOrderLine.copy(
+        isGoldenRecord = false,
+        orderConcatId = "order-2",
+        ohubUpdated = Timestamp.valueOf("2018-08-08 09:09:30"),
+        concatId = "other",
+        isActive = true)
+
+      val input: Dataset[OrderLine] = Seq(
+        newest1Record,
+        newest2Record
+      ).toDataset
+
+      val previous: Dataset[OrderLine] = Seq(
+        oldestRecord,
+        goldenRecordWithoutDateUpdated
+      ).toDataset
+
+      val products: Dataset[Product] = Seq[Product]().toDataset
+
+      val result = SUT.transform(spark, input, previous, products)
+        .collect()
+        .map(l ⇒ l.concatId -> (l.ohubId, l.isGoldenRecord)).toMap
+
+      result("other")._2 shouldBe true
+      result("newest1") shouldBe (Some("ohub-order-1"), true)
+      result("newest2") shouldBe (Some("ohub-order-1"), true)
+    }
+
+    it("delta input orderline data is preserved in favor of integrated data while retaining ohubId") {
+      val updatedRecord = defaultOrderLine.copy(
+        orderConcatId = "order-1",
         ohubId = Some("oldId"),
-        countryCode = "updated",
-        concatId = s"updated~${defaultOrderLine.sourceName}~${defaultOrderLine.sourceEntityId}",
+        concatId = "updated",
         comment = Some("Calve"))
 
       val deletedRecord = defaultOrderLine.copy(
-        isGoldenRecord = true,
-        countryCode = "deleted",
-        concatId = s"deleted~${defaultOrderLine.sourceName}~${defaultOrderLine.sourceEntityId}",
+        orderConcatId = "order-1",
+        concatId = "deleted",
         isActive = true)
 
       val newRecord = defaultOrderLine.copy(
-        isGoldenRecord = true,
-        countryCode = "new",
-        concatId = s"new~${defaultOrderLine.sourceName}~${defaultOrderLine.sourceEntityId}"
+        orderConcatId = "order-1",
+        concatId = "new"
       )
 
       val unchangedRecord = defaultOrderLine.copy(
-        isGoldenRecord = true,
-        countryCode = "unchanged",
-        concatId = s"unchanged~${defaultOrderLine.sourceName}~${defaultOrderLine.sourceEntityId}"
+        orderConcatId = "order-1",
+        concatId = "unchanged"
       )
 
       val notADeltaRecord = defaultOrderLine.copy(
-        isGoldenRecord = true,
-        countryCode = "notADelta",
-        concatId = s"notADelta~${defaultOrderLine.sourceName}~${defaultOrderLine.sourceEntityId}"
+        orderConcatId = "order-1",
+        concatId = "notADelta"
       )
 
       val previous: Dataset[OrderLine] = spark.createDataset(Seq(
@@ -61,19 +210,20 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
 
       val result = SUT.transform(spark, input, previous, products)
         .collect()
-        .sortBy(_.countryCode)
+        .sortBy(_.concatId)
 
       result.length shouldBe 5
       result(0).isActive shouldBe false
-      result(1).countryCode shouldBe "new"
-      result(2).countryCode shouldBe "notADelta"
-      result(3).countryCode shouldBe "unchanged"
-      result(4).countryCode shouldBe "updated"
+      result(0).concatId shouldBe "deleted"
+      result(1).concatId shouldBe "new"
+      result(2).concatId shouldBe "notADelta"
+      result(3).concatId shouldBe "unchanged"
+      result(4).concatId shouldBe "updated"
       result(4).comment shouldBe Some("Unox")
       result(4).ohubId shouldBe Some("oldId")
     }
 
-    it("should set the reference to the righ productOhubId") {
+    it("should set the reference to the right productOhubId") {
       val productConcatId = "NL~SNL~prod1"
       val productOhubId = "product-ohub-id"
 
