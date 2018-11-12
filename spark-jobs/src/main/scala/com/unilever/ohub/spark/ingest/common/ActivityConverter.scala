@@ -37,6 +37,8 @@ object ActivityConverter extends CommonDomainGateKeeper[Activity] with ActivityE
       actionType                  = optional(                   "actionType",                 "actionType"),
       contactPersonConcatId       = optional(                   "contactPersonConcatId",      "contactPersonConcatId"),
       contactPersonOhubId         = Option.empty,
+      operatorConcatId            = optional(                   "operatorConcatId",      "operatorConcatId"),
+      operatorOhubId              = Option.empty,
 
       additionalFields            = additionalFields,
       ingestionErrors             = errors

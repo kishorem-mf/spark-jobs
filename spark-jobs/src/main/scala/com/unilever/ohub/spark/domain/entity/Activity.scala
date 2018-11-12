@@ -30,6 +30,8 @@ case class Activity(
     actionType: Option[String],
     contactPersonConcatId: Option[String],
     contactPersonOhubId: Option[String],
+    operatorConcatId: Option[String],
+    operatorOhubId: Option[String],
 
     // other fields
     additionalFields: Map[String, String],

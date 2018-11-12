@@ -1,12 +1,12 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.{ TestActivities, TestContactPersons }
+import com.unilever.ohub.spark.domain.entity.{ TestActivities, TestContactPersons, TestOperators }
 import org.apache.spark.sql.Dataset
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.domain.entity.Activity
 
-class ActivityMergingSpec extends SparkJobSpec with TestActivities with TestContactPersons {
+class ActivityMergingSpec extends SparkJobSpec with TestActivities with TestContactPersons with TestOperators {
 
   import spark.implicits._
 
@@ -19,6 +19,10 @@ class ActivityMergingSpec extends SparkJobSpec with TestActivities with TestCont
         defaultContactPersonWithSourceEntityId("cpn1").copy(ohubId = Some("ohubCpn1")),
         defaultContactPersonWithSourceEntityId("cpn2").copy(ohubId = Some("ohubCpn2")),
         defaultContactPersonWithSourceEntityId("cpn3").copy(ohubId = Some("ohubCpn3"))
+      ).toDataset
+
+      val operators = Seq(
+        defaultOperator
       ).toDataset
 
       val updatedRecord = defaultActivity.copy(
@@ -70,7 +74,7 @@ class ActivityMergingSpec extends SparkJobSpec with TestActivities with TestCont
         newRecord
       ))
 
-      val result = SUT.transform(spark, input, previous, contactPersons)
+      val result = SUT.transform(spark, input, previous, contactPersons, operators)
         .collect()
         .sortBy(_.countryCode)
 

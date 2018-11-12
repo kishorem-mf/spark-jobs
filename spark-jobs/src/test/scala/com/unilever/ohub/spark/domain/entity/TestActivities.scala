@@ -26,6 +26,8 @@ trait TestActivities {
     actionType = Some("MyActionType"),
     contactPersonConcatId = Some("DE~SUBSCRIPTION~138175"),
     contactPersonOhubId = None,
+    operatorConcatId = Some("DE~SUBSCRIPTION~138175"),
+    operatorOhubId = None,
 
     additionalFields = Map(),
     ingestionErrors = Map()
