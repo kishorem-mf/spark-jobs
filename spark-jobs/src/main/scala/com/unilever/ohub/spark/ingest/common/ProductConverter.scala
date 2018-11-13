@@ -1,7 +1,5 @@
 package com.unilever.ohub.spark.ingest.common
 
-import java.util.UUID
-
 import com.unilever.ohub.spark.domain.entity.Product
 import com.unilever.ohub.spark.ingest.CustomParsers._
 import com.unilever.ohub.spark.ingest.{ DomainTransformer, ProductEmptyParquetWriter }
@@ -26,8 +24,8 @@ object ProductConverter extends CommonDomainGateKeeper[Product] with ProductEmpt
       dateCreated                     = optional(  "dateCreated",              "dateCreated",            parseDateTimeUnsafe()  ),
       dateUpdated                     = optional(  "dateUpdated",              "dateUpdated",            parseDateTimeUnsafe()  ),
       isActive                        = mandatory( "isActive",                 "isActive",               toBoolean              ),
-      isGoldenRecord                  = true,
-      ohubId                          = Some(UUID.randomUUID().toString),
+      isGoldenRecord                  = false, // set in ProductMerging
+      ohubId                          = None, // set in ProductMerging
       name                            = mandatory( "name",                     "name"                                           ),
       sourceEntityId                  = mandatory( "sourceEntityId",           "sourceEntityId"),
       sourceName                      = mandatory( "sourceName",               "sourceName"),
