@@ -26,6 +26,7 @@ case class OrderLine(
     // specific fields
     orderConcatId: String,
     productConcatId: String,
+    productSourceEntityId: String,
     quantityOfUnits: Int,
     amount: BigDecimal,
     pricePerUnit: Option[BigDecimal],
