@@ -39,6 +39,10 @@ class ContactPersonOutboundWriterSpec extends SparkJobSpec with TestContactPerso
       actualResult.columns shouldBe expectedResult.columns
       actualResult.collect() shouldBe expectedResult.collect()
     }
+
+    it("creates snake columns correctly") {
+      SUT.camelToSnake("someConcatId") shouldBe "some_concat_id"
+    }
   }
 }
 

@@ -154,6 +154,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .write
       .mode(saveMode)
       .option(JDBCOptions.JDBC_DRIVER_CLASS, jdbcDriverClass)
+      .option(JDBCOptions.JDBC_TRUNCATE, false) // when set to 'true' truncate table, otherwise drop & create table
       .jdbc(dbUrl, dbTable, connectionProperties(userName, userPassword))
   }
 
