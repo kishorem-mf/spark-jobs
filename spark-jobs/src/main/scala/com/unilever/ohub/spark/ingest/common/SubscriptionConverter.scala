@@ -20,6 +20,8 @@ object SubscriptionConverter extends CommonDomainGateKeeper[Subscription] with S
 
     Subscription(
       // fieldName                  mandatory                   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
+      id                          = mandatory(                  "id",                         "id"),
+      creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp",          toTimestamp),
       concatId                    = concatIdRef,
       countryCode                 = countryCode,
       customerType                = Subscription.customerType,

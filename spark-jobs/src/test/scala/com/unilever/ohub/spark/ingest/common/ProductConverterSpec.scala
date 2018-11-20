@@ -19,13 +19,15 @@ class ProductConverterSpec extends CsvDomainGateKeeperSpec[Product] with TestPro
 
         val actualProduct = actualDataSet.head()
         val expectedProduct = defaultProduct.copy(
+          id = "id-1",
+          creationTimestamp = new Timestamp(1542205922011L),
           concatId = "AU~WUFOO~P1234",
           countryCode = "AU",
           dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00")),
           dateUpdated = Some(Timestamp.valueOf("2015-06-30 13:48:00")),
           isActive = true,
-          isGoldenRecord = true,
-          ohubId = actualProduct.ohubId,
+          isGoldenRecord = false,
+          ohubId = None,
           name = "KNORR CHICKEN POWDER(D) 12X1kg",
           sourceEntityId = "P1234",
           sourceName = "WUFOO",

@@ -39,12 +39,19 @@ class ContactPersonOutboundWriterSpec extends SparkJobSpec with TestContactPerso
       actualResult.columns shouldBe expectedResult.columns
       actualResult.collect() shouldBe expectedResult.collect()
     }
+
+    it("creates snake columns correctly") {
+      SUT.camelToSnake("someConcatId") shouldBe "some_concat_id"
+    }
   }
 }
 
 class InMemStorage[DomainType <: DomainEntity](spark: SparkSession, entities: Dataset[DomainType]) extends DefaultStorage(spark) {
+  import scala.reflect.runtime.universe._
 
-  override def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T] = {
+  override def readFromParquet[T <: Product: TypeTag](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T] = {
+    implicit val encoder = Encoders.product[T]
+
     entities.as[T]
   }
 

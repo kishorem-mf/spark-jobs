@@ -20,6 +20,8 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
         val actualOperator = actualDataSet.head()
 
         val expectedOperator = Operator(
+          id = "id-3",
+          creationTimestamp = new Timestamp(1542205922011L),
           concatId = "TR~KANGAROO~HG_226466866",
           countryCode = "TR",
           customerType = "OPERATOR",

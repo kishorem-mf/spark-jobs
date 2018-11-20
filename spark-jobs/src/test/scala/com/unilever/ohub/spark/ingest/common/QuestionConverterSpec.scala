@@ -19,6 +19,8 @@ class QuestionConverterSpec extends CsvDomainGateKeeperSpec[Question] {
         val actualQuestion = actualDataSet.head()
 
         val expectedQuestion = Question(
+          id = "id-1",
+          creationTimestamp = new Timestamp(1542205922011L),
           concatId = "DE~EMAKINA~123",
           countryCode = "DE",
           customerType = "CONTACTPERSON",

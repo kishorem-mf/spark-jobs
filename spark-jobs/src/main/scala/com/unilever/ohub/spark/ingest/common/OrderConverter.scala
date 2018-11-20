@@ -17,6 +17,8 @@ object OrderConverter extends CommonDomainGateKeeper[Order] with OrderEmptyParqu
     // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
 
     Order(
+      id                                    = mandatory( "id",                                    "id"),
+      creationTimestamp                     = mandatory( "creationTimestamp",                     "creationTimestamp", toTimestamp),
       concatId                              = concatId, // TODO OHUB-1784 INBOUND PROVIDES THIS TOO, BUT SHOULD IT (IT DOES NOT FOR OTHER ENTITIES)?
       countryCode                           = mandatory( "countryCode",                           "countryCode"                                  ),
       customerType                          = Order.customerType,

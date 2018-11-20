@@ -14,6 +14,8 @@ object DomainEntity {
 // marker trait for all domain entities (press ctrl + h in IntelliJ to see all)
 trait DomainEntity extends Product {
   // mandatory fields
+  val id: String
+  val creationTimestamp: Timestamp
   val concatId: String
   val countryCode: String
   val customerType: String

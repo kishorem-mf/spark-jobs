@@ -11,6 +11,8 @@ object OrderLine {
 
 case class OrderLine(
     // generic fields
+    id: String,
+    creationTimestamp: Timestamp,
     concatId: String,
     countryCode: String,
     customerType: String,

@@ -13,6 +13,26 @@ class ProductMergingSpec extends SparkJobSpec with TestProducts {
   private val SUT = ProductMerging
 
   describe("product merging") {
+    it("a new product should get an ohubId and be marked golden record") {
+      val newRecord = defaultProduct.copy(
+        concatId = "new",
+        isGoldenRecord = false,
+        ohubId = None
+      )
+
+      val delta = Seq(
+        newRecord
+      ).toDataset
+
+      val integrated = Seq[Product]().toDataset
+
+      val result = SUT.transform(spark, delta, integrated).collect()
+
+      result.size shouldBe 1
+      result.head.ohubId shouldBe defined
+      result.head.isGoldenRecord shouldBe true
+    }
+
     it("should take newest data if available while retaining ohubId") {
       val updatedRecord = defaultProduct.copy(
         isGoldenRecord = true,

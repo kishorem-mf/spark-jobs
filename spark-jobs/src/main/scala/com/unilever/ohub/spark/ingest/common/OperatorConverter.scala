@@ -19,6 +19,8 @@ object OperatorConverter extends CommonDomainGateKeeper[Operator] with OperatorE
 
     Operator(
       // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
+      id                          = mandatory( "id",                        "id"),
+      creationTimestamp           = mandatory( "creationTimestamp",         "creationTimestamp",            toTimestamp),
       concatId                    = concatId                                                                                                           ,
       countryCode                 = countryCode                                                                                                        ,
       dateCreated                 = optional  ( "dateCreated",              "dateCreated",                  parseDateTimeUnsafe()                     ),

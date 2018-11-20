@@ -18,6 +18,8 @@ object ActivityConverter extends CommonDomainGateKeeper[Activity] with ActivityE
 
     Activity(
       // fieldName                  mandatory                   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
+      id                          = mandatory(                  "id",                         "id"),
+      creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp", toTimestamp),
       concatId                    = mandatory(                  "concatId",                   "concatId"),
       countryCode                 = mandatory(                  "countryCode",                "countryCode"),
       customerType                = mandatory(                  "customerType",               "customerType"),

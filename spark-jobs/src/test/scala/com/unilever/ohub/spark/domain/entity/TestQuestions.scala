@@ -7,6 +7,8 @@ object TestQuestions extends TestQuestions
 trait TestQuestions {
 
   lazy val defaultQuestion: Question = Question(
+    id = "id-1",
+    creationTimestamp = new Timestamp(1542205922011L),
     concatId = "DE~EMAKINA~b3a6208c-d7f6-44e2-80e2-f26d461f64c0",
     countryCode = "DE",
     customerType = "CONTACTPERSON",

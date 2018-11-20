@@ -18,6 +18,8 @@ object CustomParsers {
     Timestamp.valueOf(parsed)
   }
 
+  def toTimestamp(input: String): Timestamp = new Timestamp(input.toLong)
+
   def toBoolean(input: String): Boolean = input.toBoolean
 
   def toInt: String ⇒ Int = input ⇒ input.toInt

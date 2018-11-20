@@ -6,6 +6,7 @@ import org.apache.spark.sql._
 import org.apache.hadoop.fs._
 import org.apache.log4j.Logger
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
+import scala.reflect.runtime.universe._
 
 trait Storage {
 
@@ -21,7 +22,7 @@ trait Storage {
     options: Map[String, String] = Map()
   )(implicit log: Logger): Unit
 
-  def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
+  def readFromParquet[T <: Product: TypeTag](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
 
   def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq(), saveMode: SaveMode = SaveMode.Overwrite): Unit
 
@@ -119,9 +120,12 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .toArray
   }
 
-  override def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T] = {
+  override def readFromParquet[T <: Product: TypeTag](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T] = {
+    implicit val encoder = Encoders.product[T]
+
     val parquetDF = spark
       .read
+      .schema(encoder.schema)
       .parquet(location)
 
     val parquetSelectDF = {
@@ -154,6 +158,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .write
       .mode(saveMode)
       .option(JDBCOptions.JDBC_DRIVER_CLASS, jdbcDriverClass)
+      .option(JDBCOptions.JDBC_TRUNCATE, false) // when set to 'true' truncate table, otherwise drop & create table
       .jdbc(dbUrl, dbTable, connectionProperties(userName, userPassword))
   }
 

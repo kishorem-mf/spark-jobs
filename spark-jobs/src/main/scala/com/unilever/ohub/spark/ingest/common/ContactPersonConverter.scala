@@ -19,6 +19,8 @@ object ContactPersonConverter extends CommonDomainGateKeeper[ContactPerson] with
 
     // fieldName                        mandatory   sourceFieldName                   targetFieldName                 transformationFunction (unsafe)
     ContactPerson(
+      id                            = mandatory(    "id",                             "id"),
+      creationTimestamp             = mandatory(    "creationTimestamp",              "creationTimestamp",            toTimestamp),
       concatId                      = concatId                                                                                                            ,
       countryCode                   = countryCode                                                                                                         ,
       customerType                  = ContactPerson.customerType                                                                                          ,

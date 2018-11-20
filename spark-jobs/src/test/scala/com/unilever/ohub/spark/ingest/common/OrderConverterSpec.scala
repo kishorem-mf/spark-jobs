@@ -19,6 +19,8 @@ class OrderConverterSpec extends CsvDomainGateKeeperSpec[Order] with TestOrders 
 
         val actualOrder = actualDataSet.head
         val expectedOrder = defaultOrder.copy(
+          id = "id-1",
+          creationTimestamp = new Timestamp(1542205922011L),
           concatId = "AU~WUFOO~O1234",
           countryCode = "AU",
           dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00")),
