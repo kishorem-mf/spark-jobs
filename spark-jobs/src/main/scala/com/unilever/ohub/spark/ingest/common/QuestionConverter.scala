@@ -32,7 +32,7 @@ object QuestionConverter extends CommonDomainGateKeeper[Question] with QuestionE
       ohubUpdated                 = ohubCreated,
 
       activityConcatId            = mandatory(                  "activityConcatId",       "activityConcatId"),
-      question                    = optional(                   "questionType",           "questionType"),
+      question                    = optional(                   "question",           "question"),
 
       additionalFields            = additionalFields,
       ingestionErrors             = errors
