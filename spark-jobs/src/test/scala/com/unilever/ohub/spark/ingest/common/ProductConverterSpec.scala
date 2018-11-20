@@ -19,6 +19,8 @@ class ProductConverterSpec extends CsvDomainGateKeeperSpec[Product] with TestPro
 
         val actualProduct = actualDataSet.head()
         val expectedProduct = defaultProduct.copy(
+          id = "id-1",
+          creationTimestamp = new Timestamp(1542205922011L),
           concatId = "AU~WUFOO~P1234",
           countryCode = "AU",
           dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00")),

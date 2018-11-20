@@ -19,6 +19,8 @@ object OrderLineConverter extends CommonDomainGateKeeper[OrderLine] with OrderLi
     // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
 
     OrderLine(
+      id                              = mandatory( "id",                       "id"),
+      creationTimestamp               = mandatory( "creationTimestamp",        "creationTimestamp",      toTimestamp),
       concatId                        = orderLineConcatId,
       countryCode                     = mandatory( "countryCode",              "countryCode"                                    ),
       customerType                    = OrderLine.customerType                                                                   ,

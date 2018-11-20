@@ -8,6 +8,8 @@ trait TestOrders {
 
   // format: OFF
   lazy val defaultOrder: Order = Order(
+    id = "id-1",
+    creationTimestamp = new Timestamp(1542205922011L),
     concatId = "country-code~source-name~source-entity-id",
     countryCode = "country-code",
     customerType = Order.customerType,

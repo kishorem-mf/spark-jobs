@@ -19,6 +19,8 @@ class SubscriptionConverterSpec extends CsvDomainGateKeeperSpec[Subscription] {
         val actualSubscription = actualDataSet.head()
 
         val expectedSubscription = Subscription(
+          id = "id-1",
+          creationTimestamp = new Timestamp(1542205922011L),
           concatId = "AU~EMAKINA~AU~DEFAULT_NEWSLETTER_OPT_IN",
           contactPersonOhubId = Option.empty,
           countryCode = "AU",

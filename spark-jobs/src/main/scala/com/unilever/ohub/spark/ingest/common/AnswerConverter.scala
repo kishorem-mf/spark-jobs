@@ -4,7 +4,6 @@ import com.unilever.ohub.spark.domain.entity.Answer
 import com.unilever.ohub.spark.ingest.CustomParsers._
 import com.unilever.ohub.spark.ingest.{ DomainTransformer, AnswerEmptyParquetWriter }
 import org.apache.spark.sql.Row
-import java.util.UUID
 
 object AnswerConverter extends CommonDomainGateKeeper[Answer] with AnswerEmptyParquetWriter {
 
@@ -18,6 +17,8 @@ object AnswerConverter extends CommonDomainGateKeeper[Answer] with AnswerEmptyPa
 
     Answer(
       // fieldName                  mandatory                   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
+      id                          = mandatory(                  "id",                         "id"),
+      creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp", toTimestamp),
       concatId                    = mandatory(                  "concatId",                   "concatId"),
       countryCode                 = mandatory(                  "countryCode",                "countryCode"),
       customerType                = mandatory(                  "customerType",               "customerType"),

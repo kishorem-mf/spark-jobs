@@ -18,6 +18,8 @@ object ProductConverter extends CommonDomainGateKeeper[Product] with ProductEmpt
 
     // fieldName                        mandatory   sourceFieldName             targetFieldName           transformationFunction (unsafe)
     Product(
+      id                              = mandatory( "id",                       "id"),
+      creationTimestamp               = mandatory( "creationTimestamp",        "creationTimestamp",      toTimestamp),
       concatId                        = concatId,
       countryCode                     = mandatory( "countryCode",              "countryCode"                                    ),
       customerType                    = Product.customerType                                                                     ,

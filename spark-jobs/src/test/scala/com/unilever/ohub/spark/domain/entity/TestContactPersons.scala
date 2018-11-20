@@ -16,6 +16,8 @@ trait TestContactPersons {
     )
 
   val defaultContactPerson = ContactPerson(
+    id = "id-1",
+    creationTimestamp = new Timestamp(1542205922011L),
     concatId = "AU~WUFOO~AB123",
     countryCode = "AU",
     customerType = "CONTACTPERSON",

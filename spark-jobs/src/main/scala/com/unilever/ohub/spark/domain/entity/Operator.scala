@@ -11,6 +11,8 @@ object Operator {
 
 case class Operator(
     // generic fields
+    id: String,
+    creationTimestamp: Timestamp,
     concatId: String,
     countryCode: String,
     customerType: String,

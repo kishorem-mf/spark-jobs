@@ -19,6 +19,8 @@ class ActivityConverterSpec extends CsvDomainGateKeeperSpec[Activity] {
         val actualActivity = actualDataSet.head()
 
         val expectedActivity = Activity(
+          id = "id-1",
+          creationTimestamp = new Timestamp(1542205922011L),
           concatId = "DE~EMAKINA~123",
           countryCode = "DE",
           customerType = "CONTACTPERSON",

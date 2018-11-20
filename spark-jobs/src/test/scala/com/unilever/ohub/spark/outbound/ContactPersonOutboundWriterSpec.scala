@@ -47,8 +47,11 @@ class ContactPersonOutboundWriterSpec extends SparkJobSpec with TestContactPerso
 }
 
 class InMemStorage[DomainType <: DomainEntity](spark: SparkSession, entities: Dataset[DomainType]) extends DefaultStorage(spark) {
+  import scala.reflect.runtime.universe._
 
-  override def readFromParquet[T: Encoder](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T] = {
+  override def readFromParquet[T <: Product: TypeTag](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T] = {
+    implicit val encoder = Encoders.product[T]
+
     entities.as[T]
   }
 

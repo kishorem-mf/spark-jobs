@@ -1,2 +1,2 @@
-countryCode;sourceName;sourceEntityId;concatId;contactPersonConcatId;operatorConcatId;customerType;dateCreated;dateUpdated;isActive;name;details;actionType;activityDate;operatorRefId
-DE;EMAKINA;123;DE~EMAKINA~123;DE~EMAKINA~456;DE~EMAKINA~789;CONTACTPERSON;20171218 10:33:54;20171218 10:33:54;true;QA;answering questions;type;20171218 10:33:54;456
+id;creationTimestamp;countryCode;sourceName;sourceEntityId;concatId;contactPersonConcatId;operatorConcatId;customerType;dateCreated;dateUpdated;isActive;name;details;actionType;activityDate;operatorRefId
+id-1;1542205922011;DE;EMAKINA;123;DE~EMAKINA~123;DE~EMAKINA~456;DE~EMAKINA~789;CONTACTPERSON;20171218 10:33:54;20171218 10:33:54;true;QA;answering questions;type;20171218 10:33:54;456

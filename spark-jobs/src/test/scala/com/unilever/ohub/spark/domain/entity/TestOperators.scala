@@ -30,6 +30,8 @@ trait TestOperators {
 
   // format: OFF
   lazy val defaultOperator: Operator = Operator(
+    id                          = "id-1",
+    creationTimestamp           = new Timestamp(1542205922011L),
     concatId                    = "country-code~source-name~source-entity-id",
     countryCode                 = "country-code",
     customerType                = Operator.customerType,

@@ -49,6 +49,12 @@ class CustomParsersSpec extends FunSpec with Matchers {
     }
   }
 
+  describe("toTimestamp") {
+    it("should parse a timestamp correctly from a long input string") {
+      assert(toTimestamp("1542205922011").getTime == 1542205922011L)
+    }
+  }
+
   describe("toBigDecimal") {
     it("should throw an exception on an empty string") {
       assertThrows[Exception](toBigDecimal(""))

@@ -8,6 +8,8 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 case class Question(
     // generic fields
     // mandatory fields
+    id: String,
+    creationTimestamp: Timestamp,
     concatId: String,
     countryCode: String,
     customerType: String,

@@ -11,6 +11,8 @@ object ContactPerson {
 
 case class ContactPerson(
     // generic fields
+    id: String,
+    creationTimestamp: Timestamp,
     concatId: String,
     countryCode: String,
     customerType: String,

@@ -11,6 +11,8 @@ object Recipe {
 
 case class Recipe(
     // generic fields
+    id: String,
+    creationTimestamp: Timestamp,
     concatId: String,
     countryCode: String,
     customerType: String,

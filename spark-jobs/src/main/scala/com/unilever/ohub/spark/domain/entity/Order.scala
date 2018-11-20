@@ -11,6 +11,8 @@ object Order {
 
 case class Order(
     // generic fields
+    id: String,
+    creationTimestamp: Timestamp,
     concatId: String,
     countryCode: String,
     customerType: String,

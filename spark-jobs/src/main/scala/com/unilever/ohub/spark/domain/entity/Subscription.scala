@@ -11,6 +11,8 @@ object Subscription {
 
 case class Subscription(
     // generic fields
+    id: String,
+    creationTimestamp: Timestamp,
     concatId: String,
     countryCode: String,
     customerType: String,
