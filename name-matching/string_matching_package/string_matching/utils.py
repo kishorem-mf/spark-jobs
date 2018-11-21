@@ -6,6 +6,7 @@ from pyspark.sql import DataFrame
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
+from pyspark.sql.types import StructType
 
 LOGGER = None
 
@@ -39,11 +40,16 @@ def start_spark(name):
     return spark, LOGGER
 
 
-def read_parquet(spark: SparkSession, fn: str, fraction: float) -> DataFrame:
+def read_parquet_with_schema(spark: SparkSession, schema: StructType, fn: str) -> DataFrame:
     return (spark
             .read
-            .parquet(fn)
-            .sample(False, fraction))
+            .schema(schema)
+            .parquet(fn))
+
+def read_parquet(spark: SparkSession, fn: str) -> DataFrame:
+    return (spark
+            .read
+            .parquet(fn))
 
 
 def remove_strange_chars_to_lower_and_trim(input: str):

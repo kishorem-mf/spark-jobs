@@ -177,7 +177,7 @@ def main(arguments, preprocess_function, post_process_function):
     spark, LOGGER = start_spark('Matching')
 
     t = Timer('Reading for country {}'.format(arguments.country_code), LOGGER)
-    ddf = (read_parquet(spark, arguments.input_file, arguments.fraction)
+    ddf = (read_parquet(spark, arguments.input_file)
            .filter(sf.col('countryCode') == arguments.country_code)
            )
     ddf.persist()

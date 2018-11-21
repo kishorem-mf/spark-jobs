@@ -4,6 +4,7 @@ from pyspark.sql.types import *
 from string_matching import entity_delta_matching as victim
 from string_matching import entity_matching as helper
 
+from string_matching.utils import save_to_parquet_per_partition, read_parquet, read_parquet_with_schema
 
 class TestDeltaMatching(object):
 
@@ -32,6 +33,45 @@ class TestDeltaMatching(object):
         StructField("zipCode", StringType(), True),
         StructField("houseNumber", StringType(), True),
     ])
+
+    schema_operators_V2 = StructType([
+        StructField("id", StringType(), True),
+        StructField("concatId", StringType(), True),
+        StructField("ohubId", StringType(), True),
+        StructField("countryCode", StringType(), True),
+        StructField("name", StringType(), True),
+        StructField("city", StringType(), True),
+        StructField("street", StringType(), True),
+        StructField("houseNumber", StringType(), True),
+        StructField("zipCode", StringType(), True),
+    ])
+
+    def test_schema_evolution(self, spark):
+        delta_data = [
+            ('id-1', 'c1', None, 'NL', 'xx', '', '', '', ''),
+            ('id-2', 'c2', None, 'NL', 'xx', '', '', '', ''),
+            ('id-3', 'c3', None, 'NL', 'xy', '', '', '', ''),
+            ('id-4', 'c4', None, 'NL', 'xx', 'v', '', '', ''),
+        ]
+        integrated_data = [
+            ('c5', 'o1', 'NL', 'xx', '', '', '', ''),
+            ('c6', 'o2', 'NL', 'xx', '', '', '', ''),
+            ('c7', 'o3', 'NL', 'xz', '', '', '', ''),
+            ('c4', 'o4', 'NL', 'xx', '', '', '', ''),
+        ]
+        ingested = (spark.createDataFrame(delta_data, self.schema_operators_V2))
+        integrated = (spark.createDataFrame(integrated_data, self.schema_operators))
+
+        integrated.write.parquet('/tmp/operators_v1', mode='overwrite')
+
+        integrated_read = read_parquet_with_schema(spark, ingested.schema, '/tmp/operators_v1')
+
+        assert self.schema_operators_V2 == integrated_read.schema
+
+        result = ingested.union(integrated_read)
+
+        result.show(truncate=False)
+        assert len(result.collect()) == 8
 
     def test_full_matching_operators(self, spark):
         delta_data = [

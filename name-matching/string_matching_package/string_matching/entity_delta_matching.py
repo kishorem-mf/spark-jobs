@@ -19,7 +19,7 @@ from pyspark.sql.window import Window
 
 from .entity_matching import \
     N_GRAMS, MINIMUM_DOCUMENT_FREQUENCY, VOCABULARY_SIZE, MINIMUM_ENTRIES_PER_COUNTRY, MIN_LEVENSHTEIN_DISTANCE
-from .utils import start_spark, Timer, save_to_parquet_per_partition
+from .utils import start_spark, Timer, save_to_parquet_per_partition, read_parquet, read_parquet_with_schema
 from .spark_string_matching import similarity_schema
 
 
@@ -196,13 +196,12 @@ def main(arguments, preprocess_function, postprocess_function):
     spark, LOGGER = start_spark('Match and join newly ingested  with persistent ohubId')
 
     t = Timer('Reading for country {}'.format(arguments.country_code), LOGGER)
-    ingested_daily = (spark.read.parquet(arguments.ingested_daily_input_path)
-                      .filter(sf.col('countryCode') == arguments.country_code)
-                      )
+    ingested_daily = (read_parquet(spark, arguments.ingested_daily_input_path)
+                      .filter(sf.col('countryCode') == arguments.country_code))
 
-    integrated = (spark.read.parquet(arguments.integrated_input_path)
-                  .filter(sf.col('countryCode') == arguments.country_code)
-                  )
+    # read integrated with ingested schema for basic schema evolution
+    integrated = (read_parquet_with_schema(spark, ingested_daily.schema, arguments.integrated_input_path)
+                  .filter(sf.col('countryCode') == arguments.country_code))
     ingested_daily.persist()
     integrated.persist()
     t.end_and_log()
