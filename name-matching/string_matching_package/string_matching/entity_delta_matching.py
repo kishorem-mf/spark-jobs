@@ -169,6 +169,7 @@ def apply_delta_matching_on(spark,
                                                 integrated_preprocessed,
                                                 n_top,
                                                 threshold)
+
     matches = postprocess_function(similarity, daily_preprocessed, integrated_preprocessed)
     return_value = recreate_matched_and_unmatched(integrated_records_for_country,
                                                   ingested_records_for_country,

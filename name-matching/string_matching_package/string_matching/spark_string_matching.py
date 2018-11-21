@@ -211,18 +211,28 @@ def dense_to_sparse_ddf(ddf, row_number_column):
             )
 
 
-def sparse_to_csr_matrix(ddf, row_number_column):
+def sparse_to_pandas(ddf, row_number_column):
     df = ddf.toPandas()
     df[row_number_column] = df[row_number_column].astype(np.int32)
     df.ngram_index = df.ngram_index.astype(np.int32)
     df.value = df.value.astype(np.float64)
+    return df
+
+
+def sparse_to_csr_matrix(pandas_df, row_number_column, n_columns=None):
+    # df = ddf.toPandas()
+    # df[row_number_column] = df[row_number_column].astype(np.int32)
+    # df.ngram_index = df.ngram_index.astype(np.int32)
+    # df.value = df.value.astype(np.float64)
+
+    n_columns = n_columns or (pandas_df.ngram_index.max() + 1)
 
     csr_names_vs_ngrams = csr_matrix(
-        (df.value.values,
-         (df[row_number_column].values, df.ngram_index.values)),
-        shape=(df[row_number_column].max() + 1, df.ngram_index.max() + 1),
+        (pandas_df.value.values,
+         (pandas_df[row_number_column].values, pandas_df.ngram_index.values)),
+        shape=(pandas_df[row_number_column].max() + 1, n_columns),
         dtype=np.float64)
-    del df
+    del pandas_df
     return csr_names_vs_ngrams
 
 
@@ -293,7 +303,7 @@ def match_strings(spark, df,
     if names_vs_ngrams.count() == 0:
         return spark.createDataFrame([], similarity_schema)
 
-    csr_names_vs_ngrams = sparse_to_csr_matrix(names_vs_ngrams, row_number_column)
+    pandas_df = sparse_to_pandas(names_vs_ngrams, row_number_column)
 
     if df2:
         upper_triangular = False
@@ -303,22 +313,27 @@ def match_strings(spark, df,
                                 )
 
         names_vs_ngrams_2 = dense_to_sparse_ddf(vectorized_strings_2, row_number_column)
+        pandas_df_2 = sparse_to_pandas(names_vs_ngrams_2, row_number_column)
+        n_columns = max(pandas_df.ngram_index.max(), pandas_df_2.ngram_index.max()) + 1
+        csr_names_vs_ngrams = sparse_to_csr_matrix(pandas_df, row_number_column, n_columns)
 
         if names_vs_ngrams_2.count() == 0:
             return spark.createDataFrame([], similarity_schema)
 
-        csr_names_vs_ngrams_2 = sparse_to_csr_matrix(names_vs_ngrams_2, row_number_column)
+        csr_names_vs_ngrams_2 = sparse_to_csr_matrix(pandas_df_2, row_number_column, n_columns)
         csr_rdd_transpose = spark.sparkContext.broadcast(
             csr_names_vs_ngrams_2.transpose()
         )
     else:
+        csr_names_vs_ngrams = sparse_to_csr_matrix(pandas_df, row_number_column)
         upper_triangular = True
         csr_rdd_transpose = spark.sparkContext.broadcast(
             csr_names_vs_ngrams.transpose()
         )
 
     chunks = split_into_chunks(csr_names_vs_ngrams, matrix_chunks_rows)
-    chunks_rdd = spark.sparkContext.parallelize(chunks, numSlices=len(chunks))
+    # chunks_rdd = spark.sparkContext.parallelize(chunks, numSlices=len(chunks))
+    chunks_rdd = spark.sparkContext.parallelize(chunks, numSlices=1)
     del csr_names_vs_ngrams
 
     chunks_rdd.persist()

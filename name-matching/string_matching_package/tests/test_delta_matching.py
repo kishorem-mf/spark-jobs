@@ -1,6 +1,6 @@
-from typing import List
-
+import pytest
 from pyspark.sql.types import *
+import pyspark.sql.functions as sf
 from string_matching import entity_delta_matching as victim
 from string_matching import entity_matching as helper
 
@@ -72,6 +72,23 @@ class TestDeltaMatching(object):
 
         result.show(truncate=False)
         assert len(result.collect()) == 8
+
+    @pytest.skip(msg="Hacky test to run locally. Make sure paths to files are correct.")
+    def test_from_file(self, spark):
+        ingested = "/testdata/operators_pre_processed.parquet"
+        integrated = "/testdata/operators.parquet/"
+        ingested_df = spark.read.parquet(ingested).filter(sf.col('countryCode') == "SE")
+        integrated_df = spark.read.parquet(integrated).filter(sf.col('countryCode') == "SE")
+
+        updated, unmatched = victim.apply_delta_matching_on(spark,
+                                                            ingested_df,
+                                                            integrated_df,
+                                                            helper.preprocess_operators,
+                                                            victim.postprocess_delta_operators,
+                                                            1500, 0.8)
+
+        print("COUNT = " + str(updated.count()))
+
 
     def test_full_matching_operators(self, spark):
         delta_data = [

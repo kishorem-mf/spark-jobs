@@ -20,7 +20,7 @@ def spark(request):
         SparkSession.builder
         .master("local[2]")
         .appName("pytest")
-        .config("spark.ui.enabled", "false")
+        .config("spark.ui.enabled", "true")
         .getOrCreate()
     )
 
