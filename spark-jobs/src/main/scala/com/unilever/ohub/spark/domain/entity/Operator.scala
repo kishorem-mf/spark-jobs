@@ -21,7 +21,7 @@ case class Operator(
     isActive: Boolean,
     isGoldenRecord: Boolean,
     ohubId: Option[String],
-    name: String,
+    name: Option[String],
     sourceEntityId: String,
     sourceName: String,
     ohubCreated: Timestamp,

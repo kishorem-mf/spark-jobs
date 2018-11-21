@@ -29,7 +29,7 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
           dateUpdated = Some(Timestamp.valueOf("2017-12-18 10:47:37")),
           isActive = true,
           isGoldenRecord = false,
-          name = "Kebapçim Ali - Bodrum",
+          name = Some("Kebapçim Ali - Bodrum"),
           sourceName = "KANGAROO",
           sourceEntityId = "HG_226466866",
           ohubId = actualOperator.ohubId,

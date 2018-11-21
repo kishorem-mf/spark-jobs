@@ -29,7 +29,7 @@ object OperatorConverter extends CommonDomainGateKeeper[Operator] with OperatorE
       isActive                    = mandatory ( "isActive",                 "isActive",                     toBoolean                                 ),
       isGoldenRecord              = false                                                                                                              ,
       ohubId                      = Option.empty,
-      name                        = mandatory ( "name",                     "name"                                                                    ),
+      name                        = optional  ( "name",                     "name"                                                                    ),
       sourceEntityId              = mandatory ( "sourceEntityId",           "sourceEntityId"                                                          ),
       sourceName                  = mandatory ( "sourceName",               "sourceName"                                                              ),
       ohubCreated                 = ohubCreated                                                                                                        ,

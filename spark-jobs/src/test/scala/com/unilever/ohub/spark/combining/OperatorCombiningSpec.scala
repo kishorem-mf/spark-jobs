@@ -33,18 +33,18 @@ class OperatorCombiningSpec extends SparkJobSpec with TestOperators {
     it("should combine two operator datasets and take the latest concatId") {
       val d1 = Seq(
         defaultOperatorWithSourceEntityId("source-entity-id-a"),
-        defaultOperatorWithSourceEntityId("source-entity-id-b").copy(name = "foo")
+        defaultOperatorWithSourceEntityId("source-entity-id-b").copy(name = Some("foo"))
       ).toDataset
       val d2 = Seq(
         defaultOperatorWithSourceEntityId("source-entity-id-c"),
-        defaultOperatorWithSourceEntityId("source-entity-id-b").copy(name = "bar")
+        defaultOperatorWithSourceEntityId("source-entity-id-b").copy(name = Some("bar"))
       ).toDataset
 
       val res = OperatorCombining.transform(spark, d1, d2).collect()
 
       assert(res.length === 3)
       res.map(_.sourceEntityId) should contain theSameElementsAs Seq("source-entity-id-a", "source-entity-id-b", "source-entity-id-c")
-      res.find(_.sourceEntityId == "source-entity-id-b").get.name shouldBe "bar"
+      res.find(_.sourceEntityId == "source-entity-id-b").get.name shouldBe Some("bar")
     }
   }
 }

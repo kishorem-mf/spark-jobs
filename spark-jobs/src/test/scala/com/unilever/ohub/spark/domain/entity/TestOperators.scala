@@ -40,7 +40,7 @@ trait TestOperators {
     isActive                    = true,
     isGoldenRecord              = false,
     ohubId                      = Some(UUID.randomUUID().toString),
-    name                        = "operator-name",
+    name                        = Some("operator-name"),
     sourceEntityId              = "source-entity-id",
     sourceName                  = "source-name",
     ohubCreated                 = Timestamp.valueOf("2017-10-16 18:09:49"),
