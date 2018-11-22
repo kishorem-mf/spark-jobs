@@ -1,10 +1,9 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.{ TestActivities, TestContactPersons, TestOperators }
+import com.unilever.ohub.spark.domain.entity._
 import org.apache.spark.sql.Dataset
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.domain.entity.Activity
 
 class ActivityMergingSpec extends SparkJobSpec with TestActivities with TestContactPersons with TestOperators {
 
@@ -13,6 +12,53 @@ class ActivityMergingSpec extends SparkJobSpec with TestActivities with TestCont
   private val SUT = ActivityMerging
 
   describe("Activity merging") {
+
+    it("should give a new activity an ohubId and be marked golden record") {
+      val input = Seq(
+        defaultActivity
+      ).toDataset
+
+      val previous = Seq[Activity]().toDataset
+      val contactPersons = Seq[ContactPerson]().toDataset
+      val operators = Seq[Operator]().toDataset
+
+      val result = SUT.transform(spark, input, previous, contactPersons, operators)
+        .collect()
+
+      result.head.ohubId shouldBe defined
+      result.head.isGoldenRecord shouldBe true
+    }
+
+    it("should set the ohubId references to a contact person and operator") {
+      val input = Seq(
+        defaultActivity.copy(
+          contactPersonConcatId = Some("DE~SUBSCRIPTION~CP1"),
+          contactPersonOhubId = None,
+          operatorConcatId = Some("DE~SUBSCRIPTION~OP1"),
+          operatorOhubId = None
+        )
+      ).toDataset
+
+      val previous = Seq[Activity]().toDataset
+      val contactPersons = Seq[ContactPerson](
+        defaultContactPerson.copy(
+          concatId = "DE~SUBSCRIPTION~CP1",
+          ohubId = Some("OHUB_ID_CP_1")
+        )
+      ).toDataset
+      val operators = Seq[Operator](
+        defaultOperator.copy(
+          concatId = "DE~SUBSCRIPTION~OP1",
+          ohubId = Some("OHUB_ID_OP_1")
+        )
+      ).toDataset
+
+      val result = SUT.transform(spark, input, previous, contactPersons, operators)
+        .collect()
+      result.head.contactPersonOhubId shouldBe Some("OHUB_ID_CP_1")
+      result.head.operatorOhubId shouldBe Some("OHUB_ID_OP_1")
+    }
+
     it("should take newest data if available while retaining ohubId") {
 
       val contactPersons = Seq(

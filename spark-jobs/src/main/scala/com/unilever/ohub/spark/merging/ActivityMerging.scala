@@ -1,5 +1,7 @@
 package com.unilever.ohub.spark.merging
 
+import java.util.UUID
+
 import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.entity.{ Activity, ContactPerson, Operator }
 import com.unilever.ohub.spark.sql.JoinType
@@ -33,10 +35,10 @@ object ActivityMerging extends SparkJob[ActivityMergingConfig] {
         case (integrated, activity) ⇒
           if (activity == null) {
             integrated
-          } else if (integrated == null) {
-            activity
           } else {
-            activity.copy(ohubId = integrated.ohubId, ohubCreated = integrated.ohubCreated)
+            val ohubId = if (integrated == null) Some(UUID.randomUUID().toString) else integrated.ohubId
+
+            activity.copy(ohubId = ohubId, isGoldenRecord = true)
           }
       }
       // update cpn ids

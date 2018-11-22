@@ -1,10 +1,9 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.TestAnswers
+import com.unilever.ohub.spark.domain.entity._
 import org.apache.spark.sql.Dataset
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.domain.entity.Answer
 
 class AnswerMergingSpec extends SparkJobSpec with TestAnswers {
 
@@ -13,6 +12,21 @@ class AnswerMergingSpec extends SparkJobSpec with TestAnswers {
   private val SUT = AnswerMerging
 
   describe("Answer merging") {
+
+    it("should give a new answer an ohubId and be marked golden record") {
+      val input = Seq(
+        defaultAnswer
+      ).toDataset
+
+      val previous = Seq[Answer]().toDataset
+
+      val result = SUT.transform(spark, input, previous)
+        .collect()
+
+      result.head.ohubId shouldBe defined
+      result.head.isGoldenRecord shouldBe true
+    }
+
     it("should take newest data if available while retaining ohubId") {
 
       val updatedRecord = defaultAnswer.copy(
