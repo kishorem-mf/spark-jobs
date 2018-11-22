@@ -21,7 +21,7 @@ class SubscriptionConverterSpec extends CsvDomainGateKeeperSpec[Subscription] {
         val expectedSubscription = Subscription(
           id = "id-1",
           creationTimestamp = new Timestamp(1542205922011L),
-          concatId = "AU~EMAKINA~AU~DEFAULT_NEWSLETTER_OPT_IN",
+          concatId = "AU~EMAKINA~S1234",
           contactPersonOhubId = Option.empty,
           countryCode = "AU",
           customerType = "SUBSCRIPTION",
@@ -29,7 +29,7 @@ class SubscriptionConverterSpec extends CsvDomainGateKeeperSpec[Subscription] {
           dateUpdated = Some(Timestamp.valueOf("2015-06-30 13:48:00.0")),
           isActive = true,
           isGoldenRecord = false,
-          sourceEntityId = "AU~DEFAULT_NEWSLETTER_OPT_IN",
+          sourceEntityId = "S1234",
           sourceName = "EMAKINA",
           ohubId = None,
           ohubCreated = actualSubscription.ohubCreated,

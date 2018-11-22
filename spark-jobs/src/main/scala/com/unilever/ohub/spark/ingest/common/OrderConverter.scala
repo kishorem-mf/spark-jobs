@@ -11,7 +11,6 @@ object OrderConverter extends CommonDomainGateKeeper[Order] with OrderEmptyParqu
     import transformer._
     implicit val source: Row = row
 
-    val concatId: String = createConcatId("countryCode", "sourceName", "sourceEntityId")
     val ohubCreated = currentTimestamp()
 
     // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
@@ -19,7 +18,7 @@ object OrderConverter extends CommonDomainGateKeeper[Order] with OrderEmptyParqu
     Order(
       id                                    = mandatory( "id",                                    "id"),
       creationTimestamp                     = mandatory( "creationTimestamp",                     "creationTimestamp", toTimestamp),
-      concatId                              = concatId, // TODO OHUB-1784 INBOUND PROVIDES THIS TOO, BUT SHOULD IT (IT DOES NOT FOR OTHER ENTITIES)?
+      concatId                              = mandatory( "concatId",                              "concatId"),
       countryCode                           = mandatory( "countryCode",                           "countryCode"                                  ),
       customerType                          = Order.customerType,
       dateCreated                           = optional(  "dateCreated",                           "dateCreated",                            parseDateTimeUnsafe()),

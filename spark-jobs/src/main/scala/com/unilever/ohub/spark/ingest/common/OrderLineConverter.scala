@@ -11,9 +11,6 @@ object OrderLineConverter extends CommonDomainGateKeeper[OrderLine] with OrderLi
     import transformer._
     implicit val source: Row = row
 
-    val orderLineConcatId: String = createConcatId("countryCode", "sourceName", "sourceEntityId")(row)
-    val orderConcatId: String = createConcatId("countryCode", "sourceName", "orderRefId")
-    val productConcatId: String = createConcatId("countryCode", "sourceName", "productRefId")
     val ohubCreated = currentTimestamp()
 
     // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
@@ -21,7 +18,7 @@ object OrderLineConverter extends CommonDomainGateKeeper[OrderLine] with OrderLi
     OrderLine(
       id                              = mandatory( "id",                       "id"),
       creationTimestamp               = mandatory( "creationTimestamp",        "creationTimestamp",      toTimestamp),
-      concatId                        = orderLineConcatId,
+      concatId                        = mandatory( "concatId",                 "concatId"),
       countryCode                     = mandatory( "countryCode",              "countryCode"                                    ),
       customerType                    = OrderLine.customerType                                                                   ,
       dateCreated                     = optional(  "dateCreated",              "dateCreated",            parseDateTimeUnsafe()  ),
@@ -34,8 +31,8 @@ object OrderLineConverter extends CommonDomainGateKeeper[OrderLine] with OrderLi
       ohubCreated                     = ohubCreated,
       ohubUpdated                     = ohubCreated,
       // specific fields
-      orderConcatId                   = orderConcatId,
-      productConcatId                 = productConcatId,
+      orderConcatId                   = mandatory( "orderConcatId",            "orderConcatId"),
+      productConcatId                 = mandatory( "productConcatId",          "productConcatId"),
       productSourceEntityId           = mandatory( "productRefId",             "productRefId"),
       comment                         = optional(  "comment",                  "comment"),
       quantityOfUnits                 = mandatory( "quantityOfUnits",          "quantityOfUnits",        toInt        ),

@@ -13,16 +13,14 @@ object ContactPersonConverter extends CommonDomainGateKeeper[ContactPerson] with
 
     // format: OFF
 
-    val countryCode       = mandatoryValue("countryCode", "countryCode")(row)
-    val concatId          = createConcatId("countryCode", "sourceName", "sourceEntityId")
     val ohubCreated       = currentTimestamp()
 
     // fieldName                        mandatory   sourceFieldName                   targetFieldName                 transformationFunction (unsafe)
     ContactPerson(
       id                            = mandatory(    "id",                             "id"),
       creationTimestamp             = mandatory(    "creationTimestamp",              "creationTimestamp",            toTimestamp),
-      concatId                      = concatId                                                                                                            ,
-      countryCode                   = countryCode                                                                                                         ,
+      concatId                      = mandatory(    "concatId",                       "concatId"),
+      countryCode                   = mandatory(    "countryCode",                    "countryCode"),
       customerType                  = ContactPerson.customerType                                                                                          ,
       ohubCreated                   = ohubCreated                                                                                                         ,
       ohubUpdated                   = ohubCreated                                                                                                         ,

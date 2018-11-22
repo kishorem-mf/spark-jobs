@@ -1,2 +1,2 @@
-countryCode;sourceName;communicationChannel;sourceEntityId;contactPersonRefId;dateCreated;dateUpdated;isActive;subscriptionType;hasSubscription;subscriptionDate;hasConfirmedSubscription;confirmedSubscriptionDate;id;creationTimestamp
-AU;EMAKINA;channel;AU~DEFAULT_NEWSLETTER_OPT_IN;AB123;20150630 13:47:00;20150630 13:48:00;true;default_newsletter_opt_in;true;20150630 13:47:00;true;20150630 13:48:00;1;1542205922011
+countryCode;sourceName;communicationChannel;sourceEntityId;concatId;contactPersonRefId;dateCreated;dateUpdated;isActive;subscriptionType;hasSubscription;subscriptionDate;hasConfirmedSubscription;confirmedSubscriptionDate;id;creationTimestamp
+AU;EMAKINA;channel;S1;AU~EMAKINA~S1;AB123;20150630 13:47:00;20150630 13:48:00;true;default_newsletter_opt_in;true;20150630 13:47:00;true;20150630 13:48:00;1;1542205922011

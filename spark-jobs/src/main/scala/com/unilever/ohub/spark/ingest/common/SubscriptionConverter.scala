@@ -11,8 +11,6 @@ object SubscriptionConverter extends CommonDomainGateKeeper[Subscription] with S
     import transformer._
     implicit val source: Row = row
 
-    val countryCode = mandatoryValue("countryCode", "countryCode")(row)
-    val concatIdRef: String = createConcatId("countryCode", "sourceName", "sourceEntityId")
     val ohubCreated = currentTimestamp()
     val contactPersonConcatRefId: String = createConcatId("countryCode", "sourceName", "contactPersonRefId")
 
@@ -22,8 +20,8 @@ object SubscriptionConverter extends CommonDomainGateKeeper[Subscription] with S
       // fieldName                  mandatory                   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
       id                          = mandatory(                  "id",                         "id"),
       creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp",          toTimestamp),
-      concatId                    = concatIdRef,
-      countryCode                 = countryCode,
+      concatId                    = mandatory(                  "concatId",                   "concatId"),
+      countryCode                 = mandatory(                  "countryCode",                "countryCode"                                  ),
       customerType                = Subscription.customerType,
       dateCreated                 = optional(                   "dateCreated",                "dateCreated",                parseDateTimeUnsafe()),
       dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated",                parseDateTimeUnsafe()),

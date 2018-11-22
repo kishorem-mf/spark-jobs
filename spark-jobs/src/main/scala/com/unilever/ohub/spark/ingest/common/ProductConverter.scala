@@ -11,7 +11,6 @@ object ProductConverter extends CommonDomainGateKeeper[Product] with ProductEmpt
     import transformer._
     implicit val source: Row = row
 
-    val concatId: String = createConcatId("countryCode", "sourceName", "sourceEntityId")
     val ohubCreated = currentTimestamp()
 
     // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
@@ -20,7 +19,7 @@ object ProductConverter extends CommonDomainGateKeeper[Product] with ProductEmpt
     Product(
       id                              = mandatory( "id",                       "id"),
       creationTimestamp               = mandatory( "creationTimestamp",        "creationTimestamp",      toTimestamp),
-      concatId                        = concatId,
+      concatId                        = mandatory( "concatId",                 "concatId"),
       countryCode                     = mandatory( "countryCode",              "countryCode"                                    ),
       customerType                    = Product.customerType                                                                     ,
       dateCreated                     = optional(  "dateCreated",              "dateCreated",            parseDateTimeUnsafe()  ),

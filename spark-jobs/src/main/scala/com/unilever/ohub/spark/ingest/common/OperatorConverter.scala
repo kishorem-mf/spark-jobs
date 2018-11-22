@@ -11,8 +11,6 @@ object OperatorConverter extends CommonDomainGateKeeper[Operator] with OperatorE
     import transformer._
     implicit val source: Row = row
 
-    val countryCode = mandatoryValue("countryCode", "countryCode")(row)
-    val concatId: String = createConcatId("countryCode", "sourceName", "sourceEntityId")
     val ohubCreated = currentTimestamp()
 
     // format: OFF
@@ -21,8 +19,8 @@ object OperatorConverter extends CommonDomainGateKeeper[Operator] with OperatorE
       // fieldName                  mandatory   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
       id                          = mandatory( "id",                        "id"),
       creationTimestamp           = mandatory( "creationTimestamp",         "creationTimestamp",            toTimestamp),
-      concatId                    = concatId                                                                                                           ,
-      countryCode                 = countryCode                                                                                                        ,
+      concatId                    = mandatory( "concatId",                  "concatId"),
+      countryCode                 = mandatory( "countryCode",               "countryCode"),
       dateCreated                 = optional  ( "dateCreated",              "dateCreated",                  parseDateTimeUnsafe()                     ),
       dateUpdated                 = optional  ( "dateUpdated",              "dateUpdated",                  parseDateTimeUnsafe()                     ),
       customerType                = Operator.customerType                                                                                              ,
