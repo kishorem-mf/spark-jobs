@@ -332,8 +332,7 @@ def match_strings(spark, df,
         )
 
     chunks = split_into_chunks(csr_names_vs_ngrams, matrix_chunks_rows)
-    # chunks_rdd = spark.sparkContext.parallelize(chunks, numSlices=len(chunks))
-    chunks_rdd = spark.sparkContext.parallelize(chunks, numSlices=1)
+    chunks_rdd = spark.sparkContext.parallelize(chunks, numSlices=len(chunks))
     del csr_names_vs_ngrams
 
     chunks_rdd.persist()
