@@ -13,6 +13,20 @@ class QuestionMergingSpec extends SparkJobSpec with TestQuestions {
   private val SUT = QuestionMerging
 
   describe("Question merging") {
+    it("should give a new question an ohubId and be marked golden record") {
+      val input = Seq(
+        defaultQuestion
+      ).toDataset
+
+      val previous = Seq[Question]().toDataset
+
+      val result = SUT.transform(spark, input, previous)
+        .collect()
+
+      result.head.ohubId shouldBe defined
+      result.head.isGoldenRecord shouldBe true
+    }
+
     it("should take newest data if available while retaining ohubId") {
 
       val updatedRecord = defaultQuestion.copy(

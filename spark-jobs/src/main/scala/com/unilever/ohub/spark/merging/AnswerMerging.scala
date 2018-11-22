@@ -1,7 +1,9 @@
 package com.unilever.ohub.spark.merging
 
+import java.util.UUID
+
 import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
-import com.unilever.ohub.spark.domain.entity.{ Answer, ContactPerson }
+import com.unilever.ohub.spark.domain.entity.Answer
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
@@ -29,10 +31,10 @@ object AnswerMerging extends SparkJob[AnswerMergingConfig] {
         case (integrated, answer) ⇒
           if (answer == null) {
             integrated
-          } else if (integrated == null) {
-            answer
           } else {
-            answer.copy(ohubId = integrated.ohubId, ohubCreated = integrated.ohubCreated)
+            val ohubId = if (integrated == null) Some(UUID.randomUUID().toString) else integrated.ohubId
+
+            answer.copy(ohubId = ohubId, isGoldenRecord = true)
           }
       }
   }
