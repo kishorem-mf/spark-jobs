@@ -1,21 +1,26 @@
-""" Join ingested daily data with integrated data, keeping persistent group id's
+"""
+Join ingested daily data with integrated data, keeping persistent group IDs.
 
 This script outputs two dataframes:
-- Updated integrated data
+1. Updated integrated data
   - Changed records that match with integrated data
   - New records that match with integrated data
-- Unmatched data
+2. Unmatched data
   - All records that do not match with integrated data
 
 The following steps are performed per country:
 - Pre-process integrated data to format for matching
 - Pre-process ingested daily data to format for matching
 - Match ingested data with integrated data
-- write two dataframes to file: updated integrated data and unmatched data
+- Write two dataframes to file: updated integrated data and unmatched data
 """
 import argparse
+
+from string_matching.entity_delta_matching import (
+    main,
+    postprocess_delta_contact_persons,
+)
 from string_matching.entity_matching import preprocess_contact_persons
-from string_matching.entity_delta_matching import main, postprocess_delta_contact_persons
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

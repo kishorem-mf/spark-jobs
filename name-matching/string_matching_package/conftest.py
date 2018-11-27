@@ -1,11 +1,13 @@
-import pytest
 import shutil
+
+import pytest
 from pyspark.sql import SparkSession
 
 
 @pytest.fixture(scope="session")
 def spark(request):
-    """Fixture for creating a spark context
+    """
+    Fixture for creating a Spark context
 
     :param request: pytest.FixtureRequest object
     :return: SparkSession
@@ -18,7 +20,7 @@ def spark(request):
         pass
     spark = (
         SparkSession.builder
-        .master("local[2]")
+        .master("local[*]")
         .appName("pytest")
         .config("spark.ui.enabled", "true")
         .getOrCreate()

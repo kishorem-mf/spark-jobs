@@ -5,8 +5,10 @@ from setuptools import setup, Extension
 
 ext_utils = Extension(
     'string_matching.sparse_dot_topn',
-    sources=['./string_matching/sparse_dot_topn.pyx',
-             './string_matching/sparse_dot_topn_source.cpp'],
+    sources=[
+        './string_matching/sparse_dot_topn.pyx',
+        './string_matching/sparse_dot_topn_source.cpp'
+    ],
     include_dirs=[numpy.get_include()],
     extra_compile_args=['-std=c++0x', '-Os'],
     language='c++',
@@ -14,6 +16,8 @@ ext_utils = Extension(
 
 setup(
     name='string_matching',
+    maintainer="Unilever OHUB",
+    version="0.1",
     setup_requires=[
         # Setuptools 18.0 properly handles Cython extensions.
         'setuptools>=18.0',

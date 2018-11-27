@@ -1,4 +1,5 @@
-""" Fuzzy matching of strings using Spark
+"""
+Fuzzy matching of strings using Spark
 
 General Flow:
 
@@ -11,14 +12,16 @@ General Flow:
 - Cosine similarity is calculated by absolute squaring the matrix.
 - Collect N number of matches above a threshold
 - Group matches and assign a group ID
-- Write parquet file partition by country code
+- Write Parquet file partition by country code
 """
 
 import argparse
 
-from string_matching.entity_matching import \
-    main, \
-    preprocess_operators, postprocess_operators
+from string_matching.entity_matching import (
+    main,
+    preprocess_operators,
+    postprocess_operators,
+)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

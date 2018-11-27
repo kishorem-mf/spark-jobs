@@ -1,17 +1,16 @@
 import re
 from time import perf_counter as timer
-from typing import List
 
 from pyspark.sql import DataFrame
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
-from pyspark.sql.window import Window
 from pyspark.sql.types import StructType
+from pyspark.sql.window import Window
 
 LOGGER = None
 
-# characters to be dropped from strings to be compared
-# list provided by Roderik von Maltzahn
+# Characters to be dropped from strings to be compared.
+# List provided by Roderik von Maltzahn.
 DROP_CHARS = "\\\\!#%&()*+-/:;<=>?@\\^|~\u00A8\u00A9\u00AA\u00AC\u00AD\u00AF\u00B0" \
              "\u00B1\u00B2\u00B3\u00B6\u00B8\u00B9\u00BA\u00BB\u00BC\u00BD\u00BE" \
              "\u2013\u2014\u2022\u2026\u20AC\u2121\u2122\u2196\u2197\u247F\u250A" \
@@ -25,6 +24,11 @@ REGEX = "[{}]".format(DROP_CHARS)
 
 
 def start_spark(name):
+    """
+    TODO describe
+    :param name:
+    :return:
+    """
     spark = (SparkSession
              .builder
              .appName("NameMatching")
@@ -41,18 +45,36 @@ def start_spark(name):
 
 
 def read_parquet_with_schema(spark: SparkSession, schema: StructType, fn: str) -> DataFrame:
+    """
+    TODO describe
+    :param spark:
+    :param schema:
+    :param fn:
+    :return:
+    """
     return (spark
             .read
             .schema(schema)
             .parquet(fn))
 
 def read_parquet(spark: SparkSession, fn: str) -> DataFrame:
+    """
+    TODO desribe
+    :param spark:
+    :param fn:
+    :return:
+    """
     return (spark
             .read
             .parquet(fn))
 
 
 def remove_strange_chars_to_lower_and_trim(input: str):
+    """
+    TODO describe
+    :param input:
+    :return:
+    """
     if input is None:
         return input
     p = re.compile(
@@ -66,6 +88,11 @@ def remove_strange_chars_to_lower_and_trim(input: str):
 
 
 def remove_spaces_strange_chars_and_to_lower(input: str):
+    """
+    TODO describe
+    :param input:
+    :return:
+    """
     if input is None:
         return input
     p = re.compile(
@@ -78,12 +105,22 @@ def remove_spaces_strange_chars_and_to_lower(input: str):
     return input
 
 
-# create udf for use in spark later
+# Create UDF for use in Spark later
 udf_remove_strange_chars_to_lower_and_trim = sf.udf(remove_strange_chars_to_lower_and_trim)
 udf_remove_spaces_strange_chars_and_to_lower = sf.udf(remove_spaces_strange_chars_and_to_lower)
 
 
 def clean_operator_fields(ddf: DataFrame, name_col, city_col, street_col, housenr_col, zip_col) -> DataFrame:
+    """
+    TODO describe
+    :param ddf:
+    :param name_col:
+    :param city_col:
+    :param street_col:
+    :param housenr_col:
+    :param zip_col:
+    :return:
+    """
     return (ddf
             .withColumn('nameCleansed', udf_remove_strange_chars_to_lower_and_trim(sf.col(name_col)))
             .withColumn('cityCleansed', udf_remove_spaces_strange_chars_and_to_lower(sf.col(city_col)))
@@ -96,6 +133,17 @@ def clean_operator_fields(ddf: DataFrame, name_col, city_col, street_col, housen
 
 def clean_contactperson_fields(ddf: DataFrame, first_name_col, last_name_col, street_col, housenr_col,
                                city_col, zip_col) -> DataFrame:
+    """
+    TODO describe
+    :param ddf:
+    :param first_name_col:
+    :param last_name_col:
+    :param street_col:
+    :param housenr_col:
+    :param city_col:
+    :param zip_col:
+    :return:
+    """
     return (ddf
             .withColumn('firstNameCleansed', sf.trim(sf.col(first_name_col)))
             .withColumn('lastNameCleansed', sf.trim(sf.col(last_name_col)))
@@ -109,6 +157,11 @@ def clean_contactperson_fields(ddf: DataFrame, first_name_col, last_name_col, st
 
 
 def clean_matching_string(ddf: DataFrame) -> DataFrame:
+    """
+    TODO describe
+    :param ddf:
+    :return:
+    """
     return (ddf
             .withColumn('matching_string', sf.regexp_replace('matching_string', REGEX, ''))
             .withColumn('matching_string', sf.lower(sf.trim(sf.regexp_replace(sf.col('matching_string'), '\s+', ' '))))
@@ -116,6 +169,11 @@ def clean_matching_string(ddf: DataFrame) -> DataFrame:
 
 
 def create_operator_matching_string(ddf: DataFrame):
+    """
+    TODO describe
+    :param ddf:
+    :return:
+    """
     with_matching_string = (ddf
                             .fillna('')
                             .withColumn('matching_string', sf.concat_ws(' ',
@@ -127,6 +185,11 @@ def create_operator_matching_string(ddf: DataFrame):
 
 
 def create_contactperson_matching_string(ddf: DataFrame):
+    """
+    TODO describe
+    :param ddf:
+    :return:
+    """
     with_matching_string = (ddf
                             .fillna('')
                             .withColumn('matching_string', sf.concat_ws(' ',
@@ -139,25 +202,27 @@ def create_contactperson_matching_string(ddf: DataFrame):
 
 def group_matches(ddf: DataFrame) -> DataFrame:
     """
-    To generate a final list of matches, in the form of (i, j), i.e. contact i matches with contact j,
-    we do the following:
-    - make sure each j only matches with one i (the 'group leader')
-        - note: of course we can have multiple matches per group leader, e.g. (i, j) and (i, k)
-    - make sure that each i (group leader) is not matched with another 'group leader',
+    To generate a final list of matches, in the form of (i, j), i.e. contact i matches
+    with contact j, we do the following:
+    - Make sure each j only matches with one i (the 'group leader')
+        - Note: of course we can have multiple matches per group leader, e.g. (i, j) and (i, k)
+    - Make sure that each i (group leader) is not matched with another 'group leader',
       e.g. if we have (i, j) we remove (k, i) for all k
+    :param ddf:
+    :return:
     """
     grouping_window = (Window
                        .partitionBy('j')
                        .orderBy(sf.asc('i')))
 
-    # keep only the first entry sorted alphabetically
+    # Keep only the first entry sorted alphabetically
     grp_sim = (ddf
                .withColumn("rn", sf.row_number().over(grouping_window))
                .filter(sf.col("rn") == 1)
                .drop('rn')
                )
 
-    # remove group ID from column j
+    # Remove group ID from column j
     return grp_sim.join(
         grp_sim.select('j').subtract(grp_sim.select('i')),
         on='j', how='inner'
@@ -165,6 +230,12 @@ def group_matches(ddf: DataFrame) -> DataFrame:
 
 
 def save_to_parquet_per_partition(partition_name: str, partition_value: str):
+    """
+    TODO describe
+    :param partition_name:
+    :param partition_value:
+    :return:
+    """
     def save(ddf: DataFrame, fn: str, mode: str):
         LOGGER.info("Writing to: " + fn)
         LOGGER.info("Mode: " + mode)
@@ -179,6 +250,13 @@ def save_to_parquet_per_partition(partition_name: str, partition_value: str):
 
 
 def save_to_parquet(ddf: DataFrame, fn: str, mode: str):
+    """
+    TODO describe
+    :param ddf:
+    :param fn:
+    :param mode:
+    :return:
+    """
     LOGGER.info("Writing to: " + fn)
     LOGGER.info("Mode: " + mode)
     (ddf
@@ -190,6 +268,13 @@ def save_to_parquet(ddf: DataFrame, fn: str, mode: str):
 
 
 def print_stats_operators(ddf: DataFrame, n_top, threshold):
+    """
+    TODO describe
+    :param ddf:
+    :param n_top:
+    :param threshold:
+    :return:
+    """
     ddf.persist()
     n_matches = ddf.count()
 
@@ -212,6 +297,13 @@ def print_stats_operators(ddf: DataFrame, n_top, threshold):
 
 
 def print_stats_contacts(ddf: DataFrame, n_top, threshold):
+    """
+    TODO describe
+    :param ddf:
+    :param n_top:
+    :param threshold:
+    :return:
+    """
     ddf.persist()
     n_matches = ddf.count()
 
@@ -236,7 +328,7 @@ def print_stats_contacts(ddf: DataFrame, n_top, threshold):
     ddf.unpersist()
 
 
-class Timer(object):
+class Timer:
     def __init__(self, name: str, logger):
         self.logger = logger
         self.name = name

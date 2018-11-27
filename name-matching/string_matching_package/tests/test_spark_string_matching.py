@@ -5,7 +5,7 @@ def gen_tuple(tup, n, start_idx=0):
     return [(str(i),) + tup[1:-1] + (tup[-1].format(idx=(i + start_idx)),) for i in range(n)]
 
 
-class TestMatchStrings(object):
+class TestMatchStrings:
 
     def create_ddf(self, spark, data):
         return spark.createDataFrame(data).toDF('id', 'matching_string')

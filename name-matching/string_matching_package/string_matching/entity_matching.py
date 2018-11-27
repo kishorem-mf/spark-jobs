@@ -3,11 +3,18 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
-from .utils import start_spark, Timer, read_parquet, \
-    save_to_parquet_per_partition, group_matches, \
-    clean_operator_fields, create_operator_matching_string, clean_contactperson_fields, \
-    create_contactperson_matching_string
 from .spark_string_matching import similarity_schema
+from .utils import (
+    start_spark,
+    Timer,
+    read_parquet,
+    save_to_parquet_per_partition,
+    group_matches,
+    clean_operator_fields,
+    create_operator_matching_string,
+    clean_contactperson_fields,
+    create_contactperson_matching_string,
+)
 
 MATRIX_CHUNK_ROWS = 500
 N_GRAMS = 2
@@ -22,6 +29,14 @@ def match_entity_for_country(spark: SparkSession,
                              entities: DataFrame,
                              n_top: int,
                              threshold: float):
+    """
+    TODO describe function
+    :param spark:
+    :param entities:
+    :param n_top:
+    :param threshold:
+    :return:
+    """
     if not (entities.count() >= MINIMUM_ENTRIES_PER_COUNTRY):
         return spark.createDataFrame([], similarity_schema)
 
@@ -43,13 +58,18 @@ def match_entity_for_country(spark: SparkSession,
 
 
 def preprocess_contact_persons(ddf: DataFrame, id_column: str, *args) -> DataFrame:
-    """Some pre-processing
-        - keep only contacts without e-mail AND without mobile phone number
-        - remove contacts without first AND without last name (cleansed)
-        - remove contacts without a street (cleansed)
-        - create a unique ID
-        - create matching-string
-        - select only necessary columns
+    """
+    Some pre-processing
+        - Keep only contacts without e-mail AND without mobile phone number
+        - Remove contacts without first AND without last name (cleansed)
+        - Remove contacts without a street (cleansed)
+        - Create a unique ID
+        - Create matching-string
+        - Select only necessary columns
+    :param ddf:
+    :param id_column:
+    :param args:
+    :return:
     """
     w = Window.partitionBy('countryCode').orderBy(sf.asc(id_column))
     cleaned = clean_contactperson_fields(ddf, 'firstName', 'lastName', 'street', 'houseNumber', 'city', 'zipCode')
@@ -74,12 +94,15 @@ def preprocess_contact_persons(ddf: DataFrame, id_column: str, *args) -> DataFra
             )
 
 
-def postprocess_contact_persons(similarity: DataFrame,
-                                contacts: DataFrame):
-    """Join back the original columns (street, zip, etc.) after matching and filter matches as follows:
-        - keep only the matches with exactly matching zip code
-            - if no zip code is present: keep match if cities (cleansed) match exactly
-        - keep only the matches where Levenshtein distance between streets (cleansed) is lower than threshold (5)
+def postprocess_contact_persons(similarity: DataFrame, contacts: DataFrame):
+    """
+    Join back the original columns (street, zip, etc.) after matching and filter matches as follows:
+    - Keep only the matches with exactly matching zip code
+        - If no zip code is present: keep match if cities (cleansed) match exactly
+    - Keep only the matches where Levenshtein distance between streets (cleansed) is lower than threshold (5)
+    :param similarity:
+    :param contacts:
+    :return:
     """
     similarity_filtered = (similarity
                            .join(contacts, similarity['i'] == contacts['name_index'],
@@ -113,7 +136,13 @@ def postprocess_contact_persons(similarity: DataFrame,
 
 
 def preprocess_operators(ddf: DataFrame, id_column: str, drop_if_name_null=False) -> DataFrame:
-    """Create a unique ID and the string that is used for matching and select only necessary columns"""
+    """
+    Create a unique ID and the string that is used for matching and select only necessary columns.
+    :param ddf:
+    :param id_column:
+    :param drop_if_name_null:
+    :return:
+    """
     w = Window.partitionBy('countryCode').orderBy(sf.asc(id_column))
     ddf = clean_operator_fields(ddf, 'name', 'city', 'street', 'houseNumber', 'zipCode')
 
@@ -128,6 +157,12 @@ def preprocess_operators(ddf: DataFrame, id_column: str, drop_if_name_null=False
 
 
 def postprocess_operators(similarity: DataFrame, operators: DataFrame):
+    """
+    TOOD describe function
+    :param similarity:
+    :param operators:
+    :return:
+    """
     grouped_similarity = group_matches(similarity)
 
     return (grouped_similarity
@@ -146,6 +181,16 @@ def apply_matching_on(records_per_country: DataFrame, spark,
                       post_process_function,
                       n_top,
                       threshold):
+    """
+    TODO describe function
+    :param records_per_country:
+    :param spark:
+    :param preprocess_function:
+    :param post_process_function:
+    :param n_top:
+    :param threshold:
+    :return:
+    """
     preprocessed = (preprocess_function(records_per_country, 'concatId', True)
                     .repartition('concatId')
                     .sort('concatId', ascending=True)
@@ -158,20 +203,20 @@ def apply_matching_on(records_per_country: DataFrame, spark,
 
 
 def main(arguments, preprocess_function, post_process_function):
-    """ Main function to start running the name matching. This does globally three things:
+    """
+    Main function to start running the name matching. This does globally three things:
 
-    * Read input file (one: ingested)
-    * Name match between ingested and ingested (cartesian product)
-    * Write output files (one: one matched (with similarity schema))
+    1. Read input file (one: ingested)
+    2. Name match between ingested and ingested (cartesian product)
+    3. Write output files (one: one matched (with similarity schema))
 
     If for some reason the matching was unable to run (due to data not being there, or too little data), an error is
-    logged but the job is succesful
+    logged but the job is successful.
 
-    Args:
-        preprocess_function: Function to preprocess the data, one of
-          `preprocess_operators`, `preprocess_contactpersons`
-        postprocess_function: Function to postprocess the matching results, one of
-          `postprocess_contact_persons`, `postprocess_operators`
+    :param arguments:
+    :param callable preprocess_function: Function to preprocess the data, one of `preprocess_operators`, `preprocess_contactpersons`.
+    :param callable post_process_function: Function to postprocess the matching results, one of `postprocess_contact_persons`, `postprocess_operators`.
+    :return:
     """
     global LOGGER
     spark, LOGGER = start_spark('Matching')

@@ -1,4 +1,5 @@
-""" Join ingested daily data with integrated data, keeping persistent group id's
+"""
+Join ingested daily data with integrated data, keeping persistent group id's
 
 This script outputs two dataframes:
 - Updated integrated data
@@ -11,19 +12,39 @@ The following steps are performed per country:
 - Pre-process integrated data to format for joining
 - Pre-process ingested daily data to format for joining
 - Match ingested data with integrated data
-- write two dataframes to file: updated integrated data and unmatched data
+- Write two dataframes to file: updated integrated data and unmatched data
 """
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
 
-from .entity_matching import \
-    N_GRAMS, MINIMUM_DOCUMENT_FREQUENCY, VOCABULARY_SIZE, MINIMUM_ENTRIES_PER_COUNTRY, MIN_LEVENSHTEIN_DISTANCE
-from .utils import start_spark, Timer, save_to_parquet_per_partition, read_parquet, read_parquet_with_schema
+from .entity_matching import (
+    N_GRAMS,
+    MINIMUM_DOCUMENT_FREQUENCY,
+    VOCABULARY_SIZE,
+    MINIMUM_ENTRIES_PER_COUNTRY,
+    MIN_LEVENSHTEIN_DISTANCE,
+)
+from .utils import (
+    start_spark,
+    Timer,
+    save_to_parquet_per_partition,
+    read_parquet,
+    read_parquet_with_schema,
+)
 from .spark_string_matching import similarity_schema
 
 
 def match_delta_entity_for_country(spark, ingested_daily, integrated, n_top, threshold):
+    """
+    TODO describe function
+    :param spark:
+    :param ingested_daily:
+    :param integrated:
+    :param n_top:
+    :param threshold:
+    :return:
+    """
     from .spark_string_matching import match_strings
 
     if not (ingested_daily.count() >= MINIMUM_ENTRIES_PER_COUNTRY and
@@ -49,10 +70,15 @@ def match_delta_entity_for_country(spark, ingested_daily, integrated, n_top, thr
 def postprocess_delta_contact_persons(similarity: DataFrame,
                                       ingested_preprocessed: DataFrame,
                                       integrated_preprocessed: DataFrame):
-    """Join back the original columns (street, zip, etc.) after matching and filter matches as follows:
-        - keep only the matches with exactly matching zip code
-            - if no zip code is present: keep match if cities (cleansed) match exactly
-        - keep only the matches where Levenshtein distance between streets (cleansed) is lower than threshold (5)
+    """
+    Join back the original columns (street, zip, etc.) after matching and filter matches as follows:
+    - Keep only the matches with exactly matching zip code
+        - If no zip code is present: keep match if cities (cleansed) match exactly
+    - Keep only the matches where Levenshtein distance between streets (cleansed) is lower than threshold (5)
+    :param similarity:
+    :param ingested_preprocessed:
+    :param integrated_preprocessed:
+    :return:
     """
     similarity_filtered = (similarity
                            .join(ingested_preprocessed, similarity['i'] == ingested_preprocessed['name_index'])
@@ -99,6 +125,13 @@ def postprocess_delta_contact_persons(similarity: DataFrame,
 def postprocess_delta_operators(similarity: DataFrame,
                                 ingested_preprocessed: DataFrame,
                                 integrated_preprocessed: DataFrame):
+    """
+    TODO describe function
+    :param similarity:
+    :param ingested_preprocessed:
+    :param integrated_preprocessed:
+    :return:
+    """
     window = Window.partitionBy('i').orderBy(sf.desc('SIMILARITY'), 'j')
     best_match = (similarity
                   .withColumn('rn', sf.row_number().over(window))
@@ -127,6 +160,13 @@ def postprocess_delta_operators(similarity: DataFrame,
 def recreate_matched_and_unmatched(integrated: DataFrame,
                                    ingested: DataFrame,
                                    matched: DataFrame):
+    """
+    TODO describe function
+    :param integrated:
+    :param ingested:
+    :param matched:
+    :return:
+    """
     matched_ingested_daily_full_record = (matched
                                           .select('concatId', 'ohubId_matched')
                                           .join(ingested, on='concatId', how='left')
@@ -153,6 +193,17 @@ def apply_delta_matching_on(spark,
                             postprocess_function,
                             n_top,
                             threshold):
+    """
+    TODO describe function
+    :param spark:
+    :param ingested_records_for_country:
+    :param integrated_records_for_country:
+    :param preprocess_function:
+    :param postprocess_function:
+    :param n_top:
+    :param threshold:
+    :return:
+    """
     daily_preprocessed = (preprocess_function(ingested_records_for_country,
                                               'concatId', True)
                           .repartition('concatId')
@@ -178,20 +229,20 @@ def apply_delta_matching_on(spark,
 
 
 def main(arguments, preprocess_function, postprocess_function):
-    """ Main function to start running the name matching. This does globally three things:
+    """
+    Main function to start running the name matching. This does globally three things:
 
-    * Read input files (two: integrated and ingested)
-    * Name match between integrated and ingested
-    * Write output files (two: one matched (with domain model schema), one unmatched (with domain model schema))
+    1. Read input files (two: integrated and ingested)
+    2. Name match between integrated and ingested
+    3. Write output files (two: one matched (with domain model schema), one unmatched (with domain model schema))
 
     If for some reason the matching was unable to run (due to data not being there, or too little data), an error is
-    logged but the job is succesful
+    logged but the job is successful.
 
-    Args:
-        preprocess_function: Function to preprocess the data, one of
-          `entity_matching.preprocess_operators`, `entity_matching.preprocess_contactpersons`
-        postprocess_function: Function to postprocess the matching results, one of
-          `postprocess_delta_contact_persons`, `postprocess_delta_operators`
+    :param arguments:
+    :param callable preprocess_function: Function to preprocess the data, one of `entity_matching.preprocess_operators`, `entity_matching.preprocess_contactpersons`
+    :param callable postprocess_function: Function to postprocess the matching results, one of `postprocess_delta_contact_persons`, `postprocess_delta_operators`
+    :return:
     """
     global LOGGER
     spark, LOGGER = start_spark('Match and join newly ingested  with persistent ohubId')
@@ -200,7 +251,7 @@ def main(arguments, preprocess_function, postprocess_function):
     ingested_daily = (read_parquet(spark, arguments.ingested_daily_input_path)
                       .filter(sf.col('countryCode') == arguments.country_code))
 
-    # read integrated with ingested schema for basic schema evolution
+    # Read integrated with ingested schema for basic schema evolution
     integrated = (read_parquet_with_schema(spark, ingested_daily.schema, arguments.integrated_input_path)
                   .filter(sf.col('countryCode') == arguments.country_code))
     ingested_daily.persist()

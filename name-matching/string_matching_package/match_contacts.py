@@ -1,33 +1,35 @@
-""" Matching of contact persons based on name and location.
+"""
+Matching of contact persons based on name and location.
 
-Only match contacts without e-mail AND without mobile phone number,
-because contacts are already matched on this info.
+Only match contacts without e-mail AND without mobile phone number, because contacts are
+already matched on this info.
 
 The following steps are performed:
-- keep only contacts without e-mail AND without mobile phone number
-- remove contacts without first AND without last name (cleansed)
-- remove contacts without a street (cleansed)
-- create a matching-string: concatenation of first name and last name
-- per country
-    - match on matching-string
-    - keep only the matches with similarity above threshold
-    - keep only the matches with exactly matching zip code
-        - if no zip code is present: keep match if cities (cleansed) match exactly
-    - keep only the matches where Levenshtein distance between streets (cleansed) is lower than threshold (5)
-    - to generate a final list of matches, in the form of (i, j), i.e. contact i matches with contact j,
+- Keep only contacts without e-mail AND without mobile phone number
+- Remove contacts without first AND without last name (cleansed)
+- Remove contacts without a street (cleansed)
+- Create a matching-string: concatenation of first name and last name
+- Per country
+    - Match on matching-string
+    - Keep only the matches with similarity above threshold
+    - Keep only the matches with exactly matching zip code
+        - If no zip code is present: keep match if cities (cleansed) match exactly
+    - Keep only the matches where Levenshtein distance between streets (cleansed) is lower than threshold (5)
+    - To generate a final list of matches, in the form of (i, j), i.e. contact i matches with contact j,
       we do the following:
-        - make sure each j only matches with one i (the 'group leader')
-            - note: of course we can have multiple matches per group leader, e.g. (i, j) and (i, k)
-        - make sure that each i (group leader) is not matched with another 'group leader',
-        e.g. if we have (i, j) we remove (k, i) for all k
-- write parquet file partitioned by country code
+        - Make sure each j only matches with one i (the 'group leader')
+            - Note: of course we can have multiple matches per group leader, e.g. (i, j) and (i, k)
+        - Make sure that each i (group leader) is not matched with another 'group leader', e.g. if we have (i, j) we remove (k, i) for all k
+- Write Parquet file partitioned by country code
 """
 
 import argparse
 
-from string_matching.entity_matching import \
-    main, \
-    preprocess_contact_persons, postprocess_contact_persons
+from string_matching.entity_matching import (
+    main,
+    preprocess_contact_persons,
+    postprocess_contact_persons,
+)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

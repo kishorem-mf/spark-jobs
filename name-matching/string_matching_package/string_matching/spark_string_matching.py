@@ -14,30 +14,14 @@ General Flow:
 - Return dataframe with row numbers pairs and their similarity value
 """
 
-__author__ = "Rodrigo Agundez"
-__version__ = "0.1"
-__maintainer__ = "Rodrigo Agundez"
-__email__ = "rodrigo.agundez@godatadriven.com"
-__status__ = "Development"
-
 import math
-import numpy as np
 
+import numpy as np
 import pyspark
 import pyspark.sql.functions as sf
-
-from pyspark.ml.linalg import Vectors, VectorUDT
 from pyspark.ml import Pipeline
-from pyspark.ml.feature import CountVectorizer
-from pyspark.ml.feature import IDF
-from pyspark.ml.feature import NGram
-from pyspark.ml.feature import Normalizer
-from pyspark.ml.feature import RegexTokenizer
-from pyspark.sql.types import ArrayType
-from pyspark.sql.types import FloatType
-from pyspark.sql.types import IntegerType
-from pyspark.sql.types import StructField
-from pyspark.sql.types import StructType
+from pyspark.ml.feature import CountVectorizer, IDF, NGram, Normalizer, RegexTokenizer
+from pyspark.sql.types import ArrayType, FloatType, IntegerType, StructField, StructType
 from scipy.sparse import csr_matrix
 
 VECTORIZE_STRING_COLUMN_NAME = 'vectorized_string'
@@ -45,34 +29,29 @@ VECTORIZE_STRING_COLUMN_NAME = 'vectorized_string'
 
 def matrix_dot_limit(A, B, n_top,
                      threshold=0., start_row=0, upper_triangular=False):
-    from .sparse_dot_topn import sparse_dot_topn
-    """Calculate dot product of sparse matrices
-
-    This function uses a C++ wrapped in Cython implementation. It
-    performs A x B and returns the row indices, column indices and
-    value if value > `threshold` with a maximum of number of
-    `n_top` matches.
-
-    Since the function is optimized for speed it does not perform any
-    type of checks on the input (like matrix dimensions).
-
-    Args:
-        A (Scipy csr Matrix): Left matrix of dimensions M x K
-        B (Scipy csr Matrix): Right matrix of dimensions K x N
-        n_top (int): Maximum number of matches to return
-        threshold (float): Keep resulting values bigger then this value.
-            [Default 0.0]
-        start_row (int): First row index of matrix A. Useful when
-            performing dot operation in chunks of A. [Default 0]
-        upper_triangular (bool): If to return only the upper triangular
-            matrix. This is useful when the task is deduplication.
-            The upper triangular matrix is defined from the coordenate
-            (start_row, start_row) in the resulting matrix.
-
-    Returns:
-        Generator[(int, int, float)]: Generator of tuples with
-            (row_index, column_index, value).
     """
+    Calculate dot product of sparse matrices.
+
+    This function uses a C++ wrapped in Cython implementation. It performs A x B and
+    returns the row indices, column indices and value if value > `threshold` with a
+    maximum of number of `n_top` matches.
+
+    Since the function is optimized for speed it does not perform any type of checks on
+    the input (like matrix dimensions).
+
+    :param scipy.sparse.csr_matrix A: Left matrix of dimensions M x K.
+    :param scipy.sparse.csr_matrix B: Right matrix of dimensions K x N.
+    :param int n_top: Maximum number of matches to return.
+    :param float threshold: Keep resulting values bigger then this value (default 0.0).
+    :param int start_row: First row index of matrix A. Useful when performing dot
+        operation in chunks of A (default 0).
+    :param bool upper_triangular: If to return only the upper triangular matrix. This is
+        useful when the task is deduplication. The upper triangular matrix is defined
+        from the coordinate (start_row, start_row) in the resulting matrix.
+    :return: Generator of tuples with (row_index, column_index, value).
+    :rtype: Generator[(int, int, float)]
+    """
+    from .sparse_dot_topn import sparse_dot_topn
     B = B.tocsr()
 
     M = A.shape[0]
@@ -111,10 +90,10 @@ def matrix_dot_limit(A, B, n_top,
             zip(rows[:nnz], cols[:nnz], data[:nnz]))
 
 
-class StringVectorizer(object):
-    """Pipeline to vectorize the strings in a column
-
-    Uses different transformers and estimators
+class StringVectorizer:
+    """
+    Pipeline to vectorize the strings in a column.
+    Uses different transformers and estimators.
     """
 
     def __init__(self, input_col, *, n_gram, min_df, vocab_size):
@@ -132,13 +111,14 @@ class StringVectorizer(object):
         self.__create_pipeline()
 
     def __create_pipeline(self):
-        """Initialize components and add them to a Pipeline object
+        """
+        Initialize components and add them to a Pipeline object.
 
-        - RegexTokenizer separates each string into a list of characters
-        - NGram creates n-grams from the list of characters
-        - CountVectorizer calculates n-gram frequency on the strings
-        - IDF calculates inverse n-gram frequency on the corpus
-        - Normalizer 2-norm normalized the resulting vector of each string
+        - RegexTokenizer separates each string into a list of characters.
+        - NGram creates n-grams from the list of characters.
+        - CountVectorizer calculates n-gram frequency on the strings.
+        - IDF calculates inverse n-gram frequency on the corpus.
+        - Normalizer 2-norm normalized the resulting vector of each string.
         """
         regexTokenizer = RegexTokenizer(inputCol=self.input_col,
                                         outputCol="tokens",
@@ -167,27 +147,34 @@ class StringVectorizer(object):
         )
 
     def fit(self, df1, df2=None):
-        """Fit transformers
+        """
+        Fit transformers.
 
-        If two dataframes are sent then the vocabulary and document
-        frequency are calculated using the union.
+        If two dataframes are sent then the vocabulary and document frequency are
+        calculated using the union.
+        :param df1:
+        :param df2:
+        :return:
         """
         df = df1.union(df2) if df2 else df1
         self.pipeline = self.pipeline.fit(df)
         return self
 
     def transform(self, df):
-        """Apply all estimators.
-        """
+        """Apply all estimators."""
         return self.pipeline.transform(df)
 
 
 def unpack_vector(sparse):
-    """Combine indices and values into a tuples.
+    """
+    Combine indices and values into a tuples.
 
     For each value below 0.01 in the sparse vector we create a tuple and
     then add these tuples into a single list. The tuple contains the
     index and the value.
+
+    :param sparse:
+    :return:
     """
     return ((int(index), float(value)) for index, value in
             zip(sparse.indices, sparse.values) if value > 0.01)
@@ -200,6 +187,12 @@ ngram_schema = ArrayType(StructType([
 
 
 def dense_to_sparse_ddf(ddf, row_number_column):
+    """
+    TODO describe
+    :param ddf:
+    :param row_number_column:
+    :return:
+    """
     udf_unpack_vector = sf.udf(unpack_vector, ngram_schema)
     return (ddf
             .withColumn('explode',
@@ -212,6 +205,12 @@ def dense_to_sparse_ddf(ddf, row_number_column):
 
 
 def sparse_to_pandas(ddf, row_number_column):
+    """
+    TODO describe
+    :param ddf:
+    :param row_number_column:
+    :return:
+    """
     df = ddf.toPandas()
     df[row_number_column] = df[row_number_column].astype(np.int32)
     df.ngram_index = df.ngram_index.astype(np.int32)
@@ -220,6 +219,14 @@ def sparse_to_pandas(ddf, row_number_column):
 
 
 def sparse_to_csr_matrix(pandas_df, row_number_column, n_columns=None):
+    """
+    TODO describe
+    :param pandas_df:
+    :param row_number_column:
+    :param n_columns:
+    :return:
+    """
+
     # df = ddf.toPandas()
     # df[row_number_column] = df[row_number_column].astype(np.int32)
     # df.ngram_index = df.ngram_index.astype(np.int32)
@@ -237,6 +244,12 @@ def sparse_to_csr_matrix(pandas_df, row_number_column, n_columns=None):
 
 
 def split_into_chunks(csr_names_vs_ngrams, matrix_chunks_rows):
+    """
+    TODO describe
+    :param csr_names_vs_ngrams:
+    :param matrix_chunks_rows:
+    :return:
+    """
     n_chunks = max(
         1, math.floor(csr_names_vs_ngrams.shape[0] / matrix_chunks_rows)
     )
@@ -260,7 +273,14 @@ similarity_schema = StructType([
 
 def calculate_similarity(chunks_rdd, csr_rdd_transpose,
                          n_top, threshold, upper_triangular=False):
-    """ Similarity is calculated in chunks
+    """
+    Similarity is calculated in chunks.
+    :param chunks_rdd:
+    :param csr_rdd_transpose:
+    :param n_top:
+    :param threshold:
+    :param upper_triangular:
+    :return:
     """
     similarity = chunks_rdd.flatMap(
         lambda x: matrix_dot_limit(x[0], csr_rdd_transpose.value,
@@ -283,6 +303,21 @@ def match_strings(spark, df,
                   max_vocabulary_size,
                   matrix_chunks_rows=500,
                   df2=None):
+    """
+    TODO describe
+    :param spark:
+    :param df:
+    :param string_column:
+    :param row_number_column:
+    :param n_top:
+    :param threshold:
+    :param n_gram:
+    :param min_document_frequency:
+    :param max_vocabulary_size:
+    :param matrix_chunks_rows:
+    :param df2:
+    :return:
+    """
     try:
         str_vectorizer = (
             StringVectorizer(input_col=string_column,

@@ -38,3 +38,7 @@ metastore_db
 src/main/scala/ScratchFile.scala
 *.parquet/
 test_output/
+.DS_Store
+.ivy2/
+.sbt/
+

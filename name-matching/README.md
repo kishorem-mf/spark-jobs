@@ -3,56 +3,56 @@
 This repo contains the name matching logic for UFS O-Hub operators and contact persons.
 
 The actual matching is based on [sparse_dot_topn](https://github.com/ing-bank/sparse_dot_topn),
-a Cython library open-sourced by ING under the Apache 2 license, further elaborated on in a
+a Cython library open-sourced by ING under the Apache 2 license, further elaborated in a
 [Medium post](https://medium.com/wbaa/https-medium-com-ingwbaa-boosting-selection-of-the-most-similar-entities-in-large-scale-datasets-450b3242e618)
-and [SlideShare](https://www.slideshare.net/godatadriven/pydata-amsterdam-name-matching-at-scale) by GoDataDriven.
+and [SlideShare](https://www.slideshare.net/godatadriven/pydata-amsterdam-name-matching-at-scale).
 
-The current repository essentially wraps this library to run on our operator and contact data for initial and delta loads.
+The repository essentially wraps this library to run on our operator and contact data for initial and delta loads.
 
-On a high level, it vectorises the desired columns into trigram representations,
+On a high level, it vectorises the desired columns into bigram representations,
 then uses a [SciPy sparse matrix dot function](https://docs.scipy.org/doc/scipy-0.19.0/reference/generated/scipy.sparse.csr_matrix.dot.html) and a Spark UDF function. Then, the top-n candidates are selected using the NumPy [argpartition](http://%28https//docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.argpartition.html) function.
 
 ![`sparse_dot_topn` steps](https://cdn-images-1.medium.com/max/800/1*jElpcnRIU_rkByX2nbmweA.png)
 
 # Local development
 
-Make sure you have installed docker
+Make sure you have installed Docker.
 
-Pull and step into the docker container with
+Pull and step into the Docker container with:
 
 ```bash
 docker pull fokkodriesprong/docker-pyspark
 docker run -it -v $(pwd):/tmp fokkodriesprong/docker-pyspark /bin/bash
 ```
 
-or in command line:
+Or in command line:
 ```cmd
 docker pull fokkodriesprong/docker-pyspark
 docker run -it -v %CD%:/tmp fokkodriesprong/docker-pyspark /bin/bash
 ```
 
-Inside the container, `cd` into the working directory and install the python environment
+Inside the container, `cd` into the working directory and install the Python environment:
 ```bash
 cd /tmp
 conda env create -f environment.yml
 source activate name-matching
 ```
 
-Now you can run all the tests with
+Now you can run all the tests with:
 ```bash
 cd string_matching_package
 python setup.py pytest --addopts "--cov-config .coveragerc --cov=./ tests"
 ```
-If you get weird path errors (all paths should be relative to the docker container), remove all `__pycache__` folders with
+
+If you get weird path errors (all paths should be relative to the Docker container), remove all `__pycache__` folders with:
 ```bash
 find  . -name "*pycache*" | exec rm -rf {} \;
 ```
-and rerun the tests. After making changes 
-
+and rerun the tests after making changes. 
 
 # Usage
 
-Requirements for the cluster and Driver:
+Requirements for the cluster and driver:
 
 - Python 3
 - Spark 2
@@ -62,28 +62,29 @@ Requirements for the cluster and Driver:
 
 **Compile sparse similarity library**
 
-Create conda env containing the required packages first
+Create conda env containing the required packages first:
 ```bash
 conda env create -f environment.yml
 ```
-Activate the environment
+
+Activate the environment:
 ```bash
 conda activate name-matching
 ```
 
-Compile Python library written in `C++` and `Cython`. This will output an `egg`  file.
+Compile Python library written in `C++` and `Cython`. This will output an `egg` file.
 ```bash
 ./compile_library.sh
 ```
-This script will remove the current `egg` file, compile the code and move the `egg` file to `infra/name-matching	` as `sparse_dot_topn.egg`.
-
+This script will remove the current `egg` file, compile the code and move the `egg` file to `infra/name-matching` as `sparse_dot_topn.egg`.
 
 **Submit Spark job application**
 
 Run the spark application script which will:
-- group similar data 
-- match/link each group to a single master record 
-The output is parquet files with columns:
+- Group similar data 
+- Match/link each group to a single master record 
+
+The output is Parquet files with columns:
 `COUNTRY_CODE`, `SOURCE_ID`, `TARGET_ID`, `SIMILARITY`, `SOURCE_NAME` and `TARGET_NAME`.
 
 ```bash
@@ -96,8 +97,8 @@ For a more detailed description of the spark job please refer to the `Fuzzy name
 
 In this section I describe the steps performed in the algorithm.
 
-1. Read parquet file
-The input parquet file should be partitioned by `COUNTRY_CODE`
+1. Read Parquet file
+The input Parquet file should be partitioned by `COUNTRY_CODE`
 
 2. Create unique `id` column
 Concatenate columns `COUNTRY_CODE`, `SOURCE` and `REF_OPERATOR_ID` with the `~` character.
@@ -129,4 +130,4 @@ Collect N number of top matches above a similarity threshold.
 10. Group matches
 Keep only the first match for each entry alphabetically ordered. This will be the `SOURCE_ID`, remove resulting `SOURCE_ID`s from `TARGET_ID` s.
 
-11. Write parquet file partitioned by country code
+11. Write Parquet file partitioned by country code

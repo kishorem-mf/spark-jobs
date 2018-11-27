@@ -1,10 +1,7 @@
-from pyspark import sql
-from pyspark.sql import functions as sf
-
 from string_matching import utils as victim
 
 
-class TestGroupMatches(object):
+class TestGroupMatches:
 
     @classmethod
     def setup_class(cls):
@@ -20,7 +17,7 @@ class TestGroupMatches(object):
         assert res[1] == (2, 1)
 
 
-class TestCleaning(object):
+class TestCleaning:
 
     @classmethod
     def setup_class(cls):
@@ -42,7 +39,7 @@ class TestCleaning(object):
         assert res[0][3] == '5312be'
 
 
-class TestMatchingString(object):
+class TestMatchingString:
 
     @classmethod
     def setup_class(cls):

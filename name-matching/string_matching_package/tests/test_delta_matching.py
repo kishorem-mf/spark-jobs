@@ -1,12 +1,12 @@
+import pyspark.sql.functions as sf
 import pytest
 from pyspark.sql.types import *
-import pyspark.sql.functions as sf
 from string_matching import entity_delta_matching as victim
 from string_matching import entity_matching as helper
+from string_matching.utils import read_parquet_with_schema
 
-from string_matching.utils import save_to_parquet_per_partition, read_parquet, read_parquet_with_schema
 
-class TestDeltaMatching(object):
+class TestDeltaMatching:
 
     # note: both schema's (for integrated & delta) are exactly the same...and they should be
 
@@ -73,7 +73,7 @@ class TestDeltaMatching(object):
         result.show(truncate=False)
         assert len(result.collect()) == 8
 
-    @pytest.skip(msg="Hacky test to run locally. Make sure paths to files are correct.")
+    @pytest.mark.skip(msg="Hacky test to run locally. Make sure paths to files are correct.")
     def test_from_file(self, spark):
         ingested = "/testdata/operators_pre_processed.parquet"
         integrated = "/testdata/operators.parquet/"

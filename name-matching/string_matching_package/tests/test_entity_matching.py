@@ -4,7 +4,7 @@ from pyspark.sql.types import *
 from string_matching import entity_matching as victim
 
 
-class TestPreprocessingOperators(object):
+class TestPreprocessingOperators:
 
     @classmethod
     def setup_class(cls):
@@ -31,7 +31,7 @@ class TestPreprocessingOperators(object):
         assert res[0][0] == 'dave mustaine amsterdam baravenue14b 5312be'
 
 
-class TestPreprocessingContactPersons(object):
+class TestPreprocessingContactPersons:
 
     @classmethod
     def setup_class(cls):
@@ -68,7 +68,7 @@ def gen_tuple(tup, n):
     return [(str(i),) + tup[1:-1] + (tup[-1].format(idx=i),) for i in range(n)]
 
 
-class TestMatchingOperators(object):
+class TestMatchingOperators:
     def create_ddf(self, spark, data):
         return spark.createDataFrame(data).toDF('concatId', 'countryCode', 'name', 'city', 'street', 'houseNumber',
                                                 'zipCode')
@@ -92,7 +92,7 @@ class TestMatchingOperators(object):
         assert targets == ['2', '3']
 
 
-class TestMatchingContactPersons(object):
+class TestMatchingContactPersons:
 
     def create_ddf(self, spark, data: List[tuple]):
         schema = StructType([
