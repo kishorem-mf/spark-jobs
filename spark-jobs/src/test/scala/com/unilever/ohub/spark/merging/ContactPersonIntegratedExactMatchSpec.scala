@@ -76,7 +76,11 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       val expectedUnmatchedIntegrated = Set[Result]()
       val expectedUnmatchedDelta = Set[Result]()
 
-      matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
+      val result = matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
+
+      val ohubIds = result.map(_.ohubId).distinct().collect()
+      ohubIds.length shouldBe 1
+      ohubIds should not contain ("AAA")
     }
 
     it("should merge two existing entities in one ohub group on exact match") {
@@ -118,7 +122,11 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       val expectedUnmatchedIntegrated = Set[Result]()
       val expectedUnmatchedDelta = Set[Result]()
 
-      matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
+      val result = matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
+
+      val ohubIds = result.map(_.ohubId).distinct().collect()
+      ohubIds.length shouldBe 2
+      ohubIds should not contain ("AAA")
     }
 
     it("should lose only one ohub id when only one match string changes") {
@@ -132,6 +140,21 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       val expectedUnmatchedDelta = Set[Result]()
 
       matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
+    }
+
+    it("should give two new contactpersons with the same matching string the same ohubId") {
+      val integratedContactPersons = createDataset()
+      val deltaContactPersons = createDataset(contactPersonA3, contactPersonA5)
+
+      val expectedMatchedExact = Set(
+        Result("100", Some("COPY_GENERATED"), Some("Jansen"), Some("jan@server.com")),
+        Result("103", Some("COPY_GENERATED"), Some("Jan"), Some("jan@server.com")))
+      val expectedUnmatchedIntegrated = Set[Result]()
+      val expectedUnmatchedDelta = Set[Result]()
+
+      val result = matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
+
+      result.map(_.ohubId).distinct().collect().length shouldBe 1
     }
 
     it("a contact person without an exact match string should be in unmatched") {
@@ -152,7 +175,7 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
     expectedMatchedExact: Set[Result],
     expectedUnmatchedIntegrated: Set[Result],
     expectedUnmatchedDelta: Set[Result]
-  ): Unit = {
+  ): Dataset[ContactPerson] = {
     val (matchedExact, unmatchedIntegrated, unmatchedDelta) = ContactPersonIntegratedExactMatch.transform(
       spark, integratedContactPersons, deltaContactPersons
     )
@@ -169,6 +192,8 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
     assertResults(unmatchedIntegrated, expectedUnmatchedIntegrated)
     assertResults(unmatchedDelta, expectedUnmatchedDelta)
     assertResults(actualMatchedExact.values.toSeq.toDataset, ohubIdsCopied)
+
+    matchedExact
   }
 
   private def assertResults(actualDataSet: Dataset[ContactPerson], expectedResults: Set[Result]): Unit =

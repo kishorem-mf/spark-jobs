@@ -76,8 +76,6 @@ abstract class BasePreProcess[T <: DomainEntity: TypeTag] extends SparkJob[PrePr
   }
 
   override def run(spark: SparkSession, config: PreProcessConfig, storage: Storage): Unit = {
-    import spark.implicits._
-
     log.info(s"Pre process delta domain entities with integrated [${config.integratedInputFile}] and delta" +
       s"[${config.deltaInputFile}] to pre processed delta output [${config.deltaPreProcessedOutputFile}]")
 

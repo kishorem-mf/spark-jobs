@@ -90,8 +90,6 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
     }
 
     it("should write a contact person parquet correctly from an emtpy csv input and remain readable") {
-      import spark.implicits._
-
       val inputFile = "src/test/resources/empty.csv"
       val outputFile = "src/test/resources/output/contact_person_with_schema.parquet"
       val config = CsvDomainConfig(inputFile = inputFile, outputFile = outputFile, fieldSeparator = "‰")

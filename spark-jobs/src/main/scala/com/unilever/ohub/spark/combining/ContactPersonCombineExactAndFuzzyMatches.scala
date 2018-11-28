@@ -60,8 +60,6 @@ object ContactPersonCombineExactAndFuzzyMatches extends SparkJob[ExactAndFuzzyMa
   }
 
   override def run(spark: SparkSession, config: ExactAndFuzzyMatchesConfig, storage: Storage): Unit = {
-    import spark.implicits._
-
     log.info(s"Combining contact person exact match results from [${config.contactPersonExactMatchedInputFile}] with fuzzy match results from " +
       s"[${config.contactPersonFuzzyMatchedDeltaIntegratedInputFile}] and [${config.contactPersonsDeltaGoldenRecordsInputFile}] and write results to [${config.contactPersonsCombinedOutputFile}]")
 

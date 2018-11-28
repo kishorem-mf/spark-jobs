@@ -64,54 +64,40 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
   private def determineExactMatches(spark: SparkSession, integratedContactPersons: Dataset[ContactPerson], dailyDeltaContactPersons: Dataset[ContactPerson]): Dataset[ContactPerson] = {
     import spark.implicits._
 
+    val createOhubIdUdf = udf[String](() ⇒ UUID.randomUUID().toString)
+
     lazy val integratedWithExact = integratedContactPersons
       .filter('emailAddress.isNotNull || 'mobileNumber.isNotNull)
-      .map(cpn ⇒ (cpn.emailAddress.getOrElse("") + cpn.mobileNumber.getOrElse(""), cpn))
-      .toDF("group", "contactPerson")
+      .withColumn("group", concat(when('emailAddress.isNull, "").otherwise('emailAddress), when('mobileNumber.isNull, "").otherwise('mobileNumber)))
       .withColumn("inDelta", lit(false))
 
     lazy val newWithExact =
       dailyDeltaContactPersons
         .filter('emailAddress.isNotNull || 'mobileNumber.isNotNull)
-        .map(cpn ⇒ (cpn.emailAddress.getOrElse("") + cpn.mobileNumber.getOrElse(""), cpn))
-        .toDF("group", "contactPerson")
+        .withColumn("group", concat(when('emailAddress.isNull, "").otherwise('emailAddress), when('mobileNumber.isNull, "").otherwise('mobileNumber)))
         .withColumn("inDelta", lit(true))
+
+    val w1 = Window.partitionBy($"group").orderBy($"ohubId".desc_nulls_last)
 
     val allExact = integratedWithExact
       .union(newWithExact)
-      .groupBy($"group")
-      .agg(collect_list(struct($"contactPerson", $"inDelta")).as("contactPersons"))
-      .as[(String, Seq[(ContactPerson, Boolean)])]
-      .flatMap { // first set the proper ohubId
-        case (_, contactPersonList) ⇒
-          val contactPerson: Option[ContactPerson] = contactPersonList
-            .map { case (cp, _) ⇒ cp }
-            .find(_.ohubId.isDefined)
-
-          val ohubId: String = contactPerson.flatMap { _.ohubId }.getOrElse(UUID.randomUUID().toString)
-
-          contactPersonList.map {
-            case (cp, inDelta) ⇒ (cp.copy(ohubId = Some(ohubId)), inDelta) // preserve ohubId or assign a new one
-          }
-      }
-      .toDF("contactPerson", "inDelta")
+      .withColumn("ohubId", first($"ohubId").over(w1)) // preserve ohubId
+      .withColumn("ohubId", when('ohubId.isNull, createOhubIdUdf()).otherwise('ohubId))
+      .withColumn("ohubId", first('ohubId).over(w1)) // make sure the whole group gets the same ohubId
+      .drop("group")
 
     // NOTE: that allExact can contain exact matches from previous integrated which eventually need to be removed from the integrated result
 
-    val w = Window.partitionBy($"contactPerson.concatId")
+    val w2 = Window.partitionBy($"concatId")
     allExact
-      .withColumn("count", count("*").over(w))
+      .withColumn("count", count("*").over(w2))
       .withColumn("select", when($"count" > 1, $"inDelta").otherwise(lit(true)))
       .filter($"select")
-      .as[(ContactPerson, Boolean, Long, Boolean)]
-      .map {
-        case (contactPerson, _, _, _) ⇒ contactPerson
-      }
+      .drop("count", "select", "inDelta")
+      .as[ContactPerson]
   }
 
   override def run(spark: SparkSession, config: ExactMatchIngestedWithDbConfig, storage: Storage): Unit = {
-    import spark.implicits._
-
     log.info(s"Integrated vs ingested exact matching contact persons from [${config.integratedInputFile}] and " +
       s"[${config.deltaInputFile}] to matched exact output [${config.matchedExactOutputFile}], unmatched integrated output to [${config.unmatchedIntegratedOutputFile}] and" +
       s"unmatched delta output [${config.unmatchedDeltaOutputFile}]")

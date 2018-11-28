@@ -50,8 +50,6 @@ abstract class BaseCombining[T <: DomainEntity: TypeTag] extends SparkJob[Combin
     }
 
   override def run(spark: SparkSession, config: CombiningConfig, storage: Storage): Unit = {
-    import spark.implicits._
-
     val integratedMatched = storage.readFromParquet[T](config.integratedUpdated)
     val newGolden = storage.readFromParquet[T](config.newGolden)
     val newIntegrated = transform(spark, integratedMatched, newGolden)

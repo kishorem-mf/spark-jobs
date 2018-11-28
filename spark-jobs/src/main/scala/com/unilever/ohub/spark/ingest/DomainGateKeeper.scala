@@ -56,13 +56,12 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
 
     def handleErrors(config: Config, result: Dataset[Either[ErrorMessage, DomainType]]): Unit = {
       val errors: Dataset[ErrorMessage] = result.filter(_.isLeft).map(_.left.get)
-      val numberOfErrors = errors.count()
 
-      if (numberOfErrors > 0) { // do something with the errors here
+      if (errors.head(1).nonEmpty) { // do something with the errors here
         if (config.showErrorSummary) { // create a summary report
           errors
-            .groupByKey(_.error)
-            .count()
+            .rdd.map(e ⇒ e.error -> 1)
+            .reduceByKey(_ + _)
             .toDF("ERROR", "COUNT").show(numRows = 100, truncate = false)
         } else { // show plain errors
           errors
@@ -70,10 +69,10 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
         }
 
         if (config.strictIngestion) {
-          log.error(s"NO PARQUET FILE WRITTEN, NUMBER OF ERRORS FOUND IS '$numberOfErrors'")
+          log.error(s"NO PARQUET FILE WRITTEN, FAIL FAST NOW.")
           System.exit(1) // let's fail fast now
         } else {
-          log.error(s"WRITE PARQUET FILE ANYWAY, REGARDLESS OF NUMBER OF ERRORS FOUND '$numberOfErrors' (ERRONEOUS ENTITIES ARE NEGLECTED). ")
+          log.error(s"WRITE PARQUET FILE ANYWAY (ERRONEOUS ENTITIES ARE NEGLECTED).")
         }
       }
     }

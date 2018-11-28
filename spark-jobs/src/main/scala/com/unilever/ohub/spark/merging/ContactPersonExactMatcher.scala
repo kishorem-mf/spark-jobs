@@ -80,8 +80,6 @@ object ContactPersonExactMatcher extends SparkJob[ExactMatchWithDbConfig] with G
   }
 
   protected[merging] def run(spark: SparkSession, config: ExactMatchWithDbConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
-    import spark.implicits._
-
     log.info(s"Exact matching contact persons from [${config.inputFile}] to [${config.exactMatchOutputFile}] and left-overs to [${config.leftOversOutputFile}]")
 
     val ingestedContactPersons = storage.readFromParquet[ContactPerson](config.inputFile)

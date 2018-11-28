@@ -58,8 +58,6 @@ object QuestionMerging extends SparkJob[QuestionMergingConfig] {
     }
 
   override def run(spark: SparkSession, config: QuestionMergingConfig, storage: Storage): Unit = {
-    import spark.implicits._
-
     log.info(
       s"Merging questions from [${config.questions}] and [${config.previousIntegrated}] to [${config.outputFile}]"
     )

@@ -18,8 +18,6 @@ case class SubscriptionMergingConfig(
     outputFile: String = "path-to-output-file"
 ) extends SparkJobConfig
 
-case class ContactPersonConcatIdAndRecord(contactPersonConcatId: String, subscription: Subscription)
-
 // Technically not really subscription MERGING, but we need to update foreign key IDs in the other records
 object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] {
 
@@ -62,7 +60,8 @@ object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] {
         .withColumn("isGoldenRecord", $"rn" === 1)
         .drop($"rn")
         .as[Subscription]
-        .map(s ⇒ ContactPersonConcatIdAndRecord(s.contactPersonConcatId, s))
+        .map(s ⇒ s.contactPersonConcatId -> s)
+        .toDF("contactPersonConcatId", "subscription")
         .groupBy("contactPersonConcatId")
         .agg(collect_list("subscription").as("subscriptions"))
         .as[(String, Seq[Subscription])]
@@ -101,8 +100,6 @@ object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] {
     }
 
   override def run(spark: SparkSession, config: SubscriptionMergingConfig, storage: Storage): Unit = {
-    import spark.implicits._
-
     log.info(
       s"Merging subscriptions from [${config.contactPersonInputFile}] " +
         s"and [${config.subscriptionInputFile}] to [${config.outputFile}]"

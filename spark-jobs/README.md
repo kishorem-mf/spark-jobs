@@ -9,6 +9,7 @@ Spark jobs for the OHub2 project.
 - open the project in your editor (like IntelliJ)
 - pick a converter to run and run it from your editor
 - Be sure to pass in the VM option `-Dspark.master=local[*]` when running the jobs on your local machine. (You'll get an error about missing a spark master if you don't)
+- You can access the spark web UI to monitor the execution behavior at http://localhost:4040, see also https://spark.apache.org/docs/latest/monitoring.html for more information.
 
 # Build and Test
 run `sbt package`.  

@@ -84,8 +84,6 @@ object OrderMerging extends SparkJob[OrderMergingConfig] {
     }
 
   override def run(spark: SparkSession, config: OrderMergingConfig, storage: Storage): Unit = {
-    import spark.implicits._
-
     log.info(
       s"Merging orders from [${config.contactPersonInputFile}], [${config.operatorInputFile}] " +
         s"and [${config.orderInputFile}] to [${config.outputFile}]"

@@ -83,8 +83,6 @@ object ActivityMerging extends SparkJob[ActivityMergingConfig] {
     }
 
   override def run(spark: SparkSession, config: ActivityMergingConfig, storage: Storage): Unit = {
-    import spark.implicits._
-
     log.info(
       s"Merging activities from [${config.activities}], [${config.contactPersonIntegrated}], [${config.operatorIntegrated}] and [${config.previousIntegrated}] to [${config.outputFile}]"
     )

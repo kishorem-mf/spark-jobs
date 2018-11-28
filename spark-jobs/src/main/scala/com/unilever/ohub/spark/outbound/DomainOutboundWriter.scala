@@ -54,8 +54,6 @@ abstract class DomainOutboundWriter[DomainType <: DomainEntity: TypeTag] extends
   }
 
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
-    import spark.implicits._
-
     log.info(s"writing integrated entities [${config.integratedInputFile}] to outbound db in table [${config.dbTable}].")
 
     val integratedEntities = storage.readFromParquet[DomainType](config.integratedInputFile)

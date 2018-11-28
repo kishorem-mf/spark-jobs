@@ -9,8 +9,6 @@ import org.apache.spark.sql.functions._
 
 object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with GoldenRecordPicking[Operator] {
 
-  case class oHubIdAndRecord(ohubId: String, operator: Operator)
-
   def markGoldenRecord(sourcePreference: Map[String, Int])(operators: Seq[Operator]): Seq[Operator] = {
     val goldenRecord = pickGoldenRecord(sourcePreference, operators)
     operators.map(o ⇒ o.copy(isGoldenRecord = o == goldenRecord))
@@ -24,7 +22,8 @@ object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with Golde
     import spark.implicits._
 
     operators
-      .map(x ⇒ oHubIdAndRecord(x.ohubId.get, x))
+      .map(x ⇒ x.ohubId.get -> x)
+      .toDF("ohubId", "operator")
       .groupBy("ohubId")
       .agg(collect_list($"operator").as("operators"))
       .as[(String, Seq[Operator])]
@@ -37,8 +36,6 @@ object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with Golde
   }
 
   protected[merging] def run(spark: SparkSession, config: DefaultConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
-    import spark.implicits._
-
     val operators = storage.readFromParquet[Operator](config.inputFile)
     val transformed = transform(spark, operators, dataProvider.sourcePreferences)
 

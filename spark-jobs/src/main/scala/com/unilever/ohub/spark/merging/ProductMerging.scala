@@ -58,8 +58,6 @@ object ProductMerging extends SparkJob[ProductMergingConfig] {
     }
 
   override def run(spark: SparkSession, config: ProductMergingConfig, storage: Storage): Unit = {
-    import spark.implicits._
-
     log.info(
       s"Merging products from [${config.products}] and [${config.previousIntegrated}] to [${config.outputFile}]"
     )

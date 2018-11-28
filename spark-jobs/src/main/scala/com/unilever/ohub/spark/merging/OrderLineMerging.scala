@@ -18,8 +18,6 @@ case class OrderLineMergingConfig(
     outputFile: String = "path-to-output-file"
 ) extends SparkJobConfig
 
-case class OrderLineConcatIdAndRecord(orderConcatId: String, orderLine: OrderLine)
-
 // Technically not really order MERGING, but we need to update foreign key IDs in the other records
 object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
 
@@ -63,7 +61,8 @@ object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
         .filter($"firstOhubUpdated" === $"ohubUpdated")
         .drop($"firstOhubUpdated")
         .as[OrderLine]
-        .map(l ⇒ OrderLineConcatIdAndRecord(l.orderConcatId, l))
+        .map(l ⇒ l.orderConcatId -> l)
+        .toDF("orderConcatId", "orderLine")
         .groupBy($"orderConcatId")
         .agg(collect_list("orderLine").as("orderlines"))
         .as[(String, Seq[OrderLine])]
@@ -102,8 +101,6 @@ object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
     }
 
   override def run(spark: SparkSession, config: OrderLineMergingConfig, storage: Storage): Unit = {
-    import spark.implicits._
-
     val orderRecords = storage.readFromParquet[OrderLine](config.orderLineInputFile)
     val previousIntegrated = storage.readFromParquet[OrderLine](config.previousIntegrated)
     val products = storage.readFromParquet[Product](config.productsIntegrated)

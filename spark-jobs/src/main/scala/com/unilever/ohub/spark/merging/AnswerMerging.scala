@@ -59,8 +59,6 @@ object AnswerMerging extends SparkJob[AnswerMergingConfig] {
     }
 
   override def run(spark: SparkSession, config: AnswerMergingConfig, storage: Storage): Unit = {
-    import spark.implicits._
-
     log.info(
       s"Merging answers from [${config.answers}], [${config.contactPersonInputFile}] and [${config.previousIntegrated}] to [${config.outputFile}]"
     )
