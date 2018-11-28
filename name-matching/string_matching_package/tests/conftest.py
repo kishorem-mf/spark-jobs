@@ -23,6 +23,7 @@ def spark(request):
         .master("local[*]")
         .appName("pytest")
         .config("spark.ui.enabled", "true")
+        .config("spark.driver.memory", "8g")
         .getOrCreate()
     )
 

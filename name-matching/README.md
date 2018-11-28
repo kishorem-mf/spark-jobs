@@ -131,3 +131,6 @@ Collect N number of top matches above a similarity threshold.
 Keep only the first match for each entry alphabetically ordered. This will be the `SOURCE_ID`, remove resulting `SOURCE_ID`s from `TARGET_ID` s.
 
 11. Write Parquet file partitioned by country code
+
+# Notes
+- Giving the algorithm identical documents results in no matches. It uses a.o. TF.IDF and `IDF(N/n docs in which term i appears)` always returns log(1) which is always 0. Zero values in the vectors are filtered out and thus we get no results. This is a known "feature" of TF.IDF. Since it is only theoretical, we didn't take any action so far (28/11/2018). There are fixes for this, see e.g. "double normalization 0.5" on the [TF.IDF Wikipedia page](https://en.wikipedia.org/wiki/Tf%E2%80%93idf).

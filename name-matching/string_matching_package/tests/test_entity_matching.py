@@ -1,7 +1,9 @@
+import os
 from typing import List
 
+import pytest
 from pyspark.sql.types import *
-from string_matching import entity_matching as victim
+from string_matching import entity_matching
 
 
 class TestPreprocessingOperators:
@@ -19,7 +21,7 @@ class TestPreprocessingOperators:
 
     def test_should_drop_null_names(self, spark):
         ddf = self.create_ddf(spark)
-        res = victim.preprocess_operators(ddf, 'concatId', True).collect()
+        res = entity_matching.preprocess_operators(ddf, 'concatId', True).collect()
 
         assert len(res) == 3
         assert ['2', '3', '4'] == [_[1] for _ in res]
@@ -27,7 +29,7 @@ class TestPreprocessingOperators:
     def test_match_string_should_be_concat_from_fields(self, spark):
         ddf = self.create_ddf(spark)
 
-        res = victim.preprocess_operators(ddf, 'concatId', True).select('matching_string').collect()
+        res = entity_matching.preprocess_operators(ddf, 'concatId', True).select('matching_string').collect()
         assert res[0][0] == 'dave mustaine amsterdam baravenue14b 5312be'
 
 
@@ -51,7 +53,7 @@ class TestPreprocessingContactPersons:
 
     def test_should_drop_null_names(self, spark):
         ddf = self.create_ddf(spark)
-        res = victim.preprocess_contact_persons(ddf, 'concatId').collect()
+        res = entity_matching.preprocess_contact_persons(ddf, 'concatId').collect()
 
         assert len(res) == 3
         assert ['2', '3', '4'] == [_[1] for _ in res]
@@ -59,7 +61,7 @@ class TestPreprocessingContactPersons:
     def test_match_string_should_be_concat_from_fields(self, spark):
         ddf = self.create_ddf(spark)
 
-        res = victim.preprocess_contact_persons(ddf, 'concatId').select('matching_string', 'streetCleansed').collect()
+        res = entity_matching.preprocess_contact_persons(ddf, 'concatId').select('matching_string', 'streetCleansed').collect()
         assert res[0][0] == 'dave mustaine'
         assert res[0][1] == 'baravenue14b'
 
@@ -81,15 +83,58 @@ class TestMatchingOperators:
             ('4', 'NL', 'Ritchie Blackmore', 'Utrecht', 'fooStreet', '8', '1234AB')
         ]
         ddf = self.create_ddf(spark, data)
-        res = victim.apply_matching_on(ddf, spark,
-                                       victim.preprocess_operators,
-                                       victim.postprocess_operators,
-                                       1500, 0.8).select('sourceId', 'targetId').sort('targetId').collect()
+        res = entity_matching.apply_operator_matching(
+            ddf,
+            spark,
+            entity_matching.preprocess_operators,
+            1500,
+            0.8,
+            min_norm_name_levenshtein_sim=0
+        ).select('sourceId', 'targetId').sort('targetId').collect()
         assert len(res) == 2
         sources = [_[0] for _ in res]
         targets = [_[1] for _ in res]
         assert sources == ['1', '1']
         assert targets == ['2', '3']
+
+    def test_matching_levenshtein_threshold(self, spark):
+        # Generate a DataFrame with identical address and slightly different names.
+        input_df = spark.createDataFrame(
+            data=[(str(i),"NL",name,"den haag","stationsweg","24","3532AA") for i, name in enumerate(["benna", "benni", "benny", "benno", "benia", "alexander", "peter"])],
+            schema=StructType([StructField(field_name, StringType(), True) for field_name in ["concatId","countryCode","name","city","street","houseNumber","zipCode"]])
+        )
+
+        result_df = entity_matching.apply_operator_matching(
+            records_per_country=input_df,
+            spark=spark,
+            preprocess_function=entity_matching.preprocess_operators,
+            n_top=1500,
+            threshold=0,
+            min_norm_name_levenshtein_sim=0.7,
+            postprocess_return_levenshtein_similarity=True
+        )
+
+        result_df.show(truncate=False)
+        # TODO create sensible test
+        assert True
+
+    @pytest.mark.parametrize("csv_name", ["identical_address_different_name.csv"])
+    def test_full_matching_from_csv(self, spark, csv_name):
+        csv_path = os.path.join(os.path.dirname(__file__), "data", "operators", csv_name)
+        input_df = spark.read.format("csv").option("header", "true").load(csv_path)
+        result_df = entity_matching.apply_operator_matching(
+            records_per_country=input_df,
+            spark=spark,
+            preprocess_function=entity_matching.preprocess_operators,
+            n_top=1500,
+            threshold=0.8,
+            min_norm_name_levenshtein_sim=0,
+            postprocess_return_levenshtein_similarity=True
+        )
+
+        result_df.show(n=200, truncate=False)
+        # TODO create sensible test
+        assert True
 
 
 class TestMatchingContactPersons:
@@ -116,10 +161,14 @@ class TestMatchingContactPersons:
             ('3', 'NL', 'Dave', 'Mustaire', 'Amsterdam  ', '@barAvenue', None, None, '5314BE', '14b')
         ]
         ddf = self.create_ddf(spark, data)
-        res = victim.apply_matching_on(ddf, spark,
-                                       victim.preprocess_contact_persons,
-                                       victim.postprocess_contact_persons,
-                                       1500, 0.8).select('sourceId', 'targetId').sort('targetId').collect()
+        res = entity_matching.apply_matching_on(
+            ddf,
+            spark,
+            entity_matching.preprocess_contact_persons,
+            entity_matching.postprocess_contact_persons,
+            1500,
+            0.8
+        ).select('sourceId', 'targetId').sort('targetId').collect()
         assert len(res) == 1
         sources = [_[0] for _ in res]
         targets = [_[1] for _ in res]

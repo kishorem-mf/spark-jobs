@@ -37,7 +37,7 @@ def match_entity_for_country(spark: SparkSession,
     :param threshold:
     :return:
     """
-    if not (entities.count() >= MINIMUM_ENTRIES_PER_COUNTRY):
+    if entities.count() < MINIMUM_ENTRIES_PER_COUNTRY:
         return spark.createDataFrame([], similarity_schema)
 
     from .spark_string_matching import match_strings
@@ -144,36 +144,45 @@ def preprocess_operators(ddf: DataFrame, id_column: str, drop_if_name_null=False
     :return:
     """
     w = Window.partitionBy('countryCode').orderBy(sf.asc(id_column))
-    ddf = clean_operator_fields(ddf, 'name', 'city', 'street', 'houseNumber', 'zipCode')
+
+    df = clean_operator_fields(ddf, 'name', 'city', 'street', 'houseNumber', 'zipCode')
 
     if drop_if_name_null:
-        ddf = ddf.na.drop(subset=['nameCleansed'])
+        df = df.na.drop(subset=['nameCleansed'])
 
-    return (create_operator_matching_string(ddf)
+    return (create_operator_matching_string(df)
             .filter(sf.col('matching_string') != '')
             .withColumn('name_index', sf.row_number().over(w) - 1)
-            .select('name_index', id_column, 'matching_string')
+            .select('name_index', id_column, 'matching_string', 'nameCleansed', 'cityCleansed', 'streetCleansed', 'zipCodeCleansed')
             )
 
 
-def postprocess_operators(similarity: DataFrame, operators: DataFrame):
+def postprocess_operators(similarity: DataFrame, operators: DataFrame, min_norm_name_levenshtein_sim=0.7, return_levenshtein_similarity=False):
     """
-    TOOD describe function
-    :param similarity:
-    :param operators:
+    Join back the two dataframes containing (1) similarities and (2) operators.
+    :param pyspark.sql.DataFrame similarity: Spark DataFrame containing all similarities.
+    :param pyspark.sql.DataFrame operators: Spark DataFrame containing all operators.
+    :param double min_norm_name_levenshtein_sim: Minimum normalised Levenshtein similarity for name column.
+    :param bool return_levenshtein_similarity: True if column with Levenshtein similarity should be returned.
     :return:
+    :rtype: pyspark.sql.DataFrame
     """
     grouped_similarity = group_matches(similarity)
 
-    return (grouped_similarity
-            .join(operators, grouped_similarity['i'] == operators['name_index'],
-                  how='left').drop('name_index')
-            .selectExpr('i', 'j', 'concatId as sourceId',
-                        'similarity', 'matching_string as sourceName')
-            .join(operators, grouped_similarity['j'] == operators['name_index'],
-                  how='left').drop('name_index')
-            .selectExpr('sourceId', 'concatId as targetId',
-                        'similarity', 'sourceName', 'matching_string as targetName'))
+    result = (grouped_similarity
+              .join(operators, grouped_similarity['i'] == operators['name_index'], how='left')
+              .selectExpr('j', 'i', 'similarity', 'concatId as sourceId', 'matching_string as sourceMatchingString', 'nameCleansed as sourceNameCleansed', 'cityCleansed as sourceCityCleansed', 'streetCleansed as sourceStreetCleansed', 'zipCodeCleansed as sourceZipCodeCleaned')
+              .join(operators, grouped_similarity['j'] == operators['name_index'], how='left')
+              .withColumn('norm_name_levenshtein_similarity', 1-sf.levenshtein(sf.col('sourceNameCleansed'), sf.col('nameCleansed')) / sf.greatest(sf.length('sourceNameCleansed'), sf.length('nameCleansed')))
+              # Exclude where (city,street&zipcode) are identical and normalised Levenshtein similarity on name >= min_norm_name_levenshtein_sim
+              .where(~((sf.col('sourceCityCleansed') == sf.col('cityCleansed')) & (sf.col('sourceStreetCleansed') == sf.col('streetCleansed')) & (sf.col('sourceZipCodeCleaned') == sf.col('zipCodeCleansed')) & (sf.col('norm_name_levenshtein_similarity') < min_norm_name_levenshtein_sim)))
+              )
+
+    result_columns = ['sourceId', 'concatId as targetId', 'similarity', 'sourceMatchingString as sourceName', 'matching_string as targetName']
+    if return_levenshtein_similarity:
+        result_columns.append('norm_name_levenshtein_similarity')
+
+    return result.selectExpr(result_columns)
 
 
 def apply_matching_on(records_per_country: DataFrame, spark,
@@ -198,8 +207,89 @@ def apply_matching_on(records_per_country: DataFrame, spark,
 
     similarity = match_entity_for_country(spark, preprocessed, n_top, threshold)
     matches = post_process_function(similarity, preprocessed)
-    return_value = matches
-    return return_value
+    return matches
+
+
+def apply_operator_matching(
+    records_per_country: DataFrame,
+    spark,
+    preprocess_function,
+    n_top,
+    threshold,
+    min_norm_name_levenshtein_sim,
+    postprocess_return_levenshtein_similarity: bool = False
+):
+    """
+    Apply similarity matching on given DataFrame.
+    This function is the glue doing preprocessing - matching - postprocessing.
+    :param pyspark.sql.DataFrame records_per_country:
+    :param pyspark.sql.SparkSession spark:
+    :param callable preprocess_function:
+    :param int n_top:
+    :param double threshold:
+    :param double min_norm_name_levenshtein_sim:
+    :param bool postprocess_return_levenshtein_similarity:
+    :return:
+    :rtype: pyspark.sql.DataFrame
+    """
+    preprocessed = (
+        preprocess_function(records_per_country, "concatId", True)
+        .repartition("concatId")
+        .sort("concatId", ascending=True)
+    )
+
+    similarity = match_entity_for_country(spark, preprocessed, n_top, threshold)
+
+    matches = postprocess_operators(
+        similarity=similarity,
+        operators=preprocessed,
+        min_norm_name_levenshtein_sim=min_norm_name_levenshtein_sim,
+        return_levenshtein_similarity=postprocess_return_levenshtein_similarity,
+    )
+
+    return matches
+
+
+def main_operators(arguments, preprocess_function):
+    """
+    Main function specifically for processing operators.
+    :param arguments:
+    :param preprocess_function:
+    :return:
+    """
+    global LOGGER
+    spark, LOGGER = start_spark("OperatorsMatching")
+
+    t = Timer("Reading for country {}".format(arguments.country_code), LOGGER)
+    ddf = read_parquet(spark, arguments.input_file).filter(
+        sf.col("countryCode") == arguments.country_code
+    )
+    ddf.persist()
+    t.end_and_log()
+
+    t = Timer("Running for country {}".format(arguments.country_code), LOGGER)
+
+    grouped_matches = apply_operator_matching(
+        records_per_country=ddf,
+        spark=spark,
+        preprocess_function=preprocess_function,
+        n_top=arguments.n_top,
+        threshold=arguments.threshold,
+        min_norm_name_levenshtein_sim=arguments.min_norm_name_levenshtein_sim,
+    )
+    t.end_and_log()
+
+    if grouped_matches is None:
+        LOGGER.warn(
+            "Matching was unable to run due country {} too small".format(
+                arguments.country_code
+            )
+        )
+    else:
+        save_to_parquet_per_partition("countryCode", arguments.country_code)(
+            grouped_matches, arguments.output_path, "overwrite"
+        )
+    ddf.unpersist()
 
 
 def main(arguments, preprocess_function, post_process_function):

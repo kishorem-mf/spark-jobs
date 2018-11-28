@@ -16,27 +16,30 @@ The following steps are performed per country:
 """
 import argparse
 
-from string_matching.entity_delta_matching import main, postprocess_delta_operators
+from string_matching.entity_delta_matching import delta_load_operators
 from string_matching.entity_matching import preprocess_operators
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--integrated_input_path',
-                        help='full path or location of the parquet file with integrated operator data')
+                        help='Path of the Parquet file with integrated operator data.')
     parser.add_argument('-g', '--ingested_daily_input_path',
-                        help='full path or location of the parquet file with ingested daily operator data')
-
+                        help='Path of the Parquet file with ingested daily operator data.')
     parser.add_argument('-p', '--updated_integrated_output_path', default=None,
-                        help='write results in a parquet file to this full path or location directory')
+                        help='Write results in a Parquet file to this path.')
     parser.add_argument('-q', '--unmatched_output_path', default=None,
-                        help='write results in a parquet file to this full path or location directory')
-
+                        help='Write results in a Parquet file to this path.')
     parser.add_argument('-c', '--country_code', default='all',
-                        help='country code to use (e.g. US). Default all countries.')
+                        help='Country code to use (e.g. US). Default all countries.')
     parser.add_argument('-t', '--threshold', default=0.9, type=float,
-                        help='drop similarities below this value [0.-1.].')
+                        help='Drop similarities below this value [0-1].')
     parser.add_argument('-n', '--n_top', default=1500, type=int,
-                        help='keep N top similarities for each record.')
+                        help='Keep N top similarities for each record.')
+    # Note: because people do not understand the concept of distance we calculate
+    # "Levenshtein similarity" as 1-Levenshtein distance. Be well aware of the fact this
+    # is a non existent metric.
+    parser.add_argument('-l', '--min_norm_name_levenshtein_sim', default=0.7, type=float,
+                        help="Minimum normalised Levenshtein similarity [0-1, 0=unequal, 1=equal].")
     args = parser.parse_args()
 
-    main(args, preprocess_operators, postprocess_delta_operators)
+    delta_load_operators(args, preprocess_operators)

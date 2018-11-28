@@ -16,6 +16,7 @@ ext_utils = Extension(
 
 setup(
     name='string_matching',
+    author="Unilever OHUB",
     maintainer="Unilever OHUB",
     version="0.1",
     setup_requires=[
