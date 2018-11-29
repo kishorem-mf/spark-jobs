@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.domain.entity
 
-import java.sql.Timestamp
+import java.sql.{ Date, Timestamp }
 
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
@@ -35,7 +35,7 @@ case class ContactPerson(
     gender: Option[String],
     jobTitle: Option[String],
     language: Option[String],
-    birthDate: Option[Timestamp],
+    birthDate: Option[Date],
     street: Option[String],
     houseNumber: Option[String],
     houseNumberExtension: Option[String],

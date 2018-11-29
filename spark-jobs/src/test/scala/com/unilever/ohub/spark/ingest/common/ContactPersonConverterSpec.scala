@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.ingest.common
 
-import java.sql.Timestamp
+import java.sql.{ Date, Timestamp }
 
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.domain.entity.ContactPerson
@@ -46,7 +46,7 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
             gender = Some("M"),
             jobTitle = Some("Chef"),
             language = Some("en"),
-            birthDate = Some(Timestamp.valueOf("1975-12-21 00:00:00.0")),
+            birthDate = Some(Date.valueOf("1975-12-21")),
             street = Some("Highstreet"),
             houseNumber = Some("443"),
             houseNumberExtension = Some("A"),

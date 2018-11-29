@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.domain.entity
 
-import java.sql.Timestamp
+import java.sql.{ Date, Timestamp }
 import java.util.UUID
 
 import com.unilever.ohub.spark.domain.DomainEntity
@@ -39,7 +39,7 @@ trait TestContactPersons {
     gender = Some("M"),
     jobTitle = Some("Chef"),
     language = Some("en"),
-    birthDate = Some(Timestamp.valueOf("1975-12-21 00:00:00.0")),
+    birthDate = Some(Date.valueOf("1975-12-21")),
     street = Some("Highstreet"),
     houseNumber = Some("443"),
     houseNumberExtension = Some("A"),

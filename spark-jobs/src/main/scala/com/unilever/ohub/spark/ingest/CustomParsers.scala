@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.ingest
 
-import java.sql.Timestamp
+import java.sql.{ Date, Timestamp }
 import java.time._
 import java.time.format.DateTimeFormatter
 
@@ -12,10 +12,12 @@ object CustomParsers {
     Timestamp.valueOf(parsed)
   }
 
-  def parseDateUnsafe(datePattern: String = "yyyyMMdd")(input: String): Timestamp = {
+  def parseDateUnsafe(datePattern: String = "yyyyMMdd")(input: String): Date = {
     val pattern = DateTimeFormatter.ofPattern(datePattern)
-    val parsed = LocalDate.parse(input, pattern).atStartOfDay() // check whether it satisfies the supplied date pattern (throws an exception if it doesn't)
-    Timestamp.valueOf(parsed)
+    val localDate = LocalDate.parse(input, pattern)
+    val jdbcDatePattern = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    val str = localDate.format(jdbcDatePattern)
+    Date.valueOf(str)
   }
 
   def toTimestamp(input: String): Timestamp = new Timestamp(input.toLong)

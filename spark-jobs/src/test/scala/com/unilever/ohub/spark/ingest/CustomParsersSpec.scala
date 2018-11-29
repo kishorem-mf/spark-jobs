@@ -26,8 +26,8 @@ class CustomParsersSpec extends FunSpec with Matchers {
       assertThrows[DateTimeParseException](parseDateUnsafe()("20171215 00:00:00"))
     }
 
-    it("should parse 20171215 as 2017-12-15 00:00:00") {
-      assert(parseDateUnsafe()("20171215").toString == "2017-12-15 00:00:00.0")
+    it("should parse 20171215 as 2017-12-15") {
+      assert(parseDateUnsafe()("20171215").toString == "2017-12-15")
     }
   }
 
