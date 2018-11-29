@@ -136,6 +136,41 @@ class TestMatchingOperators:
         # TODO create sensible test
         assert True
 
+    def test_validate_matching_operators(self, spark):
+        input_df = spark.createDataFrame(
+            data=[
+                (0,"some_country","Brown-Thornton","Ebonybury","Abbott Rue","6","07172"),
+                (1,"some_country","Washington Group","Katelynville","Debbie Ville","8","30336"),
+                (2,"some_country","Holloway LLC","Dannyfort","Mann Pines",None,"48296"),
+                (3,"some_country","Owen-Thomas","Darinfurt","Penny Plaza",None,"73947"),
+                (4,"some_country","Cobb-Nichols","Darrellmouth","Jeffery Extension","4","61626")
+            ],
+            schema=StructType(
+                [
+                    StructField("concatId", StringType(), True),
+                    StructField("countryCode", StringType(), True),
+                    StructField("name", StringType(), True),
+                    StructField("city", StringType(), True),
+                    StructField("street", StringType(), True),
+                    StructField("houseNumber", StringType(), True),
+                    StructField("zipCode", StringType(), True),
+                ]
+            ),
+        )
+
+        result_df = entity_matching.apply_matching_on(
+            records_per_country=input_df,
+            spark=spark,
+            preprocess_function=entity_matching.preprocess_operators,
+            post_process_function=entity_matching.postprocess_operators,
+            n_top=1500,
+            threshold=0,
+        )
+
+        # With threshold 0, all matches should be returned, and we
+        # expect n-1 pairs (e.g. records A,B,C,D -> pairs A,B & A,C & A,D).
+        assert (input_df.count() - 1) == result_df.count()
+
 
 class TestMatchingContactPersons:
 
