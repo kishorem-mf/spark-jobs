@@ -1,13 +1,11 @@
 package com.unilever.ohub.spark.merging
 
-import java.util.UUID
-
 import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.entity.{ ContactPerson, Subscription }
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{ collect_list, row_number }
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
@@ -19,16 +17,7 @@ case class SubscriptionMergingConfig(
 ) extends SparkJobConfig
 
 // Technically not really subscription MERGING, but we need to update foreign key IDs in the other records
-object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] {
-
-  def groupWithOhubId: Seq[Subscription] ⇒ Seq[Subscription] = subscriptions ⇒ {
-    val ohubId: String = subscriptions
-      .find(_.ohubId.isDefined)
-      .flatMap(_.ohubId)
-      .getOrElse(UUID.randomUUID().toString)
-
-    subscriptions.map(_.copy(ohubId = Some(ohubId)))
-  }
+object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] with GroupingFunctions {
 
   def transform(
     spark: SparkSession,
@@ -52,29 +41,24 @@ object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] {
             }
         }
 
-    val w = Window.partitionBy($"contactPersonConcatId").orderBy($"dateUpdated".desc_nulls_last)
+    val w = Window.partitionBy($"contactPersonOhubId", $"subscriptionType").orderBy($"orderDate".desc_nulls_last)
+    val w2 = Window.partitionBy($"contactPersonOhubId", $"subscriptionType").orderBy($"ohubId".desc_nulls_last)
 
-    val allSubscriptionsGrouped =
-      allSubscriptions
-        .withColumn("rn", row_number.over(w))
-        .withColumn("isGoldenRecord", $"rn" === 1)
-        .drop($"rn")
-        .as[Subscription]
-        .map(s ⇒ s.contactPersonConcatId -> s)
-        .toDF("contactPersonConcatId", "subscription")
-        .groupBy("contactPersonConcatId")
-        .agg(collect_list("subscription").as("subscriptions"))
-        .as[(String, Seq[Subscription])]
-        .map(_._2)
-        .flatMap(groupWithOhubId)
-
-    allSubscriptionsGrouped
+    allSubscriptions
       .joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), JoinType.Left)
       .map {
         case (subscription, cpn) ⇒
           if (cpn == null) subscription
           else subscription.copy(contactPersonOhubId = cpn.ohubId)
       }
+      .withColumn("orderDate", when($"confirmedSubscriptionDate".isNotNull, $"confirmedSubscriptionDate").otherwise($"subscriptionDate"))
+      .withColumn("rn", row_number.over(w))
+      .withColumn("isGoldenRecord", $"rn" === 1)
+      .drop("rn", "orderDate")
+      .withColumn("ohubId", first($"ohubId").over(w2)) // preserve ohubId
+      .withColumn("ohubId", when('ohubId.isNull, createOhubIdUdf()).otherwise('ohubId))
+      .withColumn("ohubId", first('ohubId).over(w2)) // make sure the whole group gets the same ohubId
+      .as[Subscription]
   }
 
   override private[spark] def defaultConfig = SubscriptionMergingConfig()

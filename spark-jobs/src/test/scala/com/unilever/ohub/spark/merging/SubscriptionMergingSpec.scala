@@ -12,83 +12,258 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
 
   private val SUT = SubscriptionMerging
 
+  val contactPersons = Seq(
+    defaultContactPerson.copy(concatId = "cpn1", ohubId = Some("ohubCpn1")),
+    defaultContactPerson.copy(concatId = "cpn2", ohubId = Some("ohubCpn1"))
+  ).toDataset
+
   describe("Subscription merging") {
-    it("should take newest data if available while retaining ohubId") {
-      val contactPersons = Seq(
-        defaultContactPersonWithSourceEntityId("cpn1").copy(ohubId = Some("ohubCpn1")),
-        defaultContactPersonWithSourceEntityId("cpn2").copy(ohubId = Some("ohubCpn2"))
-      ).toDataset
+    it("should mark the most recent based on subscriptionDate golden record") {
+      val previous: Dataset[Subscription] = spark.createDataset(Seq())
+      val input: Dataset[Subscription] = spark.createDataset(Seq(
+        defaultSubscription.copy(
+          concatId = "s1",
+          isGoldenRecord = false,
+          ohubId = None,
+          contactPersonConcatId = "cpn1",
+          contactPersonOhubId = None,
+          subscriptionType = "default_newsletter_opt_in",
+          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          confirmedSubscriptionDate = None
+        ),
+        defaultSubscription.copy(
+          concatId = "s2",
+          isGoldenRecord = false,
+          ohubId = None,
+          contactPersonConcatId = "cpn2",
+          contactPersonOhubId = None,
+          subscriptionType = "default_newsletter_opt_in",
+          subscriptionDate = Timestamp.valueOf("2018-11-28 11:45:00.0"),
+          confirmedSubscriptionDate = None
+        )
+      ))
 
-      val updatedRecord = defaultSubscription.copy(
-        isGoldenRecord = true,
-        dateUpdated = Some(Timestamp.valueOf("2016-07-01 13:48:00.0")),
-        ohubId = Some("oldId"),
-        countryCode = "updated",
-        concatId = s"updated~${defaultSubscription.sourceName}~${defaultSubscription.sourceEntityId}",
-        contactPersonConcatId = "AU~WUFOO~cpn1"
+      val result = SUT.transform(spark, input, previous, contactPersons).collect()
+
+      result.map(_.ohubId).distinct.size shouldBe 1
+      result.map(s ⇒ s.concatId -> s.isGoldenRecord).toSet shouldBe Set(
+        ("s1", false),
+        ("s2", true)
       )
+    }
 
-      val deletedRecord = defaultSubscription.copy(
-        isGoldenRecord = true,
-        dateUpdated = None,
-        countryCode = "deleted",
-        concatId = s"deleted~${defaultSubscription.sourceName}~${defaultSubscription.sourceEntityId}",
-        contactPersonConcatId = "AU~WUFOO~cpn1",
-        isActive = true)
+    it("should use confirmedSubscriptionDate for ordering subscriptions when available") {
+      val previous: Dataset[Subscription] = spark.createDataset(Seq())
+      val input: Dataset[Subscription] = spark.createDataset(Seq(
+        defaultSubscription.copy(
+          concatId = "s1",
+          isGoldenRecord = false,
+          ohubId = None,
+          contactPersonConcatId = "cpn1",
+          contactPersonOhubId = None,
+          subscriptionType = "default_newsletter_opt_in",
+          subscriptionDate = Timestamp.valueOf("2018-11-26 11:45:00.0"),
+          confirmedSubscriptionDate = Some(Timestamp.valueOf("2018-11-28 11:45:00.0"))
+        ),
+        defaultSubscription.copy(
+          concatId = "s2",
+          isGoldenRecord = false,
+          ohubId = None,
+          contactPersonConcatId = "cpn2",
+          contactPersonOhubId = None,
+          subscriptionType = "default_newsletter_opt_in",
+          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          confirmedSubscriptionDate = Some(Timestamp.valueOf("2018-11-25 11:45:00.0"))
+        )
+      ))
 
-      val newRecord = defaultSubscription.copy(
-        isGoldenRecord = true,
-        dateUpdated = Some(Timestamp.valueOf("2018-08-08 13:48:00.0")),
-        countryCode = "new",
-        concatId = s"new~${defaultSubscription.sourceName}~${defaultSubscription.sourceEntityId}",
-        contactPersonConcatId = "AU~WUFOO~cpn1"
+      val result = SUT.transform(spark, input, previous, contactPersons).collect()
+
+      result.map(_.ohubId).distinct.size shouldBe 1
+      result.map(s ⇒ s.concatId -> s.isGoldenRecord).toSet shouldBe Set(
+        ("s1", true),
+        ("s2", false)
       )
+    }
 
-      val unchangedRecord = defaultSubscription.copy(
-        isGoldenRecord = true,
-        countryCode = "unchanged",
-        concatId = s"unchanged~${defaultSubscription.sourceName}~${defaultSubscription.sourceEntityId}",
-        contactPersonConcatId = "AU~WUFOO~cpn2"
+    it("should mark subscriptions that differ in subscriptionType golden record") {
+      val previous: Dataset[Subscription] = spark.createDataset(Seq())
+      val input: Dataset[Subscription] = spark.createDataset(Seq(
+        defaultSubscription.copy(
+          concatId = "s1",
+          isGoldenRecord = false,
+          ohubId = None,
+          contactPersonConcatId = "cpn1",
+          contactPersonOhubId = None,
+          subscriptionType = "type_1",
+          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          confirmedSubscriptionDate = None
+        ),
+        defaultSubscription.copy(
+          concatId = "s2",
+          isGoldenRecord = false,
+          ohubId = None,
+          contactPersonConcatId = "cpn2",
+          contactPersonOhubId = None,
+          subscriptionType = "type_2",
+          subscriptionDate = Timestamp.valueOf("2018-11-28 11:45:00.0"),
+          confirmedSubscriptionDate = None
+        )
+      ))
+
+      val result = SUT.transform(spark, input, previous, contactPersons).collect()
+
+      result.map(_.ohubId).distinct.size shouldBe 2
+      result.map(s ⇒ s.concatId -> s.isGoldenRecord).toSet shouldBe Set(
+        ("s1", true),
+        ("s2", true)
       )
+    }
 
-      val notADeltaRecord = defaultSubscription.copy(
-        isGoldenRecord = true,
-        countryCode = "notADelta",
-        concatId = s"notADelta~${defaultSubscription.sourceName}~${defaultSubscription.sourceEntityId}",
-        contactPersonConcatId = "AU~WUFOO~cpn3"
-      )
-
+    it("should preserve ohubIds") {
       val previous: Dataset[Subscription] = spark.createDataset(Seq(
-        updatedRecord,
-        deletedRecord,
-        unchangedRecord,
-        notADeltaRecord
+        defaultSubscription.copy(
+          concatId = "s1",
+          isGoldenRecord = true,
+          ohubId = Some("ohub-id-1"),
+          contactPersonConcatId = "cpn1",
+          contactPersonOhubId = Some("ohubCpn1"),
+          subscriptionType = "default_newsletter_opt_in",
+          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          confirmedSubscriptionDate = None
+        )
       ))
       val input: Dataset[Subscription] = spark.createDataset(Seq(
-        updatedRecord.copy(ohubId = Some("newId")),
-        deletedRecord.copy(isActive = false),
-        unchangedRecord,
-        newRecord
+        defaultSubscription.copy(
+          concatId = "s1",
+          isGoldenRecord = false,
+          ohubId = None,
+          contactPersonConcatId = "cpn1",
+          contactPersonOhubId = None,
+          subscriptionType = "default_newsletter_opt_in",
+          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          confirmedSubscriptionDate = None
+        ),
+        defaultSubscription.copy(
+          concatId = "s2",
+          isGoldenRecord = false,
+          ohubId = None,
+          contactPersonConcatId = "cpn2",
+          contactPersonOhubId = None,
+          subscriptionType = "default_newsletter_opt_in",
+          subscriptionDate = Timestamp.valueOf("2018-11-28 11:45:00.0"),
+          confirmedSubscriptionDate = None
+        )
       ))
 
-      val result = SUT.transform(spark, input, previous, contactPersons)
-        .collect()
-        .sortBy(_.countryCode)
+      val result = SUT.transform(spark, input, previous, contactPersons).collect()
 
-      result.length shouldBe 5
-      assertSubscription(result(0), "deleted", isActive = false, isGoldenRecord = false, ohubId = "oldId", contactPersonOhubId = Some("ohubCpn1"))
-      assertSubscription(result(1), "new", isActive = true, isGoldenRecord = true, ohubId = "oldId", contactPersonOhubId = Some("ohubCpn1"))
-      assertSubscription(result(2), "notADelta", isActive = true, isGoldenRecord = true, ohubId = result(2).ohubId.get, contactPersonOhubId = None)
-      assertSubscription(result(3), "unchanged", isActive = true, isGoldenRecord = true, ohubId = result(3).ohubId.get, contactPersonOhubId = Some("ohubCpn2"))
-      assertSubscription(result(4), "updated", isActive = true, isGoldenRecord = false, ohubId = "oldId", contactPersonOhubId = Some("ohubCpn1"))
+      result.map(_.ohubId).distinct.toSet shouldBe Set(Some("ohub-id-1"))
+      result.map(s ⇒ s.concatId -> s.isGoldenRecord).toSet shouldBe Set(
+        ("s1", false),
+        ("s2", true)
+      )
     }
-  }
 
-  private def assertSubscription(subscription: Subscription, countryCode: String, isActive: Boolean, isGoldenRecord: Boolean, ohubId: String, contactPersonOhubId: Option[String]): Unit = {
-    subscription.countryCode shouldBe countryCode
-    subscription.isActive shouldBe isActive
-    subscription.ohubId shouldBe Some(ohubId)
-    subscription.isGoldenRecord shouldBe isGoldenRecord
-    subscription.contactPersonOhubId shouldBe contactPersonOhubId
+    it("should handle deletes correctly") { // delete is a special case of updates
+      val previous: Dataset[Subscription] = spark.createDataset(Seq(
+        defaultSubscription.copy(
+          concatId = "s1",
+          isGoldenRecord = false,
+          ohubId = Some("ohub-id-1"),
+          contactPersonConcatId = "cpn1",
+          contactPersonOhubId = Some("ohubCpn1"),
+          subscriptionType = "default_newsletter_opt_in",
+          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          confirmedSubscriptionDate = None
+        )
+      ))
+      val input: Dataset[Subscription] = spark.createDataset(Seq(
+        defaultSubscription.copy(
+          concatId = "s1",
+          isGoldenRecord = false,
+          isActive = false,
+          ohubId = None,
+          contactPersonConcatId = "cpn1",
+          contactPersonOhubId = None,
+          subscriptionType = "default_newsletter_opt_in",
+          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          confirmedSubscriptionDate = None
+        )
+      ))
+
+      val result = SUT.transform(spark, input, previous, contactPersons).collect()
+
+      result.map(_.ohubId).distinct.toSet shouldBe Set(Some("ohub-id-1"))
+      result.map(s ⇒ (s.concatId, s.isGoldenRecord, s.isActive)).toSet shouldBe Set(
+        ("s1", true, false)
+      )
+    }
+
+    it("should not loose records") {
+      val previous: Dataset[Subscription] = spark.createDataset(Seq(
+        defaultSubscription.copy(
+          concatId = "s1",
+          isGoldenRecord = true,
+          ohubId = Some("ohub-id-1"),
+          contactPersonConcatId = "cpn1",
+          contactPersonOhubId = Some("ohubCpn1"),
+          subscriptionType = "type_1",
+          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          confirmedSubscriptionDate = None
+        ),
+        defaultSubscription.copy(
+          concatId = "s2",
+          isGoldenRecord = true,
+          ohubId = Some("ohub-id-2"),
+          contactPersonConcatId = "cpn1",
+          contactPersonOhubId = Some("ohubCpn1"),
+          subscriptionType = "type_2",
+          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          confirmedSubscriptionDate = None
+        )
+      ))
+      val input: Dataset[Subscription] = spark.createDataset(Seq(
+        defaultSubscription.copy(
+          concatId = "s1",
+          isGoldenRecord = false,
+          ohubId = None,
+          contactPersonConcatId = "cpn1",
+          contactPersonOhubId = None,
+          subscriptionType = "type_1",
+          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          confirmedSubscriptionDate = None
+        ),
+        defaultSubscription.copy(
+          concatId = "s3",
+          isGoldenRecord = false,
+          ohubId = None,
+          contactPersonConcatId = "cpn1",
+          contactPersonOhubId = None,
+          subscriptionType = "type_2",
+          subscriptionDate = Timestamp.valueOf("2018-11-28 11:45:00.0"),
+          confirmedSubscriptionDate = None
+        ),
+        defaultSubscription.copy(
+          concatId = "s4",
+          isGoldenRecord = false,
+          ohubId = None,
+          contactPersonConcatId = "cpn3",
+          contactPersonOhubId = None,
+          subscriptionType = "type_2",
+          subscriptionDate = Timestamp.valueOf("2018-11-28 11:45:00.0"),
+          confirmedSubscriptionDate = None
+        )
+      ))
+
+      val result = SUT.transform(spark, input, previous, contactPersons).collect()
+
+      result.map(s ⇒ (s.concatId, s.isGoldenRecord, s.ohubId, s.contactPersonOhubId)).toSet shouldBe Set(
+        ("s1", true, Some("ohub-id-1"), Some("ohubCpn1")),
+        ("s2", false, Some("ohub-id-2"), Some("ohubCpn1")),
+        ("s3", true, Some("ohub-id-2"), Some("ohubCpn1")),
+        ("s4", true, result.filter(_.concatId == "s4").head.ohubId, None)
+      )
+    }
   }
 }

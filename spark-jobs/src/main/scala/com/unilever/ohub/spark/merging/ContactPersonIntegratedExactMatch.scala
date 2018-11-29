@@ -1,7 +1,5 @@
 package com.unilever.ohub.spark.merging
 
-import java.util.UUID
-
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
@@ -18,7 +16,7 @@ case class ExactMatchIngestedWithDbConfig(
     unmatchedDeltaOutputFile: String = "path-to-unmatched-delta-output-file"
 ) extends SparkJobConfig
 
-object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWithDbConfig] {
+object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWithDbConfig] with GroupingFunctions {
 
   override private[spark] def defaultConfig = ExactMatchIngestedWithDbConfig()
 
@@ -63,8 +61,6 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
 
   private def determineExactMatches(spark: SparkSession, integratedContactPersons: Dataset[ContactPerson], dailyDeltaContactPersons: Dataset[ContactPerson]): Dataset[ContactPerson] = {
     import spark.implicits._
-
-    val createOhubIdUdf = udf[String](() ⇒ UUID.randomUUID().toString)
 
     lazy val integratedWithExact = integratedContactPersons
       .filter('emailAddress.isNotNull || 'mobileNumber.isNotNull)
