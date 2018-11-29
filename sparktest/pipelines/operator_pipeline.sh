@@ -44,11 +44,13 @@ spark-submit   --py-files=${SPARK_JOBS_EGG} ${PYTHON_DELTA_OPERATORS} \
                --ingested_daily_input_path=${DATA_OPERATORS_PRE_PROCESSED} \
                --updated_integrated_output_path=${DATA_OPERATORS_UPDATED_INTEGRATED} \
                --unmatched_output_path=${DATA_OPERATORS_DELTA_LEFT_OVERS} \
+               --min_norm_name_levenshtein_sim=0 \
                --country_code="DE"
 
 spark-submit   --py-files=${SPARK_JOBS_EGG} ${PYTHON_MATCH_OPERATORS} \
                --input_file=${DATA_OPERATORS_DELTA_LEFT_OVERS} \
                --output_path=${DATA_OPERATORS_FUZZY_MATCHED_DELTA} \
+               --min_norm_name_levenshtein_sim=0 \
                --country_code="DE"
 
 spark-submit   --class="com.unilever.ohub.spark.merging.OperatorMatchingJoiner" ${SPARK_JOBS_JAR} \
