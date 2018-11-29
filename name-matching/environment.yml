@@ -10,7 +10,7 @@ dependencies:
   - setuptools=38.4.0=py35_0
   - scipy==1.0.0
   - pandas==0.22.0
-  - pytest==2.8.5
+  - pytest==3.8.1
   - pycodestyle==2.3.1
   - pytest-cov==2.5.1
   - pytest-mock==1.10.0
