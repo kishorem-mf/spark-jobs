@@ -155,6 +155,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   override def writeJdbcTable(df: DataFrame, dbUrl: String, dbTable: String, userName: String, userPassword: String,
     jdbcDriverClass: String = "org.postgresql.Driver", saveMode: SaveMode = SaveMode.Overwrite): Unit = {
     df
+      .coalesce(20)
       .write
       .mode(saveMode)
       .option(JDBCOptions.JDBC_DRIVER_CLASS, jdbcDriverClass)
