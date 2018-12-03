@@ -1,4 +1,3 @@
-import LibraryVersions._
 import com.typesafe.sbt.SbtScalariform
 import sbt.Keys._
 import sbt._
@@ -17,8 +16,6 @@ object GlobalSettings extends AutoPlugin {
 
   lazy val testSettings: Seq[Setting[_]] = {
     val flags = Seq(Tests.Argument("-oD"))
-    //    Defaults.itSettings
-    //    IntegrationTest / testOptions ++= flags
     Seq(
       test in assembly := {},
       parallelExecution in Test := false,
@@ -50,12 +47,12 @@ object GlobalSettings extends AutoPlugin {
   lazy val projectDependencies: Seq[ModuleID] = Seq(
     "org.apache.commons" % "commons-lang3" % "3.8.1",
     "org.postgresql" % "postgresql" % "42.2.5",
-    "io.circe" %% "circe-core" % CirceVersion,
-    "io.circe" %% "circe-generic" % CirceVersion,
-    "io.circe" %% "circe-parser" % CirceVersion,
     "com.github.scopt" %% "scopt" % "3.7.0",
+    "org.scalikejdbc" %% "scalikejdbc" % "3.3.1",
+    "org.scalikejdbc" %% "scalikejdbc-config" % "3.3.1",
     "org.scalatest" %% "scalatest" % "3.0.5" % "test,it",
     "org.scalamock" %% "scalamock" % "4.1.0" % "test,it",
+    "org.scalikejdbc" %% "scalikejdbc-test" % "3.3.1" % "test",
     "com.h2database" % "h2" % "1.4.197" % "test,it"
   )
 
