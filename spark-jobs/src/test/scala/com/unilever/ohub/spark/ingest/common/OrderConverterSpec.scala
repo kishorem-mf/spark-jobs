@@ -42,7 +42,7 @@ class OrderConverterSpec extends CsvDomainGateKeeperSpec[Order] with TestOrders 
           distributorLocation = Some("locA"),
           distributorOperatorId = Some("oper2"),
           vat = Some(BigDecimal("12345")),
-          operatorConcatId = "E1-1234",
+          operatorConcatId = Some("E1-1234"),
           transactionDate = Timestamp.valueOf("2015-09-30 14:23:00")
         )
 

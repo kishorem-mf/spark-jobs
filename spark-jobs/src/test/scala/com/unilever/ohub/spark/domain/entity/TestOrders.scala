@@ -33,7 +33,7 @@ trait TestOrders {
     distributorLocation = None,
     distributorName = Some("Van der Valk"),
     distributorOperatorId = None,
-    operatorConcatId = "some~operator~id",
+    operatorConcatId = Some("some~operator~id"),
     operatorOhubId = None,
     transactionDate = Timestamp.valueOf("2015-06-30 13:49:00.0"),
     vat = None,

@@ -51,7 +51,7 @@ class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators w
         ohubId = Some("oldId"),
         countryCode = "updated",
         concatId = s"updated~${defaultOrder.sourceName}~${defaultOrder.sourceEntityId}",
-        operatorConcatId = "country-code~op1~source-entity-id",
+        operatorConcatId = Some("country-code~op1~source-entity-id"),
         contactPersonConcatId = Some("AU~WUFOO~cpn1"),
         comment = Some("Calve"))
 
@@ -59,7 +59,7 @@ class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators w
         isGoldenRecord = true,
         countryCode = "deleted",
         concatId = s"deleted~${defaultOrder.sourceName}~${defaultOrder.sourceEntityId}",
-        operatorConcatId = "country-code~op2~source-entity-id",
+        operatorConcatId = Some("country-code~op2~source-entity-id"),
         contactPersonConcatId = Some("AU~WUFOO~cpn2"),
         isActive = true)
 
@@ -67,7 +67,7 @@ class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators w
         isGoldenRecord = true,
         countryCode = "new",
         concatId = s"new~${defaultOrder.sourceName}~${defaultOrder.sourceEntityId}",
-        operatorConcatId = "country-code~op3~source-entity-id",
+        operatorConcatId = Some("country-code~op3~source-entity-id"),
         contactPersonConcatId = Some("AU~WUFOO~cpn3")
       )
 
@@ -75,7 +75,7 @@ class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators w
         isGoldenRecord = true,
         countryCode = "unchanged",
         concatId = s"unchanged~${defaultOrder.sourceName}~${defaultOrder.sourceEntityId}",
-        operatorConcatId = "country-code~op4~source-entity-id",
+        operatorConcatId = Some("country-code~op4~source-entity-id"),
         contactPersonConcatId = Some("AU~WUFOO~cpn4")
       )
 
@@ -83,7 +83,7 @@ class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators w
         isGoldenRecord = true,
         countryCode = "notADelta",
         concatId = s"notADelta~${defaultOrder.sourceName}~${defaultOrder.sourceEntityId}",
-        operatorConcatId = "country-code~op5~source-entity-id",
+        operatorConcatId = Some("country-code~op5~source-entity-id"),
         contactPersonConcatId = Some("AU~WUFOO~cpn5")
       )
 
