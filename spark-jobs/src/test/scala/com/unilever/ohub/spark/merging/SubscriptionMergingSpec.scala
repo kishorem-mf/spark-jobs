@@ -28,7 +28,7 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
           contactPersonConcatId = "cpn1",
           contactPersonOhubId = None,
           subscriptionType = "default_newsletter_opt_in",
-          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2018-11-27 11:45:00.0")),
           confirmedSubscriptionDate = None
         ),
         defaultSubscription.copy(
@@ -38,7 +38,7 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
           contactPersonConcatId = "cpn2",
           contactPersonOhubId = None,
           subscriptionType = "default_newsletter_opt_in",
-          subscriptionDate = Timestamp.valueOf("2018-11-28 11:45:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2018-11-28 11:45:00.0")),
           confirmedSubscriptionDate = None
         )
       ))
@@ -62,7 +62,7 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
           contactPersonConcatId = "cpn1",
           contactPersonOhubId = None,
           subscriptionType = "default_newsletter_opt_in",
-          subscriptionDate = Timestamp.valueOf("2018-11-26 11:45:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2018-11-26 11:45:00.0")),
           confirmedSubscriptionDate = Some(Timestamp.valueOf("2018-11-28 11:45:00.0"))
         ),
         defaultSubscription.copy(
@@ -72,7 +72,7 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
           contactPersonConcatId = "cpn2",
           contactPersonOhubId = None,
           subscriptionType = "default_newsletter_opt_in",
-          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2018-11-27 11:45:00.0")),
           confirmedSubscriptionDate = Some(Timestamp.valueOf("2018-11-25 11:45:00.0"))
         )
       ))
@@ -96,7 +96,7 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
           contactPersonConcatId = "cpn1",
           contactPersonOhubId = None,
           subscriptionType = "type_1",
-          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2018-11-27 11:45:00.0")),
           confirmedSubscriptionDate = None
         ),
         defaultSubscription.copy(
@@ -106,7 +106,7 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
           contactPersonConcatId = "cpn2",
           contactPersonOhubId = None,
           subscriptionType = "type_2",
-          subscriptionDate = Timestamp.valueOf("2018-11-28 11:45:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2018-11-28 11:45:00.0")),
           confirmedSubscriptionDate = None
         )
       ))
@@ -129,7 +129,7 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
           contactPersonConcatId = "cpn1",
           contactPersonOhubId = Some("ohubCpn1"),
           subscriptionType = "default_newsletter_opt_in",
-          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2018-11-27 11:45:00.0")),
           confirmedSubscriptionDate = None
         )
       ))
@@ -141,7 +141,7 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
           contactPersonConcatId = "cpn1",
           contactPersonOhubId = None,
           subscriptionType = "default_newsletter_opt_in",
-          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2018-11-27 11:45:00.0")),
           confirmedSubscriptionDate = None
         ),
         defaultSubscription.copy(
@@ -151,7 +151,7 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
           contactPersonConcatId = "cpn2",
           contactPersonOhubId = None,
           subscriptionType = "default_newsletter_opt_in",
-          subscriptionDate = Timestamp.valueOf("2018-11-28 11:45:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2018-11-28 11:45:00.0")),
           confirmedSubscriptionDate = None
         )
       ))
@@ -174,7 +174,7 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
           contactPersonConcatId = "cpn1",
           contactPersonOhubId = Some("ohubCpn1"),
           subscriptionType = "default_newsletter_opt_in",
-          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2018-11-27 11:45:00.0")),
           confirmedSubscriptionDate = None
         )
       ))
@@ -187,7 +187,7 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
           contactPersonConcatId = "cpn1",
           contactPersonOhubId = None,
           subscriptionType = "default_newsletter_opt_in",
-          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2018-11-27 11:45:00.0")),
           confirmedSubscriptionDate = None
         )
       ))
@@ -209,7 +209,7 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
           contactPersonConcatId = "cpn1",
           contactPersonOhubId = Some("ohubCpn1"),
           subscriptionType = "type_1",
-          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2018-11-27 11:45:00.0")),
           confirmedSubscriptionDate = None
         ),
         defaultSubscription.copy(
@@ -219,7 +219,7 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
           contactPersonConcatId = "cpn1",
           contactPersonOhubId = Some("ohubCpn1"),
           subscriptionType = "type_2",
-          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2018-11-27 11:45:00.0")),
           confirmedSubscriptionDate = None
         )
       ))
@@ -231,7 +231,7 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
           contactPersonConcatId = "cpn1",
           contactPersonOhubId = None,
           subscriptionType = "type_1",
-          subscriptionDate = Timestamp.valueOf("2018-11-27 11:45:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2018-11-27 11:45:00.0")),
           confirmedSubscriptionDate = None
         ),
         defaultSubscription.copy(
@@ -241,7 +241,7 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
           contactPersonConcatId = "cpn1",
           contactPersonOhubId = None,
           subscriptionType = "type_2",
-          subscriptionDate = Timestamp.valueOf("2018-11-28 11:45:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2018-11-28 11:45:00.0")),
           confirmedSubscriptionDate = None
         ),
         defaultSubscription.copy(
@@ -251,7 +251,7 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
           contactPersonConcatId = "cpn3",
           contactPersonOhubId = None,
           subscriptionType = "type_2",
-          subscriptionDate = Timestamp.valueOf("2018-11-28 11:45:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2018-11-28 11:45:00.0")),
           confirmedSubscriptionDate = None
         )
       ))

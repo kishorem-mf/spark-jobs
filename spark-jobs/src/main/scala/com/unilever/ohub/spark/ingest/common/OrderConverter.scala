@@ -43,7 +43,7 @@ object OrderConverter extends CommonDomainGateKeeper[Order] with OrderEmptyParqu
       distributorOperatorId                 = optional(  "distributorOperatorId",                 "distributorOperatorId"),
       operatorConcatId                      = optional(  "operatorConcatId",                      "operatorConcatId"),
       operatorOhubId                        = None, // set in OrderMerging
-      transactionDate                       = mandatory( "transactionDate",                       "transactionDate",                        parseDateTimeUnsafe()),
+      transactionDate                       = optional( "transactionDate",                       "transactionDate",                        parseDateTimeUnsafe()),
       vat                                   = optional(  "vat",                                   "vat",                                    toBigDecimal         ),
       // invoice address
       invoiceOperatorName                   = optional(  "invoiceOperatorName",                   "invoiceOperatorName"),

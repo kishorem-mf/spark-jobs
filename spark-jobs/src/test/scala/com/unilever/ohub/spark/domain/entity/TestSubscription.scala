@@ -26,7 +26,7 @@ trait TestSubscription {
     communicationChannel = Some("all"),
     subscriptionType = "Newsletter",
     hasSubscription = true,
-    subscriptionDate = Timestamp.valueOf("2015-06-20 13:49:00.0"),
+    subscriptionDate = Some(Timestamp.valueOf("2015-06-20 13:49:00.0")),
     hasConfirmedSubscription = Some(true),
     confirmedSubscriptionDate = Some(Timestamp.valueOf("2015-06-30 13:49:00.0")),
     // other fields

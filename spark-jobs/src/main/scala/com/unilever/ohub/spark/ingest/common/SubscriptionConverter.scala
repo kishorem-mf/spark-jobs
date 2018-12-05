@@ -37,7 +37,7 @@ object SubscriptionConverter extends CommonDomainGateKeeper[Subscription] with S
       communicationChannel        = optional(                   "communicationChannel",       "communicationChannel"),
       subscriptionType            = mandatory(                  "subscriptionType",           "subscriptionType"),
       hasSubscription             = mandatory(                  "hasSubscription",            "hasSubscription",            toBoolean),
-      subscriptionDate            = mandatory(                  "subscriptionDate",           "subscriptionDate",           parseDateTimeUnsafe()),
+      subscriptionDate            = optional(                   "subscriptionDate",           "subscriptionDate",           parseDateTimeUnsafe()),
       hasConfirmedSubscription    = optional(                   "hasConfirmedSubscription",   "hasConfirmedSubscription",   toBoolean),
       confirmedSubscriptionDate   = optional(                   "confirmedSubscriptionDate",  "confirmedSubscriptionDate",  parseDateTimeUnsafe()),
       additionalFields            = additionalFields,

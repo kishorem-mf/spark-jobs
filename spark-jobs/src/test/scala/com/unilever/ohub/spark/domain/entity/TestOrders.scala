@@ -35,7 +35,7 @@ trait TestOrders {
     distributorOperatorId = None,
     operatorConcatId = Some("some~operator~id"),
     operatorOhubId = None,
-    transactionDate = Timestamp.valueOf("2015-06-30 13:49:00.0"),
+    transactionDate = Some(Timestamp.valueOf("2015-06-30 13:49:00.0")),
     vat = None,
     // invoice address
     invoiceOperatorName                   = Some("invoiceOperatorName"),

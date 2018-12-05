@@ -38,7 +38,7 @@ class SubscriptionConverterSpec extends CsvDomainGateKeeperSpec[Subscription] {
           communicationChannel = Some("channel"),
           subscriptionType = "default_newsletter_opt_in",
           hasSubscription = true,
-          subscriptionDate = Timestamp.valueOf("2015-06-30 13:47:00.0"),
+          subscriptionDate = Some(Timestamp.valueOf("2015-06-30 13:47:00.0")),
           hasConfirmedSubscription = Some(true),
           confirmedSubscriptionDate = Some(Timestamp.valueOf("2015-06-30 13:48:00.0")),
           additionalFields = Map(),

@@ -31,7 +31,7 @@ case class Subscription(
     communicationChannel: Option[String],
     subscriptionType: String,
     hasSubscription: Boolean,
-    subscriptionDate: Timestamp,
+    subscriptionDate: Option[Timestamp],
     hasConfirmedSubscription: Option[Boolean],
     confirmedSubscriptionDate: Option[Timestamp],
     // other fields
