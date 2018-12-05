@@ -45,6 +45,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .option("sep", fieldSeparator)
       .option("inferSchema", value = false)
       .option("encoding", "UTF-8")
+      .option("escape", "\"")
       .csv(location)
   }
 

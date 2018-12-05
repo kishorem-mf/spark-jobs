@@ -1,0 +1,5 @@
+id;sourceName;countryCode;isActive;name;dateCreated;dateUpdated;property
+"1";"WEBUPDATER";"ES";"A";"""Mi Casa""";"20150827 21:17:03";"20160323 08:42:36";"Otros"
+"2";"WEBUPDATER";"ES";"A";"Mi; Casa";"20150827 21:17:03";"20160323 08:42:36";"Otros"
+"3";"WEBUPDATER";"ES";"A";"""Mi; Casa""";"20150827 21:17:03";"20160323 08:42:36";"Otros"
+"4";"WEBUPDATER";"ES";"A";"""""Mi; Casa""""";"20150827 21:17:03";"20160323 08:42:36";"Otros"

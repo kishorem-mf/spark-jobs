@@ -3,6 +3,7 @@ package com.unilever.ohub.spark.storage
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import org.apache.hadoop.fs.{ FileSystem, Path }
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
 
 class DefaultStorageSpec extends SparkJobSpec {
@@ -37,6 +38,19 @@ class DefaultStorageSpec extends SparkJobSpec {
       val file = new java.io.File(fileName)
       assert(file.exists)
       assert(file.isFile)
+    }
+  }
+
+  describe("readFromCsv") {
+    it("should read a csv with quotes correctly") {
+      val result = victim.readFromCsv("src/test/resources/input/quoted.csv", ";")
+
+      result.select("id", "name").collect() shouldBe Array(
+        Row("1", "\"Mi Casa\""),
+        Row("2", "Mi; Casa"),
+        Row("3", "\"Mi; Casa\""),
+        Row("4", "\"\"Mi; Casa\"\"")
+      )
     }
   }
 }
