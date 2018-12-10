@@ -19,17 +19,14 @@ The following steps are performed:
       we do the following:
         - Make sure each j only matches with one i (the 'group leader')
             - Note: of course we can have multiple matches per group leader, e.g. (i, j) and (i, k)
-        - Make sure that each i (group leader) is not matched with another 'group leader', e.g. if we have (i, j) we remove (k, i) for all k
+        - Make sure that each i (group leader) is not matched with another 'group leader',
+                e.g. if we have (i, j) we remove (k, i) for all k
 - Write Parquet file partitioned by country code
 """
 
 import argparse
 
-from string_matching.entity_matching import (
-    main,
-    preprocess_contact_persons,
-    postprocess_contact_persons,
-)
+from string_matching.entity_matching import main_contactpersons
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -45,6 +42,8 @@ if __name__ == '__main__':
                         help='drop similarities below this value [0-1].')
     parser.add_argument('-n', '--n_top', default=1500, type=int,
                         help='keep N top similarities for each record.')
+    parser.add_argument('-l', '--min_norm_name_levenshtein_sim', default=0.7, type=float,
+                        help="Minimum normalised Levenshtein similarity [0-1, 0=unequal, 1=equal].")
     args = parser.parse_args()
 
-    main(args, preprocess_contact_persons, postprocess_contact_persons)
+    main_contactpersons(args)

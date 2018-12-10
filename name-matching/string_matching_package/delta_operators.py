@@ -17,7 +17,6 @@ The following steps are performed per country:
 import argparse
 
 from string_matching.entity_delta_matching import delta_load_operators
-from string_matching.entity_matching import preprocess_operators
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -42,4 +41,4 @@ if __name__ == '__main__':
                         help="Minimum normalised Levenshtein similarity [0-1, 0=unequal, 1=equal].")
     args = parser.parse_args()
 
-    delta_load_operators(args, preprocess_operators)
+    delta_load_operators(args)

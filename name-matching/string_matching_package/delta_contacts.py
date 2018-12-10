@@ -16,11 +16,7 @@ The following steps are performed per country:
 """
 import argparse
 
-from string_matching.entity_delta_matching import (
-    main,
-    postprocess_delta_contact_persons,
-)
-from string_matching.entity_matching import preprocess_contact_persons
+from string_matching.entity_delta_matching import (delta_load_contactpersons)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -40,6 +36,8 @@ if __name__ == '__main__':
                         help='drop similarities below this value [0.-1.].')
     parser.add_argument('-n', '--n_top', default=1500, type=int,
                         help='keep N top similarities for each record.')
+    parser.add_argument('-l', '--min_norm_name_levenshtein_sim', default=0.7, type=float,
+                        help="Minimum normalised Levenshtein similarity [0-1, 0=unequal, 1=equal].")
     args = parser.parse_args()
 
-    main(args, preprocess_contact_persons, postprocess_delta_contact_persons)
+    delta_load_contactpersons(args)
