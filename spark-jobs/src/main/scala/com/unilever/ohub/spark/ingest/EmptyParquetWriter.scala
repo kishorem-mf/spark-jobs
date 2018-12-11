@@ -97,3 +97,12 @@ trait AnswerEmptyParquetWriter extends EmptyParquetWriter[Answer] {
     spark.createDataset[Answer](Seq[Answer]())
   }
 }
+
+trait LoyaltyPointsEmptyParquetWriter extends EmptyParquetWriter[LoyaltyPoints] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[LoyaltyPoints] = {
+    import spark.implicits._
+
+    spark.createDataset[LoyaltyPoints](Seq[LoyaltyPoints]())
+  }
+}

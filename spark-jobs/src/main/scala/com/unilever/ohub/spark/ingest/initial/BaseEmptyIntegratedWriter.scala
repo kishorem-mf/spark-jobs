@@ -56,3 +56,6 @@ object ActivityEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Activity]
 object AnswerEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Answer] with AnswerEmptyParquetWriter
 
 object QuestionEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Question] with QuestionEmptyParquetWriter
+
+object LoyaltyPointsEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[LoyaltyPoints] with LoyaltyPointsEmptyParquetWriter
+
