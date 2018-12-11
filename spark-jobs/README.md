@@ -17,3 +17,4 @@ run `sbt package`.
 
 # Tips
 run `sbt dependencyUpdates` to check for updates on the dependencies.
+run `sbt clean coverage test coverageReport` to run the tests with coverage.

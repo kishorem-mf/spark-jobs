@@ -58,15 +58,19 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
       val errors: Dataset[ErrorMessage] = result.filter(_.isLeft).map(_.left.get)
 
       if (errors.head(1).nonEmpty) { // do something with the errors here
-        if (config.showErrorSummary) { // create a summary report
-          errors
-            .rdd.map(e ⇒ e.error -> 1)
-            .reduceByKey(_ + _)
-            .toDF("ERROR", "COUNT").show(numRows = 100, truncate = false)
-        } else { // show plain errors
-          errors
-            .toDF("ERROR", "ROW").show(numRows = 100, truncate = false)
-        }
+        val errorResult =
+          if (config.showErrorSummary) { // create a summary report
+            errors
+              .rdd.map(e ⇒ e.error -> 1)
+              .reduceByKey(_ + _)
+              .toDF("ERROR", "COUNT")
+          } else { // show plain errors
+            errors
+              .toDF("ERROR", "ROW")
+          }
+
+        storage.writeToParquet(errorResult, config.outputFile + ".errors")
+        errorResult.show(numRows = 100, truncate = false)
 
         if (config.strictIngestion) {
           log.error(s"NO PARQUET FILE WRITTEN, FAIL FAST NOW.")
