@@ -57,7 +57,6 @@ def read_parquet_with_schema(spark: SparkSession, schema: StructType, fn: str) -
             .schema(schema)
             .parquet(fn))
 
-
 def read_parquet(spark: SparkSession, fn: str) -> DataFrame:
     """
     TODO desribe
@@ -165,7 +164,7 @@ def clean_matching_string(ddf: DataFrame) -> DataFrame:
     """
     return (ddf
             .withColumn('matching_string', sf.regexp_replace('matching_string', REGEX, ''))
-            .withColumn('matching_string', sf.lower(sf.trim(sf.regexp_replace(sf.col('matching_string'), '\\s+', ' '))))
+            .withColumn('matching_string', sf.lower(sf.trim(sf.regexp_replace(sf.col('matching_string'), '\s+', ' '))))
             )
 
 

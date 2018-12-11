@@ -39,4 +39,4 @@ if __name__ == '__main__':
                         help="Minimum normalised Levenshtein similarity [0-1, 0=unequal, 1=equal].")
     args = parser.parse_args()
 
-    main_operators(args)
+    main_operators(args, preprocess_operators)

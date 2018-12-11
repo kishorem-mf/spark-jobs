@@ -4,7 +4,7 @@ import argparse
 import glob
 from os import path
 
-from string_matching.entity_matching import main_operators
+from string_matching.entity_matching import preprocess_operators, main_operators
 
 
 class TestMatchOperators:
@@ -32,7 +32,9 @@ class TestMatchOperators:
         )
 
         parser = argparse.ArgumentParser()
-        main_operators(parser.parse_args())
+        main_operators(
+            arguments=parser.parse_args(), preprocess_function=preprocess_operators
+        )
 
         output_dir = str(tmpdir / "tmpoutput/countryCode=FAKE_COUNTRY")
         output_files = glob.glob(output_dir + "/*.parquet")
