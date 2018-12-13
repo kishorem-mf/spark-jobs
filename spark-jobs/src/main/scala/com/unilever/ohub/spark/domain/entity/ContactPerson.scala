@@ -52,6 +52,8 @@ case class ContactPerson(
     faxNumber: Option[String],
     hasGeneralOptOut: Option[Boolean],
     hasConfirmedRegistration: Option[Boolean],
+    hasRegistration: Option[Boolean],
+    registrationDate: Option[Timestamp],
     confirmedRegistrationDate: Option[Timestamp],
     hasEmailOptIn: Option[Boolean],
     emailOptInDate: Option[Timestamp],
@@ -70,6 +72,7 @@ case class ContactPerson(
     hasFaxOptIn: Option[Boolean],
     hasFaxOptOut: Option[Boolean],
     webUpdaterId: Option[String],
+
     // other fields
     additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]

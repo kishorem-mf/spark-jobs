@@ -56,6 +56,8 @@ object ContactPersonConverter extends CommonDomainGateKeeper[ContactPerson] with
       mobileNumber                  =   optional(   "mobileNumber",                   "mobileNumber"                                                     ),
       faxNumber                     =   optional(   "faxNumber",                      "faxNumber"                                                        ),
       hasGeneralOptOut              =   optional(   "hasGeneralOptOut",               "hasGeneralOptOut",             toBoolean                          ),
+      hasRegistration               =   optional(   "hasRegistration",                "hasRegistration",              toBoolean                          ),
+      registrationDate              =   optional(   "registrationDate",               "registrationDate",             parseDateTimeUnsafe()              ),
       hasConfirmedRegistration      =   optional(   "hasConfirmedRegistration",       "hasConfirmedRegistration",     toBoolean                          ),
       confirmedRegistrationDate     =   optional(   "confirmedRegistrationDate",      "confirmedRegistrationDate",    parseDateTimeUnsafe()              ),
       hasEmailOptIn                 =   optional(   "hasEmailOptIn",                  "hasEmailOptIn",                toBoolean                          ),

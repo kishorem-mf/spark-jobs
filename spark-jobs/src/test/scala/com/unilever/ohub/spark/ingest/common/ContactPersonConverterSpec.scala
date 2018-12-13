@@ -62,6 +62,8 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
             mobileNumber = Some("+61 6 1234 5678"),
             faxNumber = Some("+61 3 9662 1811"),
             hasGeneralOptOut = Some(true),
+            hasRegistration = Some(true),
+            registrationDate = Some(Timestamp.valueOf("2015-09-30 14:23:00.0")),
             hasConfirmedRegistration = Some(true),
             confirmedRegistrationDate = Some(Timestamp.valueOf("2015-09-30 14:23:00.0")),
             hasEmailOptIn = Some(true),

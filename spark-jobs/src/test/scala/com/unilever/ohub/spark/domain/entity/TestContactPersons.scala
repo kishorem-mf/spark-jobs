@@ -55,6 +55,8 @@ trait TestContactPersons {
     mobileNumber = Some("61612345678"),
     faxNumber = Some("61396621812"),
     hasGeneralOptOut = Some(true),
+    hasRegistration = Some(true),
+    registrationDate = Some(Timestamp.valueOf("2015-09-30 14:23:01.0")),
     hasConfirmedRegistration = Some(true),
     confirmedRegistrationDate = Some(Timestamp.valueOf("2015-09-30 14:23:01.0")),
     hasEmailOptIn = Some(true),
