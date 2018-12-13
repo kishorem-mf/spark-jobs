@@ -83,7 +83,6 @@ abstract class BasePreProcess[T <: DomainEntity: TypeTag] extends SparkJob[PrePr
     val dailyDeltaDomainEntities = storage.readFromParquet[T](config.deltaInputFile)
 
     val preProcessedDeltaDomainEntities = transform(spark, integratedDomainEntities, dailyDeltaDomainEntities)
-      .coalesce(24) // dividable by 2, 3, 4, 6 & 8
 
     storage.writeToParquet(preProcessedDeltaDomainEntities, config.deltaPreProcessedOutputFile)
   }
