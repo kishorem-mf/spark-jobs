@@ -37,9 +37,7 @@ class TestDeltaOperators:
         )
 
         parser = argparse.ArgumentParser()
-        delta_load_operators(
-            arguments=parser.parse_args(), preprocess_function=preprocess_operators
-        )
+        delta_load_operators(parser.parse_args())
 
         integrated_output_dir = str(tmpdir / "integrated/countryCode=FAKE_COUNTRY")
         unmatched_output_dir = str(tmpdir / "unmatched/countryCode=FAKE_COUNTRY")

@@ -29,9 +29,9 @@ class TestMatchStrings:
                 min_document_frequency=2,
                 max_vocabulary_size=1500,
             )
-                .select("i", "j")
-                .sort("j", "i")
-                .collect()
+            .select("i", "j")
+            .sort("j", "i")
+            .collect()
         )
         assert len(res) == 1
         sources = [_[0] for _ in res]
@@ -66,9 +66,9 @@ class TestMatchStrings:
                 min_document_frequency=2,
                 max_vocabulary_size=1500,
             )
-                .select("i", "j")
-                .sort("i", "j")
-                .collect()
+            .select("i", "j")
+            .sort("i", "j")
+            .collect()
         )  # i is ingested
         assert len(res) == 5
         ingested = [_[0] for _ in res]
@@ -94,9 +94,9 @@ class TestMatchStrings:
                 min_document_frequency=2,
                 max_vocabulary_size=1500,
             )
-                .select("i", "j")
-                .sort("j", "i")
-                .collect()
+            .select("i", "j")
+            .sort("j", "i")
+            .collect()
         )
         assert len(res) == 0
 
@@ -126,9 +126,9 @@ class TestMatchStrings:
                 min_document_frequency=2,
                 max_vocabulary_size=1500,
             )
-                .select("i", "j")
-                .sort("j", "i")
-                .collect()
+            .select("i", "j")
+            .sort("j", "i")
+            .collect()
         )
         assert len(res) == 0
 

@@ -1,7 +1,7 @@
 import pyspark.sql.functions as sf
 import pytest
 from pyspark.sql.types import *
-from string_matching import entity_delta_matching as victim
+from string_matching.entity_delta_matching import apply_delta_operator_matching, apply_delta_contactperson_matching
 from string_matching import entity_matching as helper
 from string_matching.utils import read_parquet_with_schema
 
@@ -75,20 +75,14 @@ class TestDeltaMatching:
 
     @pytest.mark.skip(msg="Hacky test to run locally. Make sure paths to files are correct.")
     def test_from_file(self, spark):
-        ingested = "/testdata/operators_pre_processed.parquet"
-        integrated = "/testdata/operators.parquet/"
+        ingested = "./tests/data/operators/fake_operators_100_empty_ohubId.snappy.parquet/"
+        integrated = "./tests/data/operators/fake_operators_1K_with_ohubId.snappy.parquet/"
         ingested_df = spark.read.parquet(ingested).filter(sf.col('countryCode') == "SE")
         integrated_df = spark.read.parquet(integrated).filter(sf.col('countryCode') == "SE")
 
-        updated, unmatched = victim.apply_delta_matching_on(spark,
-                                                            ingested_df,
-                                                            integrated_df,
-                                                            helper.preprocess_operators,
-                                                            victim.postprocess_delta_operators,
-                                                            1500, 0.8)
+        updated, unmatched = apply_delta_operator_matching(spark, ingested_df, integrated_df)
 
         print("COUNT = " + str(updated.count()))
-
 
     def test_full_matching_operators(self, spark):
         delta_data = [
@@ -101,7 +95,7 @@ class TestDeltaMatching:
             ('c5', 'o1', 'NL', 'xx', '', '', '', ''),
             ('c6', 'o2', 'NL', 'xx', '', '', '', ''),
             ('c7', 'o3', 'NL', 'xz', '', '', '', ''),
-            ('c4', 'o4', 'NL', 'xx', '', '', '', ''),
+            ('c4', 'o4', 'NL', 'xx', 'v', '', '', ''),
         ]
         ingested = (spark.createDataFrame(delta_data, self.schema_operators)
                     .toDF('concatId', 'ohubId', 'countryCode', 'name', 'city', 'street', 'houseNumber', 'zipCode')
@@ -110,23 +104,16 @@ class TestDeltaMatching:
                       .toDF('concatId', 'ohubId', 'countryCode', 'name', 'city', 'street', 'houseNumber', 'zipCode')
                       )
 
-        updated, unmatched = victim.apply_delta_matching_on(spark,
-                                                            ingested,
-                                                            integrated,
-                                                            helper.preprocess_operators,
-                                                            victim.postprocess_delta_operators,
-                                                            1500, 0.8)
+        updated, unmatched = apply_delta_operator_matching(spark, ingested, integrated)
         updated = updated.select('concatId', 'ohubId', 'city').sort('concatId').collect()
         unmatched = unmatched.select('concatId').collect()
-        print(updated)
-        print(unmatched)
 
         assert len(updated) == 6
         concats = [_[0] for _ in updated]
         ohubIds = [_[1] for _ in updated]
         cities_ = [_[2] for _ in updated]
         assert concats == ['c1', 'c2', 'c4', 'c5', 'c6', 'c7']
-        assert ohubIds == ['o1', 'o1', 'o1', 'o1', 'o2', 'o3']
+        assert ohubIds == ['o1', 'o1', 'o4', 'o1', 'o2', 'o3']
         assert cities_ == ['', '', 'v', '', '', '']
 
         assert len(unmatched) == 1
@@ -152,12 +139,7 @@ class TestDeltaMatching:
                       .toDF('concatId', 'ohubId', 'countryCode', 'name', 'city', 'street', 'houseNumber', 'zipCode')
                       )
 
-        updated, unmatched = victim.apply_delta_matching_on(spark,
-                                                            ingested,
-                                                            integrated,
-                                                            helper.preprocess_operators,
-                                                            victim.postprocess_delta_operators,
-                                                            1500, 0.2)
+        updated, unmatched = apply_delta_operator_matching(spark, ingested, integrated, threshold=0.2)
         updated = updated.select('concatId', 'ohubId', 'city').sort('concatId').collect()
 
         unmatched = unmatched.select('concatId').sort('concatId').collect()
@@ -190,12 +172,7 @@ class TestDeltaMatching:
         ingested = spark.createDataFrame(delta_data, self.schema_contact_persons)
         integrated = spark.createDataFrame(integrated_data, self.schema_contact_persons)
 
-        updated, unmatched = victim.apply_delta_matching_on(spark,
-                                                            ingested,
-                                                            integrated,
-                                                            helper.preprocess_contact_persons,
-                                                            victim.postprocess_delta_contact_persons,
-                                                            1500, 0.8)
+        updated, unmatched = apply_delta_contactperson_matching(spark, ingested, integrated)
         updated = updated.select('concatId', 'ohubId', 'city').sort('concatId').collect()
         unmatched = unmatched.select('concatId').collect()
 
@@ -226,12 +203,7 @@ class TestDeltaMatching:
         ingested = spark.createDataFrame(delta_data, self.schema_contact_persons)
         integrated = spark.createDataFrame(integrated_data, self.schema_contact_persons)
 
-        updated, unmatched = victim.apply_delta_matching_on(spark,
-                                                            ingested,
-                                                            integrated,
-                                                            helper.preprocess_contact_persons,
-                                                            victim.postprocess_delta_contact_persons,
-                                                            1500, 0.8)
+        updated, unmatched = apply_delta_contactperson_matching(spark, ingested, integrated)
         updated = updated.select('concatId', 'ohubId', 'city').sort('concatId').collect()
         unmatched = unmatched.select('concatId').collect()
 
@@ -254,12 +226,7 @@ class TestDeltaMatching:
         ingested = spark.createDataFrame(delta_data, self.schema_contact_persons)
         integrated = spark.createDataFrame(integrated_data, self.schema_contact_persons)
 
-        updated, unmatched = victim.apply_delta_matching_on(spark,
-                                                            ingested,
-                                                            integrated,
-                                                            helper.preprocess_contact_persons,
-                                                            victim.postprocess_delta_contact_persons,
-                                                            1500, 0.8)
+        updated, unmatched = apply_delta_contactperson_matching(spark, ingested, integrated)
         updated = updated.select('concatId', 'ohubId', 'city').sort('concatId').collect()
         unmatched = unmatched.select('concatId').collect()
 
