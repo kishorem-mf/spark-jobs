@@ -166,6 +166,40 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
       result("newest2") shouldBe (Some("ohub-order-1"), true)
     }
 
+    it("Should mark old records as inactive and golden when the same order is supplied in delta") {
+      val unchangedRecord = defaultOrderLine.copy(
+        orderConcatId = "order-2",
+        comment = Some("1st"),
+        concatId = "unchanged")
+
+      val updatedRecord = defaultOrderLine.copy(
+        orderConcatId = "order-1",
+        comment = Some("2nd"),
+        concatId = "oldie")
+
+      val previous: Dataset[OrderLine] = spark.createDataset(Seq(
+        updatedRecord,
+        unchangedRecord
+      ))
+      val input: Dataset[OrderLine] = spark.createDataset(Seq(
+        updatedRecord.copy(comment = Some("3rd"), ohubId = Some("newId"))
+      ))
+
+      val products: Dataset[Product] = Seq[Product]().toDataset
+
+      val result = SUT.transform(spark, input, previous, products)
+        .orderBy($"comment".asc)
+        .collect();
+
+      result.length shouldBe 3 // Previously ingested records for an orderId are set to inactive, delta records to active(same as golden)
+      result(0).isActive shouldBe true
+      result(0).isGoldenRecord shouldBe true
+      result(1).isActive shouldBe false
+      result(1).isGoldenRecord shouldBe false
+      result(2).isActive shouldBe true
+      result(2).isGoldenRecord shouldBe true
+    }
+
     it("delta input orderline data is preserved in favor of integrated data while retaining ohubId") {
       val updatedRecord = defaultOrderLine.copy(
         orderConcatId = "order-1",
@@ -201,7 +235,6 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
       ))
       val input: Dataset[OrderLine] = spark.createDataset(Seq(
         updatedRecord.copy(comment = Some("Unox"), ohubId = Some("newId")),
-        deletedRecord.copy(isActive = false),
         unchangedRecord,
         newRecord
       ))
@@ -212,15 +245,20 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
         .collect()
         .sortBy(_.concatId)
 
-      result.length shouldBe 5
+      result.length shouldBe 7 // Previously ingested records for an orderId are set to inactive, delta records to active(same as golden)
       result(0).isActive shouldBe false
       result(0).concatId shouldBe "deleted"
       result(1).concatId shouldBe "new"
       result(2).concatId shouldBe "notADelta"
       result(3).concatId shouldBe "unchanged"
-      result(4).concatId shouldBe "updated"
-      result(4).comment shouldBe Some("Unox")
-      result(4).ohubId shouldBe Some("oldId")
+      result(5).concatId shouldBe "updated"
+      result(5).isActive shouldBe false
+      result(5).isGoldenRecord shouldBe false
+      result(6).concatId shouldBe "updated"
+      result(6).isActive shouldBe true
+      result(6).isGoldenRecord shouldBe true
+      result(6).comment shouldBe Some("Unox")
+      result(6).ohubId shouldBe Some("oldId")
     }
 
     it("should set the reference to the right productOhubId") {
