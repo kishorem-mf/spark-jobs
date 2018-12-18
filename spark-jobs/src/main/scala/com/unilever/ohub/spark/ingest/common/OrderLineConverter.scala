@@ -23,7 +23,7 @@ object OrderLineConverter extends CommonDomainGateKeeper[OrderLine] with OrderLi
       customerType                    = OrderLine.customerType                                                                   ,
       dateCreated                     = optional(  "dateCreated",              "dateCreated",            parseDateTimeUnsafe()  ),
       dateUpdated                     = optional(  "dateUpdated",              "dateUpdated",            parseDateTimeUnsafe()  ),
-      isActive                        = true,
+      isActive                        = mandatory( "isActive",                 "isActive",               toBoolean),
       isGoldenRecord                  = false, // set in OrderLineMerging
       ohubId                          = None, // set in OrderLineMerging
       sourceEntityId                  = mandatoryValue("sourceEntityId",       "sourceEntityId")(row),

@@ -17,7 +17,19 @@ case class OrderLineMergingConfig(
     outputFile: String = "path-to-output-file"
 ) extends SparkJobConfig
 
-// Technically not really order MERGING, but we need to update foreign key IDs in the other records
+/**
+ * SparkJob that:
+ * <ol>
+ * <li>Merges old orderlines with delta ones based on ConcatId</li>
+ * <li>If old ones existed:</li>
+ * <ul>
+ *   <li>Copies their OhubId(<strong>based on OrderConcatID</strong>)</li>
+ *   <li>Sets old ones on non-golden(<strong>based on OrderConcatID</strong>)</li>
+ * </ul>
+ * <li>Sets delta ones on golden</li>
+ * <li>Generates an ohubId when not present(from an old one, <strong>based on OrderConcatID</strong>)</li>
+ * </ol>
+ */
 object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
 
   def setOhubId(orderLines: Seq[OrderLine]): Seq[OrderLine] = {
@@ -50,8 +62,9 @@ object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
       allOrderLines
         .withColumn("firstInDelta", first('inDelta).over(w))
         .withColumn("ohubId", first('ohubId).over(w2)) // Copy ohubId from older version
-        .withColumn("isActive", $"inDelta" === $"firstInDelta") // Only record provided in the delta are set on active, other inactive
-        .withColumn("isGoldenRecord", $"inDelta" === $"firstInDelta") // Same as isActive column
+        // Only record provided in the delta are set on golden.
+        // If the order is also present in the integrated, that one is set on non-golden
+        .withColumn("isGoldenRecord", $"inDelta" === $"firstInDelta")
         .drop($"inDelta")
         .as[OrderLine]
         .map(l ⇒ l.orderConcatId -> l)

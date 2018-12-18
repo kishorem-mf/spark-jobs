@@ -166,23 +166,25 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
       result("newest2") shouldBe (Some("ohub-order-1"), true)
     }
 
-    it("Should mark old records as inactive and golden when the same order is supplied in delta") {
+    it("Should mark old records as non-golden when the same order is supplied in delta") {
       val unchangedRecord = defaultOrderLine.copy(
         orderConcatId = "order-2",
         comment = Some("1st"),
-        concatId = "unchanged")
+        concatId = "unchanged",
+        isActive = false)
 
       val updatedRecord = defaultOrderLine.copy(
         orderConcatId = "order-1",
         comment = Some("2nd"),
-        concatId = "oldie")
+        concatId = "oldie",
+        isActive = true)
 
       val previous: Dataset[OrderLine] = spark.createDataset(Seq(
         updatedRecord,
         unchangedRecord
       ))
       val input: Dataset[OrderLine] = spark.createDataset(Seq(
-        updatedRecord.copy(comment = Some("3rd"), ohubId = Some("newId"))
+        updatedRecord.copy(comment = Some("3rd"), ohubId = Some("newId"), isActive = false)
       ))
 
       val products: Dataset[Product] = Seq[Product]().toDataset
@@ -192,11 +194,11 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
         .collect();
 
       result.length shouldBe 3 // Previously ingested records for an orderId are set to inactive, delta records to active(same as golden)
-      result(0).isActive shouldBe true
+      result(0).isActive shouldBe false
       result(0).isGoldenRecord shouldBe true
-      result(1).isActive shouldBe false
+      result(1).isActive shouldBe true
       result(1).isGoldenRecord shouldBe false
-      result(2).isActive shouldBe true
+      result(2).isActive shouldBe false
       result(2).isGoldenRecord shouldBe true
     }
 
@@ -205,7 +207,8 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
         orderConcatId = "order-1",
         ohubId = Some("oldId"),
         concatId = "updated",
-        comment = Some("Calve"))
+        comment = Some("Calve"),
+        isActive = true)
 
       val deletedRecord = defaultOrderLine.copy(
         orderConcatId = "order-1",
@@ -234,7 +237,7 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
         notADeltaRecord
       ))
       val input: Dataset[OrderLine] = spark.createDataset(Seq(
-        updatedRecord.copy(comment = Some("Unox"), ohubId = Some("newId")),
+        updatedRecord.copy(comment = Some("Unox"), ohubId = Some("newId"), isActive = false),
         unchangedRecord,
         newRecord
       ))
@@ -246,16 +249,16 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
         .sortBy(_.concatId)
 
       result.length shouldBe 7 // Previously ingested records for an orderId are set to inactive, delta records to active(same as golden)
-      result(0).isActive shouldBe false
+      result(0).isActive shouldBe true
       result(0).concatId shouldBe "deleted"
       result(1).concatId shouldBe "new"
       result(2).concatId shouldBe "notADelta"
       result(3).concatId shouldBe "unchanged"
       result(5).concatId shouldBe "updated"
-      result(5).isActive shouldBe false
+      result(5).isActive shouldBe true
       result(5).isGoldenRecord shouldBe false
       result(6).concatId shouldBe "updated"
-      result(6).isActive shouldBe true
+      result(6).isActive shouldBe false
       result(6).isGoldenRecord shouldBe true
       result(6).comment shouldBe Some("Unox")
       result(6).ohubId shouldBe Some("oldId")
