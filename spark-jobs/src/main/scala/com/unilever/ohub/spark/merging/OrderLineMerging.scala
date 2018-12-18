@@ -2,12 +2,11 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.entity.{ OrderLine, Product }
-import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{ collect_list, first }
+import org.apache.spark.sql.functions.{ collect_list, first, lit }
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
@@ -18,16 +17,28 @@ case class OrderLineMergingConfig(
     outputFile: String = "path-to-output-file"
 ) extends SparkJobConfig
 
-// Technically not really order MERGING, but we need to update foreign key IDs in the other records
+/**
+ * SparkJob that:
+ * <ol>
+ * <li>Merges old orderlines with delta ones based on ConcatId</li>
+ * <li>If old ones existed:</li>
+ * <ul>
+ *   <li>Copies their OhubId(<strong>based on OrderConcatID</strong>)</li>
+ *   <li>Sets old ones on non-golden(<strong>based on OrderConcatID</strong>)</li>
+ * </ul>
+ * <li>Sets delta ones on golden</li>
+ * <li>Generates an ohubId when not present(from an old one, <strong>based on OrderConcatID</strong>)</li>
+ * </ol>
+ */
 object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
 
-  def markGoldenRecordAndSetOhubId(orderLines: Seq[OrderLine]): Seq[OrderLine] = {
+  def setOhubId(orderLines: Seq[OrderLine]): Seq[OrderLine] = {
     val ohubId: String = orderLines
       .find(_.ohubId.isDefined)
       .flatMap(_.ohubId)
       .getOrElse(UUID.randomUUID().toString)
 
-    orderLines.map(l ⇒ l.copy(isGoldenRecord = true, ohubId = Some(ohubId)))
+    orderLines.map(l ⇒ l.copy(ohubId = Some(ohubId)))
   }
 
   def transform(
@@ -39,27 +50,22 @@ object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
     import spark.implicits._
 
     val allOrderLines = previousIntegrated
-      .joinWith(orderLines, previousIntegrated("concatId") === orderLines("concatId"), JoinType.FullOuter)
-      .map {
-        case (integrated, orderLine) ⇒
-          if (orderLine == null) {
-            integrated
-          } else if (integrated == null) {
-            orderLine
-          } else {
-            orderLine.copy(ohubId = integrated.ohubId)
-          }
-      }
+      .withColumn("inDelta", lit(0)) // false --> Just to be sure, use a number for internal column
+      .union(orderLines
+        .withColumn("inDelta", lit(1)) // true
+      )
 
-    val w = Window.partitionBy($"orderConcatId").orderBy($"ohubUpdated".desc_nulls_last)
+    val w = Window.partitionBy($"orderConcatId").orderBy($"inDelta".desc) // true(=1) first is existent
     val w2 = Window.partitionBy($"orderConcatId").orderBy($"ohubId".desc_nulls_last)
 
     val allOrderLinesGrouped =
       allOrderLines
-        .withColumn("firstOhubUpdated", first('ohubUpdated).over(w))
-        .withColumn("ohubId", first('ohubId).over(w2))
-        .filter($"firstOhubUpdated" === $"ohubUpdated")
-        .drop($"firstOhubUpdated")
+        .withColumn("firstInDelta", first('inDelta).over(w))
+        .withColumn("ohubId", first('ohubId).over(w2)) // Copy ohubId from older version
+        // Only record provided in the delta are set on golden.
+        // If the order is also present in the integrated, that one is set on non-golden
+        .withColumn("isGoldenRecord", $"inDelta" === $"firstInDelta")
+        .drop($"inDelta")
         .as[OrderLine]
         .map(l ⇒ l.orderConcatId -> l)
         .toDF("orderConcatId", "orderLine")
@@ -67,7 +73,7 @@ object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
         .agg(collect_list("orderLine").as("orderlines"))
         .as[(String, Seq[OrderLine])]
         .map(_._2)
-        .flatMap(markGoldenRecordAndSetOhubId)
+        .flatMap(setOhubId)
 
     allOrderLinesGrouped
       .joinWith(products, $"productConcatId" === products("concatId"), "left")
