@@ -14,8 +14,8 @@ class ContactPersonReferencingSpec extends SparkJobSpec with TestContactPersons 
   private val operator2 = defaultOperatorWithSourceEntityId("2").copy(ohubId = Some("ohub-id-2"))
 
   private val contactPersons: Dataset[ContactPerson] = Seq(
-    defaultContactPersonWithSourceEntityId("a").copy(operatorConcatId = operator1.concatId),
-    defaultContactPersonWithSourceEntityId("b").copy(operatorConcatId = operator2.concatId)
+    defaultContactPersonWithSourceEntityId("a").copy(operatorConcatId = Some(operator1.concatId)),
+    defaultContactPersonWithSourceEntityId("b").copy(operatorConcatId = Some(operator2.concatId))
   ).toDataset
 
   private val operators: Dataset[OHubIdAndRefId] = Seq(
@@ -34,18 +34,18 @@ class ContactPersonReferencingSpec extends SparkJobSpec with TestContactPersons 
 
       val contactPerson1 = contactPersonResult.head
       contactPerson1.sourceEntityId shouldBe "a"
-      contactPerson1.operatorConcatId shouldBe operator1.concatId
+      contactPerson1.operatorConcatId shouldBe Some(operator1.concatId)
       contactPerson1.operatorOhubId shouldBe Some("ohub-id-1")
 
       val contactPerson2 = contactPersonResult(1)
       contactPerson2.sourceEntityId shouldBe "b"
-      contactPerson2.operatorConcatId shouldBe operator2.concatId
+      contactPerson2.operatorConcatId shouldBe Some(operator2.concatId)
       contactPerson2.operatorOhubId shouldBe Some("ohub-id-2")
     }
 
     ignore("should fail references from contact person to operator cannot be resolved") {
       intercept[SparkException] {
-        val contactPerson3 = defaultContactPersonWithSourceEntityId("c").copy(operatorConcatId = "does-not-exist")
+        val contactPerson3 = defaultContactPersonWithSourceEntityId("c").copy(operatorConcatId = Some("does-not-exist"))
 
         ContactPersonReferencing.transform(spark, Seq(contactPerson3).toDataset, operators).head()
       }

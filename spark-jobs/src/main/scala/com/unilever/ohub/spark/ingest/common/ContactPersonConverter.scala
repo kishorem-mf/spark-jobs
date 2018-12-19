@@ -31,7 +31,7 @@ object ContactPersonConverter extends CommonDomainGateKeeper[ContactPerson] with
       isActive                      =   mandatory(	"isActive",                       "isActive",                     toBoolean                          ),
       dateCreated                   =   optional(   "dateCreated",                    "dateCreated",                  parseDateTimeUnsafe()              ),
       dateUpdated                   =   optional(   "dateUpdated",                    "dateUpdated",                  parseDateTimeUnsafe()              ),
-      operatorConcatId              =   mandatory(  "operatorConcatId",               "operatorConcatId"                                                 ),
+      operatorConcatId              =   optional(  "operatorConcatId",               "operatorConcatId"                                                 ),
       operatorOhubId                = Option.empty,  // set in ContactPersonReferencing
       oldIntegrationId              =   optional(   "oldIntegrationId",               "oldIntegrationId"                                                 ),
       firstName                     =   optional(   "firstName",                      "firstName"                                                        ),

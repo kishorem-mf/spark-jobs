@@ -37,7 +37,7 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
             sourceName = "WUFOO",
             ohubCreated = actualContactPerson.ohubCreated,
             ohubUpdated = actualContactPerson.ohubUpdated,
-            operatorConcatId = "AU~WUFOO~E1-1234",
+            operatorConcatId = Some("AU~WUFOO~E1-1234"),
             operatorOhubId = None,
             oldIntegrationId = Some("G1234"),
             firstName = Some("John"),
