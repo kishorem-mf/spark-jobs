@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.entity.CampaignClick
+import com.unilever.ohub.spark.domain.entity.{CampaignClick, ContactPerson, Operator}
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
@@ -10,6 +10,8 @@ import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 case class CampaignClickMergingConfig(
+   contactPersonIntegrated: String = "contact-person-integrated",
+   operatorIntegrated: String = "operator-integrated",
    previousIntegrated: String = "previous-integrated-campaigns",
    campaignClickInputFile: String = "campaign-click-input-file",
    outputFile: String = "path-to-output-file"
@@ -24,6 +26,8 @@ object CampaignClickMerging extends SparkJob[CampaignClickMergingConfig] {
   def transform(
      spark: SparkSession,
      campaignClicks: Dataset[CampaignClick],
+     contactPersons: Dataset[ContactPerson],
+     operators: Dataset[Operator],
      previousIntegrated: Dataset[CampaignClick]
   ): Dataset[CampaignClick] = {
     import spark.implicits._
@@ -39,6 +43,20 @@ object CampaignClickMerging extends SparkJob[CampaignClickMergingConfig] {
             campaignClick.copy(ohubId = ohubId, isGoldenRecord = true)
           }
       }
+      // update cpn ids
+      .joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), "left")
+      .map {
+        case (click, cpn) ⇒
+          if (cpn == null) click
+          else click.copy(contactPersonOhubId = cpn.ohubId)
+      }
+      // update opr ids
+      .joinWith(operators, $"operatorConcatId" === operators("concatId"), "left")
+      .map {
+        case (click, opr) ⇒
+          if (opr == null) click
+          else click.copy(operatorOhubId = opr.ohubId)
+      }
   }
 
   override private[spark] def defaultConfig = CampaignClickMergingConfig()
@@ -46,6 +64,12 @@ object CampaignClickMerging extends SparkJob[CampaignClickMergingConfig] {
   override private[spark] def configParser(): OptionParser[CampaignClickMergingConfig] =
     new scopt.OptionParser[CampaignClickMergingConfig]("Order merging") {
       head("merges campaignsClicks into an integrated campaignClicks output file.", "1.0")
+      opt[String]("contactPersonIntegrated") required () action { (x, c) ⇒
+        c.copy(contactPersonIntegrated = x)
+      } text "contactPersonIntegrated is a string property"
+      opt[String]("operatorIntegrated") required () action { (x, c) ⇒
+        c.copy(operatorIntegrated = x)
+      } text "operatorIntegrated is a string property"
       opt[String]("campaignInputFile") required () action { (x, c) ⇒
         c.copy(campaignClickInputFile = x)
       } text "campaignInputFile is a string property"
@@ -68,8 +92,10 @@ object CampaignClickMerging extends SparkJob[CampaignClickMergingConfig] {
 
     val campaignClickRecords = storage.readFromParquet[CampaignClick](config.campaignClickInputFile)
     val previousIntegrated = storage.readFromParquet[CampaignClick](config.previousIntegrated)
+    val contactPersons = storage.readFromParquet[ContactPerson](config.contactPersonIntegrated)
+    val operators = storage.readFromParquet[Operator](config.operatorIntegrated)
 
-    val transformed = transform(spark, campaignClickRecords, previousIntegrated)
+    val transformed = transform(spark, campaignClickRecords, contactPersons, operators, previousIntegrated)
 
     storage.writeToParquet(transformed, config.outputFile)
   }
