@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 trait TestCampaignOpens {
 
-  lazy val defaultCampaign: CampaignOpen = CampaignOpen(
+  lazy val defaultCampaignOpen: CampaignOpen = CampaignOpen(
     id = "id-1",
     creationTimestamp = new Timestamp(1542205922011L),
     concatId = "NL~1003499146~1003",

@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.entity.Campaign
+import com.unilever.ohub.spark.domain.entity.CampaignClick
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
@@ -23,13 +23,13 @@ object CampaignClickMerging extends SparkJob[CampaignClickMergingConfig] {
 
   def transform(
      spark: SparkSession,
-     campaigns: Dataset[Campaign],
-     previousIntegrated: Dataset[Campaign]
-  ): Dataset[Campaign] = {
+     campaignClicks: Dataset[CampaignClick],
+     previousIntegrated: Dataset[CampaignClick]
+  ): Dataset[CampaignClick] = {
     import spark.implicits._
 
     previousIntegrated
-      .joinWith(campaigns, previousIntegrated("concatId") === campaigns("concatId"), JoinType.FullOuter)
+      .joinWith(campaignClicks, previousIntegrated("concatId") === campaignClicks("concatId"), JoinType.FullOuter)
       .map {
         case (integrated, campaignClick) ⇒
           if (campaignClick == null) {
@@ -62,14 +62,14 @@ object CampaignClickMerging extends SparkJob[CampaignClickMergingConfig] {
 
   override def run(spark: SparkSession, config: CampaignClickMergingConfig, storage: Storage): Unit = {
     log.info(
-      s"Merging campaigns from [${config.campaignClickInputFile}] " +
+      s"Merging campaignClicks from [${config.campaignClickInputFile}] " +
         s"and [${config.previousIntegrated}] to [${config.outputFile}]"
     )
 
-    val campaignRecords = storage.readFromParquet[Campaign](config.campaignClickInputFile)
-    val previousIntegrated = storage.readFromParquet[Campaign](config.previousIntegrated)
+    val campaignClickRecords = storage.readFromParquet[CampaignClick](config.campaignClickInputFile)
+    val previousIntegrated = storage.readFromParquet[CampaignClick](config.previousIntegrated)
 
-    val transformed = transform(spark, campaignRecords, previousIntegrated)
+    val transformed = transform(spark, campaignClickRecords, previousIntegrated)
 
     storage.writeToParquet(transformed, config.outputFile)
   }

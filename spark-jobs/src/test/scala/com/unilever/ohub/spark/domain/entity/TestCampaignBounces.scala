@@ -6,7 +6,7 @@ import com.unilever.ohub.spark.ingest.CustomParsers.{parseDateTimeUnsafe, toBool
 
 trait TestCampaignBounces {
 
-  lazy val defaultCampaign: CampaignBounce = CampaignBounce(
+  lazy val defaultCampaignBounce: CampaignBounce = CampaignBounce(
     id = "id-1",
     creationTimestamp = new Timestamp(1542205922011L),
     concatId = "NL~1003499146~1003",

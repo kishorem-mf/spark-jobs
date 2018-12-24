@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.entity.Campaign
+import com.unilever.ohub.spark.domain.entity.CampaignOpen
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
@@ -23,13 +23,13 @@ object CampaignOpenMerging extends SparkJob[CampaignOpenMergingConfig] {
 
   def transform(
      spark: SparkSession,
-     campaigns: Dataset[Campaign],
-     previousIntegrated: Dataset[Campaign]
-  ): Dataset[Campaign] = {
+     campaignOpens: Dataset[CampaignOpen],
+     previousIntegrated: Dataset[CampaignOpen]
+  ): Dataset[CampaignOpen] = {
     import spark.implicits._
 
     previousIntegrated
-      .joinWith(campaigns, previousIntegrated("concatId") === campaigns("concatId"), JoinType.FullOuter)
+      .joinWith(campaignOpens, previousIntegrated("concatId") === campaignOpens("concatId"), JoinType.FullOuter)
       .map {
         case (integrated, campaignOpen) ⇒
           if (campaignOpen == null) {
@@ -62,14 +62,14 @@ object CampaignOpenMerging extends SparkJob[CampaignOpenMergingConfig] {
 
   override def run(spark: SparkSession, config: CampaignOpenMergingConfig, storage: Storage): Unit = {
     log.info(
-      s"Merging campaigns from [${config.campaignOpenInputFile}] " +
+      s"Merging campaignOpens from [${config.campaignOpenInputFile}] " +
         s"and [${config.previousIntegrated}] to [${config.outputFile}]"
     )
 
-    val campaignRecords = storage.readFromParquet[Campaign](config.campaignOpenInputFile)
-    val previousIntegrated = storage.readFromParquet[Campaign](config.previousIntegrated)
+    val campaignOpenRecords = storage.readFromParquet[CampaignOpen](config.campaignOpenInputFile)
+    val previousIntegrated = storage.readFromParquet[CampaignOpen](config.previousIntegrated)
 
-    val transformed = transform(spark, campaignRecords, previousIntegrated)
+    val transformed = transform(spark, campaignOpenRecords, previousIntegrated)
 
     storage.writeToParquet(transformed, config.outputFile)
   }

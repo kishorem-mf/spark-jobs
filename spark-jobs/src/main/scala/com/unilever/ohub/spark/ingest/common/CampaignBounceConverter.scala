@@ -1,8 +1,6 @@
 package com.unilever.ohub.spark.ingest.common
 
-import java.sql.Timestamp
-
-import com.unilever.ohub.spark.domain.entity.{Answer, CampaignBounce}
+import com.unilever.ohub.spark.domain.entity.CampaignBounce
 import com.unilever.ohub.spark.ingest.CustomParsers._
 import com.unilever.ohub.spark.ingest.{AnswerEmptyParquetWriter, DomainTransformer}
 import org.apache.spark.sql.Row

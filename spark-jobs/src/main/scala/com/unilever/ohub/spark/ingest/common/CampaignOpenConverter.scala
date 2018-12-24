@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.ingest.common
 
-import com.unilever.ohub.spark.domain.entity.{CampaignClick, CampaignOpen}
+import com.unilever.ohub.spark.domain.entity.CampaignOpen
 import com.unilever.ohub.spark.ingest.CustomParsers._
 import com.unilever.ohub.spark.ingest.{AnswerEmptyParquetWriter, DomainTransformer}
 import org.apache.spark.sql.Row

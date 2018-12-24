@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.entity.Campaign
+import com.unilever.ohub.spark.domain.entity.CampaignBounce
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
@@ -23,13 +23,13 @@ object CampaignBounceMerging extends SparkJob[CampaignBounceMergingConfig] {
 
   def transform(
      spark: SparkSession,
-     campaigns: Dataset[Campaign],
-     previousIntegrated: Dataset[Campaign]
-  ): Dataset[Campaign] = {
+     campaignBounces: Dataset[CampaignBounce],
+     previousIntegrated: Dataset[CampaignBounce]
+  ): Dataset[CampaignBounce] = {
     import spark.implicits._
 
     previousIntegrated
-      .joinWith(campaigns, previousIntegrated("concatId") === campaigns("concatId"), JoinType.FullOuter)
+      .joinWith(campaignBounces, previousIntegrated("concatId") === campaignBounces("concatId"), JoinType.FullOuter)
       .map {
         case (integrated, campaignBounce) ⇒
           if (campaignBounce == null) {
@@ -62,14 +62,14 @@ object CampaignBounceMerging extends SparkJob[CampaignBounceMergingConfig] {
 
   override def run(spark: SparkSession, config: CampaignBounceMergingConfig, storage: Storage): Unit = {
     log.info(
-      s"Merging campaigns from [${config.campaignBounceInputFile}] " +
+      s"Merging campaignBounces from [${config.campaignBounceInputFile}] " +
         s"and [${config.previousIntegrated}] to [${config.outputFile}]"
     )
 
-    val campaignRecords = storage.readFromParquet[Campaign](config.campaignBounceInputFile)
-    val previousIntegrated = storage.readFromParquet[Campaign](config.previousIntegrated)
+    val campaignBounceRecords = storage.readFromParquet[CampaignBounce](config.campaignBounceInputFile)
+    val previousIntegrated = storage.readFromParquet[CampaignBounce](config.previousIntegrated)
 
-    val transformed = transform(spark, campaignRecords, previousIntegrated)
+    val transformed = transform(spark, campaignBounceRecords , previousIntegrated)
 
     storage.writeToParquet(transformed, config.outputFile)
   }

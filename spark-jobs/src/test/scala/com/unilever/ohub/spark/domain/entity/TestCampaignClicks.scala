@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 trait TestCampaignClicks {
 
-  lazy val defaultCampaign: CampaignClick = CampaignClick(
+  lazy val defaultCampaignClick: CampaignClick = CampaignClick(
     id = "id-1",
     creationTimestamp = new Timestamp(1542205922011L),
     concatId = "NL~1003499146~1003",
