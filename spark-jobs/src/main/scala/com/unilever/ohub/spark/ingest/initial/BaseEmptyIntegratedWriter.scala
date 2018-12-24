@@ -59,3 +59,13 @@ object QuestionEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Question]
 
 object LoyaltyPointsEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[LoyaltyPoints] with LoyaltyPointsEmptyParquetWriter
 
+object CampaignBounceEmptyIntegratedWriter$ extends BaseEmptyIntegratedWriter[CampaignBounce] with CampaignBounceEmptyParquetWriter
+
+object CampaignClickEmptyIntegratedWriter$ extends BaseEmptyIntegratedWriter[CampaignClick] with CampaignClickEmptyParquetWriter
+
+object CampaignOpenEmptyIntegratedWriter$ extends BaseEmptyIntegratedWriter[CampaignOpen] with CampaignOpenEmptyParquetWriter
+
+object CampaignSendingEmptyIntegratedWriter$ extends BaseEmptyIntegratedWriter[CampaignSend] with CampaignSendingEmptyParquetWriter
+
+object CampaignEmptyIntegratedWriter$ extends BaseEmptyIntegratedWriter[Campaign] with CampaignEmptyParquetWriter
+
