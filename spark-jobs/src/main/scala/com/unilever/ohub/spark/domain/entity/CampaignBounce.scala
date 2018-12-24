@@ -33,12 +33,14 @@ case class CampaignBounce(
   deliveryName: String,
   communicationChannel: String,
   contactPersonConcatId: String,
+  contactPersonOhubId: Option[String],
   bounceDate: Timestamp,
   failureType: String,
   failureReason: String,
   isControlGroupMember: Boolean,
   isProofGroupMember: Boolean,
   operatorConcatId: Option[String],
+  operatorOhubId: Option[String],
 
   // other fields
   additionalFields: Map[String, String],

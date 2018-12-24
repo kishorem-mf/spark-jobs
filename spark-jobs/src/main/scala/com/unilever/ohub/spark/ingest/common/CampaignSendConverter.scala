@@ -39,11 +39,13 @@ object CampaignSendConverter extends CommonDomainGateKeeper[CampaignSend] with A
       deliveryName                = mandatory(                  "deliveryName",               "deliveryName"),
       communicationChannel        = mandatory(                  "communicationChannel",       "communicationChannel"),
       operatorConcatId            = optional(                   "operatorConcatId",           "operatorConcatId"),
+      operatorOhubId              = Option.empty,
       sendDate                    = mandatory(                  "sendDate",                   "sendDate", parseDateTimeUnsafe()),
       isControlGroupMember        = mandatory(                  "isControlGroupMember",       "isControlGroupMember", toBoolean),
       isProofGroupMember          = mandatory(                  "isProofGroupMember",         "isProofGroupMember", toBoolean),
       selectionForOfflineChannels = mandatory(                  "selectionForOfflineChannels","selectionForOfflineChannels"),
       contactPersonConcatId       = mandatory(                  "contactPersonOhubId",        "contactPersonOhubId"),
+      contactPersonOhubId         = Option.empty,
       waveName                    = mandatory(                  "waveName",                   "waveName"),
 
       additionalFields            = additionalFields,

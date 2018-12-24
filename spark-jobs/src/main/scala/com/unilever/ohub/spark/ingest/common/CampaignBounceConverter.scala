@@ -4,7 +4,6 @@ import com.unilever.ohub.spark.domain.entity.CampaignBounce
 import com.unilever.ohub.spark.ingest.CustomParsers._
 import com.unilever.ohub.spark.ingest.{AnswerEmptyParquetWriter, DomainTransformer}
 import org.apache.spark.sql.Row
-
 object CampaignBounceConverter extends CommonDomainGateKeeper[CampaignBounce] with AnswerEmptyParquetWriter {
 
   override def toDomainEntity: DomainTransformer ⇒ Row ⇒ CampaignBounce = { transformer ⇒row ⇒
@@ -39,12 +38,14 @@ object CampaignBounceConverter extends CommonDomainGateKeeper[CampaignBounce] wi
       deliveryName                = mandatory(                  "deliveryName",               "deliveryName"),
       communicationChannel        = mandatory(                  "communicationChannel",       "communicationChannel"),
       contactPersonConcatId       = mandatory(                  "contactPersonConcatId",      "contactPersonConcatId"),
+      contactPersonOhubId         = Option.empty,
       bounceDate                  = mandatory(                  "bounceDate",                 "bounceDate",         parseDateTimeUnsafe()),
       failureType                 = mandatory(                  "failureType",                "failureType"),
       failureReason               = mandatory(                  "failureReason",              "failureReason"),
       isControlGroupMember        = mandatory(                  "isControlGroupMember",        "isControlGroupMember", toBoolean),
       isProofGroupMember          = mandatory(                  "isProofGroupMember",          "isProofGroupMember", toBoolean),
       operatorConcatId            = optional(                   "operatorConcatId",              "operatorConcatId"),
+      operatorOhubId              = Option.empty,
 
       additionalFields            = additionalFields,
       ingestionErrors             = errors

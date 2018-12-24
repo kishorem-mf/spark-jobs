@@ -39,6 +39,8 @@ object CampaignOpenOutboundWriter extends DomainOutboundWriter[CampaignOpen]
 
 object CampaignSendOutboundWriter extends DomainOutboundWriter[CampaignSend]
 
+object LoyaltyPointsOutboundWriter extends DomainOutboundWriter[LoyaltyPoints]
+
 case class OutboundConfig(
     integratedInputFile: String = "integrated-input-file",
     hashesInputFile: Option[String] = None,

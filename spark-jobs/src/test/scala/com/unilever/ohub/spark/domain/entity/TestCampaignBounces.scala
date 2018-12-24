@@ -29,12 +29,14 @@ trait TestCampaignBounces {
     deliveryName = "Email_Loyalists",
     communicationChannel = "Email",
     contactPersonConcatId = "AT~1003319402~529541~ULAT~3~4",
+    contactPersonOhubId = Option.empty,
     bounceDate = Timestamp.valueOf("2016-04-17 18:00:30.0"),
     failureType = "Hard",
     failureReason = "User unknown",
     isControlGroupMember = false,
     isProofGroupMember = false,
     operatorConcatId = Some("AT~529541~1~4"),
+    operatorOhubId = Option.empty,
 
     additionalFields = Map(),
     ingestionErrors = Map()

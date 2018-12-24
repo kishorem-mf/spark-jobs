@@ -29,11 +29,13 @@ trait TestCampaignClicks {
     deliveryId = "64431647",
     deliveryName = "Copy of DFR_DDNL_DELIVERY",
     contactPersonConcatId = "AT~210946~3~6",
+    contactPersonOhubId = Option.empty,
     isOnMobileDevice = false,
     operatingSystem = Option.empty,
     browserName = Option.empty,
     browserVersion = Option.empty,
     operatorConcatId = Some("AT~MM-INITOPER~AT~210946~1~6"),
+    operatorOhubId = Option.empty,
     deliveryLogId = "6605058",
 
     additionalFields = Map(),

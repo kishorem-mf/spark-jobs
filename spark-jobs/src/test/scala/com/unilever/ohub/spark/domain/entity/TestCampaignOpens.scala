@@ -27,7 +27,9 @@ trait TestCampaignOpens {
     deliveryName = "Copy of DFR_DDNL_DELIVERY",
     communicationChannel = "Email",
     contactPersonConcatId = "CH~1003015423~573452~ULCH~3~4",
+    contactPersonOhubId = Option.empty,
     operatorConcatId = Some("CH~573452~1~4"),
+    operatorOhubId = Option.empty,
     openDate = Timestamp.valueOf("2016-04-17 18:00:30.0"),
     deliveryLogId = "6605058",
 

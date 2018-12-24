@@ -21,6 +21,9 @@ trait TestCampaigns {
     isGoldenRecord = false,
 
     contactPersonConcatId = "DE~ACM~b3a6208c-d7f6-44e2-80e2-f26d461f64c1",
+    contactPersonOhubId = Option.empty,
+    operatorConcatId = "DE~ACM~asdkjfsjflsadjf",
+    operatorOhubId = Option.empty,
     campaignId = "65054561",
     campaignName = "20160324 - Lipton",
     deliveryId = "65054561",

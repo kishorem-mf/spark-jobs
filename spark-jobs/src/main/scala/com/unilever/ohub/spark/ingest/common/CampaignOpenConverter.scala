@@ -39,7 +39,9 @@ object CampaignOpenConverter extends CommonDomainGateKeeper[CampaignOpen] with A
       deliveryName                = mandatory(                  "deliveryName",               "deliveryName"),
       communicationChannel        = mandatory(                  "communicationChannel",       "communicationChannel"),
       contactPersonConcatId       = mandatory(                  "contactPersonConcatId",      "contactPersonConcatId"),
+      contactPersonOhubId         = Option.empty,
       operatorConcatId            = optional(                   "operatorConcatId",           "operatorConcatId"),
+      operatorOhubId              = Option.empty,
       openDate                    = mandatory(                  "openDate",                   "openDate",   parseDateTimeUnsafe()),
       deliveryLogId               = mandatory(                  "deliveryLogId",              "deliveryLogId"),
 

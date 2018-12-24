@@ -33,11 +33,13 @@ case class CampaignSend(
   deliveryName: String,
   communicationChannel: String,
   operatorConcatId: Option[String],
+  operatorOhubId: Option[String],
   sendDate: Timestamp,
   isControlGroupMember: Boolean,
   isProofGroupMember: Boolean,
   selectionForOfflineChannels: String,
   contactPersonConcatId: String,
+  contactPersonOhubId: Option[String],
   waveName: String,
 
   // other fields

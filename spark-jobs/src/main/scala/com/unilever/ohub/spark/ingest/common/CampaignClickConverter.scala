@@ -41,11 +41,13 @@ object CampaignClickConverter extends CommonDomainGateKeeper[CampaignClick] with
       deliveryId                  = mandatory(                  "deliveryId",                 "deliveryId"),
       deliveryName                = mandatory(                  "deliveryName",               "deliveryName"),
       contactPersonConcatId       = mandatory(                  "contactPersonConcatId",      "contactPersonConcatId"),
+      contactPersonOhubId         = Option.empty,
       isOnMobileDevice            = mandatory(                  "isOnMobileDevice",           "isOnMobileDevice", toBoolean),
       operatingSystem             = optional(                   "operatingSystem",            "operatingSystem"),
       browserName                 = optional(                   "browserName",                "browserName"),
       browserVersion              = optional(                   "browserVersion",             "browserVersion"),
       operatorConcatId            = optional(                   "operatorConcatId",           "operatorConcatId"),
+      operatorOhubId              = Option.empty,
       deliveryLogId               = mandatory(                  "deliveryLogId",              "deliveryLogId"),
 
       additionalFields            = additionalFields,

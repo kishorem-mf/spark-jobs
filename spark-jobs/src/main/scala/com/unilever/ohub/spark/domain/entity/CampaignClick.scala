@@ -35,11 +35,13 @@ case class CampaignClick(
   deliveryId: String,
   deliveryName: String,
   contactPersonConcatId: String,
+  contactPersonOhubId: Option[String],
   isOnMobileDevice: Boolean,
   operatingSystem: Option[String],
   browserName: Option[String],
   browserVersion: Option[String],
   operatorConcatId: Option[String],
+  operatorOhubId: Option[String],
   deliveryLogId: String,
 
   // other fields

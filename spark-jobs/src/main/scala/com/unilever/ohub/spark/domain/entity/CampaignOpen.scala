@@ -33,7 +33,9 @@ case class CampaignOpen(
   deliveryName: String,
   communicationChannel: String,
   contactPersonConcatId: String,
+  contactPersonOhubId: Option[String],
   operatorConcatId: Option[String],
+  operatorOhubId: Option[String],
   openDate: Timestamp,
   deliveryLogId: String,
 

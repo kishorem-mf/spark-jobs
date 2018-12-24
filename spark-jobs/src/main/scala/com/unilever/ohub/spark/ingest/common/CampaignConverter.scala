@@ -33,6 +33,7 @@ object CampaignConverter extends CommonDomainGateKeeper[Campaign] with AnswerEmp
       isGoldenRecord              = false,
 
       contactPersonConcatId       = mandatory(                  "contactPersonConcatId",      "contactPersonConcatId"),
+      contactPersonOhubId         = Option.empty,
       campaignId                  = mandatory(                  "campaignId",                 "campaignId"),
       campaignName                = mandatory(                  "campaignName",               "campaignName"),
       deliveryId                  = mandatory(                  "deliveryId",                 "deliveryId"),
@@ -41,6 +42,8 @@ object CampaignConverter extends CommonDomainGateKeeper[Campaign] with AnswerEmp
       campaignWaveStartDate       = mandatory(                  "campaignWaveStartDate",      "campaignWaveStartDate",  parseDateTimeUnsafe()),
       campaignWaveEndDate         = mandatory(                  "campaignWaveEndDate",        "campaignWaveEndDate",    parseDateTimeUnsafe()),
       campaignWaveStatus          = mandatory(                  "campaignWaveStatus",         "campaignWaveStatus"),
+      operatorConcatId            = optional(                   "operatorConcatId",           "operatorConcatId"),
+      operatorOhubId              = Option.empty,
 
       additionalFields            = additionalFields,
       ingestionErrors             = errors

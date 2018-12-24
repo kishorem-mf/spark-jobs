@@ -27,11 +27,13 @@ trait TestCampaignSends {
     deliveryName = "NLLipton032016 -- 20160323 -- proofed",
     communicationChannel = "Email",
     operatorConcatId = Some("NL~1003725006~1~4"),
+    operatorOhubId = Option.empty,
     sendDate = Timestamp.valueOf("2016-03-28 21:16:50.0"),
     isControlGroupMember = false,
     isProofGroupMember = true,
     selectionForOfflineChannels = "24",
     contactPersonConcatId = "NL~1003499146~10037~25006~ULNL~3~4",
+    contactPersonOhubId = Option.empty,
     waveName = "20160324 - Lipton~NLLipton032016 -- 20160323 -- proofed",
 
     additionalFields = Map(),
