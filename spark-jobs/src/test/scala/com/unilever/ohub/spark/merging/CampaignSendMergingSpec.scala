@@ -5,7 +5,7 @@ import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.entity._
 import org.apache.spark.sql.Dataset
 
-class CampaignSendMergingSpec extends SparkJobSpec with TestCampaignSends {
+class CampaignSendMergingSpec extends SparkJobSpec with TestCampaignSends  with TestContactPersons with TestOperators {
 
   import spark.implicits._
 
@@ -18,9 +18,11 @@ class CampaignSendMergingSpec extends SparkJobSpec with TestCampaignSends {
         defaultCampaignSend
       ).toDataset
 
+      val contactPersons = Seq[ContactPerson]().toDataset
+      val operators = Seq[Operator]().toDataset
       val previous = Seq[CampaignSend]().toDataset
 
-      val result = SUT.transform(spark, input, previous)
+      val result = SUT.transform(spark, input, contactPersons, operators, previous)
         .collect()
 
       result.head.ohubId shouldBe defined
@@ -28,6 +30,8 @@ class CampaignSendMergingSpec extends SparkJobSpec with TestCampaignSends {
     }
 
     it("should take newest data if available while retaining ohubId") {
+      val contactPersons = Seq[ContactPerson]().toDataset
+      val operators = Seq[Operator]().toDataset
 
       val updatedRecord = defaultCampaignSend.copy(
         isGoldenRecord = true,
@@ -65,7 +69,7 @@ class CampaignSendMergingSpec extends SparkJobSpec with TestCampaignSends {
         newRecord
       ))
 
-      val result = SUT.transform(spark, input, previous)
+      val result = SUT.transform(spark, input, contactPersons, operators, previous)
         .collect()
         .sortBy(_.countryCode)
 
@@ -78,6 +82,11 @@ class CampaignSendMergingSpec extends SparkJobSpec with TestCampaignSends {
 
       result(3).countryCode shouldBe "updated"
       result(3).ohubId shouldBe Some("oldId")
+    }
+
+    it("should copy ohubId from contactperson and operator") {
+      //FIXME When merging logic is determined, fix this spec
+      false shouldBe true
     }
   }
 }
