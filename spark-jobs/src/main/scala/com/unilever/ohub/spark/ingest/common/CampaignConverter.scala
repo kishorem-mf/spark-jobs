@@ -30,7 +30,7 @@ object CampaignConverter extends CommonDomainGateKeeper[Campaign] with AnswerEmp
       dateCreated                 = optional(                   "dateCreated",                "dateCreated",            parseDateTimeUnsafe()),
       dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated",            parseDateTimeUnsafe()),
       ohubId                      = Option.empty,
-      isGoldenRecord              = false,
+      isGoldenRecord              = true, // Not specified when is true in mapping, so always golden...
 
       contactPersonConcatId       = mandatory(                  "contactPersonConcatId",      "contactPersonConcatId"),
       contactPersonOhubId         = Option.empty,

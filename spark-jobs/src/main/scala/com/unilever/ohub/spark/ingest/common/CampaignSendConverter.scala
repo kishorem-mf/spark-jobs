@@ -30,7 +30,7 @@ object CampaignSendConverter extends CommonDomainGateKeeper[CampaignSend] with A
       dateCreated                 = optional(                   "dateCreated",                "dateCreated", parseDateTimeUnsafe()),
       dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated", parseDateTimeUnsafe()),
       ohubId                      = Option.empty,
-      isGoldenRecord              = false,
+      isGoldenRecord              = true, // Not specified when is true in mapping, so always golden...
 
       deliveryLogId               = mandatory(                  "deliveryLogId",              "deliveryLogId"),
       campaignId                  = mandatory(                  "campaignId",                 "campaignId"),

@@ -30,7 +30,7 @@ object CampaignOpenConverter extends CommonDomainGateKeeper[CampaignOpen] with A
       dateCreated                 = optional(                   "dateCreated",                "dateCreated", parseDateTimeUnsafe()),
       dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated", parseDateTimeUnsafe()),
       ohubId                      = Option.empty,
-      isGoldenRecord              = false,
+      isGoldenRecord              = true, // Not specified when is true in mapping, so always golden...
 
       trackingId                  = mandatory(                  "trackingId",                 "trackingId"),
       campaignId                  = mandatory(                  "campaignId",                 "campaignId"),

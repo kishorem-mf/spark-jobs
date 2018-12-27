@@ -44,14 +44,14 @@ object CampaignClickMerging extends SparkJob[CampaignClickMergingConfig] {
           }
       }
       // update cpn ids
-      .joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), "left")
+      .joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), JoinType.Left)
       .map {
         case (click, cpn) ⇒
           if (cpn == null) click
           else click.copy(contactPersonOhubId = cpn.ohubId)
       }
       // update opr ids
-      .joinWith(operators, $"operatorConcatId" === operators("concatId"), "left")
+      .joinWith(operators, $"operatorConcatId" === operators("concatId"), JoinType.Left)
       .map {
         case (click, opr) ⇒
           if (opr == null) click
