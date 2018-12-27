@@ -35,6 +35,18 @@ object QuestionHashWriter extends DomainEntityHashWriter[Question]
 
 object AnswerHashWriter extends DomainEntityHashWriter[Answer]
 
+object LoyaltyPointsHashWriter extends DomainEntityHashWriter[LoyaltyPoints]
+
+object CampaignHashWriter extends DomainEntityHashWriter[Campaign]
+
+object CampaignSendHashWriter extends DomainEntityHashWriter[CampaignSend]
+
+object CampaignOpenWriter extends DomainEntityHashWriter[CampaignOpen]
+
+object CampaignBounceHashWriter extends DomainEntityHashWriter[CampaignBounce]
+
+object CampaignClickHashWriter extends DomainEntityHashWriter[CampaignClick]
+
 abstract class DomainEntityHashWriter[DomainType <: DomainEntity: TypeTag] extends SparkJob[HashWriterConfig] {
 
   override private[spark] def defaultConfig = HashWriterConfig()
