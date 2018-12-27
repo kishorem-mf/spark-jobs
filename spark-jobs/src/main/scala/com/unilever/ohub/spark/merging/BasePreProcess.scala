@@ -31,6 +31,18 @@ object AnswerPreProcess extends BasePreProcess[Answer]
 
 object QuestionPreProcess extends BasePreProcess[Question]
 
+object LoyaltyPointsPreProcess extends BasePreProcess[LoyaltyPoints]
+
+object CampaignPreProcess extends BasePreProcess[Campaign]
+
+object CampaignBouncePreProcess extends BasePreProcess[CampaignBounce]
+
+object CampaignOpenPreProcess extends BasePreProcess[CampaignOpen]
+
+object CampaignSendPreProcess extends BasePreProcess[CampaignSend]
+
+object CampaignClickPreProcess extends BasePreProcess[CampaignClick]
+
 case class PreProcessConfig(
     integratedInputFile: String = "path-to-integrated-input-file",
     deltaInputFile: String = "path-to-delta-input-file",
