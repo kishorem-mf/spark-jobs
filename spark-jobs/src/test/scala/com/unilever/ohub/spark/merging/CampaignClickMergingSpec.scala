@@ -5,7 +5,7 @@ import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.entity._
 import org.apache.spark.sql.Dataset
 
-class CampaignClickMergingSpec extends SparkJobSpec with TestCampaignClicks  with TestContactPersons with TestOperators {
+class CampaignClickMergingSpec extends SparkJobSpec with TestCampaignClicks with TestContactPersons with TestOperators {
 
   import spark.implicits._
 
@@ -70,7 +70,7 @@ class CampaignClickMergingSpec extends SparkJobSpec with TestCampaignClicks  wit
         newRecord
       ))
 
-      val result = SUT.transform(spark, input,contactPersons, operators, previous)
+      val result = SUT.transform(spark, input, contactPersons, operators, previous)
         .collect()
         .sortBy(_.countryCode)
 
@@ -86,8 +86,34 @@ class CampaignClickMergingSpec extends SparkJobSpec with TestCampaignClicks  wit
     }
 
     it("should copy ohubId from contactperson and operator") {
-      //FIXME When merging logic is determined, fix this spec
-      false shouldBe true
+      val previous = Seq[CampaignClick]().toDataset
+
+      val contactPerson = defaultContactPerson.copy(
+        concatId = "123",
+        ohubId = Some("456")
+      )
+
+      val operator = defaultOperator.copy(
+        concatId = "789",
+        ohubId = Some("101112")
+      )
+
+      val updatedRecord = defaultCampaignClick.copy(
+        contactPersonConcatId = "123",
+        operatorConcatId = Some("789")
+      )
+
+      val contactPersons = spark.createDataset(Seq(contactPerson))
+
+      val operators = spark.createDataset(Seq(operator))
+
+      val input = spark.createDataset(Seq(updatedRecord))
+
+      val result = SUT.transform(spark, input, contactPersons, operators, previous).collect()
+
+      result.length shouldBe 1
+      result(0).contactPersonOhubId shouldBe Some("456")
+      result(0).operatorOhubId shouldBe Some("101112")
     }
   }
 }
