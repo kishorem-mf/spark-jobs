@@ -2,8 +2,6 @@ package com.unilever.ohub.spark.domain.entity
 
 import java.sql.Timestamp
 
-import com.unilever.ohub.spark.ingest.CustomParsers.{parseDateTimeUnsafe, toBoolean}
-
 trait TestCampaignBounces {
 
   lazy val defaultCampaignBounce: CampaignBounce = CampaignBounce(

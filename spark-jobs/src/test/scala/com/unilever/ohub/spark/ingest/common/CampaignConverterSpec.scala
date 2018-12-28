@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.ingest.common
 
 import java.sql.Timestamp
 
-import com.unilever.ohub.spark.domain.entity.{Campaign, CampaignSend}
+import com.unilever.ohub.spark.domain.entity.Campaign
 import com.unilever.ohub.spark.ingest.CsvDomainGateKeeperSpec
 
 class CampaignConverterSpec extends CsvDomainGateKeeperSpec[Campaign] {
@@ -34,16 +34,16 @@ class CampaignConverterSpec extends CsvDomainGateKeeperSpec[Campaign] {
           ohubId = Option.empty,
           isGoldenRecord = true,
 
-          contactPersonConcatId       = "US~ANTHEM~999654",
-          contactPersonOhubId         = Option.empty,
-          campaignId                  = "345882796",
-          campaignName                = "20180320_IC_AO_MAR19AfricaRisingNewsletter_NAM_us_en",
-          deliveryId                  = "347696686",
-          deliveryName                = "20180320_IC_AO_MAR19AfricaRisingNewsletter_NAM_us_en_A final",
-          campaignSpecification       = "(None specified)",
-          campaignWaveStartDate       = Timestamp.valueOf("2018-03-16 00:00:00.0"),
-          campaignWaveEndDate         = Timestamp.valueOf("2018-03-27 00:00:00.0"),
-          campaignWaveStatus          = "Sent",
+          contactPersonConcatId = "US~ANTHEM~999654",
+          contactPersonOhubId = Option.empty,
+          campaignId = "345882796",
+          campaignName = "20180320_IC_AO_MAR19AfricaRisingNewsletter_NAM_us_en",
+          deliveryId = "347696686",
+          deliveryName = "20180320_IC_AO_MAR19AfricaRisingNewsletter_NAM_us_en_A final",
+          campaignSpecification = "(None specified)",
+          campaignWaveStartDate = Timestamp.valueOf("2018-03-16 00:00:00.0"),
+          campaignWaveEndDate = Timestamp.valueOf("2018-03-27 00:00:00.0"),
+          campaignWaveStatus = "Sent",
 
           additionalFields = Map(),
           ingestionErrors = Map()

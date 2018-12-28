@@ -16,9 +16,9 @@ class CampaignClickConverterSpec extends CsvDomainGateKeeperSpec[CampaignClick] 
       runJobWith(inputFile) { actualDataSet ⇒
         actualDataSet.count() shouldBe 1
 
-        val actualCampaignBounce = actualDataSet.head()
+        val actualCampaignClick = actualDataSet.head()
 
-        val expectedCampaignBounce = CampaignClick(
+        val expectedCampaignClick = CampaignClick(
           id = "e1b9ab81-97bd-4327-8b91-fb0714a1d7fb",
           creationTimestamp = new Timestamp(1545931130186L),
           concatId = "US~ACM~155731510~160568290",
@@ -27,8 +27,8 @@ class CampaignClickConverterSpec extends CsvDomainGateKeeperSpec[CampaignClick] 
           sourceEntityId = "160568290",
           sourceName = "ACM",
           isActive = true,
-          ohubCreated = actualCampaignBounce.ohubCreated,
-          ohubUpdated = actualCampaignBounce.ohubUpdated,
+          ohubCreated = actualCampaignClick.ohubCreated,
+          ohubUpdated = actualCampaignClick.ohubUpdated,
           dateCreated = None,
           dateUpdated = None,
           ohubId = Option.empty,
@@ -55,7 +55,7 @@ class CampaignClickConverterSpec extends CsvDomainGateKeeperSpec[CampaignClick] 
           additionalFields = Map(),
           ingestionErrors = Map()
         )
-        actualCampaignBounce shouldBe expectedCampaignBounce
+        actualCampaignClick shouldBe expectedCampaignClick
       }
     }
   }

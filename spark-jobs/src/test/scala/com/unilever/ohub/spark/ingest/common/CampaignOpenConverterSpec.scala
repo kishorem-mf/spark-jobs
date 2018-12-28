@@ -16,9 +16,9 @@ class CampaignOpenConverterSpec extends CsvDomainGateKeeperSpec[CampaignOpen] {
       runJobWith(inputFile) { actualDataSet ⇒
         actualDataSet.count() shouldBe 1
 
-        val actualCampaignBounce = actualDataSet.head()
+        val actualCampaignOpen = actualDataSet.head()
 
-        val expectedCampaignBounce = CampaignOpen(
+        val expectedCampaignOpen = CampaignOpen(
           id = "903610ee-1f5d-44cd-ad11-994f4fd0f677",
           creationTimestamp = new Timestamp(1545930619515L),
           concatId = "ZA~ACM~012~139221322",
@@ -27,8 +27,8 @@ class CampaignOpenConverterSpec extends CsvDomainGateKeeperSpec[CampaignOpen] {
           sourceEntityId = "139221322",
           sourceName = "ACM",
           isActive = true,
-          ohubCreated = actualCampaignBounce.ohubCreated,
-          ohubUpdated = actualCampaignBounce.ohubUpdated,
+          ohubCreated = actualCampaignOpen.ohubCreated,
+          ohubUpdated = actualCampaignOpen.ohubUpdated,
           dateCreated = None,
           dateUpdated = None,
           ohubId = Option.empty,
@@ -50,7 +50,7 @@ class CampaignOpenConverterSpec extends CsvDomainGateKeeperSpec[CampaignOpen] {
           additionalFields = Map(),
           ingestionErrors = Map()
         )
-        actualCampaignBounce shouldBe expectedCampaignBounce
+        actualCampaignOpen shouldBe expectedCampaignOpen
       }
     }
   }
