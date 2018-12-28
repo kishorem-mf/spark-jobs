@@ -23,7 +23,7 @@ class CampaignSendConverterSpec extends CsvDomainGateKeeperSpec[CampaignSend] {
           creationTimestamp = new Timestamp(1545927397428L),
           concatId = "RU~ACM~488088227~491258182",
           countryCode = "RU",
-          customerType = "yo",
+          customerType = CampaignSend.customerType,
           sourceEntityId = "491258182",
           sourceName = "ACM",
           isActive = true,

@@ -5,6 +5,10 @@ import java.sql.Timestamp
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 
+object CampaignClick {
+  val customerType = "CONTACTPERSON"
+}
+
 case class CampaignClick(
   // generic fields
   // mandatory fields

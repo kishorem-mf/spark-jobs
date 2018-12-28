@@ -11,7 +11,7 @@ class CampaignClickConverterSpec extends CsvDomainGateKeeperSpec[CampaignClick] 
 
   describe("common campaignClick converter") {
     it("should convert a campaignClick correctly from a valid common csv input") {
-      val inputFile = "src/test/resources/COMMON_CAMPAIGN_BOUNCES.csv"
+      val inputFile = "src/test/resources/COMMON_CAMPAIGN_CLICKS.csv"
 
       runJobWith(inputFile) { actualDataSet ⇒
         actualDataSet.count() shouldBe 1
@@ -23,7 +23,7 @@ class CampaignClickConverterSpec extends CsvDomainGateKeeperSpec[CampaignClick] 
           creationTimestamp = new Timestamp(1545931130186L),
           concatId = "US~ACM~155731510~160568290",
           countryCode = "US",
-          customerType = "yo",
+          customerType = CampaignClick.customerType,
           sourceEntityId = "160568290",
           sourceName = "ACM",
           isActive = true,
@@ -50,7 +50,7 @@ class CampaignClickConverterSpec extends CsvDomainGateKeeperSpec[CampaignClick] 
           browserVersion = Some("53.0.2785."),
           operatorConcatId = Some("US~MM-INIT-OPER~O~830499"),
           operatorOhubId = Option.empty,
-          deliveryLogId = "FIXME", //FIXME
+          deliveryLogId = "1wewee2",
 
           additionalFields = Map(),
           ingestionErrors = Map()

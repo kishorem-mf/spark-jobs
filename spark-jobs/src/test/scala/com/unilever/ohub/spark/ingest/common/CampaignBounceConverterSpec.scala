@@ -23,7 +23,7 @@ class CampaignBounceConverterSpec extends CsvDomainGateKeeperSpec[CampaignBounce
           creationTimestamp = new Timestamp(1545930619021L),
           concatId = "ZA~ACM~0~139221322",
           countryCode = "ZA",
-          customerType = "yo",
+          customerType = CampaignBounce.customerType,
           sourceEntityId = "139221322",
           sourceName = "ACM",
           isActive = true,

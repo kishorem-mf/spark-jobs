@@ -12,9 +12,8 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
   describe("common operator converter") {
     it("should convert an operator correctly from a valid common csv input") {
       val inputFile = "src/test/resources/COMMON_OPERATORS.csv"
-      val config = CsvDomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = ";")
 
-      runJobWith(config) { actualDataSet ⇒
+      runJobWith(inputFile) { actualDataSet ⇒
         actualDataSet.count() shouldBe 6
 
         val actualOperator = actualDataSet.head()
@@ -98,9 +97,8 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
 
     it("should select the latest operator based on dateUpdated") {
       val inputFile = "src/test/resources/COMMON_OPERATORS_DUPLICATES.csv"
-      val config = CsvDomainConfig(inputFile = inputFile, outputFile = "", fieldSeparator = ";")
 
-      runJobWith(config) { actualDataSet ⇒
+      runJobWith(inputFile) { actualDataSet ⇒
         actualDataSet.count() shouldBe 2
 
         val res = actualDataSet.collect

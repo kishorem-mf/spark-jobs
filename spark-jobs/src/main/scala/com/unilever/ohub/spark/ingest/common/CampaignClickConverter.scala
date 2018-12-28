@@ -21,7 +21,7 @@ object CampaignClickConverter extends CommonDomainGateKeeper[CampaignClick] with
       creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp",    toTimestamp),
       concatId                    = mandatory(                  "concatId",                   "concatId"),
       countryCode                 = mandatory(                  "countryCode",                "countryCode"),
-      customerType                = "yo", //TODO get actual wanted value in here
+      customerType                = CampaignClick.customerType,
       isActive                    = mandatory(                  "isActive",                   "isActive",             toBoolean),
       sourceEntityId              = mandatory(                  "sourceEntityId",             "sourceEntityId"),
       sourceName                  = mandatory(                  "sourceName",                 "sourceName"),

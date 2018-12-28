@@ -20,7 +20,7 @@ object CampaignBounceConverter extends CommonDomainGateKeeper[CampaignBounce] wi
       creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp",    toTimestamp),
       concatId                    = mandatory(                  "concatId",                   "concatId"),
       countryCode                 = mandatory(                  "countryCode",                "countryCode"),
-      customerType                = "yo", //TODO get actual wanted value in here
+      customerType                = CampaignBounce.customerType,
       isActive                    = mandatory(                  "isActive",                   "isActive",             toBoolean),
       sourceEntityId              = mandatory(                  "sourceEntityId",             "sourceEntityId"),
       sourceName                  = mandatory(                  "sourceName",                 "sourceName"),
