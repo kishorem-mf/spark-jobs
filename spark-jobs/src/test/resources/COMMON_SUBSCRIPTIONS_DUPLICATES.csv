@@ -1,0 +1,11 @@
+id;creationTimestamp;concatId;countryCode;sourceName;communicationChannel;sourceEntityId;contactPersonRefId;dateCreated;dateUpdated;isActive;subscriptionType;hasSubscription;subscriptionDate;hasConfirmedSubscription;confirmedSubscriptionDate
+id-1;1542205922011;AU~EMAKINA~S1234;AU;EMAKINA;channel;S1234;AB123;20150630 13:47:00;20150630 13:48:00;true;default_newsletter_opt_in;true;20150630 13:47:00;true;20150630 13:48:00
+id-2;1542205922011;AU~EMAKINA~S1234;AU;EMAKINA;channel;S1234;AB123;20150630 13:47:00;20150630 13:48:00;false;default_newsletter_opt_in;false;20150630 13:48:00;false;20150630 13:48:00
+id-3;1542205922011;NZ~EMAKINA~S1234;NZ;EMAKINA;channel;S1234;AB123;20150630 13:47:00;20150630 13:48:00;true;default_newsletter_opt_in;true;;true;20150630 13:48:00
+id-4;1542205922011;NZ~EMAKINA~S1234;NZ;EMAKINA;channel;S1234;AB123;20150630 13:47:00;20150630 13:48:00;false;default_newsletter_opt_in;false;;false;20150630 13:49:00
+id-5;1542205922011;NL~EMAKINA~S1234;NL;EMAKINA;channel;S1234;AB123;20150630 13:47:00;20150630 13:48:00;true;default_newsletter_opt_in;true;;true;
+id-6;1542205922011;NL~EMAKINA~S1234;NL;EMAKINA;channel;S1234;AB123;20150630 13:47:00;20150630 13:49:00;false;default_newsletter_opt_in;false;;false;
+id-7;1542205922011;FR~EMAKINA~S1234;FR;EMAKINA;channel;S1234;AB123;20150630 13:48:00;;false;default_newsletter_opt_in;false;;false;
+id-8;1542205922011;FR~EMAKINA~S1234;FR;EMAKINA;channel;S1234;AB123;20150630 13:47:00;;true;default_newsletter_opt_in;true;;true;
+id-9;1542205922011;DE~EMAKINA~S1234;DE;EMAKINA;channel;S1234;AB123;;;true;default_newsletter_opt_in;true;;true;
+id-10;1542205922011;DE~EMAKINA~S1234;DE;EMAKINA;channel;S1234;AB123;;;false;default_newsletter_opt_in;false;;false;
