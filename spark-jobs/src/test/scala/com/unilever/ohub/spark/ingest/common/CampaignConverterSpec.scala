@@ -44,8 +44,6 @@ class CampaignConverterSpec extends CsvDomainGateKeeperSpec[Campaign] {
           campaignWaveStartDate       = Timestamp.valueOf("2018-03-16 00:00:00.0"),
           campaignWaveEndDate         = Timestamp.valueOf("2018-03-27 00:00:00.0"),
           campaignWaveStatus          = "Sent",
-//          operatorConcatId            = optional(                   "operatorConcatId",           "operatorConcatId"),
-//          operatorOhubId              = Option.empty,
 
           additionalFields = Map(),
           ingestionErrors = Map()

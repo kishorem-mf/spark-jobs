@@ -42,8 +42,6 @@ object CampaignConverter extends CommonDomainGateKeeper[Campaign] with AnswerEmp
       campaignWaveStartDate       = mandatory(                  "campaignWaveStartDate",      "campaignWaveStartDate",parseDateTimeUnsafe()),
       campaignWaveEndDate         = mandatory(                  "campaignWaveEndDate",        "campaignWaveEndDate",  parseDateTimeUnsafe()),
       campaignWaveStatus          = mandatory(                  "campaignWaveStatus",         "campaignWaveStatus"),
-//      operatorConcatId            = optional(                   "operatorConcatId",           "operatorConcatId"),
-//      operatorOhubId              = Option.empty,
 
       additionalFields            = additionalFields,
       ingestionErrors             = errors

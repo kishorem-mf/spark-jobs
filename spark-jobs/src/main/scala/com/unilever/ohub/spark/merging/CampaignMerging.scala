@@ -11,7 +11,6 @@ import scopt.OptionParser
 
 case class CampaignMergingConfig(
    contactPersonIntegrated: String = "contact-person-integrated",
-   operatorIntegrated: String = "operator-integrated",
    previousIntegrated: String = "previous-integrated-campaigns",
    campaignInputFile: String = "campaign-input-file",
    outputFile: String = "path-to-output-file"
@@ -27,7 +26,6 @@ object CampaignMerging extends SparkJob[CampaignMergingConfig] {
      spark: SparkSession,
      campaigns: Dataset[Campaign],
      contactPersons: Dataset[ContactPerson],
-     operators: Dataset[Operator],
      previousIntegrated: Dataset[Campaign]
   ): Dataset[Campaign] = {
     import spark.implicits._
@@ -50,13 +48,6 @@ object CampaignMerging extends SparkJob[CampaignMergingConfig] {
           if (cpn == null) campaign
           else campaign.copy(contactPersonOhubId = cpn.ohubId)
       }
-//      // update opr ids
-//      .joinWith(operators, $"operatorConcatId" === operators("concatId"), JoinType.Left)
-//      .map {
-//        case (campaign, opr) ⇒
-//          if (opr == null) campaign
-//          else campaign.copy(operatorOhubId = opr.ohubId)
-//      }
   }
 
   override private[spark] def defaultConfig = CampaignMergingConfig()
@@ -67,9 +58,6 @@ object CampaignMerging extends SparkJob[CampaignMergingConfig] {
       opt[String]("contactPersonIntegrated") required () action { (x, c) ⇒
         c.copy(contactPersonIntegrated = x)
       } text "contactPersonIntegrated is a string property"
-      opt[String]("operatorIntegrated") required () action { (x, c) ⇒
-        c.copy(operatorIntegrated = x)
-      } text "operatorIntegrated is a string property"
       opt[String]("campaignInputFile") required () action { (x, c) ⇒
         c.copy(campaignInputFile = x)
       } text "campaignInputFile is a string property"
@@ -93,9 +81,8 @@ object CampaignMerging extends SparkJob[CampaignMergingConfig] {
     val campaignRecords = storage.readFromParquet[Campaign](config.campaignInputFile)
     val previousIntegrated = storage.readFromParquet[Campaign](config.previousIntegrated)
     val contactPersons = storage.readFromParquet[ContactPerson](config.contactPersonIntegrated)
-    val operators = storage.readFromParquet[Operator](config.operatorIntegrated)
 
-    val transformed = transform(spark, campaignRecords, contactPersons, operators, previousIntegrated)
+    val transformed = transform(spark, campaignRecords, contactPersons, previousIntegrated)
 
     storage.writeToParquet(transformed, config.outputFile)
   }

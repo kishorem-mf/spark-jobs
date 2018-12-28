@@ -19,10 +19,9 @@ class CampaignMergingSpec extends SparkJobSpec with TestCampaigns with TestConta
       ).toDataset
 
       val contactPersons = Seq[ContactPerson]().toDataset
-      val operators = Seq[Operator]().toDataset
       val previous = Seq[Campaign]().toDataset
 
-      val result = SUT.transform(spark, input, contactPersons, operators, previous)
+      val result = SUT.transform(spark, input, contactPersons, previous)
         .collect()
 
       result.head.ohubId shouldBe defined
@@ -31,7 +30,6 @@ class CampaignMergingSpec extends SparkJobSpec with TestCampaigns with TestConta
 
     it("should take newest data if available while retaining ohubId") {
       val contactPersons = Seq[ContactPerson]().toDataset
-      val operators = Seq[Operator]().toDataset
 
       val updatedRecord = defaultCampaign.copy(
         isGoldenRecord = true,
@@ -69,7 +67,7 @@ class CampaignMergingSpec extends SparkJobSpec with TestCampaigns with TestConta
         newRecord
       ))
 
-      val result = SUT.transform(spark, input, contactPersons, operators, previous)
+      val result = SUT.transform(spark, input, contactPersons, previous)
         .collect()
         .sortBy(_.countryCode)
 
@@ -92,28 +90,18 @@ class CampaignMergingSpec extends SparkJobSpec with TestCampaigns with TestConta
         ohubId = Some("456")
       )
 
-      val operator = defaultOperator.copy(
-        concatId = "789",
-        ohubId = Some("101112")
-      )
-
       val updatedRecord = defaultCampaign.copy(
         contactPersonConcatId = "123"
-//        ,
-//        operatorConcatId = Some("789")
       )
 
       val contactPersons = spark.createDataset(Seq(contactPerson))
 
-      val operators = spark.createDataset(Seq(operator))
-
       val input = spark.createDataset(Seq(updatedRecord))
 
-      val result = SUT.transform(spark, input, contactPersons, operators, previous).collect()
+      val result = SUT.transform(spark, input, contactPersons, previous).collect()
 
       result.length shouldBe 1
       result(0).contactPersonOhubId shouldBe Some("456")
-//      result(0).operatorOhubId shouldBe Some("101112")
     }
   }
 }

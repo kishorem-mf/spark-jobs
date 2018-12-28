@@ -36,8 +36,6 @@ case class Campaign(
   campaignWaveStartDate: Timestamp,
   campaignWaveEndDate: Timestamp,
   campaignWaveStatus: String,
-//  operatorConcatId: Option[String],
-//  operatorOhubId: Option[String],
 
   // other fields
   additionalFields: Map[String, String],
