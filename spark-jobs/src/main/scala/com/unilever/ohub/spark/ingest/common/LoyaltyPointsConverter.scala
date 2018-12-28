@@ -14,35 +14,35 @@ object LoyaltyPointsConverter extends CommonDomainGateKeeper[LoyaltyPoints] with
 
     LoyaltyPoints(
       //fieldName                     mandatory                                    sourceFieldName                               targetFieldName               transformationFunction (unsafe)
-      id = mandatory("id", "id"),
-      creationTimestamp = mandatory("creationTimestamp", "creationTimestamp", toTimestamp),
-      concatId = mandatory("concatId", "concatId"),
-      countryCode = mandatory("countryCode", "countryCode"),
-      customerType = mandatory("customerType", "customerType"),
-      dateCreated = optional("dateCreated", "dateCreated", parseDateTimeUnsafe()),
-      dateUpdated = optional("dateUpdated", "dateUpdated", parseDateTimeUnsafe()),
-      isActive = true,
-      isGoldenRecord = true,
-      sourceEntityId = mandatory("sourceEntityId", "sourceEntityId"),
-      sourceName = mandatory("sourceName", "sourceName"),
-      ohubId = Option.empty,
-      ohubCreated = ohubCreated,
-      ohubUpdated = ohubCreated,
+      id                            = mandatory("id", "id"),
+      creationTimestamp             = mandatory("creationTimestamp", "creationTimestamp", toTimestamp),
+      concatId                      = mandatory("concatId", "concatId"),
+      countryCode                   = mandatory("countryCode", "countryCode"),
+      customerType                  = mandatory("customerType", "customerType"),
+      dateCreated                   = optional("dateCreated", "dateCreated", parseDateTimeUnsafe()),
+      dateUpdated                   = optional("dateUpdated", "dateUpdated", parseDateTimeUnsafe()),
+      isActive                      = true,
+      isGoldenRecord                = true,
+      sourceEntityId                = mandatory("sourceEntityId", "sourceEntityId"),
+      sourceName                    = mandatory("sourceName", "sourceName"),
+      ohubId                        = Option.empty,
+      ohubCreated                   = ohubCreated,
+      ohubUpdated                   = ohubCreated,
 
       // specific fields
-      totalLoyaltyPointsEarned = optional("totalLoyaltyPointsEarned", "totalLoyaltyPointsEarned", toBigDecimal),
-      totalLoyaltyPointsSpent = optional("totalLoyaltyPointsSpent", "totalLoyaltyPointsSpent", toBigDecimal),
-      totalLoyaltyPointsActual = optional("totalLoyaltyPointsActual", "totalLoyaltyPointsActual", toBigDecimal),
-      loyaltyRewardGoal = optional("loyaltyRewardGoal", "loyaltyRewardGoal", toBigDecimal),
-      contactPersonRefId = optional("contactPersonRefId", "contactPersonRefId"),
-      contactPersonConcatId = optional("contactPersonConcatId", "contactPersonConcatId"),
-      contactPersonOhubId = Option.empty,
-      operatorRefId = optional("operatorRefId", "operatorRefId"),
-      operatorConcatId = optional("operatorConcatId", "operatorConcatId"),
-      operatorOhubId = Option.empty,
+      totalLoyaltyPointsEarned      = optional("totalLoyaltyPointsEarned", "totalLoyaltyPointsEarned", toBigDecimal),
+      totalLoyaltyPointsSpent       = optional("totalLoyaltyPointsSpent", "totalLoyaltyPointsSpent", toBigDecimal),
+      totalLoyaltyPointsActual      = optional("totalLoyaltyPointsActual", "totalLoyaltyPointsActual", toBigDecimal),
+      loyaltyRewardGoal             = optional("loyaltyRewardGoal", "loyaltyRewardGoal", toBigDecimal),
+      contactPersonRefId            = optional("contactPersonRefId", "contactPersonRefId"),
+      contactPersonConcatId         = optional("contactPersonConcatId", "contactPersonConcatId"),
+      contactPersonOhubId           = Option.empty,
+      operatorRefId                 = optional("operatorRefId", "operatorRefId"),
+      operatorConcatId              = optional("operatorConcatId", "operatorConcatId"),
+      operatorOhubId                = Option.empty,
 
-      additionalFields = additionalFields,
-      ingestionErrors = errors
+      additionalFields              = additionalFields,
+      ingestionErrors               = errors
     )
   }
 }

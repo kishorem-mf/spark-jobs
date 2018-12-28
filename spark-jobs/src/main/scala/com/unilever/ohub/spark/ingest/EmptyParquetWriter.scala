@@ -106,3 +106,48 @@ trait LoyaltyPointsEmptyParquetWriter extends EmptyParquetWriter[LoyaltyPoints] 
     spark.createDataset[LoyaltyPoints](Seq[LoyaltyPoints]())
   }
 }
+
+trait CampaignBounceEmptyParquetWriter extends EmptyParquetWriter[CampaignBounce] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[CampaignBounce] = {
+    import spark.implicits._
+
+    spark.createDataset[CampaignBounce](Seq[CampaignBounce]())
+  }
+}
+
+trait CampaignClickEmptyParquetWriter extends EmptyParquetWriter[CampaignClick] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[CampaignClick] = {
+    import spark.implicits._
+
+    spark.createDataset[CampaignClick](Seq[CampaignClick]())
+  }
+}
+
+trait CampaignOpenEmptyParquetWriter extends EmptyParquetWriter[CampaignOpen] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[CampaignOpen] = {
+    import spark.implicits._
+
+    spark.createDataset[CampaignOpen](Seq[CampaignOpen]())
+  }
+}
+
+trait CampaignSendingEmptyParquetWriter extends EmptyParquetWriter[CampaignSend] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[CampaignSend] = {
+    import spark.implicits._
+
+    spark.createDataset[CampaignSend](Seq[CampaignSend]())
+  }
+}
+
+trait CampaignEmptyParquetWriter extends EmptyParquetWriter[Campaign] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[Campaign] = {
+    import spark.implicits._
+
+    spark.createDataset[Campaign](Seq[Campaign]())
+  }
+}
