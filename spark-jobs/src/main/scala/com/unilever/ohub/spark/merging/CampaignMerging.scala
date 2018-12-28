@@ -50,13 +50,13 @@ object CampaignMerging extends SparkJob[CampaignMergingConfig] {
           if (cpn == null) campaign
           else campaign.copy(contactPersonOhubId = cpn.ohubId)
       }
-      // update opr ids
-      .joinWith(operators, $"operatorConcatId" === operators("concatId"), JoinType.Left)
-      .map {
-        case (campaign, opr) ⇒
-          if (opr == null) campaign
-          else campaign.copy(operatorOhubId = opr.ohubId)
-      }
+//      // update opr ids
+//      .joinWith(operators, $"operatorConcatId" === operators("concatId"), JoinType.Left)
+//      .map {
+//        case (campaign, opr) ⇒
+//          if (opr == null) campaign
+//          else campaign.copy(operatorOhubId = opr.ohubId)
+//      }
   }
 
   override private[spark] def defaultConfig = CampaignMergingConfig()

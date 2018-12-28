@@ -16,19 +16,19 @@ object CampaignConverter extends CommonDomainGateKeeper[Campaign] with AnswerEmp
     // format: OFF
 
     Campaign(
-      // fieldName                  mandatory                   sourceFieldName                                  targetFieldName                            transformationFunction (unsafe)
+      // fieldName                  mandatory                   sourceFieldName                                 targetFieldName                        transformationFunction (unsafe)
       id                          = mandatory(                  "id",                         "id"),
-      creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp",      toTimestamp),
+      creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp",    toTimestamp),
       concatId                    = mandatory(                  "concatId",                   "concatId"),
       countryCode                 = mandatory(                  "countryCode",                "countryCode"),
-      customerType                = mandatory(                  "customerType",               "customerType"),
-      isActive                    = true,
+      customerType                = "yo", //TODO get actual wanted value in here
+      isActive                    = mandatory(                  "isActive",                   "isActive",             toBoolean),
       sourceEntityId              = mandatory(                  "sourceEntityId",             "sourceEntityId"),
       sourceName                  = mandatory(                  "sourceName",                 "sourceName"),
       ohubCreated                 = ohubCreated,
       ohubUpdated                 = ohubCreated,
-      dateCreated                 = optional(                   "dateCreated",                "dateCreated",            parseDateTimeUnsafe()),
-      dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated",            parseDateTimeUnsafe()),
+      dateCreated                 = optional(                   "dateCreated",                "dateCreated",          parseDateTimeUnsafe()),
+      dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated",          parseDateTimeUnsafe()),
       ohubId                      = Option.empty,
       isGoldenRecord              = true, // Not specified when is true in mapping, so always golden...
 
@@ -39,11 +39,11 @@ object CampaignConverter extends CommonDomainGateKeeper[Campaign] with AnswerEmp
       deliveryId                  = mandatory(                  "deliveryId",                 "deliveryId"),
       deliveryName                = mandatory(                  "deliveryName",               "deliveryName"),
       campaignSpecification       = mandatory(                  "campaignSpecification",      "campaignSpecification"),
-      campaignWaveStartDate       = mandatory(                  "campaignWaveStartDate",      "campaignWaveStartDate",  parseDateTimeUnsafe()),
-      campaignWaveEndDate         = mandatory(                  "campaignWaveEndDate",        "campaignWaveEndDate",    parseDateTimeUnsafe()),
+      campaignWaveStartDate       = mandatory(                  "campaignWaveStartDate",      "campaignWaveStartDate",parseDateTimeUnsafe()),
+      campaignWaveEndDate         = mandatory(                  "campaignWaveEndDate",        "campaignWaveEndDate",  parseDateTimeUnsafe()),
       campaignWaveStatus          = mandatory(                  "campaignWaveStatus",         "campaignWaveStatus"),
-      operatorConcatId            = optional(                   "operatorConcatId",           "operatorConcatId"),
-      operatorOhubId              = Option.empty,
+//      operatorConcatId            = optional(                   "operatorConcatId",           "operatorConcatId"),
+//      operatorOhubId              = Option.empty,
 
       additionalFields            = additionalFields,
       ingestionErrors             = errors

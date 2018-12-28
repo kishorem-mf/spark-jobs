@@ -16,25 +16,25 @@ object CampaignClickConverter extends CommonDomainGateKeeper[CampaignClick] with
     // format: OFF
 
     CampaignClick(
-      // fieldName                  mandatory                   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
+      // fieldName                  mandatory                   sourceFieldName                                 targetFieldName                        transformationFunction (unsafe)
       id                          = mandatory(                  "id",                         "id"),
-      creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp", toTimestamp),
+      creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp",    toTimestamp),
       concatId                    = mandatory(                  "concatId",                   "concatId"),
       countryCode                 = mandatory(                  "countryCode",                "countryCode"),
-      customerType                = mandatory(                  "customerType",               "customerType"),
-      isActive                    = true,
+      customerType                = "yo", //TODO get actual wanted value in here
+      isActive                    = mandatory(                  "isActive",                   "isActive",             toBoolean),
       sourceEntityId              = mandatory(                  "sourceEntityId",             "sourceEntityId"),
       sourceName                  = mandatory(                  "sourceName",                 "sourceName"),
       ohubCreated                 = ohubCreated,
       ohubUpdated                 = ohubCreated,
-      dateCreated                 = optional(                   "dateCreated",                "dateCreated", parseDateTimeUnsafe()),
-      dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated", parseDateTimeUnsafe()),
+      dateCreated                 = optional(                   "dateCreated",                "dateCreated",          parseDateTimeUnsafe()),
+      dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated",          parseDateTimeUnsafe()),
       ohubId                      = Option.empty,
       isGoldenRecord              = true, // Not specified when is true in mapping, so always golden...
 
       trackingId                  = mandatory(                  "trackingId",                 "trackingId"),
       clickedUrl                  = mandatory(                  "clickedUrl",                 "clickedUrl"),
-      clickDate                   = mandatory(                  "clickDate",                  "clickDate",   parseDateTimeUnsafe()),
+      clickDate                   = mandatory(                  "clickDate",                  "clickDate",            parseDateTimeUnsafe()),
       communicationChannel        = mandatory(                  "communicationChannel",       "communicationChannel"),
       campaignId                  = mandatory(                  "campaignId",                 "campaignId"),
       campaignName                = optional(                   "campaignName",               "campaignName"),
@@ -42,7 +42,7 @@ object CampaignClickConverter extends CommonDomainGateKeeper[CampaignClick] with
       deliveryName                = mandatory(                  "deliveryName",               "deliveryName"),
       contactPersonConcatId       = mandatory(                  "contactPersonConcatId",      "contactPersonConcatId"),
       contactPersonOhubId         = Option.empty,
-      isOnMobileDevice            = mandatory(                  "isOnMobileDevice",           "isOnMobileDevice", toBoolean),
+      isOnMobileDevice            = mandatory(                  "isOnMobileDevice",           "isOnMobileDevice",     toBoolean),
       operatingSystem             = optional(                   "operatingSystem",            "operatingSystem"),
       browserName                 = optional(                   "browserName",                "browserName"),
       browserVersion              = optional(                   "browserVersion",             "browserVersion"),

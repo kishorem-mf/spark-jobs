@@ -15,19 +15,19 @@ object CampaignBounceConverter extends CommonDomainGateKeeper[CampaignBounce] wi
     // format: OFF
 
     CampaignBounce(
-      // fieldName                  mandatory                   sourceFieldName                                  targetFieldName                        transformationFunction (unsafe)
+      // fieldName                  mandatory                   sourceFieldName                                 targetFieldName                        transformationFunction (unsafe)
       id                          = mandatory(                  "id",                         "id"),
-      creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp",  toTimestamp),
+      creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp",    toTimestamp),
       concatId                    = mandatory(                  "concatId",                   "concatId"),
       countryCode                 = mandatory(                  "countryCode",                "countryCode"),
-      customerType                = mandatory(                  "customerType",               "customerType"),
-      isActive                    = true,
+      customerType                = "yo", //TODO get actual wanted value in here
+      isActive                    = mandatory(                  "isActive",                   "isActive",             toBoolean),
       sourceEntityId              = mandatory(                  "sourceEntityId",             "sourceEntityId"),
       sourceName                  = mandatory(                  "sourceName",                 "sourceName"),
       ohubCreated                 = ohubCreated,
       ohubUpdated                 = ohubCreated,
-      dateCreated                 = optional(                   "dateCreated",                "dateCreated",        parseDateTimeUnsafe()),
-      dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated",        parseDateTimeUnsafe()),
+      dateCreated                 = optional(                   "dateCreated",                "dateCreated",          parseDateTimeUnsafe()),
+      dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated",          parseDateTimeUnsafe()),
       ohubId                      = Option.empty,
       isGoldenRecord              = true, // Not specified when is true in mapping, so always golden...
 
@@ -39,11 +39,11 @@ object CampaignBounceConverter extends CommonDomainGateKeeper[CampaignBounce] wi
       communicationChannel        = mandatory(                  "communicationChannel",       "communicationChannel"),
       contactPersonConcatId       = mandatory(                  "contactPersonConcatId",      "contactPersonConcatId"),
       contactPersonOhubId         = Option.empty,
-      bounceDate                  = mandatory(                  "bounceDate",                 "bounceDate",         parseDateTimeUnsafe()),
+      bounceDate                  = mandatory(                  "bounceDate",                 "bounceDate",           parseDateTimeUnsafe()),
       failureType                 = mandatory(                  "failureType",                "failureType"),
       failureReason               = mandatory(                  "failureReason",              "failureReason"),
-      isControlGroupMember        = mandatory(                  "isControlGroupMember",        "isControlGroupMember", toBoolean),
-      isProofGroupMember          = mandatory(                  "isProofGroupMember",          "isProofGroupMember", toBoolean),
+      isControlGroupMember        = mandatory(                  "isControlGroupMember",        "isControlGroupMember",toBoolean),
+      isProofGroupMember          = mandatory(                  "isProofGroupMember",          "isProofGroupMember",  toBoolean),
       operatorConcatId            = optional(                   "operatorConcatId",              "operatorConcatId"),
       operatorOhubId              = Option.empty,
 

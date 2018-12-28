@@ -16,19 +16,19 @@ object CampaignSendConverter extends CommonDomainGateKeeper[CampaignSend] with A
     // format: OFF
 
     CampaignSend(
-      // fieldName                  mandatory                   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
+      // fieldName                  mandatory                   sourceFieldName                                 targetFieldName                        transformationFunction (unsafe)
       id                          = mandatory(                  "id",                         "id"),
-      creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp", toTimestamp),
+      creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp",    toTimestamp),
       concatId                    = mandatory(                  "concatId",                   "concatId"),
       countryCode                 = mandatory(                  "countryCode",                "countryCode"),
-      customerType                = mandatory(                  "customerType",               "customerType"),
-      isActive                    = true,
+      customerType                = "yo", //TODO get actual wanted value in here
+      isActive                    = mandatory(                  "isActive",                   "isActive",             toBoolean),
       sourceEntityId              = mandatory(                  "sourceEntityId",             "sourceEntityId"),
       sourceName                  = mandatory(                  "sourceName",                 "sourceName"),
       ohubCreated                 = ohubCreated,
       ohubUpdated                 = ohubCreated,
-      dateCreated                 = optional(                   "dateCreated",                "dateCreated", parseDateTimeUnsafe()),
-      dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated", parseDateTimeUnsafe()),
+      dateCreated                 = optional(                   "dateCreated",                "dateCreated",          parseDateTimeUnsafe()),
+      dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated",          parseDateTimeUnsafe()),
       ohubId                      = Option.empty,
       isGoldenRecord              = true, // Not specified when is true in mapping, so always golden...
 
@@ -40,11 +40,11 @@ object CampaignSendConverter extends CommonDomainGateKeeper[CampaignSend] with A
       communicationChannel        = mandatory(                  "communicationChannel",       "communicationChannel"),
       operatorConcatId            = optional(                   "operatorConcatId",           "operatorConcatId"),
       operatorOhubId              = Option.empty,
-      sendDate                    = mandatory(                  "sendDate",                   "sendDate", parseDateTimeUnsafe()),
+      sendDate                    = mandatory(                  "sendDate",                   "sendDate",             parseDateTimeUnsafe()),
       isControlGroupMember        = mandatory(                  "isControlGroupMember",       "isControlGroupMember", toBoolean),
-      isProofGroupMember          = mandatory(                  "isProofGroupMember",         "isProofGroupMember", toBoolean),
+      isProofGroupMember          = mandatory(                  "isProofGroupMember",         "isProofGroupMember",   toBoolean),
       selectionForOfflineChannels = mandatory(                  "selectionForOfflineChannels","selectionForOfflineChannels"),
-      contactPersonConcatId       = mandatory(                  "contactPersonOhubId",        "contactPersonOhubId"),
+      contactPersonConcatId       = mandatory(                  "contactPersonConcatId",        "contactPersonConcatId"),
       contactPersonOhubId         = Option.empty,
       waveName                    = mandatory(                  "waveName",                   "waveName"),
 
