@@ -1,16 +1,36 @@
-You can built the docker image with
+# Integration-tests
 
+## Building the dependencies
+### TestImage
 ```docker build -t sparktest .```
 
 First it copies the _pipelines_, _test data_ and _test scripts_ to the designated directories.
 Then it launches a Spark cluster with two worker nodes. 
 
-Next you can run the docker image with
+The base image is a custom scalaspark image. This can be install in the local registry by building the dockerfile located in the `engine-build-tools`-repo.
 
-```docker run 
-    -v <host-path-to-artefacts>/<path-to-spark-jobs>/:/usr/local/artefacts/sparkjobs 
-    -v <host-path-to-artefacts>/<path-to-name-matching-egg>/:/usr/local/artefacts/name-matching/egg/ 
-    -v <host-path-to-artefacts>/<pat-to-name-matching-main>/:/usr/local/artefacts/name-matching/main/ 
+### Artifacts
+
+Build the spark-jobs JAR by running `sbt assemble -DsparkDependencyType=provided`.
+
+Build the python egg by: Running in linux/mac-os(because of the C++ executable architecture --> WSL(Windows Subsystem for Linux) can be used for this) and using python3(executable for python3 is asserted to be python on path, not python3) and call `engine\name-matching\compile_library.sh`.
+
+## Running the test
+For a decent shell/bash:
+``` sh
+docker run \
+    -v <host-path-to-artefacts>/<path-to-spark-jobs>/:/usr/local/artefacts/sparkjobs \
+    -v <host-path-to-artefacts>/<path-to-name-matching-egg>/:/usr/local/artefacts/name-matching/egg/ \
+    -v <host-path-to-artefacts>/<pat-to-name-matching-main>/:/usr/local/artefacts/name-matching/main/ \
+    sparktest bash -c "/usr/local/pipelines/all_pipelines.sh;pytest /usr/local/it-test/tests/"
+```
+
+For windows:
+````PowerShell
+docker run `
+    -v <host-path-to-artefacts>/<path-to-spark-jobs>/:/usr/local/artefacts/sparkjobs `
+    -v <host-path-to-artefacts>/<path-to-name-matching-egg>/:/usr/local/artefacts/name-matching/egg/ `
+    -v <host-path-to-artefacts>/<pat-to-name-matching-main>/:/usr/local/artefacts/name-matching/main/ `
     sparktest bash -c "/usr/local/pipelines/all_pipelines.sh;pytest /usr/local/it-test/tests/"
 ```
 
