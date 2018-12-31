@@ -65,7 +65,7 @@ object CampaignClickEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Camp
 
 object CampaignOpenEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[CampaignOpen] with CampaignOpenEmptyParquetWriter
 
-object CampaignSendingEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[CampaignSend] with CampaignSendingEmptyParquetWriter
+object CampaignSendEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[CampaignSend] with CampaignSendEmptyParquetWriter
 
 object CampaignEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Campaign] with CampaignEmptyParquetWriter
 

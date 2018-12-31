@@ -134,7 +134,7 @@ trait CampaignOpenEmptyParquetWriter extends EmptyParquetWriter[CampaignOpen] {
   }
 }
 
-trait CampaignSendingEmptyParquetWriter extends EmptyParquetWriter[CampaignSend] {
+trait CampaignSendEmptyParquetWriter extends EmptyParquetWriter[CampaignSend] {
 
   def createEmptyDataset(spark: SparkSession): Dataset[CampaignSend] = {
     import spark.implicits._
