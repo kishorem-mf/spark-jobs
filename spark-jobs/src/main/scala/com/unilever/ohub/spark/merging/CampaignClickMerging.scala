@@ -70,9 +70,9 @@ object CampaignClickMerging extends SparkJob[CampaignClickMergingConfig] {
       opt[String]("operatorIntegrated") required () action { (x, c) ⇒
         c.copy(operatorIntegrated = x)
       } text "operatorIntegrated is a string property"
-      opt[String]("campaignInputFile") required () action { (x, c) ⇒
+      opt[String]("campaignClickInputFile") required () action { (x, c) ⇒
         c.copy(campaignClickInputFile = x)
-      } text "campaignInputFile is a string property"
+      } text "campaignClickInputFile is a string property"
       opt[String]("previousIntegrated") optional () action { (x, c) ⇒
         c.copy(previousIntegrated = x)
       } text "previousIntegrated is a string property"

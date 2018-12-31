@@ -70,9 +70,9 @@ object CampaignBounceMerging extends SparkJob[CampaignBounceMergingConfig] {
       opt[String]("operatorIntegrated") required () action { (x, c) ⇒
         c.copy(operatorIntegrated = x)
       } text "operatorIntegrated is a string property"
-      opt[String]("campaignInputFile") required () action { (x, c) ⇒
+      opt[String]("campaignBounceInputFile") required () action { (x, c) ⇒
         c.copy(campaignBounceInputFile = x)
-      } text "campaignInputFile is a string property"
+      } text "campaignBounceInputFile is a string property"
       opt[String]("previousIntegrated") optional () action { (x, c) ⇒
         c.copy(previousIntegrated = x)
       } text "previousIntegrated is a string property"
