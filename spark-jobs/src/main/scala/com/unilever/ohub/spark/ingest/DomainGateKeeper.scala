@@ -111,23 +111,6 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
       $"dateCreated".desc_nulls_last,
       $"ohubUpdated".desc_nulls_last)
 
-    val isSub = domainEntitiesMapped.head match {
-      case s: Subscription => true
-      case _ => false
-    }
-    val partitioned = Window.partitionBy($"concatId")
-    val w = if (isSub)
-      partitioned.orderBy(
-        $"subscriptionDate".desc_nulls_last,
-        $"confirmedSubscriptionDate".desc_nulls_last,
-        $"dateUpdated".desc_nulls_last,
-        $"dateCreated".desc_nulls_last,
-        $"ohubUpdated".desc_nulls_last)
-    else partitioned.orderBy(
-      $"dateUpdated".desc_nulls_last,
-      $"dateCreated".desc_nulls_last,
-      $"ohubUpdated".desc_nulls_last)
-
     val domainEntities = if (config.deduplicateOnConcatId) {
       domainEntitiesMapped
         .withColumn("rn", row_number.over(w))
