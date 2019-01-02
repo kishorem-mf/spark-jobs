@@ -1,8 +1,10 @@
+import pytest
 from pyspark.sql.types import *
 from test_utils import assertDataframeCount
 
 class TestCampaignClicks(object):
 
+    @pytest.mark.skip(reason="pipline not yet implemented")
     def test_full_matching_campaign_clicks(self, spark):
         # raw contains 1 records (todo add proper test data)...input integrated is empty
 
