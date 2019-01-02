@@ -36,7 +36,7 @@ trait TestCampaignClicks {
     browserVersion = Option.empty,
     operatorConcatId = Some("AT~MM-INITOPER~AT~210946~1~6"),
     operatorOhubId = Option.empty,
-    deliveryLogId = "6605058",
+    deliveryLogId = Option("6605058"),
 
     additionalFields = Map(),
     ingestionErrors = Map()

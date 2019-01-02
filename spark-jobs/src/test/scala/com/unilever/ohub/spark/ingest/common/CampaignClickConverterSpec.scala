@@ -50,7 +50,7 @@ class CampaignClickConverterSpec extends CsvDomainGateKeeperSpec[CampaignClick] 
           browserVersion = Some("53.0.2785."),
           operatorConcatId = Some("US~MM-INIT-OPER~O~830499"),
           operatorOhubId = Option.empty,
-          deliveryLogId = "1wewee2",
+          deliveryLogId = Option.empty,
 
           additionalFields = Map(),
           ingestionErrors = Map()

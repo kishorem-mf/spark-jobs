@@ -46,7 +46,7 @@ case class CampaignClick(
   browserVersion: Option[String],
   operatorConcatId: Option[String],
   operatorOhubId: Option[String],
-  deliveryLogId: String,
+  deliveryLogId: Option[String],
 
   // other fields
   additionalFields: Map[String, String],

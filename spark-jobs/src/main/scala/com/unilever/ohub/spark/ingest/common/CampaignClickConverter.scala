@@ -48,7 +48,7 @@ object CampaignClickConverter extends CommonDomainGateKeeper[CampaignClick] with
       browserVersion              = optional(                   "browserVersion",             "browserVersion"),
       operatorConcatId            = optional(                   "operatorConcatId",           "operatorConcatId"),
       operatorOhubId              = Option.empty,
-      deliveryLogId               = mandatory(                  "deliveryLogId",              "deliveryLogId"),
+      deliveryLogId               = optional(                   "deliveryLogId",              "deliveryLogId"),
 
       additionalFields            = additionalFields,
       ingestionErrors             = errors
