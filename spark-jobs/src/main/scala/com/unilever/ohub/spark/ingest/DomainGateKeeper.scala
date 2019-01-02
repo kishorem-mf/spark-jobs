@@ -90,31 +90,14 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
     handleErrors(config, result)
 
     // deduplicate incoming domain entities by selecting the 'newest' entity per unique concatId.
-    val partitioned = Window.partitionBy($"concatId")
-
     val domainEntitiesMapped: Dataset[DomainType] = result
       .filter(_.isRight).map(_.right.get)
 
-    val isSub = domainEntitiesMapped.head match {
-      case s: Subscription => true
-      case _ => false
-    }
-    val w = if (isSub)
-      partitioned.orderBy(
-        $"subscriptionDate".desc_nulls_last,
-        $"confirmedSubscriptionDate".desc_nulls_last,
-        $"dateUpdated".desc_nulls_last,
-        $"dateCreated".desc_nulls_last,
-        $"ohubUpdated".desc_nulls_last)
-    else partitioned.orderBy(
-      $"dateUpdated".desc_nulls_last,
-      $"dateCreated".desc_nulls_last,
-      $"ohubUpdated".desc_nulls_last)
-
-    val isSub = domainEntitiesMapped.head match {
-      case s: Subscription => true
-      case _ => false
-    }
+    val isSub = if (domainEntitiesMapped.count() == 0L) false
+      else domainEntitiesMapped.head match {
+        case s: Subscription => true
+        case _ => false
+      }
     val partitioned = Window.partitionBy($"concatId")
     val w = if (isSub)
       partitioned.orderBy(

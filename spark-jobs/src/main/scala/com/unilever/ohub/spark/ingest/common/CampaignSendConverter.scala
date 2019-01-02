@@ -2,10 +2,10 @@ package com.unilever.ohub.spark.ingest.common
 
 import com.unilever.ohub.spark.domain.entity.CampaignSend
 import com.unilever.ohub.spark.ingest.CustomParsers._
-import com.unilever.ohub.spark.ingest.{AnswerEmptyParquetWriter, DomainTransformer}
+import com.unilever.ohub.spark.ingest.{CampaignSendEmptyParquetWriter, DomainTransformer}
 import org.apache.spark.sql.Row
 
-object CampaignSendConverter extends CommonDomainGateKeeper[CampaignSend] with AnswerEmptyParquetWriter {
+object CampaignSendConverter extends CommonDomainGateKeeper[CampaignSend] with CampaignSendEmptyParquetWriter {
 
   override def toDomainEntity: DomainTransformer ⇒ Row ⇒ CampaignSend = { transformer ⇒row ⇒
     import transformer._
