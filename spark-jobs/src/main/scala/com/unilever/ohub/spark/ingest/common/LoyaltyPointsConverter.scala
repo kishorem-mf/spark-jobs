@@ -11,7 +11,7 @@ object LoyaltyPointsConverter extends CommonDomainGateKeeper[LoyaltyPoints] with
     implicit val source: Row = row
 
     val ohubCreated = currentTimestamp()
-
+    // format: OFF
     LoyaltyPoints(
       //fieldName                     mandatory                                    sourceFieldName                               targetFieldName               transformationFunction (unsafe)
       id                            = mandatory("id", "id"),
@@ -44,5 +44,6 @@ object LoyaltyPointsConverter extends CommonDomainGateKeeper[LoyaltyPoints] with
       additionalFields              = additionalFields,
       ingestionErrors               = errors
     )
+    // format: ON
   }
 }

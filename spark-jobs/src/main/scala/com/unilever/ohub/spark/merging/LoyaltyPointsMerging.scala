@@ -69,7 +69,7 @@ object LoyaltyPointsMerging extends SparkJob[LoyaltyPointsMergingConfig] {
       } text "operatorIntegrated is a string property"
       opt[String]("loyaltyPointsInputFile") required () action { (x, c) ⇒
         c.copy(loyaltyPoints = x)
-      } text "activitiesInputFile is a string property"
+      } text "loyaltyPointsInputFile is a string property"
       opt[String]("previousIntegrated") required () action { (x, c) ⇒
         c.copy(previousIntegrated = x)
       } text "previousIntegrated is a string property"

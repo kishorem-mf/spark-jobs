@@ -2,31 +2,31 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.entity.{Campaign, ContactPerson, Operator}
+import com.unilever.ohub.spark.domain.entity.{ Campaign, ContactPerson, Operator }
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
-import org.apache.spark.sql.{Dataset, SparkSession}
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
+import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 case class CampaignMergingConfig(
-   contactPersonIntegrated: String = "contact-person-integrated",
-   previousIntegrated: String = "previous-integrated-campaigns",
-   campaignInputFile: String = "campaign-input-file",
-   outputFile: String = "path-to-output-file"
+    contactPersonIntegrated: String = "contact-person-integrated",
+    previousIntegrated: String = "previous-integrated-campaigns",
+    campaignInputFile: String = "campaign-input-file",
+    outputFile: String = "path-to-output-file"
 ) extends SparkJobConfig
 
 /**
-  * Simple merging which only passes the latest version of a campaign entity
-  * (and copies the ohubId when it is previously integrated).
-  */
+ * Simple merging which only passes the latest version of a campaign entity
+ * (and copies the ohubId when it is previously integrated).
+ */
 object CampaignMerging extends SparkJob[CampaignMergingConfig] {
 
   def transform(
-     spark: SparkSession,
-     campaigns: Dataset[Campaign],
-     contactPersons: Dataset[ContactPerson],
-     previousIntegrated: Dataset[Campaign]
+    spark: SparkSession,
+    campaigns: Dataset[Campaign],
+    contactPersons: Dataset[ContactPerson],
+    previousIntegrated: Dataset[Campaign]
   ): Dataset[Campaign] = {
     import spark.implicits._
 

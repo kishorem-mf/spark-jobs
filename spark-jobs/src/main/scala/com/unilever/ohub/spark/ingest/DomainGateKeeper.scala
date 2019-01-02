@@ -6,12 +6,13 @@ import com.unilever.ohub.spark.domain.entity._
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql._
 import DomainGateKeeper._
-import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.expressions.{ Window, WindowSpec }
 import org.apache.spark.sql.functions._
 
 import scala.reflect.runtime.universe._
 
 object DomainGateKeeper {
+
   case class ErrorMessage(error: String, row: String)
 
   trait DomainConfig extends SparkJobConfig {
@@ -26,6 +27,7 @@ object DomainGateKeeper {
     implicit def eitherEncoder[T1, T2]: Encoder[Either[T1, T2]] =
       Encoders.kryo[Either[T1, T2]]
   }
+
 }
 
 abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Config <: DomainConfig] extends SparkJob[Config] {
@@ -51,6 +53,22 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
         case e: Throwable ⇒
           Left(ErrorMessage(s"Error parsing row: '$e'", s"$row"))
       }
+
+  /**
+   * Function that sorts the partitioned window.
+   * Only the first row is ingested, the others are discarded.
+   * @param spark sparksession, user for implicits import
+   * @param windowSpec windowspec that is sorted by this function
+   * @return a sorted dedplicationWindowSpec
+   */
+  protected def sortDeduplicationWindowSpec(spark: SparkSession, windowSpec: WindowSpec): WindowSpec = {
+    import spark.implicits._
+
+    windowSpec.orderBy(
+      $"dateUpdated".desc_nulls_last,
+      $"dateCreated".desc_nulls_last,
+      $"ohubUpdated".desc_nulls_last)
+  }
 
   override def run(spark: SparkSession, config: Config, storage: Storage): Unit = {
     import spark.implicits._
@@ -94,22 +112,12 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
       .filter(_.isRight).map(_.right.get)
 
     val isSub = if (domainEntitiesMapped.count() == 0L) false
-      else domainEntitiesMapped.head match {
-        case s: Subscription => true
-        case _ => false
-      }
-    val partitioned = Window.partitionBy($"concatId")
-    val w = if (isSub)
-      partitioned.orderBy(
-        $"subscriptionDate".desc_nulls_last,
-        $"confirmedSubscriptionDate".desc_nulls_last,
-        $"dateUpdated".desc_nulls_last,
-        $"dateCreated".desc_nulls_last,
-        $"ohubUpdated".desc_nulls_last)
-    else partitioned.orderBy(
-      $"dateUpdated".desc_nulls_last,
-      $"dateCreated".desc_nulls_last,
-      $"ohubUpdated".desc_nulls_last)
+
+    else domainEntitiesMapped.head match {
+      case s: Subscription ⇒ true
+      case _               ⇒ false
+    }
+    val w = sortDeduplicationWindowSpec(spark, Window.partitionBy($"concatId"))
 
     val domainEntities = if (config.deduplicateOnConcatId) {
       domainEntitiesMapped

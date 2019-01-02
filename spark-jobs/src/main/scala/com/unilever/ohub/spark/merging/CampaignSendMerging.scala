@@ -2,33 +2,33 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.entity.{CampaignSend, ContactPerson, Operator}
+import com.unilever.ohub.spark.domain.entity.{ CampaignSend, ContactPerson, Operator }
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
-import org.apache.spark.sql.{Dataset, SparkSession}
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
+import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 case class CampaignSendMergingConfig(
-   contactPersonIntegrated: String = "contact-person-integrated",
-   operatorIntegrated: String = "operator-integrated",
-   previousIntegrated: String = "previous-integrated-campaigns",
-   campaignSendInputFile: String = "campaign-send-input-file",
-   outputFile: String = "path-to-output-file"
+    contactPersonIntegrated: String = "contact-person-integrated",
+    operatorIntegrated: String = "operator-integrated",
+    previousIntegrated: String = "previous-integrated-campaigns",
+    campaignSendInputFile: String = "campaign-send-input-file",
+    outputFile: String = "path-to-output-file"
 ) extends SparkJobConfig
 
 /**
-  * Simple merging which only passes the latest version of a campaignSend entity
-  * (and copies the ohubId when it is previously integrated).
-  */
+ * Simple merging which only passes the latest version of a campaignSend entity
+ * (and copies the ohubId when it is previously integrated).
+ */
 object CampaignSendMerging extends SparkJob[CampaignSendMergingConfig] {
 
   def transform(
-     spark: SparkSession,
-     campaignSends: Dataset[CampaignSend],
-     contactPersons: Dataset[ContactPerson],
-     operators: Dataset[Operator],
-     previousIntegrated: Dataset[CampaignSend]
+    spark: SparkSession,
+    campaignSends: Dataset[CampaignSend],
+    contactPersons: Dataset[ContactPerson],
+    operators: Dataset[Operator],
+    previousIntegrated: Dataset[CampaignSend]
   ): Dataset[CampaignSend] = {
     import spark.implicits._
 
