@@ -2,33 +2,33 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.entity.{CampaignBounce, ContactPerson, Operator}
+import com.unilever.ohub.spark.domain.entity.{ CampaignBounce, ContactPerson, Operator }
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
-import org.apache.spark.sql.{Dataset, SparkSession}
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
+import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 case class CampaignBounceMergingConfig(
-   contactPersonIntegrated: String = "contact-person-integrated",
-   operatorIntegrated: String = "operator-integrated",
-   previousIntegrated: String = "previous-integrated-campaigns",
-   campaignBounceInputFile: String = "campaign-bounce-input-file",
-   outputFile: String = "path-to-output-file"
+    contactPersonIntegrated: String = "contact-person-integrated",
+    operatorIntegrated: String = "operator-integrated",
+    previousIntegrated: String = "previous-integrated-campaigns",
+    campaignBounceInputFile: String = "campaign-bounce-input-file",
+    outputFile: String = "path-to-output-file"
 ) extends SparkJobConfig
 
 /**
-  * Simple merging which only passes the latest version of a campaignBounce entity
-  * (and copies the ohubId when it is previously integrated).
-  */
+ * Simple merging which only passes the latest version of a campaignBounce entity
+ * (and copies the ohubId when it is previously integrated).
+ */
 object CampaignBounceMerging extends SparkJob[CampaignBounceMergingConfig] {
 
   def transform(
-     spark: SparkSession,
-     campaignBounces: Dataset[CampaignBounce],
-     contactPersons: Dataset[ContactPerson],
-     operators: Dataset[Operator],
-     previousIntegrated: Dataset[CampaignBounce]
+    spark: SparkSession,
+    campaignBounces: Dataset[CampaignBounce],
+    contactPersons: Dataset[ContactPerson],
+    operators: Dataset[Operator],
+    previousIntegrated: Dataset[CampaignBounce]
   ): Dataset[CampaignBounce] = {
     import spark.implicits._
 

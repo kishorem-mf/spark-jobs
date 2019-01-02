@@ -1,16 +1,7 @@
 package com.unilever.ohub.spark.ingest.common
 
-import java.sql.Timestamp
-
-import com.unilever.ohub.spark.domain.entity.Subscription
-import com.unilever.ohub.spark.ingest.{CsvDomainConfig, CsvDomainGateKeeperSpec, DomainGateKeeper}
-import com.unilever.ohub.spark.SharedSparkSession.spark
-import org.apache.spark.sql.Dataset
-import com.unilever.ohub.spark.domain.entity._
-import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions._
-import com.unilever.ohub.spark.ingest._
-
+import com.unilever.ohub.spark.domain.entity.{Subscription, _}
+import com.unilever.ohub.spark.ingest.{CsvDomainConfig, CsvDomainGateKeeperSpec}
 
 class DomainGateKeeperSubscriptionDedupeSpec extends CsvDomainGateKeeperSpec[Subscription] with TestSubscription {
 
@@ -28,7 +19,7 @@ class DomainGateKeeperSubscriptionDedupeSpec extends CsvDomainGateKeeperSpec[Sub
         val res = actualDataSet.collect
 
         // by default pick newest by subscriptionDate
-        val filledSubscriptionDate= res.filter(_.countryCode == "AU")
+        val filledSubscriptionDate = res.filter(_.countryCode == "AU")
         filledSubscriptionDate.length shouldBe 1
         filledSubscriptionDate.head.hasSubscription shouldBe false
 

@@ -10,45 +10,45 @@ object CampaignClick {
 }
 
 case class CampaignClick(
-  // generic fields
-  // mandatory fields
-  id: String,
-  creationTimestamp: Timestamp,
-  concatId: String,
-  countryCode: String,
-  customerType: String,
-  sourceEntityId: String,
-  sourceName: String,
-  isActive: Boolean,
-  ohubCreated: Timestamp,
-  ohubUpdated: Timestamp,
-  // optional fields
-  dateCreated: Option[Timestamp],
-  dateUpdated: Option[Timestamp],
-  // used for grouping and marking the golden record within the group
-  ohubId: Option[String],
-  isGoldenRecord: Boolean,
+    // generic fields
+    // mandatory fields
+    id: String,
+    creationTimestamp: Timestamp,
+    concatId: String,
+    countryCode: String,
+    customerType: String,
+    sourceEntityId: String,
+    sourceName: String,
+    isActive: Boolean,
+    ohubCreated: Timestamp,
+    ohubUpdated: Timestamp,
+    // optional fields
+    dateCreated: Option[Timestamp],
+    dateUpdated: Option[Timestamp],
+    // used for grouping and marking the golden record within the group
+    ohubId: Option[String],
+    isGoldenRecord: Boolean,
 
-  // Specific fields
-  trackingId: String,
-  clickedUrl: String,
-  clickDate: Timestamp,
-  communicationChannel: String,
-  campaignId: String,
-  campaignName: Option[String],
-  deliveryId: String,
-  deliveryName: String,
-  contactPersonConcatId: String,
-  contactPersonOhubId: Option[String],
-  isOnMobileDevice: Boolean,
-  operatingSystem: Option[String],
-  browserName: Option[String],
-  browserVersion: Option[String],
-  operatorConcatId: Option[String],
-  operatorOhubId: Option[String],
-  deliveryLogId: Option[String],
+    // Specific fields
+    trackingId: String,
+    clickedUrl: String,
+    clickDate: Timestamp,
+    communicationChannel: String,
+    campaignId: String,
+    campaignName: Option[String],
+    deliveryId: String,
+    deliveryName: String,
+    contactPersonConcatId: String,
+    contactPersonOhubId: Option[String],
+    isOnMobileDevice: Boolean,
+    operatingSystem: Option[String],
+    browserName: Option[String],
+    browserVersion: Option[String],
+    operatorConcatId: Option[String],
+    operatorOhubId: Option[String],
+    deliveryLogId: Option[String],
 
-  // other fields
-  additionalFields: Map[String, String],
-  ingestionErrors: Map[String, IngestionError]
-)extends DomainEntity {}
+    // other fields
+    additionalFields: Map[String, String],
+    ingestionErrors: Map[String, IngestionError]
+) extends DomainEntity {}

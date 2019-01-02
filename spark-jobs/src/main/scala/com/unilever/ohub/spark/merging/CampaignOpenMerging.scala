@@ -2,33 +2,33 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.entity.{CampaignOpen, ContactPerson, Operator}
+import com.unilever.ohub.spark.domain.entity.{ CampaignOpen, ContactPerson, Operator }
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
-import org.apache.spark.sql.{Dataset, SparkSession}
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
+import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 case class CampaignOpenMergingConfig(
-   contactPersonIntegrated: String = "contact-person-integrated",
-   operatorIntegrated: String = "operator-integrated",
-   previousIntegrated: String = "previous-integrated-campaigns",
-   campaignOpenInputFile: String = "campaign-open-input-file",
-   outputFile: String = "path-to-output-file"
+    contactPersonIntegrated: String = "contact-person-integrated",
+    operatorIntegrated: String = "operator-integrated",
+    previousIntegrated: String = "previous-integrated-campaigns",
+    campaignOpenInputFile: String = "campaign-open-input-file",
+    outputFile: String = "path-to-output-file"
 ) extends SparkJobConfig
 
 /**
-  * Simple merging which only passes the latest version of a campaignOpen entity
-  * (and copies the ohubId when it is previously integrated).
-  */
+ * Simple merging which only passes the latest version of a campaignOpen entity
+ * (and copies the ohubId when it is previously integrated).
+ */
 object CampaignOpenMerging extends SparkJob[CampaignOpenMergingConfig] {
 
   def transform(
-     spark: SparkSession,
-     campaignOpens: Dataset[CampaignOpen],
-     contactPersons: Dataset[ContactPerson],
-     operators: Dataset[Operator],
-     previousIntegrated: Dataset[CampaignOpen]
+    spark: SparkSession,
+    campaignOpens: Dataset[CampaignOpen],
+    contactPersons: Dataset[ContactPerson],
+    operators: Dataset[Operator],
+    previousIntegrated: Dataset[CampaignOpen]
   ): Dataset[CampaignOpen] = {
     import spark.implicits._
 

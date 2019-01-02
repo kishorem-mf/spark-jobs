@@ -2,12 +2,12 @@ package com.unilever.ohub.spark.ingest.common
 
 import com.unilever.ohub.spark.domain.entity.Campaign
 import com.unilever.ohub.spark.ingest.CustomParsers._
-import com.unilever.ohub.spark.ingest.{CampaignEmptyParquetWriter, DomainTransformer}
+import com.unilever.ohub.spark.ingest.{ CampaignEmptyParquetWriter, DomainTransformer }
 import org.apache.spark.sql.Row
 
 object CampaignConverter extends CommonDomainGateKeeper[Campaign] with CampaignEmptyParquetWriter {
 
-  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Campaign = { transformer ⇒row ⇒
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Campaign = { transformer ⇒ row ⇒
     import transformer._
     implicit val source: Row = row
 

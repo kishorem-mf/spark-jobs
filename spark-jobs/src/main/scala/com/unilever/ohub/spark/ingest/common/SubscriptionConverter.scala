@@ -3,7 +3,8 @@ package com.unilever.ohub.spark.ingest.common
 import com.unilever.ohub.spark.domain.entity.Subscription
 import com.unilever.ohub.spark.ingest.CustomParsers._
 import com.unilever.ohub.spark.ingest.{ DomainTransformer, SubscriptionEmptyParquetWriter }
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.expressions.WindowSpec
+import org.apache.spark.sql.{ Row, SparkSession }
 
 object SubscriptionConverter extends CommonDomainGateKeeper[Subscription] with SubscriptionEmptyParquetWriter {
 
@@ -45,5 +46,22 @@ object SubscriptionConverter extends CommonDomainGateKeeper[Subscription] with S
     )
 
     // format: ON
+  }
+
+  /**
+   * @inheritdoc
+   * @param spark sparksession, user for implicits import
+   * @param windowSpec windowspec that is sorted by this function
+   * @return a sorted dedplicationWindowSpec
+   */
+  override def sortDeduplicationWindowSpec(spark: SparkSession, windowSpec: WindowSpec): WindowSpec = {
+    import spark.implicits._
+
+    windowSpec.orderBy(
+      $"subscriptionDate".desc_nulls_last,
+      $"confirmedSubscriptionDate".desc_nulls_last,
+      $"dateUpdated".desc_nulls_last,
+      $"dateCreated".desc_nulls_last,
+      $"ohubUpdated".desc_nulls_last)
   }
 }
