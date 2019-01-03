@@ -33,6 +33,4 @@ spark-submit    --class="com.unilever.ohub.spark.merging.QuestionPreProcess" ${S
 spark-submit    --class="com.unilever.ohub.spark.merging.QuestionMerging" ${SPARK_JOBS_JAR} \
                 --questionsInputFile=${DATA_PRE_PROCESSED} \
                 --previousIntegrated=${DATA_INTEGRATED_INPUT} \
-                --operatorIntegrated=${DATA_OP_INTEGRATED_INPUT} \
-                --contactPersonIntegrated=${DATA_CP_INTEGRATED_INPUT} \
                 --outputFile=${DATA_INTEGRATED_OUTPUT}

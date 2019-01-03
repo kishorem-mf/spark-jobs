@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.ingest.common
 
-import com.unilever.ohub.spark.domain.entity.{Subscription, _}
-import com.unilever.ohub.spark.ingest.{CsvDomainConfig, CsvDomainGateKeeperSpec}
+import com.unilever.ohub.spark.domain.entity.{ Subscription, _ }
+import com.unilever.ohub.spark.ingest.{ CsvDomainConfig, CsvDomainGateKeeperSpec }
 
 class DomainGateKeeperSubscriptionDedupeSpec extends CsvDomainGateKeeperSpec[Subscription] with TestSubscription {
 
