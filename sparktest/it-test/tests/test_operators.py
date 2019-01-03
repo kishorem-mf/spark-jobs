@@ -1,4 +1,3 @@
-
 from pyspark.sql.types import *
 from test_utils import assertDataframeCount
 
