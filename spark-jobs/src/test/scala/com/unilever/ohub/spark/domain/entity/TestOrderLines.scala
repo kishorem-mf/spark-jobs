@@ -34,6 +34,7 @@ trait TestOrderLines {
     campaignLabel = Some("campaign-label"),
     loyaltyPoints = Some(123),
     productOhubId = Some("product-ohub-id"),
+    orderType = None,
     // other fields
     additionalFields = Map(),
     ingestionErrors = Map()

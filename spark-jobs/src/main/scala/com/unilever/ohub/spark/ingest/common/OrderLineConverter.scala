@@ -42,6 +42,7 @@ object OrderLineConverter extends CommonDomainGateKeeper[OrderLine] with OrderLi
       campaignLabel                   = optional(  "campaignLabel",            "campaignLabel"),
       loyaltyPoints                   = optional(  "loyaltyPoints",            "loyaltyPoints" ,         toBigDecimal ),
       productOhubId                   = None, // set in OrderLineMerging
+      orderType                       = optional(  "orderType",                "orderType"),
       // other fields
       additionalFields                = additionalFields,
       ingestionErrors                 = errors
