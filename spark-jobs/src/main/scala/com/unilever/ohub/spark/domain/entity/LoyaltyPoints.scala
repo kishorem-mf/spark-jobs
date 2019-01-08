@@ -26,10 +26,11 @@ case class LoyaltyPoints(
     isGoldenRecord: Boolean,
 
     // specific fields
-    totalLoyaltyPointsEarned: Option[BigDecimal],
-    totalLoyaltyPointsSpent: Option[BigDecimal],
-    totalLoyaltyPointsActual: Option[BigDecimal],
-    loyaltyRewardGoal: Option[BigDecimal],
+    totalEarned: Option[BigDecimal],
+    totalSpent: Option[BigDecimal],
+    totalActual: Option[BigDecimal],
+    rewardGoal: Option[BigDecimal],
+    contactPersonRefId: Option[String],
     contactPersonConcatId: Option[String],
     contactPersonOhubId: Option[String],
     operatorConcatId: Option[String],
