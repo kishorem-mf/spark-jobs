@@ -34,10 +34,8 @@ object LoyaltyPointsConverter extends CommonDomainGateKeeper[LoyaltyPoints] with
       totalLoyaltyPointsSpent       = optional("totalLoyaltyPointsSpent", "totalLoyaltyPointsSpent", toBigDecimal),
       totalLoyaltyPointsActual      = optional("totalLoyaltyPointsActual", "totalLoyaltyPointsActual", toBigDecimal),
       loyaltyRewardGoal             = optional("loyaltyRewardGoal", "loyaltyRewardGoal", toBigDecimal),
-      contactPersonRefId            = optional("contactPersonRefId", "contactPersonRefId"),
       contactPersonConcatId         = optional("contactPersonConcatId", "contactPersonConcatId"),
       contactPersonOhubId           = Option.empty,
-      operatorRefId                 = optional("operatorRefId", "operatorRefId"),
       operatorConcatId              = optional("operatorConcatId", "operatorConcatId"),
       operatorOhubId                = Option.empty,
 

@@ -25,10 +25,8 @@ trait TestLoyaltyPoints {
     totalLoyaltyPointsActual = Some(BigDecimal.apply(15)),
     loyaltyRewardGoal = Some(BigDecimal.apply(15)),
 
-    contactPersonRefId = None,
     contactPersonConcatId = Some("DE~FILE~138175"),
     contactPersonOhubId = None,
-    operatorRefId = None,
     operatorConcatId = Some("DE~FILE~138175"),
     operatorOhubId = None,
 

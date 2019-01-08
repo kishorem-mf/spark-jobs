@@ -30,10 +30,8 @@ case class LoyaltyPoints(
     totalLoyaltyPointsSpent: Option[BigDecimal],
     totalLoyaltyPointsActual: Option[BigDecimal],
     loyaltyRewardGoal: Option[BigDecimal],
-    contactPersonRefId: Option[String],
     contactPersonConcatId: Option[String],
     contactPersonOhubId: Option[String],
-    operatorRefId: Option[String],
     operatorConcatId: Option[String],
     operatorOhubId: Option[String],
 

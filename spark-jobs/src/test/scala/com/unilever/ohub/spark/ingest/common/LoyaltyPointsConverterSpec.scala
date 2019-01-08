@@ -38,10 +38,8 @@ class LoyaltyPointsConverterSpec extends CsvDomainGateKeeperSpec[LoyaltyPoints] 
           totalLoyaltyPointsSpent = Some(BigDecimal.apply(12.0)),
           totalLoyaltyPointsActual = Some(BigDecimal.apply(3.0)),
           loyaltyRewardGoal = Some(BigDecimal.apply(20.0)),
-          contactPersonRefId = None,
           contactPersonConcatId = Some("DE~EMAKINA~456"),
           contactPersonOhubId = None,
-          operatorRefId = Some("456"),
           operatorConcatId = Some("DE~EMAKINA~789"),
           operatorOhubId = None,
 
