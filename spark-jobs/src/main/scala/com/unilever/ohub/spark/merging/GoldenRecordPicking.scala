@@ -6,8 +6,8 @@ import com.unilever.ohub.spark.domain.DomainEntity
 
 trait GoldenRecordPicking[DomainType <: DomainEntity] {
 
-  def pickGoldenRecord(sourcePreference: Map[String, Int], operators: Seq[DomainType]): DomainType = {
-    operators.reduce((o1, o2) ⇒ {
+  def pickGoldenRecord(sourcePreference: Map[String, Int], entities: Seq[DomainType]): DomainType = {
+    entities.reduce((o1, o2) ⇒ {
       val preference1 = sourcePreference.getOrElse(o1.sourceName, Int.MaxValue)
       val preference2 = sourcePreference.getOrElse(o2.sourceName, Int.MaxValue)
       if (preference1 < preference2) o1
