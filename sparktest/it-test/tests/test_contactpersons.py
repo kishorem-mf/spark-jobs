@@ -25,7 +25,7 @@ class TestContactPersons(object):
 
         assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_delta_left_overs.parquet", 121)
 
-        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_fuzzy_matched_delta.parquet", 46)
+        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_fuzzy_matched_delta.parquet", 54)
 
         assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_delta_golden_records.parquet", 121)
 
@@ -38,10 +38,10 @@ class TestContactPersons(object):
         assert (spark
                 .read
                 .parquet("/usr/local/data/output/integrated/contactpersons")
-                ).select('ohubId').distinct().count() == 544
+                ).select('ohubId').distinct().count() == 536
 
-        # 469 ohubIds from exact matches, 75 from fuzzy matching, 544 ohubIds in total
+        # 469 ohubIds from exact matches, 67 from fuzzy matching, 536 ohubIds in total
         assert(spark
                .read
                .parquet("/usr/local/data/output/integrated/contactpersons")
-               ).filter(sf.isnull(sf.col('emailAddress')) & sf.isnull(sf.col('mobileNumber'))).select('ohubId').distinct().count() == 75
+               ).filter(sf.isnull(sf.col('emailAddress')) & sf.isnull(sf.col('mobileNumber'))).select('ohubId').distinct().count() == 67
