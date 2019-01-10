@@ -49,7 +49,7 @@ class ContactPersonMatchingJoinerSpec extends SparkJobSpec with TestContactPerso
     defaultContactPerson.copy(concatId = "cp-8", sourceName = "z2",
       dateCreated = Some(new Timestamp(3L)), // Golden --> newest dateCreated is preferred
       ohubUpdated = new Timestamp(1L))
-    // end Group 3
+  // end Group 3
   ).toDataset
 
   describe("ContactPersonMatchingJoiner") {
@@ -85,7 +85,7 @@ class ContactPersonMatchingJoinerSpec extends SparkJobSpec with TestContactPerso
         .collect
         .sortBy(_.sourceName)
 
-      result.map(r ⇒ (r.sourceName, r.isGoldenRecord)) should contain inOrderOnly(
+      result.map(r ⇒ (r.sourceName, r.isGoldenRecord)) should contain inOrderOnly (
         ("a", true), ("b", false), ("c", false), ("d", true), ("x", true), ("y", false), ("z1", false), ("z2", true)
       )
     }

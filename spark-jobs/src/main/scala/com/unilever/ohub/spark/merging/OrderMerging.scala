@@ -38,8 +38,9 @@ object OrderMerging extends SparkJob[OrderMergingConfig] {
               integrated
             } else {
               val ohubId = if (integrated == null) Some(UUID.randomUUID().toString) else integrated.ohubId
+              val orderUID = if (integrated == null) Some(UUID.randomUUID().toString) else integrated.orderUID
 
-              order.copy(ohubId = ohubId, isGoldenRecord = true)
+              order.copy(ohubId = ohubId, orderUID = orderUID, isGoldenRecord = true)
             }
         }
 
