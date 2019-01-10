@@ -31,6 +31,7 @@ object OrderConverter extends CommonDomainGateKeeper[Order] with OrderEmptyParqu
       ohubCreated                           = ohubCreated,
       ohubUpdated                           = ohubCreated,
       // specific fields
+      orderUID                              = optional(  "orderUID",                              "orderUID"),
       `type`                                = mandatory( "orderType",                             "orderType" ),
       campaignCode                          = optional(  "campaignCode",                          "campaignCode"),
       campaignName                          = optional(  "campaignName",                          "campaignName"),
