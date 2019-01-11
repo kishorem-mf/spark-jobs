@@ -38,10 +38,11 @@ class ProductConverterSpec extends CsvDomainGateKeeperSpec[Product] with TestPro
           currency = Some("GBP"),
           eanConsumerUnit = Some("812234000000"),
           eanDistributionUnit = Some("112234000000"),
-          `type` = Some("Product"),
+          `type` = Some("NotProduct"),
           unit = Some("Cases"),
           unitPrice = Some(BigDecimal(4)),
-          brandCode = Some("brand")
+          brandCode = Some("brand"),
+          subBrandCode = Some("subBrand")
         )
 
         actualProduct shouldBe expectedProduct
