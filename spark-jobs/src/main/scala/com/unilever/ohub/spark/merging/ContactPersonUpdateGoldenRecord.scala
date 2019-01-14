@@ -1,10 +1,12 @@
 package com.unilever.ohub.spark.merging
 
-import com.unilever.ohub.spark.{ DefaultConfig, SparkJobWithDefaultDbConfig }
+import java.sql.Timestamp
+
+import com.unilever.ohub.spark.{DefaultConfig, SparkJobWithDefaultDbConfig}
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.DomainDataProvider
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import org.apache.spark.sql.{Dataset, SparkSession}
 import org.apache.spark.sql.functions._
 
 object ContactPersonUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with GoldenRecordPicking[ContactPerson] {
@@ -12,6 +14,21 @@ object ContactPersonUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with 
   def markGoldenRecord(sourcePreference: Map[String, Int])(contactPersons: Seq[ContactPerson]): Seq[ContactPerson] = {
     val goldenRecord = pickGoldenRecord(sourcePreference, contactPersons)
     contactPersons.map(o ⇒ o.copy(isGoldenRecord = o == goldenRecord))
+  }
+
+  // When it is decided to select golden record based on source instead of newest, remove
+  // this override def pickGoldenRecord(...
+  /**
+    * Get the newest contactPerson(based on dateUpdated, dateCreated and ohubUpdated) to mark as golden record.
+    * @param sourcePreference -- not used
+    * @param entities
+    * @return
+    */
+  override def pickGoldenRecord(sourcePreference: Map[String, Int], entities: Seq[ContactPerson]): ContactPerson = {
+    implicit def ordered: Ordering[Timestamp] = new Ordering[Timestamp] {
+      def compare(x: Timestamp, y: Timestamp): Int = x compareTo y
+    }
+    entities.sortBy(cp ⇒ (cp.dateUpdated, cp.dateCreated, cp.ohubUpdated)).reverse.head
   }
 
   def transform(
