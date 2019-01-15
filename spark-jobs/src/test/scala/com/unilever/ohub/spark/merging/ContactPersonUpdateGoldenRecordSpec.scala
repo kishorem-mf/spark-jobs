@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.SharedSparkSession._
-import com.unilever.ohub.spark.domain.entity.{ContactPerson, TestContactPersons}
+import com.unilever.ohub.spark.domain.entity.{ ContactPerson, TestContactPersons }
 import com.unilever.ohub.spark.ingest.TestDomainDataProvider
 import org.apache.spark.sql.Dataset
 
