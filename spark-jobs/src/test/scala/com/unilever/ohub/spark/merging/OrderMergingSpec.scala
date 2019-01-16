@@ -12,7 +12,7 @@ class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators w
   private val SUT = OrderMerging
 
   describe("order merging") {
-    it("a new order should get an ohubId and be marked golden record") {
+    it("a new order should get an ohubId and orderUid and be marked golden record") {
       val newRecord = defaultOrder.copy(
         isGoldenRecord = false,
         concatId = "new"
@@ -32,6 +32,34 @@ class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators w
       result.head.isGoldenRecord shouldBe true
       result.head.ohubId shouldBe defined
       result.head.orderUid shouldBe defined
+    }
+
+    it("should favor delta orderUid over integrated") {
+      val operators = Seq[Operator]().toDataset
+      val contactPersons = Seq[ContactPerson]().toDataset
+
+      val integratedRecord = defaultOrder.copy(
+        orderUid = Some("a")
+      )
+
+      val newRecord = defaultOrder.copy(
+        orderUid = Some("b")
+      )
+
+      val previous: Dataset[Order] = spark.createDataset(Seq(
+        integratedRecord
+      ))
+
+      val input: Dataset[Order] = spark.createDataset(Seq(
+        newRecord
+      ))
+
+      val result = SUT.transform(spark, input, previous, operators, contactPersons)
+        .collect()
+
+      result.length shouldBe 1
+      result(0).orderUid shouldBe Some("b")
+
     }
 
     it("should take newest data if available while retaining ohubId and orderUid") {
