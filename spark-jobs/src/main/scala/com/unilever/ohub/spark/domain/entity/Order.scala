@@ -26,7 +26,7 @@ case class Order(
     ohubCreated: Timestamp,
     ohubUpdated: Timestamp,
     // specific fields
-    orderUID: Option[String],
+    orderUid: Option[String],
     `type`: String,
     campaignCode: Option[String],
     campaignName: Option[String],

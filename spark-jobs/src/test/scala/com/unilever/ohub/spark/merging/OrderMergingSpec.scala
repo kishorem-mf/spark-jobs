@@ -31,10 +31,10 @@ class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators w
       result.size shouldBe 1
       result.head.isGoldenRecord shouldBe true
       result.head.ohubId shouldBe defined
-      result.head.orderUID shouldBe defined
+      result.head.orderUid shouldBe defined
     }
 
-    it("should take newest data if available while retaining ohubId and orderUID") {
+    it("should take newest data if available while retaining ohubId and orderUid") {
       val operators = Seq(
         defaultOperatorWithSourceName("op1").copy(ohubId = Some("ohubOp1")),
         defaultOperatorWithSourceName("op2").copy(ohubId = Some("ohubOp2")),
@@ -50,7 +50,7 @@ class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators w
       val updatedRecord = defaultOrder.copy(
         isGoldenRecord = true,
         ohubId = Some("oldId"),
-        orderUID = Some("oldOrderUID"),
+        orderUid = Some("oldOrderUid"),
         countryCode = "updated",
         concatId = s"updated~${defaultOrder.sourceName}~${defaultOrder.sourceEntityId}",
         operatorConcatId = Some("country-code~op1~source-entity-id"),
@@ -128,7 +128,7 @@ class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators w
       result(4).contactPersonOhubId shouldBe Some("ohubCpn1")
       result(4).comment shouldBe Some("Unox")
       result(4).ohubId shouldBe Some("oldId")
-      result(4).orderUID shouldBe Some("oldOrderUID")
+      result(4).orderUid shouldBe Some("oldOrderUid")
     }
   }
 }
