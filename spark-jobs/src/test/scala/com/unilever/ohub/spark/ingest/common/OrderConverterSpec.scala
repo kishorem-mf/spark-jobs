@@ -32,7 +32,7 @@ class OrderConverterSpec extends CsvDomainGateKeeperSpec[Order] with TestOrders 
           sourceName = "WUFOO",
           ohubCreated = actualOrder.ohubCreated,
           ohubUpdated = actualOrder.ohubUpdated,
-          orderUID = None,
+          orderUid = None,
           `type` = "UNKNOWN",
           campaignCode = Some("E1234"),
           campaignName = Some("Sample campaign"),
