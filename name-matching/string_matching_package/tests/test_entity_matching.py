@@ -58,7 +58,7 @@ class TestPreprocessingContactPersons:
         res = preprocess_contact_persons(ddf, 'concatId').collect()
 
         assert len(res) == 4
-        assert ['2', '3', '4', '7'] == [_[1] for _ in res]
+        assert ['2', '3', '4'] == [_[1] for _ in res]
 
     def test_match_string_should_be_concat_from_fields(self, spark):
         ddf = self.create_ddf(spark)
