@@ -66,6 +66,7 @@ def preprocess_contact_persons(ddf: DataFrame, id_column: str, *args) -> DataFra
     Some pre-processing
         - Keep only contacts without e-mail AND without mobile phone number
         - Remove contacts without first AND without last name (cleansed)
+        - Remove contacts without a street (cleansed)
         - Create a unique ID
         - Create matching-string
         - Select only necessary columns
@@ -80,8 +81,11 @@ def preprocess_contact_persons(ddf: DataFrame, id_column: str, *args) -> DataFra
     filtered = (cleaned
                 # drop if no first name and no last name
                 .na.drop(subset=['firstNameCleansed', 'lastNameCleansed'], how='all')
+                # drop if no street
+                .na.drop(subset=['streetCleansed'], how='any')
                 # same logic but for an empty string
-                .filter(((sf.col('firstNameCleansed') != '') | (sf.col('lastNameCleansed') != '')))
+                .filter((sf.col('streetCleansed') != '') &
+                        ((sf.col('firstNameCleansed') != '') | (sf.col('lastNameCleansed') != '')))
                 )
 
     return (create_contactperson_matching_string(filtered)
