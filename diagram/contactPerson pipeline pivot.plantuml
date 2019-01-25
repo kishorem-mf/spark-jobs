@@ -1,0 +1,95 @@
+@startuml
+skinparam linetype ortho
+
+cloud "Azure Blob Storage" {
+  folder "Inbound" {
+    [Contactpersons.csv] as inb
+  }
+
+  folder "Engine" {
+    folder "ingested/[exec-date - 1 day]" {      
+        [contactpersons.parquet] as ingest      
+    }
+    folder "Intermediate/[exec-date - 1 day]" {      
+         [contactpersons_pre_processed.parquet] as prepro
+         [contactpersons_exact_matches.parquet] as exm
+         [contactpersons_fuzzy_matched_delta.parquet] as fmd
+         [contactpersons_fuzzy_matched_delta_integrated.parquet] as fmdi
+         [contactpersons_unmatched_delta.parquet] as umd
+         [contactpersons_unmatched_integrated.parquet] as umi
+         [contactpersons_delta_left_overs.parquet] as dlo
+         [contactpersons_delta_golden_records.parquet] as dgr
+         [contactpersons_combined.parquet] as comb
+         [contactpersons_updated_references.parquet] as urp
+    }
+    folder "Integrated" {
+      folder "exec-date - 1 day" {
+        [contactpersons.parquet] as integc
+        [operators.parquet] as intego
+      }
+      folder "exec-date - 2 days" {
+        [contactpersons.parquet] as integCOld
+      }
+    }
+  }
+}
+
+[1. ContactPersonsCommonConvertor] as pConv
+[2. PreProcessing] as pPrep
+[3. Exact_match] as pExactM
+[4. Match_new] as pMn
+[5. Match_unmatched] as pMu
+[6. Merging] as pMerge
+[7. Combine] as pComb
+[8. Referencing] as pRef
+[9. Update Golden Records] as pUgr
+
+start .d-> pConv
+
+pConv <- inb
+pConv -[#green]> ingest
+pConv .d-> pPrep
+
+pPrep <- ingest
+pPrep <- integCOld
+pPrep -[#green]> prepro
+pPrep .d-> pExactM
+
+pExactM <- prepro
+pExactM <- integCOld
+pExactM -[#green]> exm
+pExactM -[#green]> umd
+pExactM -[#green]> umi
+pExactM .d-> pMn
+
+pMn <- umd
+pMn <- umi
+pMn -[#green]> fmdi
+pMn -[#green]> dlo
+pMn .d-> pMu
+
+pMu <- dlo
+pMu -[#green]> fmd
+pMu .d-> pMerge
+
+pMerge <- fmd
+pMerge <- dlo
+pMerge -[#green]> dgr
+pMerge .d-> pComb
+
+pComb <- exm
+pComb <- fmdi
+pComb <- dgr
+pComb -[#green]> comb
+pComb .d-> pRef
+
+pRef <- comb
+pRef <- intego
+pRef -[#green]> urp
+pRef .d-> pUgr
+
+pUgr <- urp
+pUgr -[#green]> integc
+
+pUgr .d-> end
+@enduml
