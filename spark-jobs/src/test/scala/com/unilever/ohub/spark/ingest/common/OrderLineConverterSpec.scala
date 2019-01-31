@@ -2,8 +2,8 @@ package com.unilever.ohub.spark.ingest.common
 
 import java.sql.Timestamp
 
-import com.unilever.ohub.spark.domain.entity.{OrderLine, TestOrderLines}
-import com.unilever.ohub.spark.ingest.{CsvDomainConfig, CsvDomainGateKeeperSpec}
+import com.unilever.ohub.spark.domain.entity.{ OrderLine, TestOrderLines }
+import com.unilever.ohub.spark.ingest.{ CsvDomainConfig, CsvDomainGateKeeperSpec }
 
 class OrderLineConverterSpec extends CsvDomainGateKeeperSpec[OrderLine] with TestOrderLines {
 
