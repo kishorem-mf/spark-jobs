@@ -20,15 +20,13 @@ trait TestLoyaltyPoints {
     ohubCreated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
     ohubUpdated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
 
-    totalLoyaltyPointsEarned = Some(BigDecimal.apply(15)),
-    totalLoyaltyPointsSpent = Some(BigDecimal.apply(15)),
-    totalLoyaltyPointsActual = Some(BigDecimal.apply(15)),
-    loyaltyRewardGoal = Some(BigDecimal.apply(15)),
+    totalEarned = Some(BigDecimal.apply(15)),
+    totalSpent = Some(BigDecimal.apply(15)),
+    totalActual = Some(BigDecimal.apply(15)),
+    rewardGoal = Some(BigDecimal.apply(15)),
 
-    contactPersonRefId = None,
     contactPersonConcatId = Some("DE~FILE~138175"),
     contactPersonOhubId = None,
-    operatorRefId = None,
     operatorConcatId = Some("DE~FILE~138175"),
     operatorOhubId = None,
 

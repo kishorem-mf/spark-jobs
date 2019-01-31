@@ -41,7 +41,7 @@ object CampaignHashWriter extends DomainEntityHashWriter[Campaign]
 
 object CampaignSendHashWriter extends DomainEntityHashWriter[CampaignSend]
 
-object CampaignOpenWriter extends DomainEntityHashWriter[CampaignOpen]
+object CampaignOpenHashWriter extends DomainEntityHashWriter[CampaignOpen]
 
 object CampaignBounceHashWriter extends DomainEntityHashWriter[CampaignBounce]
 

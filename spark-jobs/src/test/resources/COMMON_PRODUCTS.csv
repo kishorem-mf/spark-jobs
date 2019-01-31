@@ -1,2 +1,2 @@
-﻿id;creationTimestamp;concatId;sourceEntityId;sourceName;countryCode;isActive;dateCreated;dateUpdated;name;eanConsumerUnit;eanDistributionUnit;code;unit;unitPrice;currency;brandCode
-id-1;1542205922011;AU~WUFOO~P1234;P1234;WUFOO;AU;true;20150630 13:47:00;20150630 13:48:00;KNORR CHICKEN POWDER(D) 12X1kg;812234000000;112234000000;201119;Cases;4;GBP;brand
+﻿id;creationTimestamp;concatId;sourceEntityId;sourceName;countryCode;isActive;dateCreated;dateUpdated;name;eanConsumerUnit;eanDistributionUnit;code;unit;unitPrice;currency;brandCode;subBrandCode;type
+id-1;1542205922011;AU~WUFOO~P1234;P1234;WUFOO;AU;true;20150630 13:47:00;20150630 13:48:00;KNORR CHICKEN POWDER(D) 12X1kg;812234000000;112234000000;201119;Cases;4;GBP;brand;subBrand;NotProduct

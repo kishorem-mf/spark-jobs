@@ -1,0 +1,36 @@
+@startuml
+title Entity depends on
+
+[ContactPersons] as CP
+[Operators] as OP
+[Orders] as OD
+[Orderlines] as OL
+[Products] as PD
+[Activities] as AC
+[Questions] as QU
+[Answers] as AN
+[Subscriptions] as SC
+[LoyaltyPoints] as LP
+
+CP --> OP
+
+OD --> CP
+OD --> OP
+
+OL --> OD
+OL --> OP
+OL ----> PD
+
+AC --> OP
+AC --> CP
+
+QU --> AC
+
+AN --> QU
+
+SC --> CP
+
+LP --> OP
+LP --> CP
+
+@enduml

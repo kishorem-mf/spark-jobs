@@ -84,8 +84,16 @@ class DomainTransformer() extends DomainTransformFunctions with Serializable {
   }
 
   def optionalValue(columnName: String)(row: Row): Option[String] = {
-    val fieldIndex = getFieldIndex(columnName)(row)
-    Option(row.getString(fieldIndex)).filterNot(_.trim.isEmpty) // treat empty strings as None
+    try {
+      val fieldIndex = getFieldIndex(columnName)(row)
+      Option(row.getString(fieldIndex)).filterNot(_.trim.isEmpty) // treat empty strings as None
+    } catch {
+      case e: IllegalArgumentException ⇒
+        if (e.getMessage contains "does not exist.") {
+          None
+        } else
+          throw e
+    }
   }
 
   def mandatoryValue(columnName: String, domainFieldName: String)(implicit row: Row): String = {

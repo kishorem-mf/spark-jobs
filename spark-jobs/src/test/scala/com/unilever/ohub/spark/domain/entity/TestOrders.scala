@@ -23,6 +23,7 @@ trait TestOrders {
     ohubCreated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
     ohubUpdated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
     // specific fields
+    orderUid = None,
     `type` = "DIRECT",
     campaignCode = Some("UNKNOWN"),
     campaignName = Some("campaign"),

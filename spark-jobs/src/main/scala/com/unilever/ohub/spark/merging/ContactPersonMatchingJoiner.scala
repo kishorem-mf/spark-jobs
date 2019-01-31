@@ -1,7 +1,9 @@
 package com.unilever.ohub.spark.merging
 
-import com.unilever.ohub.spark.domain.entity.ContactPerson
+import java.sql.Timestamp
+
 import com.unilever.ohub.spark.DomainDataProvider
+import com.unilever.ohub.spark.domain.entity.ContactPerson
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
 object ContactPersonMatchingJoiner extends BaseMatchingJoiner[ContactPerson] {
@@ -22,6 +24,21 @@ object ContactPersonMatchingJoiner extends BaseMatchingJoiner[ContactPerson] {
     matchedOperators
       .union(unmatchedOperators)
       .flatMap(markGoldenRecordAndGroupIdFn)
+  }
+
+  // When it is decided to select golden record based on source instead of newest, remove
+  // this override def pickGoldenRecord(...
+  /**
+   * Get the newest contactPerson(based on dateUpdated, dateCreated and ohubUpdated) to mark as golden record.
+   * @param sourcePreference -- not used
+   * @param entities
+   * @return
+   */
+  override def pickGoldenRecord(sourcePreference: Map[String, Int], entities: Seq[ContactPerson]): ContactPerson = {
+    implicit def ordered: Ordering[Timestamp] = new Ordering[Timestamp] {
+      def compare(x: Timestamp, y: Timestamp): Int = x compareTo y
+    }
+    entities.sortBy(cp ⇒ (cp.dateUpdated, cp.dateCreated, cp.ohubUpdated)).reverse.head
   }
 
   override private[merging] def markGoldenAndGroup(entity: ContactPerson, isGoldenRecord: Boolean, groupId: String): ContactPerson = {

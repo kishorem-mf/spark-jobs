@@ -36,5 +36,5 @@ class DomainGateKeeperDedupeSpec extends CsvDomainGateKeeperSpec[Operator] {
       }
     }
   }
-  
+
 }

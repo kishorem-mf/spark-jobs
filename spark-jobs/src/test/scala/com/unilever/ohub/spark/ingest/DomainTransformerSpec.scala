@@ -77,13 +77,13 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
     }
 
     "throw an illegal argument exception" when {
-      "and optional column does not exist" in {
+      "a mandatory column does not exist" in {
         val row = mock[Row]
 
         expectColumnNameNotFound(row)
 
         intercept[IllegalArgumentException] {
-          domainTransformer.optional(originalColumnName, domainFieldName)(row)
+          domainTransformer.mandatory(originalColumnName, domainFieldName)(row)
         }
       }
     }
@@ -100,6 +100,16 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
 
       "an original column has an empty value" in {
         val row = new GenericRowWithSchema(List("").toArray, StructType(List(StructField(originalColumnName, DataTypes.StringType, nullable = true))))
+
+        val value = domainTransformer.optional(originalColumnName, domainFieldName)(row)
+
+        value shouldBe None
+        domainTransformer.errors shouldBe Map()
+      }
+
+      "an optional column does not exist" in {
+        val row = mock[Row]
+        expectColumnNameNotFound(row)
 
         val value = domainTransformer.optional(originalColumnName, domainFieldName)(row)
 

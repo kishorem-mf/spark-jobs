@@ -12,7 +12,7 @@ class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators w
   private val SUT = OrderMerging
 
   describe("order merging") {
-    it("a new order should get an ohubId and be marked golden record") {
+    it("a new order should get an ohubId and orderUid and be marked golden record") {
       val newRecord = defaultOrder.copy(
         isGoldenRecord = false,
         concatId = "new"
@@ -31,9 +31,38 @@ class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators w
       result.size shouldBe 1
       result.head.isGoldenRecord shouldBe true
       result.head.ohubId shouldBe defined
+      result.head.orderUid shouldBe defined
     }
 
-    it("should take newest data if available while retaining ohubId") {
+    it("should favor delta orderUid over integrated") {
+      val operators = Seq[Operator]().toDataset
+      val contactPersons = Seq[ContactPerson]().toDataset
+
+      val integratedRecord = defaultOrder.copy(
+        orderUid = Some("a")
+      )
+
+      val newRecord = defaultOrder.copy(
+        orderUid = Some("b")
+      )
+
+      val previous: Dataset[Order] = spark.createDataset(Seq(
+        integratedRecord
+      ))
+
+      val input: Dataset[Order] = spark.createDataset(Seq(
+        newRecord
+      ))
+
+      val result = SUT.transform(spark, input, previous, operators, contactPersons)
+        .collect()
+
+      result.length shouldBe 1
+      result(0).orderUid shouldBe Some("b")
+
+    }
+
+    it("should take newest data if available while retaining ohubId and orderUid") {
       val operators = Seq(
         defaultOperatorWithSourceName("op1").copy(ohubId = Some("ohubOp1")),
         defaultOperatorWithSourceName("op2").copy(ohubId = Some("ohubOp2")),
@@ -49,6 +78,7 @@ class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators w
       val updatedRecord = defaultOrder.copy(
         isGoldenRecord = true,
         ohubId = Some("oldId"),
+        orderUid = Some("oldOrderUid"),
         countryCode = "updated",
         concatId = s"updated~${defaultOrder.sourceName}~${defaultOrder.sourceEntityId}",
         operatorConcatId = Some("country-code~op1~source-entity-id"),
@@ -126,6 +156,7 @@ class OrderMergingSpec extends SparkJobSpec with TestOrders with TestOperators w
       result(4).contactPersonOhubId shouldBe Some("ohubCpn1")
       result(4).comment shouldBe Some("Unox")
       result(4).ohubId shouldBe Some("oldId")
+      result(4).orderUid shouldBe Some("oldOrderUid")
     }
   }
 }
