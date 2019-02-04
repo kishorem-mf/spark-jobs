@@ -21,10 +21,11 @@ class CampaignOpenConverterSpec extends CsvDomainGateKeeperSpec[CampaignOpen] {
         val expectedCampaignOpen = CampaignOpen(
           id = "903610ee-1f5d-44cd-ad11-994f4fd0f677",
           creationTimestamp = new Timestamp(1545930619515L),
-          concatId = "ZA~ACM~012~139221322",
+          concatId = "b3a6208c~NL~EMAKINA~1003499146~2018-10-08T22:53:51",
           countryCode = "ZA",
           customerType = CampaignOpen.customerType,
-          sourceEntityId = "139221322",
+          sourceEntityId = "b3a6208c~NL~EMAKINA~1003499146",
+          campaignConcatId = "b3a6208c~NL~EMAKINA~1003499146~f26d461f64c0",
           sourceName = "ACM",
           isActive = true,
           ohubCreated = actualCampaignOpen.ohubCreated,

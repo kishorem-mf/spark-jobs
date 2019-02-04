@@ -19,6 +19,7 @@ case class CampaignBounce(
     customerType: String,
     sourceEntityId: String,
     sourceName: String,
+    campaignConcatId: String,
     isActive: Boolean,
     ohubCreated: Timestamp,
     ohubUpdated: Timestamp,

@@ -18,6 +18,7 @@ case class CampaignClick(
     countryCode: String,
     customerType: String,
     sourceEntityId: String,
+    campaignConcatId: String,
     sourceName: String,
     isActive: Boolean,
     ohubCreated: Timestamp,

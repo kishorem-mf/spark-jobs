@@ -21,10 +21,11 @@ class CampaignBounceConverterSpec extends CsvDomainGateKeeperSpec[CampaignBounce
         val expectedCampaignBounce = CampaignBounce(
           id = "d7d0d4c8-494e-4545-98c7-9217112c67f3",
           creationTimestamp = new Timestamp(1545930619021L),
-          concatId = "ZA~ACM~0~139221322",
+          concatId = "b3a6208c~NL~EMAKINA~1003499146~2018-10-08T22:53:51",
           countryCode = "ZA",
           customerType = CampaignBounce.customerType,
-          sourceEntityId = "139221322",
+          sourceEntityId = "b3a6208c~NL~EMAKINA~1003499146",
+          campaignConcatId = "b3a6208c~NL~EMAKINA~1003499146~f26d461f64c0",
           sourceName = "ACM",
           isActive = true,
           ohubCreated = actualCampaignBounce.ohubCreated,
