@@ -24,6 +24,7 @@ object CampaignClickConverter extends CommonDomainGateKeeper[CampaignClick] with
       customerType                = CampaignClick.customerType,
       isActive                    = mandatory(                  "isActive",                   "isActive",             toBoolean),
       sourceEntityId              = mandatory(                  "sourceEntityId",             "sourceEntityId"),
+      campaignConcatId            = mandatory(                  "campaignConcatId",           "campaignConcatId"),
       sourceName                  = mandatory(                  "sourceName",                 "sourceName"),
       ohubCreated                 = ohubCreated,
       ohubUpdated                 = ohubCreated,

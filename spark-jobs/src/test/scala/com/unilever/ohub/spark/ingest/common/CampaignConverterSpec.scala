@@ -21,7 +21,7 @@ class CampaignConverterSpec extends CsvDomainGateKeeperSpec[Campaign] {
         val expectedCampaign = Campaign(
           id = "bd433fc0-b6f4-4dfd-a53d-a499ba636d0a",
           creationTimestamp = new Timestamp(1545929029010L),
-          concatId = "US~ACM~345882796~347696686",
+          concatId = "b3a6208c~NL~EMAKINA~1003499146~2018-10-08T22:53:51",
           countryCode = "US",
           customerType = Campaign.customerType,
           sourceEntityId = "347696686",

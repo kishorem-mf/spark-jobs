@@ -7,11 +7,11 @@ trait TestCampaigns {
   lazy val defaultCampaign: Campaign = Campaign(
     id = "id-1",
     creationTimestamp = new Timestamp(1542205922011L),
-    concatId = "NL~1003499146~1003",
+    concatId = "b3a6208c~NL~EMAKINA~1003499146~2018-10-08T22:53:51",
     countryCode = "NL",
     customerType = "CONTACTPERSON",
     isActive = true,
-    sourceEntityId = "b3a6208c-d7f6-44e2-80e2-f26d461f64c0",
+    sourceEntityId = "b3a6208c~NL~EMAKINA~1003499146",
     sourceName = "ACM",
     ohubCreated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
     ohubUpdated = Timestamp.valueOf("2015-06-30 13:49:00.0"),

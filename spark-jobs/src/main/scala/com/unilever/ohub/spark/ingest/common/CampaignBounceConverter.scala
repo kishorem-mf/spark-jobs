@@ -23,6 +23,7 @@ object CampaignBounceConverter extends CommonDomainGateKeeper[CampaignBounce] wi
       customerType                = CampaignBounce.customerType,
       isActive                    = mandatory(                  "isActive",                   "isActive",             toBoolean),
       sourceEntityId              = mandatory(                  "sourceEntityId",             "sourceEntityId"),
+      campaignConcatId            = mandatory(                  "campaignConcatId",           "campaignConcatId"),
       sourceName                  = mandatory(                  "sourceName",                 "sourceName"),
       ohubCreated                 = ohubCreated,
       ohubUpdated                 = ohubCreated,
