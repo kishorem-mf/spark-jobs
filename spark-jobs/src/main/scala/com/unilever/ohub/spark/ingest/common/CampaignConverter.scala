@@ -25,6 +25,7 @@ object CampaignConverter extends CommonDomainGateKeeper[Campaign] with CampaignE
       isActive                    = mandatory(                  "isActive",                   "isActive",             toBoolean),
       sourceEntityId              = mandatory(                  "sourceEntityId",             "sourceEntityId"),
       sourceName                  = mandatory(                  "sourceName",                 "sourceName"),
+      campaignConcatId            = mandatory(                  "campaignConcatId",           "campaignConcatId"),
       ohubCreated                 = ohubCreated,
       ohubUpdated                 = ohubCreated,
       dateCreated                 = optional(                   "dateCreated",                "dateCreated",          parseDateTimeUnsafe()),
