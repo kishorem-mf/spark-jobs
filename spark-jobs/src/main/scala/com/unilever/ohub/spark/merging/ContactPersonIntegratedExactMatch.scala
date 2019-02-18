@@ -3,13 +3,13 @@ package com.unilever.ohub.spark.merging
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.merging.DataFrameHelpers._
+import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
-import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import scopt.OptionParser
 
-object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWithDbConfig] {
+object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWithDbConfig] with GroupingFunctions {
 
   override private[spark] def defaultConfig = ExactMatchIngestedWithDbConfig()
 
@@ -41,50 +41,62 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
     dailyDeltaContactPersons: Dataset[ContactPerson])(implicit spark: SparkSession): (Dataset[ContactPerson], Dataset[ContactPerson], Dataset[ContactPerson]) = {
     import spark.implicits._
 
-    val matchedExact: Dataset[ContactPerson] = determineExactMatches(integratedContactPersons, dailyDeltaContactPersons)
+    val matchedExactEmailAndPhone: Dataset[ContactPerson] = determineExactMatchesEmailAndPhone(integratedContactPersons, dailyDeltaContactPersons)
+
+    val unmatchedEmailAndPhoneIntegrated = integratedContactPersons
+      .join(matchedExactEmailAndPhone, Seq("concatId"), JoinType.LeftAnti)
+      .as[ContactPerson]
+    val unmatchedEmailAndPhoneDelta = dailyDeltaContactPersons
+      .join(matchedExactEmailAndPhone, Seq("concatId"), JoinType.LeftAnti)
+      .as[ContactPerson]
+
+    val columns = Seq("countryCode", "city", "street", "houseNumber", "houseNumberExtension", "zipCode", "firstName", "lastName")
+    val matchedExactColumns: Dataset[ContactPerson] = matchColumns[ContactPerson](
+      unmatchedEmailAndPhoneIntegrated,
+      unmatchedEmailAndPhoneDelta,
+      columns)
+
+    val matchedExactAll = matchedExactEmailAndPhone.union(matchedExactColumns)
 
     val unmatchedIntegrated = integratedContactPersons
-      .filter('emailAddress.isNull && 'mobileNumber.isNull)
+      .join(matchedExactAll, Seq("concatId"), JoinType.LeftAnti)
       .as[ContactPerson]
 
     val unmatchedDelta = dailyDeltaContactPersons
-      .filter('emailAddress.isNull && 'mobileNumber.isNull)
+      .join(matchedExactAll, Seq("concatId"), JoinType.LeftAnti)
       .as[ContactPerson]
 
-    (matchedExact, unmatchedIntegrated, unmatchedDelta)
+    (matchedExactAll, unmatchedIntegrated, unmatchedDelta)
   }
 
-  private def determineExactMatches(
+  private def determineExactMatchesEmailAndPhone(
     integratedContactPersons: Dataset[ContactPerson],
     dailyDeltaContactPersons: Dataset[ContactPerson])(implicit spark: SparkSession): Dataset[ContactPerson] = {
     import spark.implicits._
 
     val mobileAndEmail = Seq("emailAddress", "mobileNumber").map(col)
+    val filter = $"emailAddress".isNotNull || $"mobileNumber".isNotNull
 
     lazy val integratedWithExact = integratedContactPersons
       .toDF
-      .filter('emailAddress.isNotNull || 'mobileNumber.isNotNull)
+      .filter(filter)
       .concatenateColumns("group", mobileAndEmail)
       .withColumn("inDelta", lit(false))
 
     lazy val newWithExact =
       dailyDeltaContactPersons
         .toDF
-        .filter('emailAddress.isNotNull || 'mobileNumber.isNotNull)
+        .filter(filter)
         .concatenateColumns("group", mobileAndEmail)
         .withColumn("inDelta", lit(true))
 
-    val allExact = integratedWithExact
+    integratedWithExact
       .union(newWithExact)
       .addOhubId
       .drop("group")
-
-    // NOTE: that allExact can contain exact matches from previous integrated which eventually need to be removed from the integrated result
-
-    val w2 = Window.partitionBy($"concatId")
-    allExact
       .selectLatestRecord
       .drop("inDelta")
+      .removeSingletonGroups
       .as[ContactPerson]
   }
 

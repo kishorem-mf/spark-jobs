@@ -3,10 +3,13 @@ package com.unilever.ohub.spark.merging
 import java.util.UUID
 
 import com.unilever.ohub.spark.SparkJobConfig
+import com.unilever.ohub.spark.domain.entity.Operator
+import com.unilever.ohub.spark.domain.DomainEntity
 import org.apache.spark.sql.functions.udf
-import org.apache.spark.sql.{ Column, DataFrame, Dataset, SparkSession }
+import org.apache.spark.sql._
 import org.apache.spark.sql.expressions.{ UserDefinedFunction, Window }
 import org.apache.spark.sql.functions._
+import DataFrameHelpers._
 
 case class ExactMatchIngestedWithDbConfig(
     integratedInputFile: String = "path-to-integrated-input-file",
@@ -19,6 +22,35 @@ case class ExactMatchIngestedWithDbConfig(
 trait GroupingFunctions {
 
   val createOhubIdUdf: UserDefinedFunction = udf[String](() ⇒ UUID.randomUUID().toString)
+
+  def matchColumns[T <: DomainEntity: Encoder](
+    integrated: Dataset[T],
+    delta: Dataset[T],
+    columns: Seq[String])(implicit spark: SparkSession): Dataset[T] = {
+    import spark.implicits._
+
+    val sameColumns = columns.map(col)
+
+    val integratedWithExact = integrated
+      .columnsNotNullAndNotEmpty($"name")
+      .concatenateColumns("group", sameColumns)
+      .withColumn("inDelta", lit(false))
+
+    val newWithExact =
+      delta
+        .columnsNotNullAndNotEmpty($"name")
+        .concatenateColumns("group", sameColumns)
+        .withColumn("inDelta", lit(true))
+
+    integratedWithExact
+      .union(newWithExact)
+      .addOhubId
+      .drop("group")
+      .selectLatestRecord
+      .drop("inDelta")
+      .removeSingletonGroups
+      .as[T]
+  }
 }
 
 object DataFrameHelpers extends GroupingFunctions {
@@ -73,5 +105,6 @@ object DataFrameHelpers extends GroupingFunctions {
         .filter($"groupSize" > 1)
         .drop("groupSize")
     }
+
   }
 }
