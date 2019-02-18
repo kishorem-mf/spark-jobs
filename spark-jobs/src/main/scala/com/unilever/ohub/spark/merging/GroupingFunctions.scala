@@ -40,12 +40,18 @@ object DataFrameHelpers extends GroupingFunctions {
       columnsNotNullAndNotEmpty(col +: cols)
     }
 
+    /**
+     * Keep rows where all columns are not null and not empty
+     */
     def columnsNotNullAndNotEmpty(cols: Seq[Column]): Dataset[_] = {
       def notNullOrEmpty(col: Column): Column = col.isNotNull and col.notEqual("")
 
       df.filter(cols.map(c ⇒ notNullOrEmpty(c)).reduce(_ and _))
     }
 
+    /**
+     * Select latest of 2 records with similar concatId
+     */
     def selectLatestRecord(implicit spark: SparkSession): Dataset[_] = {
       import spark.implicits._
       val w2 = Window.partitionBy($"concatId")
@@ -55,6 +61,17 @@ object DataFrameHelpers extends GroupingFunctions {
         .filter($"select")
         .drop("select", "count")
     }
-  }
 
+    /**
+     * Remove groups that only contain 1 record
+     */
+    def removeSingletonGroups(implicit spark: SparkSession): Dataset[_] = {
+      import spark.implicits._
+      val w = Window.partitionBy("ohubId")
+
+      df.withColumn("groupSize", count("*").over(w))
+        .filter($"groupSize" > 1)
+        .drop("groupSize")
+    }
+  }
 }
