@@ -25,7 +25,7 @@ class CampaignConverterSpec extends CsvDomainGateKeeperSpec[Campaign] {
           countryCode = "US",
           customerType = Campaign.customerType,
           sourceEntityId = "347696686",
-          campaignConcatId= "b3a6208c~NL~EMAKINA~1003499146",
+          campaignConcatId = "b3a6208c~NL~EMAKINA~1003499146",
           sourceName = "ACM",
           isActive = true,
           ohubCreated = actualCampaign.ohubCreated,
