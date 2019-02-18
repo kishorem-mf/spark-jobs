@@ -4,7 +4,7 @@ import java.util.UUID
 
 import com.unilever.ohub.spark.SparkJobConfig
 import org.apache.spark.sql.functions.udf
-import org.apache.spark.sql.{ Column, DataFrame, SparkSession }
+import org.apache.spark.sql.{ Column, DataFrame, Dataset, SparkSession }
 import org.apache.spark.sql.expressions.{ UserDefinedFunction, Window }
 import org.apache.spark.sql.functions._
 
@@ -23,12 +23,12 @@ trait GroupingFunctions {
 
 object DataFrameHelpers extends GroupingFunctions {
 
-  implicit class Helpers(df: DataFrame) {
-    def concatenateColumns(name: String, cols: Seq[Column])(implicit spark: SparkSession): DataFrame = {
+  implicit class Helpers(df: Dataset[_]) {
+    def concatenateColumns(name: String, cols: Seq[Column])(implicit spark: SparkSession): Dataset[_] = {
       df.withColumn(name, concat(cols.map(c ⇒ when(c.isNull, "").otherwise(c)): _*))
     }
 
-    def addOhubId(implicit spark: SparkSession): DataFrame = {
+    def addOhubId(implicit spark: SparkSession): Dataset[_] = {
       import spark.implicits._
       val w1 = Window.partitionBy($"group").orderBy($"ohubId".desc_nulls_last)
       df.withColumn("ohubId", first($"ohubId").over(w1)) // preserve ohubId
@@ -36,17 +36,17 @@ object DataFrameHelpers extends GroupingFunctions {
         .withColumn("ohubId", first('ohubId).over(w1)) // make sure the whole group gets the same ohubId
     }
 
-    def columnsNotNullAndNotEmpty(col: Column, cols: Column*): DataFrame = {
+    def columnsNotNullAndNotEmpty(col: Column, cols: Column*): Dataset[_] = {
       columnsNotNullAndNotEmpty(col +: cols)
     }
 
-    def columnsNotNullAndNotEmpty(cols: Seq[Column]): DataFrame = {
+    def columnsNotNullAndNotEmpty(cols: Seq[Column]): Dataset[_] = {
       def notNullOrEmpty(col: Column): Column = col.isNotNull and col.notEqual("")
 
       df.filter(cols.map(c ⇒ notNullOrEmpty(c)).reduce(_ and _))
     }
 
-    def selectLatestRecord(implicit spark: SparkSession): DataFrame = {
+    def selectLatestRecord(implicit spark: SparkSession): Dataset[_] = {
       import spark.implicits._
       val w2 = Window.partitionBy($"concatId")
       df
