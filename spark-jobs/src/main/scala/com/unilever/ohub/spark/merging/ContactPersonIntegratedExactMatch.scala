@@ -44,20 +44,18 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
     val matchedExactEmailAndPhone: Dataset[ContactPerson] = determineExactMatchesEmailAndPhone(
       integratedContactPersons,
       dailyDeltaContactPersons)
-    matchedExactEmailAndPhone.map(r ⇒ (r.sourceEntityId, r.ohubId, r.firstName, r.emailAddress)).show
 
-    val unmatchedEmailAndPhoneIntegrated = integratedContactPersons
-      .join(matchedExactEmailAndPhone, Seq("concatId"), JoinType.LeftAnti)
-      .as[ContactPerson]
-    val unmatchedEmailAndPhoneDelta = dailyDeltaContactPersons
-      .join(matchedExactEmailAndPhone, Seq("concatId"), JoinType.LeftAnti)
-      .as[ContactPerson]
-
-    //    val columns = Seq("countryCode", "city", "street", "houseNumber", "houseNumberExtension", "zipCode", "firstName", "lastName")
-    //    val matchedExactColumns: Dataset[ContactPerson] = matchColumns[ContactPerson](
-    //      unmatchedEmailAndPhoneIntegrated,
-    //      unmatchedEmailAndPhoneDelta,
-    //      columns)
+    //    val unmatchedEmailAndPhoneIntegrated = integratedContactPersons
+    //      .join(matchedExactEmailAndPhone, Seq("concatId"), JoinType.LeftAnti)
+    //      .as[ContactPerson]
+    //    val unmatchedEmailAndPhoneDelta = dailyDeltaContactPersons
+    //      .join(matchedExactEmailAndPhone, Seq("concatId"), JoinType.LeftAnti)
+    //      .as[ContactPerson]
+    //        val columns = Seq("countryCode", "city", "street", "houseNumber", "houseNumberExtension", "zipCode", "firstName", "lastName")
+    //        val matchedExactColumns: Dataset[ContactPerson] = matchColumns[ContactPerson](
+    //          unmatchedEmailAndPhoneIntegrated,
+    //          unmatchedEmailAndPhoneDelta,
+    //          columns)
 
     val matchedExactAll = matchedExactEmailAndPhone
 

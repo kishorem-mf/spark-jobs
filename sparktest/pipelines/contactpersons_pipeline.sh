@@ -69,10 +69,10 @@ spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonMatchingJoi
                --outputFile=${DATA_CONTACTPERSONS_DELTA_GOLDEN_RECORDS}
 
 spark-submit   --class="com.unilever.ohub.spark.combining.ContactPersonCombineExactAndFuzzyMatches" ${SPARK_JOBS_JAR} \
-               --contactPersonExactMatchedInputFile=${DATA_CONTACTPERSONS_EXACT_MATCHES} \
-               --contactPersonFuzzyMatchedDeltaIntegratedInputFile=${DATA_CONTACTPERSONS_FUZZY_MATCHED_DELTA_INTEGRATED} \
-               --contactPersonsDeltaGoldenRecordsInputFile=${DATA_CONTACTPERSONS_DELTA_GOLDEN_RECORDS} \
-               --contactPersonsCombinedOutputFile=${DATA_CONTACTPERSONS_COMBINED}
+               --exactMatchedInputFile=${DATA_CONTACTPERSONS_EXACT_MATCHES} \
+               --fuzzyMatchedDeltaIntegratedInputFile=${DATA_CONTACTPERSONS_FUZZY_MATCHED_DELTA_INTEGRATED} \
+               --deltaGoldenRecordsInputFile=${DATA_CONTACTPERSONS_DELTA_GOLDEN_RECORDS} \
+               --combinedOutputFile=${DATA_CONTACTPERSONS_COMBINED}
 
 spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonReferencing" ${SPARK_JOBS_JAR} \
                --combinedInputFile=${DATA_CONTACTPERSONS_COMBINED} \

@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 object OperatorIntegratedExactMatch extends SparkJob[ExactMatchIngestedWithDbConfig] with GroupingFunctions {

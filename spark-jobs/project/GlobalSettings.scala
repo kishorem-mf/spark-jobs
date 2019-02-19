@@ -17,8 +17,8 @@ object GlobalSettings extends AutoPlugin {
   lazy val testSettings: Seq[Setting[_]] = {
     val flags = Seq(Tests.Argument("-oD"))
     Seq(
-      test in assembly := {},
-      parallelExecution in Test := false,
+      assembly / test := {},
+      Test / parallelExecution := false,
       Test / testOptions ++= flags
     )
   }

@@ -1,9 +1,9 @@
 package com.unilever.ohub.spark.combining
 
-import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{ Dataset, SparkSession }
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.row_number
 import scopt.OptionParser
@@ -11,11 +11,11 @@ import scopt.OptionParser
 import scala.reflect.runtime.universe._
 
 case class ExactAndFuzzyMatchesConfig(
-                                       exactMatchedInputFile: String = "exact-matched-input-file",
-                                       fuzzyMatchedDeltaIntegratedInputFile: String = "fuzzy-matched-delta-integrated-input-file",
-                                       deltaGoldenRecordsInputFile: String = "delta-golden-records-input-file",
-                                       combinedOutputFile: String = "combined-output-file"
-                                     ) extends SparkJobConfig
+    exactMatchedInputFile: String = "exact-matched-input-file",
+    fuzzyMatchedDeltaIntegratedInputFile: String = "fuzzy-matched-delta-integrated-input-file",
+    deltaGoldenRecordsInputFile: String = "delta-golden-records-input-file",
+    combinedOutputFile: String = "combined-output-file"
+) extends SparkJobConfig
 
 abstract class BaseCombining[T <: DomainEntity: TypeTag] extends SparkJob[ExactAndFuzzyMatchesConfig] {
 
@@ -42,20 +42,23 @@ abstract class BaseCombining[T <: DomainEntity: TypeTag] extends SparkJob[ExactA
     }
 
   def transform(
-                 spark: SparkSession,
-                 contactPersonExactMatches: Dataset[T],
-                 fuzzyMatchesDeltaIntegrated: Dataset[T],
-                 fuzzyMatchesDeltaLeftOvers: Dataset[T]
-               ): Dataset[T] = {
+    spark: SparkSession,
+    contactPersonExactMatches: Dataset[T],
+    fuzzyMatchesDeltaIntegrated: Dataset[T],
+    fuzzyMatchesDeltaLeftOvers: Dataset[T]
+  ): Dataset[T] = {
     import spark.implicits._
 
     // deduplicate contact persons by selecting the 'newest' one (based on ohubCreated) per unique concatId.
     val w = Window.partitionBy('concatId).orderBy('ohubCreated.desc)
 
-    contactPersonExactMatches
+    val all = contactPersonExactMatches
       .unionByName(fuzzyMatchesDeltaIntegrated)
       .unionByName(fuzzyMatchesDeltaLeftOvers)
-      .withColumn("rn", row_number.over(w))
+
+    all.select("sourceEntityId", "ohubCreated").show
+
+    all.withColumn("rn", row_number.over(w))
       .filter('rn === 1)
       .drop('rn)
       .as[T]
