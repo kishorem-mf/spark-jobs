@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
 
-class OperatorCombiningSpec extends SparkJobSpec with TestOperators {
+class OperatorCombineExactAndFuzzyMatchesSpec extends SparkJobSpec with TestOperators {
   import spark.implicits._
 
   describe("combining") {
@@ -12,7 +12,7 @@ class OperatorCombiningSpec extends SparkJobSpec with TestOperators {
       val d1 = spark.emptyDataset[Operator]
       val d2 = spark.emptyDataset[Operator]
 
-      val res = OperatorCombining.transform(spark, d1, d2).collect()
+      val res = OperatorCombineExactAndFuzzyMatches.transform(spark, d1, d2).collect()
 
       assert(res.length === 0)
     }
@@ -24,7 +24,7 @@ class OperatorCombiningSpec extends SparkJobSpec with TestOperators {
       ).toDataset
       val d2 = defaultOperatorWithSourceEntityId("source-entity-id-c").toDataset
 
-      val res = OperatorCombining.transform(spark, d1, d2).collect()
+      val res = OperatorCombineExactAndFuzzyMatches.transform(spark, d1, d2).collect()
 
       assert(res.length === 3)
       res.map(_.sourceEntityId) should contain theSameElementsAs Seq("source-entity-id-a", "source-entity-id-b", "source-entity-id-c")
@@ -40,7 +40,7 @@ class OperatorCombiningSpec extends SparkJobSpec with TestOperators {
         defaultOperatorWithSourceEntityId("source-entity-id-b").copy(name = Some("bar"))
       ).toDataset
 
-      val res = OperatorCombining.transform(spark, d1, d2).collect()
+      val res = OperatorCombineExactAndFuzzyMatches.transform(spark, d1, d2).collect()
 
       assert(res.length === 3)
       res.map(_.sourceEntityId) should contain theSameElementsAs Seq("source-entity-id-a", "source-entity-id-b", "source-entity-id-c")

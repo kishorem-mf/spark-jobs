@@ -2,11 +2,9 @@ package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.domain.entity.Operator
-import com.unilever.ohub.spark.merging.DataFrameHelpers._
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{ Dataset, SparkSession }
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 object OperatorIntegratedExactMatch extends SparkJob[ExactMatchIngestedWithDbConfig] with GroupingFunctions {
