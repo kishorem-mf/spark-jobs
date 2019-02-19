@@ -41,7 +41,10 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
     dailyDeltaContactPersons: Dataset[ContactPerson])(implicit spark: SparkSession): (Dataset[ContactPerson], Dataset[ContactPerson], Dataset[ContactPerson]) = {
     import spark.implicits._
 
-    val matchedExactEmailAndPhone: Dataset[ContactPerson] = determineExactMatchesEmailAndPhone(integratedContactPersons, dailyDeltaContactPersons)
+    val matchedExactEmailAndPhone: Dataset[ContactPerson] = determineExactMatchesEmailAndPhone(
+      integratedContactPersons,
+      dailyDeltaContactPersons)
+    matchedExactEmailAndPhone.map(r ⇒ (r.sourceEntityId, r.ohubId, r.firstName, r.emailAddress)).show
 
     val unmatchedEmailAndPhoneIntegrated = integratedContactPersons
       .join(matchedExactEmailAndPhone, Seq("concatId"), JoinType.LeftAnti)
@@ -50,13 +53,13 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
       .join(matchedExactEmailAndPhone, Seq("concatId"), JoinType.LeftAnti)
       .as[ContactPerson]
 
-    val columns = Seq("countryCode", "city", "street", "houseNumber", "houseNumberExtension", "zipCode", "firstName", "lastName")
-    val matchedExactColumns: Dataset[ContactPerson] = matchColumns[ContactPerson](
-      unmatchedEmailAndPhoneIntegrated,
-      unmatchedEmailAndPhoneDelta,
-      columns)
+    //    val columns = Seq("countryCode", "city", "street", "houseNumber", "houseNumberExtension", "zipCode", "firstName", "lastName")
+    //    val matchedExactColumns: Dataset[ContactPerson] = matchColumns[ContactPerson](
+    //      unmatchedEmailAndPhoneIntegrated,
+    //      unmatchedEmailAndPhoneDelta,
+    //      columns)
 
-    val matchedExactAll = matchedExactEmailAndPhone.union(matchedExactColumns)
+    val matchedExactAll = matchedExactEmailAndPhone
 
     val unmatchedIntegrated = integratedContactPersons
       .join(matchedExactAll, Seq("concatId"), JoinType.LeftAnti)
@@ -75,18 +78,16 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
     import spark.implicits._
 
     val mobileAndEmail = Seq("emailAddress", "mobileNumber").map(col)
-    val filter = $"emailAddress".isNotNull || $"mobileNumber".isNotNull
+    val emailOrPhoneNotNull = $"emailAddress".isNotNull || $"mobileNumber".isNotNull
 
     lazy val integratedWithExact = integratedContactPersons
-      .toDF
-      .filter(filter)
+      .filter(emailOrPhoneNotNull)
       .concatenateColumns("group", mobileAndEmail)
       .withColumn("inDelta", lit(false))
 
     lazy val newWithExact =
       dailyDeltaContactPersons
-        .toDF
-        .filter(filter)
+        .filter(emailOrPhoneNotNull)
         .concatenateColumns("group", mobileAndEmail)
         .withColumn("inDelta", lit(true))
 
@@ -96,7 +97,7 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
       .drop("group")
       .selectLatestRecord
       .drop("inDelta")
-      .removeSingletonGroups
+      //      .removeSingletonGroups
       .as[ContactPerson]
   }
 
