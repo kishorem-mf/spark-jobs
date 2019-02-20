@@ -24,13 +24,13 @@ abstract class BaseCombining[T <: DomainEntity: TypeTag] extends SparkJob[ExactA
   override private[spark] def configParser(): OptionParser[ExactAndFuzzyMatchesConfig] =
     new scopt.OptionParser[ExactAndFuzzyMatchesConfig]("Exact and fuzzy matches combiner") {
       head("combines dataset from exact matches and fuzzy matches", "1.0")
-      opt[String]("ExactMatchedInputFile") required () action { (x, c) ⇒
+      opt[String]("exactMatchedInputFile") required () action { (x, c) ⇒
         c.copy(exactMatchedInputFile = x)
       } text "exactMatchedInputFile is a string property"
       opt[String]("fuzzyMatchedDeltaIntegratedInputFile") required () action { (x, c) ⇒
         c.copy(fuzzyMatchedDeltaIntegratedInputFile = x)
       } text "fuzzyMatchedDeltaIntegratedInputFile is a string property"
-      opt[String]("contactPersonsDeltaGoldenRecordsInputFile") required () action { (x, c) ⇒
+      opt[String]("deltaGoldenRecordsInputFile") required () action { (x, c) ⇒
         c.copy(deltaGoldenRecordsInputFile = x)
       } text "deltaGoldenRecordsInputFile is a string property"
       opt[String]("combinedOutputFile") required () action { (x, c) ⇒

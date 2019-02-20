@@ -30,19 +30,27 @@ DATA_OPERATORS_FUZZY_MATCHED_DELTA="${DATA_ROOT_DIR}intermediate/operators_fuzzy
 DATA_OPERATORS_DELTA_GOLDEN_RECORDS="${DATA_ROOT_DIR}intermediate/operators_delta_golden_records.parquet"
 DATA_OPERATORS_COMBINED="${DATA_ROOT_DIR}intermediate/operators_combined.parquet"
 
+echo
+echo OperatorEmptyIntegratedWriter
 spark-submit   --class="com.unilever.ohub.spark.ingest.initial.OperatorEmptyIntegratedWriter" ${SPARK_JOBS_JAR} \
                --outputFile=${DATA_OPERATORS_INTEGRATED_INPUT}
 
+echo
+echo OperatorConverter
 spark-submit   --class="com.unilever.ohub.spark.ingest.common.OperatorConverter" ${SPARK_JOBS_JAR} \
                --inputFile=${DATA_OPERATORS_RAW} \
                --outputFile=${DATA_OPERATORS_INGESTED} \
                --fieldSeparator=";" --strictIngestion="false" --deduplicateOnConcatId="true"
 
+echo
+echo OperatorPreProcess
 spark-submit   --class="com.unilever.ohub.spark.merging.OperatorPreProcess" ${SPARK_JOBS_JAR} \
                --integratedInputFile=${DATA_OPERATORS_INTEGRATED_INPUT} \
                --deltaInputFile=${DATA_OPERATORS_INGESTED} \
                --deltaPreProcessedOutputFile=${DATA_OPERATORS_PRE_PROCESSED}
 
+echo
+echo OperatorIntegratedExactMatch
 spark-submit   --class="com.unilever.ohub.spark.merging.OperatorIntegratedExactMatch" ${SPARK_JOBS_JAR} \
                --integratedInputFile=${DATA_OPERATORS_INTEGRATED_INPUT} \
                --deltaInputFile=${DATA_OPERATORS_PRE_PROCESSED} \
@@ -50,6 +58,8 @@ spark-submit   --class="com.unilever.ohub.spark.merging.OperatorIntegratedExactM
                --unmatchedIntegratedOutputFile=${DATA_OPERATORS_UNMATCHED_INTEGRATED} \
                --unmatchedDeltaOutputFile=${DATA_OPERATORS_UNMATCHED_DELTA}
 
+echo
+echo fuzzy match delta vs integrated
 spark-submit   --py-files=${SPARK_JOBS_EGG} ${PYTHON_DELTA_OPERATORS} \
                --integrated_input_path=${DATA_OPERATORS_UNMATCHED_INTEGRATED} \
                --ingested_daily_input_path=${DATA_OPERATORS_UNMATCHED_DELTA} \
@@ -58,23 +68,31 @@ spark-submit   --py-files=${SPARK_JOBS_EGG} ${PYTHON_DELTA_OPERATORS} \
                --min_norm_name_levenshtein_sim=0 \
                --country_code="DE"
 
+echo
+echo fuzzy match delta leftovers
 spark-submit   --py-files=${SPARK_JOBS_EGG} ${PYTHON_MATCH_OPERATORS} \
                --input_file=${DATA_OPERATORS_DELTA_LEFT_OVERS} \
                --output_path=${DATA_OPERATORS_FUZZY_MATCHED_DELTA} \
                --min_norm_name_levenshtein_sim=0 \
                --country_code="DE"
 
+echo
+echo OperatorMatchingJoiner
 spark-submit   --class="com.unilever.ohub.spark.merging.OperatorMatchingJoiner" ${SPARK_JOBS_JAR} \
                --matchingInputFile=${DATA_OPERATORS_FUZZY_MATCHED_DELTA} \
                --entityInputFile=${DATA_OPERATORS_DELTA_LEFT_OVERS} \
                --outputFile=${DATA_OPERATORS_DELTA_GOLDEN_RECORDS}
 
+echo
+echo OperatorCombineExactAndFuzzyMatches
 spark-submit   --class="com.unilever.ohub.spark.combining.OperatorCombineExactAndFuzzyMatches" ${SPARK_JOBS_JAR} \
                --exactMatchedInputFile=${DATA_OPERATORS_EXACT_MATCHES} \
                --fuzzyMatchedDeltaIntegratedInputFile=${DATA_OPERATORS_FUZZY_MATCHED_DELTA_INTEGRATED} \
                --deltaGoldenRecordsInputFile=${DATA_OPERATORS_DELTA_GOLDEN_RECORDS} \
                --combinedOutputFile=${DATA_OPERATORS_COMBINED}
 
+echo
+echo OperatorUpdateGoldenRecord
 spark-submit   --class="com.unilever.ohub.spark.merging.OperatorUpdateGoldenRecord" ${SPARK_JOBS_JAR} \
                --inputFile=${DATA_OPERATORS_COMBINED} \
                --outputFile=${DATA_OPERATORS_INTEGRATED_OUTPUT}
