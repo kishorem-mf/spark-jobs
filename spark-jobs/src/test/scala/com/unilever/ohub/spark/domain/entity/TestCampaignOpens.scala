@@ -32,7 +32,7 @@ trait TestCampaignOpens {
     operatorConcatId = Some("CH~573452~1~4"),
     operatorOhubId = Option.empty,
     openDate = Timestamp.valueOf("2016-04-17 18:00:30.0"),
-    deliveryLogId = "6605058",
+    deliveryLogId = Some("6605058"),
 
     additionalFields = Map(),
     ingestionErrors = Map()
