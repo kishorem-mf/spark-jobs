@@ -42,7 +42,7 @@ case class CampaignOpen(
     operatorConcatId: Option[String],
     operatorOhubId: Option[String],
     openDate: Timestamp,
-    deliveryLogId: String,
+    deliveryLogId: Option[String],
 
     // other fields
     additionalFields: Map[String, String],
