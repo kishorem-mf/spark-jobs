@@ -57,10 +57,10 @@ object OrderLineOrderTypeMigration extends SparkJob[OrderLineOrderTypeMigrationC
     val orderLinesRecords = storage.readFromParquet[OrderLine](config.orderLinesIntegratedFile)
 
     if (orderLinesRecords.filter($"orderType".isNull).count() > 0) { // Only convert if there are undefined orderTypes
-        val orderRecords = storage.readFromParquet[Order](config.ordersIntegratedFile)
-        val transformed = transform(spark, orderLinesRecords, orderRecords)
+      val orderRecords = storage.readFromParquet[Order](config.ordersIntegratedFile)
+      val transformed = transform(spark, orderLinesRecords, orderRecords)
 
-        storage.writeToParquet(transformed, config.orderLinesIntegratedFile)
+      storage.writeToParquet(transformed, config.orderLinesIntegratedFile)
     }
   }
 }
