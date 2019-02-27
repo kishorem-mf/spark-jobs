@@ -36,7 +36,7 @@ object CampaignConverter extends CommonDomainGateKeeper[Campaign] with CampaignE
       contactPersonConcatId       = mandatory(                  "contactPersonConcatId",      "contactPersonConcatId"),
       contactPersonOhubId         = Option.empty,
       campaignId                  = mandatory(                  "campaignId",                 "campaignId"),
-      campaignName                = mandatory(                  "campaignName",               "campaignName"),
+      campaignName                = optional(                   "campaignName",               "campaignName"),
       deliveryId                  = mandatory(                  "deliveryId",                 "deliveryId"),
       deliveryName                = mandatory(                  "deliveryName",               "deliveryName"),
       campaignSpecification       = mandatory(                  "campaignSpecification",      "campaignSpecification"),
