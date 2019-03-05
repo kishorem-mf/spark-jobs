@@ -1,10 +1,13 @@
 package com.unilever.ohub.spark.merging
 
+import java.util
+
 import com.unilever.ohub.spark.{ DefaultConfig, SparkJobWithDefaultDbConfig }
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.DomainDataProvider
 import org.apache.spark.sql.{ Dataset, SparkSession }
+import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 
 object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with GoldenRecordPicking[Operator] {
@@ -17,18 +20,40 @@ object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with Golde
   def transform(
     spark: SparkSession,
     operators: Dataset[Operator],
-    sourcePreference: Map[String, Int]
+    sourcePreference: Map[String, Int],
+    sizeThreshold: Int = 250000
   ): Dataset[Operator] = {
     import spark.implicits._
 
-    operators
+    val toBigMan: Array[String] = operators
+      .groupBy("ohubId")
+      .count
+      .filter($"count" >= sizeThreshold)
+      .select("ohubId")
+      .as[String]
+      .collect()
+
+    val goldenRecordCorrect = operators
       .map(x ⇒ x.ohubId.get -> x)
       .toDF("ohubId", "operator")
+      .filter($"ohubId".isin(toBigMan: _*) === false)
       .groupBy("ohubId")
       .agg(collect_list($"operator").as("operators"))
-      .as[(String, Seq[Operator])]
-      .map(_._2)
+      .select("operators")
+      .as[Seq[Operator]]
       .flatMap(markGoldenRecord(sourcePreference))
+      .checkpoint
+
+    val w = Window.partitionBy($"ohubId").orderBy($"concatId")
+    val goldenRecordCheap = operators
+      .filter($"ohubId".isin(toBigMan: _*) === true)
+      .withColumn("rn", row_number().over(w))
+      .withColumn("isGoldenRecord", when($"rn" === 1, true).otherwise(false))
+      .drop("rn")
+      .as[Operator]
+      .checkpoint
+
+    goldenRecordCorrect.unionByName(goldenRecordCheap)
   }
 
   override def run(spark: SparkSession, config: DefaultConfig, storage: Storage): Unit = {
