@@ -1,6 +1,6 @@
 
 lazy val `spark-jobs` = project.in(file("."))
-  .enablePlugins(SparkDependencies)
+  .enablePlugins(SparkDependencies, GlobalSettings)
   .configs(IntegrationTest)
 
 assembly / test := {}
