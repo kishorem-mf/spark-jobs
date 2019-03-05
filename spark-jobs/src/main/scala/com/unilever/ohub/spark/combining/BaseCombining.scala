@@ -43,7 +43,7 @@ abstract class BaseCombining[T <: DomainEntity: TypeTag] extends SparkJob[ExactA
 
   def transform(
     spark: SparkSession,
-    contactPersonExactMatches: Dataset[T],
+    exactMatches: Dataset[T],
     fuzzyMatchesDeltaIntegrated: Dataset[T],
     fuzzyMatchesDeltaLeftOvers: Dataset[T]
   ): Dataset[T] = {
@@ -52,7 +52,7 @@ abstract class BaseCombining[T <: DomainEntity: TypeTag] extends SparkJob[ExactA
     // deduplicate records by selecting the 'newest' one (based on ohubCreated) per unique concatId.
     val w = Window.partitionBy('concatId).orderBy('ohubCreated.desc)
 
-    val all = contactPersonExactMatches
+    val all = exactMatches
       .unionByName(fuzzyMatchesDeltaIntegrated)
       .unionByName(fuzzyMatchesDeltaLeftOvers)
 
