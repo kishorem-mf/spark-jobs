@@ -6,6 +6,7 @@ import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
+import DataFrameHelpers._
 
 object OperatorIntegratedExactMatch extends SparkJob[ExactMatchIngestedWithDbConfig] with GroupingFunctions {
 
@@ -41,9 +42,15 @@ object OperatorIntegratedExactMatch extends SparkJob[ExactMatchIngestedWithDbCon
     val columns = Seq("countryCode", "city", "street", "houseNumber", "houseNumberExtension", "zipCode", "name")
     val matchedExact: Dataset[Operator] = matchColumns[Operator](integratedRecords, dailyDeltaRecords, columns)
 
+    val oneRecordPerMatchingGroup = matchedExact
+      .grabOneRecordPerGroup
+      .as[Operator]
+
+    // This now also includes one matched record per matching group, to be used in fuzzy matching
     val unmatchedIntegrated = integratedRecords
       .join(matchedExact, Seq("concatId"), JoinType.LeftAnti)
       .as[Operator]
+      .unionByName(oneRecordPerMatchingGroup)
 
     val unmatchedDelta = dailyDeltaRecords
       .join(matchedExact, Seq("concatId"), JoinType.LeftAnti)

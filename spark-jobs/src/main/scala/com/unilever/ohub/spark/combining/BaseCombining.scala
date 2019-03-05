@@ -49,16 +49,15 @@ abstract class BaseCombining[T <: DomainEntity: TypeTag] extends SparkJob[ExactA
   ): Dataset[T] = {
     import spark.implicits._
 
-    // deduplicate contact persons by selecting the 'newest' one (based on ohubCreated) per unique concatId.
+    // deduplicate records by selecting the 'newest' one (based on ohubCreated) per unique concatId.
     val w = Window.partitionBy('concatId).orderBy('ohubCreated.desc)
 
     val all = contactPersonExactMatches
       .unionByName(fuzzyMatchesDeltaIntegrated)
       .unionByName(fuzzyMatchesDeltaLeftOvers)
 
-    all.select("sourceEntityId", "ohubCreated").show
-
-    all.withColumn("rn", row_number.over(w))
+    all
+      .withColumn("rn", row_number.over(w))
       .filter('rn === 1)
       .drop('rn)
       .as[T]

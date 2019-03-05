@@ -21,7 +21,7 @@ case class ExactMatchIngestedWithDbConfig(
 
 trait GroupingFunctions {
 
-  val createOhubIdUdf: UserDefinedFunction = udf[String](() ⇒ UUID.randomUUID().toString)
+  val createOhubIdUdf: UserDefinedFunction = udf((d: Double) ⇒ UUID.nameUUIDFromBytes(d.toString.getBytes).toString)
 
   def matchColumns[T <: DomainEntity: Encoder](
     integrated: Dataset[T],
@@ -48,12 +48,13 @@ trait GroupingFunctions {
       .drop("group")
       .selectLatestRecord
       .drop("inDelta")
-      .removeSingletonGroups
       .as[T]
   }
 }
 
 object DataFrameHelpers extends GroupingFunctions {
+
+  private val SEED = 666
 
   implicit class Helpers(df: Dataset[_]) {
     def concatenateColumns(name: String, cols: Seq[Column])(implicit spark: SparkSession): Dataset[_] = {
@@ -64,8 +65,10 @@ object DataFrameHelpers extends GroupingFunctions {
       import spark.implicits._
       val w1 = Window.partitionBy($"group").orderBy($"ohubId".desc_nulls_last)
       df.withColumn("ohubId", first($"ohubId").over(w1)) // preserve ohubId
-        .withColumn("ohubId", when('ohubId.isNull, createOhubIdUdf()).otherwise('ohubId))
+        .withColumn("rand", rand(SEED))
+        .withColumn("ohubId", when('ohubId.isNull, createOhubIdUdf($"rand")).otherwise('ohubId))
         .withColumn("ohubId", first('ohubId).over(w1)) // make sure the whole group gets the same ohubId
+        .drop("rand")
     }
 
     def columnsNotNullAndNotEmpty(col: Column, cols: Column*): Dataset[_] = {
@@ -106,5 +109,13 @@ object DataFrameHelpers extends GroupingFunctions {
         .drop("groupSize")
     }
 
+    def grabOneRecordPerGroup(implicit spark: SparkSession): Dataset[_] = {
+      import spark.implicits._
+      val w = Window.partitionBy("ohubId").orderBy($"concatId")
+      df.withColumn("rn", row_number().over(w))
+        .filter($"rn" === 1)
+        .drop("rn")
+    }
   }
+
 }
