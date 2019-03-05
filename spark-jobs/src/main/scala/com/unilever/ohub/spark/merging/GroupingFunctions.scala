@@ -65,8 +65,11 @@ object DataFrameHelpers extends GroupingFunctions {
       import spark.implicits._
       val w1 = Window.partitionBy($"group").orderBy($"ohubId".desc_nulls_last)
       df.withColumn("ohubId", first($"ohubId").over(w1)) // preserve ohubId
+
+        // the next two lines will select a deterministic random ohubId
         .withColumn("rand", rand(SEED))
         .withColumn("ohubId", when('ohubId.isNull, createOhubIdUdf($"rand")).otherwise('ohubId))
+
         .withColumn("ohubId", first('ohubId).over(w1)) // make sure the whole group gets the same ohubId
         .drop("rand")
     }
@@ -95,18 +98,6 @@ object DataFrameHelpers extends GroupingFunctions {
         .withColumn("select", when($"count" > 1, $"inDelta").otherwise(lit(true))) // select latest record
         .filter($"select")
         .drop("select", "count")
-    }
-
-    /**
-     * Remove groups that only contain 1 record
-     */
-    def removeSingletonGroups(implicit spark: SparkSession): Dataset[_] = {
-      import spark.implicits._
-      val w = Window.partitionBy("ohubId")
-
-      df.withColumn("groupSize", count("*").over(w))
-        .filter($"groupSize" > 1)
-        .drop("groupSize")
     }
 
     def grabOneRecordPerGroup(implicit spark: SparkSession): Dataset[_] = {

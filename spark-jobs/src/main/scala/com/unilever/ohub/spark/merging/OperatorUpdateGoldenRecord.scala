@@ -1,12 +1,9 @@
 package com.unilever.ohub.spark.merging
 
-import java.util
-
-import com.unilever.ohub.spark.{ DefaultConfig, SparkJobWithDefaultDbConfig }
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.DomainDataProvider
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import com.unilever.ohub.spark.{DefaultConfig, DomainDataProvider, SparkJobWithDefaultDbConfig}
+import org.apache.spark.sql.{Dataset, SparkSession}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 
@@ -25,7 +22,7 @@ object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with Golde
   ): Dataset[Operator] = {
     import spark.implicits._
 
-    val toBigMan: Array[String] = operators
+    val ohubIdHavingEnormousGroups: Array[String] = operators
       .groupBy("ohubId")
       .count
       .filter($"count" >= sizeThreshold)
@@ -33,25 +30,29 @@ object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with Golde
       .as[String]
       .collect()
 
+    // original way of selecting golden records using source preferences
     val goldenRecordCorrect = operators
       .map(x ⇒ x.ohubId.get -> x)
       .toDF("ohubId", "operator")
-      .filter($"ohubId".isin(toBigMan: _*) === false)
+      .filter($"ohubId".isin(ohubIdHavingEnormousGroups: _*) === false)
       .groupBy("ohubId")
       .agg(collect_list($"operator").as("operators"))
       .select("operators")
       .as[Seq[Operator]]
       .flatMap(markGoldenRecord(sourcePreference))
-      .checkpoint
+      .checkpoint // checkpoints are needed to remove the lineage of the dataset, otherwise it causes a diamond problem on the unionByName
 
+
+    // spark will run out of memory, due to the flatmap and some partitions/groups having over 1M records
+    // this will select the golden records by picking the very first record per group, sorted arbitrarily, avoiding the out of memeory issue
     val w = Window.partitionBy($"ohubId").orderBy($"concatId")
     val goldenRecordCheap = operators
-      .filter($"ohubId".isin(toBigMan: _*) === true)
+      .filter($"ohubId".isin(ohubIdHavingEnormousGroups: _*) === true)
       .withColumn("rn", row_number().over(w))
       .withColumn("isGoldenRecord", when($"rn" === 1, true).otherwise(false))
       .drop("rn")
       .as[Operator]
-      .checkpoint
+      .checkpoint // checkpoints are needed to remove the lineage of the dataset, otherwise it causes a diamond problem on the unionByName
 
     goldenRecordCorrect.unionByName(goldenRecordCheap)
   }

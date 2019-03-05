@@ -101,19 +101,4 @@ class GroupingFunctionsSpec extends SparkJobSpec {
       res(2).id shouldBe 4
     }
   }
-
-  describe("DataFrameHelpers.removeSingletonGroups") {
-    it("should remove groups of size 1") {
-      val df = Seq(
-        DummyRecord(1, "goup1", "id1"),
-        DummyRecord(2, "goup1", "id2"),
-        DummyRecord(3, "goup2", "id2")
-      ).toDS
-
-      val res = df.removeSingletonGroups.as[DummyRecord].collect
-
-      res.length shouldBe 2
-      res.head.ohubId shouldBe "id2"
-    }
-  }
 }
