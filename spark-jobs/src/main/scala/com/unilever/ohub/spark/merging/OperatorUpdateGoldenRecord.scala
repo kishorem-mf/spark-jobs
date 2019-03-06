@@ -2,12 +2,14 @@ package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{DefaultConfig, DomainDataProvider, SparkJobWithDefaultDbConfig}
-import org.apache.spark.sql.{Dataset, SparkSession}
+import com.unilever.ohub.spark.{ DefaultConfig, DomainDataProvider, SparkJobWithDefaultDbConfig }
+import org.apache.spark.internal.Logging
+import org.apache.spark.sql.{ Dataset, SparkSession }
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 
 object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with GoldenRecordPicking[Operator] {
+  val DEFAULT_CHECKPOINT_DIR = "/checkpoints"
 
   def markGoldenRecord(sourcePreference: Map[String, Int])(operators: Seq[Operator]): Seq[Operator] = {
     val goldenRecord = pickGoldenRecord(sourcePreference, operators)
@@ -42,7 +44,6 @@ object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with Golde
       .flatMap(markGoldenRecord(sourcePreference))
       .checkpoint // checkpoints are needed to remove the lineage of the dataset, otherwise it causes a diamond problem on the unionByName
 
-
     // spark will run out of memory, due to the flatmap and some partitions/groups having over 1M records
     // this will select the golden records by picking the very first record per group, sorted arbitrarily, avoiding the out of memeory issue
     val w = Window.partitionBy($"ohubId").orderBy($"concatId")
@@ -65,6 +66,12 @@ object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with Golde
     val operators = storage.readFromParquet[Operator](config.inputFile)
     val transformed = transform(spark, operators, dataProvider.sourcePreferences)
 
+    spark.sparkContext.getCheckpointDir match {
+      case Some(dir) ⇒ log.info(s"checkpoint directory already set to $dir")
+      case None ⇒
+        log.info(s"checkpoint directory not set, setting to $DEFAULT_CHECKPOINT_DIR")
+        spark.sparkContext.setCheckpointDir(DEFAULT_CHECKPOINT_DIR)
+    }
     storage.writeToParquet(transformed, config.outputFile)
   }
 }
