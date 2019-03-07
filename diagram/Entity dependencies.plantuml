@@ -21,13 +21,9 @@ title Entity can be run after...
 CP --> OP
 
 OD --> CP
-' OD --> OP
 
-' OL --> OD
-' OL --> OP
 OL ----> PD
 
-' AC --> OP
 AC --> CP
 
 QU --> AC
@@ -36,17 +32,12 @@ AN --> QU
 
 SC --> CP
 
-' LP --> OP
 LP --> CP
 
 CMP ---> CP
-' CMPC ---> OP
 CMPC ---> CP
-' CMPB ---> OP
 CMPB ---> CP
-' CMPS ---> OP
 CMPS ---> CP
-' CMPO ---> OP
 CMPO ---> CP
 
 @enduml
