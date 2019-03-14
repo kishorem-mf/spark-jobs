@@ -6,6 +6,9 @@ object TestOrderLines extends TestOrderLines
 
 trait TestOrderLines {
 
+  def orderLineWithOrderTypeSSD(): OrderLine = defaultOrderLine.copy(orderType = Some("SSD"))
+  def orderLineWithOrderTypeTRANSFER(): OrderLine = defaultOrderLine.copy(orderType = Some("TRANSFER"))
+
   // format: OFF
   lazy val defaultOrderLine: OrderLine = OrderLine(
     id = "id-1",
