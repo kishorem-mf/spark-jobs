@@ -6,6 +6,10 @@ object TestOrders extends TestOrders
 
 trait TestOrders {
 
+  def orderWithOrderTypeSSD(): Order = defaultOrder.copy(`type` = "SSD")
+  def orderWithOrderTypeTRANSFER(): Order = defaultOrder.copy(`type` = "TRANSFER")
+
+
   // format: OFF
   lazy val defaultOrder: Order = Order(
     id = "id-1",
@@ -39,23 +43,23 @@ trait TestOrders {
     transactionDate = Some(Timestamp.valueOf("2015-06-30 13:49:00.0")),
     vat = None,
     // invoice address
-    invoiceOperatorName                   = Some("invoiceOperatorName"),
-    invoiceOperatorStreet                 = Some("invoiceOperatorStreet"),
-    invoiceOperatorHouseNumber            = Some("invoiceOperatorHouseNumber"),
-    invoiceOperatorHouseNumberExtension   = Some("invoiceOperatorHouseNumberExtension"),
-    invoiceOperatorZipCode                = Some("invoiceOperatorZipCode"),
-    invoiceOperatorCity                   = Some("invoiceOperatorCity"),
-    invoiceOperatorState                  = Some("invoiceOperatorState"),
-    invoiceOperatorCountry                = Some("invoiceOperatorCountry"),
+    invoiceOperatorName = Some("invoiceOperatorName"),
+    invoiceOperatorStreet = Some("invoiceOperatorStreet"),
+    invoiceOperatorHouseNumber = Some("invoiceOperatorHouseNumber"),
+    invoiceOperatorHouseNumberExtension = Some("invoiceOperatorHouseNumberExtension"),
+    invoiceOperatorZipCode = Some("invoiceOperatorZipCode"),
+    invoiceOperatorCity = Some("invoiceOperatorCity"),
+    invoiceOperatorState = Some("invoiceOperatorState"),
+    invoiceOperatorCountry = Some("invoiceOperatorCountry"),
     // delivery address
-    deliveryOperatorName                  = Some("deliveryOperatorName"),
-    deliveryOperatorStreet                = Some("deliveryOperatorStreet"),
-    deliveryOperatorHouseNumber           = Some("deliveryOperatorHouseNumber"),
-    deliveryOperatorHouseNumberExtension  = Some("deliveryOperatorHouseNumberExtension"),
-    deliveryOperatorZipCode               = Some("deliveryOperatorZipCode"),
-    deliveryOperatorCity                  = Some("deliveryOperatorCity"),
-    deliveryOperatorState                 = Some("deliveryOperatorState"),
-    deliveryOperatorCountry               = Some("deliveryOperatorCountry"),
+    deliveryOperatorName = Some("deliveryOperatorName"),
+    deliveryOperatorStreet = Some("deliveryOperatorStreet"),
+    deliveryOperatorHouseNumber = Some("deliveryOperatorHouseNumber"),
+    deliveryOperatorHouseNumberExtension = Some("deliveryOperatorHouseNumberExtension"),
+    deliveryOperatorZipCode = Some("deliveryOperatorZipCode"),
+    deliveryOperatorCity = Some("deliveryOperatorCity"),
+    deliveryOperatorState = Some("deliveryOperatorState"),
+    deliveryOperatorCountry = Some("deliveryOperatorCountry"),
     // other fields
     additionalFields = Map(),
     ingestionErrors = Map()
