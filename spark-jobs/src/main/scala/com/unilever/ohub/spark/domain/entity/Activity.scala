@@ -34,6 +34,7 @@ case class Activity(
     contactPersonOhubId: Option[String],
     operatorConcatId: Option[String],
     operatorOhubId: Option[String],
+    activityId: Option[String],
 
     // other fields
     additionalFields: Map[String, String],

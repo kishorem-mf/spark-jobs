@@ -42,6 +42,7 @@ class ActivityConverterSpec extends CsvDomainGateKeeperSpec[Activity] {
           contactPersonOhubId = None,
           operatorConcatId = Some("DE~EMAKINA~789"),
           operatorOhubId = None,
+          activityId = Some("232323"),
 
           additionalFields = Map(),
           ingestionErrors = Map()
