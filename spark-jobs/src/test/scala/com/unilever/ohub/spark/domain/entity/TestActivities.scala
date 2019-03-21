@@ -30,6 +30,7 @@ trait TestActivities {
     contactPersonOhubId = None,
     operatorConcatId = Some("DE~SUBSCRIPTION~138175"),
     operatorOhubId = None,
+    activityId = Some("232323"),
 
     additionalFields = Map(),
     ingestionErrors = Map()
