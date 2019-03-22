@@ -82,5 +82,31 @@ class ContactPersonUpdateGoldenRecordSpec extends SparkJobSpec with TestContactP
         (Some("ohub-id-1"), "WEB_EVENT", false)
       )
     }
+
+    it("should favor Newest contact person based on isGoldenRecord and mark it as a golden record") {
+      val contactPersons: Dataset[ContactPerson] = Seq[ContactPerson](
+        defaultContactPerson.copy(ohubId = Some("ohub-id-1"), sourceName = "EMAKINA",
+          dateUpdated = Some(new Timestamp(2l)),
+          dateCreated = Some(new Timestamp(1l)),
+          ohubUpdated = new Timestamp(1l),
+          isGoldenRecord = true
+        ),
+        defaultContactPerson.copy(ohubId = Some("ohub-id-1"), sourceName = "WEB_EVENT",
+          dateUpdated = Some(new Timestamp(2l)),
+          dateCreated = Some(new Timestamp(1l)),
+          ohubUpdated = new Timestamp(1l)
+        )
+      ).toDataset
+
+      val result = SUT
+        .transform(spark, contactPersons, TestDomainDataProvider().sourcePreferences)
+        .map(cp ⇒ (cp.ohubId, cp.sourceName, cp.isGoldenRecord))
+        .collect().toSet
+
+      result shouldBe Set(
+        (Some("ohub-id-1"), "EMAKINA", true),
+        (Some("ohub-id-1"), "WEB_EVENT", false)
+      )
+    }
   }
 }
