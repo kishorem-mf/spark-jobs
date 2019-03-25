@@ -261,7 +261,7 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
       val productOhubId = "product-ohub-id"
 
       val recordWithValidProductConcatId = defaultOrderLine.copy(
-        isGoldenRecord = false,
+        isGoldenRecord = true,
         ohubId = Some("oldId"),
         countryCode = "withProductId",
         concatId = s"withProductId~${defaultOrderLine.sourceName}~${defaultOrderLine.sourceEntityId}",
@@ -271,7 +271,7 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
 
       val recordWithUnknownProductConcatId = defaultOrderLine.copy(
         isGoldenRecord = true,
-        ohubId = Some("oldId"),
+        ohubId = Some("otherId"),
         countryCode = "withoutProductId",
         concatId = s"withoutProductId~${defaultOrderLine.sourceName}~${defaultOrderLine.sourceEntityId}",
         productConcatId = "unknown-product-id",
