@@ -50,22 +50,23 @@ object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
     import spark.implicits._
 
     val allOrderLines = previousIntegrated
-      .withColumn("inDelta", lit(0)) // false --> Just to be sure, use a number for internal column
+      .withColumn("isInDelta", lit(false))
       .union(orderLines
-        .withColumn("inDelta", lit(1)) // true
+        .withColumn("isInDelta", lit(true))
       )
 
-    val w = Window.partitionBy($"orderConcatId").orderBy($"inDelta".desc) // true(=1) first is existent
+    val w = Window.partitionBy($"orderConcatId").orderBy($"isInDelta".desc)
     val w2 = Window.partitionBy($"orderConcatId").orderBy($"ohubId".desc_nulls_last)
 
     val allOrderLinesGrouped =
       allOrderLines
-        .withColumn("firstInDelta", first('inDelta).over(w))
+        .withColumn("newestIsInDelta", first('isInDelta).over(w))
         .withColumn("ohubId", first('ohubId).over(w2)) // Copy ohubId from older version
         // Only record provided in the delta are set on golden.
         // If the order is also present in the integrated, that one is set on non-golden
-        .withColumn("isGoldenRecord", $"inDelta" === $"firstInDelta")
-        .drop($"inDelta")
+        .withColumn("isGoldenRecord", $"isInDelta" === $"newestIsInDelta" && $"isGoldenRecord")
+        .drop($"isInDelta")
+        .filter($"isGoldenRecord") // We only keep golden records
         .as[OrderLine]
         .map(l ⇒ l.orderConcatId -> l)
         .toDF("orderConcatId", "orderLine")
@@ -78,7 +79,7 @@ object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
     allOrderLinesGrouped
       .joinWith(products, $"productConcatId" === products("concatId"), "left")
       .map {
-        case (order, product) ⇒
+        case (order, product) =>
           if (product == null) order
           else order.copy(productOhubId = product.ohubId)
       }
