@@ -38,18 +38,21 @@ class GoldenRecordPickingSpec extends SparkJobSpec with TestOperators {
       assert(golden.sourceName === "sourceA")
     }
 
-    it("should pick the operator that was already golden when dateCreated and source are equal") {
+    it("should pick the operator that was already golden when dateCreated and sourcePreferences are equal") {
       val sourcePreferences = Map(
         "sourceA" -> 1,
         "sourceB" -> 1
       )
+
+      val date = Timestamp.valueOf("2017-05-25 12:00:00");
       val operators = Seq(
-        defaultOperatorWithSourceName("sourceA").copy(dateCreated = Some(Timestamp.valueOf("2017-05-25 12:00:00"))),
-        defaultOperatorWithSourceName("sourceB").copy(isGoldenRecord = true, dateCreated = Some(Timestamp.valueOf("2017-05-25 12:00:00")))
+        defaultOperatorWithSourceName("sourceA").copy(dateCreated = Some(date)),
+        defaultOperatorWithSourceName("sourceB").copy(dateCreated = Some(date), isGoldenRecord = true)
       )
       val golden = Foo().pickGoldenRecord(sourcePreferences, operators)
 
       assert(golden.sourceName === "sourceB")
+
     }
   }
 }
