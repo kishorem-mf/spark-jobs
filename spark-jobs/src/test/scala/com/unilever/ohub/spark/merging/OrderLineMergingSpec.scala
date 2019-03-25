@@ -17,7 +17,7 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
 
     it("a single orderline should get an ohubId and be marked as golden record") {
       val singleOrderLine = defaultOrderLine.copy(
-        isGoldenRecord = false,
+        isGoldenRecord = true,
         orderConcatId = "order-1",
         ohubUpdated = Timestamp.valueOf("2018-10-05 10:30:45"),
         ohubId = None,
@@ -42,7 +42,7 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
 
     it("two orderlines of the same order should get the same ohubId") {
       val orderLine1 = defaultOrderLine.copy(
-        isGoldenRecord = false,
+        isGoldenRecord = true,
         orderConcatId = "order-1",
         ohubUpdated = Timestamp.valueOf("2018-10-05 10:30:45"),
         ohubId = None,
@@ -50,7 +50,7 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
         isActive = true)
 
       val orderLine2 = defaultOrderLine.copy(
-        isGoldenRecord = false,
+        isGoldenRecord = true,
         orderConcatId = "order-1",
         ohubUpdated = Timestamp.valueOf("2018-10-05 10:30:45"),
         ohubId = None,
@@ -80,7 +80,7 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
 
     it("two orderlines of two distinct orders should get a different ohubId") {
       val orderLine1 = defaultOrderLine.copy(
-        isGoldenRecord = false,
+        isGoldenRecord = true,
         orderConcatId = "order-1",
         ohubUpdated = Timestamp.valueOf("2018-10-05 10:30:45"),
         ohubId = None,
@@ -88,7 +88,7 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
         isActive = true)
 
       val orderLine2 = defaultOrderLine.copy(
-        isGoldenRecord = false,
+        isGoldenRecord = true,
         orderConcatId = "order-2",
         ohubUpdated = Timestamp.valueOf("2017-09-01 10:30:45"),
         ohubId = None,
@@ -117,14 +117,14 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
 
     it("the most recent orderlines should be preserved and marked as golden record") {
       val newest1Record = defaultOrderLine.copy(
-        isGoldenRecord = false,
+        isGoldenRecord = true,
         orderConcatId = "order-1",
         ohubUpdated = Timestamp.valueOf("2018-10-05 10:30:45"),
         concatId = "newest1",
         isActive = true)
 
       val newest2Record = defaultOrderLine.copy(
-        isGoldenRecord = false,
+        isGoldenRecord = true,
         orderConcatId = "order-1",
         ohubUpdated = Timestamp.valueOf("2018-10-05 10:30:45"),
         concatId = "newest2",
@@ -139,7 +139,7 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
         isActive = true)
 
       val goldenRecordWithoutDateUpdated = defaultOrderLine.copy(
-        isGoldenRecord = false,
+        isGoldenRecord = true,
         orderConcatId = "order-2",
         ohubUpdated = Timestamp.valueOf("2018-08-08 09:09:30"),
         concatId = "other",
@@ -166,7 +166,7 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
       result("newest2") shouldBe (Some("ohub-order-1"), true)
     }
 
-    it("Should mark old records as non-golden when the same order is supplied in delta") {
+    it("Should drop old records when the same order is supplied in delta") {
       val unchangedRecord = defaultOrderLine.copy(
         orderConcatId = "order-2",
         comment = Some("1st"),
@@ -193,13 +193,11 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
         .orderBy($"comment".asc)
         .collect();
 
-      result.length shouldBe 3 // Previously ingested records for an orderId are set to inactive, delta records to active(same as golden)
+      result.length shouldBe 2 // Previously ingested records for an orderId are removed, delta records to active(same as golden)
       result(0).isActive shouldBe false
       result(0).isGoldenRecord shouldBe true
-      result(1).isActive shouldBe true
-      result(1).isGoldenRecord shouldBe false
-      result(2).isActive shouldBe false
-      result(2).isGoldenRecord shouldBe true
+      result(1).isActive shouldBe false
+      result(1).isGoldenRecord shouldBe true
     }
 
     it("delta input orderline data is preserved in favor of integrated data while retaining ohubId") {
@@ -248,20 +246,14 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
         .collect()
         .sortBy(_.concatId)
 
-      result.length shouldBe 7 // Previously ingested records for an orderId are set to inactive, delta records to active(same as golden)
-      result(0).isActive shouldBe true
-      result(0).concatId shouldBe "deleted"
-      result(1).concatId shouldBe "new"
-      result(2).concatId shouldBe "notADelta"
-      result(3).concatId shouldBe "unchanged"
-      result(5).concatId shouldBe "updated"
-      result(5).isActive shouldBe true
-      result(5).isGoldenRecord shouldBe false
-      result(6).concatId shouldBe "updated"
-      result(6).isActive shouldBe false
-      result(6).isGoldenRecord shouldBe true
-      result(6).comment shouldBe Some("Unox")
-      result(6).ohubId shouldBe Some("oldId")
+      result.length shouldBe 3 // Previously ingested records for an orderId are set to inactive, delta records to active(same as golden)
+      result(0).concatId shouldBe "new"
+      result(1).concatId shouldBe "unchanged"
+      result(2).concatId shouldBe "updated"
+      result(2).isActive shouldBe false
+      result(2).isGoldenRecord shouldBe true
+      result(2).comment shouldBe Some("Unox")
+      result(2).ohubId shouldBe Some("oldId")
     }
 
     it("should set the reference to the right productOhubId") {
@@ -279,7 +271,7 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
 
       val recordWithUnknownProductConcatId = defaultOrderLine.copy(
         isGoldenRecord = true,
-        ohubId = Some("oldId"),
+        ohubId = Some("otherId"),
         countryCode = "withoutProductId",
         concatId = s"withoutProductId~${defaultOrderLine.sourceName}~${defaultOrderLine.sourceEntityId}",
         productConcatId = "unknown-product-id",
@@ -309,6 +301,31 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
           "withProductId" -> Some(productOhubId),
           "withoutProductId" -> None
         )
+    }
+
+    it("when no delta records have been provided, integrated should keep previous status") {
+      val singleOrderLine = defaultOrderLine.copy(
+        isGoldenRecord = false,
+        orderConcatId = "order-1",
+        ohubUpdated = Timestamp.valueOf("2018-10-05 10:30:45"),
+        ohubId = None,
+        concatId = "first-line",
+        isActive = true)
+
+      val input: Dataset[OrderLine] = Seq[OrderLine]().toDataset
+
+      val previous: Dataset[OrderLine] = Seq(
+        singleOrderLine,
+        singleOrderLine.copy(orderConcatId = "order-1", concatId = "second-line", isGoldenRecord = true)
+      ).toDataset
+
+      val products: Dataset[Product] = Seq[Product]().toDataset
+
+      val result = SUT.transform(spark, input, previous, products)
+        .collect()
+        .map(l ⇒ l.concatId -> (l.ohubId, l.isGoldenRecord)).toMap
+
+      result("second-line")._2 shouldBe true
     }
   }
 }
