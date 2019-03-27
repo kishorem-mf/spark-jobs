@@ -49,10 +49,12 @@ class GoldenRecordPickingSpec extends SparkJobSpec with TestOperators {
         defaultOperatorWithSourceName("sourceA").copy(dateCreated = Some(date)),
         defaultOperatorWithSourceName("sourceB").copy(dateCreated = Some(date), isGoldenRecord = true)
       )
-      val golden = Foo().pickGoldenRecord(sourcePreferences, operators)
-
+      var golden = Foo().pickGoldenRecord(sourcePreferences, operators)
       assert(golden.sourceName === "sourceB")
 
+      // The location of the golden record shouldn't matter, so reversed should give the same results
+      val goldenReversed = Foo().pickGoldenRecord(sourcePreferences, operators.reverse)
+      assert(goldenReversed.sourceName === "sourceB")
     }
   }
 }
