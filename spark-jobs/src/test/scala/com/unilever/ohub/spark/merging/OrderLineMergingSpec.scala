@@ -193,7 +193,7 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
         .orderBy($"comment".asc)
         .collect();
 
-      result.length shouldBe 3 // Previously ingested records for an orderId are removed, delta records to active(same as golden)
+      result.length shouldBe 3 // Previously ingested records for an orderId are removed, delta records to what was provided
       result(0).isActive shouldBe false
       result(0).isGoldenRecord shouldBe true
       result(1).isActive shouldBe false
@@ -248,7 +248,7 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
         .collect()
         .sortBy(_.concatId)
 
-      result.length shouldBe 7 // Previously ingested records for an orderId are set to inactive, delta records to active(same as golden)
+      result.length shouldBe 7 // Previously ingested records for an orderId are set to inactive, delta records to what was provided
       result(0).isActive shouldBe false
       result(0).concatId shouldBe "deleted"
       result(1).concatId shouldBe "new"

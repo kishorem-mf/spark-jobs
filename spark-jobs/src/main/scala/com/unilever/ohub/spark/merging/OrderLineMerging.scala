@@ -65,6 +65,7 @@ object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
         // Only record provided in the delta are set on golden.
         // If the order is also present in the integrated, that one is set on non-golden
         .withColumn("isGoldenRecord", $"isInDelta" === $"newestIsInDelta" && $"isGoldenRecord")
+        // When a order has lines in integrated and delta, the integrated ones are set to inactive. Otherwise the original value
         .withColumn("isActive", when($"newestIsInDelta" && !$"isInDelta", lit(false)).otherwise($"isActive"))
         .drop($"isInDelta")
         .as[OrderLine]
