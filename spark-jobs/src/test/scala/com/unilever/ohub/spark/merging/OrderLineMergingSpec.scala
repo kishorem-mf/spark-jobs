@@ -166,7 +166,7 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
       result("newest2") shouldBe (Some("ohub-order-1"), true)
     }
 
-    it("Should drop old records when the same order is supplied in delta") {
+    it("Should set old records to inactive when the same order is supplied in delta") {
       val unchangedRecord = defaultOrderLine.copy(
         orderConcatId = "order-2",
         comment = Some("1st"),
@@ -184,7 +184,7 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
         unchangedRecord
       ))
       val input: Dataset[OrderLine] = spark.createDataset(Seq(
-        updatedRecord.copy(comment = Some("3rd"), ohubId = Some("newId"), isActive = false)
+        updatedRecord.copy(comment = Some("3rd"), ohubId = Some("newId"))
       ))
 
       val products: Dataset[Product] = Seq[Product]().toDataset
@@ -193,11 +193,13 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
         .orderBy($"comment".asc)
         .collect();
 
-      result.length shouldBe 2 // Previously ingested records for an orderId are removed, delta records to active(same as golden)
+      result.length shouldBe 3 // Previously ingested records for an orderId are removed, delta records to active(same as golden)
       result(0).isActive shouldBe false
       result(0).isGoldenRecord shouldBe true
       result(1).isActive shouldBe false
-      result(1).isGoldenRecord shouldBe true
+      result(1).isGoldenRecord shouldBe false
+      result(2).isActive shouldBe true
+      result(2).isGoldenRecord shouldBe true
     }
 
     it("delta input orderline data is preserved in favor of integrated data while retaining ohubId") {
@@ -246,14 +248,20 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
         .collect()
         .sortBy(_.concatId)
 
-      result.length shouldBe 3 // Previously ingested records for an orderId are set to inactive, delta records to active(same as golden)
-      result(0).concatId shouldBe "new"
-      result(1).concatId shouldBe "unchanged"
-      result(2).concatId shouldBe "updated"
-      result(2).isActive shouldBe false
-      result(2).isGoldenRecord shouldBe true
-      result(2).comment shouldBe Some("Unox")
-      result(2).ohubId shouldBe Some("oldId")
+      result.length shouldBe 7 // Previously ingested records for an orderId are set to inactive, delta records to active(same as golden)
+      result(0).isActive shouldBe false
+      result(0).concatId shouldBe "deleted"
+      result(1).concatId shouldBe "new"
+      result(2).concatId shouldBe "notADelta"
+      result(3).concatId shouldBe "unchanged"
+      result(5).concatId shouldBe "updated"
+      result(5).isActive shouldBe false
+      result(5).isGoldenRecord shouldBe false
+      result(6).concatId shouldBe "updated"
+      result(6).isActive shouldBe false
+      result(6).isGoldenRecord shouldBe true
+      result(6).comment shouldBe Some("Unox")
+      result(6).ohubId shouldBe Some("oldId")
     }
 
     it("should set the reference to the right productOhubId") {
