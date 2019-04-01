@@ -26,10 +26,6 @@ OL --> PD
 
 AC --> CP
 
-QU --> AC
-
-AN --> QU
-
 SC --> CP
 
 LP --> CP
@@ -40,4 +36,8 @@ CMPB ---> CP
 CMPS ---> CP
 CMPO ---> CP
 
+' Place entities without dependencies next to operators
+OP -[hidden]right- QU
+OP -[hidden]right- AN
+OP -[hidden]right- PD
 @enduml
