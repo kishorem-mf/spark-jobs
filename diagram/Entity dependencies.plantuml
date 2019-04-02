@@ -1,5 +1,5 @@
 @startuml
-title Entity depends on
+title Entity can be run after...
 
 [ContactPersons] as CP
 [Operators] as OP
@@ -12,16 +12,18 @@ title Entity depends on
 [Subscriptions] as SC
 [LoyaltyPoints] as LP
 
+[Campaign] as CMP
+[CampaignClicks] as CMPC
+[CampaignBounces] as CMPB
+[CampaignSends] as CMPS
+[CampaignOpens] as CMPO
+
 CP --> OP
 
 OD --> CP
-OD --> OP
 
-OL --> OD
-OL --> OP
-OL ----> PD
+OL --> PD
 
-AC --> OP
 AC --> CP
 
 QU --> AC
@@ -30,7 +32,12 @@ AN --> QU
 
 SC --> CP
 
-LP --> OP
 LP --> CP
+
+CMP ---> CP
+CMPC ---> CP
+CMPB ---> CP
+CMPS ---> CP
+CMPO ---> CP
 
 @enduml

@@ -46,7 +46,7 @@ class CampaignOpenConverterSpec extends CsvDomainGateKeeperSpec[CampaignOpen] {
           operatorConcatId = Some("ZA~EMAKINA~4e438846-f6c2-4239-b59e-33b69b6a5587"),
           operatorOhubId = Option.empty,
           openDate = Timestamp.valueOf("2016-07-24 09:03:36.0"),
-          deliveryLogId = "1wewee2",
+          deliveryLogId = Some("1wewee2"),
 
           additionalFields = Map(),
           ingestionErrors = Map()

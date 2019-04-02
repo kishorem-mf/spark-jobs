@@ -34,7 +34,7 @@ case class Campaign(
     contactPersonConcatId: String,
     contactPersonOhubId: Option[String],
     campaignId: String,
-    campaignName: String,
+    campaignName: Option[String],
     deliveryId: String,
     deliveryName: String,
     campaignSpecification: String,
