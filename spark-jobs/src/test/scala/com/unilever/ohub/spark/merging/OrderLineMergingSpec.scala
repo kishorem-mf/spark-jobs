@@ -166,38 +166,75 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
       result("newest2") shouldBe (Some("ohub-order-1"), true)
     }
 
-    it("Should drop old records when the same order is supplied in delta") {
-      val unchangedRecord = defaultOrderLine.copy(
-        orderConcatId = "order-2",
-        comment = Some("1st"),
-        concatId = "unchanged",
-        isActive = false)
-
-      val updatedRecord = defaultOrderLine.copy(
+    it("should deduplicate ordelines based on concatId") {
+      val unchangedLine = defaultOrderLine.copy(
         orderConcatId = "order-1",
-        comment = Some("2nd"),
-        concatId = "oldie",
-        isActive = true)
+        concatId = "orderline-1")
+
+      val oldLine = defaultOrderLine.copy(
+        orderConcatId = "order-2",
+        concatId = "orderline-2",
+        comment = Some("I'm the old one"))
+
+      val newLine = defaultOrderLine.copy(
+        orderConcatId = "order-2",
+        concatId = "orderline-2",
+        comment = Some("I'm the new one"))
 
       val previous: Dataset[OrderLine] = spark.createDataset(Seq(
-        updatedRecord,
-        unchangedRecord
+        unchangedLine,
+        oldLine
+      ))
+
+      val input: Dataset[OrderLine] = spark.createDataset(Seq(
+        newLine
+      ))
+
+      val products: Dataset[Product] = Seq[Product]().toDataset
+
+
+      val result = SUT.transform(spark, input, previous, products)
+        .orderBy($"concatId".asc)
+        .collect();
+
+      result.length shouldBe 2
+      result(1).comment shouldBe Some("I'm the new one")
+    }
+
+    it("Should set old records to inactive when the same order is supplied in delta") {
+      val firstOldLine = defaultOrderLine.copy(
+        orderConcatId = "order-1",
+        concatId = "orderline-1")
+
+      val secondOldLine = defaultOrderLine.copy(
+        orderConcatId = "order-1",
+        concatId = "orderline-2")
+
+      val newLine = defaultOrderLine.copy(
+        orderConcatId = "order-1",
+        concatId = "orderline-3")
+
+      val previous: Dataset[OrderLine] = spark.createDataset(Seq(
+        secondOldLine,
+        firstOldLine
       ))
       val input: Dataset[OrderLine] = spark.createDataset(Seq(
-        updatedRecord.copy(comment = Some("3rd"), ohubId = Some("newId"), isActive = false)
+        newLine
       ))
 
       val products: Dataset[Product] = Seq[Product]().toDataset
 
       val result = SUT.transform(spark, input, previous, products)
-        .orderBy($"comment".asc)
+        .orderBy($"concatId".asc)
         .collect();
 
-      result.length shouldBe 2 // Previously ingested records for an orderId are removed, delta records to active(same as golden)
+      result.length shouldBe 3 // Previously ingested records for an orderId are removed, delta records to what was provided
       result(0).isActive shouldBe false
-      result(0).isGoldenRecord shouldBe true
+      result(0).isGoldenRecord shouldBe false
       result(1).isActive shouldBe false
-      result(1).isGoldenRecord shouldBe true
+      result(1).isGoldenRecord shouldBe false
+      result(2).isActive shouldBe true
+      result(2).isGoldenRecord shouldBe true
     }
 
     it("delta input orderline data is preserved in favor of integrated data while retaining ohubId") {
@@ -246,14 +283,15 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
         .collect()
         .sortBy(_.concatId)
 
-      result.length shouldBe 3 // Previously ingested records for an orderId are set to inactive, delta records to active(same as golden)
-      result(0).concatId shouldBe "new"
-      result(1).concatId shouldBe "unchanged"
-      result(2).concatId shouldBe "updated"
-      result(2).isActive shouldBe false
-      result(2).isGoldenRecord shouldBe true
-      result(2).comment shouldBe Some("Unox")
-      result(2).ohubId shouldBe Some("oldId")
+      result.length shouldBe 5 // Previously ingested records for an orderId are set to inactive, delta records to what was provided
+      result(0).isActive shouldBe false
+      result(0).concatId shouldBe "deleted"
+      result(1).concatId shouldBe "new"
+      result(2).concatId shouldBe "notADelta"
+      result(3).concatId shouldBe "unchanged"
+      result(4).concatId shouldBe "updated"
+      result(4).isActive shouldBe false
+      result(4).isGoldenRecord shouldBe false
     }
 
     it("should set the reference to the right productOhubId") {

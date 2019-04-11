@@ -6,7 +6,7 @@ import com.unilever.ohub.spark.domain.entity.{ OrderLine, Product }
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{ collect_list, first, lit }
+import org.apache.spark.sql.functions.{ collect_list, first, lit, when, row_number }
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
@@ -17,19 +17,6 @@ case class OrderLineMergingConfig(
     outputFile: String = "path-to-output-file"
 ) extends SparkJobConfig
 
-/**
- * SparkJob that:
- * <ol>
- * <li>Merges old orderlines with delta ones based on ConcatId</li>
- * <li>If old ones existed:</li>
- * <ul>
- *   <li>Copies their OhubId(<strong>based on OrderConcatID</strong>)</li>
- *   <li>Sets old ones on non-golden(<strong>based on OrderConcatID</strong>)</li>
- * </ul>
- * <li>Sets delta ones on golden</li>
- * <li>Generates an ohubId when not present(from an old one, <strong>based on OrderConcatID</strong>)</li>
- * </ol>
- */
 object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
 
   def setOhubId(orderLines: Seq[OrderLine]): Seq[OrderLine] = {
@@ -65,8 +52,9 @@ object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
         // Only record provided in the delta are set on golden.
         // If the order is also present in the integrated, that one is set on non-golden
         .withColumn("isGoldenRecord", $"isInDelta" === $"newestIsInDelta" && $"isGoldenRecord")
+        // When a order has lines in integrated and delta, the integrated ones are set to inactive. Otherwise the original value
+        .withColumn("isActive", when($"newestIsInDelta" && !$"isInDelta", lit(false)).otherwise($"isActive"))
         .drop($"isInDelta")
-        .filter($"isGoldenRecord") // We only keep golden records
         .as[OrderLine]
         .map(l ⇒ l.orderConcatId -> l)
         .toDF("orderConcatId", "orderLine")
@@ -76,7 +64,15 @@ object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
         .map(_._2)
         .flatMap(setOhubId)
 
-    allOrderLinesGrouped
+    val concatIdWindow = Window.partitionBy($"concatId").orderBy($"ohubUpdated".desc)
+
+    val deduplicatedOrderLines = allOrderLinesGrouped
+      .withColumn("rn", row_number().over(concatIdWindow))
+      .filter($"rn" === 1)
+      .drop("rn")
+      .as[OrderLine]
+
+    deduplicatedOrderLines
       .joinWith(products, $"productConcatId" === products("concatId"), "left")
       .map {
         case (order, product) =>

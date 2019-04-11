@@ -83,7 +83,7 @@ class ContactPersonUpdateGoldenRecordSpec extends SparkJobSpec with TestContactP
       )
     }
 
-    it("should favor Newest contact person based on isGoldenRecord and mark it as a golden record") {
+    it("should favor contact person based on isGoldenRecord and mark it as a golden record") {
       val contactPersons: Dataset[ContactPerson] = Seq[ContactPerson](
         defaultContactPerson.copy(ohubId = Some("ohub-id-1"), sourceName = "EMAKINA",
           dateUpdated = Some(new Timestamp(2l)),
