@@ -1,4 +1,4 @@
-ARG BASEIMAGE=scalaspark:latest
+ARG BASEIMAGE=ohub2docker.azurecr.io/scalaspark:latest
 
 FROM $BASEIMAGE
 
