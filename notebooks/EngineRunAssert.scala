@@ -5,6 +5,15 @@
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql._
 
+def hasSuccessFile(path: String): Boolean = {
+  try {
+    val files = dbutils.fs.ls(path)
+    return files.exists(_.name == "_SUCCESS")
+  } catch {
+    case _: Exception => false
+  }
+}
+
 def readCsv(
     location: String,
     fieldSeparator: String = ";",
@@ -37,31 +46,41 @@ def tryCount(countFunc: () => Long) : Long = {
   try {
     countFunc()
   } catch {
-    case _ : Exception => 0
+    case _ : Exception => -1
   }
 }
 
 // COMMAND ----------
 
-// Counts for seperate stages
+// Counts for seperate stages. If no _SUCCESS file is present in the corresponding dir, -1 wil be returned as count
+
 def getInboundCounts(runId: String, domain: String) = {
-  val inbound = readCsv(s"dbfs:/mnt/inbound/${domain}/${runId}/*.csv")
-  val inboundCount = tryCount(() => inbound.count())
-  val inboundUniqueCount = tryCount(() => inbound.dropDuplicates("concatId").count())
-  (inboundCount, inboundUniqueCount)
+  val inboundCsvDir = s"dbfs:/mnt/inbound/${domain}/${runId}"
+  if(hasSuccessFile(inboundCsvDir)) {
+    val inbound = readCsv(inboundCsvDir + "/*.csv")
+    val inboundCount = tryCount(() => inbound.count())
+    val inboundUniqueCount = tryCount(() => inbound.dropDuplicates("concatId").count())
+    (inboundCount, inboundUniqueCount)
+  } else (-1L, -1L)
 }
 
 def getIngestedCount(runId: String, domain: String) = {
-  val ingested = readParquet(s"dbfs:/mnt/engine/ingested/${runId}/${domain}.parquet")
-  val ingestedCount = tryCount(() => ingested.count())
-  val ingestionErrors = readParquet(s"dbfs:/mnt/engine/ingested/${runId}/${domain}.parquet.errors")
-  val ingestionErrorsCount = tryCount(() => ingestionErrors.count())
-  (ingestedCount, ingestionErrorsCount)
+  val ingestedDir = s"dbfs:/mnt/engine/ingested/${runId}/${domain}.parquet"
+  if(hasSuccessFile(ingestedDir)) {
+    val ingested = readParquet(ingestedDir)
+    val ingestedCount = tryCount(() => ingested.count())
+    val ingestionErrors = readParquet(s"dbfs:/mnt/engine/ingested/${runId}/${domain}.parquet.errors")
+    val ingestionErrorsCount = tryCount(() => ingestionErrors.count())
+    (ingestedCount, ingestionErrorsCount)  
+  } else (-1L, -1L)  
 }
 
 def getIntegratedCount(runId: String, domain: String) = {
-  val integrated = readParquet(s"dbfs:/mnt/engine/integrated/${runId}/${domain}.parquet")
-  tryCount(() => integrated.count())
+  val integratedDir = s"dbfs:/mnt/engine/integrated/${runId}/${domain}.parquet"
+  if(hasSuccessFile(integratedDir)) {
+    val integrated = readParquet(integratedDir)
+    tryCount(() => integrated.count())
+  } else -1L
 }
 
 def getChangedRows(domain: String, runId: String) = {
@@ -75,23 +94,27 @@ def getChangedRows(domain: String, runId: String) = {
 }
 
 def getChangedCount(runId: String, domain: String) = {
-  val changed = getChangedRows(domain, runId)
-  val changedCount = tryCount(() => changed.count())
-  val orderChangedCount = domain match {
-    case "orders" => tryCount(() => changed.filter(!$"type".isin("SSD", "TRANSFER")).count()) // Not exactly the same as outbound yet...
-    case "orderlines" => tryCount(() => changed.filter($"orderType".isNull || !$"orderType".isin("SSD", "TRANSFER")).count()) // Not exactly the same as outbound yet...
-    case _ => 0
-  }
-  val changedGoldenCount = tryCount(() => changed.filter($"isGoldenRecord").count())
-  val orderChangedGoldenCount = domain match {
-    case "orders" => tryCount(() => changed.filter(!$"type".isin("SSD", "TRANSFER") && $"isGoldenRecord").count()) // Not exactly the same as outbound yet...
-    case "orderlines" => tryCount(() => changed.filter(($"orderType".isNull || !$"orderType".isin("SSD", "TRANSFER")) && $"isGoldenRecord").count()) // Not exactly the same as outbound yet...
-    case _ => 0
-  }
-  (changedCount, orderChangedCount, changedGoldenCount, orderChangedGoldenCount)
+  val hashDir = s"dbfs:/mnt/engine/hash/${runId}/${domain}.parquet"
+  if (hasSuccessFile(hashDir)) {
+    val changed = getChangedRows(domain, runId)
+    val changedCount = tryCount(() => changed.count())
+    val orderChangedCount = domain match {
+      case "orders" => tryCount(() => changed.filter(!$"type".isin("SSD", "TRANSFER")).count())
+      case "orderlines" => tryCount(() => changed.filter($"orderType".isNull || !$"orderType".isin("SSD", "TRANSFER")).count())
+      case _ => 0L
+    }
+    val changedGoldenCount = tryCount(() => changed.filter($"isGoldenRecord").count())
+    val orderChangedGoldenCount = domain match {
+      case "orders" => tryCount(() => changed.filter(!$"type".isin("SSD", "TRANSFER") && $"isGoldenRecord").count())
+      case "orderlines" => tryCount(() => changed.filter(($"orderType".isNull || !$"orderType".isin("SSD", "TRANSFER")) && $"isGoldenRecord").count())
+      case _ => 0L
+    }
+    (changedCount, orderChangedCount, changedGoldenCount, orderChangedGoldenCount)
+  } else (-1L, -1L, -1L, -1L)
 }
 
 def getOutboundCount(runId: String, domain: String) = {
+  // Outbound doesn't produce a _SUCCESS file
   val outboundDispatch = readCsv(s"dbfs:/mnt/outbound/${domain}/${runId}/UFS_DISPATCH*.csv") // Dispatcher uses pilcrow as seperator(not ';'), so only count will work fine a.t.m.
   val outboundDispatchCount = tryCount(() => outboundDispatch.count())
   val acmDomain = domain match { 
@@ -135,7 +158,7 @@ def getCountsForDomain(runId: String, domain: String) = {
 }
 
 // Get counts for all entities
-def getCounts(implicit runId: String, domains: String*) = {
+def getCounts(runId: String, domains: String*) = {
   domains.map(domain => {
     getCountsForDomain(runId: String, domain: String)
   }).toDF(
@@ -190,7 +213,13 @@ val counts = getCounts(runId, allDomains :_*)
 
 // COMMAND ----------
 
-display(counts)
+println(s"Export for: ${runId}")
+counts.orderBy($"domain").show(truncate = false)
+
+// COMMAND ----------
+
+println(s"Export for: ${runId}")
+counts.orderBy($"domain").select("domain", "integratedCount", "changedCount").show(truncate = false)
 
 // COMMAND ----------
 
@@ -224,29 +253,33 @@ val exportedToDispatch = Seq(
 
 // Generic asserts
 val asserts = counts
-  .withColumn("assertPipelineFinished", $"integratedCount" =!= 0) // This assertion does not include the content of the DB due to performance (but DB is implicitly covered in outbound counts)
+  .withColumn("assertPipelineFinished", $"integratedCount" =!= -1) // This assertion does not include the content of the DB due to performance (but DB is implicitly covered in outbound counts)
   .withColumn("assertAllIngested", $"inboundUniqueCount" === $"ingestedCount")
   .withColumn("assertNoIngestionsErrors", $"ingestionErrorsCount" === 0)
 
 // Asserts for orders and orderlines
 val orderAsserts = asserts
   .filter($"domain".isin("orders", "orderlines"))
-  .withColumn("assertDispatchExport", $"assertPipelineFinished" && $"orderChangedCount" === $"outboundDispatchCount")
-  .withColumn("assertAcmExport", $"assertPipelineFinished" && $"orderChangedGoldenCount" === $"outboundAcmCount")
+  .withColumn("assertDispatchExportComplete", $"assertPipelineFinished" && $"orderChangedCount" === $"outboundDispatchCount")
+  .withColumn("assertAcmExportComplete", $"assertPipelineFinished" && $"orderChangedGoldenCount" === $"outboundAcmCount")
 
 val allCountsAsserts = asserts
   .filter(!$"domain".isin("orders", "orderlines"))
-  .withColumn("assertDispatchExport", $"assertPipelineFinished" && (!$"domain".isin(exportedToDispatch:_*)) || ($"changedCount" === $"outboundDispatchCount"))
-  .withColumn("assertAcmExport", $"assertPipelineFinished" && (!$"domain".isin(exportedToAcm:_*)) || ($"changedGoldenCount" === $"outboundAcmCount"))  
+  .withColumn("assertDispatchExportComplete", $"assertPipelineFinished" && (!$"domain".isin(exportedToDispatch:_*)) || ($"changedCount" === $"outboundDispatchCount"))
+  .withColumn("assertAcmExportComplete", $"assertPipelineFinished" && (!$"domain".isin(exportedToAcm:_*)) || ($"changedGoldenCount" === $"outboundAcmCount"))
   .union(orderAsserts)
 
 val allAsserts = allCountsAsserts.select("domain", allCountsAsserts.columns.filter(_.startsWith("assert")):_*)
+val assertResult = allAsserts
+  .toDF(allAsserts.columns.map((col) => col.replace("assert", "")) :_*)
+  .orderBy($"domain")
 
 // COMMAND ----------
 
-display(allAsserts)
+println(s"Export for: ${runId}")
+assertResult.show(truncate = false)
 
 // COMMAND ----------
 
-allAsserts.coalesce(1).write.mode(SaveMode.Overwrite).json(s"dbfs:/mnt/inbound/runresult/${runId}/assert")
+assertResult.coalesce(1).write.mode(SaveMode.Overwrite).json(s"dbfs:/mnt/inbound/runresult/${runId}/assert")
 counts.coalesce(1).write.mode(SaveMode.Overwrite).json(s"dbfs:/mnt/inbound/runresult/${runId}/count")
