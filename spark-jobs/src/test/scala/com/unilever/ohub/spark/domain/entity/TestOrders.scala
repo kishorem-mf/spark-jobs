@@ -38,6 +38,7 @@ trait TestOrders {
     distributorLocation = None,
     distributorName = Some("Van der Valk"),
     distributorOperatorId = None,
+    currency = Some("EUR"),
     operatorConcatId = Some("some~operator~id"),
     operatorOhubId = None,
     transactionDate = Some(Timestamp.valueOf("2015-06-30 13:49:00.0")),
