@@ -13,13 +13,13 @@ Spark jobs for the OHub2 project.
 
 # Build and Test
 run `sbt package`.
-## If sbt task are available run configurations (as in Intellij):
+## If sbt task are available as run configurations (as in Intellij):
 create a sbt task with `clean assembly` as tasks and add
 `-Xms512M -Xmx1024M -Xss1M -XX:+CMSClassUnloadingEnabled -DsparkDependencyType=provided` as VM params
 
 # Tips
 run `sbt dependencyUpdates` to check for updates on the dependencies.
 run `sbt clean coverage test coverageReport` to run the tests with coverage.
-## If sbt task are available run configurations (as in Intellij):
+## If sbt task are available as run configurations (as in Intellij):
 create a sbt task with `"set test in assembly := {}" clean assembly` as tasks (with same VM params as assembly)
 to build jar while skipping the tests
