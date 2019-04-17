@@ -23,32 +23,46 @@ DATA_OPERATORS_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/operators"
 DATA_CONTACTPERSONS_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/contactpersons"
 DATA_PRODUCTS_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/products"
 
+echo
+echo OrderEmptyIntegratedWriter
 spark-submit    --class="com.unilever.ohub.spark.ingest.initial.OrderEmptyIntegratedWriter" ${SPARK_JOBS_JAR} \
                 --outputFile=${DATA_ORDERS_INTEGRATED_INPUT}
 
+echo
+echo OrderLineEmptyIntegratedWriter
 spark-submit    --class="com.unilever.ohub.spark.ingest.initial.OrderLineEmptyIntegratedWriter" ${SPARK_JOBS_JAR} \
                 --outputFile=${DATA_ORDERLINES_INTEGRATED_INPUT}
 
+echo
+echo OrderConverter
 spark-submit    --class="com.unilever.ohub.spark.ingest.common.OrderConverter" ${SPARK_JOBS_JAR} \
                 --inputFile=${RAW_ORDERS_INPUT_PATH} \
                 --outputFile=${DATA_ORDERS_INGESTED} \
                 --fieldSeparator=";" --strictIngestion="false" --deduplicateOnConcatId="true"
 
+echo
+echo OrderLineConverter
 spark-submit    --class="com.unilever.ohub.spark.ingest.common.OrderLineConverter" ${SPARK_JOBS_JAR} \
                 --inputFile=${RAW_ORDERS_INPUT_PATH} \
                 --outputFile=${DATA_ORDERLINES_INGESTED} \
                 --fieldSeparator=";" --strictIngestion="false" --deduplicateOnConcatId="true"
 
+echo
+echo OrderPreProcess
 spark-submit    --class="com.unilever.ohub.spark.merging.OrderPreProcess" ${SPARK_JOBS_JAR} \
                 --integratedInputFile=${DATA_ORDERS_INTEGRATED_INPUT} \
                 --deltaInputFile=${DATA_ORDERS_INGESTED} \
                 --deltaPreProcessedOutputFile=${DATA_ORDERS_PRE_PROCESSED}
 
+echo
+echo OrderLinePreProcess
 spark-submit    --class="com.unilever.ohub.spark.merging.OrderLinePreProcess" ${SPARK_JOBS_JAR} \
                 --integratedInputFile=${DATA_ORDERLINES_INTEGRATED_INPUT} \
                 --deltaInputFile=${DATA_ORDERLINES_INGESTED} \
                 --deltaPreProcessedOutputFile=${DATA_ORDERLINES_PRE_PROCESSED}
 
+echo
+echo OrderMerging
 spark-submit    --class="com.unilever.ohub.spark.merging.OrderMerging" ${SPARK_JOBS_JAR} \
                 --orderInputFile=${DATA_ORDERS_PRE_PROCESSED} \
                 --previousIntegrated=${DATA_ORDERS_INTEGRATED_INPUT} \
@@ -56,6 +70,8 @@ spark-submit    --class="com.unilever.ohub.spark.merging.OrderMerging" ${SPARK_J
                 --operatorInputFile=${DATA_OPERATORS_INTEGRATED_OUTPUT} \
                 --outputFile=${DATA_ORDERS_INTEGRATED_OUTPUT}
 
+echo
+echo OrderLineMerging
 spark-submit    --class="com.unilever.ohub.spark.merging.OrderLineMerging" ${SPARK_JOBS_JAR} \
                 --orderLineInputFile=${DATA_ORDERLINES_PRE_PROCESSED} \
                 --previousIntegrated=${DATA_ORDERLINES_INTEGRATED_INPUT} \

@@ -17,19 +17,27 @@ DATA_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/campaign_clicks"
 DATA_OP_INTEGRATED_INPUT="${DATA_ROOT_DIR}input/integrated/operators"
 DATA_CP_INTEGRATED_INPUT="${DATA_ROOT_DIR}input/integrated/contactpersons"
 
+echo
+echo CampaignClickEmptyIntegratedWriter
 spark-submit    --class="com.unilever.ohub.spark.ingest.initial.CampaignClickEmptyIntegratedWriter" ${SPARK_JOBS_JAR} \
                 --outputFile=${DATA_INTEGRATED_INPUT}
 
+echo
+echo CampaignClickConverter
 spark-submit    --class="com.unilever.ohub.spark.ingest.common.CampaignClickConverter" ${SPARK_JOBS_JAR} \
                 --inputFile=${RAW_INPUT_PATH} \
                 --outputFile=${DATA_INGESTED} \
                 --fieldSeparator=";" --strictIngestion="false" --deduplicateOnConcatId="true"
 
+echo
+echo CampaignClickPreProcess
 spark-submit    --class="com.unilever.ohub.spark.merging.CampaignClickPreProcess" ${SPARK_JOBS_JAR} \
                 --integratedInputFile=${DATA_INTEGRATED_INPUT} \
                 --deltaInputFile=${DATA_INGESTED} \
                 --deltaPreProcessedOutputFile=${DATA_PRE_PROCESSED}
 
+echo
+echo CampaignClickMerging
 spark-submit    --class="com.unilever.ohub.spark.merging.CampaignClickMerging" ${SPARK_JOBS_JAR} \
                 --campaignClickInputFile=${DATA_PRE_PROCESSED} \
                 --previousIntegrated=${DATA_INTEGRATED_INPUT} \

@@ -64,7 +64,6 @@ object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with Golde
 
   protected[merging] def run(spark: SparkSession, config: DefaultConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     val operators = storage.readFromParquet[Operator](config.inputFile)
-    val transformed = transform(spark, operators, dataProvider.sourcePreferences)
 
     spark.sparkContext.getCheckpointDir match {
       case Some(dir) ⇒ log.info(s"checkpoint directory already set to $dir")
@@ -72,6 +71,8 @@ object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with Golde
         log.info(s"checkpoint directory not set, setting to $DEFAULT_CHECKPOINT_DIR")
         spark.sparkContext.setCheckpointDir(DEFAULT_CHECKPOINT_DIR)
     }
+
+    val transformed = transform(spark, operators, dataProvider.sourcePreferences)
     storage.writeToParquet(transformed, config.outputFile)
   }
 }
