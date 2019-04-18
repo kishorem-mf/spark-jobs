@@ -29,6 +29,7 @@ DATA_OPERATORS_DELTA_LEFT_OVERS="${DATA_ROOT_DIR}intermediate/operators_delta_le
 DATA_OPERATORS_FUZZY_MATCHED_DELTA="${DATA_ROOT_DIR}intermediate/operators_fuzzy_matched_delta.parquet"
 DATA_OPERATORS_DELTA_GOLDEN_RECORDS="${DATA_ROOT_DIR}intermediate/operators_delta_golden_records.parquet"
 DATA_OPERATORS_COMBINED="${DATA_ROOT_DIR}intermediate/operators_combined.parquet"
+DATA_OPERATORS_CHECKPOINT="${DATA_ROOT_DIR}intermediate/checkpoint.parquet"
 
 echo
 echo OperatorEmptyIntegratedWriter
@@ -95,4 +96,5 @@ echo
 echo OperatorUpdateGoldenRecord
 spark-submit   --class="com.unilever.ohub.spark.merging.OperatorUpdateGoldenRecord" ${SPARK_JOBS_JAR} \
                --inputFile=${DATA_OPERATORS_COMBINED} \
+               --checkpointFile=${DATA_OPERATORS_CHECKPOINT} \
                --outputFile=${DATA_OPERATORS_INTEGRATED_OUTPUT}

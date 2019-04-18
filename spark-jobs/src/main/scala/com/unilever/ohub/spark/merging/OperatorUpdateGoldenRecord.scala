@@ -2,15 +2,19 @@ package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{ DefaultConfig, DomainDataProvider, SparkJobWithDefaultDbConfig }
-import org.apache.spark.internal.Logging
+import com.unilever.ohub.spark.{ DefaultConfig, DomainDataProvider, SparkJob, SparkJobConfig, SparkJobWithDefaultDbConfig }
 import org.apache.spark.sql.{ Dataset, SparkSession }
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
+import scopt.OptionParser
 
-object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with GoldenRecordPicking[Operator] {
-  val DEFAULT_CHECKPOINT_DIR = "/checkpoints"
+case class OperatorUpdateGoldenRecordConfig(
+    inputFile: String = "path-to-input-file",
+    checkpointFile: String = "path-to-checkpoint-file",
+    outputFile: String = "path-to-output-file"
+) extends SparkJobConfig
 
+object OperatorUpdateGoldenRecord extends SparkJob[OperatorUpdateGoldenRecordConfig] with GoldenRecordPicking[Operator] {
   def markGoldenRecord(sourcePreference: Map[String, Int])(operators: Seq[Operator]): Seq[Operator] = {
     val goldenRecord = pickGoldenRecord(sourcePreference, operators)
     operators.map(o ⇒ o.copy(isGoldenRecord = o == goldenRecord))
@@ -58,19 +62,32 @@ object OperatorUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with Golde
     goldenRecordCorrect.unionByName(goldenRecordCheap)
   }
 
-  override def run(spark: SparkSession, config: DefaultConfig, storage: Storage): Unit = {
+  override private[spark] def defaultConfig = OperatorUpdateGoldenRecordConfig()
+
+  override private[spark] def configParser(): OptionParser[OperatorUpdateGoldenRecordConfig] =
+    new scopt.OptionParser[OperatorUpdateGoldenRecordConfig]("Question merging") {
+      head("merges questions into an integrated questions output file.", "1.0")
+      opt[String]("inputFile") required () action { (x, c) ⇒
+        c.copy(inputFile = x)
+      } text "inputFile is a string property"
+      opt[String]("checkpointFile") required () action { (x, c) ⇒
+        c.copy(checkpointFile = x)
+      } text "checkpointFile is a string property"
+      opt[String]("outputFile") required () action { (x, c) ⇒
+        c.copy(outputFile = x)
+      } text "outputFile is a string property"
+
+      version("1.0")
+      help("help") text "help text"
+    }
+
+  override def run(spark: SparkSession, config: OperatorUpdateGoldenRecordConfig, storage: Storage): Unit = {
     run(spark, config, storage, DomainDataProvider(spark))
   }
 
-  protected[merging] def run(spark: SparkSession, config: DefaultConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
+  protected[merging] def run(spark: SparkSession, config: OperatorUpdateGoldenRecordConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
     val operators = storage.readFromParquet[Operator](config.inputFile)
-
-    spark.sparkContext.getCheckpointDir match {
-      case Some(dir) ⇒ log.info(s"checkpoint directory already set to $dir")
-      case None ⇒
-        log.info(s"checkpoint directory not set, setting to $DEFAULT_CHECKPOINT_DIR")
-        spark.sparkContext.setCheckpointDir(DEFAULT_CHECKPOINT_DIR)
-    }
+    spark.sparkContext.setCheckpointDir(config.checkpointFile)
 
     val transformed = transform(spark, operators, dataProvider.sourcePreferences)
     storage.writeToParquet(transformed, config.outputFile)
