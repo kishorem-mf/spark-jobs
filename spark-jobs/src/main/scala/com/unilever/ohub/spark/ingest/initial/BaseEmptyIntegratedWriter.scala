@@ -39,25 +39,11 @@ abstract class BaseEmptyIntegratedWriter[DomainType <: DomainEntity: TypeTag] ex
   }
 }
 
-object OperatorEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Operator] with OperatorEmptyParquetWriter
-
-object ContactPersonEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[ContactPerson] with ContactPersonEmptyParquetWriter
-
-object SubscriptionEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Subscription] with SubscriptionEmptyParquetWriter
-
-object ProductEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Product] with ProductEmptyParquetWriter
-
-object OrderEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Order] with OrderEmptyParquetWriter
-
-object OrderLineEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[OrderLine] with OrderLineEmptyParquetWriter
-
 object ActivityEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Activity] with ActivityEmptyParquetWriter
 
 object AnswerEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Answer] with AnswerEmptyParquetWriter
 
-object QuestionEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Question] with QuestionEmptyParquetWriter
-
-object LoyaltyPointsEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[LoyaltyPoints] with LoyaltyPointsEmptyParquetWriter
+object CampaignEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Campaign] with CampaignEmptyParquetWriter
 
 object CampaignBounceEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[CampaignBounce] with CampaignBounceEmptyParquetWriter
 
@@ -67,5 +53,21 @@ object CampaignOpenEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Campa
 
 object CampaignSendEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[CampaignSend] with CampaignSendEmptyParquetWriter
 
-object CampaignEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Campaign] with CampaignEmptyParquetWriter
+object ChannelMappingEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[ChannelMapping] with ChannelMappingEmptyParquetWriter
+
+object ContactPersonEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[ContactPerson] with ContactPersonEmptyParquetWriter
+
+object LoyaltyPointsEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[LoyaltyPoints] with LoyaltyPointsEmptyParquetWriter
+
+object OperatorEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Operator] with OperatorEmptyParquetWriter
+
+object OrderEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Order] with OrderEmptyParquetWriter
+
+object OrderLineEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[OrderLine] with OrderLineEmptyParquetWriter
+
+object ProductEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Product] with ProductEmptyParquetWriter
+
+object QuestionEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Question] with QuestionEmptyParquetWriter
+
+object SubscriptionEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Subscription] with SubscriptionEmptyParquetWriter
 

@@ -151,3 +151,12 @@ trait CampaignEmptyParquetWriter extends EmptyParquetWriter[Campaign] {
     spark.createDataset[Campaign](Seq[Campaign]())
   }
 }
+
+trait ChannelMappingEmptyParquetWriter extends EmptyParquetWriter[ChannelMapping] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[ChannelMapping] = {
+    import spark.implicits._
+
+    spark.createDataset[ChannelMapping](Seq[ChannelMapping]())
+  }
+}
