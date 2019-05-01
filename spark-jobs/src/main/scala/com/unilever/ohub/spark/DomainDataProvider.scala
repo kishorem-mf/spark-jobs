@@ -5,7 +5,6 @@ import org.apache.spark.sql._
 
 import scala.io.Source
 
-
 trait DomainDataProvider {
   def sourcePreferences: Map[String, Int]
 
@@ -44,7 +43,7 @@ class InMemDomainDataProvider(spark: SparkSession) extends DomainDataProvider wi
         globalChannel = lineParts(3),
         globalSubChannel = lineParts(4)
       ))
-      .map(ref => ref.channelReferenceId -> ref)
+      .map(ref ⇒ ref.channelReferenceId -> ref)
       .toMap
   }
 }

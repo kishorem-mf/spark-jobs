@@ -2,7 +2,6 @@ package com.unilever.ohub.spark.domain.entity
 
 import java.sql.Timestamp
 
-
 trait TestChannelMappings {
 
   lazy val defaultChannelReference = ChannelReference(

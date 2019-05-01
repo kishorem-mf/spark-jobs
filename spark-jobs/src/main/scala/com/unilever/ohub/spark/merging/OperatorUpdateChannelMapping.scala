@@ -1,16 +1,16 @@
 package com.unilever.ohub.spark.merging
 
-import com.unilever.ohub.spark.domain.entity.{ChannelMapping, ChannelReference, Operator}
+import com.unilever.ohub.spark.domain.entity.{ ChannelMapping, ChannelReference, Operator }
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{DomainDataProvider, SparkJob, SparkJobConfig}
-import org.apache.spark.sql.{Dataset, SparkSession}
+import com.unilever.ohub.spark.{ DomainDataProvider, SparkJob, SparkJobConfig }
+import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 case class OperatorUpdateChannelMappingConfig(
-   channelMappingsInputFile: String = "channel-mappings-input-file",
-   operatorsInputFile: String = "operators-input-file",
-   outputFile: String = "path-to-output-file"
+    channelMappingsInputFile: String = "channel-mappings-input-file",
+    operatorsInputFile: String = "operators-input-file",
+    outputFile: String = "path-to-output-file"
 ) extends SparkJobConfig
 
 object OperatorUpdateChannelMapping extends SparkJob[OperatorUpdateChannelMappingConfig] {
@@ -18,29 +18,29 @@ object OperatorUpdateChannelMapping extends SparkJob[OperatorUpdateChannelMappin
   override def defaultConfig = OperatorUpdateChannelMappingConfig()
 
   def transform(
-     spark: SparkSession,
-     operators: Dataset[Operator],
-     channelMappings: Dataset[ChannelMapping],
-     channelReferences: Map[String, ChannelReference]
+    spark: SparkSession,
+    operators: Dataset[Operator],
+    channelMappings: Dataset[ChannelMapping],
+    channelReferences: Map[String, ChannelReference]
   ): Dataset[Operator] = {
     import spark.implicits._
 
     operators.as("op")
       .joinWith(channelMappings.as("cm"), $"op.countryCode" === $"cm.countryCode" && $"op.channel" === $"cm.originalChannel", JoinType.LeftOuter)
       .map {
-        case (operator: Operator, channelMapping: ChannelMapping) => {
-            val channelReference = channelReferences.getOrElse(channelMapping.channelReference, channelReferences.get("-1").get)
+        case (operator: Operator, channelMapping: ChannelMapping) ⇒ {
+          val channelReference = channelReferences.getOrElse(channelMapping.channelReference, channelReferences.get("-1").get)
 
-            operator.copy(
-              localChannel = Some(channelMapping.localChannel),
-              channelUsage = Some(channelMapping.channelUsage),
-              socialCommercial = channelReference.socialCommercial,
-              strategicChannel = Some(channelReference.strategicChannel),
-              globalChannel = Some(channelReference.globalChannel),
-              globalSubChannel = Some(channelReference.globalSubChannel)
-            )
-          }
-        case (operator: Operator, _) => operator
+          operator.copy(
+            localChannel = Some(channelMapping.localChannel),
+            channelUsage = Some(channelMapping.channelUsage),
+            socialCommercial = channelReference.socialCommercial,
+            strategicChannel = Some(channelReference.strategicChannel),
+            globalChannel = Some(channelReference.globalChannel),
+            globalSubChannel = Some(channelReference.globalSubChannel)
+          )
+        }
+        case (operator: Operator, _) ⇒ operator
       }.as[Operator]
   }
 

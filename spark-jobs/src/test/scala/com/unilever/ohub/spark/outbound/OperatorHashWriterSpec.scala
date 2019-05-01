@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.outbound
 import com.unilever.ohub.spark.SharedSparkSession._
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.DomainEntityHash
-import com.unilever.ohub.spark.domain.entity.{Operator, TestOperators}
+import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
 import org.apache.spark.sql.Dataset
 
 class OperatorHashWriterSpec extends SparkJobSpec with TestOperators {

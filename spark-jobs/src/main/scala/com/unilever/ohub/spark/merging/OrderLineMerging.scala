@@ -75,7 +75,7 @@ object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
     deduplicatedOrderLines
       .joinWith(products, $"productConcatId" === products("concatId"), "left")
       .map {
-        case (order, product) =>
+        case (order, product) ⇒
           if (product == null) order
           else order.copy(productOhubId = product.ohubId)
       }

@@ -8,12 +8,12 @@ class DomainDataProviderSpec extends SparkJobSpec {
 
     it("should be able to create a dataset for channelReferences") {
       val channelReferences = domainDataProvider.channelReferences
-      channelReferences.size > 0 shouldBe  true
+      channelReferences.size > 0 shouldBe true
     }
 
     it("should be able to create a map with sourcePreferences") {
       val sourcePreferences = domainDataProvider.sourcePreferences
-      sourcePreferences.size > 0 shouldBe  true
+      sourcePreferences.size > 0 shouldBe true
     }
   }
 }

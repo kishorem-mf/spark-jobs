@@ -1,13 +1,13 @@
 package com.unilever.ohub.spark.outbound
 
 import com.unilever.ohub.spark.domain.entity._
-import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityHash}
+import com.unilever.ohub.spark.domain.{ DomainEntity, DomainEntityHash }
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import org.apache.spark.sql.functions.when
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.{ DataFrame, Dataset, SparkSession }
 import scopt.OptionParser
 
 import scala.reflect.runtime.universe._
@@ -29,10 +29,10 @@ object OrderOutboundWriter extends DomainOutboundWriter[Order] {
 
 object OrderLineOutboundWriter extends DomainOutboundWriter[OrderLine] {
   override private[outbound] def filterDataSet(spark: SparkSession, dataSet: Dataset[OrderLine]) = {
-    dataSet.filter(o => {
+    dataSet.filter(o ⇒ {
       o.orderType match {
-        case Some(t) => !(t.equals("SSD") || t.equals("TRANSFER"))
-        case None => true
+        case Some(t) ⇒ !(t.equals("SSD") || t.equals("TRANSFER"))
+        case None    ⇒ true
       }
     });
   }
@@ -57,16 +57,16 @@ object CampaignSendOutboundWriter extends DomainOutboundWriter[CampaignSend]
 object LoyaltyPointsOutboundWriter extends DomainOutboundWriter[LoyaltyPoints]
 
 case class OutboundConfig(
-                           integratedInputFile: String = "integrated-input-file",
-                           hashesInputFile: Option[String] = None,
-                           numberOfPartitions: Int = 200,
-                           dbUrl: String = "db-url",
-                           dbTable: String = "db-table",
-                           dbUsername: String = "db-username",
-                           dbPassword: String = "db-password"
-                         ) extends SparkJobConfig
+    integratedInputFile: String = "integrated-input-file",
+    hashesInputFile: Option[String] = None,
+    numberOfPartitions: Int = 200,
+    dbUrl: String = "db-url",
+    dbTable: String = "db-table",
+    dbUsername: String = "db-username",
+    dbPassword: String = "db-password"
+) extends SparkJobConfig
 
-abstract class DomainOutboundWriter[DomainType <: DomainEntity : TypeTag] extends SparkJob[OutboundConfig] {
+abstract class DomainOutboundWriter[DomainType <: DomainEntity: TypeTag] extends SparkJob[OutboundConfig] {
 
   override private[spark] def defaultConfig = OutboundConfig()
 
@@ -76,25 +76,25 @@ abstract class DomainOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     new scopt.OptionParser[OutboundConfig]("Spark job default") {
       head("run a spark job with default config.", "1.0")
 
-      opt[String]("integratedInputFile") required() action { (x, c) ⇒
+      opt[String]("integratedInputFile") required () action { (x, c) ⇒
         c.copy(integratedInputFile = x)
       } text "integratedInputFile is a string property"
-      opt[String]("hashesInputFile") optional() action { (x, c) ⇒
+      opt[String]("hashesInputFile") optional () action { (x, c) ⇒
         c.copy(hashesInputFile = Some(x))
       } text "hashesInputFile is a string property"
-      opt[Int]("numberOfPartitions") optional() action { (x, c) ⇒
+      opt[Int]("numberOfPartitions") optional () action { (x, c) ⇒
         c.copy(numberOfPartitions = x)
       } text "numberOfPartitions is an integer property"
-      opt[String]("dbUrl") required() action { (x, c) ⇒
+      opt[String]("dbUrl") required () action { (x, c) ⇒
         c.copy(dbUrl = x)
       } text "dbUrl is a string property"
-      opt[String]("dbTable") required() action { (x, c) ⇒
+      opt[String]("dbTable") required () action { (x, c) ⇒
         c.copy(dbTable = x)
       } text "dbTable is a string property"
-      opt[String]("dbUsername") required() action { (x, c) ⇒
+      opt[String]("dbUsername") required () action { (x, c) ⇒
         c.copy(dbUsername = x)
       } text "dbUsername is a string property"
-      opt[String]("dbPassword") required() action { (x, c) ⇒
+      opt[String]("dbPassword") required () action { (x, c) ⇒
         c.copy(dbPassword = x)
       } text "dbPassword is a string property"
 
@@ -118,7 +118,7 @@ abstract class DomainOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
     val hashesInputFile = config.hashesInputFile match {
       case Some(location) ⇒ storage.readFromParquet[DomainEntityHash](location)
-      case None ⇒ spark.createDataset(Seq[DomainEntityHash]()) // no hash file configured -> everything marked as changed
+      case None           ⇒ spark.createDataset(Seq[DomainEntityHash]()) // no hash file configured -> everything marked as changed
     }
     val integratedEntities = filterDataSet(spark, storage.readFromParquet[DomainType](config.integratedInputFile))
     val columnsInOrder = integratedEntities.drop("additionalFields", "ingestionErrors").columns :+ "hasChanged"

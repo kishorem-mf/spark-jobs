@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.ingest.common
 
 import com.unilever.ohub.spark.domain.entity.ChannelMapping
 import com.unilever.ohub.spark.ingest.CustomParsers._
-import com.unilever.ohub.spark.ingest.{ActivityEmptyParquetWriter, DomainTransformer}
+import com.unilever.ohub.spark.ingest.{ ActivityEmptyParquetWriter, DomainTransformer }
 import org.apache.spark.sql.Row
 
 object ChannelMappingConverter extends CommonDomainGateKeeper[ChannelMapping] with ActivityEmptyParquetWriter {

@@ -192,7 +192,6 @@ class OrderLineMergingSpec extends SparkJobSpec with TestOrderLines with TestPro
 
       val products: Dataset[Product] = Seq[Product]().toDataset
 
-
       val result = SUT.transform(spark, input, previous, products)
         .orderBy($"concatId".asc)
         .collect();

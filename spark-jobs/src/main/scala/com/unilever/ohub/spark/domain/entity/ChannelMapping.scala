@@ -9,7 +9,7 @@ object ChannelMapping {
   val customerType = "OPERATOR"
 }
 
-case class ChannelReference (
+case class ChannelReference(
     channelReferenceId: String,
     socialCommercial: Option[String],
     strategicChannel: String,
@@ -17,7 +17,7 @@ case class ChannelReference (
     globalSubChannel: String
 ) extends scala.Product
 
-case class ChannelMapping (
+case class ChannelMapping(
     // generic fields
     // mandatory fields
     id: String,
