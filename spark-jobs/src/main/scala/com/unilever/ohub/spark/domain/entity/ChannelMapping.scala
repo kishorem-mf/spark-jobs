@@ -9,6 +9,10 @@ object ChannelMapping {
   val customerType = "OPERATOR"
 }
 
+object ChannelReference {
+  val unknownChannelReferenceId = "-1"
+}
+
 case class ChannelReference(
     channelReferenceId: String,
     socialCommercial: Option[String],

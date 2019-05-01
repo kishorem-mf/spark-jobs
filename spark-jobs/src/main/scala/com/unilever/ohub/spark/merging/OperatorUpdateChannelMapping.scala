@@ -29,7 +29,10 @@ object OperatorUpdateChannelMapping extends SparkJob[OperatorUpdateChannelMappin
       .joinWith(channelMappings.as("cm"), $"op.countryCode" === $"cm.countryCode" && $"op.channel" === $"cm.originalChannel", JoinType.LeftOuter)
       .map {
         case (operator: Operator, channelMapping: ChannelMapping) ⇒ {
-          val channelReference = channelReferences.getOrElse(channelMapping.channelReference, channelReferences.get("-1").get)
+          val channelReference = channelReferences.getOrElse(
+            channelMapping.channelReference,
+            channelReferences.get(ChannelReference.unknownChannelReferenceId).get
+          )
 
           operator.copy(
             localChannel = Some(channelMapping.localChannel),
