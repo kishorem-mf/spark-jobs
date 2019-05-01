@@ -37,7 +37,7 @@ object OperatorUpdateChannelMapping extends SparkJob[OperatorUpdateChannelMappin
               socialCommercial = channelReference.socialCommercial,
               strategicChannel = Some(channelReference.strategicChannel),
               globalChannel = Some(channelReference.globalChannel),
-              globalSubchannel = Some(channelReference.globalSubchannel)
+              globalSubChannel = Some(channelReference.globalSubChannel)
             )
           }
         case (operator: Operator, _) => operator

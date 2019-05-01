@@ -28,7 +28,7 @@ class OperatororUpdateChannelMappingSpecs extends SparkJobSpec with TestOperator
       res.head.socialCommercial shouldBe channelReference.socialCommercial
       res.head.strategicChannel shouldBe Some(channelReference.strategicChannel)
       res.head.globalChannel shouldBe Some(channelReference.globalChannel)
-      res.head.globalSubchannel shouldBe Some(channelReference.globalSubchannel)
+      res.head.globalSubChannel shouldBe Some(channelReference.globalSubChannel)
     }
 
     it("should update operator with available channel mapping and unknown channelreference (id = -1)") {
@@ -48,7 +48,7 @@ class OperatororUpdateChannelMappingSpecs extends SparkJobSpec with TestOperator
       res.head.socialCommercial shouldBe channelReference.socialCommercial
       res.head.strategicChannel shouldBe Some(channelReference.strategicChannel)
       res.head.globalChannel shouldBe Some(channelReference.globalChannel)
-      res.head.globalSubchannel shouldBe Some(channelReference.globalSubchannel)
+      res.head.globalSubChannel shouldBe Some(channelReference.globalSubChannel)
     }
 
     it("shouldn't update operator when channelMapping is non-existent") {
@@ -68,7 +68,7 @@ class OperatororUpdateChannelMappingSpecs extends SparkJobSpec with TestOperator
       res.head.socialCommercial shouldBe None
       res.head.strategicChannel shouldBe None
       res.head.globalChannel shouldBe None
-      res.head.globalSubchannel shouldBe None
+      res.head.globalSubChannel shouldBe None
     }
   }
 }

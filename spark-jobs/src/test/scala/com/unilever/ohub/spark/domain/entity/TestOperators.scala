@@ -103,7 +103,7 @@ trait TestOperators {
     socialCommercial            = None,
     strategicChannel            = None,
     globalChannel               = None,
-    globalSubchannel            = None,
+    globalSubChannel            = None,
     additionalFields            = Map(),
     ingestionErrors             = Map()
   )

@@ -17,7 +17,7 @@ case class TestDomainDataProvider(
       "1" -> ChannelReference(
         channelReferenceId = "1",
         globalChannel = "GLOBAL_CHANNEL",
-        globalSubchannel = "GLOBAL_SUBCHANNEL",
+        globalSubChannel = "GLOBAL_SUBCHANNEL",
         socialCommercial = Some("SOCIAL_COMMERCIAL"),
         strategicChannel = "STRATEGIC_CHANNEL"
       )

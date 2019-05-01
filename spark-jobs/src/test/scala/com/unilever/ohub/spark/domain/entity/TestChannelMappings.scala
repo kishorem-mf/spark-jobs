@@ -8,7 +8,7 @@ trait TestChannelMappings {
   lazy val defaultChannelReference = ChannelReference(
     channelReferenceId = "1",
     globalChannel = "GLOBAL_CHANNEL",
-    globalSubchannel = "GLOBAL_SUBCHANNEL",
+    globalSubChannel = "GLOBAL_SUBCHANNEL",
     socialCommercial = Some("SOCIAL_COMMERCIAL"),
     strategicChannel = "STRATEGIC_CHANNEL"
   )
@@ -25,7 +25,7 @@ trait TestChannelMappings {
     isGoldenRecord = false,
     sourceEntityId = "b3a6208c-d7f6-44e2-80e2-f26d461f64c0",
     sourceName = "EMAKINA",
-    ohubId = null,
+    ohubId = None,
     ohubCreated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
     ohubUpdated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
 

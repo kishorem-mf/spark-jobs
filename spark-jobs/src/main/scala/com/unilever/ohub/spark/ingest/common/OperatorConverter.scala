@@ -90,7 +90,7 @@ object OperatorConverter extends CommonDomainGateKeeper[Operator] with OperatorE
       socialCommercial            = None,
       strategicChannel            = None,
       globalChannel               = None,
-      globalSubchannel            = None,
+      globalSubChannel            = None,
       additionalFields            = additionalFields                                                                                                   ,
       ingestionErrors             = errors
     )

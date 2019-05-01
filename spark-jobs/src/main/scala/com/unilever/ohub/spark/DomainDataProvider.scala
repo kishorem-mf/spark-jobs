@@ -42,7 +42,7 @@ class InMemDomainDataProvider(spark: SparkSession) extends DomainDataProvider wi
         socialCommercial = Some(lineParts(1)),
         strategicChannel = lineParts(2),
         globalChannel = lineParts(3),
-        globalSubchannel = lineParts(4)
+        globalSubChannel = lineParts(4)
       ))
       .map(ref => ref.channelReferenceId -> ref)
       .toMap

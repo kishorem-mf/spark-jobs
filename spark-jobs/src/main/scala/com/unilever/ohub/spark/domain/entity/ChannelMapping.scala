@@ -5,12 +5,16 @@ import java.sql.Timestamp
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 
+object ChannelMapping {
+  val customerType = "OPERATOR"
+}
+
 case class ChannelReference (
     channelReferenceId: String,
     socialCommercial: Option[String],
     strategicChannel: String,
     globalChannel: String,
-    globalSubchannel: String
+    globalSubChannel: String
 ) extends scala.Product
 
 case class ChannelMapping (

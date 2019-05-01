@@ -27,13 +27,9 @@ object ChannelMappingMerging extends SparkJob[ChannelMappingMergingConfig] {
     previousIntegrated
       .joinWith(channelMappings, previousIntegrated("concatId") === channelMappings("concatId"), JoinType.FullOuter)
       .map {
-        case (integrated, channelMapping) ⇒
-          if (channelMapping == null) {
-            integrated
-          } else {
-            val ohubId = if (integrated == null) Some(UUID.randomUUID().toString) else integrated.ohubId
-            channelMapping.copy(ohubId = ohubId, isGoldenRecord = true)
-          }
+        case (integrated: ChannelMapping, channelMapping: ChannelMapping) => channelMapping.copy(ohubId = integrated.ohubId)
+        case (_, channelMapping: ChannelMapping) => channelMapping.copy(ohubId = Some(UUID.randomUUID().toString))
+        case (integrated: ChannelMapping, _) => integrated
       }
   }
 

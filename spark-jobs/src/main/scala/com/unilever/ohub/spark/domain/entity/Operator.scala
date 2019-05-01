@@ -85,7 +85,7 @@ case class Operator(
     socialCommercial: Option[String],
     strategicChannel: Option[String],
     globalChannel: Option[String],
-    globalSubchannel: Option[String],
+    globalSubChannel: Option[String],
     // other fields
     additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]
