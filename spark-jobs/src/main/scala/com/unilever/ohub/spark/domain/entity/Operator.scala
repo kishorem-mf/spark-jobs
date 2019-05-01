@@ -80,6 +80,12 @@ case class Operator(
     webUpdaterId: Option[String],
     weeksClosed: Option[Int],
     zipCode: Option[String],
+    localChannel: Option[String],
+    channelUsage: Option[String],
+    socialCommercial: Option[String],
+    strategicChannel: Option[String],
+    globalChannel: Option[String],
+    globalSubchannel: Option[String],
     // other fields
     additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]

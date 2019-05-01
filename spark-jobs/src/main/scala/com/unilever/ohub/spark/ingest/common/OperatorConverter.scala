@@ -85,6 +85,12 @@ object OperatorConverter extends CommonDomainGateKeeper[Operator] with OperatorE
       webUpdaterId                = None                                                                                                               ,
       weeksClosed                 = optional  ( "weeksClosed",              "weeksClosed",                  toInt                                     ),
       zipCode                     = optional  ( "zipCode",                  "zipCode"                                                                 ),
+      localChannel                = None,
+      channelUsage                = None,
+      socialCommercial            = None,
+      strategicChannel            = None,
+      globalChannel               = None,
+      globalSubchannel            = None,
       additionalFields            = additionalFields                                                                                                   ,
       ingestionErrors             = errors
     )

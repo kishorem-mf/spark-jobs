@@ -98,6 +98,12 @@ trait TestOperators {
     webUpdaterId                = Some("web-updater-id"),
     weeksClosed                 = Some(2),
     zipCode                     = Some("1234 AB"),
+    localChannel                = None,
+    channelUsage                = None,
+    socialCommercial            = None,
+    strategicChannel            = None,
+    globalChannel               = None,
+    globalSubchannel            = None,
     additionalFields            = Map(),
     ingestionErrors             = Map()
   )
