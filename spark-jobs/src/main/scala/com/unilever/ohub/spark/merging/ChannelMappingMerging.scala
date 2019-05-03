@@ -36,7 +36,7 @@ object ChannelMappingMerging extends SparkJob[ChannelMappingMergingConfig] {
   override private[spark] def defaultConfig = ChannelMappingMergingConfig()
 
   override private[spark] def configParser(): OptionParser[ChannelMappingMergingConfig] =
-    new scopt.OptionParser[ChannelMappingMergingConfig]("Activity merging") {
+    new scopt.OptionParser[ChannelMappingMergingConfig]("ChannelMapping merging") {
       head("merges channelMappings into an integrated channelMappings output file.", "1.0")
       opt[String]("channelMappingsInputFile") required () action { (x, c) ⇒
         c.copy(channelMappingsInputFile = x)
