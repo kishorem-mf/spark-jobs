@@ -1,9 +1,9 @@
 package com.unilever.ohub.spark.outbound
 
-import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
 import com.unilever.ohub.spark.SharedSparkSession._
+import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.DomainEntityHash
+import com.unilever.ohub.spark.domain.entity.{ Operator, TestOperators }
 import org.apache.spark.sql.Dataset
 
 class OperatorHashWriterSpec extends SparkJobSpec with TestOperators {
@@ -36,12 +36,19 @@ class OperatorHashWriterSpec extends SparkJobSpec with TestOperators {
       result.head().hasChanged shouldBe Some(true)
     }
 
+    def getOldHash(operator: Operator): DomainEntityHash = {
+      SUT.determineHashes(spark, Seq(operator).toDataset, Seq[DomainEntityHash]().toDataset).head
+    }
+
     it("should mark entity has changed when operator has changed") {
       val integratedEntities: Dataset[Operator] = Seq[Operator](
         defaultOperator.copy(id = "1", concatId = "1", ohubId = Some("1"), name = Some("a new name"))
       ).toDataset
+
+      val oldHash = getOldHash(defaultOperator)
+
       val previousHashes: Dataset[DomainEntityHash] = Seq[DomainEntityHash](
-        DomainEntityHash("1", Some(false), Some("3ca8c46280aad881648b7df74bc1363"))
+        DomainEntityHash("1", Some(false), oldHash.md5Hash)
       ).toDataset
 
       val result = SUT.determineHashes(spark, integratedEntities, previousHashes)
@@ -51,10 +58,13 @@ class OperatorHashWriterSpec extends SparkJobSpec with TestOperators {
 
     it("should mark entity has not changed when the hashes match") {
       val integratedEntities: Dataset[Operator] = Seq[Operator](
-        defaultOperator.copy(id = "1", concatId = "1", ohubId = Some("1"))
+        defaultOperator.copy(id = defaultOperator.id, concatId = defaultOperator.concatId, ohubId = defaultOperator.ohubId)
       ).toDataset
+
+      val oldHash = getOldHash(defaultOperator)
+
       val previousHashes: Dataset[DomainEntityHash] = Seq[DomainEntityHash](
-        DomainEntityHash("1", Some(true), Some("3ca8c46280aad881648b7df74bc1363"))
+        DomainEntityHash(defaultOperator.concatId, Some(true), oldHash.md5Hash)
       ).toDataset
 
       val result = SUT.determineHashes(spark, integratedEntities, previousHashes)

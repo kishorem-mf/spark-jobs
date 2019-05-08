@@ -1,0 +1,5 @@
+creationTimestamp;id;sourceEntityId;concatId;sourceName;countryCode;originalChannel;localChannel;channelUsage;channelReference
+1556708917626;3af22c48-e78e-4487-9cfa-a42e192b041f;Hotel/Alojamiento;AD~mysource~Hotel/Alojamiento;mysource;AD;Hotel/Alojamiento;Hotels;Key;-1
+1556708917630;f3ee5bd0-f5ab-492b-ae90-c533887c5355;Cash and carry;AD~mysource2~Cash and carry;mysource2;AD;Cash and carry;Other;Key;-1
+1556708917631;b3832b4f-4c56-462c-84c5-8a811a7d7d1e;Otros;AD~mysource3~Otros;mysource3;AD;Otros;Other;Key;-1
+1556708917631;0a01ac26-419b-458f-9914-926376ae5273;Catering;AD~mysource4~Catering;mysource4;AD;Catering;Social;Key;-1

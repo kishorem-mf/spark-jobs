@@ -20,11 +20,14 @@ DATA_OPERATORS_RAW="${RAW_OPERATORS_INPUT_PATH}*.csv"
 DATA_OPERATORS_INGESTED="${DATA_ROOT_DIR}ingested/common/operators.parquet"
 DATA_OPERATORS_PRE_PROCESSED="${DATA_ROOT_DIR}intermediate/operators_pre_processed.parquet"
 DATA_OPERATORS_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/operators"
+DATA_OPERATORS_UPDATED_GOLDEN="${DATA_ROOT_DIR}intermediate/operators_updated_golden_records.parquet"
 DATA_OPERATORS_UPDATED_INTEGRATED="${DATA_ROOT_DIR}intermediate/operators_fuzzy_matched_delta_integrated.parquet"
 DATA_OPERATORS_DELTA_LEFT_OVERS="${DATA_ROOT_DIR}intermediate/operators_delta_left_overs.parquet"
 DATA_OPERATORS_FUZZY_MATCHED_DELTA="${DATA_ROOT_DIR}intermediate/operators_fuzzy_matched_delta.parquet"
 DATA_OPERATORS_DELTA_GOLDEN_RECORDS="${DATA_ROOT_DIR}intermediate/operators_delta_golden_records.parquet"
 DATA_OPERATORS_COMBINED="${DATA_ROOT_DIR}intermediate/operators_combined.parquet"
+
+DATA_CM_INTEGRATED_INPUT="${DATA_ROOT_DIR}output/integrated/channel_mappings"
 
 spark-submit   --class="com.unilever.ohub.spark.ingest.initial.OperatorEmptyIntegratedWriter" ${SPARK_JOBS_JAR} \
                --outputFile=${DATA_OPERATORS_INTEGRATED_INPUT}
@@ -65,4 +68,9 @@ spark-submit   --class="com.unilever.ohub.spark.combining.OperatorCombining" ${S
 
 spark-submit   --class="com.unilever.ohub.spark.merging.OperatorUpdateGoldenRecord" ${SPARK_JOBS_JAR} \
                --inputFile=${DATA_OPERATORS_COMBINED} \
+               --outputFile=${DATA_OPERATORS_UPDATED_GOLDEN}
+
+spark-submit   --class="com.unilever.ohub.spark.merging.OperatorUpdateChannelMapping" ${SPARK_JOBS_JAR} \
+               --operatorsInputFile=${DATA_OPERATORS_UPDATED_GOLDEN} \
+               --channelMappingsInputFile=${DATA_CM_INTEGRATED_INPUT} \
                --outputFile=${DATA_OPERATORS_INTEGRATED_OUTPUT}

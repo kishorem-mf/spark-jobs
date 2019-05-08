@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.ingest.common
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.Operator
-import com.unilever.ohub.spark.ingest.{ CsvDomainConfig, CsvDomainGateKeeperSpec }
+import com.unilever.ohub.spark.ingest.CsvDomainGateKeeperSpec
 
 class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
 
@@ -87,6 +87,12 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
           webUpdaterId = None,
           weeksClosed = None,
           zipCode = None,
+          localChannel = None,
+          channelUsage = None,
+          socialCommercial = None,
+          strategicChannel = None,
+          globalChannel = None,
+          globalSubChannel = None,
           additionalFields = Map(),
           ingestionErrors = Map()
         )

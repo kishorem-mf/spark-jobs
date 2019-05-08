@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # fpo
+/usr/local/pipelines/channel_mappings_pipeline.sh
 /usr/local/pipelines/operator_pipeline.sh
 /usr/local/pipelines/contactpersons_pipeline.sh
 /usr/local/pipelines/subscription_pipeline.sh
