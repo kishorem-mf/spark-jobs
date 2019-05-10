@@ -17,22 +17,22 @@ object ContactPersonConverter extends CommonDomainGateKeeper[ContactPerson] with
 
     // fieldName                        mandatory   sourceFieldName                   targetFieldName                 transformationFunction (unsafe)
     ContactPerson(
-      id                            = mandatory(    "id",                             "id"),
-      creationTimestamp             = mandatory(    "creationTimestamp",              "creationTimestamp",            toTimestamp),
-      concatId                      = mandatory(    "concatId",                       "concatId"),
-      countryCode                   = mandatory(    "countryCode",                    "countryCode"),
-      customerType                  = ContactPerson.customerType                                                                                          ,
-      ohubCreated                   = ohubCreated                                                                                                         ,
-      ohubUpdated                   = ohubCreated                                                                                                         ,
-      ohubId                        = Option.empty, // set in ContactPersonMatchingJoiner, ContactPersonExactMatcher, ContactPersonIntegratedExactMatch
-      isGoldenRecord                = false                                                                                                               ,
+      id                            =   mandatory(    "id",                             "id"),
+      creationTimestamp             =   mandatory(    "creationTimestamp",              "creationTimestamp",            toTimestamp),
+      concatId                      =   mandatory(    "concatId",                       "concatId"),
+      countryCode                   =   mandatory(    "countryCode",                    "countryCode"),
+      customerType                  =   ContactPerson.customerType                                                                                          ,
+      ohubCreated                   =   ohubCreated                                                                                                         ,
+      ohubUpdated                   =   ohubCreated                                                                                                         ,
+      ohubId                        =   Option.empty, // set in ContactPersonMatchingJoiner, ContactPersonExactMatcher, ContactPersonIntegratedExactMatch
+      isGoldenRecord                =   false                                                                                                               ,
       sourceEntityId                =   mandatory(  "sourceEntityId",                 "sourceEntityId"                                                   ),
       sourceName                    =   mandatory(  "sourceName",                     "sourceName"                                                       ),
       isActive                      =   mandatory(	"isActive",                       "isActive",                     toBoolean                          ),
       dateCreated                   =   optional(   "dateCreated",                    "dateCreated",                  parseDateTimeUnsafe()              ),
       dateUpdated                   =   optional(   "dateUpdated",                    "dateUpdated",                  parseDateTimeUnsafe()              ),
       operatorConcatId              =   optional(  "operatorConcatId",               "operatorConcatId"                                                 ),
-      operatorOhubId                = Option.empty,  // set in ContactPersonReferencing
+      operatorOhubId                =   Option.empty,  // set in ContactPersonReferencing
       oldIntegrationId              =   optional(   "oldIntegrationId",               "oldIntegrationId"                                                 ),
       firstName                     =   optional(   "firstName",                      "firstName"                                                        ),
       lastName                      =   optional(   "lastName",                       "lastName"                                                         ),
@@ -76,9 +76,10 @@ object ContactPersonConverter extends CommonDomainGateKeeper[ContactPerson] with
       hasMobileOptOut               =   optional(   "hasMobileOptOut",                "hasMobileOptOut",              toBoolean                          ),
       hasFaxOptIn                   =   optional(   "hasFaxOptIn",                    "hasFaxOptIn",                  toBoolean                          ),
       hasFaxOptOut                  =   optional(   "hasFaxOptOut",                   "hasFaxOptOut",                 toBoolean                          ),
-      webUpdaterId                  = Option.empty, // TODO what to do with this one?
-      additionalFields              = additionalFields,
-      ingestionErrors               = errors
+      webUpdaterId                  =   Option.empty, // TODO what to do with this one?
+      isEmailAddressValid           =   Some(true),
+      additionalFields              =   additionalFields,
+      ingestionErrors               =   errors
     )
     // format: ON
   }
