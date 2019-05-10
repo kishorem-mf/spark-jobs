@@ -82,7 +82,7 @@ spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonReferencing
                --outputFile=${DATA_CONTACTPERSONS_UPDATED_REFERENCES}
 
 spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonUpdateEmailValidFlag" ${SPARK_JOBS_JAR} \
-               --contactPersonsInputFile=${DATA_CONTACTPERSONS_COMBINED} \
+               --contactPersonsInputFile=${DATA_CONTACTPERSONS_UPDATED_REFERENCES} \
                --invalidEmailAddressesInputFile=${DATA_INVALID_EMAIL_INPUT} \
                --outputFile=${DATA_CONTACTPERSONS_UPDATED_VALID_EMAIL}
 
