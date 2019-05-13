@@ -16,6 +16,7 @@ PYTHON_MATCH_CONTACTS=${ARTEFACTS_DIR}name-matching/main/${MATCH_CONTACTS}
 RAW_CONTACTPERSONS_INPUT_PATH="${DATA_ROOT_DIR}raw/contactpersons/"
 
 DATA_OPERATORS_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/operators"
+DATA_INVALID_EMAIL_INPUT="${DATA_ROOT_DIR}raw/reference/invalid_email.csv"
 DATA_CONTACTPERSONS_INTEGRATED_INPUT="${DATA_ROOT_DIR}input/integrated/contactpersons"
 DATA_CONTACTPERSONS_RAW="${RAW_CONTACTPERSONS_INPUT_PATH}*.csv"
 DATA_CONTACTPERSONS_INGESTED="${DATA_ROOT_DIR}ingested/common/contactpersons.parquet"
@@ -30,6 +31,7 @@ DATA_CONTACTPERSONS_FUZZY_MATCHED_DELTA="${DATA_ROOT_DIR}intermediate/contactper
 DATA_CONTACTPERSONS_DELTA_GOLDEN_RECORDS="${DATA_ROOT_DIR}intermediate/contactpersons_delta_golden_records.parquet"
 DATA_CONTACTPERSONS_COMBINED="${DATA_ROOT_DIR}intermediate/contactpersons_combined.parquet"
 DATA_CONTACTPERSONS_UPDATED_REFERENCES="${DATA_ROOT_DIR}intermediate/contactpersons_updated_references.parquet"
+DATA_CONTACTPERSONS_UPDATED_VALID_EMAIL="${DATA_ROOT_DIR}intermediate/contactpersons_updated_valid_email.parquet"
 
 spark-submit   --class="com.unilever.ohub.spark.ingest.initial.ContactPersonEmptyIntegratedWriter" ${SPARK_JOBS_JAR} \
                --outputFile=${DATA_CONTACTPERSONS_INTEGRATED_INPUT}
@@ -79,6 +81,11 @@ spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonReferencing
                --operatorInputFile=${DATA_OPERATORS_INTEGRATED_OUTPUT} \
                --outputFile=${DATA_CONTACTPERSONS_UPDATED_REFERENCES}
 
+spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonUpdateEmailValidFlag" ${SPARK_JOBS_JAR} \
+               --contactPersonsInputFile=${DATA_CONTACTPERSONS_UPDATED_REFERENCES} \
+               --invalidEmailAddressesInputFile=${DATA_INVALID_EMAIL_INPUT} \
+               --outputFile=${DATA_CONTACTPERSONS_UPDATED_VALID_EMAIL}
+
 spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonUpdateGoldenRecord" ${SPARK_JOBS_JAR} \
-               --inputFile=${DATA_CONTACTPERSONS_UPDATED_REFERENCES} \
+               --inputFile=${DATA_CONTACTPERSONS_UPDATED_VALID_EMAIL} \
                --outputFile=${DATA_CONTACTPERSONS_INTEGRATED_OUTPUT}

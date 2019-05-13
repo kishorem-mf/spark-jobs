@@ -1,0 +1,5 @@
+"email","ZB Status","ZB Sub Status","ZB Account","ZB Domain","ZB First Name","ZB Last Name","ZB Gender","ZB Free Email","ZB MX Found","ZB MX Record","ZB SMTP Provider","ZB Did You Mean"
+"814609544@1636.com","invalid","does_not_accept_mail","814609544","1636.com","","","","false","False","","",""
+"+886928570750@ufs.com","invalid","mailbox_not_found","+886928570750","ufs.com","","","","false","True","mail.dms.unileverservices.com","",""
+"+886965408948@ufs.com","invalid","mailbox_not_found","+886965408948","ufs.com","","","","false","True","mail.dms.unileverservices.com","",""
+"+886923207995@ufs.com","invalid","mailbox_not_found","+886923207995","ufs.com","","","","false","True","mail.dms.unileverservices.com","",""
