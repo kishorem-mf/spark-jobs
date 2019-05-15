@@ -1,10 +1,8 @@
 package com.unilever.ohub.spark
 
-import com.unilever.ohub.spark.SharedSparkSession.spark
-
 class DomainDataProviderSpec extends SparkJobSpec {
   describe("DomainDataProvider") {
-    val domainDataProvider = DomainDataProvider(spark)
+    val domainDataProvider = DomainDataProvider()
 
     it("should be able to create a dataset for channelReferences") {
       val channelReferences = domainDataProvider.channelReferences

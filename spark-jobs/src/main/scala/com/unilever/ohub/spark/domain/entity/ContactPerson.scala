@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.domain.entity
 
-import java.sql.{ Date, Timestamp }
+import java.sql.{Date, Timestamp}
 
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
