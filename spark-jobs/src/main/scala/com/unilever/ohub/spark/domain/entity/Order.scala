@@ -37,6 +37,7 @@ case class Order(
     distributorLocation: Option[String],
     distributorName: Option[String],
     distributorOperatorId: Option[String],
+    currency: Option[String],
     operatorConcatId: Option[String],
     operatorOhubId: Option[String],
     transactionDate: Option[Timestamp],

@@ -24,12 +24,15 @@ DATA_OPERATORS_UNMATCHED_INTEGRATED="${DATA_ROOT_DIR}intermediate/operators_unma
 DATA_OPERATORS_UNMATCHED_DELTA="${DATA_ROOT_DIR}intermediate/operators_unmatched_delta.parquet"
 DATA_OPERATORS_FUZZY_MATCHED_DELTA_INTEGRATED="${DATA_ROOT_DIR}intermediate/operators_fuzzy_matched_delta_integrated.parquet"
 DATA_OPERATORS_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/operators"
+DATA_OPERATORS_UPDATED_GOLDEN="${DATA_ROOT_DIR}intermediate/operators_updated_golden_records.parquet"
 DATA_OPERATORS_UPDATED_INTEGRATED="${DATA_ROOT_DIR}intermediate/operators_fuzzy_matched_delta_integrated.parquet"
 DATA_OPERATORS_DELTA_LEFT_OVERS="${DATA_ROOT_DIR}intermediate/operators_delta_left_overs.parquet"
 DATA_OPERATORS_FUZZY_MATCHED_DELTA="${DATA_ROOT_DIR}intermediate/operators_fuzzy_matched_delta.parquet"
 DATA_OPERATORS_DELTA_GOLDEN_RECORDS="${DATA_ROOT_DIR}intermediate/operators_delta_golden_records.parquet"
 DATA_OPERATORS_COMBINED="${DATA_ROOT_DIR}intermediate/operators_combined.parquet"
 DATA_OPERATORS_CHECKPOINT="${DATA_ROOT_DIR}intermediate/checkpoint.parquet"
+
+DATA_CM_INTEGRATED_INPUT="${DATA_ROOT_DIR}output/integrated/channel_mappings"
 
 echo
 echo OperatorEmptyIntegratedWriter
@@ -97,4 +100,9 @@ echo OperatorUpdateGoldenRecord
 spark-submit   --class="com.unilever.ohub.spark.merging.OperatorUpdateGoldenRecord" ${SPARK_JOBS_JAR} \
                --inputFile=${DATA_OPERATORS_COMBINED} \
                --checkpointFile=${DATA_OPERATORS_CHECKPOINT} \
+               --outputFile=${DATA_OPERATORS_UPDATED_GOLDEN}
+
+spark-submit   --class="com.unilever.ohub.spark.merging.OperatorUpdateChannelMapping" ${SPARK_JOBS_JAR} \
+               --operatorsInputFile=${DATA_OPERATORS_UPDATED_GOLDEN} \
+               --channelMappingsInputFile=${DATA_CM_INTEGRATED_INPUT} \
                --outputFile=${DATA_OPERATORS_INTEGRATED_OUTPUT}

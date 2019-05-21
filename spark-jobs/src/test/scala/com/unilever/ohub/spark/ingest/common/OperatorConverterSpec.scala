@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.ingest.common
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.Operator
-import com.unilever.ohub.spark.ingest.{ CsvDomainConfig, CsvDomainGateKeeperSpec }
+import com.unilever.ohub.spark.ingest.CsvDomainGateKeeperSpec
 
 class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
 
@@ -34,7 +34,11 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
           ohubId = actualOperator.ohubId,
           ohubCreated = actualOperator.ohubCreated,
           ohubUpdated = actualOperator.ohubUpdated,
+          annualTurnover = None,
           averagePrice = None,
+          averageRating = None,
+          beveragePurchasePotential = None,
+          buildingSquareFootage = None,
           chainId = Some("UG_1"),
           chainName = Some("Diger Müsteriler"),
           channel = Some("Restaurants"),
@@ -57,6 +61,11 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
           hasMobileOptOut = None,
           hasTelemarketingOptIn = Some(true),
           hasTelemarketingOptOut = None,
+          headQuarterAddress = None,
+          headQuarterCity = None,
+          headQuarterPhoneNumber = None,
+          headQuarterState = None,
+          headQuarterZipCode = None,
           houseNumber = None,
           houseNumberExtension = None,
           isNotRecalculatingOtm = None,
@@ -69,12 +78,17 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
           isOpenOnWednesday = Some(true),
           isPrivateHousehold = None,
           kitchenType = None,
+          menuKeywords = None,
           mobileNumber = Some("05356800669"),
           netPromoterScore = Some(BigDecimal("0")),
+          numberOfProductsFittingInMenu = None,
+          numberOfReviews = None,
           oldIntegrationId = None,
+          operatorLeadScore = None,
           otm = None,
           otmEnteredBy = None,
           phoneNumber = Some("0252 3854478"),
+          potentialSalesValue = None,
           region = Some("Mugla"),
           salesRepresentative = Some("Bodrum (Vacant)"),
           state = Some("Bodrum"),
@@ -84,9 +98,18 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
           totalLocations = None,
           totalStaff = None,
           vat = Some("18808137040"),
+          wayOfServingAlcohol = None,
+          website = None,
           webUpdaterId = None,
           weeksClosed = None,
+          yearFounded = None,
           zipCode = None,
+          localChannel = None,
+          channelUsage = None,
+          socialCommercial = None,
+          strategicChannel = None,
+          globalChannel = None,
+          globalSubChannel = None,
           additionalFields = Map(),
           ingestionErrors = Map()
         )

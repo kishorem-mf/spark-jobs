@@ -72,8 +72,13 @@ case class ContactPerson(
     hasFaxOptIn: Option[Boolean],
     hasFaxOptOut: Option[Boolean],
     webUpdaterId: Option[String],
+    isEmailAddressValid: Option[Boolean],
 
     // other fields
     additionalFields: Map[String, String],
     ingestionErrors: Map[String, IngestionError]
 ) extends DomainEntity
+
+case class InvalidEmail(
+    emailAddress: String
+)

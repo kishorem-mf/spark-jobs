@@ -76,6 +76,7 @@ trait TestContactPersons {
     hasFaxOptIn = Some(true),
     hasFaxOptOut = Some(true),
     webUpdaterId = None,
+    isEmailAddressValid = None,
     additionalFields = Map(),
     ingestionErrors = Map()
   )

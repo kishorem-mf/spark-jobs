@@ -2,6 +2,8 @@
 Spark jobs for the OHub2 project.
 
 # Getting Started
+
+- install Java 8 
 - install scala and sbt
 - git clone this project
 - run sbt compile
@@ -23,3 +25,14 @@ run `sbt clean coverage test coverageReport` to run the tests with coverage.
 ## If sbt task are available as run configurations (as in Intellij):
 create a sbt task with `"set test in assembly := {}" clean assembly` as tasks (with same VM params as assembly)
 to build jar while skipping the tests
+
+# Windows setup
+
+If you don't have Hadoop installed locally it will complain about: `Missing winutils.exe (Failed to locate the winutils binary in the hadoop binary path) `
+To solve this:
+
+- Download `winutils.exe` from https://github.com/steveloughran/winutils/blob/master/hadoop-2.7.1/bin/winutils.exe
+- Create a new directory for example: `c:\hadoop\bin` and place `winutils.exe` in this directory
+- Add `c:\hadoop\bin` to your path or specify `-Dhadoop.home.dir=C:\hadoop` to your run configuration
+
+
