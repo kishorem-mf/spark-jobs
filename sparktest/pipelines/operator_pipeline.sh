@@ -26,6 +26,8 @@ DATA_OPERATORS_DELTA_LEFT_OVERS="${DATA_ROOT_DIR}intermediate/operators_delta_le
 DATA_OPERATORS_FUZZY_MATCHED_DELTA="${DATA_ROOT_DIR}intermediate/operators_fuzzy_matched_delta.parquet"
 DATA_OPERATORS_DELTA_GOLDEN_RECORDS="${DATA_ROOT_DIR}intermediate/operators_delta_golden_records.parquet"
 DATA_OPERATORS_COMBINED="${DATA_ROOT_DIR}intermediate/operators_combined.parquet"
+DATA_OPERATORS_CREATED_GOLDEN_RECORDS="${DATA_ROOT_DIR}output/integrated/operators_golden"
+
 
 DATA_CM_INTEGRATED_INPUT="${DATA_ROOT_DIR}output/integrated/channel_mappings"
 
@@ -74,3 +76,7 @@ spark-submit   --class="com.unilever.ohub.spark.merging.OperatorUpdateChannelMap
                --operatorsInputFile=${DATA_OPERATORS_UPDATED_GOLDEN} \
                --channelMappingsInputFile=${DATA_CM_INTEGRATED_INPUT} \
                --outputFile=${DATA_OPERATORS_INTEGRATED_OUTPUT}
+
+spark-submit   --class="com.unilever.ohub.spark.merging.OperatorCreateGoldenRecord" ${SPARK_JOBS_JAR} \
+               --inputFile=${DATA_OPERATORS_INTEGRATED_OUTPUT} \
+               --outputFile=${DATA_OPERATORS_CREATED_GOLDEN_RECORDS}            
