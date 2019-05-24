@@ -17,19 +17,27 @@ DATA_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/activities"
 DATA_OP_INTEGRATED_INPUT="${DATA_ROOT_DIR}input/integrated/operators"
 DATA_CP_INTEGRATED_INPUT="${DATA_ROOT_DIR}input/integrated/contactpersons"
 
+echo
+echo ActivityEmptyIntegratedWriter
 spark-submit    --class="com.unilever.ohub.spark.ingest.initial.ActivityEmptyIntegratedWriter" ${SPARK_JOBS_JAR} \
                 --outputFile=${DATA_INTEGRATED_INPUT}
 
+echo
+echo ActivityConverter
 spark-submit    --class="com.unilever.ohub.spark.ingest.common.ActivityConverter" ${SPARK_JOBS_JAR} \
                 --inputFile=${RAW_INPUT_PATH} \
                 --outputFile=${DATA_INGESTED} \
                 --fieldSeparator=";" --strictIngestion="false" --deduplicateOnConcatId="true"
 
+echo
+echo ActivityPreProcess
 spark-submit    --class="com.unilever.ohub.spark.merging.ActivityPreProcess" ${SPARK_JOBS_JAR} \
                 --integratedInputFile=${DATA_INTEGRATED_INPUT} \
                 --deltaInputFile=${DATA_INGESTED} \
                 --deltaPreProcessedOutputFile=${DATA_PRE_PROCESSED}
 
+echo
+echo ActivityMerging
 spark-submit    --class="com.unilever.ohub.spark.merging.ActivityMerging" ${SPARK_JOBS_JAR} \
                 --activitiesInputFile=${DATA_PRE_PROCESSED} \
                 --previousIntegrated=${DATA_INTEGRATED_INPUT} \

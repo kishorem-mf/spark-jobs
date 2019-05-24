@@ -4,6 +4,8 @@ import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.domain.entity.TestOperators
 
+import scala.collection.immutable
+
 class OperatorUpdateGoldenRecordSpec extends SparkJobSpec with TestOperators {
   import spark.implicits._
 
@@ -72,6 +74,26 @@ class OperatorUpdateGoldenRecordSpec extends SparkJobSpec with TestOperators {
       val updated = OperatorUpdateGoldenRecord.transform(spark, operators, sourcePreferences).collect
 
       assert(updated.find(_.sourceName == "sourceA").get.isGoldenRecord)
+      assert(!updated.find(_.sourceName == "sourceB").get.isGoldenRecord)
+    }
+
+    it("select first record as golden record in big groups") {
+      val sourcePreferences = Map(
+        "sourceA" -> 1,
+        "sourceB" -> 2
+      )
+
+      val a = defaultOperatorWithSourceName("sourceA").copy(ohubId = Some("a"))
+      val b = defaultOperatorWithSourceName("sourceB").copy(isGoldenRecord = true, ohubId = Some("a"))
+      val bigList = 0 to 100 map (i ⇒ defaultOperatorWithSourceName(i.toString).copy(ohubId = Some("b")))
+
+      val operators = (bigList ++ Seq(a, b)).toDataset
+
+      val updated = OperatorUpdateGoldenRecord.transform(spark, operators, sourcePreferences, 10).collect
+
+      assert(updated.find(_.sourceName == "sourceA").get.isGoldenRecord)
+      assert(updated.find(_.sourceName == "0").get.isGoldenRecord)
+      assert(!updated.find(_.sourceName == "1").get.isGoldenRecord)
       assert(!updated.find(_.sourceName == "sourceB").get.isGoldenRecord)
     }
   }

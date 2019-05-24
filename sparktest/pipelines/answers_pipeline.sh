@@ -14,19 +14,27 @@ DATA_INGESTED="${DATA_ROOT_DIR}ingested/common/answers.parquet"
 DATA_PRE_PROCESSED="${DATA_ROOT_DIR}intermediate/answers_pre_processed.parquet"
 DATA_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/answers"
 
+echo
+echo AnswerEmptyIntegratedWriter
 spark-submit    --class="com.unilever.ohub.spark.ingest.initial.AnswerEmptyIntegratedWriter" ${SPARK_JOBS_JAR} \
                 --outputFile=${DATA_INTEGRATED_INPUT}
 
+echo
+echo AnswerConverter
 spark-submit    --class="com.unilever.ohub.spark.ingest.common.AnswerConverter" ${SPARK_JOBS_JAR} \
                 --inputFile=${RAW_INPUT_PATH} \
                 --outputFile=${DATA_INGESTED} \
                 --fieldSeparator=";" --strictIngestion="false" --deduplicateOnConcatId="true"
 
+echo
+echo AnswerPreProcess
 spark-submit    --class="com.unilever.ohub.spark.merging.AnswerPreProcess" ${SPARK_JOBS_JAR} \
                 --integratedInputFile=${DATA_INTEGRATED_INPUT} \
                 --deltaInputFile=${DATA_INGESTED} \
                 --deltaPreProcessedOutputFile=${DATA_PRE_PROCESSED}
 
+echo
+echo AnswerMerging
 spark-submit    --class="com.unilever.ohub.spark.merging.AnswerMerging" ${SPARK_JOBS_JAR} \
                 --answersInputFile=${DATA_PRE_PROCESSED} \
                 --previousIntegrated=${DATA_INTEGRATED_INPUT} \

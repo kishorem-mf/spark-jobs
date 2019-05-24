@@ -17,19 +17,27 @@ DATA_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/loyalty_points"
 DATA_OP_INTEGRATED_INPUT="${DATA_ROOT_DIR}input/integrated/operators"
 DATA_CP_INTEGRATED_INPUT="${DATA_ROOT_DIR}input/integrated/contactpersons"
 
+echo
+echo LoyaltyPointsEmptyIntegratedWriter
 spark-submit    --class="com.unilever.ohub.spark.ingest.initial.LoyaltyPointsEmptyIntegratedWriter" ${SPARK_JOBS_JAR} \
                 --outputFile=${DATA_INTEGRATED_INPUT}
 
+echo
+echo LoyaltyPointsConverter
 spark-submit    --class="com.unilever.ohub.spark.ingest.common.LoyaltyPointsConverter" ${SPARK_JOBS_JAR} \
                 --inputFile=${RAW_INPUT_PATH} \
                 --outputFile=${DATA_INGESTED} \
                 --fieldSeparator=";" --strictIngestion="false" --deduplicateOnConcatId="true"
 
+echo
+echo LoyaltyPointsPreProcess
 spark-submit    --class="com.unilever.ohub.spark.merging.LoyaltyPointsPreProcess" ${SPARK_JOBS_JAR} \
                 --integratedInputFile=${DATA_INTEGRATED_INPUT} \
                 --deltaInputFile=${DATA_INGESTED} \
                 --deltaPreProcessedOutputFile=${DATA_PRE_PROCESSED}
 
+echo
+echo LoyaltyPointsMerging
 spark-submit    --class="com.unilever.ohub.spark.merging.LoyaltyPointsMerging" ${SPARK_JOBS_JAR} \
                 --loyaltyPointsInputFile=${DATA_PRE_PROCESSED} \
                 --previousIntegrated=${DATA_INTEGRATED_INPUT} \

@@ -2,6 +2,7 @@ package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.entity.{ ContactPerson, Subscription }
+import com.unilever.ohub.spark.merging.DataFrameHelpers.SEED
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql.expressions.Window
@@ -56,7 +57,7 @@ object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] with Grou
       .withColumn("isGoldenRecord", $"rn" === 1)
       .drop("rn", "orderDate")
       .withColumn("ohubId", first($"ohubId").over(w2)) // preserve ohubId
-      .withColumn("ohubId", when('ohubId.isNull, createOhubIdUdf()).otherwise('ohubId))
+      .withColumn("ohubId", when('ohubId.isNull, createOhubIdUdf(rand())).otherwise('ohubId))
       .withColumn("ohubId", first('ohubId).over(w2)) // make sure the whole group gets the same ohubId
       .as[Subscription]
   }

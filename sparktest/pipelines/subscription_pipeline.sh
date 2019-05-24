@@ -16,19 +16,27 @@ DATA_SUBSCRIPTIONS_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/subscrip
 
 DATA_CONTACTPERSONS_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/contactpersons"
 
+echo
+echo SubscriptionEmptyIntegratedWriter
 spark-submit    --class="com.unilever.ohub.spark.ingest.initial.SubscriptionEmptyIntegratedWriter" ${SPARK_JOBS_JAR} \
                 --outputFile=${DATA_SUBSCRIPTIONS_INTEGRATED_INPUT}
 
+echo
+echo SubscriptionConverter
 spark-submit    --class="com.unilever.ohub.spark.ingest.common.SubscriptionConverter" ${SPARK_JOBS_JAR} \
                 --inputFile=${RAW_SUBSCRIPTIONS_INPUT_PATH} \
                 --outputFile=${DATA_SUBSCRIPTIONS_INGESTED} \
                 --fieldSeparator=";" --strictIngestion="false" --deduplicateOnConcatId="true"
 
+echo
+echo SubscriptionPreProcess
 spark-submit    --class="com.unilever.ohub.spark.merging.SubscriptionPreProcess" ${SPARK_JOBS_JAR} \
                 --integratedInputFile=${DATA_SUBSCRIPTIONS_INTEGRATED_INPUT} \
                 --deltaInputFile=${DATA_SUBSCRIPTIONS_INGESTED} \
                 --deltaPreProcessedOutputFile=${DATA_SUBSCRIPTIONS_PRE_PROCESSED}
 
+echo
+echo SubscriptionMerging
 spark-submit    --class="com.unilever.ohub.spark.merging.SubscriptionMerging" ${SPARK_JOBS_JAR} \
                 --subscriptionInputFile=${DATA_SUBSCRIPTIONS_PRE_PROCESSED} \
                 --previousIntegrated=${DATA_SUBSCRIPTIONS_INTEGRATED_INPUT} \
