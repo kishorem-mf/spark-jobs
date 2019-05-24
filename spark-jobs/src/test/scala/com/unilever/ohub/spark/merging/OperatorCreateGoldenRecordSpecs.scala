@@ -25,12 +25,40 @@ class OperatorCreateGoldenRecordSpecs extends SparkJobSpec with TestOperators {
 
       val opInactive = defaultOperator.copy(isActive = false, ohubId = Some("tcInactive"))
 
-      val input = Seq(opMerge1, opMerge2, opNull1, opNull2, opInactive).toDataset
+      val opNewest1 = defaultOperator.copy(
+        dateUpdated = Some(new Timestamp(1L)),
+        dateCreated = Some(new Timestamp(1L)),
+        ohubUpdated = new Timestamp(1L),
+        name = None,
+        chainName = None,
+        channel = Some("newest"),
+        ohubId = Some("tcNewest")
+      )
+      val opNewest2 = defaultOperator.copy(
+        dateUpdated = None,
+        dateCreated = Some(new Timestamp(1L)),
+        ohubUpdated = new Timestamp(1L),
+        name = None,
+        chainName = Some("middle"),
+        channel = Some("middle"),
+        ohubId = Some("tcNewest")
+      )
+      val opNewest3 = defaultOperator.copy(
+        dateUpdated = None,
+        dateCreated = None,
+        ohubUpdated = new Timestamp(1L),
+        name = Some("oldest"),
+        chainName = Some("oldest"),
+        channel = Some("oldest"),
+        ohubId = Some("tcNewest")
+      )
+
+      val input = Seq(opMerge1, opMerge2, opNull1, opNull2, opInactive, opNewest1, opNewest2, opNewest3).toDataset
 
       val result = SUT.transform(spark, input).collect
 
       it("should output 1 record for each group with active operators") {
-        result.length shouldBe(2)
+        result.length shouldBe (3)
       }
 
       it("should not output inactive groups") {
@@ -44,18 +72,13 @@ class OperatorCreateGoldenRecordSpecs extends SparkJobSpec with TestOperators {
         tcResult.head.name shouldBe opMerge1.name
       }
 
-      it("should ignore null values when an older value exists within the group") {
-
-      }
-
-      it("should only process active operators") {
-
+      it("should merge groups based on multiple date columns") {
+        val tcResult = result.filter(_.ohubId == Some("tcNewest"))
+        tcResult.length shouldBe 1
+        tcResult.head.name shouldBe opNewest3.name
+        tcResult.head.chainName shouldBe opNewest2.chainName
+        tcResult.head.channel shouldBe opNewest1.channel
       }
     }
-
-
-
-
-
   }
 }

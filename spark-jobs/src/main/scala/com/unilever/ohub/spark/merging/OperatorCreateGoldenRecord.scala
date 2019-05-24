@@ -5,19 +5,18 @@ import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{DefaultConfig, SparkJobWithDefaultConfig}
 import org.apache.spark.sql.expressions.{Window, WindowSpec}
-import org.apache.spark.sql.functions.{col, first, lit, typedLit}
-import org.apache.spark.sql.{Column, DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 object OperatorCreateGoldenRecord extends SparkJobWithDefaultConfig {
-  def transform(spark: SparkSession,
-                operators: Dataset[Operator]
-               ): Dataset[Operator] = {
+  def transform(spark: SparkSession, operators: Dataset[Operator]): Dataset[Operator] = {
     import spark.implicits._
     val groupWindow = Window.partitionBy($"ohubId")
     val activeOperators = operators.filter($"isActive").drop("additionalFields", "ingestionErrors")
 
     setFieldsToLatestValue(spark, groupWindow, activeOperators)
-      .dropDuplicates()
+      .filter($"group_row_num" === 1)
+      .drop("group_row_num")
       .withColumn("isGoldenRecord", lit(true))
       .withColumn("additionalFields", typedLit(Map[String, String]()))
       .withColumn("ingestionErrors", typedLit(Map[String, IngestionError]()))
@@ -37,10 +36,11 @@ object OperatorCreateGoldenRecord extends SparkJobWithDefaultConfig {
     dataframe.columns
       .filter(!excludeFields.contains(_))
       .foldLeft(dataframe)(
-        (op: DataFrame, column: String) => {
+        (op: DataFrame, column: String) ⇒ {
           op.withColumn(column, first(col(column), true).over(newestNotNullWindow))
         }
       )
+      .withColumn("group_row_num", row_number().over(newestNotNullWindow))
   }
 
   override def run(spark: SparkSession, config: DefaultConfig, storage: Storage): Unit = {
