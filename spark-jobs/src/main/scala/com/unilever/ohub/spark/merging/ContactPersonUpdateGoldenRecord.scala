@@ -2,12 +2,11 @@ package com.unilever.ohub.spark.merging
 
 import java.sql.Timestamp
 
-import com.unilever.ohub.spark.{ DefaultConfig, SparkJobWithDefaultDbConfig }
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.DomainDataProvider
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import com.unilever.ohub.spark.{DefaultConfig, DomainDataProvider, SparkJobWithDefaultDbConfig}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Dataset, SparkSession}
 
 object ContactPersonUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with GoldenRecordPicking[ContactPerson] {
   def markGoldenRecord(sourcePreference: Map[String, Int])(contactPersons: Seq[ContactPerson]): Seq[ContactPerson] = {
@@ -62,7 +61,7 @@ object ContactPersonUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with 
   }
 
   override def run(spark: SparkSession, config: DefaultConfig, storage: Storage): Unit = {
-    run(spark, config, storage, DomainDataProvider(spark))
+    run(spark, config, storage, DomainDataProvider())
   }
 
   protected[merging] def run(spark: SparkSession, config: DefaultConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {

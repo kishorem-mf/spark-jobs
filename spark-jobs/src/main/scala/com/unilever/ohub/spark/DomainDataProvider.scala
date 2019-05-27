@@ -1,7 +1,6 @@
 package com.unilever.ohub.spark
 
 import com.unilever.ohub.spark.domain.entity.ChannelReference
-import org.apache.spark.sql._
 
 import scala.io.Source
 
@@ -9,14 +8,16 @@ trait DomainDataProvider {
   def sourcePreferences: Map[String, Int]
 
   def channelReferences: Map[String, ChannelReference]
+
+  def sourceIds: Map[String, Int]
 }
 
 object DomainDataProvider {
-  def apply(spark: SparkSession): DomainDataProvider =
-    new InMemDomainDataProvider(spark)
+  def apply(): DomainDataProvider =
+    new InMemDomainDataProvider()
 }
 
-class InMemDomainDataProvider(spark: SparkSession) extends DomainDataProvider with Serializable {
+class InMemDomainDataProvider() extends DomainDataProvider with Serializable {
 
   override val sourcePreferences: Map[String, Int] = {
     Source
@@ -44,6 +45,18 @@ class InMemDomainDataProvider(spark: SparkSession) extends DomainDataProvider wi
         globalSubChannel = lineParts(4)
       ))
       .map(ref ⇒ ref.channelReferenceId -> ref)
+      .toMap
+  }
+
+  override lazy val sourceIds: Map[String, Int] = {
+    Source
+      .fromInputStream(this.getClass.getResourceAsStream("/sources.csv"))
+      .getLines()
+      .toSeq
+      .filter(_.nonEmpty)
+      .drop(1)
+      .map(_.split(";"))
+      .map(lineParts ⇒ lineParts(0) -> lineParts(1).toInt)
       .toMap
   }
 }

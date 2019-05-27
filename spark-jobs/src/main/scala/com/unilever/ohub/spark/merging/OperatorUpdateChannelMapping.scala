@@ -1,10 +1,10 @@
 package com.unilever.ohub.spark.merging
 
-import com.unilever.ohub.spark.domain.entity.{ ChannelMapping, ChannelReference, Operator }
+import com.unilever.ohub.spark.domain.entity.{ChannelMapping, ChannelReference, Operator}
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{ DomainDataProvider, SparkJob, SparkJobConfig }
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import com.unilever.ohub.spark.{DomainDataProvider, SparkJob, SparkJobConfig}
+import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 case class OperatorUpdateChannelMappingConfig(
@@ -65,7 +65,7 @@ object OperatorUpdateChannelMapping extends SparkJob[OperatorUpdateChannelMappin
     }
 
   override def run(spark: SparkSession, config: OperatorUpdateChannelMappingConfig, storage: Storage): Unit = {
-    val dataProvider = DomainDataProvider(spark)
+    val dataProvider = DomainDataProvider()
     val operators = storage.readFromParquet[Operator](config.operatorsInputFile)
     val channelMappings = storage.readFromParquet[ChannelMapping](config.channelMappingsInputFile)
     val transformed = transform(spark, operators, channelMappings, dataProvider.channelReferences)

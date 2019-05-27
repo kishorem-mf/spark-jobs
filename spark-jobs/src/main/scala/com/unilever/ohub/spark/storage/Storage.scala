@@ -1,11 +1,11 @@
 package com.unilever.ohub.spark.storage
 
-import java.util.{ Properties, UUID }
+import java.util.Properties
 
-import org.apache.spark.sql._
 import org.apache.hadoop.fs._
-import org.apache.log4j.Logger
+import org.apache.spark.sql._
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
+
 import scala.reflect.runtime.universe._
 
 trait Storage {
@@ -15,12 +15,6 @@ trait Storage {
     fieldSeparator: String,
     hasHeaders: Boolean = true
   ): Dataset[Row]
-
-  def writeToSingleCsv(
-    ds: Dataset[_],
-    outputFile: String,
-    options: Map[String, String] = Map()
-  )(implicit log: Logger): Unit
 
   def readFromParquet[T <: Product: TypeTag](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
 
@@ -47,65 +41,6 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .option("encoding", "UTF-8")
       .option("escape", "\"")
       .csv(location)
-  }
-
-  def writeToSingleCsv(
-    ds: Dataset[_],
-    outputFile: String,
-    options: Map[String, String] = Map()
-  )(implicit log: Logger): Unit = {
-
-    val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
-    val outputFilePath = new Path(outputFile)
-    val temporaryPath = new Path(outputFilePath.getParent, UUID.randomUUID().toString)
-
-    val concatAvailable = isConcatAvailable(fs)
-
-    val updatedDs = if (concatAvailable) ds else ds.coalesce(1)
-    updatedDs
-      .write
-      .mode(SaveMode.Overwrite)
-      .option("encoding", "UTF-8")
-      .option("header", "true")
-      .options(options)
-      .csv(temporaryPath.toString)
-
-    createSingleFileFromPath(fs, outputFilePath, temporaryPath, concatAvailable, getCsvFilePaths)
-  }
-
-  private[storage] def createSingleFileFromPath(
-    fs: FileSystem,
-    outputFilePath: Path,
-    inputPath: Path,
-    concatAvailable: Boolean,
-    getFilesFun: (FileSystem, Path) ⇒ Array[Path]
-  )(implicit log: Logger) = {
-    val paths = getFilesFun(fs, inputPath)
-    if (fs.exists(outputFilePath)) {
-      fs.delete(outputFilePath, true)
-    }
-
-    if (concatAvailable) {
-      fs.concat(outputFilePath, paths)
-      fs.delete(inputPath, true)
-    } else {
-      if (paths.length != 1) {
-        log.error("the number of files found is greater or smaller than 1, this is not supported")
-        System.exit(1)
-      }
-      fs.rename(paths.head, outputFilePath)
-      fs.delete(inputPath, true)
-    }
-  }
-
-  private[storage] def isConcatAvailable(fs: FileSystem) = {
-    try {
-      fs.concat(new Path("/tmp/"), Array.empty)
-      true
-    } catch {
-      case _: UnsupportedOperationException ⇒ false
-      case _: Throwable                     ⇒ true
-    }
   }
 
   private[storage] def getCsvFilePaths(fs: FileSystem, path: Path): Array[Path] = {

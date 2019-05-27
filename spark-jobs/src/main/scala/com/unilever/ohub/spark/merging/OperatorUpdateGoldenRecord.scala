@@ -2,10 +2,10 @@ package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{ DefaultConfig, DomainDataProvider, SparkJob, SparkJobConfig, SparkJobWithDefaultDbConfig }
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import com.unilever.ohub.spark.{DomainDataProvider, SparkJob, SparkJobConfig}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 case class OperatorUpdateGoldenRecordConfig(
@@ -82,7 +82,7 @@ object OperatorUpdateGoldenRecord extends SparkJob[OperatorUpdateGoldenRecordCon
     }
 
   override def run(spark: SparkSession, config: OperatorUpdateGoldenRecordConfig, storage: Storage): Unit = {
-    run(spark, config, storage, DomainDataProvider(spark))
+    run(spark, config, storage, DomainDataProvider())
   }
 
   protected[merging] def run(spark: SparkSession, config: OperatorUpdateGoldenRecordConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {

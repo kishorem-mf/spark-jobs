@@ -2,13 +2,12 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.DomainDataProvider
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import com.unilever.ohub.spark.{DomainDataProvider, SparkJob, SparkJobConfig}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 import scala.reflect.runtime.universe._
@@ -91,7 +90,7 @@ abstract class BaseMatchingJoiner[T <: DomainEntity: TypeTag] extends SparkJob[D
     }
 
   override def run(spark: SparkSession, config: DomainEntityJoinConfig, storage: Storage): Unit = {
-    run(spark, config, storage, DomainDataProvider(spark))
+    run(spark, config, storage, DomainDataProvider())
   }
 
   protected[merging] def run(spark: SparkSession, config: DomainEntityJoinConfig, storage: Storage, dataProvider: DomainDataProvider): Unit = {
