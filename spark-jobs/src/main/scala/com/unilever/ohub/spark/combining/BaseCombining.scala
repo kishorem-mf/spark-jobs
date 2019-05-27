@@ -42,10 +42,10 @@ abstract class BaseCombining[T <: DomainEntity: TypeTag] extends SparkJob[ExactA
     }
 
   def transform(
-    spark: SparkSession,
-    exactMatches: Dataset[T],
-    fuzzyMatchesDeltaIntegrated: Dataset[T],
-    fuzzyMatchesDeltaLeftOvers: Dataset[T]
+   spark: SparkSession,
+   exactMatches: Dataset[T],
+   fuzzyMatchesDeltaIntegrated: Dataset[T],
+   deltaGoldenRecords: Dataset[T]
   ): Dataset[T] = {
     import spark.implicits._
 
@@ -54,7 +54,7 @@ abstract class BaseCombining[T <: DomainEntity: TypeTag] extends SparkJob[ExactA
 
     val all = exactMatches
       .unionByName(fuzzyMatchesDeltaIntegrated)
-      .unionByName(fuzzyMatchesDeltaLeftOvers)
+      .unionByName(deltaGoldenRecords)
 
     all
       .withColumn("rn", row_number.over(w))
@@ -72,9 +72,9 @@ abstract class BaseCombining[T <: DomainEntity: TypeTag] extends SparkJob[ExactA
 
     val exactMatches = storage.readFromParquet[T](config.exactMatchedInputFile)
     val fuzzyMatchesDeltaIntegrated = storage.readFromParquet[T](config.fuzzyMatchedDeltaIntegratedInputFile)
-    val fuzzyMatchesDeltaLeftOvers = storage.readFromParquet[T](config.deltaGoldenRecordsInputFile)
+    val deltaGoldenRecords = storage.readFromParquet[T](config.deltaGoldenRecordsInputFile)
 
-    val result: Dataset[T] = transform(spark, exactMatches, fuzzyMatchesDeltaIntegrated, fuzzyMatchesDeltaLeftOvers)
+    val result: Dataset[T] = transform(spark, exactMatches, fuzzyMatchesDeltaIntegrated, deltaGoldenRecords)
 
     storage.writeToParquet(result, config.combinedOutputFile)
   }
