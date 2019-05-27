@@ -9,9 +9,9 @@ object SparkDependencies extends AutoPlugin {
   private val sparkDependencyType: String = sys.props.getOrElse("sparkDependencyType", "compile")
 
   lazy val sparkDependencies: Seq[ModuleID] = Seq(
-    "org.apache.spark"        %% "spark-core"          % SparkVersion  % sparkDependencyType excludeAll ExclusionRule(organization = "org.scalatest"),
-    "org.apache.spark"        %% "spark-sql"           % SparkVersion  % sparkDependencyType,
-    "org.apache.spark"        %% "spark-mllib"         % SparkVersion  % sparkDependencyType
+    "org.apache.spark"        %% "spark-core"          % SparkVersion  % Provided excludeAll ExclusionRule(organization = "org.scalatest"),
+    "org.apache.spark"        %% "spark-sql"           % SparkVersion  % Provided,
+    "org.apache.spark"        %% "spark-mllib"         % SparkVersion  % Provided
   )
 
   object autoImport {
@@ -26,4 +26,5 @@ object SparkDependencies extends AutoPlugin {
     },
     libraryDependencies ++= sparkDependencies
   )
+
 }

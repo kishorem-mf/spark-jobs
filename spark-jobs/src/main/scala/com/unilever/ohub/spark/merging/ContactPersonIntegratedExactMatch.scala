@@ -1,20 +1,13 @@
 package com.unilever.ohub.spark.merging
 
+import com.unilever.ohub.spark.SparkJob
 import com.unilever.ohub.spark.domain.entity.ContactPerson
+import com.unilever.ohub.spark.merging.DataFrameHelpers._
+import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
-import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{ Dataset, SparkSession }
+import org.apache.spark.sql.functions._
 import scopt.OptionParser
-
-case class ExactMatchIngestedWithDbConfig(
-    integratedInputFile: String = "path-to-integrated-input-file",
-    deltaInputFile: String = "path-to-delta-input-file",
-    matchedExactOutputFile: String = "path-to-matched-exact-output-file",
-    unmatchedIntegratedOutputFile: String = "path-to-unmatched-integrated-output-file",
-    unmatchedDeltaOutputFile: String = "path-to-unmatched-delta-output-file"
-) extends SparkJobConfig
 
 object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWithDbConfig] with GroupingFunctions {
 
@@ -43,65 +36,82 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
       help("help") text "help text"
     }
 
-  def transform(spark: SparkSession, integratedContactPersons: Dataset[ContactPerson], dailyDeltaContactPersons: Dataset[ContactPerson]): (Dataset[ContactPerson], Dataset[ContactPerson], Dataset[ContactPerson]) = {
+  def transform(
+    integratedContactPersons: Dataset[ContactPerson],
+    dailyDeltaContactPersons: Dataset[ContactPerson])(implicit spark: SparkSession): (Dataset[ContactPerson], Dataset[ContactPerson], Dataset[ContactPerson]) = {
     import spark.implicits._
 
-    val matchedExact: Dataset[ContactPerson] = determineExactMatches(spark, integratedContactPersons, dailyDeltaContactPersons)
+    val matchedExactEmailAndPhone: Dataset[ContactPerson] = determineExactMatchesEmailAndPhone(
+      integratedContactPersons,
+      dailyDeltaContactPersons)
+
+    //    val unmatchedEmailAndPhoneIntegrated = integratedContactPersons
+    //      .join(matchedExactEmailAndPhone, Seq("concatId"), JoinType.LeftAnti)
+    //      .as[ContactPerson]
+    //    val unmatchedEmailAndPhoneDelta = dailyDeltaContactPersons
+    //      .join(matchedExactEmailAndPhone, Seq("concatId"), JoinType.LeftAnti)
+    //      .as[ContactPerson]
+    //        val columns = Seq("countryCode", "city", "street", "houseNumber", "houseNumberExtension", "zipCode", "firstName", "lastName")
+    //        val matchedExactColumns: Dataset[ContactPerson] = matchColumns[ContactPerson](
+    //          unmatchedEmailAndPhoneIntegrated,
+    //          unmatchedEmailAndPhoneDelta,
+    //          columns)
+
+    val matchedExactAll = matchedExactEmailAndPhone
 
     val unmatchedIntegrated = integratedContactPersons
-      .filter('emailAddress.isNull && 'mobileNumber.isNull)
+      .join(matchedExactAll, Seq("concatId"), JoinType.LeftAnti)
       .as[ContactPerson]
 
     val unmatchedDelta = dailyDeltaContactPersons
-      .filter('emailAddress.isNull && 'mobileNumber.isNull)
+      .join(matchedExactAll, Seq("concatId"), JoinType.LeftAnti)
       .as[ContactPerson]
 
-    (matchedExact, unmatchedIntegrated, unmatchedDelta)
+    (matchedExactAll, unmatchedIntegrated, unmatchedDelta)
   }
 
-  private def determineExactMatches(spark: SparkSession, integratedContactPersons: Dataset[ContactPerson], dailyDeltaContactPersons: Dataset[ContactPerson]): Dataset[ContactPerson] = {
+  private def determineExactMatchesEmailAndPhone(
+    integratedContactPersons: Dataset[ContactPerson],
+    dailyDeltaContactPersons: Dataset[ContactPerson])(implicit spark: SparkSession): Dataset[ContactPerson] = {
     import spark.implicits._
 
+    val mobileAndEmail = Seq("emailAddress", "mobileNumber").map(col)
+    val emailOrPhoneNotNull = $"emailAddress".isNotNull || $"mobileNumber".isNotNull
+
     lazy val integratedWithExact = integratedContactPersons
-      .filter('emailAddress.isNotNull || 'mobileNumber.isNotNull)
-      .withColumn("group", concat(when('emailAddress.isNull, "").otherwise('emailAddress), when('mobileNumber.isNull, "").otherwise('mobileNumber)))
+      .filter(emailOrPhoneNotNull)
+      .concatenateColumns("group", mobileAndEmail)
       .withColumn("inDelta", lit(false))
 
     lazy val newWithExact =
       dailyDeltaContactPersons
-        .filter('emailAddress.isNotNull || 'mobileNumber.isNotNull)
-        .withColumn("group", concat(when('emailAddress.isNull, "").otherwise('emailAddress), when('mobileNumber.isNull, "").otherwise('mobileNumber)))
+        .filter(emailOrPhoneNotNull)
+        .concatenateColumns("group", mobileAndEmail)
         .withColumn("inDelta", lit(true))
 
-    val w1 = Window.partitionBy($"group").orderBy($"ohubId".desc_nulls_last)
-
-    val allExact = integratedWithExact
+    integratedWithExact
       .union(newWithExact)
-      .withColumn("ohubId", first($"ohubId").over(w1)) // preserve ohubId
-      .withColumn("ohubId", when('ohubId.isNull, createOhubIdUdf()).otherwise('ohubId))
-      .withColumn("ohubId", first('ohubId).over(w1)) // make sure the whole group gets the same ohubId
+      .addOhubId
       .drop("group")
-
-    // NOTE: that allExact can contain exact matches from previous integrated which eventually need to be removed from the integrated result
-
-    val w2 = Window.partitionBy($"concatId")
-    allExact
-      .withColumn("count", count("*").over(w2))
-      .withColumn("select", when($"count" > 1, $"inDelta").otherwise(lit(true)))
-      .filter($"select")
-      .drop("count", "select", "inDelta")
+      .selectLatestRecord
+      .drop("inDelta")
+      //      .removeSingletonGroups
       .as[ContactPerson]
   }
 
   override def run(spark: SparkSession, config: ExactMatchIngestedWithDbConfig, storage: Storage): Unit = {
-    log.info(s"Integrated vs ingested exact matching contact persons from [${config.integratedInputFile}] and " +
-      s"[${config.deltaInputFile}] to matched exact output [${config.matchedExactOutputFile}], unmatched integrated output to [${config.unmatchedIntegratedOutputFile}] and" +
-      s"unmatched delta output [${config.unmatchedDeltaOutputFile}]")
+    log.info(
+      s"""
+         |Integrated vs ingested exact matching contact persons from [${config.integratedInputFile}] and  [${config.deltaInputFile}]
+         |to matched exact output [${config.matchedExactOutputFile}],
+         |unmatched integrated output to [${config.unmatchedIntegratedOutputFile}]
+         |and unmatched delta output [${config.unmatchedDeltaOutputFile}]""".stripMargin)
 
+    implicit val implicitSpark: SparkSession = spark
     val integratedContactPersons = storage.readFromParquet[ContactPerson](config.integratedInputFile)
     val dailyDeltaContactPersons = storage.readFromParquet[ContactPerson](config.deltaInputFile)
 
-    val (matchedExact, unmatchedIntegrated, unmatchedDelta) = transform(spark, integratedContactPersons, dailyDeltaContactPersons)
+    val (matchedExact, unmatchedIntegrated, unmatchedDelta) = transform(integratedContactPersons, dailyDeltaContactPersons)
 
     storage.writeToParquet(matchedExact, config.matchedExactOutputFile)
     storage.writeToParquet(unmatchedIntegrated, config.unmatchedIntegratedOutputFile)

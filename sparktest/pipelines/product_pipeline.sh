@@ -14,19 +14,27 @@ DATA_INGESTED="${DATA_ROOT_DIR}ingested/common/products.parquet"
 DATA_PRE_PROCESSED="${DATA_ROOT_DIR}intermediate/products_pre_processed.parquet"
 DATA_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/products"
 
+echo
+echo ProductEmptyIntegratedWriter
 spark-submit    --class="com.unilever.ohub.spark.ingest.initial.ProductEmptyIntegratedWriter" ${SPARK_JOBS_JAR} \
                 --outputFile=${DATA_INTEGRATED_INPUT}
 
+echo
+echo ProductConverter
 spark-submit    --class="com.unilever.ohub.spark.ingest.common.ProductConverter" ${SPARK_JOBS_JAR} \
                 --inputFile=${RAW_INPUT_PATH} \
                 --outputFile=${DATA_INGESTED} \
                 --fieldSeparator=";" --strictIngestion="false" --deduplicateOnConcatId="true"
 
+echo
+echo ProductPreProcess
 spark-submit    --class="com.unilever.ohub.spark.merging.ProductPreProcess" ${SPARK_JOBS_JAR} \
                 --integratedInputFile=${DATA_INTEGRATED_INPUT} \
                 --deltaInputFile=${DATA_INGESTED} \
                 --deltaPreProcessedOutputFile=${DATA_PRE_PROCESSED}
 
+echo
+echo ProductMerging
 spark-submit    --class="com.unilever.ohub.spark.merging.ProductMerging" ${SPARK_JOBS_JAR} \
                 --productsInputFile=${DATA_PRE_PROCESSED} \
                 --previousIntegrated=${DATA_INTEGRATED_INPUT} \

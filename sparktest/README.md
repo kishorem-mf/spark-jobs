@@ -25,6 +25,15 @@ docker run \
     sparktest bash -c "/usr/local/pipelines/all_pipelines.sh;pytest /usr/local/it-test/tests/"
 ```
 
+docker run -it \
+    -v /Users/timvancann/repos/unilever/engine/spark-jobs/target/scala-2.11:/usr/local/artefacts/sparkjobs \
+    -v /Users/timvancann/repos/unilever/engine/name-matching/dist:/usr/local/artefacts/name-matching/egg/ \
+    -v /Users/timvancann/repos/unilever/engine/name-matching/string_matching_package:/usr/local/artefacts/name-matching/main/ \
+    -v /Users/timvancann/repos/unilever/engine/sparktest/pipelines:/usr/local/pipelines \
+    -v /Users/timvancann/repos/unilever/engine/sparktest/it-test:/usr/local/it-test \
+    sparktest bash
+```
+
 For windows:
 ````PowerShell
 docker run `
