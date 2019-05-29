@@ -114,14 +114,28 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag, Outbou
     mergeDirectoryToOneFile(temporaryPath, new Path(outputFilePath, filename(config.targetType)), sparkSession, header)
   }
 
-  def mergeDirectoryToOneFile(souceDirectory: Path, outputFile: Path, spark: SparkSession, header: String) = {
-    log.info(s"Merging to one directory [${souceDirectory}] to ${outputFile}")
+  def mergeDirectoryToOneFile(sourceDirectory: Path, outputFile: Path, spark: SparkSession, header: String) = {
+    log.info(s"Merging to one directory [${sourceDirectory}] to ${outputFile}")
 
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
     //Create a new header file which start with a `_` because the files are merged based on alphabetical order so
     //the header files will be merged first
-    createHeaderFile(fs, souceDirectory, header)
-    FileUtil.copyMerge(fs, souceDirectory, fs, outputFile, true, spark.sparkContext.hadoopConfiguration, null)
+    createHeaderFile(fs, sourceDirectory, header)
+
+    def moveOnlyCsvFilesToOtherDirectory = {
+      //Move all csv files to different directory so we don't make a mistake of merging other files from the source directory
+      val tmpCsvSourceDirectory = new Path(sourceDirectory.getParent, UUID.randomUUID().toString)
+      fs.mkdirs(tmpCsvSourceDirectory)
+      val csvFiles = fs.listStatus(sourceDirectory)
+        .filter(p => p.isFile)
+        .filter(p => p.getPath.getName.endsWith(".csv"))
+        .map(_.getPath)
+      fs.moveFromLocalFile(csvFiles, tmpCsvSourceDirectory)
+      tmpCsvSourceDirectory
+    }
+
+    val tmpCsvSourceDirectory: Path = moveOnlyCsvFilesToOtherDirectory
+    FileUtil.copyMerge(fs, tmpCsvSourceDirectory, fs, outputFile, true, spark.sparkContext.hadoopConfiguration, null)
   }
 
   def createHeaderFile(fs: FileSystem, sourceDirectory: Path, header: String): Path = {
