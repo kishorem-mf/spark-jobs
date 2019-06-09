@@ -4,14 +4,14 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.{ DomainEntity, DomainEntityHash }
-import com.unilever.ohub.spark.export.TargetType.{ ACM, DISPATCHER, TargetType }
+import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityHash}
+import com.unilever.ohub.spark.export.TargetType.{ACM, DISPATCHER, TargetType}
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
-import org.apache.hadoop.fs.{ FileSystem, FileUtil, Path }
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
 import org.apache.spark.sql.functions.when
-import org.apache.spark.sql.{ Dataset, SaveMode, SparkSession }
+import org.apache.spark.sql.{Dataset, SaveMode, SparkSession}
 import scopt.OptionParser
 
 import scala.reflect.runtime.universe._
@@ -22,13 +22,13 @@ object TargetType extends Enumeration {
 }
 
 case class OutboundConfig(
-    integratedInputFile: String = "integrated-input-file",
-    hashesInputFile: Option[String] = None,
-    targetType: TargetType = ACM,
-    outboundLocation: String = "outbound-location"
-) extends SparkJobConfig
+                           integratedInputFile: String = "integrated-input-file",
+                           hashesInputFile: Option[String] = None,
+                           targetType: TargetType = ACM,
+                           outboundLocation: String = "outbound-location"
+                         ) extends SparkJobConfig
 
-abstract class ExportOutboundWriter[DomainType <: DomainEntity: TypeTag, OutboundType <: OutboundEntity] extends SparkJob[OutboundConfig] with CsvOptions {
+abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag, OutboundType <: OutboundEntity] extends SparkJob[OutboundConfig] with CsvOptions {
 
   override private[spark] def defaultConfig = OutboundConfig()
 
@@ -42,26 +42,28 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity: TypeTag, Outboun
 
   val csvOptions = Map()
 
-  def filename(targetType: TargetType): String =
+  def filename(targetType: TargetType): String = {
+    val timestampFile = LocalDateTime.now().minusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
     targetType match {
-      case ACM        ⇒ "UFS_" + entityName() + "_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".csv"
-      case DISPATCHER ⇒ "UFS_DISPATCHER" + "_" + entityName() + "_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".csv"
+      case ACM ⇒ "UFS_" + entityName() + "_" + timestampFile + ".csv"
+      case DISPATCHER ⇒ "UFS_DISPATCHER" + "_" + entityName() + "_" + timestampFile + ".csv"
     }
+  }
 
   override private[spark] def configParser(): OptionParser[OutboundConfig] =
     new scopt.OptionParser[OutboundConfig]("Spark job default") {
       head("run a spark job with default config.", "1.0")
 
-      opt[String]("outbound-location") required () action { (x, c) ⇒
+      opt[String]("outbound-location") required() action { (x, c) ⇒
         c.copy(outboundLocation = x)
       } text "outbound-location is a string property"
-      opt[String]("targetType") required () action { (x, c) ⇒
+      opt[String]("targetType") required() action { (x, c) ⇒
         c.copy(targetType = TargetType.withName(x))
       } text "targetType is a string property"
-      opt[String]("integratedInputFile") required () action { (x, c) ⇒
+      opt[String]("integratedInputFile") required() action { (x, c) ⇒
         c.copy(integratedInputFile = x)
       } text "integratedInputFile is a string property"
-      opt[String]("hashesInputFile") optional () action { (x, c) ⇒
+      opt[String]("hashesInputFile") optional() action { (x, c) ⇒
         c.copy(hashesInputFile = Some(x))
       } text "hashesInputFile is a string property"
       version("1.0")
@@ -75,7 +77,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity: TypeTag, Outboun
 
     val hashesInputFile = config.hashesInputFile match {
       case Some(location) ⇒ storage.readFromParquet[DomainEntityHash](location)
-      case None           ⇒ spark.createDataset(Seq[DomainEntityHash]())
+      case None ⇒ spark.createDataset(Seq[DomainEntityHash]())
     }
     export(storage.readFromParquet[DomainType](config.integratedInputFile), hashesInputFile, config, spark);
   }
@@ -85,7 +87,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity: TypeTag, Outboun
 
     val domainEntities = config.targetType match {
       case ACM ⇒ goldenRecordOnlyFilter(spark, integratedEntities)
-      case _   ⇒ integratedEntities
+      case _ ⇒ integratedEntities
     }
 
     val columnsInOrder = domainEntities.columns :+ "hasChanged"
@@ -139,7 +141,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity: TypeTag, Outboun
   }
 
   def createHeaderFile(fs: FileSystem, sourceDirectory: Path, header: String): Path = {
-    import java.io.{ BufferedWriter, OutputStreamWriter }
+    import java.io.{BufferedWriter, OutputStreamWriter}
 
     val headerFile = new Path(sourceDirectory, "_" + UUID.randomUUID().toString + ".csv")
     val out = fs.create(headerFile)
