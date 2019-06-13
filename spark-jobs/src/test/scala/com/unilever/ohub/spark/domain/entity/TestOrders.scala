@@ -67,5 +67,6 @@ trait TestOrders {
     ingestionErrors = Map()
   )
 
+
   // format: ON
 }
