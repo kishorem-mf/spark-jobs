@@ -45,11 +45,18 @@ abstract class BaseMerging[T <: DomainEntity : TypeTag] extends SparkJobWithDefa
       .as[T]
   }
 
-  private[merging] def pickOldest(spark: SparkSession, df: DataFrame, column: String, newestNotNullWindow: WindowSpec): DataFrame = {
+  private[merging] def pickOldest(spark: SparkSession, df: DataFrame, column: String): DataFrame = {
+    import spark.implicits._
+
     // Picks the oldest per record and writes to a new column
+    val groupWindowForCreatedDates = Window.partitionBy($"ohubId")
+
+    val orderByCreatedDateWindow = groupWindowForCreatedDates.orderBy(col(column).asc_nulls_last)
+
     df.withColumn(
-      prefixNewColumn + column, last(col(column), true).over(
-        newestNotNullWindow.rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing))
+      prefixNewColumn + column, first(col(column), true).over(
+        orderByCreatedDateWindow.rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)
+      )
     )
   }
 
@@ -78,7 +85,7 @@ abstract class BaseMerging[T <: DomainEntity : TypeTag] extends SparkJobWithDefa
         (op: DataFrame, column: String) ⇒ {
 
           if (reversedOrderColumns.contains(column)) {
-            pickOldest(spark, op, column, orderByDatesWindow)
+            pickOldest(spark, op, column)
           } else {
             pickNewest(spark, op, column, orderByDatesWindow)
           }
