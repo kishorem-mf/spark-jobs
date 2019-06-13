@@ -98,7 +98,6 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
           totalLocations = None,
           totalStaff = None,
           vat = Some("18808137040"),
-          amount = Some("920"),
           wayOfServingAlcohol = None,
           website = None,
           webUpdaterId = None,
