@@ -38,5 +38,6 @@ case class AcmOrder(
     INVOICE_COUNTRY: String,
     COMMENTS: String,
     VAT: String,
+    AMOUNT: String,
     DELETED_FLAG: String,
     ORDER_AMOUNT_CURRENCY_CODE: String) extends OutboundEntity
