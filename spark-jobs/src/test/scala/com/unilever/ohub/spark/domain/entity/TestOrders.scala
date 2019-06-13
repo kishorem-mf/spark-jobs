@@ -43,6 +43,7 @@ trait TestOrders {
     operatorOhubId = None,
     transactionDate = Some(Timestamp.valueOf("2015-06-30 13:49:00.0")),
     vat = None,
+    amount = Some(BigDecimal.apply(920)),
     // invoice address
     invoiceOperatorName = Some("invoiceOperatorName"),
     invoiceOperatorStreet = Some("invoiceOperatorStreet"),
