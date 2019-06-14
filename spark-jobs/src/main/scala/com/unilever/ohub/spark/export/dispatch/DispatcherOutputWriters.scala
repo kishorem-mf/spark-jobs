@@ -149,7 +149,7 @@ object CampaignSendOutboundWriter extends ExportOutboundWriter[CampaignSend, Dis
     dataSet.map(CampaignSendDispatcherConverter.convert(_))
   }
 
-  override def entityName(): String = "CW_CLICKS"
+  override def entityName(): String = "CW_SENDS"
 }
 
 
