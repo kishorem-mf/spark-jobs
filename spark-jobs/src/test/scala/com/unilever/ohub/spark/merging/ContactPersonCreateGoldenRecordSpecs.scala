@@ -50,7 +50,9 @@ class ContactPersonCreateGoldenRecordSpecs extends SparkJobSpec with TestContact
         firstName = None,
         jobTitle = None,
         gender = Some("newest"),
-        ohubId = Some("tcNewest")
+        ohubId = Some("tcNewest"),
+        hasEmailOptIn = Some(true),
+        mobileDoubleOptInDate = Some(Timestamp.valueOf("2015-09-30 14:23:05.0"))
       )
 
       val cpNewest2 = defaultContactPerson.copy(
@@ -79,7 +81,15 @@ class ContactPersonCreateGoldenRecordSpecs extends SparkJobSpec with TestContact
         firstName = None,
         jobTitle = None,
         gender = Some("newest"),
-        ohubId = Some("tcSameDateUpdated")
+        ohubId = Some("tcSameDateUpdated"),
+        hasEmailOptIn = None,
+        emailOptInDate = Some(Timestamp.valueOf("2019-12-31 14:23:05.0")),
+        hasEmailDoubleOptIn = None,
+        emailDoubleOptInDate = Some(Timestamp.valueOf("2019-12-31 14:23:05.0")),
+        hasMobileOptIn = None,
+        mobileOptInDate = Some(Timestamp.valueOf("2019-12-31 14:23:05.0")),
+        hasMobileDoubleOptIn = None,
+        mobileDoubleOptInDate = Some(Timestamp.valueOf("2019-12-31 14:23:05.0"))
       )
 
       val cpSameDateUpdated2 = defaultContactPerson.copy(
@@ -89,7 +99,15 @@ class ContactPersonCreateGoldenRecordSpecs extends SparkJobSpec with TestContact
         firstName = None,
         jobTitle = Some("middle"),
         gender = Some("middle"),
-        ohubId = Some("tcSameDateUpdated")
+        ohubId = Some("tcSameDateUpdated"),
+        hasEmailOptIn = Some(true),
+        emailOptInDate = Some(Timestamp.valueOf("2019-01-01 14:23:05.0")),
+        hasEmailDoubleOptIn = Some(true),
+        emailDoubleOptInDate = Some(Timestamp.valueOf("2019-01-01 14:23:05.0")),
+        hasMobileOptIn = Some(true),
+        mobileOptInDate = Some(Timestamp.valueOf("2019-01-01 14:23:05.0")),
+        hasMobileDoubleOptIn = Some(true),
+        mobileDoubleOptInDate = Some(Timestamp.valueOf("2019-01-01 14:23:05.0"))
       )
 
       val cpSameDateUpdated3 = defaultContactPerson.copy(
@@ -99,7 +117,15 @@ class ContactPersonCreateGoldenRecordSpecs extends SparkJobSpec with TestContact
         firstName = Some("oldest"),
         jobTitle = Some("oldest"),
         gender = Some("oldest"),
-        ohubId = Some("tcSameDateUpdated")
+        ohubId = Some("tcSameDateUpdated"),
+        hasEmailOptIn = Some(false),
+        emailOptInDate = Some(Timestamp.valueOf("2019-06-15 14:23:05.0")),
+        hasEmailDoubleOptIn = Some(false),
+        emailDoubleOptInDate = Some(Timestamp.valueOf("2019-06-15 14:23:05.0")),
+        hasMobileOptIn = Some(false),
+        mobileOptInDate = Some(Timestamp.valueOf("2019-06-15 14:23:05.0")),
+        hasMobileDoubleOptIn = Some(false),
+        mobileDoubleOptInDate = Some(Timestamp.valueOf("2019-06-15 14:23:05.0"))
       )
 
       val input = Seq(cpMerge1, cpMerge2, cpNull1, cpNull2, cpInactive, cpNewest1, cpNewest2, cpNewest3,
@@ -139,6 +165,14 @@ class ContactPersonCreateGoldenRecordSpecs extends SparkJobSpec with TestContact
         tcResult.head.jobTitle shouldBe cpSameDateUpdated2.jobTitle
         tcResult.head.gender shouldBe cpSameDateUpdated1.gender
         tcResult.head.dateCreated shouldBe cpSameDateUpdated3.dateCreated
+        tcResult.head.hasEmailOptIn shouldBe cpSameDateUpdated3.hasEmailOptIn
+        tcResult.head.emailOptInDate shouldBe cpSameDateUpdated3.emailOptInDate
+        tcResult.head.hasEmailDoubleOptIn shouldBe cpSameDateUpdated3.hasEmailDoubleOptIn
+        tcResult.head.emailDoubleOptInDate shouldBe cpSameDateUpdated3.emailDoubleOptInDate
+        tcResult.head.hasMobileOptIn shouldBe cpSameDateUpdated3.hasMobileOptIn
+        tcResult.head.mobileOptInDate shouldBe cpSameDateUpdated3.mobileOptInDate
+        tcResult.head.hasMobileDoubleOptIn shouldBe cpSameDateUpdated3.hasMobileDoubleOptIn
+        tcResult.head.mobileDoubleOptInDate shouldBe cpSameDateUpdated3.mobileDoubleOptInDate
       }
     }
   }

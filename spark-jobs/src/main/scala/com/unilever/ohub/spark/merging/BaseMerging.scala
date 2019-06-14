@@ -3,15 +3,15 @@ package com.unilever.ohub.spark.merging
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.SparkJobWithDefaultConfig
-import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
-
+import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import scala.reflect.runtime.universe._
 
 abstract class BaseMerging[T <: DomainEntity : TypeTag] extends SparkJobWithDefaultConfig {
   val mergeGroupSizeCap = 100
   val prefixNewColumn = "merged_"
+  val excludeFields = Seq("group_row_num")
 
   def transform(spark: SparkSession, operators: Dataset[T]): Dataset[T] = {
     import spark.implicits._
@@ -34,7 +34,7 @@ abstract class BaseMerging[T <: DomainEntity : TypeTag] extends SparkJobWithDefa
       spark,
       orderByDatesWindow,
       mergeableOperators,
-      excludeFields = Seq("group_row_num"),
+      excludeFields = excludeFields,
       reversedOrderColumns = Seq("dateCreated", "ohubCreated")
     )
       .filter($"group_row_num" === 1)

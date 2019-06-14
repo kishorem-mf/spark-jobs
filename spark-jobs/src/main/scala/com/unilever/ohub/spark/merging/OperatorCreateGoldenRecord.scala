@@ -5,6 +5,7 @@ import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.DefaultConfig
 import org.apache.spark.sql.SparkSession
 
+
 object OperatorCreateGoldenRecord extends BaseMerging[Operator] {
 
   override def run(spark: SparkSession, config: DefaultConfig, storage: Storage): Unit = {
