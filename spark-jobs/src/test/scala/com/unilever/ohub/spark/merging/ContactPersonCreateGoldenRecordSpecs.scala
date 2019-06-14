@@ -102,11 +102,11 @@ class ContactPersonCreateGoldenRecordSpecs extends SparkJobSpec with TestContact
         ohubId = Some("tcSameDateUpdated"),
         hasEmailOptIn = Some(true),
         emailOptInDate = Some(Timestamp.valueOf("2019-01-01 14:23:05.0")),
-        hasEmailDoubleOptIn = None,
+        hasEmailDoubleOptIn = Some(true),
         emailDoubleOptInDate = Some(Timestamp.valueOf("2019-01-01 14:23:05.0")),
-        hasMobileOptIn = None,
+        hasMobileOptIn = Some(true),
         mobileOptInDate = Some(Timestamp.valueOf("2019-01-01 14:23:05.0")),
-        hasMobileDoubleOptIn = None,
+        hasMobileDoubleOptIn = Some(true),
         mobileDoubleOptInDate = Some(Timestamp.valueOf("2019-01-01 14:23:05.0"))
       )
 
@@ -120,11 +120,11 @@ class ContactPersonCreateGoldenRecordSpecs extends SparkJobSpec with TestContact
         ohubId = Some("tcSameDateUpdated"),
         hasEmailOptIn = Some(false),
         emailOptInDate = Some(Timestamp.valueOf("2019-06-15 14:23:05.0")),
-        hasEmailDoubleOptIn = None,
+        hasEmailDoubleOptIn = Some(false),
         emailDoubleOptInDate = Some(Timestamp.valueOf("2019-06-15 14:23:05.0")),
-        hasMobileOptIn = None,
+        hasMobileOptIn = Some(false),
         mobileOptInDate = Some(Timestamp.valueOf("2019-06-15 14:23:05.0")),
-        hasMobileDoubleOptIn = None,
+        hasMobileDoubleOptIn = Some(false),
         mobileDoubleOptInDate = Some(Timestamp.valueOf("2019-06-15 14:23:05.0"))
       )
 
@@ -167,6 +167,12 @@ class ContactPersonCreateGoldenRecordSpecs extends SparkJobSpec with TestContact
         tcResult.head.dateCreated shouldBe cpSameDateUpdated3.dateCreated
         tcResult.head.hasEmailOptIn shouldBe cpSameDateUpdated3.hasEmailOptIn
         tcResult.head.emailOptInDate shouldBe cpSameDateUpdated3.emailOptInDate
+        tcResult.head.hasEmailDoubleOptIn shouldBe cpSameDateUpdated3.hasEmailDoubleOptIn
+        tcResult.head.emailDoubleOptInDate shouldBe cpSameDateUpdated3.emailDoubleOptInDate
+        tcResult.head.hasMobileOptIn shouldBe cpSameDateUpdated3.hasMobileOptIn
+        tcResult.head.mobileOptInDate shouldBe cpSameDateUpdated3.mobileOptInDate
+        tcResult.head.hasMobileDoubleOptIn shouldBe cpSameDateUpdated3.hasMobileDoubleOptIn
+        tcResult.head.mobileDoubleOptInDate shouldBe cpSameDateUpdated3.mobileDoubleOptInDate
       }
     }
   }

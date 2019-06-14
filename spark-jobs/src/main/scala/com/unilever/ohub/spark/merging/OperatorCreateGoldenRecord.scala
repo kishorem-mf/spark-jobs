@@ -3,9 +3,8 @@ package com.unilever.ohub.spark.merging
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.DefaultConfig
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.expressions.WindowSpec
-import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.SparkSession
+
 
 object OperatorCreateGoldenRecord extends BaseMerging[Operator] {
 

@@ -3,10 +3,9 @@ package com.unilever.ohub.spark.merging
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.SparkJobWithDefaultConfig
-import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
-
+import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import scala.reflect.runtime.universe._
 
 abstract class BaseMerging[T <: DomainEntity : TypeTag] extends SparkJobWithDefaultConfig {
