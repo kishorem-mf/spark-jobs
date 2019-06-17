@@ -22,7 +22,7 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson, D
     dataSet.map(ContactPersonDispatchConverter.convert(_))
   }
 
-  override def entityName(): String = "RECIPIENTS"
+  override def entityName(): String = "CONTACT_PERSONS"
 }
 
 object OperatorOutboundWriter extends ExportOutboundWriter[Operator, DispatchOperator] with DispatcherOptions {
@@ -49,7 +49,7 @@ object ProductOutboundWriter extends ExportOutboundWriter[Product, DispatchProdu
     dataSet.map(ProductDispatchConverter.convert(_))
   }
 
-  override def entityName(): String = "PRODUCTS"
+  override def entityName(): String = "ORDER_PRODUCTS"
 }
 
 object OrderOutboundWriter extends ExportOutboundWriter[Order, DispatchOrder] with DispatcherOptions {
@@ -81,7 +81,7 @@ object OrderLineOutboundWriter extends ExportOutboundWriter[OrderLine, DispatchO
     dataSet.map(OrderLineDispatchConverter.convert(_))
   }
 
-  override def entityName(): String = "ORDERLINES"
+  override def entityName(): String = "ORDER_LINES"
 }
 
 object ActivityOutboundWriter extends ExportOutboundWriter[Activity, DispatchActivity] with DispatcherOptions {
@@ -90,7 +90,7 @@ object ActivityOutboundWriter extends ExportOutboundWriter[Activity, DispatchAct
     dataSet.map(ActivityDispatcherConverter.convert(_))
   }
 
-  override def entityName(): String = "ACTIVITIES"
+  override def entityName(): String = "CONTACT_PERSON_ACTIVITIES"
 }
 
 object LoyaltyPointsOutboundWriter extends ExportOutboundWriter[LoyaltyPoints, DispatchLoyaltyPoints] with DispatcherOptions {
@@ -149,7 +149,7 @@ object CampaignSendOutboundWriter extends ExportOutboundWriter[CampaignSend, Dis
     dataSet.map(CampaignSendDispatcherConverter.convert(_))
   }
 
-  override def entityName(): String = "CW_SENDS"
+  override def entityName(): String = "CW_SENDINGS"
 }
 
 
