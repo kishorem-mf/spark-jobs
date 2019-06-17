@@ -27,7 +27,7 @@ object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPers
         case _   ⇒ "0"
       },
       LANGUAGE = cp.language,
-      EMAIL_ADDRESS = cp.emailAddress,
+      EMAIL_ADDRESS = clearField(cp.emailAddress, cp.isEmailAddressValid),
       MOBILE_PHONE_NUMBER = cp.mobileNumber,
       PHONE_NUMBER = cp.phoneNumber,
       FAX_NUMBER = cp.faxNumber,
@@ -55,7 +55,7 @@ object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPers
       MOB_CONFIRMED_OPT_IN_DATE = cp.mobileDoubleOptInDate,
       ORG_FIRST_NAME = cp.firstName,
       ORG_LAST_NAME = cp.lastName,
-      ORG_EMAIL_ADDRESS = cp.emailAddress,
+      ORG_EMAIL_ADDRESS = clearField(cp.emailAddress, cp.isEmailAddressValid),
       ORG_FIXED_PHONE_NUMBER = cp.phoneNumber,
       ORG_MOBILE_PHONE_NUMBER = cp.mobileNumber,
       ORG_FAX_NUMBER = cp.faxNumber,

@@ -22,4 +22,10 @@ trait TransformationFunctions {
 
   protected[export] implicit def booleanToYNConverter(input: Boolean): String = if (input) "Y" else "N"
 
+  protected[export] def clearField(input: Option[String], cleanYN: Option[Boolean]): Option[String] =
+    cleanYN match {
+      case Some(true) => input
+      case Some(false) => None
+      case None => input
+    }
 }
