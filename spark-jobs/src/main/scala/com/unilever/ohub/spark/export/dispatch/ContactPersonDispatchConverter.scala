@@ -29,7 +29,7 @@ object ContactPersonDispatchConverter extends Converter[ContactPerson, DispatchC
       CITY = cp.city.map(cleanString),
       COUNTRY = cp.countryName,
       DM_OPT_OUT = cp.hasDirectMailOptOut,
-      EMAIL_ADDRESS = cp.emailAddress,
+      EMAIL_ADDRESS = clearField(cp.emailAddress, cp.isEmailAddressValid),
       EMAIL_OPT_OUT = cp.hasEmailOptOut,
       FIXED_OPT_OUT = cp.hasTeleMarketingOptOut,
       FIXED_PHONE_NUMBER = cp.phoneNumber,
