@@ -43,6 +43,7 @@ class OrderAcmConverterSpec extends FunSpec with TestOrders with Matchers {
         INVOICE_COUNTRY = ("invoiceOperatorCountry"),
         COMMENTS = "",
         VAT = "",
+        AMOUNT = "10.00",
         DELETED_FLAG = "N",
         ORDER_AMOUNT_CURRENCY_CODE = ("EUR")
       )

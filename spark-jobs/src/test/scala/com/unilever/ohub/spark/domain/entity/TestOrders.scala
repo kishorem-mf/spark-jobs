@@ -43,6 +43,7 @@ trait TestOrders {
     operatorOhubId = None,
     transactionDate = Some(Timestamp.valueOf("2015-06-30 13:49:00.0")),
     vat = None,
+    amount = Some(BigDecimal(10)),
     // invoice address
     invoiceOperatorName = Some("invoiceOperatorName"),
     invoiceOperatorStreet = Some("invoiceOperatorStreet"),
@@ -65,6 +66,7 @@ trait TestOrders {
     additionalFields = Map(),
     ingestionErrors = Map()
   )
+
 
   // format: ON
 }

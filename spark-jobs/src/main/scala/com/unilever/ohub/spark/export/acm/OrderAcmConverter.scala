@@ -35,6 +35,7 @@ object OrderAcmConverter extends Converter[Order, AcmOrder] with TransformationF
       INVOICE_COUNTRY = order.invoiceOperatorCountry,
       COMMENTS = order.comment,
       VAT = order.vat,
+      AMOUNT = order.amount,
       DELETED_FLAG = !order.isActive
     )
   }

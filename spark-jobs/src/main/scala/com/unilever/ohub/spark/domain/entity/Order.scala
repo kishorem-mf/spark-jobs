@@ -42,6 +42,7 @@ case class Order(
     operatorOhubId: Option[String],
     transactionDate: Option[Timestamp],
     vat: Option[BigDecimal],
+    amount: Option[BigDecimal],
     // invoice address
     invoiceOperatorName: Option[String],
     invoiceOperatorStreet: Option[String],
