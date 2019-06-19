@@ -11,4 +11,8 @@ case class AcmLoyaltyPoints(
     SPENT: String,
     ACTUAL: String,
     GOAL: String,
-    UPDATED_AT: String) extends OutboundEntity
+    UPDATED_AT: String,
+    REWARD_NAME: String,
+    REWARD_IMAGE_URL: String,
+    REWARD_LANDING_PAGE_URL: String,
+    REWARD_EAN_CODE: String) extends OutboundEntity

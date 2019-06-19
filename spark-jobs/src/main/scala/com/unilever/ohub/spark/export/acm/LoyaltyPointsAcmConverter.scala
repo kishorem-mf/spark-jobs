@@ -15,7 +15,11 @@ object LoyaltyPointsAcmConverter extends Converter[LoyaltyPoints, AcmLoyaltyPoin
       SPENT = loyaltyPoints.totalSpent,
       ACTUAL = loyaltyPoints.totalActual,
       GOAL = loyaltyPoints.rewardGoal,
-      UPDATED_AT = loyaltyPoints.ohubUpdated
+      UPDATED_AT = loyaltyPoints.ohubUpdated,
+      REWARD_NAME = loyaltyPoints.rewardName,
+      REWARD_IMAGE_URL = loyaltyPoints.rewardImageUrl,
+      REWARD_LANDING_PAGE_URL = loyaltyPoints.rewardLandingPageUrl,
+      REWARD_EAN_CODE = loyaltyPoints.rewardEanCode
     )
   }
 }

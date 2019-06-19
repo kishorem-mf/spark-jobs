@@ -38,7 +38,10 @@ object LoyaltyPointsConverter extends CommonDomainGateKeeper[LoyaltyPoints] with
       contactPersonOhubId           = Option.empty,
       operatorConcatId              = optional("operatorConcatId", "operatorConcatId"),
       operatorOhubId                = Option.empty,
-
+      rewardName                    = optional("rewardName", "rewardName"),
+      rewardImageUrl                = optional("rewardImageUrl", "rewardImageUrl"),
+      rewardLandingPageUrl          = optional("rewardLandingPageUrl", "rewardLandingPageUrl"),
+      rewardEanCode                 = optional("rewardEanCode", "rewardEanCode"),
       additionalFields              = additionalFields,
       ingestionErrors               = errors
     )
