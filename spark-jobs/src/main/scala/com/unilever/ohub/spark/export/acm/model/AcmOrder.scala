@@ -21,6 +21,7 @@ case class AcmOrder(
     ORDER_MOBILE_PHONE_NUMBER: String = "",
     TRANSACTION_DATE: String,
     ORDER_AMOUNT: String = "",
+    ORDER_AMOUNT_CURRENCY_CODE: String,
     DELIVERY_STREET: String,
     DELIVERY_HOUSENUMBER: String,
     DELIVERY_ZIPCODE: String,
@@ -38,6 +39,4 @@ case class AcmOrder(
     INVOICE_COUNTRY: String,
     COMMENTS: String,
     VAT: String,
-    AMOUNT: String,
-    DELETED_FLAG: String,
-    ORDER_AMOUNT_CURRENCY_CODE: String) extends OutboundEntity
+    DELETED_FLAG: String) extends OutboundEntity
