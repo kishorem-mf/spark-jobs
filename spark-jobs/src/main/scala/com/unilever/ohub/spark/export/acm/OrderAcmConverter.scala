@@ -18,6 +18,7 @@ object OrderAcmConverter extends Converter[Order, AcmOrder] with TransformationF
       CAMPAIGN_NAME = order.campaignName,
       WHOLESALER = order.distributorId,
       TRANSACTION_DATE = order.transactionDate,
+      ORDER_AMOUNT = order.amount,
       ORDER_AMOUNT_CURRENCY_CODE = order.currency,
       DELIVERY_STREET = order.deliveryOperatorStreet,
       DELIVERY_HOUSENUMBER = order.deliveryOperatorHouseNumber,
@@ -35,7 +36,6 @@ object OrderAcmConverter extends Converter[Order, AcmOrder] with TransformationF
       INVOICE_COUNTRY = order.invoiceOperatorCountry,
       COMMENTS = order.comment,
       VAT = order.vat,
-      AMOUNT = order.amount,
       DELETED_FLAG = !order.isActive
     )
   }
