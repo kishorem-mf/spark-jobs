@@ -31,8 +31,8 @@ class LoyaltyPointsAcmConverterSpec extends FunSpec with TestLoyaltyPoints with 
         UPDATED_AT = "2015/06/30 13:49:00",
         REWARD_NAME = "REWARD NAME",
         REWARD_IMAGE_URL = "imageUrl.png",
-        REWARD_LANDING_PAGE_URL = "imagePageUrl.png",
-        REWARD_EAN_CODE = "123456789"
+        REWARD_LDP_URL = "imagePageUrl.png",
+        REWARD_EANCODE = "123456789"
       )
 
       result shouldBe expectedAcmLoyaltyPoints
