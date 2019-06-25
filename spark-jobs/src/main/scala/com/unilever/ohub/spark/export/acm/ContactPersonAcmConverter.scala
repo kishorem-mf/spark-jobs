@@ -9,8 +9,8 @@ object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPers
 
   override def convert(cp: ContactPerson): AcmContactPerson = {
     AcmContactPerson(
-      CP_ORIG_INTEGRATION_ID = new ConcatPersonOldOhubConverter(DomainDataProvider().sourceIds).convert(cp.concatId),
-      CP_LNKD_INTEGRATION_ID = cp.ohubId,
+      CP_ORIG_INTEGRATION_ID = cp.ohubId,
+      CP_LNKD_INTEGRATION_ID = new ConcatPersonOldOhubConverter(DomainDataProvider().sourceIds).convert(cp.concatId),
       OPR_ORIG_INTEGRATION_ID = cp.operatorOhubId,
       GOLDEN_RECORD_FLAG = "Y",
       EMAIL_OPTOUT = cp.hasEmailOptOut,

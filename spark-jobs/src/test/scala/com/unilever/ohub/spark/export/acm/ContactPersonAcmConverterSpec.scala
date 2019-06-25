@@ -14,8 +14,8 @@ import org.scalatest.{FunSpec, Matchers}
         val actualAcmContactPerson = SUT.convert(cp)
         val expectedAcmContactPerson =
           AcmContactPerson(
-            CP_ORIG_INTEGRATION_ID = "AU~AB123~3~19",
-            CP_LNKD_INTEGRATION_ID = defaultContactPerson.ohubId.get,
+            CP_ORIG_INTEGRATION_ID = defaultContactPerson.ohubId.get,
+            CP_LNKD_INTEGRATION_ID = "AU~AB123~3~19",
             OPR_ORIG_INTEGRATION_ID = "operator-ohub-id",
             GOLDEN_RECORD_FLAG = "Y",
             WEB_CONTACT_ID = "",
