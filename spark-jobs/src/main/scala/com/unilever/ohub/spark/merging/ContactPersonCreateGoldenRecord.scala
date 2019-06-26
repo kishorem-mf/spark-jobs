@@ -5,13 +5,11 @@ import java.sql.Timestamp
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.DefaultConfig
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.expressions.{Window, WindowSpec}
+import org.apache.spark.sql.{ DataFrame, SparkSession }
+import org.apache.spark.sql.expressions.{ Window, WindowSpec }
 import org.apache.spark.sql.functions._
 
 object ContactPersonCreateGoldenRecord extends BaseMerging[ContactPerson] {
-
-  private case class ConsentColumns(flag: String, date: String)
 
   private val consentFlagDateMapping = Map(
     "hasEmailOptIn" -> "emailOptInDate",
@@ -20,15 +18,16 @@ object ContactPersonCreateGoldenRecord extends BaseMerging[ContactPerson] {
     "hasMobileDoubleOptIn" -> "mobileDoubleOptInDate"
   )
 
-  private[merging] def pickLatestConsent(spark: SparkSession,
-                                         df: DataFrame,
-                                         column: String
-                                        ): DataFrame = {
+  private[merging] def pickLatestConsent(
+    spark: SparkSession,
+    df: DataFrame,
+    column: String
+  ): DataFrame = {
     import spark.implicits._
 
     val groupWindow = Window.partitionBy($"ohubId")
     val consentOrderDateColumn = consentFlagDateMapping(column)
-    val consentOrderDateColumnTemp = consentOrderDateColumn+"TEMP"
+    val consentOrderDateColumnTemp = consentOrderDateColumn + "TEMP"
 
     // Only for ordering: use a consentOrderDateColumnTemp where the related OptIn null values are set to 1970-01-01
     val consentOrderWindow = groupWindow.orderBy(
@@ -40,8 +39,8 @@ object ContactPersonCreateGoldenRecord extends BaseMerging[ContactPerson] {
 
     df.withColumn(
       consentOrderDateColumnTemp, when(
-        col(column).isNull, Timestamp.valueOf("1970-01-01 00:00:00")
-      ).otherwise(col(consentOrderDateColumn))
+      col(column).isNull, Timestamp.valueOf("1970-01-01 00:00:00")
+    ).otherwise(col(consentOrderDateColumn))
     )
       .withColumn(prefixNewColumn + column, first(col(column), true).over(
         consentOrderWindow.rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)))
@@ -50,9 +49,8 @@ object ContactPersonCreateGoldenRecord extends BaseMerging[ContactPerson] {
   }
 
   override def setFieldsToLatestValue(spark: SparkSession, orderByDatesWindow: WindowSpec,
-                                      dataframe: DataFrame, excludeFields: Seq[String] = Seq(),
-                                      reversedOrderColumns: Seq[String] = Seq()
-                                     ): DataFrame = {
+    dataframe: DataFrame, excludeFields: Seq[String] = Seq(),
+    reversedOrderColumns: Seq[String] = Seq()): DataFrame = {
     // Set all columns of dataset on the first value of it's newestNotNullWindow
     // Note: we write the result to a new column as prefix+columnName because overwriting introduces randomness
     // OptiIn Logic: for each has{}OptIn we pick the latest value and it's related date
