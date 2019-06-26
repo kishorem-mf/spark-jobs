@@ -12,7 +12,9 @@ object CampaignBounceDispatcherConverter extends Converter[CampaignBounce, Dispa
       COUNTRY_CODE = bounce.countryCode,
       BOUNCE_DATE = bounce.bounceDate,
       FAILURE_TYPE = bounce.failureType,
-      FAILURE_REASON = bounce.failureReason
+      FAILURE_REASON = bounce.failureReason,
+      CREATED_AT = bounce.ohubCreated,
+      UPDATED_AT = bounce.ohubUpdated
     )
   }
 }
