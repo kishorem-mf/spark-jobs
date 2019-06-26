@@ -21,9 +21,9 @@ class SubscriptionDispatchConverterSpec extends SparkJobSpec with TestSubscripti
         DELETE_FLAG = "N",
         NL_NAME = "Newsletter",
         REGION = "DE",
-        SUBSCRIBED = "Y",
+        SUBSCRIBED = "1",
         SUBSCRIPTION_DATE = "2015-06-20 13:49:00",
-        SUBSCRIPTION_CONFIRMED = "Y",
+        SUBSCRIPTION_CONFIRMED = "1",
         SUBSCRIPTION_CONFIRMED_DATE = "2015-06-30 13:49:00"
       )
 

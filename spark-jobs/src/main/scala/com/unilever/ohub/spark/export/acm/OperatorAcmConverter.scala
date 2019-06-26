@@ -2,6 +2,7 @@ package com.unilever.ohub.spark.export.acm
 
 import com.unilever.ohub.spark.DomainDataProvider
 import com.unilever.ohub.spark.domain.entity.Operator
+import com.unilever.ohub.spark.export.acm.SubscriptionAcmConverter.booleanToYNConverter
 import com.unilever.ohub.spark.export.acm.model.AcmOperator
 import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
 
@@ -37,17 +38,17 @@ object OperatorAcmConverter extends Converter[Operator, AcmOperator] with Transf
       CHAIN_NAME = op.chainName.map(cleanString),
       DATE_CREATED = op.dateCreated,
       DATE_UPDATED = op.dateUpdated,
-      DELETE_FLAG = !op.isActive,
+      DELETE_FLAG = booleanToYNConverter(!op.isActive),
       WHOLESALER_OPERATOR_ID = op.distributorOperatorId,
-      PRIVATE_HOUSEHOLD = op.isPrivateHousehold,
+      PRIVATE_HOUSEHOLD = op.isPrivateHousehold.booleanToYN,
       VAT = op.vat,
-      OPEN_ON_MONDAY = op.isOpenOnMonday,
-      OPEN_ON_TUESDAY = op.isOpenOnTuesday,
-      OPEN_ON_WEDNESDAY = op.isOpenOnWednesday,
-      OPEN_ON_THURSDAY = op.isOpenOnThursday,
-      OPEN_ON_FRIDAY = op.isOpenOnFriday,
-      OPEN_ON_SATURDAY = op.isOpenOnSaturday,
-      OPEN_ON_SUNDAY = op.isOpenOnSunday,
+      OPEN_ON_MONDAY = op.isOpenOnMonday.booleanToYN,
+      OPEN_ON_TUESDAY = op.isOpenOnTuesday.booleanToYN,
+      OPEN_ON_WEDNESDAY = op.isOpenOnWednesday.booleanToYN,
+      OPEN_ON_THURSDAY = op.isOpenOnThursday.booleanToYN,
+      OPEN_ON_FRIDAY = op.isOpenOnFriday.booleanToYN,
+      OPEN_ON_SATURDAY = op.isOpenOnSaturday.booleanToYN,
+      OPEN_ON_SUNDAY = op.isOpenOnSunday.booleanToYN,
       KITCHEN_TYPE = op.kitchenType.map(cleanString),
       LOCAL_CHANNEL = op.localChannel,
       CHANNEL_USAGE = op.channelUsage,
