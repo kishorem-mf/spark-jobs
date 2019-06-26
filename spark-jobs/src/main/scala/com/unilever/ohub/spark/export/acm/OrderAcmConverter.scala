@@ -39,7 +39,7 @@ object OrderAcmConverter extends Converter[Order, AcmOrder] with TransformationF
       INVOICE_COUNTRY = order.invoiceOperatorCountry,
       COMMENTS = order.comment,
       VAT = order.vat,
-      DELETED_FLAG = !order.isActive
+      DELETED_FLAG = booleanToYNConverter(!order.isActive)
     )
   }
 }
