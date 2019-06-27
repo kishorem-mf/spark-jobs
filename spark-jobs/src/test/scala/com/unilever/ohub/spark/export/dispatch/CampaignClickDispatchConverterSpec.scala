@@ -21,7 +21,9 @@ class CampaignClickDispatchConverterSpec extends SparkJobSpec with TestCampaignC
         MOBILE_DEVICE= "false",
         OPERATING_SYSTEM= "",
         BROWSER_NAME= "",
-        BROWSER_VERSION= ""
+        BROWSER_VERSION= "",
+        CREATED_AT= "2015-06-30 13:49:00",
+        UPDATED_AT= "2015-06-30 13:49:00"
       )
 
       result shouldBe expectedCampaignClick

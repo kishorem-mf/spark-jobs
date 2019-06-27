@@ -11,6 +11,8 @@ case class DispatchCampaignClick(
     MOBILE_DEVICE: String,
     OPERATING_SYSTEM: String,
     BROWSER_NAME: String,
-    BROWSER_VERSION: String
+    BROWSER_VERSION: String,
+    CREATED_AT: String,
+    UPDATED_AT: String
 ) extends OutboundEntity
 

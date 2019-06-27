@@ -16,7 +16,9 @@ object CampaignClickDispatcherConverter extends Converter[CampaignClick, Dispatc
       MOBILE_DEVICE = click.isOnMobileDevice.toString,
       OPERATING_SYSTEM = click.operatingSystem,
       BROWSER_NAME = click.browserName,
-      BROWSER_VERSION = click.browserVersion
+      BROWSER_VERSION = click.browserVersion,
+      CREATED_AT = click.ohubCreated,
+      UPDATED_AT = click.ohubUpdated
     )
   }
 }

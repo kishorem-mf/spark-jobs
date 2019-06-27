@@ -20,6 +20,8 @@ object CampaignSendDispatcherConverter extends Converter[CampaignSend, DispatchC
       SELECTION_FOR_OFFLINE_CHANNELS = send.selectionForOfflineChannels,
       CAMPAIGN_ID = send.campaignId,
       DELIVERY_ID = send.deliveryId,
-      CAMPAIGN_CONCAT_ID = send.campaignConcatId
+      CAMPAIGN_CONCAT_ID = send.campaignConcatId,
+      CREATED_AT = send.ohubCreated,
+      UPDATED_AT = send.ohubUpdated
     )
 }

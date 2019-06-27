@@ -26,7 +26,9 @@ class CampaignSendDispatchConverterSpec extends SparkJobSpec with TestCampaignSe
         SELECTION_FOR_OFFLINE_CHANNELS = "24",
         CAMPAIGN_ID = "65054561",
         DELIVERY_ID = "65096985",
-        CAMPAIGN_CONCAT_ID = "b3a6208c~NL~EMAKINA~1003499146~f26d461f64c0"
+        CAMPAIGN_CONCAT_ID = "b3a6208c~NL~EMAKINA~1003499146~f26d461f64c0",
+        CREATED_AT= "2015-06-30 13:49:00",
+        UPDATED_AT= "2015-06-30 13:49:00"
       )
 
       result shouldBe expectedCampaignSend

@@ -23,7 +23,9 @@ class CampaignDispatchConverterSpec extends SparkJobSpec with TestCampaigns {
         CONCAT_ID = "b3a6208c~NL~EMAKINA~1003499146~2018-10-08T22:53:51",
         CAMPAIGN_ID = "65054561",
         DELIVERY_ID = "65054561",
-        CAMPAIGN_CONCAT_ID = "b3a6208c~NL~EMAKINA~1003499146"
+        CAMPAIGN_CONCAT_ID = "b3a6208c~NL~EMAKINA~1003499146",
+        CREATED_AT= "2015-06-30 13:49:00",
+        UPDATED_AT= "2015-06-30 13:49:00"
       )
 
       result shouldBe expectedCampaign
