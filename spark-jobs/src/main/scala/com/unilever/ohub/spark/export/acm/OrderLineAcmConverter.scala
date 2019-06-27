@@ -16,7 +16,7 @@ object OrderLineAcmConverter extends Converter[OrderLine, AcmOrderLine] with Tra
       PRD_INTEGRATION_ID = orderLine.productConcatId,
       CAMPAIGN_LABEL = orderLine.campaignLabel,
       COMMENTS = orderLine.comment,
-      DELETED_FLAG = !orderLine.isActive
+      DELETED_FLAG = booleanToYNConverter(!orderLine.isActive)
     )
   }
 

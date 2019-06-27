@@ -13,7 +13,7 @@ object CampaignClickDispatcherConverter extends Converter[CampaignClick, Dispatc
       COUNTRY_CODE = click.countryCode,
       CLICK_DATE = click.clickDate,
       CLICKED_URL = click.clickedUrl,
-      MOBILE_DEVICE = click.isOnMobileDevice,
+      MOBILE_DEVICE = click.isOnMobileDevice.toString,
       OPERATING_SYSTEM = click.operatingSystem,
       BROWSER_NAME = click.browserName,
       BROWSER_VERSION = click.browserVersion,
