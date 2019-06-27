@@ -83,5 +83,11 @@ import org.scalatest.{FunSpec, Matchers}
         assert(actualDispatchContactPerson.ORG_EMAIL_ADDRESS contains("jwilliams@downunder.au"))
         assert(actualDispatchContactPerson.EMAIL_ADDRESS contains("jwilliams@downunder.au"))
       }
+      it("It should convert GENDER to 0 when empty") {
+        val cp = defaultContactPerson.copy(isGoldenRecord = true).copy(gender = None)
+        val actualDispatchContactPerson = SUT.convert(cp)
+
+        assert(actualDispatchContactPerson.GENDER equals ("0"))
+      }
     }
   }

@@ -17,7 +17,7 @@ object ContactPersonDispatchConverter extends Converter[ContactPerson, DispatchC
       DELETE_FLAG = booleanToYNConverter(!cp.isActive),
       CREATED_AT = cp.ohubCreated,
       UPDATED_AT = cp.ohubUpdated,
-      GENDER = cp.gender.map(cleanString),
+      GENDER = cleanString(cp.gender),
       ROLE = cp.jobTitle,
       TITLE = cp.title,
       FIRST_NAME = cp.firstName.map(cleanString),
