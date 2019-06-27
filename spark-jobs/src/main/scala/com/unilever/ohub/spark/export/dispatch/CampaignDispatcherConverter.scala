@@ -17,6 +17,8 @@ object CampaignDispatcherConverter extends Converter[Campaign, DispatchCampaign]
       CONCAT_ID = campaign.concatId,
       CAMPAIGN_ID = campaign.campaignId,
       DELIVERY_ID = campaign.deliveryId,
-      CAMPAIGN_CONCAT_ID = campaign.campaignConcatId
+      CAMPAIGN_CONCAT_ID = campaign.campaignConcatId,
+      CREATED_AT = campaign.ohubCreated,
+      UPDATED_AT = campaign.ohubUpdated
     )
 }

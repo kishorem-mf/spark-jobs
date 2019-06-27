@@ -7,5 +7,7 @@ case class DispatchCampaignBounce(
     COUNTRY_CODE: String,
     BOUNCE_DATE: String,
     FAILURE_TYPE: String,
-    FAILURE_REASON: String
+    FAILURE_REASON: String,
+    CREATED_AT: String,
+    UPDATED_AT: String
 ) extends OutboundEntity

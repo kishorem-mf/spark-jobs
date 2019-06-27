@@ -17,6 +17,8 @@ case class DispatchCampaignSend(
     CAMPAIGN_SPECIFICATION: String = "",
     CAMPAIGN_ID: String,
     DELIVERY_ID: String,
-    CAMPAIGN_CONCAT_ID: String
+    CAMPAIGN_CONCAT_ID: String,
+    CREATED_AT: String,
+    UPDATED_AT: String
 ) extends OutboundEntity
 
