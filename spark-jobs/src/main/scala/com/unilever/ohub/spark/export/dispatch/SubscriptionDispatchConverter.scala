@@ -13,12 +13,12 @@ object SubscriptionDispatchConverter extends Converter[Subscription, DispatchSub
       COUNTRY_CODE = subscription.countryCode,
       CREATED_AT = subscription.ohubCreated,
       UPDATED_AT = subscription.ohubUpdated,
-      DELETE_FLAG = !subscription.isActive,
+      DELETE_FLAG = booleanToYNConverter(!subscription.isActive),
       NL_NAME = subscription.subscriptionType,
       REGION = subscription.countryCode,
-      SUBSCRIBED = subscription.hasSubscription,
+      SUBSCRIBED = booleanTo10Converter(subscription.hasSubscription),
       SUBSCRIPTION_DATE = subscription.subscriptionDate,
-      SUBSCRIPTION_CONFIRMED = subscription.hasConfirmedSubscription,
+      SUBSCRIPTION_CONFIRMED = subscription.hasConfirmedSubscription.booleanTo10,
       SUBSCRIPTION_CONFIRMED_DATE = subscription.confirmedSubscriptionDate
     )
   }

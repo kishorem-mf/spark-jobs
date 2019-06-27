@@ -11,7 +11,7 @@ object ActivityAcmConverter extends Converter[Activity, AcmActivity] with Transf
       ACTIVITY_ID = activity.concatId,
       COUNTRY_CODE = activity.countryCode,
       CP_ORIG_INTEGRATION_ID = activity.contactPersonOhubId,
-      DELETE_FLAG = !activity.isActive,
+      DELETE_FLAG = booleanToYNConverter(!activity.isActive),
       DATE_CREATED = activity.dateCreated,
       DATE_UPDATED = activity.dateUpdated,
       DETAILS = activity.details,
