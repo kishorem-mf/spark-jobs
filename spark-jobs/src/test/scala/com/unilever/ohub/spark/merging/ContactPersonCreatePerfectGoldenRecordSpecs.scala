@@ -75,54 +75,111 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
       )
 
       val cpSameDateUpdated1 = defaultContactPerson.copy(
-        dateUpdated = Some(new Timestamp(1561413600000L)),    // 06/25/2019
-        dateCreated = Some(new Timestamp(1560981600000L)),    // 06/20/2019
-        ohubUpdated = new Timestamp(1561845600000L),          // 06/30/2019
+        dateUpdated = Some(new Timestamp(1561413600000L)), // 06/25/2019
+        dateCreated = Some(new Timestamp(1560981600000L)), // 06/20/2019
+        ohubUpdated = new Timestamp(1561845600000L), // 06/30/2019
         firstName = None,
         jobTitle = None,
         gender = Some("newest"),
-        ohubId = Some("tcSameDateUpdated"),
+        ohubId = Some("consentMerging"),
+
+        // Email consent Fields
+        hasEmailOptIn = null,
+        emailOptInDate = Some(Timestamp.valueOf("2019-01-01 14:23:05.0")),
+        hasEmailDoubleOptIn = null,
+        emailDoubleOptInDate = Some(Timestamp.valueOf("2019-01-01 14:23:05.0")),
+        hasEmailOptOut = null,
+
+        // Mobile consent Fields
+        hasMobileOptIn = Some(false),
+        mobileOptInDate = null,
+        hasMobileDoubleOptIn = null,
+        mobileDoubleOptInDate = null,
+        hasMobileOptOut = null,
+
+        //DirectMail
+        hasDirectMailOptIn = Some(false),
+        hasDirectMailOptOut = Some(true),
+
+        //Telemarketing
+        hasTeleMarketingOptIn = Some(true),
+        hasTeleMarketingOptOut = Some(false),
+
+        // Fax
+        hasFaxOptIn = Some(true),
+        hasFaxOptOut = Some(false)
+      )
+
+      val cpSameDateUpdated2 = defaultContactPerson.copy(
+        dateUpdated = Some(new Timestamp(1561413600000L)), // 06/25/2019
+        dateCreated = Some(new Timestamp(1560204000000L)), // 06/11/2019
+        ohubUpdated = new Timestamp(1561845600000L), // 06/30/2019
+        firstName = None,
+        jobTitle = Some("middle"),
+        gender = Some("middle"),
+        ohubId = Some("consentMerging"),
 
         // Email consent Fields
         hasEmailOptIn = Some(true),
         emailOptInDate = Some(Timestamp.valueOf("2019-12-31 14:23:05.0")),
         hasEmailDoubleOptIn = Some(true),
         emailDoubleOptInDate = Some(Timestamp.valueOf("2019-12-31 14:23:05.0")),
-        hasEmailOptOut = null
-      )
+        hasEmailOptOut = Some(true),
 
-      val cpSameDateUpdated2 = defaultContactPerson.copy(
-        dateUpdated = Some(new Timestamp(1561413600000L)), // 06/25/2019
-        dateCreated = Some(new Timestamp(1560204000000L)), // 06/11/2019
-        ohubUpdated = new Timestamp(1561845600000L),       // 06/30/2019
-        firstName = None,
-        jobTitle = Some("middle"),
-        gender = Some("middle"),
-        ohubId = Some("tcSameDateUpdated"),
+        // Mobile consent Fields
+        hasMobileOptIn = Some(false),
+        mobileOptInDate = Some(Timestamp.valueOf("2019-12-31 14:23:05.0")),
+        hasMobileDoubleOptIn = Some(false),
+        mobileDoubleOptInDate = Some(Timestamp.valueOf("2019-12-31 14:23:05.0")),
+        hasMobileOptOut = Some(true),
 
-        // Email consent Fields
-        hasEmailOptIn = Some(true),
-        emailOptInDate = Some(Timestamp.valueOf("2019-01-01 14:23:05.0")),
-        hasEmailDoubleOptIn = Some(true),
-        emailDoubleOptInDate = Some(Timestamp.valueOf("2019-01-01 14:23:05.0")),
-        hasEmailOptOut = null
+        //DirectMail
+        hasDirectMailOptIn = Some(true),
+        hasDirectMailOptOut = Some(true),
+
+        //Telemarketing
+        hasTeleMarketingOptIn = Some(true),
+        hasTeleMarketingOptOut = Some(true),
+
+        // Fax
+        hasFaxOptIn = Some(true),
+        hasFaxOptOut = Some(true)
       )
 
       val cpSameDateUpdated3 = defaultContactPerson.copy(
         dateUpdated = Some(new Timestamp(1561413600000L)), // 06/25/2019
         dateCreated = Some(new Timestamp(1559340000000L)), // 06/01/2019
-        ohubUpdated = new Timestamp(1561845600000L),       // 06/30/2019
+        ohubUpdated = new Timestamp(1561845600000L), // 06/30/2019
         firstName = Some("oldest"),
         jobTitle = Some("oldest"),
         gender = Some("oldest"),
-        ohubId = Some("tcSameDateUpdated"),
+        ohubId = Some("consentMerging"),
 
         // Email consent Fields
         hasEmailOptIn = Some(false),
         emailOptInDate = Some(Timestamp.valueOf("2019-06-15 14:23:05.0")),
         hasEmailDoubleOptIn = Some(false),
         emailDoubleOptInDate = Some(Timestamp.valueOf("2019-06-15 14:23:05.0")),
-        hasEmailOptOut = Some(true)
+        hasEmailOptOut = Some(false),
+
+        // Mobile consent Fields
+        hasMobileOptIn = null,
+        mobileOptInDate = null,
+        hasMobileDoubleOptIn = null,
+        mobileDoubleOptInDate = null,
+        hasMobileOptOut = null,
+
+        //DirectMail
+        hasDirectMailOptIn = Some(true),
+        hasDirectMailOptOut = Some(true),
+
+        //Telemarketing
+        hasTeleMarketingOptIn = Some(true),
+        hasTeleMarketingOptOut = Some(true),
+
+        // Fax
+        hasFaxOptIn = Some(true),
+        hasFaxOptOut = Some(true)
       )
 
       val input = Seq(cpMerge1, cpMerge2, cpNull1, cpNull2, cpInactive, cpNewest1, cpNewest2, cpNewest3,
@@ -154,18 +211,33 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
         tcResult.head.gender shouldBe cpNewest1.gender
       }
 
-      it("should merge and use dateCreated if dateupdated is alsways the same") {
-        val tcResult = result.filter(_.ohubId == Some("tcSameDateUpdated"))
+      it("Should take the most recent for every and merge properly the consent by channel") {
+        val tcResult = result.filter(_.ohubId == Some("consentMerging"))
+
         tcResult.length shouldBe 1
         tcResult.head.dateUpdated shouldBe cpSameDateUpdated1.dateUpdated
         tcResult.head.firstName shouldBe cpSameDateUpdated3.firstName
         tcResult.head.jobTitle shouldBe cpSameDateUpdated2.jobTitle
         tcResult.head.gender shouldBe cpSameDateUpdated1.gender
         tcResult.head.dateCreated shouldBe cpSameDateUpdated3.dateCreated
-        tcResult.head.hasEmailOptIn shouldBe cpSameDateUpdated1.hasEmailOptIn
-        tcResult.head.emailOptInDate shouldBe cpSameDateUpdated1.emailOptInDate
-        tcResult.head.hasEmailDoubleOptIn shouldBe cpSameDateUpdated1.hasEmailDoubleOptIn
-        tcResult.head.emailDoubleOptInDate shouldBe cpSameDateUpdated1.emailDoubleOptInDate
+
+        // Email consent
+        tcResult.head.hasEmailOptIn shouldBe cpSameDateUpdated2.hasEmailOptIn
+        tcResult.head.emailOptInDate shouldBe cpSameDateUpdated2.emailOptInDate
+        tcResult.head.hasEmailDoubleOptIn shouldBe cpSameDateUpdated2.hasEmailDoubleOptIn
+        tcResult.head.emailDoubleOptInDate shouldBe cpSameDateUpdated2.emailDoubleOptInDate
+        tcResult.head.hasEmailOptOut shouldBe cpSameDateUpdated2.hasEmailOptOut
+
+        // Mobile consent
+        tcResult.head.hasMobileOptIn shouldBe cpSameDateUpdated2.hasMobileOptIn
+        tcResult.head.mobileOptInDate shouldBe cpSameDateUpdated2.mobileOptInDate
+        tcResult.head.hasMobileDoubleOptIn shouldBe cpSameDateUpdated2.hasMobileDoubleOptIn
+        tcResult.head.mobileDoubleOptInDate shouldBe cpSameDateUpdated2.mobileDoubleOptInDate
+        tcResult.head.hasMobileOptOut shouldBe cpSameDateUpdated2.hasMobileOptOut
+
+        // TeleMarketing
+        tcResult.head.hasTeleMarketingOptIn shouldBe cpSameDateUpdated1.hasTeleMarketingOptIn
+        tcResult.head.hasTeleMarketingOptOut shouldBe cpSameDateUpdated1.hasTeleMarketingOptOut
       }
     }
   }
