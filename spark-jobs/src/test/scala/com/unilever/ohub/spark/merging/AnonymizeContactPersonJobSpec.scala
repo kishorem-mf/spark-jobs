@@ -1,12 +1,12 @@
-package com.unilever.ohub.spark.merging
+package com.unilever.ohub.spark.anonymization
 
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.anonymization.{AnonymizeContactPersonJob, AnonymizedContactPersonIdentifier}
 import com.unilever.ohub.spark.domain.entity.{ContactPerson, TestContactPersons}
 import org.apache.spark.sql.functions.{col, sha2}
 import org.apache.spark.sql.{Dataset, SparkSession}
 import org.scalatest.Matchers
+import org.apache.spark.sql.functions._
 
 class AnonymizeContactPersonJobSpec extends SparkJobSpec with TestContactPersons with Matchers {
 
@@ -32,8 +32,8 @@ class AnonymizeContactPersonJobSpec extends SparkJobSpec with TestContactPersons
   def toAnonymized(emailAddress: Option[String], mobileNumber: Option[String]): Dataset[AnonymizedContactPersonIdentifier] =
     Seq((emailAddress.getOrElse(""), mobileNumber.getOrElse("")))
       .toDF("hashedEmailAddress", "hashedMobileNumber")
-      .withColumn("hashedEmailAddress", sha2(col("hashedEmailAddress"), 256))
-      .withColumn("hashedMobileNumber", sha2(col("hashedMobileNumber"), 256))
+      .withColumn("hashedEmailAddress", upper(sha2(col("hashedEmailAddress"), 256)))
+      .withColumn("hashedMobileNumber", upper(sha2(col("hashedMobileNumber"), 256)))
       .as[AnonymizedContactPersonIdentifier]
 
   describe("Contact person asked for right to be forgotten") {
