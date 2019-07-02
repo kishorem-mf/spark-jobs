@@ -50,7 +50,7 @@ import org.scalatest.{FunSpec, Matchers}
             OPT_IN = "Y",
             OPT_IN_DATE = "2015/09/30 14:23:02",
             CONFIRMED_OPT_IN = "Y",
-            CONFIRMED_OPT_IN_DATE = "2015/09/30 14:23:01",
+            CONFIRMED_OPT_IN_DATE = "2015/09/30 14:23:03",
             MOB_OPT_IN = "Y",
             MOB_OPT_IN_DATE = "2015/09/30 14:23:04",
             MOB_CONFIRMED_OPT_IN = "Y",
