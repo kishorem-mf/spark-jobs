@@ -82,3 +82,4 @@ case class ContactPerson(
 case class InvalidEmail(
     emailAddress: String
 )
+
