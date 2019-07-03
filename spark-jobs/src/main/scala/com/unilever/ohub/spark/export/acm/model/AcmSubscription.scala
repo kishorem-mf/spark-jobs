@@ -12,4 +12,5 @@ case class AcmSubscription(
     SUBSCRIPTION_EMAIL_ADDRESS: String = "",
     SUBSCRIPTION_DATE: String,
     SUBSCRIPTION_CONFIRMED: String,
-    SUBSCRIPTION_CONFIRMED_DATE: String) extends OutboundEntity
+    SUBSCRIPTION_CONFIRMED_DATE: String,
+    FAIR_KITCHENS_SIGN_UP_TYPE: String) extends OutboundEntity
