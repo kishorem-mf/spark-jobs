@@ -13,7 +13,7 @@ object OrderLineAcmConverter extends Converter[OrderLine, AcmOrderLine] with Tra
       QUANTITY = orderLine.quantityOfUnits.toString,
       AMOUNT = orderLine.amount,
       LOYALTY_POINTS = orderLine.loyaltyPoints,
-      PRD_INTEGRATION_ID = orderLine.productConcatId,
+      PRD_INTEGRATION_ID = orderLine.productOhubId,
       CAMPAIGN_LABEL = orderLine.campaignLabel,
       COMMENTS = orderLine.comment,
       DELETED_FLAG = booleanToYNConverter(!orderLine.isActive)

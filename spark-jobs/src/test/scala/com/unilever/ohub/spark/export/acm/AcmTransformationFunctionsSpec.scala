@@ -53,6 +53,12 @@ class AcmTransformationFunctionsSpec extends FunSpec with AcmTransformationFunct
     }
   }
 
+  describe("When string contains a dash character") {
+    it("should remove that character") {
+      assert(acmFunctions.cleanString("jean-pierre") == "jeanpierre")
+    }
+  }
+
   describe("When converting timestamp") {
     it("should convert to ACM wished format") {
       val ts = LocalDateTime.of(2019, 11, 12, 10, 11, 12)
