@@ -26,7 +26,7 @@ class OperatorAcmConverterSpec extends SparkJobSpec with TestOperators {
         AcmOperator(
           OPR_ORIG_INTEGRATION_ID = defaultOperator.ohubId.get,
           OPR_LNKD_INTEGRATION_ID = "AU~AB123~1~19",
-          GOLDEN_RECORD_FLAG = "Y",
+          GOLDEN_RECORD_FLAG = "N",
           COUNTRY_CODE = "country-code",
           NAME = "operatorname",
           CHANNEL = "channel",

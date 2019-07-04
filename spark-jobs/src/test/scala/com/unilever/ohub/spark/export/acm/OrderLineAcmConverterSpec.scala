@@ -17,7 +17,7 @@ class OrderLineAcmConverterSpec extends FunSpec with TestOrderLines with Matcher
         QUANTITY = "0",
         AMOUNT = "0.00",
         LOYALTY_POINTS = "123.00",
-        PRD_INTEGRATION_ID = "product-concat-id",
+        PRD_INTEGRATION_ID = "product-ohub-id",
         SAMPLE_ID = "",
         CAMPAIGN_LABEL = "campaign-label",
         COMMENTS = "",
