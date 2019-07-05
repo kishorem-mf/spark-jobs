@@ -12,7 +12,7 @@ object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPers
       CP_ORIG_INTEGRATION_ID = cp.ohubId,
       CP_LNKD_INTEGRATION_ID = new ConcatPersonOldOhubConverter(DomainDataProvider().sourceIds).convert(cp.concatId),
       OPR_ORIG_INTEGRATION_ID = cp.operatorOhubId,
-      GOLDEN_RECORD_FLAG = "Y",
+      GOLDEN_RECORD_FLAG = booleanToYNConverter(cp.isGoldenRecord),
       EMAIL_OPTOUT = cp.hasEmailOptOut.booleanToYNU,
       PHONE_OPTOUT = cp.hasTeleMarketingOptOut.booleanToYNU,
       FAX_OPTOUT = cp.hasFaxOptOut.booleanToYNU,

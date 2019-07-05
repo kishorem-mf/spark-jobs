@@ -39,7 +39,7 @@ object CampaignConverter extends CommonDomainGateKeeper[Campaign] with CampaignE
       campaignName                = optional(                   "campaignName",               "campaignName"),
       deliveryId                  = mandatory(                  "deliveryId",                 "deliveryId"),
       deliveryName                = mandatory(                  "deliveryName",               "deliveryName"),
-      campaignSpecification       = mandatory(                  "campaignSpecification",      "campaignSpecification"),
+      campaignSpecification       = optional(                   "campaignSpecification",      "campaignSpecification"),
       campaignWaveStartDate       = mandatory(                  "campaignWaveStartDate",      "campaignWaveStartDate",parseDateTimeUnsafe()),
       campaignWaveEndDate         = mandatory(                  "campaignWaveEndDate",        "campaignWaveEndDate",  parseDateTimeUnsafe()),
       campaignWaveStatus          = mandatory(                  "campaignWaveStatus",         "campaignWaveStatus"),

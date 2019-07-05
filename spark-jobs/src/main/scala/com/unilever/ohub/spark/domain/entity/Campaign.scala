@@ -37,7 +37,7 @@ case class Campaign(
     campaignName: Option[String],
     deliveryId: String,
     deliveryName: String,
-    campaignSpecification: String,
+    campaignSpecification: Option[String],
     campaignWaveStartDate: Timestamp,
     campaignWaveEndDate: Timestamp,
     campaignWaveStatus: String,

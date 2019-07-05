@@ -2,7 +2,6 @@ package com.unilever.ohub.spark.export.acm
 
 import com.unilever.ohub.spark.DomainDataProvider
 import com.unilever.ohub.spark.domain.entity.Operator
-import com.unilever.ohub.spark.export.acm.SubscriptionAcmConverter.booleanToYNConverter
 import com.unilever.ohub.spark.export.acm.model.AcmOperator
 import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
 
@@ -12,7 +11,7 @@ object OperatorAcmConverter extends Converter[Operator, AcmOperator] with Transf
     AcmOperator(
       OPR_ORIG_INTEGRATION_ID = op.ohubId.get,
       OPR_LNKD_INTEGRATION_ID = new OperatorOldOhubConverter(DomainDataProvider().sourceIds).convert(op.concatId),
-      GOLDEN_RECORD_FLAG = "Y",
+      GOLDEN_RECORD_FLAG = booleanToYNConverter(op.isGoldenRecord),
       COUNTRY_CODE = op.countryCode,
       NAME = op.name.map(cleanString),
       CHANNEL = op.channel,
