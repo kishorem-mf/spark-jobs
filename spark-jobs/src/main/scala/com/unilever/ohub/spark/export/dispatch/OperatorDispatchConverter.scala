@@ -31,7 +31,9 @@ object OperatorDispatchConverter extends Converter[Operator, DispatchOperator] w
       ZIP_CODE = operator.zipCode,
       AVERAGE_SELLING_PRICE = operator.averagePrice,
       NUMBER_OF_COVERS = operator.totalDishes,
-      NUMBER_OF_WEEKS_OPEN = operator.weeksClosed,
+      NUMBER_OF_WEEKS_OPEN = operator.weeksClosed.map { weeksClosed ⇒
+        if (52 - weeksClosed < 0) 0 else 52 - weeksClosed
+      },
       NUMBER_OF_DAYS_OPEN = operator.daysOpen,
       STATUS = if (operator.isActive) "A" else "D",
       CONVENIENCE_LEVEL = operator.cookingConvenienceLevel,
