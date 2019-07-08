@@ -46,7 +46,7 @@ class OperatorDispatchConverterSpec extends SparkJobSpec with TestOperators {
           ZIP_CODE= "1234 AB",
           AVERAGE_SELLING_PRICE= "12345.00",
           NUMBER_OF_COVERS= "150",
-          NUMBER_OF_WEEKS_OPEN= "2",
+          NUMBER_OF_WEEKS_OPEN= "50",
           NUMBER_OF_DAYS_OPEN= "4",
           STATUS= "A",
           CONVENIENCE_LEVEL= "cooking-convenience-level",
