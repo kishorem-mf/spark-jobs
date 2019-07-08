@@ -5,24 +5,30 @@ import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.entity.{ ContactPerson, TestContactPersons }
 import org.apache.spark.sql.{ Dataset, SparkSession }
 
-case class ResultContactPerson(sourceEntityId: String, ohubId: Option[String], firstName: Option[String], emailAddress: Option[String])
+case class ResultContactPerson(sourceEntityId: String, ohubId: Option[String], firstName: Option[String], emailAddress: Option[String],mobileNumber: Option[String])
 
 class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContactPersons {
   import spark.implicits._
 
   lazy implicit val implicitSpark: SparkSession = spark
 
-  private val contactPersonA1 = defaultContactPersonWithSourceEntityId("100").copy(ohubId = Some("AAA"), firstName = Some("Jan"), emailAddress = Some("jan@server.com"))
-  private val contactPersonB1 = defaultContactPersonWithSourceEntityId("200").copy(ohubId = Some("BBB"), firstName = Some("Piet"), emailAddress = Some("piet@server.com"))
-  private val contactPersonA2 = defaultContactPersonWithSourceEntityId("200").copy(ohubId = None, firstName = Some("Jan"), emailAddress = Some("jan@server.com"))
-  private val contactPersonA3 = defaultContactPersonWithSourceEntityId("100").copy(ohubId = None, firstName = Some("Jansen"), emailAddress = Some("jan@server.com"))
-  private val contactPersonA4 = defaultContactPersonWithSourceEntityId("100").copy(ohubId = None, firstName = Some("Jan"), emailAddress = Some("jansen@server.com"))
-  private val contactPersonB2 = defaultContactPersonWithSourceEntityId("100").copy(ohubId = None, firstName = Some("Piet"), emailAddress = Some("piet@server.com"))
-  private val contactPersonA5 = defaultContactPersonWithSourceEntityId("103").copy(ohubId = None, firstName = Some("Jan"), emailAddress = Some("jan@server.com"))
-  private val contactPersonA6 = defaultContactPersonWithSourceEntityId("200").copy(ohubId = Some("AAA"), firstName = Some("Jan"), emailAddress = Some("jan@server.com"))
-  private val contactPersonB3 = defaultContactPersonWithSourceEntityId("200").copy(ohubId = None, firstName = Some("Kees"), emailAddress = Some("kees@server.com"))
-  private val contactPersonA7 = defaultContactPersonWithSourceEntityId("101").copy(ohubId = Some("AAA"), firstName = Some("Jan"), emailAddress = None, mobileNumber = None)
-  private val contactPersonB4 = defaultContactPersonWithSourceEntityId("200").copy(ohubId = Some("BBB"), firstName = Some("Piet"), emailAddress = None, mobileNumber = None)
+  private val contactPersonA1 = defaultContactPersonWithSourceEntityId("100").copy(ohubId = Some("AAA"), firstName = Some("Jan"), emailAddress = Some("jan@server.com"),mobileNumber = Some("900009022"))
+  private val contactPersonB1 = defaultContactPersonWithSourceEntityId("200").copy(ohubId = Some("BBB"), firstName = Some("Piet"), emailAddress = Some("piet@server.com"),mobileNumber = Some("900009022"))
+  private val contactPersonA2 = defaultContactPersonWithSourceEntityId("200").copy(ohubId = None, firstName = Some("Jan"), emailAddress = Some("jan@server.com"),mobileNumber = Some("900009022"))
+  private val contactPersonA3 = defaultContactPersonWithSourceEntityId("100").copy(ohubId = None, firstName = Some("Jansen"), emailAddress = Some("jan@server.com"),mobileNumber = Some("900009022"))
+  private val contactPersonA4 = defaultContactPersonWithSourceEntityId("100").copy(ohubId = None, firstName = Some("Jan"), emailAddress = Some("jansen@server.com"),mobileNumber = Some("900009022"))
+  private val contactPersonB2 = defaultContactPersonWithSourceEntityId("100").copy(ohubId = None, firstName = Some("Piet"), emailAddress = Some("piet@server.com"),mobileNumber = Some("900009022"))
+  private val contactPersonA5 = defaultContactPersonWithSourceEntityId("103").copy(ohubId = None, firstName = Some("Jan"), emailAddress = Some("jan@server.com"),mobileNumber = Some("900009022"))
+  private val contactPersonA6 = defaultContactPersonWithSourceEntityId("200").copy(ohubId = Some("AAA"), firstName = Some("Jan"), emailAddress = Some("jan@server.com"),mobileNumber = Some("900009022"))
+  private val contactPersonB3 = defaultContactPersonWithSourceEntityId("200").copy(ohubId = None, firstName = Some("Kees"), emailAddress = Some("kees@server.com"),mobileNumber = Some("900009022"))
+  private val contactPersonA7 = defaultContactPersonWithSourceEntityId("101").copy(ohubId = Some("AAA"), firstName = Some("Jan"), emailAddress = None, mobileNumber = Some("12345678"))
+
+  private val contactPersonA9 = defaultContactPersonWithSourceEntityId("100").copy(ohubId = Some("AAA"), firstName = Some("Jan"), emailAddress = None,mobileNumber = Some("900009022"))
+  private val contactPersonB6 = defaultContactPersonWithSourceEntityId("200").copy(ohubId = Some("BBB"), firstName = Some("Piet"), emailAddress = None,mobileNumber = Some("900009022"))
+
+  private val contactPersonA10 = defaultContactPersonWithSourceEntityId("100").copy(ohubId = Some("AAA"), firstName = Some("Jan"), emailAddress = None,mobileNumber = Some("12345678"))
+  private val contactPersonB7 = defaultContactPersonWithSourceEntityId("200").copy(ohubId = Some("BBB"), firstName = Some("Piet"), emailAddress = None,mobileNumber = Some("1234"))
+
 
   private val COPY_GENERATED = "COPY_GENERATED"
 
@@ -32,8 +38,8 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       val deltaContactPersons = createDataset(contactPersonB1)
 
       val expectedMatchedExact = Set(
-        ResultContactPerson("100", Some("AAA"), Some("Jan"), Some("jan@server.com")),
-        ResultContactPerson("200", Some("BBB"), Some("Piet"), Some("piet@server.com"))
+        ResultContactPerson("100", Some("AAA"), Some("Jan"), Some("jan@server.com"),Some("900009022")),
+        ResultContactPerson("200", Some("BBB"), Some("Piet"), Some("piet@server.com"),Some("900009022"))
       )
       val expectedUnmatchedIntegrated = Set[ResultContactPerson]()
       val expectedUnmatchedDelta = Set[ResultContactPerson]()
@@ -46,8 +52,8 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       val deltaContactPersons = createDataset(contactPersonA2)
 
       val expectedMatchedExact = Set(
-        ResultContactPerson("100", Some("AAA"), Some("Jan"), Some("jan@server.com")),
-        ResultContactPerson("200", Some("AAA"), Some("Jan"), Some("jan@server.com"))
+        ResultContactPerson("100", Some("AAA"), Some("Jan"), Some("jan@server.com"),Some("900009022")),
+        ResultContactPerson("200", Some("AAA"), Some("Jan"), Some("jan@server.com"),Some("900009022"))
       )
       val expectedUnmatchedIntegrated = Set[ResultContactPerson]()
       val expectedUnmatchedDelta = Set[ResultContactPerson]()
@@ -60,7 +66,7 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       val deltaContactPersons = createDataset(contactPersonA3)
 
       val expectedMatchedExact = Set(
-        ResultContactPerson("100", Some("AAA"), Some("Jansen"), Some("jan@server.com"))
+        ResultContactPerson("100", Some("AAA"), Some("Jansen"), Some("jan@server.com"),Some("900009022"))
       )
       val expectedUnmatchedIntegrated = Set[ResultContactPerson]()
       val expectedUnmatchedDelta = Set[ResultContactPerson]()
@@ -73,7 +79,7 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       val deltaContactPersons = createDataset(contactPersonA4)
 
       val expectedMatchedExact = Set(
-        ResultContactPerson("100", Some(COPY_GENERATED), Some("Jan"), Some("jansen@server.com")) // copy ohub id of actual result
+        ResultContactPerson("100", Some(COPY_GENERATED), Some("Jan"), Some("jansen@server.com"),Some("900009022")) // copy ohub id of actual result
       )
       val expectedUnmatchedIntegrated = Set[ResultContactPerson]()
       val expectedUnmatchedDelta = Set[ResultContactPerson]()
@@ -90,8 +96,8 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       val deltaContactPersons = createDataset(contactPersonB2)
 
       val expectedMatchedExact = Set(
-        ResultContactPerson("100", Some("BBB"), Some("Piet"), Some("piet@server.com")),
-        ResultContactPerson("200", Some("BBB"), Some("Piet"), Some("piet@server.com"))
+        ResultContactPerson("100", Some("BBB"), Some("Piet"), Some("piet@server.com"),Some("900009022")),
+        ResultContactPerson("200", Some("BBB"), Some("Piet"), Some("piet@server.com"),Some("900009022"))
       )
       val expectedUnmatchedIntegrated = Set[ResultContactPerson]()
       val expectedUnmatchedDelta = Set[ResultContactPerson]()
@@ -104,9 +110,9 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       val deltaContactPersons = createDataset(contactPersonB2, contactPersonA5)
 
       val expectedMatchedExact = Set(
-        ResultContactPerson("100", Some("BBB"), Some("Piet"), Some("piet@server.com")),
-        ResultContactPerson("200", Some("BBB"), Some("Piet"), Some("piet@server.com")),
-        ResultContactPerson("103", Some("AAA"), Some("Jan"), Some("jan@server.com"))
+        ResultContactPerson("100", Some("BBB"), Some("Piet"), Some("piet@server.com"),Some("900009022")),
+        ResultContactPerson("200", Some("BBB"), Some("Piet"), Some("piet@server.com"),Some("900009022")),
+        ResultContactPerson("103", Some("AAA"), Some("Jan"), Some("jan@server.com"),Some("900009022"))
       )
       val expectedUnmatchedIntegrated = Set[ResultContactPerson]()
       val expectedUnmatchedDelta = Set[ResultContactPerson]()
@@ -119,8 +125,8 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       val deltaContactPersons = createDataset(contactPersonB2, contactPersonB3)
 
       val expectedMatchedExact = Set(
-        ResultContactPerson("100", Some(COPY_GENERATED), Some("Piet"), Some("piet@server.com")),
-        ResultContactPerson("200", Some(COPY_GENERATED), Some("Kees"), Some("kees@server.com"))) // you could argue to keep the ohub id for this one?
+        ResultContactPerson("100", Some(COPY_GENERATED), Some("Piet"), Some("piet@server.com"),Some("900009022")),
+        ResultContactPerson("200", Some(COPY_GENERATED), Some("Kees"), Some("kees@server.com"),Some("900009022"))) // you could argue to keep the ohub id for this one?
       val expectedUnmatchedIntegrated = Set[ResultContactPerson]()
       val expectedUnmatchedDelta = Set[ResultContactPerson]()
 
@@ -136,8 +142,8 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       val deltaContactPersons = createDataset(contactPersonA3, contactPersonB3)
 
       val expectedMatchedExact = Set(
-        ResultContactPerson("100", Some("AAA"), Some("Jansen"), Some("jan@server.com")),
-        ResultContactPerson("200", Some("COPY_GENERATED"), Some("Kees"), Some("kees@server.com")))
+        ResultContactPerson("100", Some("AAA"), Some("Jansen"), Some("jan@server.com"),Some("900009022")),
+        ResultContactPerson("200", Some("COPY_GENERATED"), Some("Kees"), Some("kees@server.com"),Some("900009022")))
       val expectedUnmatchedIntegrated = Set[ResultContactPerson]()
       val expectedUnmatchedDelta = Set[ResultContactPerson]()
 
@@ -149,8 +155,8 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       val deltaContactPersons = createDataset(contactPersonA3, contactPersonA5)
 
       val expectedMatchedExact = Set(
-        ResultContactPerson("100", Some("COPY_GENERATED"), Some("Jansen"), Some("jan@server.com")),
-        ResultContactPerson("103", Some("COPY_GENERATED"), Some("Jan"), Some("jan@server.com")))
+        ResultContactPerson("100", Some("COPY_GENERATED"), Some("Jansen"), Some("jan@server.com"),Some("900009022")),
+        ResultContactPerson("103", Some("COPY_GENERATED"), Some("Jan"), Some("jan@server.com"),Some("900009022")))
       val expectedUnmatchedIntegrated = Set[ResultContactPerson]()
       val expectedUnmatchedDelta = Set[ResultContactPerson]()
 
@@ -159,34 +165,50 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       result.map(_.ohubId).distinct().collect().length shouldBe 1
     }
 
-    it("a contact person without an exact match string should be in unmatched") {
-      val integratedContactPersons = createDataset(contactPersonA1, contactPersonB4)
-      val deltaContactPersons = createDataset(contactPersonA7)
+    it("a contact person with an exact matching phone number should be in matched") {
+      val integratedContactPersons = createDataset(contactPersonA9, contactPersonB6)
+      val deltaContactPersons = createDataset(contactPersonA9)
 
       val expectedMatchedExact = Set(
-        ResultContactPerson("100", Some("AAA"), Some("Jan"), Some("jan@server.com")))
-      val expectedUnmatchedIntegrated = Set(
-        ResultContactPerson("200", Some("BBB"), Some("Piet"), None))
-      val expectedUnmatchedDelta = Set(
-        ResultContactPerson("101", Some("AAA"), Some("Jan"), None))
+        ResultContactPerson("100", Some("BBB"), Some("Jan"), None,Some("900009022")),
+        ResultContactPerson("200", Some("BBB"), Some("Piet"), None,Some("900009022"))
+      )
+
+      val expectedUnmatchedIntegrated = Set[ResultContactPerson]()
+      val expectedUnmatchedDelta = Set[ResultContactPerson]()
+
+      matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
+    }
+
+    it("a contact person without an exact match string should be in unmatched") {
+      val integratedContactPersons = createDataset(contactPersonA10, contactPersonB7)
+      val deltaContactPersons = createDataset(contactPersonA10)
+
+      val expectedMatchedExact = Set(
+        ResultContactPerson("100", Some("AAA"), Some("Jan"), None,Some("12345678")),
+        ResultContactPerson("200", Some("BBB"), Some("Piet"), None,Some("1234"))
+      )
+
+      val expectedUnmatchedIntegrated = Set[ResultContactPerson]()
+      val expectedUnmatchedDelta = Set[ResultContactPerson]()
 
       matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
     }
   }
 
   private def matchExactAndAssert(
-    integratedContactPersons: Dataset[ContactPerson],
-    deltaContactPersons: Dataset[ContactPerson],
-    expectedMatchedExact: Set[ResultContactPerson],
-    expectedUnmatchedIntegrated: Set[ResultContactPerson],
-    expectedUnmatchedDelta: Set[ResultContactPerson]
-  ): Dataset[ContactPerson] = {
+                                   integratedContactPersons: Dataset[ContactPerson],
+                                   deltaContactPersons: Dataset[ContactPerson],
+                                   expectedMatchedExact: Set[ResultContactPerson],
+                                   expectedUnmatchedIntegrated: Set[ResultContactPerson],
+                                   expectedUnmatchedDelta: Set[ResultContactPerson]
+                                 ): Dataset[ContactPerson] = {
     val (matchedExact, unmatchedIntegrated, unmatchedDelta) = ContactPersonIntegratedExactMatch.transform(
       integratedContactPersons, deltaContactPersons
     )
 
-    val actualMatchedExact = matchedExact.collect().toSeq.map(cp ⇒ cp.sourceEntityId -> cp).toMap
-    val ohubIdsCopied = expectedMatchedExact.map { result ⇒
+    val actualMatchedExact = matchedExact.collect().toSeq.map(cp => cp.sourceEntityId -> cp).toMap
+    val ohubIdsCopied = expectedMatchedExact.map { result =>
       if (result.ohubId.contains(COPY_GENERATED)) {
         result.copy(ohubId = actualMatchedExact.get(result.sourceEntityId).flatMap(_.ohubId))
       } else {
@@ -205,7 +227,8 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
     withClue(s"$title:")(createActualResultSet(actualDataSet) shouldBe expectedResults)
 
   private def createActualResultSet(actualDataSet: Dataset[ContactPerson]): Set[ResultContactPerson] =
-    actualDataSet.map(cp ⇒ ResultContactPerson(cp.sourceEntityId, cp.ohubId, cp.firstName, cp.emailAddress)).collect().toSet
+    actualDataSet.map(cp => ResultContactPerson(cp.sourceEntityId, cp.ohubId, cp.firstName, cp.emailAddress,cp.mobileNumber)).collect().toSet
 
   private def createDataset(contactPersons: ContactPerson*): Dataset[ContactPerson] = contactPersons.toDataset
 }
+
