@@ -45,12 +45,18 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
       integratedContactPersons,
       dailyDeltaContactPersons)
 
+    //matchedExactEmail.show()
+
     val matchedExactPhone: Dataset[ContactPerson] = determineExactMatchByPhone(
       integratedContactPersons,
       dailyDeltaContactPersons)
 
+    //matchedExactPhone.show()
+
     val matchedExactAll = matchedExactEmail
                               .union(matchedExactPhone)
+
+    //matchedExactAll.show()
 
     val unmatchedIntegrated = integratedContactPersons
       .join(matchedExactAll, Seq("concatId"), JoinType.LeftAnti)
@@ -101,12 +107,12 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
 
     lazy val integratedWithExact = integratedContactPersons
       .filter(emailNull)
-      .concatenateColumns("group", byPhone)
+      .concatenateColumns("group", byPhone) //remove this
       .withColumn("inDelta", lit(false))
 
     lazy val newWithExact =
       dailyDeltaContactPersons
-        .filter(emailNull)
+        .filter(emailNull) //add condition for mobile not null
         .concatenateColumns("group", byPhone)
         .withColumn("inDelta", lit(true))
 
