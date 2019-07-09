@@ -41,20 +41,18 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
     dailyDeltaContactPersons: Dataset[ContactPerson])(implicit spark: SparkSession): (Dataset[ContactPerson], Dataset[ContactPerson], Dataset[ContactPerson]) = {
     import spark.implicits._
 
-    val matchedExactEmail: Dataset[ContactPerson] = determineExactMatchByEmail(
-      integratedContactPersons,
-      dailyDeltaContactPersons)
-
-    //matchedExactEmail.show()
-
     val matchedExactPhone: Dataset[ContactPerson] = determineExactMatchByPhone(
       integratedContactPersons,
       dailyDeltaContactPersons)
 
-    //matchedExactPhone.show()
+    val matchedExactEmailNotNull: Dataset[ContactPerson] = determineExactMatchByEmail(
+      matchedExactPhone)
 
-    val matchedExactAll = matchedExactEmail
-                              .union(matchedExactPhone)
+    val matchedExactEmailNull: Dataset[ContactPerson] = determineExactMatchByEmailNull(
+      matchedExactPhone)
+
+    val matchedExactAll = matchedExactEmailNotNull
+                              .union(matchedExactEmailNull)
 
     //matchedExactAll.show()
 
@@ -69,28 +67,37 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
     (matchedExactAll, unmatchedIntegrated, unmatchedDelta)
   }
 
+  private def determineExactMatchByEmailNull(groupedByMobileContactPersons: Dataset[ContactPerson])(implicit spark: SparkSession): Dataset[ContactPerson] = {
+    import spark.implicits._
 
-  private def determineExactMatchByEmail(
-                                          integratedContactPersons: Dataset[ContactPerson],
-                                          dailyDeltaContactPersons: Dataset[ContactPerson])(implicit spark: SparkSession): Dataset[ContactPerson] = {
+    val byEmail = Seq("emailAddress").map(col)
+    val emailNull = $"emailAddress".isNull
+
+    lazy val integratedWithExact = groupedByMobileContactPersons
+      .filter(emailNull)
+      .concatenateColumns("group", byEmail)
+      .withColumn("inDelta", lit(false))
+
+    integratedWithExact
+      .drop("group")
+      .selectLatestRecord
+      .drop("inDelta")
+      //      .removeSingletonGroups
+      .as[ContactPerson]
+  }
+  private def determineExactMatchByEmail(groupedByMobileContactPersons: Dataset[ContactPerson])(implicit spark: SparkSession): Dataset[ContactPerson] = {
     import spark.implicits._
 
     val byEmail = Seq("emailAddress").map(col)
     val emailNotNull = $"emailAddress".isNotNull
 
-    lazy val integratedWithExact = integratedContactPersons
+    lazy val integratedWithExact = groupedByMobileContactPersons
       .filter(emailNotNull)
       .concatenateColumns("group", byEmail)
       .withColumn("inDelta", lit(false))
 
-    lazy val newWithExact =
-      dailyDeltaContactPersons
-        .filter(emailNotNull)
-        .concatenateColumns("group", byEmail)
-        .withColumn("inDelta", lit(true))
 
     integratedWithExact
-      .union(newWithExact)
       .addOhubId
       .drop("group")
       .selectLatestRecord
@@ -103,16 +110,13 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
     import spark.implicits._
 
     val byPhone = Seq("mobileNumber").map(col)
-    val emailNull = $"emailAddress".isNull
 
     lazy val integratedWithExact = integratedContactPersons
-      .filter(emailNull)
       .concatenateColumns("group", byPhone) //remove this
       .withColumn("inDelta", lit(false))
 
     lazy val newWithExact =
       dailyDeltaContactPersons
-        .filter(emailNull) //add condition for mobile not null
         .concatenateColumns("group", byPhone)
         .withColumn("inDelta", lit(true))
 
@@ -125,6 +129,42 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
       //      .removeSingletonGroups
       .as[ContactPerson]
   }
+
+  private def determineExactMatchByPhone2(groupedByNotNullEmailExactMatches: Dataset[ContactPerson],unmatchedNullEmails: Dataset[ContactPerson],
+                                          allRecords: Dataset[ContactPerson])(implicit spark: SparkSession): Dataset[ContactPerson] = {
+    import spark.implicits._
+
+    val byPhone = Seq("mobileNumber").map(col)
+    val emailNull = $"emailAddress".isNull
+
+    //columnwise comparision
+    /*val columns = df1.schema.fields.map(_.name)
+    val selectiveDifferences = columns.map(col => df1.select(col).except(df2.select(col)))
+    selectiveDifferences.map(diff => {if(diff.count > 0) diff.show})*/
+
+    //https://stackoverflow.com/questions/44338412/how-to-compare-two-dataframe-and-print-columns-that-are-different-in-scala
+
+    //row wise comparision
+
+    lazy val unmatchedRecords = groupedByNotNullEmailExactMatches
+      .except(unmatchedNullEmails)
+      .as[ContactPerson]
+
+
+    lazy val integratedWithExact = unmatchedRecords
+      .filter(emailNull)
+      .concatenateColumns("group", byPhone) //remove this
+      .withColumn("inDelta", lit(false))
+
+    integratedWithExact
+      .addOhubId
+      .drop("group")
+      .selectLatestRecord
+      .drop("inDelta")
+      //      .removeSingletonGroups
+      .as[ContactPerson]
+  }
+
   private def determineExactMatchesEmailAndPhone(
     integratedContactPersons: Dataset[ContactPerson],
     dailyDeltaContactPersons: Dataset[ContactPerson])(implicit spark: SparkSession): Dataset[ContactPerson] = {

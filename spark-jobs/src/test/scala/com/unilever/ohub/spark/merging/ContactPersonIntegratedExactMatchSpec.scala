@@ -194,6 +194,9 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
 
       matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
     }
+
+
+
   }
 
   private def matchExactAndAssert(
