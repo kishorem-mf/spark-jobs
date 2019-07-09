@@ -29,6 +29,7 @@ trait TestSubscription {
     subscriptionDate = Some(Timestamp.valueOf("2015-06-20 13:49:00.0")),
     hasConfirmedSubscription = Some(true),
     confirmedSubscriptionDate = Some(Timestamp.valueOf("2015-06-30 13:49:00.0")),
+    fairKitchensSignUpType = Some("pledger"),
     // other fields
     additionalFields = Map(),
     ingestionErrors = Map()

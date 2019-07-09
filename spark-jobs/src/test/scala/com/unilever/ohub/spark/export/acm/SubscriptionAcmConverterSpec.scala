@@ -22,7 +22,8 @@ class SubscriptionAcmConverterSpec extends FunSpec with TestSubscription with Ma
         DATE_UPDATED = "2015/06/30 13:49:00",
         SUBSCRIPTION_DATE = "2015/06/20 13:49:00",
         SUBSCRIPTION_CONFIRMED = "Y",
-        SUBSCRIPTION_CONFIRMED_DATE = "2015/06/30 13:49:00"
+        SUBSCRIPTION_CONFIRMED_DATE = "2015/06/30 13:49:00",
+        FAIR_KITCHENS_SIGN_UP_TYPE = "pledger"
       )
 
       result shouldBe expectedAcmSubscription
