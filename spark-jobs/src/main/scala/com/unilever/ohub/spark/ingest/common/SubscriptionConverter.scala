@@ -41,6 +41,7 @@ object SubscriptionConverter extends CommonDomainGateKeeper[Subscription] with S
       subscriptionDate            = optional(                   "subscriptionDate",           "subscriptionDate",           parseDateTimeUnsafe()),
       hasConfirmedSubscription    = optional(                   "hasConfirmedSubscription",   "hasConfirmedSubscription",   toBoolean),
       confirmedSubscriptionDate   = optional(                   "confirmedSubscriptionDate",  "confirmedSubscriptionDate",  parseDateTimeUnsafe()),
+      fairKitchensSignUpType      = optional(                   "fairKitchensSignUpType",     "fairKitchensSignUpType"),
       additionalFields            = additionalFields,
       ingestionErrors             = errors
     )
