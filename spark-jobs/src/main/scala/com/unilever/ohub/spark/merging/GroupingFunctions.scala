@@ -86,6 +86,19 @@ object DataFrameHelpers extends GroupingFunctions {
 
     }
 
+    def addOhubIdBasedOnColumnAndPriority1(exactMatchColumn: String)(implicit spark: SparkSession): Dataset[_] = {
+
+      import spark.implicits._
+      val w1 = Window.partitionBy(col(exactMatchColumn)).orderBy($"priority", $"ohubId".desc_nulls_last)
+      //Date Created can be used instead of priority
+      df.withColumn("ohubId", first($"ohubId").over(w1)) // preserve ohubId
+
+        // the next two lines will select a deterministic random ohubId
+        .withColumn("rand", rand(SEED))
+        .withColumn("ohubId", when('ohubId.isNull, createOhubIdUdf($"rand")).otherwise('ohubId))
+        .withColumn("ohubId",first('ohubId).over(w1)) // make sure the whole group gets the same ohubId
+        .drop("rand")
+    }
     def addOhubIdBasedOnColumnAndPriority(exactMatchColumn: String)(implicit spark: SparkSession): Dataset[_] = {
 
       import spark.implicits._
@@ -96,7 +109,6 @@ object DataFrameHelpers extends GroupingFunctions {
         // the next two lines will select a deterministic random ohubId
         .withColumn("rand", rand(SEED))
         .withColumn("ohubId", when('ohubId.isNull, createOhubIdUdf($"rand")).otherwise('ohubId))
-
         .withColumn("ohubId", first('ohubId).over(w1)) // make sure the whole group gets the same ohubId
         .drop("rand")
     }
@@ -120,6 +132,15 @@ object DataFrameHelpers extends GroupingFunctions {
       def notNullOrEmpty(col: Column): Column = col.isNotNull and col.notEqual("")
 
       df.filter(cols.map(c ⇒ notNullOrEmpty(c)).reduce(_ and _))
+    }
+
+    /**
+      * Keep rows where all columns are not null and not empty
+      */
+    def columnsCondition(cols: Seq[Column], colCondition:Column): Dataset[_] = {
+      def condition(col: Column): Column = colCondition
+
+      df.filter(cols.map(c ⇒ condition(c)).reduce(_ and _))
     }
 
     /**

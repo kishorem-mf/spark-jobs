@@ -1,8 +1,10 @@
 package com.unilever.ohub.spark.merging
 
+import java.util.Optional
+
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.ingest.EmptyParquetWriter
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{Column, Dataset, SparkSession}
 import org.apache.spark.sql.functions._
 import com.unilever.ohub.spark.merging.DataFrameHelpers._
 import com.unilever.ohub.spark.sql.JoinType
@@ -18,44 +20,78 @@ object ContactPersonExactMatchUtils {
 
     val referenceEmptyRecords = spark.createDataset[ContactPerson](Seq[ContactPerson]())
 
-    val (matchedCPOnEmail, unMatchedCPIntegratedOnEmail,  unMatchedCPDeltaOnEmail) = getMatchedAndUnmatchedEmailAndMobile(
+    val (matchedCPOnEmail, unMatchedCPIntegratedOnEmail,  unMatchedCPDeltaOnEmail) = getMatchedAndUnmatchedEmail(
       "cleansedEmail",
       referenceEmptyRecords,
       integratedContactPersons,
       dailyDeltaContactPersons)
 
-    println("matchedCPOnEmail")
-    matchedCPOnEmail.select("concatId", "ohubId","emailAddress","mobileNumber").show()
-    println("===============================================================")
-
-    println("unMatchedCPIntegratedOnEmail")
-    unMatchedCPIntegratedOnEmail.select("concatId", "ohubId","emailAddress","mobileNumber").show()
-    println("===============================================================")
-
-    println("unMatchedCPDeltaOnEmail")
-    unMatchedCPDeltaOnEmail.select("concatId", "ohubId","emailAddress","mobileNumber").show()
-
-
-
-    val (matchedCPOnMobileAndEmail, unMatchedIntegratedCPOnMobile, unMatchedDeltaCPOnMobile) = getMatchedAndUnmatchedEmailAndMobile(
+   val (matchedCPOnMobileAndEmail, unMatchedIntegratedCPOnMobile, unMatchedDeltaCPOnMobile) = getMatchedAndUnmatchedMobile(
       "cleansedMobile",
-      matchedCPOnEmail, //.dropDuplicates("mobileNumber"),
+      matchedCPOnEmail,
       unMatchedCPIntegratedOnEmail,
       unMatchedCPDeltaOnEmail)
-
-    println("matchedCPOnMobile")
-    matchedCPOnMobileAndEmail.select("concatId", "ohubId","emailAddress","mobileNumber").show()
-    println("===============================================================")
-    println("unMatchedCPOnMobile")
-    unMatchedIntegratedCPOnMobile.select("concatId", "ohubId","emailAddress","mobileNumber").show()
-
 
     matchedCPOnMobileAndEmail
   }
 
+  private def getMatchedAndUnmatchedMobile(
+                                           exactMatchColumn: String,
+                                           referenceMatchedRecords: Dataset[ContactPerson],
+                                           integratedContactPersons: Dataset[ContactPerson],
+                                           deltaContactPersons: Dataset[ContactPerson])(implicit spark: SparkSession) = {
+
+    import spark.implicits._
+
+    val exactMatchColumnSeq = Seq(exactMatchColumn).map(col)
+
+    val integratedCPWithExactColumn = integratedContactPersons
+      .cleansMobileEmail
+      .columnsNotNullAndNotEmpty(exactMatchColumnSeq)
+      .filter($"emailAddress".isNull)
+      .withColumn("priority", lit(2))
+    //.withColumn("inDelta", lit(false))
+
+    val deltaCPWithExactColumn = deltaContactPersons
+      .cleansMobileEmail
+      .columnsNotNullAndNotEmpty(exactMatchColumnSeq)
+      .filter($"emailAddress".isNull)
+      .withColumn("priority",lit(3))
+    //.withColumn("inDelta", lit(true))
+
+    val matchedCPOnExactColumn = referenceMatchedRecords
+      .cleansMobileEmail
+      //.filter($"emailAddress".isNull)
+      .withColumn("priority", lit(1))
+      .unionByName(integratedCPWithExactColumn)
+      .unionByName(deltaCPWithExactColumn)
+      .addOhubIdBasedOnColumnAndPriority1(exactMatchColumn)
+      .filter($"emailAddress".isNull)
+      .as[ContactPerson]
 
 
-  private def getMatchedAndUnmatchedEmailAndMobile(
+    val matchedCPOnExactColumn1 =  matchedCPOnExactColumn.drop( "priority","cleansedEmail", "cleansedMobile")
+      .as[ContactPerson]
+
+    val unMatchedCPIntegratedExactColumn = integratedContactPersons
+      .join(matchedCPOnExactColumn, Seq("concatId"), JoinType.LeftAnti)
+      .as[ContactPerson]
+
+
+    val unMatchedCPDeltaExactColumn = deltaContactPersons
+      .join(matchedCPOnExactColumn, Seq("concatId"), JoinType.LeftAnti)
+      .as[ContactPerson]
+
+    val matchedCPOnExactColumn2 = matchedCPOnExactColumn1
+      .unionByName(referenceMatchedRecords)
+      .dropDuplicates("concatId")
+      .as[ContactPerson]
+
+    (matchedCPOnExactColumn2, unMatchedCPIntegratedExactColumn, unMatchedCPDeltaExactColumn)
+  }
+
+
+  private def getMatchedAndUnmatchedEmail(
       exactMatchColumn: String,
       referenceMatchedRecords: Dataset[ContactPerson],
       integratedContactPersons: Dataset[ContactPerson],
@@ -76,36 +112,25 @@ object ContactPersonExactMatchUtils {
       .columnsNotNullAndNotEmpty(exactMatchColumnSeq)
       .withColumn("priority",lit(3))
       //.withColumn("inDelta", lit(true))
-    deltaCPWithExactColumn.show()
-    integratedCPWithExactColumn.show()
+
     val matchedCPOnExactColumn = referenceMatchedRecords
       .cleansMobileEmail
       .withColumn("priority", lit(1))
-      .union(integratedCPWithExactColumn)
-      .union(deltaCPWithExactColumn)
+      .unionByName(integratedCPWithExactColumn)
+      .unionByName(deltaCPWithExactColumn)
       .addOhubIdBasedOnColumnAndPriority(exactMatchColumn)
-      //.selectLatestRecord
-
-
-    println("matchedCPOnExactColumn")
-    matchedCPOnExactColumn.select("concatId", "ohubId","emailAddress","mobileNumber","priority","cleansedEmail", "cleansedMobile").show()
-    println("===============================================================")
-
+      .as[ContactPerson]
 
      val matchedCPOnExactColumn1 =  matchedCPOnExactColumn.drop( "priority","cleansedEmail", "cleansedMobile")
       .as[ContactPerson]
-    matchedCPOnExactColumn1.show()
+
     val unMatchedCPIntegratedExactColumn = integratedContactPersons
       .join(matchedCPOnExactColumn, Seq("concatId"), JoinType.LeftAnti)
       .as[ContactPerson]
 
-    unMatchedCPIntegratedExactColumn.show()
-
     val unMatchedCPDeltaExactColumn = deltaContactPersons
       .join(matchedCPOnExactColumn, Seq("concatId"), JoinType.LeftAnti)
       .as[ContactPerson]
-
-    unMatchedCPDeltaExactColumn.show()
 
     (matchedCPOnExactColumn1, unMatchedCPIntegratedExactColumn, unMatchedCPDeltaExactColumn)
   }
