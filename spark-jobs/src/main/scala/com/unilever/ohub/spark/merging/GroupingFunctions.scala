@@ -86,19 +86,6 @@ object DataFrameHelpers extends GroupingFunctions {
 
     }
 
-    def addOhubIdBasedOnColumnAndPriority1(exactMatchColumn: String)(implicit spark: SparkSession): Dataset[_] = {
-
-      import spark.implicits._
-      val w1 = Window.partitionBy(col(exactMatchColumn)).orderBy($"priority", $"ohubId".desc_nulls_last)
-      //Date Created can be used instead of priority
-      df.withColumn("ohubId", first($"ohubId").over(w1)) // preserve ohubId
-
-        // the next two lines will select a deterministic random ohubId
-        .withColumn("rand", rand(SEED))
-        .withColumn("ohubId", when('ohubId.isNull, createOhubIdUdf($"rand")).otherwise('ohubId))
-        .withColumn("ohubId",first('ohubId).over(w1)) // make sure the whole group gets the same ohubId
-        .drop("rand")
-    }
     def addOhubIdBasedOnColumnAndPriority(exactMatchColumn: String)(implicit spark: SparkSession): Dataset[_] = {
 
       import spark.implicits._

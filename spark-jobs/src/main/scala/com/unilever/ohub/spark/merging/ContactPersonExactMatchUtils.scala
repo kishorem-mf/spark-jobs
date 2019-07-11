@@ -50,21 +50,19 @@ object ContactPersonExactMatchUtils {
       .columnsNotNullAndNotEmpty(exactMatchColumnSeq)
       .filter($"emailAddress".isNull)
       .withColumn("priority", lit(2))
-    //.withColumn("inDelta", lit(false))
 
     val deltaCPWithExactColumn = deltaContactPersons
       .cleansMobileEmail
       .columnsNotNullAndNotEmpty(exactMatchColumnSeq)
       .filter($"emailAddress".isNull)
       .withColumn("priority",lit(3))
-    //.withColumn("inDelta", lit(true))
 
     val matchedCPOnExactColumn = referenceMatchedRecords
       .cleansMobileEmail
       .withColumn("priority", lit(1))
       .unionByName(integratedCPWithExactColumn)
       .unionByName(deltaCPWithExactColumn)
-      .addOhubIdBasedOnColumnAndPriority1(exactMatchColumn)
+      .addOhubIdBasedOnColumnAndPriority(exactMatchColumn)
       .filter($"emailAddress".isNull)
       .as[ContactPerson]
 
@@ -104,13 +102,11 @@ object ContactPersonExactMatchUtils {
       .cleansMobileEmail
       .columnsNotNullAndNotEmpty(exactMatchColumnSeq)
       .withColumn("priority", lit(2))
-      //.withColumn("inDelta", lit(false))
 
     val deltaCPWithExactColumn = deltaContactPersons
       .cleansMobileEmail
       .columnsNotNullAndNotEmpty(exactMatchColumnSeq)
       .withColumn("priority",lit(3))
-      //.withColumn("inDelta", lit(true))
 
     val matchedCPOnExactColumn = referenceMatchedRecords
       .cleansMobileEmail
