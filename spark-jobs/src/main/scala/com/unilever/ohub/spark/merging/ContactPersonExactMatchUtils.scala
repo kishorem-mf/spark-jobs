@@ -61,7 +61,6 @@ object ContactPersonExactMatchUtils {
 
     val matchedCPOnExactColumn = referenceMatchedRecords
       .cleansMobileEmail
-      //.filter($"emailAddress".isNull)
       .withColumn("priority", lit(1))
       .unionByName(integratedCPWithExactColumn)
       .unionByName(deltaCPWithExactColumn)
