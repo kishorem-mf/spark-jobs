@@ -22,7 +22,8 @@ def spark(request):
         SparkSession.builder
         .master("local[*]")
         .appName("pytest")
-        .config("spark.ui.enabled", "true")
+        .config("spark.ui.enabled", "false")
+        .config("spark.sql.shuffle.partitions", "1")
         .config("spark.driver.memory", "8g")
         .getOrCreate()
     )
