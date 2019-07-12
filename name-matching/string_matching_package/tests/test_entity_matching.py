@@ -26,7 +26,9 @@ class TestPreprocessingOperators:
         res = preprocess_operators(ddf, 'concatId', True).collect()
 
         assert len(res) == 3
-        assert ['2', '3', '4'] == [_[1] for _ in res]
+        concatIds = [_[1] for _ in res]
+        concatIds.sort()
+        assert ['2', '3', '4'] == concatIds
 
     def test_match_string_should_be_concat_from_fields(self, spark):
         ddf = self.create_ddf(spark)
@@ -58,7 +60,9 @@ class TestPreprocessingContactPersons:
         res = preprocess_contact_persons(ddf, 'concatId').collect()
 
         assert len(res) == 3
-        assert ['2', '3', '4'] == [_[1] for _ in res]
+        concatIds = [_[1] for _ in res]
+        concatIds.sort()
+        assert ['2', '3', '4'] == concatIds
 
     def test_match_string_should_be_concat_from_fields(self, spark):
         ddf = self.create_ddf(spark)

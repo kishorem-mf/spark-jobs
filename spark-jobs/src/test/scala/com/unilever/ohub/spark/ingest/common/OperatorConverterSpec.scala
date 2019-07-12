@@ -16,7 +16,10 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
       runJobWith(inputFile) { actualDataSet ⇒
         actualDataSet.count() shouldBe 6
 
-        val actualOperator = actualDataSet.head()
+        import com.unilever.ohub.spark.SharedSparkSession.spark
+        import spark.implicits._
+
+        val actualOperator = actualDataSet.filter($"id" === "id-3").head()
 
         val expectedOperator = Operator(
           id = "id-3",

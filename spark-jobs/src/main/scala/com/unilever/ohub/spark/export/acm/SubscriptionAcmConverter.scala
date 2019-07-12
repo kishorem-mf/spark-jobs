@@ -16,7 +16,8 @@ object SubscriptionAcmConverter extends Converter[Subscription, AcmSubscription]
       DATE_UPDATED = subscription.ohubUpdated,
       SUBSCRIPTION_DATE = subscription.subscriptionDate,
       SUBSCRIPTION_CONFIRMED = subscription.hasConfirmedSubscription.booleanToYNU,
-      SUBSCRIPTION_CONFIRMED_DATE = subscription.confirmedSubscriptionDate
+      SUBSCRIPTION_CONFIRMED_DATE = subscription.confirmedSubscriptionDate,
+      FAIR_KITCHENS_SIGN_UP_TYPE = subscription.fairKitchensSignUpType
     )
   }
 }
