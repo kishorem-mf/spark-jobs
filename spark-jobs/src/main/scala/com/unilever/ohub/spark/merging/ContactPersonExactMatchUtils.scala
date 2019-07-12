@@ -81,7 +81,7 @@ object ContactPersonExactMatchUtils {
 
     val matchedCPOnExactColumn2 = matchedCPOnExactColumn1
       .unionByName(referenceMatchedRecords)
-      .dropDuplicates("concatId")
+//      .dropDuplicates("concatId")
       .as[ContactPerson]
 
     (matchedCPOnExactColumn2, unMatchedCPIntegratedExactColumn, unMatchedCPDeltaExactColumn)
@@ -116,7 +116,9 @@ object ContactPersonExactMatchUtils {
       .addOhubIdBasedOnColumnAndPriority(exactMatchColumn)
       .as[ContactPerson]
 
-     val matchedCPOnExactColumn1 =  matchedCPOnExactColumn.drop( "priority","cleansedEmail", "cleansedMobile")
+     val matchedCPOnExactColumn1 =  matchedCPOnExactColumn
+      .filter($"priority" =!= 2)
+      .drop( "priority","cleansedEmail", "cleansedMobile")
       .as[ContactPerson]
 
     val unMatchedCPIntegratedExactColumn = integratedContactPersons
