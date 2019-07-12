@@ -10,11 +10,11 @@ class TestGroupMatches:
     def test_each_i_should_only_appear_once(self, spark):
         ddf = spark.createDataFrame(self.data).toDF('i', 'j')
 
-        res = victim.group_matches(ddf).collect()
+        res = victim.group_matches(ddf).collect()        
 
         assert len(res) == 2
-        assert res[0] == (3, 1)
-        assert res[1] == (2, 1)
+        assert res[1] == (3, 1)
+        assert res[0] == (2, 1)
 
 
 class TestCleaning:
