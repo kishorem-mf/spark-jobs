@@ -2,8 +2,8 @@ package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.{ ContactPerson, TestContactPersons }
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import com.unilever.ohub.spark.domain.entity.{ContactPerson, TestContactPersons}
+import org.apache.spark.sql.{Dataset, SparkSession}
 
 case class ResultExactContactPerson(sourceEntityId: String, ohubId: Option[String], firstName: Option[String], emailAddress: Option[String], mobileNumber: Option[String])
 
@@ -42,17 +42,16 @@ class ContactPersonExactMatchUtilsSpec extends SparkJobSpec with TestContactPers
      Scenario 5: Different Email, Same Mobile, Different Group
      Scenario 6: Email NULL, Same Mobile, Same Group(D)
      */
-  describe("ContactPersonExactMatch.transform") {
+  describe("ContactPersonExactMatchUtils.transform") {
     it("Use case : (1. Email NULL, Same Mobile, Same Group)(2. Same Email, Different Mobile, Same Group)(3. Same Email, Mobile NULL , Same Group)") {
 
       val integratedContactPersons = createDataset(contactPersonA1, contactPersonA2)
-      val deltaContactPersons = createDataset(contactPersonA3,contactPersonA4)
+      val deltaContactPersons = createDataset(contactPerson12,contactPersonA3,contactPersonA4)
 
       val expectedMatchedExact = Set(
         ResultExactContactPerson("102", Some("AAA"), Some("unknown"), None, Some("12345")),
         ResultExactContactPerson("103", Some("AAA"), Some("Jan"), Some("jan@server.com"), Some("54321")),
-        ResultExactContactPerson("100", Some("AAA"), Some("Jan"), Some("jan@server.com"), Some("12345")),
-        ResultExactContactPerson("101", Some("AAA"), Some("Jan"), Some("jan@server.com"), None)
+        ResultExactContactPerson("108", Some("AAA"), Some("Jan"),  Some("jan@server.com"), Some("12345"))
       )
       val expectedUnmatchedIntegrated = Set[ResultContactPerson]()
 
@@ -68,8 +67,6 @@ class ContactPersonExactMatchUtilsSpec extends SparkJobSpec with TestContactPers
 
       val expectedMatchedExact = Set(
         ResultExactContactPerson("107", Some("BBB1"), Some("Jan"), Some("jan@server.com"), Some("12345")),
-        ResultExactContactPerson("104", Some("BBB1"), Some("Jan"), Some("jan@server.com"), Some("12345")),
-        ResultExactContactPerson("105", Some("BBB1"), Some("Jan"), Some("jan@server.com"), Some("12345")),
         ResultExactContactPerson("106", Some("BBB1"), Some("Jan"), Some("jan@server.com"), Some("12345"))
       )
 
@@ -86,9 +83,7 @@ class ContactPersonExactMatchUtilsSpec extends SparkJobSpec with TestContactPers
       val deltaContactPersons = createDataset(contactPersonA14, contactPersonA15)
 
       val expectedMatchedExact = Set[ResultExactContactPerson](
-        ResultExactContactPerson("109", Some("BBB1"), Some("Jan1"), Some("Jan1@server.com"), Some("1234")),
         ResultExactContactPerson("110", Some("BBB"), Some("Jan2"), Some("Jan2@server.com"), Some("123456")),
-        ResultExactContactPerson("108", Some("AAA"), Some("Jan"), Some("jan@server.com"), Some("12345")),
         ResultExactContactPerson("111", Some("AAA"), Some("Jan3"), Some("JAN@server.com"), Some("123457"))
       )
 
@@ -105,8 +100,6 @@ class ContactPersonExactMatchUtilsSpec extends SparkJobSpec with TestContactPers
       val deltaContactPersons = createDataset(contactPersonA18, contactPersonA19)
 
       val expectedMatchedExact = Set[ResultExactContactPerson](
-        ResultExactContactPerson("112", Some("AAA"), Some("Jan"), Some("jan@server.com"), Some("12345")),
-        ResultExactContactPerson("113", Some("BBB1"), Some("Jan1"), Some("Jan1@server.com"), Some("12345")),
         ResultExactContactPerson("115", Some("CCC"), Some("Jan3"), Some("Jan3@server.com"), Some("12345")),
         ResultExactContactPerson("114", Some("BBB"), Some("Jan2"), Some("Jan2@server.com"), Some("12345"))
       )
