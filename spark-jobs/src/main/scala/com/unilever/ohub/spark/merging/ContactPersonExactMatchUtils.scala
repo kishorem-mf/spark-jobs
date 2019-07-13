@@ -29,8 +29,8 @@ object ContactPersonExactMatchUtils {
    val (matchedCPOnMobileAndEmail, unMatchedIntegratedCPOnMobile, unMatchedDeltaCPOnMobile) = getMatchedAndUnmatchedMobile(
       "cleansedMobile",
       matchedCPOnEmail,
-      unMatchedCPIntegratedOnEmail,
-      unMatchedCPDeltaOnEmail)
+     unMatchedCPIntegratedOnEmail,
+     unMatchedCPDeltaOnEmail)
 
     matchedCPOnMobileAndEmail
   }

@@ -69,10 +69,11 @@ class ContactPersonIntegratedExactMatchSpec extends SparkJobSpec with TestContac
       val integratedContactPersons = createDataset(contactPersonA1)
       val deltaContactPersons = createDataset(contactPersonA3)
 
-      val expectedMatchedExact = Set(
+      val expectedMatchedExact = Set(ResultContactPerson("100", Some("AAA"), Some("Jansen"), Some("jan@server.com"), Some("12345"))
+      )
+      val expectedUnmatchedIntegrated = Set(
         ResultContactPerson("100", Some("AAA"), Some("Jansen"), Some("jan@server.com"), Some("12345"))
       )
-      val expectedUnmatchedIntegrated = Set[ResultContactPerson]()
       val expectedUnmatchedDelta = Set[ResultContactPerson]()
 
       matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
