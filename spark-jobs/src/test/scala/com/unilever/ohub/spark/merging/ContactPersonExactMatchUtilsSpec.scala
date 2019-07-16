@@ -126,19 +126,10 @@ class ContactPersonExactMatchUtilsSpec extends SparkJobSpec with TestContactPers
       integratedContactPersons, deltaContactPersons
     )
 
-    println("matchedExact")
-    matchedExact.select("concatId", "ohubId","emailAddress","mobileNumber").show()
-    println("===============================================================")
-
     val actualMatchedExact = convertDataSetToMap(matchedExact)
 
     val matchedOhubIdsCopied = copyOhubIds(expectedMatchedExact, actualMatchedExact)
 
-  /*  val actualUnmatchedIntegrated = convertDataSetToMap(unmatchedIntegrated)
-    val unmatchedIntegOhubIdsCopied = copyOhubIds(expectedUnmatchedIntegrated, actualUnmatchedIntegrated)
-
-    assertResults("unmatchedIntegrated", actualUnmatchedIntegrated.values.toSeq.toDataset, unmatchedIntegOhubIdsCopied)
-    assertResults("unmatchedDelta", unmatchedDelta, expectedUnmatchedDelta)*/
     assertResults("matched", actualMatchedExact.values.toSeq.toDataset, matchedOhubIdsCopied)
 
     matchedExact

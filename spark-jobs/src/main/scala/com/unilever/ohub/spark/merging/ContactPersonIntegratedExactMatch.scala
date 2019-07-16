@@ -88,30 +88,6 @@ object ContactPersonIntegratedExactMatch extends SparkJob[ExactMatchIngestedWith
     (matchedExactAll, unmatchedIntegrated, unmatchedDelta)
   }
 
- /* private def determineExactMatches(
-    exactMatchColumn: String,
-    integratedContactPersons: Dataset[ContactPerson],
-    dailyDeltaContactPersons: Dataset[ContactPerson])(implicit spark: SparkSession): Dataset[ContactPerson] = {
-    import spark.implicits._
-
-    val exactMatchColumnSeq = Seq(exactMatchColumn).map(col)
-
-    lazy val integratedWithExact = integratedContactPersons
-      .columnsNotNullAndNotEmpty(exactMatchColumnSeq)
-      .withColumn("inDelta", lit(false))
-
-    lazy val newWithExact = dailyDeltaContactPersons
-      .columnsNotNullAndNotEmpty(exactMatchColumnSeq)
-      .withColumn("inDelta",lit(true))
-
-    integratedWithExact
-      .union(newWithExact)
-      .addOhubIdForCP(exactMatchColumn)
-      .selectLatestRecord
-      .drop("inDelta")
-      .as[ContactPerson]
-  }*/
-
   override def run(spark: SparkSession, config: ExactMatchIngestedWithDbConfig, storage: Storage): Unit = {
     log.info(
       s"""

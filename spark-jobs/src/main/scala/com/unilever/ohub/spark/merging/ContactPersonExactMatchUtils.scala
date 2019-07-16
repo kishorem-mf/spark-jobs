@@ -1,10 +1,7 @@
 package com.unilever.ohub.spark.merging
 
-import java.util.Optional
-
 import com.unilever.ohub.spark.domain.entity.ContactPerson
-import com.unilever.ohub.spark.ingest.EmptyParquetWriter
-import org.apache.spark.sql.{Column, Dataset, SparkSession}
+import org.apache.spark.sql.{Dataset, SparkSession}
 import org.apache.spark.sql.functions._
 import com.unilever.ohub.spark.merging.DataFrameHelpers._
 import com.unilever.ohub.spark.sql.JoinType
@@ -27,8 +24,8 @@ object ContactPersonExactMatchUtils {
       dailyDeltaContactPersons)
 
    val (matchedCPOnMobileAndEmail, unMatchedIntegratedCPOnMobile, unMatchedDeltaCPOnMobile) = getMatchedAndUnmatchedMobile(
-      "cleansedMobile",
-      matchedCPOnEmail,
+     "cleansedMobile",
+     matchedCPOnEmail,
      unMatchedCPIntegratedOnEmail,
      unMatchedCPDeltaOnEmail)
 
@@ -46,20 +43,20 @@ object ContactPersonExactMatchUtils {
     val exactMatchColumnSeq = Seq(exactMatchColumn).map(col)
 
     val integratedCPWithExactColumn = integratedContactPersons
-      .cleansMobileEmail
+      .cleanseMobileEmail
       .columnsNotNullAndNotEmpty(exactMatchColumnSeq)
       .filter($"emailAddress".isNull)
-      .withColumn("priority", lit(2))
+      .withColumn("priority", lit(Priority.SecondIntegrated.id))
 
     val deltaCPWithExactColumn = deltaContactPersons
-      .cleansMobileEmail
+      .cleanseMobileEmail
       .columnsNotNullAndNotEmpty(exactMatchColumnSeq)
       .filter($"emailAddress".isNull)
-      .withColumn("priority",lit(3))
+      .withColumn("priority",lit(Priority.ThirdDelta.id))
 
     val matchedCPOnExactColumn = referenceMatchedRecords
-      .cleansMobileEmail
-      .withColumn("priority", lit(1))
+      .cleanseMobileEmail
+      .withColumn("priority", lit(Priority.FirstEmail.id))
       .unionByName(integratedCPWithExactColumn)
       .unionByName(deltaCPWithExactColumn)
       .addOhubIdBasedOnColumnAndPriority(exactMatchColumn)
@@ -67,7 +64,8 @@ object ContactPersonExactMatchUtils {
       .as[ContactPerson]
 
 
-    val matchedCPOnExactColumn1 =  matchedCPOnExactColumn.drop( "priority","cleansedEmail", "cleansedMobile")
+    val matchedCPOnExactColumn1 =  matchedCPOnExactColumn.drop(
+      "priority","cleansedEmail", "cleansedMobile")
       .as[ContactPerson]
 
     val unMatchedCPIntegratedExactColumn = integratedContactPersons
@@ -81,7 +79,6 @@ object ContactPersonExactMatchUtils {
 
     val matchedCPOnExactColumn2 = matchedCPOnExactColumn1
       .unionByName(referenceMatchedRecords)
-//      .dropDuplicates("concatId")
       .as[ContactPerson]
 
     (matchedCPOnExactColumn2, unMatchedCPIntegratedExactColumn, unMatchedCPDeltaExactColumn)
@@ -99,25 +96,24 @@ object ContactPersonExactMatchUtils {
     val exactMatchColumnSeq = Seq(exactMatchColumn).map(col)
 
     val integratedCPWithExactColumn = integratedContactPersons
-      .cleansMobileEmail
+      .cleanseMobileEmail
       .columnsNotNullAndNotEmpty(exactMatchColumnSeq)
-      .withColumn("priority", lit(2))
+      .withColumn("priority", lit(Priority.SecondIntegrated.id))
 
     val deltaCPWithExactColumn = deltaContactPersons
-      .cleansMobileEmail
+      .cleanseMobileEmail
       .columnsNotNullAndNotEmpty(exactMatchColumnSeq)
-      .withColumn("priority",lit(3))
+      .withColumn("priority",lit(Priority.ThirdDelta.id))
 
     val matchedCPOnExactColumn = referenceMatchedRecords
-      .cleansMobileEmail
-      .withColumn("priority", lit(1))
+      .cleanseMobileEmail
+      .withColumn("priority", lit(Priority.FirstEmail.id))
       .unionByName(integratedCPWithExactColumn)
       .unionByName(deltaCPWithExactColumn)
       .addOhubIdBasedOnColumnAndPriority(exactMatchColumn)
-      .as[ContactPerson]
 
-     val matchedCPOnExactColumn1 =  matchedCPOnExactColumn
-      .filter($"priority" =!= 2)
+     val matchedCPOnExactColumnWithoutIntegRecords  =  matchedCPOnExactColumn
+      .filter($"priority" =!= Priority.SecondIntegrated.id)
       .drop( "priority","cleansedEmail", "cleansedMobile")
       .as[ContactPerson]
 
@@ -129,19 +125,18 @@ object ContactPersonExactMatchUtils {
       .join(matchedCPOnExactColumn, Seq("concatId"), JoinType.LeftAnti)
       .as[ContactPerson]
 
-    (matchedCPOnExactColumn1, unMatchedCPIntegratedExactColumn, unMatchedCPDeltaExactColumn)
+    (matchedCPOnExactColumnWithoutIntegRecords, unMatchedCPIntegratedExactColumn, unMatchedCPDeltaExactColumn)
   }
-/*
 
-  def cleansMobileEmail(contactPersonsDS: Dataset[ContactPerson])(implicit spark: SparkSession): Dataset[ContactPerson] = {
-    import spark.implicits._
+}
 
-    contactPersonsDS
-      .withColumn("cleansedEmail", trim(lower($"emailAddress")))
-      .withColumn("cleansedMobile", regexp_replace($"mobileNumber", "(^0+)|([\\+\\-\\s])", ""))
-      .as[ContactPerson]
-  }
-*/
+/**
+  * This Enumerator indicates the highest priority for email
+  */
+object Priority extends Enumeration {
+  type Priority = Value
 
-
+  val FirstEmail      = Value("FirstEmail")
+  val SecondIntegrated  = Value("SecondIntegrated")
+  val ThirdDelta       = Value("ThirdDelta")
 }

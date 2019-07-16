@@ -100,14 +100,14 @@ object DataFrameHelpers extends GroupingFunctions {
         .drop("rand")
     }
 
-    def cleansMobileEmail(implicit spark: SparkSession): Dataset[_] = {
+    def cleanseMobileEmail(implicit spark: SparkSession): Dataset[_] = {
       import spark.implicits._
 
       df
         .withColumn("cleansedEmail", trim(lower($"emailAddress")))
         .withColumn("cleansedMobile", regexp_replace($"mobileNumber", "(^0+)|([\\+\\-\\s])", ""))
-        //.as[_]
     }
+
     def columnsNotNullAndNotEmpty(col: Column, cols: Column*): Dataset[_] = {
       columnsNotNullAndNotEmpty(col +: cols)
     }
