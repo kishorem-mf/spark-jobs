@@ -43,7 +43,8 @@ class ContactPersonExactMatchUtilsSpec extends SparkJobSpec with TestContactPers
      Scenario 6: Email NULL, Same Mobile, Same Group(D)
      */
   describe("ContactPersonExactMatchUtils.transform") {
-    it("Use case : (1. Email NULL, Same Mobile, Same Group)(2. Same Email, Different Mobile, Same Group)(3. Same Email, Mobile NULL , Same Group)") {
+    it("Use case : (1. Email NULL, Same Mobile, Same Group)(2. Same Email, Different Mobile, Same Group)" +
+      "(3. Same Email, Mobile NULL , Same Group)") {
 
       val integratedContactPersons = createDataset(contactPersonA1, contactPersonA2)
       val deltaContactPersons = createDataset(contactPerson12,contactPersonA3,contactPersonA4)

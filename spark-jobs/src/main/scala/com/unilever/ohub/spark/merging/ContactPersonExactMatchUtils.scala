@@ -61,10 +61,9 @@ object ContactPersonExactMatchUtils {
       .unionByName(deltaCPWithExactColumn)
       .addOhubIdBasedOnColumnAndPriority(exactMatchColumn)
       .filter($"emailAddress".isNull)
-      .as[ContactPerson]
 
 
-    val matchedCPOnExactColumn1 =  matchedCPOnExactColumn.drop(
+    val matchedCPOnExactColumn1 = matchedCPOnExactColumn.drop(
       "priority","cleansedEmail", "cleansedMobile")
       .as[ContactPerson]
 
