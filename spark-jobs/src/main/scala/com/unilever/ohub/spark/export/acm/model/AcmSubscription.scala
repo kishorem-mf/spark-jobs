@@ -17,5 +17,5 @@ case class AcmSubscription(
                             FAIR_KITCHENS_SIGN_UP_TYPE: String,
                             COMMUNICATION_CHANNEL: String,
                             SUBSCRIPTION_TYPE: String,
-                            DELETED_FLAG: String,
+                            DELETED_FLAG: String
                           ) extends OutboundEntity
