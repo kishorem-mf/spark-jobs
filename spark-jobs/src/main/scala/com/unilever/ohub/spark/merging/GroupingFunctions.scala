@@ -3,13 +3,11 @@ package com.unilever.ohub.spark.merging
 import java.util.UUID
 
 import com.unilever.ohub.spark.SparkJobConfig
-import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.domain.DomainEntity
-import org.apache.spark.sql.functions.udf
+import com.unilever.ohub.spark.merging.DataFrameHelpers._
 import org.apache.spark.sql._
-import org.apache.spark.sql.expressions.{ UserDefinedFunction, Window }
+import org.apache.spark.sql.expressions.{UserDefinedFunction, Window}
 import org.apache.spark.sql.functions._
-import DataFrameHelpers._
 
 case class ExactMatchIngestedWithDbConfig(
     integratedInputFile: String = "path-to-integrated-input-file",
@@ -54,8 +52,6 @@ trait GroupingFunctions {
 
 object DataFrameHelpers extends GroupingFunctions {
 
-  private val SEED = 666
-
   implicit class Helpers(df: Dataset[_]) {
     def concatenateColumns(name: String, cols: Seq[Column])(implicit spark: SparkSession): Dataset[_] = {
       df.withColumn(name, concat(cols.map(c ⇒ when(c.isNull, "").otherwise(c)): _*))
@@ -67,7 +63,7 @@ object DataFrameHelpers extends GroupingFunctions {
       df.withColumn("ohubId", first($"ohubId").over(w1)) // preserve ohubId
 
         // the next two lines will select a deterministic random ohubId
-        .withColumn("rand", rand(SEED))
+        .withColumn("rand", concat(monotonically_increasing_id(), rand()))
         .withColumn("ohubId", when('ohubId.isNull, createOhubIdUdf($"rand")).otherwise('ohubId))
 
         .withColumn("ohubId", first('ohubId).over(w1)) // make sure the whole group gets the same ohubId
