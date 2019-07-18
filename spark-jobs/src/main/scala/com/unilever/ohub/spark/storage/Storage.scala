@@ -24,6 +24,19 @@ trait Storage {
 
   def writeJdbcTable(df: DataFrame, dbUrl: String, dbTable: String, userName: String, userPassword: String,
     jdbcDriverClass: String = "org.postgresql.Driver", saveMode: SaveMode = SaveMode.Overwrite): Unit
+
+  def writeAzureDWTable(
+    df: DataFrame,
+    jdbcDriverClass: String,
+    dbUrl: String,
+    dbTable: String,
+    userName: String,
+    userPassword: String,
+    dbTempDir: String,
+    preActions: String,
+    postActions: String,
+    saveMode: SaveMode = SaveMode.Overwrite
+  ): Unit
 }
 
 class DefaultStorage(spark: SparkSession) extends Storage {
@@ -103,5 +116,33 @@ class DefaultStorage(spark: SparkSession) extends Storage {
     connectionProperties.put("user", userName)
     connectionProperties.put("password", userPassword)
     connectionProperties
+  }
+
+  override def writeAzureDWTable(
+    df: DataFrame,
+    jdbcDriverClass: String = "com.databricks.spark.sqldw",
+    dbUrl: String,
+    dbTable: String,
+    userName: String,
+    userPassword: String,
+    dbTempDir: String,
+    preActions: String,
+    postActions: String,
+    saveMode: SaveMode = SaveMode.Overwrite
+  ): Unit = {
+
+    val fullDbURL: String = dbUrl + ";user=" + userName + ";password=" + userPassword
+
+    df
+      .write
+      .format(jdbcDriverClass)
+      .option("url", fullDbURL)
+      .option("forwardSparkAzureStorageCredentials", "true")
+      .option("dbTable", dbTable)
+      .option("tempDir", dbTempDir)
+      .option("preActions", preActions)
+      .option("postActions", postActions)
+      .mode(saveMode)
+      .save
   }
 }

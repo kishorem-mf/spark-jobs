@@ -53,7 +53,8 @@ object GlobalSettings extends AutoPlugin {
     "org.scalatest" %% "scalatest" % "3.0.5" % "test,it",
     "org.scalamock" %% "scalamock" % "4.1.0" % "test,it",
     "org.scalikejdbc" %% "scalikejdbc-test" % "3.3.1" % "test",
-    "com.h2database" % "h2" % "1.4.197" % "test,it"
+    "com.h2database" % "h2" % "1.4.197" % "test,it",
+    "com.microsoft.azure" % "adal4j" % "1.6.4"
   )
 
   /**
