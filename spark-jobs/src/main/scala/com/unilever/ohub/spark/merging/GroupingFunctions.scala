@@ -90,7 +90,7 @@ object DataFrameHelpers extends GroupingFunctions {
       df.withColumn("ohubId", first($"ohubId").over(w1)) // preserve ohubId
 
         // the next two lines will select a deterministic random ohubId
-        .withColumn("rand", rand(SEED))
+        .withColumn("rand", concat(monotonically_increasing_id(), rand()))
         .withColumn("ohubId", when('ohubId.isNull, createOhubIdUdf($"rand")).otherwise('ohubId))
         .withColumn("ohubId", first('ohubId).over(w1)) // make sure the whole group gets the same ohubId
         .drop("rand")
