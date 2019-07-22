@@ -1,13 +1,12 @@
 package com.unilever.ohub.spark.merging
 
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
-import com.unilever.ohub.spark.domain.entity.{ ContactPerson, Subscription }
-import com.unilever.ohub.spark.merging.DataFrameHelpers.SEED
-import com.unilever.ohub.spark.storage.Storage
+import com.unilever.ohub.spark.domain.entity.{ContactPerson, Subscription}
 import com.unilever.ohub.spark.sql.JoinType
+import com.unilever.ohub.spark.storage.Storage
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 case class SubscriptionMergingConfig(
