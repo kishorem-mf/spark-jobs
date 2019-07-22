@@ -10,8 +10,8 @@ class ActivityAcmConverterSpec extends FunSpec with TestActivities with Matchers
 
   private[acm] val SUT = ActivityAcmConverter
 
-  describe("Product acm converter") {
-    it("should convert a product correctly into an acm product") {
+  describe("Activity acm converter") {
+    it("should convert a activity correctly into an acm activity") {
       val activity = defaultActivity.copy(dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00.0")), dateUpdated = Some(Timestamp.valueOf("2015-06-30 13:47:00.0")))
       val result = SUT.convert(activity)
 
