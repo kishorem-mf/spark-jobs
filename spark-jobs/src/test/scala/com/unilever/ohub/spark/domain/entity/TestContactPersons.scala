@@ -12,7 +12,7 @@ trait TestContactPersons {
   def defaultContactPersonWithSourceEntityId(sourceEntityId: String): ContactPerson =
     defaultContactPerson.copy(
       sourceEntityId = sourceEntityId,
-      concatId = DomainEntity.createConcatIdFromValues(defaultContactPerson.countryCode, defaultContactPerson.sourceName, sourceEntityId)
+      concatId = Util.createConcatIdFromValues(defaultContactPerson.countryCode, defaultContactPerson.sourceName, sourceEntityId)
     )
 
   val defaultContactPerson = ContactPerson(

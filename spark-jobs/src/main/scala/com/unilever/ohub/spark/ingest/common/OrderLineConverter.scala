@@ -1,52 +1,50 @@
 package com.unilever.ohub.spark.ingest.common
 
+import java.sql.Timestamp
+
 import com.unilever.ohub.spark.domain.entity.OrderLine
 import com.unilever.ohub.spark.ingest.CustomParsers._
-import com.unilever.ohub.spark.ingest.{ DomainTransformer, OrderLineEmptyParquetWriter }
+import com.unilever.ohub.spark.ingest.{DomainTransformer, OrderLineEmptyParquetWriter}
 import org.apache.spark.sql.Row
 
 object OrderLineConverter extends CommonDomainGateKeeper[OrderLine] with OrderLineEmptyParquetWriter {
 
-  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ OrderLine = { transformer ⇒ row ⇒
-    import transformer._
-    implicit val source: Row = row
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ OrderLine = { transformer ⇒
+    row ⇒
+      import transformer._
+      implicit val source: Row = row
 
-    val ohubCreated = currentTimestamp()
+      val ohubCreated = new Timestamp(System.currentTimeMillis())
 
-    // format: OFF             // see also: https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
-
-    OrderLine(
-      id                              = mandatory( "id",                       "id"),
-      creationTimestamp               = mandatory( "creationTimestamp",        "creationTimestamp",      toTimestamp),
-      concatId                        = mandatory( "concatId",                 "concatId"),
-      countryCode                     = mandatory( "countryCode",              "countryCode"                                    ),
-      customerType                    = OrderLine.customerType                                                                   ,
-      dateCreated                     = optional(  "dateCreated",              "dateCreated",            parseDateTimeUnsafe()  ),
-      dateUpdated                     = optional(  "dateUpdated",              "dateUpdated",            parseDateTimeUnsafe()  ),
-      isActive                        = mandatory( "isActive",                 "isActive",               toBoolean),
-      isGoldenRecord                  = true,
-      ohubId                          = None, // set in OrderLineMerging
-      sourceEntityId                  = mandatoryValue("sourceEntityId",       "sourceEntityId")(row),
-      sourceName                      = mandatory( "sourceName",               "sourceName"),
-      ohubCreated                     = ohubCreated,
-      ohubUpdated                     = ohubCreated,
-      // specific fields
-      orderConcatId                   = mandatory( "orderConcatId",            "orderConcatId"),
-      productConcatId                 = mandatory( "productConcatId",          "productConcatId"),
-      productSourceEntityId           = mandatory( "productRefId",             "productRefId"),
-      comment                         = optional(  "comment",                  "comment"),
-      quantityOfUnits                 = mandatory( "quantityOfUnits",          "quantityOfUnits",        toInt        ),
-      amount                          = mandatory( "amount",                   "amount",                 toBigDecimal ),
-      pricePerUnit                    = optional(  "pricePerUnit",             "pricePerUnit",           toBigDecimal ),
-      currency                        = optional(  "currency",                 "currency"),
-      campaignLabel                   = optional(  "campaignLabel",            "campaignLabel"),
-      loyaltyPoints                   = optional(  "loyaltyPoints",            "loyaltyPoints" ,         toBigDecimal ),
-      productOhubId                   = None, // set in OrderLineMerging
-      orderType                       = optional(  "orderType",                "orderType"),
-      // other fields
-      additionalFields                = additionalFields,
-      ingestionErrors                 = errors
-    )
-    // format: ON
+      OrderLine(
+        id = mandatory("id"),
+        creationTimestamp = mandatory("creationTimestamp", toTimestamp),
+        concatId = mandatory("concatId"),
+        countryCode = mandatory("countryCode"),
+        customerType = OrderLine.customerType,
+        dateCreated = optional("dateCreated", parseDateTimeUnsafe()),
+        dateUpdated = optional("dateUpdated", parseDateTimeUnsafe()),
+        isActive = mandatory("isActive", toBoolean),
+        isGoldenRecord = true,
+        ohubId = None, // set in OrderLineMerging
+        sourceEntityId = mandatory("sourceEntityId"),
+        sourceName = mandatory("sourceName"),
+        ohubCreated = ohubCreated,
+        ohubUpdated = ohubCreated,
+        orderConcatId = mandatory("orderConcatId"),
+        productConcatId = mandatory("productConcatId"),
+        productSourceEntityId = mandatory("productRefId"),
+        comment = optional("comment"),
+        quantityOfUnits = mandatory("quantityOfUnits", toInt),
+        amount = mandatory("amount", toBigDecimal),
+        pricePerUnit = optional("pricePerUnit", toBigDecimal),
+        currency = optional("currency"),
+        campaignLabel = optional("campaignLabel"),
+        loyaltyPoints = optional("loyaltyPoints", toBigDecimal),
+        productOhubId = None, // set in OrderLineMerging
+        orderType = optional("orderType"),
+        additionalFields = additionalFields,
+        ingestionErrors = errors
+      )
   }
 }

@@ -12,20 +12,20 @@ trait TestOperators {
   def defaultOperatorWithSourceName(sourceName: String): Operator =
     defaultOperator.copy(
       sourceName = sourceName,
-      concatId = DomainEntity.createConcatIdFromValues(defaultOperator.countryCode, sourceName, defaultOperator.sourceEntityId)
+      concatId = Util.createConcatIdFromValues(defaultOperator.countryCode, sourceName, defaultOperator.sourceEntityId)
     )
 
   def defaultOperatorWithSourceNameAndCountryCode(source: String, countryCode: String): Operator =
     defaultOperator.copy(
       sourceName = source,
       countryCode = countryCode,
-      concatId = DomainEntity.createConcatIdFromValues(countryCode, source, defaultOperator.sourceEntityId)
+      concatId = Util.createConcatIdFromValues(countryCode, source, defaultOperator.sourceEntityId)
     )
 
   def defaultOperatorWithSourceEntityId(sourceEntityId: String): Operator =
     defaultOperator.copy(
       sourceEntityId = sourceEntityId,
-      concatId = DomainEntity.createConcatIdFromValues(defaultOperator.countryCode, defaultOperator.sourceName, sourceEntityId)
+      concatId = Util.createConcatIdFromValues(defaultOperator.countryCode, defaultOperator.sourceName, sourceEntityId)
     )
 
   // format: OFF

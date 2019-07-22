@@ -1,86 +1,85 @@
 package com.unilever.ohub.spark.ingest.common
 
+import java.sql.Timestamp
+
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.ingest.CustomParsers._
-import com.unilever.ohub.spark.ingest.{ ContactPersonEmptyParquetWriter, DomainTransformer }
+import com.unilever.ohub.spark.ingest.{ContactPersonEmptyParquetWriter, DomainTransformer}
 import org.apache.spark.sql.Row
 
 object ContactPersonConverter extends CommonDomainGateKeeper[ContactPerson] with ContactPersonEmptyParquetWriter {
 
-  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ ContactPerson = { transformer ⇒ row ⇒
-    import transformer._
-    implicit val source: Row = row
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ ContactPerson = { transformer ⇒
+    row ⇒
+      import transformer._
+      implicit val source: Row = row
 
-    // format: OFF
+      val ohubCreated = new Timestamp(System.currentTimeMillis())
 
-    val ohubCreated       = currentTimestamp()
-
-    // fieldName                        mandatory   sourceFieldName                   targetFieldName                 transformationFunction (unsafe)
-    ContactPerson(
-      id                            =   mandatory(    "id",                             "id"),
-      creationTimestamp             =   mandatory(    "creationTimestamp",              "creationTimestamp",            toTimestamp),
-      concatId                      =   mandatory(    "concatId",                       "concatId"),
-      countryCode                   =   mandatory(    "countryCode",                    "countryCode"),
-      customerType                  =   ContactPerson.customerType                                                                                          ,
-      ohubCreated                   =   ohubCreated                                                                                                         ,
-      ohubUpdated                   =   ohubCreated                                                                                                         ,
-      ohubId                        =   Option.empty, // set in ContactPersonMatchingJoiner, ContactPersonExactMatcher, ContactPersonIntegratedExactMatch
-      isGoldenRecord                =   false                                                                                                               ,
-      sourceEntityId                =   mandatory(  "sourceEntityId",                 "sourceEntityId"                                                   ),
-      sourceName                    =   mandatory(  "sourceName",                     "sourceName"                                                       ),
-      isActive                      =   mandatory(	"isActive",                       "isActive",                     toBoolean                          ),
-      dateCreated                   =   optional(   "dateCreated",                    "dateCreated",                  parseDateTimeUnsafe()              ),
-      dateUpdated                   =   optional(   "dateUpdated",                    "dateUpdated",                  parseDateTimeUnsafe()              ),
-      operatorConcatId              =   optional(  "operatorConcatId",               "operatorConcatId"                                                 ),
-      operatorOhubId                =   Option.empty,  // set in ContactPersonReferencing
-      oldIntegrationId              =   optional(   "oldIntegrationId",               "oldIntegrationId"                                                 ),
-      firstName                     =   optional(   "firstName",                      "firstName"                                                        ),
-      lastName                      =   optional(   "lastName",                       "lastName"                                                         ),
-      title                         =   optional(   "title",                          "title"                                                            ),
-      gender                        =   optional(   "gender",                         "gender"                                                           ),
-      jobTitle                      =   optional(   "jobTitle",                       "jobTitle"                                                         ),
-      language                      =   optional(   "language",                       "language"                                                         ),
-      birthDate                     =   optional(   "birthDate",                      "birthDate",                    parseDateUnsafe()                  ),
-      street                        =   optional(   "street",                         "street"                                                           ),
-      houseNumber                   =   optional(   "houseNumber",                    "houseNumber"                                                      ),
-      houseNumberExtension          =   optional(   "houseNumberExtension",           "houseNumberExtension"                                             ),
-      city                          =   optional(   "city",                           "city"                                                             ),
-      zipCode                       =   optional(   "zipCode",                        "zipCode"                                                          ),
-      state                         =   optional(   "state",                          "state"                                                            ),
-      countryName                   =   optional(   "countryName",                    "countryName"                                                      ),
-      isPreferredContact            =   optional(   "isPreferredContact",             "isPreferredContact",           toBoolean                          ),
-      isKeyDecisionMaker            =   optional(   "isKeyDecisionMaker",             "isKeyDecisionMaker",           toBoolean                          ),
-      standardCommunicationChannel  =   optional(   "standardCommunicationChannel",   "standardCommunicationChannel"                                     ),
-      emailAddress                  =   optional(   "emailAddress",                   "emailAddress"                                                     ),
-      phoneNumber                   =   optional(   "phoneNumber",                    "phoneNumber"                                                      ),
-      mobileNumber                  =   optional(   "mobileNumber",                   "mobileNumber"                                                     ),
-      faxNumber                     =   optional(   "faxNumber",                      "faxNumber"                                                        ),
-      hasGeneralOptOut              =   optional(   "hasGeneralOptOut",               "hasGeneralOptOut",             toBoolean                          ),
-      hasRegistration               =   optional(   "hasRegistration",                "hasRegistration",              toBoolean                          ),
-      registrationDate              =   optional(   "registrationDate",               "registrationDate",             parseDateTimeUnsafe()              ),
-      hasConfirmedRegistration      =   optional(   "hasConfirmedRegistration",       "hasConfirmedRegistration",     toBoolean                          ),
-      confirmedRegistrationDate     =   optional(   "confirmedRegistrationDate",      "confirmedRegistrationDate",    parseDateTimeUnsafe()              ),
-      hasEmailOptIn                 =   optional(   "hasEmailOptIn",                  "hasEmailOptIn",                toBoolean                          ),
-      emailOptInDate                =   optional(   "emailOptInDate",                 "emailOptInDate",               parseDateTimeUnsafe()              ),
-      hasEmailDoubleOptIn           =   optional(   "hasEmailDoubleOptIn",            "hasEmailDoubleOptIn",          toBoolean                          ),
-      emailDoubleOptInDate          =   optional(   "emailDoubleOptInDate",           "emailDoubleOptInDate",         parseDateTimeUnsafe()              ),
-      hasEmailOptOut                =   optional(   "hasEmailOptOut",                 "hasEmailOptOut",               toBoolean                          ),
-      hasDirectMailOptIn            =   optional(   "hasDirectMailOptIn",             "hasDirectMailOptIn",           toBoolean                          ),
-      hasDirectMailOptOut           =   optional(   "hasDirectMailOptOut",            "hasDirectMailOptOut",          toBoolean                          ),
-      hasTeleMarketingOptIn         =   optional(   "hasTeleMarketingOptIn",          "hasTeleMarketingOptIn",        toBoolean                          ),
-      hasTeleMarketingOptOut        =   optional(   "hasTeleMarketingOptOut",         "hasTeleMarketingOptOut",       toBoolean                          ),
-      hasMobileOptIn                =   optional(   "hasMobileOptIn",                 "hasMobileOptIn",               toBoolean                          ),
-      mobileOptInDate               =   optional(   "mobileOptInDate",                "mobileOptInDate",              parseDateTimeUnsafe()              ),
-      hasMobileDoubleOptIn          =   optional(   "hasMobileDoubleOptIn",           "hasMobileDoubleOptIn",         toBoolean                          ),
-      mobileDoubleOptInDate         =   optional(   "mobileDoubleOptInDate",          "mobileDoubleOptInDate",        parseDateTimeUnsafe()              ),
-      hasMobileOptOut               =   optional(   "hasMobileOptOut",                "hasMobileOptOut",              toBoolean                          ),
-      hasFaxOptIn                   =   optional(   "hasFaxOptIn",                    "hasFaxOptIn",                  toBoolean                          ),
-      hasFaxOptOut                  =   optional(   "hasFaxOptOut",                   "hasFaxOptOut",                 toBoolean                          ),
-      webUpdaterId                  =   Option.empty, // TODO what to do with this one?
-      isEmailAddressValid           =   Some(true),
-      additionalFields              =   additionalFields,
-      ingestionErrors               =   errors
-    )
-    // format: ON
+      ContactPerson(
+        id = mandatory("id"),
+        creationTimestamp = mandatory("creationTimestamp", toTimestamp),
+        concatId = mandatory("concatId"),
+        countryCode = mandatory("countryCode"),
+        customerType = ContactPerson.customerType,
+        ohubCreated = ohubCreated,
+        ohubUpdated = ohubCreated,
+        ohubId = Option.empty, // set in ContactPersonMatchingJoiner, ContactPersonExactMatcher, ContactPersonIntegratedExactMatch
+        isGoldenRecord = false,
+        sourceEntityId = mandatory("sourceEntityId"),
+        sourceName = mandatory("sourceName"),
+        isActive = mandatory("isActive", toBoolean),
+        dateCreated = optional("dateCreated", parseDateTimeUnsafe()),
+        dateUpdated = optional("dateUpdated", parseDateTimeUnsafe()),
+        operatorConcatId = optional("operatorConcatId"),
+        operatorOhubId = Option.empty, // set in ContactPersonReferencing
+        oldIntegrationId = optional("oldIntegrationId"),
+        firstName = optional("firstName"),
+        lastName = optional("lastName"),
+        title = optional("title"),
+        gender = optional("gender"),
+        jobTitle = optional("jobTitle"),
+        language = optional("language"),
+        birthDate = optional("birthDate", parseDateUnsafe()),
+        street = optional("street"),
+        houseNumber = optional("houseNumber"),
+        houseNumberExtension = optional("houseNumberExtension"),
+        city = optional("city"),
+        zipCode = optional("zipCode"),
+        state = optional("state"),
+        countryName = optional("countryName"),
+        isPreferredContact = optional("isPreferredContact", toBoolean),
+        isKeyDecisionMaker = optional("isKeyDecisionMaker", toBoolean),
+        standardCommunicationChannel = optional("standardCommunicationChannel"),
+        emailAddress = optional("emailAddress"),
+        phoneNumber = optional("phoneNumber"),
+        mobileNumber = optional("mobileNumber"),
+        faxNumber = optional("faxNumber"),
+        hasGeneralOptOut = optional("hasGeneralOptOut", toBoolean),
+        hasRegistration = optional("hasRegistration", toBoolean),
+        registrationDate = optional("registrationDate", parseDateTimeUnsafe()),
+        hasConfirmedRegistration = optional("hasConfirmedRegistration", toBoolean),
+        confirmedRegistrationDate = optional("confirmedRegistrationDate", parseDateTimeUnsafe()),
+        hasEmailOptIn = optional("hasEmailOptIn", toBoolean),
+        emailOptInDate = optional("emailOptInDate", parseDateTimeUnsafe()),
+        hasEmailDoubleOptIn = optional("hasEmailDoubleOptIn", toBoolean),
+        emailDoubleOptInDate = optional("emailDoubleOptInDate", parseDateTimeUnsafe()),
+        hasEmailOptOut = optional("hasEmailOptOut", toBoolean),
+        hasDirectMailOptIn = optional("hasDirectMailOptIn", toBoolean),
+        hasDirectMailOptOut = optional("hasDirectMailOptOut", toBoolean),
+        hasTeleMarketingOptIn = optional("hasTeleMarketingOptIn", toBoolean),
+        hasTeleMarketingOptOut = optional("hasTeleMarketingOptOut", toBoolean),
+        hasMobileOptIn = optional("hasMobileOptIn", toBoolean),
+        mobileOptInDate = optional("mobileOptInDate", parseDateTimeUnsafe()),
+        hasMobileDoubleOptIn = optional("hasMobileDoubleOptIn", toBoolean),
+        mobileDoubleOptInDate = optional("mobileDoubleOptInDate", parseDateTimeUnsafe()),
+        hasMobileOptOut = optional("hasMobileOptOut", toBoolean),
+        hasFaxOptIn = optional("hasFaxOptIn", toBoolean),
+        hasFaxOptOut = optional("hasFaxOptOut", toBoolean),
+        webUpdaterId = Option.empty, // TODO what to do with this one?
+        isEmailAddressValid = Some(true),
+        additionalFields = additionalFields,
+        ingestionErrors = errors
+      )
   }
 }
