@@ -14,13 +14,13 @@ class ActivityOutboundWriterTest extends SparkJobSpec {
     it("Should filter out activities linked to operators") {
       val result = SUT.filterDataSet(spark, Seq(TestActivities.defaultActivity.copy(customerType = "OPERATOR")).toDataset)
 
-      result should be (empty)
+      assert(result.collect().isEmpty)
     }
 
     it("Should not filter out activities linked to contactpersons") {
       val result = SUT.filterDataSet(spark, Seq(TestActivities.defaultActivity).toDataset)
 
-      result.collect() should have size(1)
+      assert(result.collect().size == 1)
     }
   }
 
