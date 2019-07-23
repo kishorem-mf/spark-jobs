@@ -9,28 +9,29 @@ import scopt.OptionParser
 
 import scala.reflect.runtime.universe._
 
-/** Configuration for the Azure Datawarehouse
+/**
+  * Configuration for the Azure Datawarehouse
   *
-  *  @param integratedInputFile
-  *  @param entityName: Tables in the datawarehouse will have the same entity name
-  *  @param dbUrl: jdbc url, dafault value is "jdbc:sqlserver://ufs-marketing.database.windows.net:1433;database=ufs-marketing;",
-  *  @param dbUsername
-  *  @param dbPassword
-  *  @param dbSchema: target schema, default is "ohub2",
-  *  @param dbTempDir: temp bucket "wasbs://outbound@ohub2storagedev.blob.core.windows.net/DW"
+  * @param integratedInputFile
+  * @param entityName : Tables in the datawarehouse will have the same entity name
+  * @param dbUrl      : jdbc url, dafault value is "jdbc:sqlserver://ufs-marketing.database.windows.net:1433;database=ufs-marketing;",
+  * @param dbUsername
+  * @param dbPassword
+  * @param dbSchema   : target schema, default is "ohub2",
+  * @param dbTempDir  : temp bucket "wasbs://outbound@ohub2storagedev.blob.core.windows.net/DW"
   *
   */
 case class AzureDWConfiguration(
-    integratedInputFile: String = "integrated-input-file",
-    entityName: String = "entity-name",
-    dbUrl: String = "jdbc:sqlserver://ufs-marketing.database.windows.net:1433;database=ufs-marketing;",
-    dbUsername: String = "db-username",
-    dbPassword: String = "db-password",
-    dbSchema: String = "ohub2",
-    dbTempDir: String = "wasbs://outbound@ohub2storagedev.blob.core.windows.net/DW"
+  integratedInputFile: String = "integrated-input-file",
+  entityName: String = "entity-name",
+  dbUrl: String = "jdbc:sqlserver://ufs-marketing.database.windows.net:1433;database=ufs-marketing;",
+  dbUsername: String = "db-username",
+  dbPassword: String = "db-password",
+  dbSchema: String = "ohub2",
+  dbTempDir: String = "wasbs://outbound@ohub2storagedev.blob.core.windows.net/DW"
 ) extends SparkJobConfig
 
-class AzureDWWriter[DomainType <: DomainEntity: TypeTag] extends SparkJob[AzureDWConfiguration] {
+class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJob[AzureDWConfiguration] {
 
   override private[spark] def defaultConfig = AzureDWConfiguration()
 
@@ -38,25 +39,25 @@ class AzureDWWriter[DomainType <: DomainEntity: TypeTag] extends SparkJob[AzureD
     new scopt.OptionParser[AzureDWConfiguration]("Spark job default") {
       head("run a spark job with default config.", "1.0")
 
-      opt[String]("integratedInputFile") required () action { (x, c) ⇒
+      opt[String]("integratedInputFile") required() action { (x, c) ⇒
         c.copy(integratedInputFile = x)
       } text "integratedInputFile is a string property"
-      opt[String]("entityName") required () action { (x, c) ⇒
+      opt[String]("entityName") required() action { (x, c) ⇒
         c.copy(entityName = x)
       } text "dbTable is a string property"
-      opt[String]("dbUrl") required () action { (x, c) ⇒
+      opt[String]("dbUrl") required() action { (x, c) ⇒
         c.copy(dbUrl = x)
       } text "dbUrl is a string property"
-      opt[String]("dbUsername") required () action { (x, c) ⇒
+      opt[String]("dbUsername") required() action { (x, c) ⇒
         c.copy(dbUsername = x)
       } text "dbUsername is a string property"
-      opt[String]("dbPassword") required () action { (x, c) ⇒
+      opt[String]("dbPassword") required() action { (x, c) ⇒
         c.copy(dbPassword = x)
       } text "dbPassword is a string property"
-      opt[String]("dbSchema") required () action { (x, c) ⇒
+      opt[String]("dbSchema") required() action { (x, c) ⇒
         c.copy(dbSchema = x)
       } text "dbSchema is the target schema. Default value is ohub2"
-      opt[String]("dbTempDir") required () action { (x, c) ⇒
+      opt[String]("dbTempDir") required() action { (x, c) ⇒
         c.copy(dbTempDir = x)
       } text "dbTempDir the temporary loading bucket"
 
@@ -65,35 +66,36 @@ class AzureDWWriter[DomainType <: DomainEntity: TypeTag] extends SparkJob[AzureD
     }
 
   /** Removes the map fields because resulting on an error when queried in Azure DW. */
-  private def preProcess(dataSet: Dataset[DomainType]): DataFrame = {
+  private def dropUnnecessaryFields(dataSet: Dataset[DomainType]): DataFrame = {
 
     val mapFields: Array[String] = dataSet.schema.fields.collect(
       { case field if field.dataType.typeName == "map" ⇒ field.name })
 
     val otherUnnecessaryFields = Seq("id")
 
-    dataSet.drop(mapFields++otherUnnecessaryFields: _*)
+    dataSet.drop(mapFields ++ otherUnnecessaryFields: _*)
   }
 
-  /** Writes to a Azure DW table
+  /**
+    * Writes to a Azure DW table
     *
-    *  @param spark spark session
-    *  @param config the configuration definition
-    *  @param storage the class defining the storage mechanism
+    * @param spark   spark session
+    * @param config  the configuration definition
+    * @param storage the class defining the storage mechanism
     *
-    *  Implementation notes:
-    *  [Flexibility] Tables are dropped and recreated (as default, it can be changed) so that every new field in the
-    *  source parquet is automatically created in the destination table.
-    *  Tables are subdue to a row-level security policy (table-valued function + security policy). In order to satisfy
-    *  the [flexibility] they need to be dropped and recreated together with the table.
-    *  These "contraints" require the countryCode column to be always available.
+    *                Implementation notes:
+    *                [Flexibility] Tables are dropped and recreated (as default, it can be changed) so that every new field in the
+    *                source parquet is automatically created in the destination table.
+    *                Tables are subdue to a row-level security policy (table-valued function + security policy). In order to satisfy
+    *                the [flexibility] they need to be dropped and recreated together with the table.
+    *                These "contraints" require the countryCode column to be always available.
     *
     */
   override def run(spark: SparkSession, config: AzureDWConfiguration, storage: Storage): Unit = {
     log.info(s"Writing integrated entities [${config.integratedInputFile}] to Azure DW in the table [${config.entityName}].")
 
     val integratedEntity: Dataset[DomainType] = storage.readFromParquet[DomainType](config.integratedInputFile)
-    val result = preProcess(integratedEntity)
+    val result = dropUnnecessaryFields(integratedEntity)
 
     val dbTable: String = config.entityName
     val dbSchema: String = config.dbSchema
@@ -110,14 +112,14 @@ class AzureDWWriter[DomainType <: DomainEntity: TypeTag] extends SparkJob[AzureD
           WITH (STATE = ON);
         """
 
-    log.debug(s"${dbFullTableName}")
-    log.debug(s"${integratedEntity}")
-    log.debug(s"${dropRowLevelSecurityPolicyAction}")
-    log.debug(s"${createRowLevelSecurityPolicyAction}")
+    log.info(s"Destination table name: ${dbFullTableName}")
+    log.info(s"Entity name: ${integratedEntity}")
+    log.info(s"Pre action: ${dropRowLevelSecurityPolicyAction}")
+    log.info(s"Post action: ${createRowLevelSecurityPolicyAction}")
 
     storage.writeAzureDWTable(
       df = result,
-      jdbcDriverClass="com.databricks.spark.sqldw",
+      jdbcDriverClass = "com.databricks.spark.sqldw",
       dbUrl = config.dbUrl,
       dbTable = dbFullTableName,
       userName = config.dbUsername,
@@ -133,19 +135,35 @@ class AzureDWWriter[DomainType <: DomainEntity: TypeTag] extends SparkJob[AzureD
 }
 
 object ActivityAzureDWWriter extends AzureDWWriter[Activity]
+
 object AnswerAzureDWWriter extends AzureDWWriter[Answer]
+
 object CampaignAzureDWWriter extends AzureDWWriter[Campaign]
+
 object CampaignBounceAzureDWWriter extends AzureDWWriter[CampaignBounce]
+
 object CampaignClickAzureDWWriter extends AzureDWWriter[CampaignClick]
+
 object CampaignOpenDWWriter extends AzureDWWriter[CampaignOpen]
+
 object CampaignSendDWWriter extends AzureDWWriter[CampaignSend]
+
 object ChannelMappingDWWriter extends AzureDWWriter[ChannelMapping]
+
 object ContactPersonDWWriter extends AzureDWWriter[ContactPerson]
+
 object LoyaltyPointsDWWriter extends AzureDWWriter[LoyaltyPoints]
+
 object OperatorDWWriter extends AzureDWWriter[Operator]
+
 object OrderDWWriter extends AzureDWWriter[Order]
+
 object OrderLineDWWriter extends AzureDWWriter[OrderLine]
+
 object ProductDWWriter extends AzureDWWriter[Product]
+
 object QuestionDWWriter extends AzureDWWriter[Question]
+
 object RecipeDWWriter extends AzureDWWriter[Recipe]
+
 object SubscriptionDWWriter extends AzureDWWriter[Subscription]
