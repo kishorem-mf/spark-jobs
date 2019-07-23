@@ -10,7 +10,6 @@ object SubscriptionAcmConverter extends Converter[Subscription, AcmSubscription]
     AcmSubscription(
       COUNTRY_CODE = subscription.countryCode,
       SUBSCRIBE_FLAG = booleanToYNConverter(subscription.hasSubscription),
-      SERVICE_NAME = subscription.subscriptionType,
       DATE_CREATED = subscription.ohubCreated,
       DATE_UPDATED = subscription.ohubUpdated,
       SUBSCRIPTION_DATE = subscription.subscriptionDate,

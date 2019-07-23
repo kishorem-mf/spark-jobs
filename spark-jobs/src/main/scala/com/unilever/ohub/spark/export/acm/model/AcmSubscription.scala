@@ -7,7 +7,6 @@ case class AcmSubscription(
                             CP_LNKD_INTEGRATION_ID: String,
                             COUNTRY_CODE: String,
                             SUBSCRIBE_FLAG: String,
-                            SERVICE_NAME: String,
                             DATE_CREATED: String,
                             DATE_UPDATED: String,
                             SUBSCRIPTION_EMAIL_ADDRESS: String = "",
