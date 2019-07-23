@@ -18,7 +18,6 @@ class SubscriptionAcmConverterSpec extends FunSpec with TestSubscription with Ma
         CP_LNKD_INTEGRATION_ID = "a3a6208c-d7f6-44e2-80e2-f26d461f64c0",
         COUNTRY_CODE = "DE",
         SUBSCRIBE_FLAG = "Y",
-        SERVICE_NAME = "Newsletter",
         DATE_CREATED = "2015/06/30 13:49:00",
         DATE_UPDATED = "2015/06/30 13:49:00",
         SUBSCRIPTION_DATE = "2015/06/20 13:49:00",
