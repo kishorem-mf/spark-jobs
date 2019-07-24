@@ -41,7 +41,7 @@ class CampaignConverterSpec extends CsvDomainGateKeeperSpec[Campaign] {
           campaignName = Some("20180320_IC_AO_MAR19AfricaRisingNewsletter_NAM_us_en"),
           deliveryId = "347696686",
           deliveryName = "20180320_IC_AO_MAR19AfricaRisingNewsletter_NAM_us_en_A final",
-          campaignSpecification = "(None specified)",
+          campaignSpecification = Some("(None specified)"),
           campaignWaveStartDate = Timestamp.valueOf("2018-03-16 00:00:00.0"),
           campaignWaveEndDate = Timestamp.valueOf("2018-03-27 00:00:00.0"),
           campaignWaveStatus = "Sent",

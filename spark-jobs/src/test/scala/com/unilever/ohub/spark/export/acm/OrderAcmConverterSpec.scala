@@ -11,18 +11,18 @@ class OrderAcmConverterSpec extends FunSpec with TestOrders with Matchers {
   describe("Order acm converter") {
     it("should convert an order into an acm order") {
 
-      val result = SUT.convert(defaultOrder)
+      val result = SUT.convert(defaultOrder.copy(operatorOhubId = Some("operator-ohub-id"), contactPersonOhubId = Some("contactperson-ohub-id")))
 
       val expectedAcmOrder = AcmOrder(
         ORDER_ID = "country-code~source-name~source-entity-id",
-        REF_ORDER_ID = ("ohub-id"),
+        REF_ORDER_ID = "source-entity-id",
         COUNTRY_CODE = "country-code",
         ORDER_TYPE = "DIRECT",
-        CP_LNKD_INTEGRATION_ID = "",
-        OPR_LNKD_INTEGRATION_ID = ("some~operator~id"),
+        CP_LNKD_INTEGRATION_ID = "contactperson-ohub-id",
+        OPR_LNKD_INTEGRATION_ID = ("operator-ohub-id"),
         CAMPAIGN_CODE = ("UNKNOWN"),
         CAMPAIGN_NAME = ("campaign"),
-        WHOLESALER = "",
+        WHOLESALER = "Van der Valk",
         WHOLESALER_ID = "",
         WHOLESALER_CUSTOMER_NUMBER = "",
         WHOLESALER_LOCATION = "",
@@ -43,11 +43,10 @@ class OrderAcmConverterSpec extends FunSpec with TestOrders with Matchers {
         INVOICE_COUNTRY = ("invoiceOperatorCountry"),
         COMMENTS = "",
         VAT = "",
-        AMOUNT = "10.00",
+        ORDER_AMOUNT = "10.00",
         DELETED_FLAG = "N",
         ORDER_AMOUNT_CURRENCY_CODE = ("EUR")
       )
-
       result shouldBe expectedAcmOrder
     }
   }

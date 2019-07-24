@@ -13,7 +13,7 @@ object ActivityDispatcherConverter extends Converter[Activity, DispatchActivity]
       COUNTRY_CODE = activity.countryCode,
       CREATED_AT = activity.ohubCreated,
       UPDATED_AT = activity.ohubUpdated,
-      DELETE_FLAG = !activity.isActive,
+      DELETE_FLAG = booleanToYNConverter(!activity.isActive),
       CONTACT_DATE = activity.activityDate,
       ACTION_TYPE = activity.actionType,
       ACTIVITY_NAME = activity.name,

@@ -18,10 +18,12 @@ class CampaignClickDispatchConverterSpec extends SparkJobSpec with TestCampaignC
         COUNTRY_CODE= "NL",
         CLICK_DATE= "2015-06-30 13:49:00",
         CLICKED_URL= "https://www.dasgrossestechen.at/gewinnspiel",
-        MOBILE_DEVICE= "N",
+        MOBILE_DEVICE= "false",
         OPERATING_SYSTEM= "",
         BROWSER_NAME= "",
-        BROWSER_VERSION= ""
+        BROWSER_VERSION= "",
+        CREATED_AT= "2015-06-30 13:49:00",
+        UPDATED_AT= "2015-06-30 13:49:00"
       )
 
       result shouldBe expectedCampaignClick

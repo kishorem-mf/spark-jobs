@@ -42,6 +42,10 @@ class LoyaltyPointsConverterSpec extends CsvDomainGateKeeperSpec[LoyaltyPoints] 
           contactPersonOhubId = None,
           operatorConcatId = Some("DE~EMAKINA~789"),
           operatorOhubId = None,
+          rewardName = Some("REWARD NAME"),
+          rewardImageUrl = Some("imageUrl.png"),
+          rewardLandingPageUrl = Some("imagePageUrl.png"),
+          rewardEanCode = Some("123456789"),
 
           additionalFields = Map(),
           ingestionErrors = Map()

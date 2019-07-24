@@ -30,6 +30,11 @@ trait TestLoyaltyPoints {
     operatorConcatId = Some("DE~FILE~138175"),
     operatorOhubId = None,
 
+    rewardName = Some("REWARD NAME"),
+    rewardImageUrl = Some("imageUrl.png"),
+    rewardLandingPageUrl = Some("imagePageUrl.png"),
+    rewardEanCode = Some("123456789"),
+
     additionalFields = Map(),
     ingestionErrors = Map()
   )

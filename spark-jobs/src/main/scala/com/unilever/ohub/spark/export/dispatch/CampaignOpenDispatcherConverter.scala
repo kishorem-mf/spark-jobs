@@ -11,7 +11,9 @@ object CampaignOpenDispatcherConverter extends Converter[CampaignOpen, DispatchC
       TRACKING_ID = open.trackingId,
       CAMPAIGN_WAVE_RESPONSE_ID = open.deliveryLogId,
       COUNTRY_CODE = open.countryCode,
-      OPEN_DATE = open.openDate
+      OPEN_DATE = open.openDate,
+      CREATED_AT = open.ohubCreated,
+      UPDATED_AT = open.ohubUpdated
     )
   }
 }

@@ -21,12 +21,14 @@ class CampaignSendDispatchConverterSpec extends SparkJobSpec with TestCampaignSe
         WAVE_NAME = "20160324 - Lipton~NLLipton032016 -- 20160323 -- proofed",
         CHANNEL = "Email",
         CAMPAIGN_WAVE_RESPONSE_ID = "6160583",
-        CONTROL_POPULATION = "N",
-        PROOF_GROUP_MEMBER = "Y",
+        CONTROL_POPULATION = "0",
+        PROOF_GROUP_MEMBER = "1",
         SELECTION_FOR_OFFLINE_CHANNELS = "24",
         CAMPAIGN_ID = "65054561",
         DELIVERY_ID = "65096985",
-        CAMPAIGN_CONCAT_ID = "b3a6208c~NL~EMAKINA~1003499146~f26d461f64c0"
+        CAMPAIGN_CONCAT_ID = "b3a6208c~NL~EMAKINA~1003499146~f26d461f64c0",
+        CREATED_AT= "2015-06-30 13:49:00",
+        UPDATED_AT= "2015-06-30 13:49:00"
       )
 
       result shouldBe expectedCampaignSend

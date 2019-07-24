@@ -70,7 +70,7 @@ object OrderLineOutboundWriter extends ExportOutboundWriter[OrderLine, AcmOrderL
     dataSet.filter(o ⇒ {
       o.orderType match {
         case Some(t) ⇒ !(t.equals("SSD") || t.equals("TRANSFER"))
-        case None    ⇒ true
+        case None ⇒ true
       }
     });
   }
@@ -87,6 +87,11 @@ object ActivityOutboundWriter extends ExportOutboundWriter[Activity, AcmActivity
   override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[Activity]) = {
     import spark.implicits._
     dataSet.map(ActivityAcmConverter.convert(_))
+  }
+
+  override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[Activity]) = {
+    import spark.implicits._
+    dataSet.filter($"customerType" === "CONTACTPERSON")
   }
 
   override def entityName(): String = "ACTIVITIES"

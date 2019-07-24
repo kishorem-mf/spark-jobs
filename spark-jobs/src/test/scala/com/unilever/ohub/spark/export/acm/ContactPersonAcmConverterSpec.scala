@@ -14,8 +14,8 @@ import org.scalatest.{FunSpec, Matchers}
         val actualAcmContactPerson = SUT.convert(cp)
         val expectedAcmContactPerson =
           AcmContactPerson(
-            CP_ORIG_INTEGRATION_ID = "AU~AB123~3~19",
-            CP_LNKD_INTEGRATION_ID = defaultContactPerson.ohubId.get,
+            CP_ORIG_INTEGRATION_ID = defaultContactPerson.ohubId.get,
+            CP_LNKD_INTEGRATION_ID = "AU~AB123~3~19",
             OPR_ORIG_INTEGRATION_ID = "operator-ohub-id",
             GOLDEN_RECORD_FLAG = "Y",
             WEB_CONTACT_ID = "",
@@ -50,7 +50,7 @@ import org.scalatest.{FunSpec, Matchers}
             OPT_IN = "Y",
             OPT_IN_DATE = "2015/09/30 14:23:02",
             CONFIRMED_OPT_IN = "Y",
-            CONFIRMED_OPT_IN_DATE = "2015/09/30 14:23:01",
+            CONFIRMED_OPT_IN_DATE = "2015/09/30 14:23:03",
             MOB_OPT_IN = "Y",
             MOB_OPT_IN_DATE = "2015/09/30 14:23:04",
             MOB_CONFIRMED_OPT_IN = "Y",
@@ -82,6 +82,12 @@ import org.scalatest.{FunSpec, Matchers}
 
         assert(actualDispatchContactPerson.ORG_EMAIL_ADDRESS contains("jwilliams@downunder.au"))
         assert(actualDispatchContactPerson.EMAIL_ADDRESS contains("jwilliams@downunder.au"))
+      }
+      it("It should convert GENDER to 0 when empty") {
+        val cp = defaultContactPerson.copy(isGoldenRecord = true).copy(gender = None)
+        val actualDispatchContactPerson = SUT.convert(cp)
+
+        assert(actualDispatchContactPerson.GENDER equals ("0"))
       }
     }
   }

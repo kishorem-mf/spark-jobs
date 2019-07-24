@@ -6,10 +6,10 @@ import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.entity.TestOperators
 
-class OperatorCreateGoldenRecordSpecs extends SparkJobSpec with TestOperators {
+class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOperators {
   import spark.implicits._
 
-  private val SUT = OperatorCreateGoldenRecord;
+  private val SUT = OperatorCreatePerfectGoldenRecord;
 
   describe("Operator create golden record") {
     describe("full transform") {
@@ -75,7 +75,7 @@ class OperatorCreateGoldenRecordSpecs extends SparkJobSpec with TestOperators {
       val opSameDateUpdated1 = defaultOperator.copy(
         dateUpdated = Some(new Timestamp(1561413600000L)), // 06/25/2019
         dateCreated = Some(new Timestamp(1560981600000L)), // 06/20/2019
-        ohubUpdated = new Timestamp(1561845600000L),       // 06/30/2019
+        ohubUpdated = new Timestamp(1561845600000L), // 06/30/2019
         name = None,
         chainName = None,
         channel = Some("newest"),
@@ -85,7 +85,7 @@ class OperatorCreateGoldenRecordSpecs extends SparkJobSpec with TestOperators {
       val opSameDateUpdated2 = defaultOperator.copy(
         dateUpdated = Some(new Timestamp(1561413600000L)), // 06/25/2019
         dateCreated = Some(new Timestamp(1560204000000L)), // 06/11/2019
-        ohubUpdated = new Timestamp(1561845600000L),       // 06/30/2019
+        ohubUpdated = new Timestamp(1561845600000L), // 06/30/2019
         name = None,
         chainName = Some("middle"),
         channel = Some("middle"),
@@ -95,7 +95,7 @@ class OperatorCreateGoldenRecordSpecs extends SparkJobSpec with TestOperators {
       val opSameDateUpdated3 = defaultOperator.copy(
         dateUpdated = Some(new Timestamp(1561413600000L)), // 06/25/2019
         dateCreated = Some(new Timestamp(1559340000000L)), // 06/01/2019
-        ohubUpdated = new Timestamp(1561845600000L),       // 06/30/2019
+        ohubUpdated = new Timestamp(1561845600000L), // 06/30/2019
         name = Some("oldest"),
         chainName = Some("oldest"),
         channel = Some("oldest"),

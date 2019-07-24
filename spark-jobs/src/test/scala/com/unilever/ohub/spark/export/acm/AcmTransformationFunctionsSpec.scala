@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 
 import org.scalatest.FunSpec
 
-class AcmTransformationFunctionsSpec extends FunSpec {
+class AcmTransformationFunctionsSpec extends FunSpec with AcmTransformationFunctions  {
 
   var acmFunctions = new AcmTransformationFunctions {}
 
@@ -17,7 +17,8 @@ class AcmTransformationFunctionsSpec extends FunSpec {
       assert(acmFunctions.booleanToYNConverter(true) == "Y")
     }
     it("should convert to Y with unknown converter") {
-      assert(acmFunctions.booleanToYNUConverter(Some(true)) == "Y")
+
+      assert((Some(true).booleanToYNU) == "Y")
     }
   }
 
@@ -29,14 +30,14 @@ class AcmTransformationFunctionsSpec extends FunSpec {
       assert(acmFunctions.booleanToYNConverter(false) == "N")
     }
     it("should convert to N with unknown converter") {
-      assert(acmFunctions.booleanToYNUConverter(Some(false)) == "N")
+      assert(Some(false).booleanToYNU == "N")
     }
   }
 
   describe("When you have an undefined boolean value") {
     it("should convert to U") {
       val value: Option[Boolean] = Option.empty
-      assert(acmFunctions.booleanToYNUConverter(value) == "U")
+      assert(value.booleanToYNU == "U")
     }
   }
 
@@ -49,6 +50,12 @@ class AcmTransformationFunctionsSpec extends FunSpec {
   describe("When string contains a weird character") {
     it("should only remove that character") {
       assert(acmFunctions.cleanString("test˵˶˹˻˼˽") == "test")
+    }
+  }
+
+  describe("When string contains a dash character") {
+    it("should remove that character") {
+      assert(acmFunctions.cleanString("jean-pierre") == "jeanpierre")
     }
   }
 

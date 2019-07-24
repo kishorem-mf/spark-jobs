@@ -18,9 +18,9 @@ trait TransformationFunctions {
 
   protected[export] implicit def optionalBigDecimalToString(input: Option[BigDecimal]): String = input.map(bigDecimalTo2Decimals)
 
-  protected[export] implicit def booleanToYNUConverter(input: Option[Boolean]): String = if (input.isEmpty) Some("U") else input.map(b ⇒ if (b) "Y" else "N")
+  protected[export] def booleanToYNConverter = (bool: Boolean) ⇒ if (bool) "Y" else "N"
 
-  protected[export] implicit def booleanToYNConverter(input: Boolean): String = if (input) "Y" else "N"
+  implicit def opt2opt(opt: Option[Boolean]) = new BooleanOptional(opt)
 
   protected[export] def clearField(input: Option[String], cleanYN: Option[Boolean]): Option[String] =
     cleanYN match {
@@ -28,4 +28,10 @@ trait TransformationFunctions {
       case Some(false) => None
       case None => input
     }
+}
+
+class BooleanOptional(val opt: Option[Boolean]) {
+  def booleanToYNU: String = opt.fold("U")(b ⇒ if (b) "Y" else "N")
+  def booleanToYN: String = opt.fold("")(b => if (b) "Y" else "N")
+  def booleanTo10: String = opt.fold("")(b => if (b) "1" else "0")
 }

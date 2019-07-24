@@ -17,7 +17,9 @@ class CampaignBounceDispatchConverterSpec extends SparkJobSpec with TestCampaign
         COUNTRY_CODE= "NL",
         BOUNCE_DATE= "2016-04-17 18:00:30",
         FAILURE_TYPE= "Hard",
-        FAILURE_REASON= "User unknown"
+        FAILURE_REASON= "User unknown",
+        CREATED_AT= "2015-06-30 13:49:00",
+        UPDATED_AT= "2015-06-30 13:49:00"
       )
 
       result shouldBe expectedCampaignBounce

@@ -9,15 +9,19 @@ object OrderAcmConverter extends Converter[Order, AcmOrder] with TransformationF
   override def convert(order: Order): AcmOrder = {
     AcmOrder(
       ORDER_ID = order.concatId,
-      REF_ORDER_ID = order.ohubId,
+      REF_ORDER_ID = order.sourceEntityId,
       COUNTRY_CODE = order.countryCode,
       ORDER_TYPE = order.`type`,
       CP_LNKD_INTEGRATION_ID = order.contactPersonOhubId,
-      OPR_LNKD_INTEGRATION_ID = order.operatorConcatId,
+      OPR_LNKD_INTEGRATION_ID = order.operatorOhubId,
       CAMPAIGN_CODE = order.campaignCode,
       CAMPAIGN_NAME = order.campaignName,
-      WHOLESALER = order.distributorId,
+      WHOLESALER = order.distributorName,
+      WHOLESALER_ID = order.distributorId,
+      WHOLESALER_CUSTOMER_NUMBER = order.distributorOperatorId,
+      WHOLESALER_LOCATION = order.distributorLocation,
       TRANSACTION_DATE = order.transactionDate,
+      ORDER_AMOUNT = order.amount,
       ORDER_AMOUNT_CURRENCY_CODE = order.currency,
       DELIVERY_STREET = order.deliveryOperatorStreet,
       DELIVERY_HOUSENUMBER = order.deliveryOperatorHouseNumber,
@@ -35,8 +39,7 @@ object OrderAcmConverter extends Converter[Order, AcmOrder] with TransformationF
       INVOICE_COUNTRY = order.invoiceOperatorCountry,
       COMMENTS = order.comment,
       VAT = order.vat,
-      AMOUNT = order.amount,
-      DELETED_FLAG = !order.isActive
+      DELETED_FLAG = booleanToYNConverter(!order.isActive)
     )
   }
 }

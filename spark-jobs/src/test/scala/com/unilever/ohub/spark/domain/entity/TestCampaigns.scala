@@ -27,7 +27,7 @@ trait TestCampaigns {
     campaignName = Some("20160324 - Lipton"),
     deliveryId = "65054561",
     deliveryName = "NLLipton032016 --20160325 – followup",
-    campaignSpecification = "Product Introduction",
+    campaignSpecification = Some("Product Introduction"),
     campaignWaveStartDate = Timestamp.valueOf("2017-09-28 13:49:00.0"),
     campaignWaveEndDate = Timestamp.valueOf("2017-09-28 13:50:00.0"),
     campaignWaveStatus = "ended",

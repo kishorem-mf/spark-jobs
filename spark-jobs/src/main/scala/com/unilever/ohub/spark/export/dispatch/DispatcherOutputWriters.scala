@@ -90,6 +90,11 @@ object ActivityOutboundWriter extends ExportOutboundWriter[Activity, DispatchAct
     dataSet.map(ActivityDispatcherConverter.convert(_))
   }
 
+  override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[Activity]) = {
+    import spark.implicits._
+    dataSet.filter($"customerType" === "CONTACTPERSON")
+  }
+
   override def entityName(): String = "CONTACT_PERSON_ACTIVITIES"
 }
 
@@ -112,7 +117,7 @@ object CampaignOutboundWriter extends ExportOutboundWriter[Campaign, DispatchCam
   override def entityName(): String = "CAMPAIGNS"
 }
 
-object CampaignBounceOutboundWriter extends ExportOutboundWriter[CampaignBounce, DispatchCampaignBounce] {
+object CampaignBounceOutboundWriter extends ExportOutboundWriter[CampaignBounce, DispatchCampaignBounce] with DispatcherOptions {
   override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[CampaignBounce]) = {
     import spark.implicits._
 
@@ -122,7 +127,7 @@ object CampaignBounceOutboundWriter extends ExportOutboundWriter[CampaignBounce,
   override def entityName(): String = "CW_BOUNCES"
 }
 
-object CampaignClickOutboundWriter extends ExportOutboundWriter[CampaignClick, DispatchCampaignClick] {
+object CampaignClickOutboundWriter extends ExportOutboundWriter[CampaignClick, DispatchCampaignClick] with DispatcherOptions {
   override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[CampaignClick]) = {
     import spark.implicits._
 
@@ -132,7 +137,7 @@ object CampaignClickOutboundWriter extends ExportOutboundWriter[CampaignClick, D
   override def entityName(): String = "CW_CLICKS"
 }
 
-object CampaignOpenOutboundWriter extends ExportOutboundWriter[CampaignOpen, DispatchCampaignOpen] {
+object CampaignOpenOutboundWriter extends ExportOutboundWriter[CampaignOpen, DispatchCampaignOpen] with DispatcherOptions {
   override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[CampaignOpen]) = {
     import spark.implicits._
 
@@ -142,7 +147,7 @@ object CampaignOpenOutboundWriter extends ExportOutboundWriter[CampaignOpen, Dis
   override def entityName(): String = "CW_OPENS"
 }
 
-object CampaignSendOutboundWriter extends ExportOutboundWriter[CampaignSend, DispatchCampaignSend] {
+object CampaignSendOutboundWriter extends ExportOutboundWriter[CampaignSend, DispatchCampaignSend] with DispatcherOptions {
   override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[CampaignSend]) = {
     import spark.implicits._
 

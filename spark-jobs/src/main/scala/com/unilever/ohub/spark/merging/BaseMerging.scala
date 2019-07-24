@@ -4,16 +4,16 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.SparkJobWithDefaultConfig
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
-import org.apache.spark.sql.expressions.{Window, WindowSpec}
+import org.apache.spark.sql.{ DataFrame, Dataset, SparkSession }
+import org.apache.spark.sql.expressions.{ Window, WindowSpec }
 import scala.reflect.runtime.universe._
 
-abstract class BaseMerging[T <: DomainEntity : TypeTag] extends SparkJobWithDefaultConfig {
+abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefaultConfig {
   val mergeGroupSizeCap = 100
   val prefixNewColumn = "merged_"
   val excludeFields = Seq("group_row_num")
 
-  def transform(spark: SparkSession, operators: Dataset[T]): Dataset[T] = {
+  def transform(spark: SparkSession, ds: Dataset[T]): Dataset[T] = {
     import spark.implicits._
 
     val groupWindow = Window.partitionBy($"ohubId")
@@ -24,7 +24,7 @@ abstract class BaseMerging[T <: DomainEntity : TypeTag] extends SparkJobWithDefa
       $"ohubUpdated".desc
     )
 
-    val mergeableOperators = operators
+    val mergeableRecords = ds
       .filter($"isActive")
       .withColumn("group_row_num", row_number().over(orderByDatesWindow))
       .filter($"group_row_num" <= mergeGroupSizeCap)
@@ -33,7 +33,7 @@ abstract class BaseMerging[T <: DomainEntity : TypeTag] extends SparkJobWithDefa
     setFieldsToLatestValue(
       spark,
       orderByDatesWindow,
-      mergeableOperators,
+      mergeableRecords,
       excludeFields = excludeFields,
       reversedOrderColumns = Seq("dateCreated", "ohubCreated")
     )
@@ -70,10 +70,10 @@ abstract class BaseMerging[T <: DomainEntity : TypeTag] extends SparkJobWithDefa
   }
 
   private[merging] def setFieldsToLatestValue(
-                                               spark: SparkSession, orderByDatesWindow: WindowSpec,
-                                               dataframe: DataFrame, excludeFields: Seq[String] = Seq(),
-                                               reversedOrderColumns: Seq[String] = Seq()
-                                             ): DataFrame = {
+    spark: SparkSession, orderByDatesWindow: WindowSpec,
+    dataframe: DataFrame, excludeFields: Seq[String] = Seq(),
+    reversedOrderColumns: Seq[String] = Seq()
+  ): DataFrame = {
     // Set all columns of dataset on the first value of it's newestNotNullWindow
     // Note: we write the result to a new column as prefix+columnName because overwriting introduces randomness
 

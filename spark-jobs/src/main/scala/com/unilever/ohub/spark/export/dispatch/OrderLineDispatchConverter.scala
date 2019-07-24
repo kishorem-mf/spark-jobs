@@ -10,7 +10,7 @@ object OrderLineDispatchConverter extends Converter[OrderLine, DispatchOrderLine
     DispatchOrderLine(
       COUNTRY_CODE = orderline.countryCode,
       SOURCE = orderline.sourceName,
-      DELETE_FLAG = !orderline.isActive,
+      DELETE_FLAG = booleanToYNConverter(!orderline.isActive),
       ORD_INTEGRATION_ID = orderline.orderConcatId,
       ODL_INTEGRATION_ID = orderline.concatId,
       PRD_INTEGRATION_ID = orderline.productConcatId,

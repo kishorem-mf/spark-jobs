@@ -34,6 +34,10 @@ case class LoyaltyPoints(
     contactPersonOhubId: Option[String],
     operatorConcatId: Option[String],
     operatorOhubId: Option[String],
+    rewardName: Option[String],
+    rewardImageUrl: Option[String],
+    rewardLandingPageUrl: Option[String],
+    rewardEanCode: Option[String],
 
     // other fields
     additionalFields: Map[String, String],
