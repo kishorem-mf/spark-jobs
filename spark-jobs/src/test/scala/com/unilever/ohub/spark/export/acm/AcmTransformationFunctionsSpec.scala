@@ -59,6 +59,12 @@ class AcmTransformationFunctionsSpec extends FunSpec with AcmTransformationFunct
     }
   }
 
+  describe("When string only contains a dot") {
+    it("should remove that character and return empty string") {
+      assert(acmFunctions.cleanString(".") == "")
+    }
+  }
+
   describe("When converting timestamp") {
     it("should convert to ACM wished format") {
       val ts = LocalDateTime.of(2019, 11, 12, 10, 11, 12)

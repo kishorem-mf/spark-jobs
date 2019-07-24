@@ -90,6 +90,11 @@ object ActivityOutboundWriter extends ExportOutboundWriter[Activity, DispatchAct
     dataSet.map(ActivityDispatcherConverter.convert(_))
   }
 
+  override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[Activity]) = {
+    import spark.implicits._
+    dataSet.filter($"customerType" === "CONTACTPERSON")
+  }
+
   override def entityName(): String = "CONTACT_PERSON_ACTIVITIES"
 }
 
