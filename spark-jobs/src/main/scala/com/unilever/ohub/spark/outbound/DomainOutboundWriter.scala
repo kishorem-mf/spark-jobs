@@ -38,7 +38,12 @@ object OrderLineOutboundWriter extends DomainOutboundWriter[OrderLine] {
   }
 }
 
-object ActivityOutboundWriter extends DomainOutboundWriter[Activity]
+object ActivityOutboundWriter extends DomainOutboundWriter[Activity] {
+  override private[outbound] def filterDataSet(spark: SparkSession, dataSet: Dataset[Activity]) = {
+    import spark.implicits._
+    dataSet.filter($"customerType" === "CONTACTPERSON");
+  }
+}
 
 object QuestionOutboundWriter extends DomainOutboundWriter[Question]
 
