@@ -15,6 +15,9 @@ RUN mkdir -p $NAME_MATCHING_EGG_ARTEFACTS_DIR
 ARG NAME_MATCHING_MAIN_ARTEFACTS_DIR=/usr/local/artefacts/name-matching/main
 RUN mkdir -p $NAME_MATCHING_MAIN_ARTEFACTS_DIR
 
+# copy spark conf
+COPY conf/spark-defaults.conf $SPARK_HOME/conf/spark-defaults.conf
+
 # copy test input data
 ARG DATA_ROOT_DIR=/usr/local/data/
 COPY data $DATA_ROOT_DIR
