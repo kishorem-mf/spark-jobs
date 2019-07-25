@@ -24,22 +24,21 @@ trait GroupingFunctions {
   def matchColumns[T <: DomainEntity: Encoder](
     integrated: Dataset[T],
     delta: Dataset[T],
-    groupingColumns: Seq[String],
-    notNullColoumns: Seq[String])(implicit spark: SparkSession): Dataset[T] = {
+    columns: Seq[String])(implicit spark: SparkSession): Dataset[T] = {
     import spark.implicits._
 
-    val sameColumns = groupingColumns.map(col)
-    val notNullCheckColumns = notNullColoumns.map(col)
+    val sameColumns = columns.map(col)
 
     val integratedWithExact = integrated
-      .columnsNotNullAndNotEmpty(notNullCheckColumns)
+      .columnsNotNullAndNotEmpty($"name")
       .concatenateColumns("group", sameColumns)
       .withColumn("inDelta", lit(false))
 
-    val newWithExact = delta
-      .columnsNotNullAndNotEmpty(notNullCheckColumns)
-      .concatenateColumns("group", sameColumns)
-      .withColumn("inDelta", lit(true))
+    val newWithExact =
+      delta
+        .columnsNotNullAndNotEmpty($"name")
+        .concatenateColumns("group", sameColumns)
+        .withColumn("inDelta", lit(true))
 
     integratedWithExact
       .union(newWithExact)
@@ -54,18 +53,8 @@ trait GroupingFunctions {
 object DataFrameHelpers extends GroupingFunctions {
 
   implicit class Helpers(df: Dataset[_]) {
-
-    /**
-     * Concatenate all the specified
-     * @param cols and create new column with name
-     * @param name
-     * @param convertToLowerCase is used to make convert all column values to lower case. By default it is false
-     */
-    def concatenateColumns(name: String, cols: Seq[Column], convertToLowerCase: Boolean = false)(implicit spark: SparkSession): Dataset[_] = {
-      df.withColumn(name, concat(cols.map(c ⇒
-        when(c.isNull, "").otherwise(
-          if (!convertToLowerCase) c
-          else trim(lower(c)))): _*))
+    def concatenateColumns(name: String, cols: Seq[Column])(implicit spark: SparkSession): Dataset[_] = {
+      df.withColumn(name, concat(cols.map(c ⇒ when(c.isNull, "").otherwise(c)): _*))
     }
 
     def addOhubId(implicit spark: SparkSession): Dataset[_] = {
@@ -79,29 +68,6 @@ object DataFrameHelpers extends GroupingFunctions {
 
         .withColumn("ohubId", first('ohubId).over(w1)) // make sure the whole group gets the same ohubId
         .drop("rand")
-
-    }
-
-    def addOhubIdBasedOnColumnAndPriority(exactMatchColumn: String)(implicit spark: SparkSession): Dataset[_] = {
-
-      import spark.implicits._
-      val w1 = Window.partitionBy(col(exactMatchColumn)).orderBy($"priority", $"ohubId".desc_nulls_last)
-      //Date Created can be used instead of priority
-      df.withColumn("ohubId", first($"ohubId").over(w1)) // preserve ohubId
-
-        // the next two lines will select a deterministic random ohubId
-        .withColumn("rand", concat(monotonically_increasing_id(), rand()))
-        .withColumn("ohubId", when('ohubId.isNull, createOhubIdUdf($"rand")).otherwise('ohubId))
-        .withColumn("ohubId", first('ohubId).over(w1)) // make sure the whole group gets the same ohubId
-        .drop("rand")
-    }
-
-    def cleanseMobileEmail(implicit spark: SparkSession): Dataset[_] = {
-      import spark.implicits._
-
-      df
-        .withColumn("cleansedEmail", trim(lower($"emailAddress")))
-        .withColumn("cleansedMobile", regexp_replace($"mobileNumber", "(^0+)|([\\+\\-\\s])", ""))
     }
 
     def columnsNotNullAndNotEmpty(col: Column, cols: Column*): Dataset[_] = {
@@ -115,24 +81,6 @@ object DataFrameHelpers extends GroupingFunctions {
       def notNullOrEmpty(col: Column): Column = col.isNotNull and col.notEqual("")
 
       df.filter(cols.map(c ⇒ notNullOrEmpty(c)).reduce(_ and _))
-    }
-
-    /**
-      * Keep rows where all columns are not null and not empty
-      */
-    def columnsCondition(cols: Seq[Column], colCondition:Column): Dataset[_] = {
-      def condition(col: Column): Column = colCondition
-
-      df.filter(cols.map(c ⇒ condition(c)).reduce(_ and _))
-    }
-
-    /**
-     * Removing Leading Zeros in mobile number
-     */
-    def removeLeadingZeros(columnName: String): Dataset[_] = {
-
-      df.withColumn(columnName, regexp_replace(col(columnName), "^0+", ""))
-
     }
 
     /**
