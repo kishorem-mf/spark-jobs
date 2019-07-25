@@ -40,7 +40,8 @@ object OperatorIntegratedExactMatch extends SparkJob[ExactMatchIngestedWithDbCon
     dailyDeltaRecords: Dataset[Operator])(implicit spark: SparkSession): (Dataset[Operator], Dataset[Operator], Dataset[Operator]) = {
     import spark.implicits._
     val columns = Seq("countryCode", "city", "street", "houseNumber", "houseNumberExtension", "zipCode", "name")
-    val matchedExact: Dataset[Operator] = matchColumns[Operator](integratedRecords, dailyDeltaRecords, columns)
+    val notNullColumns = Seq("name", "street")
+    val matchedExact: Dataset[Operator] = matchColumns[Operator](integratedRecords, dailyDeltaRecords, columns,notNullColumns)
 
     val oneRecordPerMatchingGroup = matchedExact
       .grabOneRecordPerGroup
