@@ -12,7 +12,7 @@ class TestOperators(object):
 
         assertDataframeCount(spark, "/usr/local/data/intermediate/operators_exact_matches.parquet", 1000)
 
-        # integrated input is empty
+        # integrated input is 769 as the reference records have to be passed to fuzzy logic
         assertDataframeCount(spark, "/usr/local/data/intermediate/operators_unmatched_integrated.parquet", 769)
 
         # fuzzy matching for DE only (so 90 records remain)

@@ -14,10 +14,10 @@ class TestContactPersons(object):
 
         assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_exact_matches.parquet", 936)
 
-        # integrated input is empty
+        # integrated input is 407 as the reference records have to be passed to fuzzy logic
         assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_unmatched_integrated.parquet", 407)
 
-        # fuzzy matching for TH only (so 121/132 records)
+        # fuzzy matching for TH only (so 54/130 records)
 
         assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_unmatched_delta.parquet", 64)
 
@@ -42,7 +42,7 @@ class TestContactPersons(object):
                 .parquet("/usr/local/data/output/integrated/contactpersons")
                 ).select('ohubId').distinct().count() == 443
 
-        # 469 ohubIds from exact matches, 75 from fuzzy matching, 544 ohubIds in total
+        # 443 ohubIds from exact matches, 90 from fuzzy matching, 533 ohubIds in total
         assert(spark
                .read
                .parquet("/usr/local/data/output/integrated/contactpersons")
