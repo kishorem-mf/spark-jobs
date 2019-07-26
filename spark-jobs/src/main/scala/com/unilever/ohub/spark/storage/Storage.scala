@@ -24,6 +24,29 @@ trait Storage {
 
   def writeJdbcTable(df: DataFrame, dbUrl: String, dbTable: String, userName: String, userPassword: String,
     jdbcDriverClass: String = "org.postgresql.Driver", saveMode: SaveMode = SaveMode.Overwrite): Unit
+
+  def writeAzureDWTable(
+    df: DataFrame,
+    jdbcDriverClass: String = "com.databricks.spark.sqldw",
+    dbUrl: String,
+    dbTable: String,
+    userName: String,
+    userPassword: String,
+    dbTempDir: String,
+    preActions: String = "",
+    postActions: String = "",
+    saveMode: SaveMode = SaveMode.Overwrite
+  ): Unit
+
+  def readAzureDWQuery(
+    spark: SparkSession,
+    jdbcDriverClass: String = "com.databricks.spark.sqldw",
+    dbUrl: String,
+    userName: String,
+    userPassword: String,
+    dbTempDir: String,
+    query: String
+  ): DataFrame
 }
 
 class DefaultStorage(spark: SparkSession) extends Storage {
@@ -103,5 +126,80 @@ class DefaultStorage(spark: SparkSession) extends Storage {
     connectionProperties.put("user", userName)
     connectionProperties.put("password", userPassword)
     connectionProperties
+  }
+
+  /**
+   * Configuration for the Azure Datawarehouse
+   *
+   * @param df
+   * @param jdbcDriverClass
+   * @param dbUrl        : example "jdbc:sqlserver://ufs-marketing.database.windows.net:1433;database=ufs-marketing;",
+   * @param dbTable      destination table as schema.tablename
+   * @param userName
+   * @param userPassword :
+   * @param dbTempDir    : temp bucket, wasb protocol only accepted
+   *                    eg. "wasbs://outbound@ohub2storagedev.blob.core.windows.net/DW"
+   * @param preActions   a sequence of statements separated by ; executed before writing
+   * @param postActions  a sequence of statements separated by ; executed after writing
+   */
+  override def writeAzureDWTable(
+    df: DataFrame,
+    jdbcDriverClass: String = "com.databricks.spark.sqldw",
+    dbUrl: String,
+    dbTable: String,
+    userName: String,
+    userPassword: String,
+    dbTempDir: String,
+    preActions: String = "",
+    postActions: String = "",
+    saveMode: SaveMode = SaveMode.Overwrite
+  ): Unit = {
+
+    val fullDbURL: String = s"${dbUrl};user=${userName};password=${userPassword}"
+
+    df
+      .write
+      .format(jdbcDriverClass)
+      .option("url", fullDbURL)
+      .option("forwardSparkAzureStorageCredentials", "true")
+      .option("dbTable", dbTable)
+      .option("tempDir", dbTempDir)
+      .option("preActions", preActions)
+      .option("postActions", postActions)
+      .mode(saveMode)
+      .save
+  }
+
+  /**
+   * Runs query on the datawarehouse
+   *
+   * @param spark
+   * @param jdbcDriverClass
+   * @param dbUrl        : example "jdbc:sqlserver://ufs-marketing.database.windows.net:1433;database=ufs-marketing;",
+   * @param userName
+   * @param userPassword :
+   * @param dbTempDir    : temp bucket, wasb protocol only accepted
+   *                    eg. "wasbs://outbound@ohub2storagedev.blob.core.windows.net/DW"
+   * @param query        : the query in T-SQL dialect - Azure DW compatible
+   */
+  override def readAzureDWQuery(
+    spark: SparkSession,
+    jdbcDriverClass: String = "com.databricks.spark.sqldw",
+    dbUrl: String,
+    userName: String,
+    userPassword: String,
+    dbTempDir: String,
+    query: String
+  ): DataFrame = {
+
+    val fullDbURL: String = s"${dbUrl};user=${userName};password=${userPassword}"
+
+    spark.read
+      .format(jdbcDriverClass)
+      .option("url", fullDbURL)
+      .option("forwardSparkAzureStorageCredentials", "true")
+      .option("tempDir", dbTempDir)
+      .option("query", query)
+      .load()
   }
 }
