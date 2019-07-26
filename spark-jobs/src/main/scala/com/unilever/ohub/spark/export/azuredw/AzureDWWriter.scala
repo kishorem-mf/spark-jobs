@@ -35,7 +35,7 @@ case class AzureDWConfiguration(
   blobStorageKey: String = ""
 ) extends SparkJobConfig
 
-case class logRow(
+case class LogRow(
   entityName: String,
   loadingDate: java.sql.Timestamp,
   latestContentDate: java.sql.Timestamp,
@@ -98,11 +98,11 @@ class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJob[Azure
 
     import spark.implicits._
 
-    val insertedRowNumber = storage.readAzureDWQuery(
+    val insertedRowCount = storage.readAzureDWQuery(
       spark = spark, dbUrl = config.dbUrl, userName = config.dbUsername,
       userPassword = config.dbPassword, dbTempDir = config.dbTempDir,
-      query = s"select count(*) as insertedRowNumber from ${config.dbSchema}.${config.entityName}"
-    ).select("insertedRowNumber").rdd.map(r ⇒ r(0)).collect()(0).toString.toInt
+      query = s"select count(*) as insertedRowCount from ${config.dbSchema}.${config.entityName}"
+    ).select("insertedRowCount").rdd.map(r ⇒ r(0)).collect()(0).toString.toInt
 
     val maxOhubUpdated = storage.readAzureDWQuery(
       spark = spark, dbUrl = config.dbUrl, userName = config.dbUsername,
@@ -110,12 +110,12 @@ class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJob[Azure
       query = s"select max(ohubUpdated) as maxOhubUpdated from ${config.dbSchema}.${config.entityName}"
     ).select("maxOhubUpdated").rdd.map(r ⇒ r(0)).collect()(0).toString
 
-    val loggingDF = Seq(logRow(
+    val loggingDF = Seq(LogRow(
       entityName = config.entityName,
       loadingDate = new Timestamp(System.currentTimeMillis()),
       latestContentDate = Timestamp.valueOf(maxOhubUpdated),
       loadingTimeSec = jobDuration.toInt,
-      rowCount = insertedRowNumber.toString.toInt
+      rowCount = insertedRowCount.toString.toInt
     )).toDF()
 
     storage.writeAzureDWTable(
@@ -227,7 +227,5 @@ object OrderLineDWWriter extends AzureDWWriter[OrderLine]
 object ProductDWWriter extends AzureDWWriter[Product]
 
 object QuestionDWWriter extends AzureDWWriter[Question]
-
-object RecipeDWWriter extends AzureDWWriter[Recipe]
 
 object SubscriptionDWWriter extends AzureDWWriter[Subscription]
