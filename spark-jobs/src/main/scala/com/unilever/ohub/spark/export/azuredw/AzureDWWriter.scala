@@ -87,7 +87,7 @@ class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJob[Azure
   private def dropUnnecessaryFields(dataSet: Dataset[DomainType]): DataFrame = {
 
     val mapFields: Array[String] = dataSet.schema.fields.collect(
-      { case field if field.dataType.typeName == "map" ⇒ field.name })
+      { case field if field.dataType.typeName == "map" || field.dataType.typeName == "array" ⇒ field.name })
 
     val otherUnnecessaryFields = Seq("id")
 
@@ -198,15 +198,15 @@ class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJob[Azure
   }
 }
 
-object ActivityAzureDWWriter extends AzureDWWriter[Activity]
+object ActivityDWWriter extends AzureDWWriter[Activity]
 
-object AnswerAzureDWWriter extends AzureDWWriter[Answer]
+object AnswerDWWriter extends AzureDWWriter[Answer]
 
-object CampaignAzureDWWriter extends AzureDWWriter[Campaign]
+object CampaignDWWriter extends AzureDWWriter[Campaign]
 
-object CampaignBounceAzureDWWriter extends AzureDWWriter[CampaignBounce]
+object CampaignBounceDWWriter extends AzureDWWriter[CampaignBounce]
 
-object CampaignClickAzureDWWriter extends AzureDWWriter[CampaignClick]
+object CampaignClickDWWriter extends AzureDWWriter[CampaignClick]
 
 object CampaignOpenDWWriter extends AzureDWWriter[CampaignOpen]
 
