@@ -166,6 +166,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .option("tempDir", dbTempDir)
       .option("preActions", preActions)
       .option("postActions", postActions)
+      .option("maxStrLength", 4000)
       .mode(saveMode)
       .save
   }
