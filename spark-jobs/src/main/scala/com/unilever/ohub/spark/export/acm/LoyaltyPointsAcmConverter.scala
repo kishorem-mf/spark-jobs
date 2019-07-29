@@ -19,7 +19,8 @@ object LoyaltyPointsAcmConverter extends Converter[LoyaltyPoints, AcmLoyaltyPoin
       REWARD_NAME = loyaltyPoints.rewardName,
       REWARD_IMAGE_URL = loyaltyPoints.rewardImageUrl,
       REWARD_LDP_URL = loyaltyPoints.rewardLandingPageUrl,
-      REWARD_EANCODE = loyaltyPoints.rewardEanCode
+      REWARD_EANCODE = loyaltyPoints.rewardEanCode,
+      LOYALTY_POINT_ID = loyaltyPoints.concatId
     )
   }
 }
