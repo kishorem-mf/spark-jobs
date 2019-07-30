@@ -6,9 +6,6 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 
 object DomainEntity {
   case class IngestionError(originalColumnName: String, inputValue: Option[String], exceptionMessage: String)
-
-  def createConcatIdFromValues(countryCode: String, sourceName: String, sourceEntityId: String): String =
-    s"$countryCode~$sourceName~$sourceEntityId"
 }
 
 // marker trait for all domain entities (press ctrl + h in IntelliJ to see all)

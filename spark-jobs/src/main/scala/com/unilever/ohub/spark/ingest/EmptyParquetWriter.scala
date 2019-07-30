@@ -1,11 +1,9 @@
 package com.unilever.ohub.spark.ingest
 
-import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity._
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.SaveMode
-import org.apache.spark.sql.Dataset
+import com.unilever.ohub.spark.storage.Storage
+import org.apache.spark.sql.{Dataset, SaveMode, SparkSession}
 
 trait EmptyParquetWriter[T <: DomainEntity] {
   def createEmptyDataset(spark: SparkSession): Dataset[T]
@@ -158,5 +156,14 @@ trait ChannelMappingEmptyParquetWriter extends EmptyParquetWriter[ChannelMapping
     import spark.implicits._
 
     spark.createDataset[ChannelMapping](Seq[ChannelMapping]())
+  }
+}
+
+trait ChainEmptyParquetWriter extends EmptyParquetWriter[Chain] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[Chain] = {
+    import spark.implicits._
+
+    spark.createDataset[Chain](Seq[Chain]())
   }
 }

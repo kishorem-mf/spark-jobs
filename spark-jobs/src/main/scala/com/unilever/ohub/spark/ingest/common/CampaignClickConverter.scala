@@ -1,59 +1,58 @@
 package com.unilever.ohub.spark.ingest.common
 
+import java.sql.Timestamp
+
 import com.unilever.ohub.spark.domain.entity.CampaignClick
 import com.unilever.ohub.spark.ingest.CustomParsers._
-import com.unilever.ohub.spark.ingest.{ CampaignClickEmptyParquetWriter, DomainTransformer }
+import com.unilever.ohub.spark.ingest.{CampaignClickEmptyParquetWriter, DomainTransformer}
 import org.apache.spark.sql.Row
 
 object CampaignClickConverter extends CommonDomainGateKeeper[CampaignClick] with CampaignClickEmptyParquetWriter {
 
-  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ CampaignClick = { transformer ⇒ row ⇒
-    import transformer._
-    implicit val source: Row = row
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ CampaignClick = { transformer ⇒
+    row ⇒
+      import transformer._
+      implicit val source: Row = row
 
-    val ohubCreated = currentTimestamp()
+      val ohubCreated = new Timestamp(System.currentTimeMillis())
 
-    // format: OFF
+      CampaignClick(
+        id = mandatory("id"),
+        creationTimestamp = mandatory("creationTimestamp", toTimestamp),
+        concatId = mandatory("concatId"),
+        countryCode = mandatory("countryCode"),
+        customerType = CampaignClick.customerType,
+        isActive = mandatory("isActive", toBoolean),
+        sourceEntityId = mandatory("sourceEntityId"),
+        campaignConcatId = mandatory("campaignConcatId"),
+        sourceName = mandatory("sourceName"),
+        ohubCreated = ohubCreated,
+        ohubUpdated = ohubCreated,
+        dateCreated = optional("dateCreated", parseDateTimeUnsafe()),
+        dateUpdated = optional("dateUpdated", parseDateTimeUnsafe()),
+        ohubId = Option.empty,
+        isGoldenRecord = true, // Not specified when is true in mapping, so always golden...
 
-    CampaignClick(
-      // fieldName                  mandatory                   sourceFieldName                                 targetFieldName                        transformationFunction (unsafe)
-      id                          = mandatory(                  "id",                         "id"),
-      creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp",    toTimestamp),
-      concatId                    = mandatory(                  "concatId",                   "concatId"),
-      countryCode                 = mandatory(                  "countryCode",                "countryCode"),
-      customerType                = CampaignClick.customerType,
-      isActive                    = mandatory(                  "isActive",                   "isActive",             toBoolean),
-      sourceEntityId              = mandatory(                  "sourceEntityId",             "sourceEntityId"),
-      campaignConcatId            = mandatory(                  "campaignConcatId",           "campaignConcatId"),
-      sourceName                  = mandatory(                  "sourceName",                 "sourceName"),
-      ohubCreated                 = ohubCreated,
-      ohubUpdated                 = ohubCreated,
-      dateCreated                 = optional(                   "dateCreated",                "dateCreated",          parseDateTimeUnsafe()),
-      dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated",          parseDateTimeUnsafe()),
-      ohubId                      = Option.empty,
-      isGoldenRecord              = true, // Not specified when is true in mapping, so always golden...
+        trackingId = mandatory("trackingId"),
+        clickedUrl = mandatory("clickedUrl"),
+        clickDate = mandatory("clickDate", parseDateTimeUnsafe()),
+        communicationChannel = mandatory("communicationChannel"),
+        campaignId = mandatory("campaignId"),
+        campaignName = optional("campaignName"),
+        deliveryId = mandatory("deliveryId"),
+        deliveryName = mandatory("deliveryName"),
+        contactPersonConcatId = mandatory("contactPersonConcatId"),
+        contactPersonOhubId = Option.empty,
+        isOnMobileDevice = mandatory("isOnMobileDevice", toBoolean),
+        operatingSystem = optional("operatingSystem"),
+        browserName = optional("browserName"),
+        browserVersion = optional("browserVersion"),
+        operatorConcatId = optional("operatorConcatId"),
+        operatorOhubId = Option.empty,
+        deliveryLogId = optional("deliveryLogId"),
 
-      trackingId                  = mandatory(                  "trackingId",                 "trackingId"),
-      clickedUrl                  = mandatory(                  "clickedUrl",                 "clickedUrl"),
-      clickDate                   = mandatory(                  "clickDate",                  "clickDate",            parseDateTimeUnsafe()),
-      communicationChannel        = mandatory(                  "communicationChannel",       "communicationChannel"),
-      campaignId                  = mandatory(                  "campaignId",                 "campaignId"),
-      campaignName                = optional(                   "campaignName",               "campaignName"),
-      deliveryId                  = mandatory(                  "deliveryId",                 "deliveryId"),
-      deliveryName                = mandatory(                  "deliveryName",               "deliveryName"),
-      contactPersonConcatId       = mandatory(                  "contactPersonConcatId",      "contactPersonConcatId"),
-      contactPersonOhubId         = Option.empty,
-      isOnMobileDevice            = mandatory(                  "isOnMobileDevice",           "isOnMobileDevice",     toBoolean),
-      operatingSystem             = optional(                   "operatingSystem",            "operatingSystem"),
-      browserName                 = optional(                   "browserName",                "browserName"),
-      browserVersion              = optional(                   "browserVersion",             "browserVersion"),
-      operatorConcatId            = optional(                   "operatorConcatId",           "operatorConcatId"),
-      operatorOhubId              = Option.empty,
-      deliveryLogId               = optional(                   "deliveryLogId",              "deliveryLogId"),
-
-      additionalFields            = additionalFields,
-      ingestionErrors             = errors
-    )
-    // format: ON
+        additionalFields = additionalFields,
+        ingestionErrors = errors
+      )
   }
 }

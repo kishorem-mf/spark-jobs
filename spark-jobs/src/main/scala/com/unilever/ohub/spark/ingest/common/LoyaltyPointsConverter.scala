@@ -1,50 +1,51 @@
 package com.unilever.ohub.spark.ingest.common
 
+import java.sql.Timestamp
+
 import com.unilever.ohub.spark.domain.entity.LoyaltyPoints
-import com.unilever.ohub.spark.ingest.CustomParsers.{ parseDateTimeUnsafe, toBigDecimal, toTimestamp }
-import com.unilever.ohub.spark.ingest.{ ActivityEmptyParquetWriter, DomainTransformer }
+import com.unilever.ohub.spark.ingest.CustomParsers.{parseDateTimeUnsafe, toBigDecimal, toTimestamp}
+import com.unilever.ohub.spark.ingest.{ActivityEmptyParquetWriter, DomainTransformer}
 import org.apache.spark.sql.Row
 
 object LoyaltyPointsConverter extends CommonDomainGateKeeper[LoyaltyPoints] with ActivityEmptyParquetWriter {
-  override protected def toDomainEntity: DomainTransformer ⇒ Row ⇒ LoyaltyPoints = { transformer ⇒ row ⇒
-    import transformer._
-    implicit val source: Row = row
+  override protected def toDomainEntity: DomainTransformer ⇒ Row ⇒ LoyaltyPoints = { transformer ⇒
+    row ⇒
+      import transformer._
+      implicit val source: Row = row
 
-    val ohubCreated = currentTimestamp()
-    // format: OFF
-    LoyaltyPoints(
-      //fieldName                     mandatory                  sourceFieldName                               targetFieldName               transformationFunction (unsafe)
-      id                            = mandatory("id",                         "id"),
-      creationTimestamp             = mandatory("creationTimestamp",          "creationTimestamp",          toTimestamp),
-      concatId                      = mandatory("concatId",                   "concatId"),
-      countryCode                   = mandatory("countryCode",                "countryCode"),
-      customerType                  = mandatory("customerType",               "customerType"),
-      dateCreated                   = optional( "dateCreated",                "dateCreated",                parseDateTimeUnsafe()),
-      dateUpdated                   = optional( "dateUpdated",                "dateUpdated",                parseDateTimeUnsafe()),
-      isActive                      = true,
-      isGoldenRecord                = true,
-      sourceEntityId                = mandatory("sourceEntityId",             "sourceEntityId"),
-      sourceName                    = mandatory("sourceName",                 "sourceName"),
-      ohubId                        = Option.empty,
-      ohubCreated                   = ohubCreated,
-      ohubUpdated                   = ohubCreated,
+      val ohubCreated = new Timestamp(System.currentTimeMillis())
 
-      // specific fields
-      totalEarned                   = optional("totalLoyaltyPointsEarned",    "totalEarned",                toBigDecimal),
-      totalSpent                    = optional("totalLoyaltyPointsSpent",     "totalSpent",                 toBigDecimal),
-      totalActual                   = optional("totalLoyaltyPointsActual",    "totalActual",                toBigDecimal),
-      rewardGoal                    = optional("loyaltyRewardGoal",           "rewardGoal",                 toBigDecimal),
-      contactPersonConcatId         = optional("contactPersonConcatId",       "contactPersonConcatId"),
-      contactPersonOhubId           = Option.empty,
-      operatorConcatId              = optional("operatorConcatId", "operatorConcatId"),
-      operatorOhubId                = Option.empty,
-      rewardName                    = optional("rewardName", "rewardName"),
-      rewardImageUrl                = optional("rewardImageUrl", "rewardImageUrl"),
-      rewardLandingPageUrl          = optional("rewardLandingPageUrl", "rewardLandingPageUrl"),
-      rewardEanCode                 = optional("rewardEanCode", "rewardEanCode"),
-      additionalFields              = additionalFields,
-      ingestionErrors               = errors
-    )
-    // format: ON
+      LoyaltyPoints(
+        id = mandatory("id"),
+        creationTimestamp = mandatory("creationTimestamp", toTimestamp),
+        concatId = mandatory("concatId"),
+        countryCode = mandatory("countryCode"),
+        customerType = mandatory("customerType"),
+        dateCreated = optional("dateCreated", parseDateTimeUnsafe()),
+        dateUpdated = optional("dateUpdated", parseDateTimeUnsafe()),
+        isActive = true,
+        isGoldenRecord = true,
+        sourceEntityId = mandatory("sourceEntityId"),
+        sourceName = mandatory("sourceName"),
+        ohubId = Option.empty,
+        ohubCreated = ohubCreated,
+        ohubUpdated = ohubCreated,
+
+        // specific fields
+        totalEarned = optional("totalEarned", toBigDecimal),
+        totalSpent = optional("totalSpent", toBigDecimal),
+        totalActual = optional("totalActual", toBigDecimal),
+        rewardGoal = optional("rewardGoal", toBigDecimal),
+        contactPersonConcatId = optional("contactPersonConcatId"),
+        contactPersonOhubId = Option.empty,
+        operatorConcatId = optional("operatorConcatId"),
+        operatorOhubId = Option.empty,
+        rewardName = optional("rewardName"),
+        rewardImageUrl = optional("rewardImageUrl"),
+        rewardLandingPageUrl = optional("rewardLandingPageUrl"),
+        rewardEanCode = optional("rewardEanCode"),
+        additionalFields = additionalFields,
+        ingestionErrors = errors
+      )
   }
 }
