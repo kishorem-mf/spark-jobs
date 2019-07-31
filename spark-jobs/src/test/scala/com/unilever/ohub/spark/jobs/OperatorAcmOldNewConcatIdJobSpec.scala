@@ -25,7 +25,6 @@ class OperatorAcmOldNewConcatIdJobSpec extends SparkJobSpec with TestContactPers
 
   private val config = OutboundConfig(
     integratedInputFile = "integrated",
-    hashesInputFile = Some("hash"),
     outboundLocation = UUID.randomUUID().toString
   )
   val storage = new InMemStorage(spark, operators, hashes)

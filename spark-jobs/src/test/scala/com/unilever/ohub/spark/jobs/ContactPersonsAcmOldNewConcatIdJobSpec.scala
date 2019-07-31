@@ -24,7 +24,6 @@ class ContactPersonsAcmOldNewConcatIdJobSpec extends SparkJobSpec with TestConta
   }
   private val config = OutboundConfig(
     integratedInputFile = "integrated",
-    hashesInputFile = Some("hash"),
     outboundLocation = UUID.randomUUID().toString
   )
   val storage = new InMemStorage(spark, contactPersons, hashes)

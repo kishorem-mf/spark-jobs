@@ -2,8 +2,9 @@ package com.unilever.ohub.spark.jobs
 
 import com.unilever.ohub.spark.DomainDataProvider
 import com.unilever.ohub.spark.domain.entity.{ContactPerson, Operator}
+import com.unilever.ohub.spark.export._
 import com.unilever.ohub.spark.export.acm.{AcmOptions, ConcatPersonOldOhubConverter, OperatorOldOhubConverter}
-import com.unilever.ohub.spark.export.{Converter, ExportOutboundWriter, OutboundEntity, TransformationFunctions}
+import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{Dataset, SparkSession}
 
 case class OldNew(oldConcatId: String, concatId: String) extends OutboundEntity
@@ -34,6 +35,10 @@ object ContactPersonOldNewWriter extends ExportOutboundWriter[ContactPerson, Old
 
     dataSet.map(ContactPersonOldNewConverter.convert(_))
   }
+
+  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
+    super.run(spark, config.copy(hashesInputFile = None), storage)
+  }
 }
 
 object OperatorOldNewWriter extends ExportOutboundWriter[Operator, OldNew] with AcmOptions {
@@ -43,6 +48,10 @@ object OperatorOldNewWriter extends ExportOutboundWriter[Operator, OldNew] with 
     import spark.implicits._
 
     dataSet.map(OperatorOldNewConverter.convert(_))
+  }
+
+  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
+    super.run(spark, config.copy(hashesInputFile = None), storage)
   }
 }
 
