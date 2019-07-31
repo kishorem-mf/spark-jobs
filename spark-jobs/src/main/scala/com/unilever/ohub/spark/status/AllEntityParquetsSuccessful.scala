@@ -1,10 +1,10 @@
 package com.unilever.ohub.spark.status
 
-import com.unilever.ohub.spark.domain.{ DomainEntityCompanion, DomainEntityUtils }
+import com.unilever.ohub.spark.domain.{DomainEntityCompanion, DomainEntityUtils}
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.SparkSession
-import org.apache.hadoop.fs.{ FileSystem, Path }
 
 case class AllEntityParquetsSuccessfulConfig(
     basePath: String = "basepath",
@@ -28,16 +28,25 @@ object AllEntityParquetsSuccessful extends SparkJob[AllEntityParquetsSuccessfulC
 
   private def successFileExists(location: String)(implicit spark: SparkSession): Boolean = {
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
-    fs.exists(new Path(location, "_SUCCESS"))
+    val exists = fs.exists(new Path(location, "_SUCCESS"))
+    exists match {
+      case true => log.info(s"_SUCCESS file found in ${location}")
+      case false => log.info(s"No _SUCCESS file found in ${location}")
+    }
+    exists
   }
 
   def checkAllSuccessFiles(basePath: String, runId: String)(implicit spark: SparkSession) = {
-    val unsuccessfulDomains = DomainEntityUtils.getDomainCompanionObjects
+    val allDomainCompanions = DomainEntityUtils.getDomainCompanionObjects
+    val unsuccessfulDomains = allDomainCompanions
       .filter((domainCompanion: DomainEntityCompanion) ⇒ !successFileExists(s"${basePath}/${runId}/${domainCompanion.engineFolderName}.parquet"))
 
     unsuccessfulDomains.length > 0 match {
-      case true  ⇒ throw new NotAllEntitesSuccessfulException(s"Entity(-ies) ${unsuccessfulDomains.map(_.getClass.getSimpleName).mkString(",")} have no successFile")
-      case false ⇒ // All good
+      case true  ⇒ {
+        log.info(s"Entities without success file found, throwing exception to let the job fail.")
+        throw new NotAllEntitesSuccessfulException(s"Entities without success file: ${unsuccessfulDomains.map(_.getClass.getSimpleName).mkString(", ")}.")
+      }
+      case false ⇒ log.info("All success files present")
     }
   }
 

@@ -6,7 +6,7 @@ import scala.reflect.runtime.universe._
 
 object DomainEntityUtils {
   /**
-    * Function uses reflection to look for all [[com.unilever.ohub.spark.domain.DomainEntity]]objects
+    * Function uses reflection to look for all [[com.unilever.ohub.spark.domain.DomainEntity]] objects
     * (under [[com.unilever.ohub.spark.domain.DomainEntity]]'s package) and fetches the
     * corresponding [[com.unilever.ohub.spark.domain.DomainEntityCompanion]]s.
     *
