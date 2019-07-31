@@ -2,8 +2,8 @@ package com.unilever.ohub.spark.export.acm
 
 import com.unilever.ohub.spark.domain.entity._
 import com.unilever.ohub.spark.export.acm.model._
-import com.unilever.ohub.spark.export.{CsvOptions, ExportOutboundWriter}
-import org.apache.spark.sql.{Dataset, SparkSession}
+import com.unilever.ohub.spark.export.{ CsvOptions, ExportOutboundWriter }
+import org.apache.spark.sql.{ Dataset, SparkSession }
 
 trait AcmOptions extends CsvOptions {
 
@@ -16,7 +16,7 @@ trait AcmOptions extends CsvOptions {
 }
 
 object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson, AcmContactPerson] with AcmOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[ContactPerson]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[ContactPerson]) = {
     import spark.implicits._
     dataSet.map(ContactPersonAcmConverter.convert(_))
   }
@@ -25,7 +25,7 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson, A
 }
 
 object OperatorOutboundWriter extends ExportOutboundWriter[Operator, AcmOperator] with AcmOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[Operator]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Operator]) = {
     import spark.implicits._
     dataSet.map(OperatorAcmConverter.convert(_))
   }
@@ -34,7 +34,7 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator, AcmOperator
 }
 
 object SubscriptionOutboundWriter extends ExportOutboundWriter[Subscription, AcmSubscription] with AcmOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[Subscription]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Subscription]) = {
     import spark.implicits._
     dataSet.map(SubscriptionAcmConverter.convert(_))
   }
@@ -43,7 +43,7 @@ object SubscriptionOutboundWriter extends ExportOutboundWriter[Subscription, Acm
 }
 
 object ProductOutboundWriter extends ExportOutboundWriter[Product, AcmProduct] with AcmOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[Product]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Product]) = {
     import spark.implicits._
     dataSet.map(ProductAcmConverter.convert(_))
   }
@@ -52,7 +52,7 @@ object ProductOutboundWriter extends ExportOutboundWriter[Product, AcmProduct] w
 }
 
 object OrderOutboundWriter extends ExportOutboundWriter[Order, AcmOrder] with AcmOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[Order]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Order]) = {
     import spark.implicits._
     dataSet.map(OrderAcmConverter.convert(_))
   }
@@ -70,12 +70,12 @@ object OrderLineOutboundWriter extends ExportOutboundWriter[OrderLine, AcmOrderL
     dataSet.filter(o ⇒ {
       o.orderType match {
         case Some(t) ⇒ !(t.equals("SSD") || t.equals("TRANSFER"))
-        case None ⇒ true
+        case None    ⇒ true
       }
     });
   }
 
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[OrderLine]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[OrderLine]) = {
     import spark.implicits._
     dataSet.map(OrderLineAcmConverter.convert(_))
   }
@@ -84,7 +84,7 @@ object OrderLineOutboundWriter extends ExportOutboundWriter[OrderLine, AcmOrderL
 }
 
 object ActivityOutboundWriter extends ExportOutboundWriter[Activity, AcmActivity] with AcmOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[Activity]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Activity]) = {
     import spark.implicits._
     dataSet.map(ActivityAcmConverter.convert(_))
   }
@@ -98,7 +98,7 @@ object ActivityOutboundWriter extends ExportOutboundWriter[Activity, AcmActivity
 }
 
 object LoyaltyPointsOutboundWriter extends ExportOutboundWriter[LoyaltyPoints, AcmLoyaltyPoints] with AcmOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[LoyaltyPoints]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[LoyaltyPoints]) = {
     import spark.implicits._
     dataSet.map(LoyaltyPointsAcmConverter.convert(_))
   }
