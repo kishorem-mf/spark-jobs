@@ -1,8 +1,6 @@
-import com.typesafe.sbt.SbtScalariform
 import sbt.Keys._
 import sbt._
 import sbtassembly.AssemblyKeys.assembly
-import scalariform.formatter.preferences._
 import scoverage.ScoverageKeys._
 
 object GlobalSettings extends AutoPlugin {
@@ -12,7 +10,7 @@ object GlobalSettings extends AutoPlugin {
   override val projectSettings: Seq[Setting[_]] = Seq(
     scalaVersion := "2.11.12",
     libraryDependencies ++= projectDependencies
-  ) ++ testSettings ++ scoverageSettings ++ scalariFormSettings ++ forceDepsSettings
+  ) ++ testSettings ++ scoverageSettings ++ forceDepsSettings
 
   lazy val testSettings: Seq[Setting[_]] = {
     val flags = Seq(Tests.Argument("-oD"))
@@ -22,21 +20,7 @@ object GlobalSettings extends AutoPlugin {
       Test / testOptions ++= flags
     )
   }
-
-  lazy val scalariFormSettings: Seq[Setting[_]] = Seq(
-    SbtScalariform.autoImport.scalariformPreferences :=
-      SbtScalariform.autoImport.scalariformPreferences.value
-        .setPreference(AlignParameters, false)
-        .setPreference(AlignSingleLineCaseStatements, true)
-        .setPreference(AlignSingleLineCaseStatements.MaxArrowIndent, 90)
-        .setPreference(DoubleIndentConstructorArguments, true)
-        .setPreference(RewriteArrowSymbols, true)
-        .setPreference(DanglingCloseParenthesis, Preserve)
-        .setPreference(IndentSpaces, 2)
-        .setPreference(IndentWithTabs, false)
-        .setPreference(NewlineAtEndOfFile, true)
-  )
-
+  
   lazy val scoverageSettings: Seq[Setting[_]] = Seq(
     // Scoverage settings
     coverageExcludedPackages := "<empty>",
