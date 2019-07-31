@@ -45,6 +45,8 @@ object CampaignClickPreProcess extends BasePreProcess[CampaignClick]
 
 object ChannelMappingPreProcess extends BasePreProcess[ChannelMapping]
 
+object ChainPreProcess extends BasePreProcess[Chain]
+
 case class PreProcessConfig(
     integratedInputFile: String = "path-to-integrated-input-file",
     deltaInputFile: String = "path-to-delta-input-file",
