@@ -54,7 +54,8 @@ object GlobalSettings extends AutoPlugin {
     "org.scalamock" %% "scalamock" % "4.1.0" % "test,it",
     "org.scalikejdbc" %% "scalikejdbc-test" % "3.3.1" % "test",
     "com.h2database" % "h2" % "1.4.197" % "test,it",
-    "com.microsoft.azure" % "adal4j" % "1.6.4"
+    "com.microsoft.azure" % "adal4j" % "1.6.4",
+    "org.reflections" % "reflections" % "0.9.11"
   )
 
   /**
@@ -64,8 +65,7 @@ object GlobalSettings extends AutoPlugin {
     dependencyOverrides ++= Seq(
       "com.google.code.findbugs" % "jsr305" % "3.0.2",
       "io.netty" % "netty" % "3.9.9.Final",
-      "commons-net" % "commons-net" % "2.2",
-      "com.google.guava" % "guava" % "11.0.2"
+      "commons-net" % "commons-net" % "2.2"
     )
   )
 }

@@ -23,8 +23,6 @@ object OrderLinePreProcess extends BasePreProcess[OrderLine]
 
 object ProductPreProcess extends BasePreProcess[Product]
 
-object RecipePreProcess extends BasePreProcess[Recipe]
-
 object ActivityPreProcess extends BasePreProcess[Activity]
 
 object AnswerPreProcess extends BasePreProcess[Answer]

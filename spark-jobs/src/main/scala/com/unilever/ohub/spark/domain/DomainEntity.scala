@@ -37,3 +37,7 @@ trait DomainEntity extends Product {
   // ENABLE IF THE ENTITY SHOULDN'T BE CREATED WHEN INGESTION ERRORS ARE PRESENT
   // assert(ingestionErrors.isEmpty, s"can't create domain entity due to '${ingestionErrors.size}' ingestion error(s): '${ingestionErrors.keySet.toSeq.sorted.mkString(",")}'")
 }
+
+trait DomainEntityCompanion {
+  val engineFolderName: String
+};
