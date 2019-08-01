@@ -123,7 +123,7 @@ def getOutboundCount(runId: String, domain: String) = {
     case "loyaltypoints" => "loyalties"
     case _ => domain
   }
-  val outboundAcm = readCsv(s"dbfs:/mnt/outbound/${domain}/${runId}/UFS_${acmDomain.toUpperCase()}*.csv")
+  val outboundAcm = readCsv(s"dbfs:/mnt/engine/outbound/${domain}/${runId}/UFS_${acmDomain.toUpperCase()}*.csv")
   val outboundAcmCount = tryCount(() => outboundAcm.count())
   (outboundDispatchCount, outboundAcmCount)
 }
@@ -213,16 +213,6 @@ val counts = getCounts(runId, allDomains :_*)
 
 // COMMAND ----------
 
-println(s"Export for: ${runId}")
-counts.orderBy($"domain").show(truncate = false)
-
-// COMMAND ----------
-
-println(s"Export for: ${runId}")
-counts.orderBy($"domain").select("domain", "integratedCount", "changedCount").show(truncate = false)
-
-// COMMAND ----------
-
 val exportedToAcm = Seq(
   "operators", 
   "contactpersons", 
@@ -245,6 +235,7 @@ val exportedToDispatch = Seq(
   "products",
   "campaignclicks",
   "campaignbounces",
+  "campaigns",
   "campaignsends",
   "campaignopens"
 )
@@ -276,10 +267,27 @@ val assertResult = allAsserts
 
 // COMMAND ----------
 
-println(s"Export for: ${runId}")
-assertResult.show(truncate = false)
+assertResult.coalesce(1).write.mode(SaveMode.Overwrite).json(s"dbfs:/mnt/inbound/runresult/${runId}/assert")
+counts.coalesce(1).write.mode(SaveMode.Overwrite).json(s"dbfs:/mnt/inbound/runresult/${runId}/count")
 
 // COMMAND ----------
 
-assertResult.coalesce(1).write.mode(SaveMode.Overwrite).json(s"dbfs:/mnt/inbound/runresult/${runId}/assert")
-counts.coalesce(1).write.mode(SaveMode.Overwrite).json(s"dbfs:/mnt/inbound/runresult/${runId}/count")
+displayHTML(s"<h1>Run for data provided on ${runId}</h1>")
+
+// COMMAND ----------
+
+val allDone = assertResult.withColumn("done", $"PipelineFinished" && $"AllIngested" && $"NoIngestionsErrors" && $"DispatchExportComplete" && $"AcmExportComplete").filter(!$"done").count() == 0
+allDone match {
+  case true => displayHTML("<p style='color:green;''>All pipelines have run successfully</p>")
+  case false => displayHTML("<p style='color:red'>All pipelines have <strong>NOT</strong> run successfully</p>")
+}
+
+// COMMAND ----------
+
+// DBTITLE 1,Assertions
+display(assertResult)
+
+// COMMAND ----------
+
+// DBTITLE 1,Counts
+display(counts.orderBy($"domain".asc))
