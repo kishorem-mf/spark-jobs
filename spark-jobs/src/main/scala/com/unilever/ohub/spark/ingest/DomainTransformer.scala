@@ -9,7 +9,8 @@ object DomainTransformer {
   final val ZERO_WIDTH_NO_BREAK_SPACE = "\uFEFF" // see also: http://www.fileformat.info/info/unicode/char/FEFF/index.htm
 }
 
-class DomainTransformer() extends DomainTransformFunctions with Serializable {
+class DomainTransformer() extends Serializable {
+
   import DomainTransformer._
 
   var headers: Map[String, Int] = Map()
@@ -20,49 +21,32 @@ class DomainTransformer() extends DomainTransformFunctions with Serializable {
     this.headers = headers
   }
 
-  def mandatory(originalColumnName: String, domainFieldName: String)(implicit row: Row): String =
-    mandatory[String](originalColumnName, domainFieldName, identity)(row)
+  def mandatory(originalColumnName: String)(implicit row: Row): String = {
+    mandatory(originalColumnName, (x: String) => x)(row)
+  }
 
-  def mandatory[T](originalColumnName: String, domainFieldName: String, transformFn: String ⇒ T)(implicit row: Row): T = {
+  def mandatory[T](originalColumnName: String, transformFn: String ⇒ T)(implicit row: Row): T = {
     val valueOpt: Option[String] = optionalValue(originalColumnName)(row)
 
-    transformOrError[T](originalColumnName, domainFieldName, mandatory = true, valueOpt, transformFn).get
+    transformOrError[T](originalColumnName, mandatory = true, valueOpt, transformFn).get
   }
 
-  def mandatory(originalColumnName: String, domainFieldName: String, valueOpt: Option[String]): String = {
-    transformOrError(originalColumnName, domainFieldName, mandatory = true, valueOpt, identity).get
-  }
-
-  def optional(originalColumnName: String, domainFieldName: String)(implicit row: Row): Option[String] = {
+  def optional(originalColumnName: String)(implicit row: Row): Option[String] = {
     val valueOpt: Option[String] = optionalValue(originalColumnName)(row)
 
-    transformOrError(originalColumnName, domainFieldName, mandatory = false, valueOpt, identity)
+    transformOrError(originalColumnName, mandatory = false, valueOpt, identity)
   }
 
-  def optional[T](originalColumnName: String, domainFieldName: String, transformFn: String ⇒ T)(implicit row: Row): Option[T] = {
+  def optional[T](originalColumnName: String, transformFn: String ⇒ T)(implicit row: Row): Option[T] = {
     val valueOpt: Option[String] = optionalValue(originalColumnName)(row)
 
-    transformOrError(originalColumnName, domainFieldName, mandatory = false, valueOpt, transformFn)
+    transformOrError(originalColumnName, mandatory = false, valueOpt, transformFn)
   }
 
-  def optional[T](originalColumnName: String, domainFieldName: String, valueOpt: Option[String], transformFn: String ⇒ T): Option[T] = {
-    transformOrError(originalColumnName, domainFieldName, mandatory = false, valueOpt, transformFn)
-  }
-
-  def additionalField[T](originalColumnName: String, additionalFieldName: String)(implicit row: Row): Option[String] = {
-    val valueOpt: Option[String] = optionalValue(originalColumnName)(row)
-    val result = transformOrError(originalColumnName, additionalFieldName, mandatory = false, valueOpt, identity)
-
-    result.foreach { additionalValue ⇒
-      additionalFields = additionalFields.updated(additionalFieldName, additionalValue)
-    }
-    result
-  }
-
-  private def transformOrError[T](originalColumnName: String, domainFieldName: String, mandatory: Boolean,
-    valueOpt: Option[String], transformFn: String ⇒ T): Option[T] = {
+  private def transformOrError[T](originalColumnName: String, mandatory: Boolean,
+                                  valueOpt: Option[String], transformFn: String ⇒ T): Option[T] = {
     if (mandatory && valueOpt.isEmpty) {
-      throw MandatoryFieldException(domainFieldName, s"No value found for '$originalColumnName'")
+      throw MandatoryFieldException(originalColumnName, s"No value found for '$originalColumnName'")
     }
 
     try {
@@ -70,14 +54,14 @@ class DomainTransformer() extends DomainTransformFunctions with Serializable {
     } catch {
       case e: Exception ⇒
         if (mandatory) {
-          throw MandatoryFieldException(domainFieldName, s"Couldn't apply transformation function on value '$valueOpt'")
+          throw MandatoryFieldException(originalColumnName, s"Couldn't apply transformation function on value '$valueOpt'")
         } else {
           val ingestionError = IngestionError(
             originalColumnName = originalColumnName,
             inputValue = valueOpt,
             exceptionMessage = s"${e.getClass.getName}:${e.getMessage}"
           )
-          errors = errors.updated(domainFieldName, ingestionError)
+          errors = errors.updated(originalColumnName, ingestionError)
         }
         None
     }
@@ -94,15 +78,6 @@ class DomainTransformer() extends DomainTransformFunctions with Serializable {
         } else
           throw e
     }
-  }
-
-  def mandatoryValue(columnName: String, domainFieldName: String)(implicit row: Row): String = {
-    val valueOpt = optionalValue(columnName)(row)
-
-    if (valueOpt.isEmpty) {
-      throw MandatoryFieldException(domainFieldName, s"No value found for '$columnName'")
-    }
-    valueOpt.get
   }
 
   private def getFieldIndex(columnName: String, numberOfBomCharsToPrepend: Int = 0)(implicit row: Row): Int =

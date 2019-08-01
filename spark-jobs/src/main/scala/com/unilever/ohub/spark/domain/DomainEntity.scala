@@ -6,9 +6,6 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 
 object DomainEntity {
   case class IngestionError(originalColumnName: String, inputValue: Option[String], exceptionMessage: String)
-
-  def createConcatIdFromValues(countryCode: String, sourceName: String, sourceEntityId: String): String =
-    s"$countryCode~$sourceName~$sourceEntityId"
 }
 
 // marker trait for all domain entities (press ctrl + h in IntelliJ to see all)
@@ -40,3 +37,7 @@ trait DomainEntity extends Product {
   // ENABLE IF THE ENTITY SHOULDN'T BE CREATED WHEN INGESTION ERRORS ARE PRESENT
   // assert(ingestionErrors.isEmpty, s"can't create domain entity due to '${ingestionErrors.size}' ingestion error(s): '${ingestionErrors.keySet.toSeq.sorted.mkString(",")}'")
 }
+
+trait DomainEntityCompanion {
+  val engineFolderName: String
+};

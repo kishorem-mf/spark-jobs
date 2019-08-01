@@ -1,5 +1,7 @@
 package com.unilever.ohub.spark.export.azuredw
 
+import java.sql.Timestamp
+
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity._
 import com.unilever.ohub.spark.storage.Storage
@@ -33,6 +35,14 @@ case class AzureDWConfiguration(
   blobStorageKey: String = ""
 ) extends SparkJobConfig
 
+case class LogRow(
+  entityName: String,
+  loadingDate: java.sql.Timestamp,
+  latestContentDate: java.sql.Timestamp,
+  loadingTimeSec: Int,
+  rowCount: Int
+)
+
 class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJob[AzureDWConfiguration] {
 
   override private[spark] def defaultConfig = AzureDWConfiguration()
@@ -62,6 +72,12 @@ class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJob[Azure
       opt[String]("dbTempDir") required() action { (x, c) ⇒
         c.copy(dbTempDir = x)
       } text "dbTempDir the temporary loading bucket"
+      opt[String]("blobStorageContainer") required() action { (x, c) ⇒
+        c.copy(blobStorageContainer = x)
+      } text "blobStorageContainer"
+      opt[String]("blobStorageKey") required() action { (x, c) ⇒
+        c.copy(blobStorageKey = x)
+      } text "blobStorageKey"
 
       version("1.0")
       help("help") text "help text"
@@ -71,11 +87,46 @@ class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJob[Azure
   private def dropUnnecessaryFields(dataSet: Dataset[DomainType]): DataFrame = {
 
     val mapFields: Array[String] = dataSet.schema.fields.collect(
-      { case field if field.dataType.typeName == "map" ⇒ field.name })
+      { case field if field.dataType.typeName == "map" || field.dataType.typeName == "array" ⇒ field.name })
 
     val otherUnnecessaryFields = Seq("id")
 
     dataSet.drop(mapFields ++ otherUnnecessaryFields: _*)
+  }
+
+  private def logToAzureDWTable(spark: SparkSession, storage: Storage, config: AzureDWConfiguration, jobDuration: Int): Unit = {
+
+    import spark.implicits._
+
+    val insertedRowCount = storage.readAzureDWQuery(
+      spark = spark, dbUrl = config.dbUrl, userName = config.dbUsername,
+      userPassword = config.dbPassword, dbTempDir = config.dbTempDir,
+      query = s"select count(*) as insertedRowCount from ${config.dbSchema}.${config.entityName}"
+    ).select("insertedRowCount").rdd.map(r ⇒ r(0)).collect()(0).toString.toInt
+
+    val maxOhubUpdated = storage.readAzureDWQuery(
+      spark = spark, dbUrl = config.dbUrl, userName = config.dbUsername,
+      userPassword = config.dbPassword, dbTempDir = config.dbTempDir,
+      query = s"select max(ohubUpdated) as maxOhubUpdated from ${config.dbSchema}.${config.entityName}"
+    ).select("maxOhubUpdated").rdd.map(r ⇒ r(0)).collect()(0).toString
+
+    val loggingDF = Seq(LogRow(
+      entityName = config.entityName,
+      loadingDate = new Timestamp(System.currentTimeMillis()),
+      latestContentDate = Timestamp.valueOf(maxOhubUpdated),
+      loadingTimeSec = jobDuration.toInt,
+      rowCount = insertedRowCount.toString.toInt
+    )).toDF()
+
+    storage.writeAzureDWTable(
+      df = loggingDF,
+      dbUrl = config.dbUrl,
+      dbTable = "eng.logging_staging",
+      userName = config.dbUsername,
+      userPassword = config.dbPassword,
+      dbTempDir = config.dbTempDir,
+      saveMode = SaveMode.Append
+    )
   }
 
   /**
@@ -86,14 +137,15 @@ class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJob[Azure
     * @param storage the class defining the storage mechanism
     *
     *                Implementation notes:
-    *                [Flexibility] Tables are dropped and recreated (as default, it can be changed) so that every new field in the
-    *                source parquet is automatically created in the destination table.
-    *                Tables are subdue to a row-level security policy (table-valued function + security policy). In order to satisfy
-    *                the [flexibility] they need to be dropped and recreated together with the table.
+    *                [Flexibility] Tables are dropped and recreated (as default, it can be changed) so that every new
+    *                field in the source parquet is automatically created in the destination table.
+    *                Tables are subdue to a row-level security policy (table-valued function + security policy).
+    *                In order to satisfy the [flexibility] they need to be dropped and recreated together with the table.
     *                These "contraints" require the countryCode column to be always available.
     *
     */
   override def run(spark: SparkSession, config: AzureDWConfiguration, storage: Storage): Unit = {
+
     log.info(s"Writing integrated entities [${config.integratedInputFile}] to Azure DW in the table [${config.entityName}].")
 
     // Add blob storage key to hadoop configuration for wasb protocol connection required by the tempo staging directory
@@ -123,9 +175,10 @@ class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJob[Azure
     log.info(s"Pre action: ${dropRowLevelSecurityPolicyAction}")
     log.info(s"Post action: ${createRowLevelSecurityPolicyAction}")
 
+    val startOfJob = System.currentTimeMillis()
+
     storage.writeAzureDWTable(
       df = result,
-      jdbcDriverClass = "com.databricks.spark.sqldw",
       dbUrl = config.dbUrl,
       dbTable = dbFullTableName,
       userName = config.dbUsername,
@@ -136,20 +189,24 @@ class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJob[Azure
       saveMode = SaveMode.Overwrite
     )
 
+    val jobDuration = ((System.currentTimeMillis - startOfJob) / 1000).toInt
     log.info(s"Written to ${dbFullTableName}")
+
+    // Logging info to Azure DW
+    logToAzureDWTable(spark, storage, config, jobDuration)
 
   }
 }
 
-object ActivityAzureDWWriter extends AzureDWWriter[Activity]
+object ActivityDWWriter extends AzureDWWriter[Activity]
 
-object AnswerAzureDWWriter extends AzureDWWriter[Answer]
+object AnswerDWWriter extends AzureDWWriter[Answer]
 
-object CampaignAzureDWWriter extends AzureDWWriter[Campaign]
+object CampaignDWWriter extends AzureDWWriter[Campaign]
 
-object CampaignBounceAzureDWWriter extends AzureDWWriter[CampaignBounce]
+object CampaignBounceDWWriter extends AzureDWWriter[CampaignBounce]
 
-object CampaignClickAzureDWWriter extends AzureDWWriter[CampaignClick]
+object CampaignClickDWWriter extends AzureDWWriter[CampaignClick]
 
 object CampaignOpenDWWriter extends AzureDWWriter[CampaignOpen]
 
@@ -170,7 +227,5 @@ object OrderLineDWWriter extends AzureDWWriter[OrderLine]
 object ProductDWWriter extends AzureDWWriter[Product]
 
 object QuestionDWWriter extends AzureDWWriter[Question]
-
-object RecipeDWWriter extends AzureDWWriter[Recipe]
 
 object SubscriptionDWWriter extends AzureDWWriter[Subscription]

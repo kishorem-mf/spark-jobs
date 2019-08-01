@@ -23,8 +23,6 @@ object OrderLinePreProcess extends BasePreProcess[OrderLine]
 
 object ProductPreProcess extends BasePreProcess[Product]
 
-object RecipePreProcess extends BasePreProcess[Recipe]
-
 object ActivityPreProcess extends BasePreProcess[Activity]
 
 object AnswerPreProcess extends BasePreProcess[Answer]
@@ -44,6 +42,8 @@ object CampaignSendPreProcess extends BasePreProcess[CampaignSend]
 object CampaignClickPreProcess extends BasePreProcess[CampaignClick]
 
 object ChannelMappingPreProcess extends BasePreProcess[ChannelMapping]
+
+object ChainPreProcess extends BasePreProcess[Chain]
 
 case class PreProcessConfig(
     integratedInputFile: String = "path-to-integrated-input-file",

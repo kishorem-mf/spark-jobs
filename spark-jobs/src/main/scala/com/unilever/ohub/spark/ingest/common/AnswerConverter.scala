@@ -1,44 +1,42 @@
 package com.unilever.ohub.spark.ingest.common
 
+import java.sql.Timestamp
+
 import com.unilever.ohub.spark.domain.entity.Answer
 import com.unilever.ohub.spark.ingest.CustomParsers._
-import com.unilever.ohub.spark.ingest.{ DomainTransformer, AnswerEmptyParquetWriter }
+import com.unilever.ohub.spark.ingest.{AnswerEmptyParquetWriter, DomainTransformer}
 import org.apache.spark.sql.Row
 
 object AnswerConverter extends CommonDomainGateKeeper[Answer] with AnswerEmptyParquetWriter {
 
-  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Answer = { transformer ⇒ row ⇒
-    import transformer._
-    implicit val source: Row = row
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Answer = { transformer ⇒
+    row ⇒
+      import transformer._
+      implicit val source: Row = row
 
-    val ohubCreated = currentTimestamp()
+      val ohubCreated = new Timestamp(System.currentTimeMillis())
 
-    // format: OFF
+      Answer(
+        id = mandatory("id"),
+        creationTimestamp = mandatory("creationTimestamp", toTimestamp),
+        concatId = mandatory("concatId"),
+        countryCode = mandatory("countryCode"),
+        customerType = mandatory("customerType"),
+        isActive = mandatory("isActive", toBoolean),
+        sourceEntityId = mandatory("sourceEntityId"),
+        sourceName = mandatory("sourceName"),
+        ohubCreated = ohubCreated,
+        ohubUpdated = ohubCreated,
+        dateCreated = optional("dateCreated", parseDateTimeUnsafe()),
+        dateUpdated = optional("dateUpdated", parseDateTimeUnsafe()),
+        ohubId = Option.empty,
+        isGoldenRecord = false,
 
-    Answer(
-      // fieldName                  mandatory                   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
-      id                          = mandatory(                  "id",                         "id"),
-      creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp", toTimestamp),
-      concatId                    = mandatory(                  "concatId",                   "concatId"),
-      countryCode                 = mandatory(                  "countryCode",                "countryCode"),
-      customerType                = mandatory(                  "customerType",               "customerType"),
-      isActive                    = mandatory(                  "isActive",                   "isActive", toBoolean),
-      sourceEntityId              = mandatory(                  "sourceEntityId",             "sourceEntityId"),
-      sourceName                  = mandatory(                  "sourceName",                 "sourceName"),
-      ohubCreated                 = ohubCreated,
-      ohubUpdated                 = ohubCreated,
-      dateCreated                 = optional(                   "dateCreated",                "dateCreated", parseDateTimeUnsafe()),
-      dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated", parseDateTimeUnsafe()),
-      ohubId                      = Option.empty,
-      isGoldenRecord              = false,
+        answer = optional("answer"),
+        questionConcatId = mandatory("questionConcatId"),
 
-      answer                      = optional(                   "answer",                     "answer"),
-      questionConcatId            = mandatory(                  "questionConcatId",           "questionConcatId"),
-
-      additionalFields            = additionalFields,
-      ingestionErrors             = errors
-    )
-
-    // format: ON
+        additionalFields = additionalFields,
+        ingestionErrors = errors
+      )
   }
 }

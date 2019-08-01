@@ -7,13 +7,19 @@
 First it copies the _pipelines_, _test data_ and _test scripts_ to the designated directories.
 Then it launches a Spark cluster with two worker nodes. 
 
-The base image is a custom scalaspark image. This can be install in the local registry by building the dockerfile located in the `engine-build-tools`-repo.
+The base image is a custom `scalaspark` image. This can be install in the local registry by building the dockerfile located in the `engine-build-tools`-repo.
+
+--or--
+
+The `scalaspark` image can be pulled from the azure container repo. To do this, the `az`-cli can be used (see: [az acr readme](https://github.com/MicrosoftDocs/azure-docs/blob/master/articles/container-registry/container-registry-get-started-docker-cli.md)--> only the log into a registry part)
 
 ### Artifacts
 
 Build the spark-jobs JAR by running `sbt assemble -DsparkDependencyType=provided`.
 
 Build the python egg by: Running in linux/mac-os(because of the C++ executable architecture --> WSL(Windows Subsystem for Linux) can be used for this) and using python3(executable for python3 is asserted to be python on path, not python3) and call `engine\name-matching\compile_library.sh`.
+
+Note: anaconda can be used to resolve the dependencies, see name-matching readme for more info on that.
 
 ## Running the test
 For a decent shell/bash:

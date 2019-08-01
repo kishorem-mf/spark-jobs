@@ -27,6 +27,11 @@ __pycache__/
 .pytest_cache/
 .coverage
 *.log
+*.iml
+_SUCCESS
+*.crc
+*.parquet
+spark-jobs/src/test/resources/checkpoints
 
 # Setuptools
 build/

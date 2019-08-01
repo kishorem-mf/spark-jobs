@@ -1,52 +1,49 @@
 package com.unilever.ohub.spark.ingest.common
 
+import java.sql.Timestamp
+
 import com.unilever.ohub.spark.domain.entity.Activity
 import com.unilever.ohub.spark.ingest.CustomParsers._
-import com.unilever.ohub.spark.ingest.{ DomainTransformer, ActivityEmptyParquetWriter }
+import com.unilever.ohub.spark.ingest.{ActivityEmptyParquetWriter, DomainTransformer}
 import org.apache.spark.sql.Row
-import java.util.UUID
 
 object ActivityConverter extends CommonDomainGateKeeper[Activity] with ActivityEmptyParquetWriter {
 
-  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Activity = { transformer ⇒ row ⇒
-    import transformer._
-    implicit val source: Row = row
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Activity = { transformer ⇒
+    row ⇒
+      import transformer._
+      implicit val source: Row = row
 
-    val ohubCreated = currentTimestamp()
+      val ohubCreated = new Timestamp(System.currentTimeMillis())
 
-    // format: OFF
+      Activity(
+        id = mandatory("id"),
+        creationTimestamp = mandatory("creationTimestamp", toTimestamp),
+        concatId = mandatory("concatId"),
+        countryCode = mandatory("countryCode"),
+        customerType = mandatory("customerType"),
+        dateCreated = optional("dateCreated", parseDateTimeUnsafe()),
+        dateUpdated = optional("dateUpdated", parseDateTimeUnsafe()),
+        isActive = mandatory("isActive", toBoolean),
+        isGoldenRecord = false,
+        sourceEntityId = mandatory("sourceEntityId"),
+        sourceName = mandatory("sourceName"),
+        ohubId = Option.empty,
+        ohubCreated = ohubCreated,
+        ohubUpdated = ohubCreated,
 
-    Activity(
-      // fieldName                  mandatory                   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
-      id                          = mandatory(                  "id",                         "id"),
-      creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp", toTimestamp),
-      concatId                    = mandatory(                  "concatId",                   "concatId"),
-      countryCode                 = mandatory(                  "countryCode",                "countryCode"),
-      customerType                = mandatory(                  "customerType",               "customerType"),
-      dateCreated                 = optional(                   "dateCreated",                "dateCreated", parseDateTimeUnsafe()),
-      dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated", parseDateTimeUnsafe()),
-      isActive                    = mandatory(                  "isActive",                   "isActive", toBoolean),
-      isGoldenRecord              = false,
-      sourceEntityId              = mandatory(                  "sourceEntityId",             "sourceEntityId"),
-      sourceName                  = mandatory(                  "sourceName",                 "sourceName"),
-      ohubId                      = Option.empty,
-      ohubCreated                 = ohubCreated,
-      ohubUpdated                 = ohubCreated,
+        activityDate = optional("activityDate", parseDateTimeUnsafe()),
+        name = optional("name"),
+        details = optional("details"),
+        actionType = optional("actionType"),
+        contactPersonConcatId = optional("contactPersonConcatId"),
+        contactPersonOhubId = Option.empty,
+        operatorConcatId = optional("operatorConcatId"),
+        operatorOhubId = Option.empty,
+        activityId = optional("activityId"),
 
-      activityDate                = optional(                   "activityDate",               "activityDate", parseDateTimeUnsafe()),
-      name                        = optional(                   "name",                       "name"),
-      details                     = optional(                   "details",                    "details"),
-      actionType                  = optional(                   "actionType",                 "actionType"),
-      contactPersonConcatId       = optional(                   "contactPersonConcatId",      "contactPersonConcatId"),
-      contactPersonOhubId         = Option.empty,
-      operatorConcatId            = optional(                   "operatorConcatId",      "operatorConcatId"),
-      operatorOhubId              = Option.empty,
-      activityId                  = optional(                   "activityId",             "activityId"),
-
-      additionalFields            = additionalFields,
-      ingestionErrors             = errors
-    )
-
-    // format: ON
+        additionalFields = additionalFields,
+        ingestionErrors = errors
+      )
   }
 }

@@ -1,60 +1,57 @@
 package com.unilever.ohub.spark.ingest.common
 
+import java.sql.Timestamp
+
 import com.unilever.ohub.spark.domain.entity.Subscription
 import com.unilever.ohub.spark.ingest.CustomParsers._
-import com.unilever.ohub.spark.ingest.{ DomainTransformer, SubscriptionEmptyParquetWriter }
+import com.unilever.ohub.spark.ingest.{DomainTransformer, SubscriptionEmptyParquetWriter}
 import org.apache.spark.sql.expressions.WindowSpec
-import org.apache.spark.sql.{ Row, SparkSession }
+import org.apache.spark.sql.{Row, SparkSession}
 
 object SubscriptionConverter extends CommonDomainGateKeeper[Subscription] with SubscriptionEmptyParquetWriter {
 
-  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Subscription = { transformer ⇒ row ⇒
-    import transformer._
-    implicit val source: Row = row
+  override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Subscription = { transformer ⇒
+    row ⇒
+      import transformer._
+      implicit val source: Row = row
 
-    val ohubCreated = currentTimestamp()
-    val contactPersonConcatRefId: String = createConcatId("countryCode", "sourceName", "contactPersonRefId")
+      val ohubCreated = new Timestamp(System.currentTimeMillis())
 
-    // format: OFF
-
-    Subscription(
-      // fieldName                  mandatory                   sourceFieldName             targetFieldName                 transformationFunction (unsafe)
-      id                          = mandatory(                  "id",                         "id"),
-      creationTimestamp           = mandatory(                  "creationTimestamp",          "creationTimestamp",          toTimestamp),
-      concatId                    = mandatory(                  "concatId",                   "concatId"),
-      countryCode                 = mandatory(                  "countryCode",                "countryCode"                                  ),
-      customerType                = Subscription.customerType,
-      dateCreated                 = optional(                   "dateCreated",                "dateCreated",                parseDateTimeUnsafe()),
-      dateUpdated                 = optional(                   "dateUpdated",                "dateUpdated",                parseDateTimeUnsafe()),
-      isActive                    = mandatory(                  "isActive",                   "isActive",                   toBoolean),
-      isGoldenRecord              = false,
-      sourceEntityId              = mandatory(                  "sourceEntityId",             "sourceEntityId"),
-      sourceName                  = mandatory(                  "sourceName",                 "sourceName"),
-      ohubId                      = Option.empty,
-      ohubCreated                 = ohubCreated,
-      ohubUpdated                 = ohubCreated,
-      contactPersonConcatId       = contactPersonConcatRefId,
-      contactPersonOhubId         = Option.empty,
-      communicationChannel        = optional(                   "communicationChannel",       "communicationChannel"),
-      subscriptionType            = mandatory(                  "subscriptionType",           "subscriptionType"),
-      hasSubscription             = mandatory(                  "hasSubscription",            "hasSubscription",            toBoolean),
-      subscriptionDate            = optional(                   "subscriptionDate",           "subscriptionDate",           parseDateTimeUnsafe()),
-      hasConfirmedSubscription    = optional(                   "hasConfirmedSubscription",   "hasConfirmedSubscription",   toBoolean),
-      confirmedSubscriptionDate   = optional(                   "confirmedSubscriptionDate",  "confirmedSubscriptionDate",  parseDateTimeUnsafe()),
-      fairKitchensSignUpType      = optional(                   "fairKitchensSignUpType",     "fairKitchensSignUpType"),
-      additionalFields            = additionalFields,
-      ingestionErrors             = errors
-    )
-
-    // format: ON
+      Subscription(
+        id = mandatory("id"),
+        creationTimestamp = mandatory("creationTimestamp", toTimestamp),
+        concatId = mandatory("concatId"),
+        countryCode = mandatory("countryCode"),
+        customerType = Subscription.customerType,
+        dateCreated = optional("dateCreated", parseDateTimeUnsafe()),
+        dateUpdated = optional("dateUpdated", parseDateTimeUnsafe()),
+        isActive = mandatory("isActive", toBoolean),
+        isGoldenRecord = false,
+        sourceEntityId = mandatory("sourceEntityId"),
+        sourceName = mandatory("sourceName"),
+        ohubId = Option.empty,
+        ohubCreated = ohubCreated,
+        ohubUpdated = ohubCreated,
+        contactPersonConcatId = mandatory("contactPersonConcatId"),
+        contactPersonOhubId = Option.empty,
+        communicationChannel = optional("communicationChannel"),
+        subscriptionType = mandatory("subscriptionType"),
+        hasSubscription = mandatory("hasSubscription", toBoolean),
+        subscriptionDate = optional("subscriptionDate", parseDateTimeUnsafe()),
+        hasConfirmedSubscription = optional("hasConfirmedSubscription", toBoolean),
+        confirmedSubscriptionDate = optional("confirmedSubscriptionDate", parseDateTimeUnsafe()),
+        fairKitchensSignUpType = optional("fairKitchensSignUpType"),
+        additionalFields = additionalFields,
+        ingestionErrors = errors
+      )
   }
 
   /**
-   * @inheritdoc
-   * @param spark sparksession, user for implicits import
-   * @param windowSpec windowspec that is sorted by this function
-   * @return a sorted dedplicationWindowSpec
-   */
+    * @inheritdoc
+    * @param spark      sparksession, user for implicits import
+    * @param windowSpec windowspec that is sorted by this function
+    * @return a sorted dedplicationWindowSpec
+    */
   override def sortDeduplicationWindowSpec(spark: SparkSession, windowSpec: WindowSpec): WindowSpec = {
     import spark.implicits._
 
