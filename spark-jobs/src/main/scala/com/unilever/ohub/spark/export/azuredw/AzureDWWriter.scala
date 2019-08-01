@@ -229,3 +229,5 @@ object ProductDWWriter extends AzureDWWriter[Product]
 object QuestionDWWriter extends AzureDWWriter[Question]
 
 object SubscriptionDWWriter extends AzureDWWriter[Subscription]
+
+object ChainDWWriter extends AzureDWWriter[Chain]
