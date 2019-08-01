@@ -12,7 +12,7 @@ import org.apache.spark.sql.SparkSession
 object SharedSparkSession {
   lazy val spark: SparkSession = createSparkSession
 
-  private val resourcesPath: Path =
+  val resourcesPath: Path =
     Paths.get(new java.io.File(".").getAbsolutePath, "src", "test", "resources")
   private val warehousePath: String =
     new File(resourcesPath.toFile, "spark-warehouse").getAbsolutePath

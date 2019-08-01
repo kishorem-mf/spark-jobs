@@ -2,11 +2,12 @@ package com.unilever.ohub.spark.domain.entity
 
 import java.sql.Timestamp
 
-import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
+import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 
-object Chain {
+object Chain extends DomainEntityCompanion {
   val customerType = "CHAIN"
+  override val engineFolderName: String = "chains"
 }
 
 case class Chain(
