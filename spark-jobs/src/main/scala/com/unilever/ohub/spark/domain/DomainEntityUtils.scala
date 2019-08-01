@@ -12,7 +12,7 @@ object DomainEntityUtils {
     *
     * @return
     */
-  def getDomainCompanionObjects: Array[DomainEntityCompanion] = {
+  lazy val domainCompanionObjects: Array[DomainEntityCompanion] = {
     val reflections = new Reflections(classOf[DomainEntity].getPackage.getName)
     val types = reflections.getSubTypesOf[DomainEntity](classOf[DomainEntity])
 

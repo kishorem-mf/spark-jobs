@@ -8,7 +8,7 @@ class DomainEntityUtilsSpec extends SimpleSpec {
   describe("DomainEntityUtils") {
     it("Should be able to get the DomainEntityCompanion object for all DomainEntities") {
       try {
-        SUT.getDomainCompanionObjects
+        SUT.domainCompanionObjects
         succeed
       } catch {
         case e: ClassCastException => fail("Did you add a companionObject of type DomainEntityCompanion to new DomainEntities?", e)

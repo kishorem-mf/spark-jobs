@@ -37,7 +37,7 @@ object AllEntityParquetsSuccessful extends SparkJob[AllEntityParquetsSuccessfulC
   }
 
   def checkAllSuccessFiles(basePath: String, runId: String)(implicit spark: SparkSession) = {
-    val allDomainCompanions = DomainEntityUtils.getDomainCompanionObjects
+    val allDomainCompanions = DomainEntityUtils.domainCompanionObjects
     val unsuccessfulDomains = allDomainCompanions
       .filter((domainCompanion: DomainEntityCompanion) ⇒ !successFileExists(s"${basePath}/${runId}/${domainCompanion.engineFolderName}.parquet"))
 
