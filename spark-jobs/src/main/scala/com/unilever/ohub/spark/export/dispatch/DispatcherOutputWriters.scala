@@ -158,7 +158,7 @@ object CampaignSendOutboundWriter extends ExportOutboundWriter[CampaignSend, Dis
 }
 
 object ChainOutboundWriter extends ExportOutboundWriter[Chain, DispatchChain] with DispatcherOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[Chain]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Chain]) = {
     import spark.implicits._
 
     dataSet.map(ChainDispatchConverter.convert(_))
