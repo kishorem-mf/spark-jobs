@@ -34,7 +34,6 @@ class AllEntityParquetsSuccessfulSpec extends SparkJobSpec {
         SUT.checkAllSuccessFiles(resourcesPath.toAbsolutePath.toString, runId)
       } catch {
         case _: NotAllEntitesSuccessfulException => succeed
-        case e: ClassCastException => fail("Did you add a companionObject of type DomainEntityCompanion to new DomainEntities?")
         case e: Throwable ⇒ fail("Unexpected exception thrown", e)
       }
     }
