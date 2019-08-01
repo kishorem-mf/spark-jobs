@@ -53,6 +53,8 @@ object CampaignOpenEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Campa
 
 object CampaignSendEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[CampaignSend] with CampaignSendEmptyParquetWriter
 
+object ChainEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Chain] with ChainEmptyParquetWriter
+
 object ChannelMappingEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[ChannelMapping] with ChannelMappingEmptyParquetWriter
 
 object ContactPersonEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[ContactPerson] with ContactPersonEmptyParquetWriter

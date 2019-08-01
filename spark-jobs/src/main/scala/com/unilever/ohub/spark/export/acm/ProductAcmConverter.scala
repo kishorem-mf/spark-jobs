@@ -15,7 +15,8 @@ object ProductAcmConverter extends Converter[Product, AcmProduct] with Transform
       MRDR_CODE = product.code,
       CREATED_AT = product.ohubCreated,
       UPDATED_AT = product.ohubUpdated,
-      DELETE_FLAG = booleanToYNConverter(!product.isActive)
+      DELETE_FLAG = booleanToYNConverter(!product.isActive),
+      PRODUCT_ID = product.concatId
     )
   }
 }

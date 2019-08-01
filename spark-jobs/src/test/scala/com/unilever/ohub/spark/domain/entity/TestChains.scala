@@ -2,41 +2,39 @@ package com.unilever.ohub.spark.domain.entity
 
 import java.sql.Timestamp
 
+
 trait TestChains {
 
-  lazy val defaultChains = Chain(
-    id = "id-1",
-    creationTimestamp = new Timestamp(1542205922011L),
-    concatId = "DE~FAIRKITCHENS~b3a6208c-d7f6-44e2-80e2-f26d461f64c0",
-    countryCode = "DE",
-    //customerType = "CHAIN",
-    dateCreated = None,
-    dateUpdated = None,
-    isActive = true,
+  val defaultChain = Chain(
+    id = "1",
+    creationTimestamp = new Timestamp(1563806646631L),
+    concatId = "US~FIREFLY~10002662",
+    countryCode = "US",
+    customerType = Chain.customerType,
+    ohubCreated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
+    ohubUpdated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
+    ohubId = Option.empty,
     isGoldenRecord = false,
-    sourceEntityId = "b3a6208c-d7f6-44e2-80e2-f26d461f64c0",
-    sourceName = "FAIRKITCHENS",
-    ohubId = None,
-    ohubCreated = Timestamp.valueOf("2019-07-30 13:49:00.0"),
-    ohubUpdated = Timestamp.valueOf("2019-07-30 13:49:00.0"),
-
-    conceptName = Some("newPromo"),
-    numberOfUnits = Some(23),
-    numberOfStates = Some(233),
-    estimatedAnnualSales = Some(33.23),
-    estimatedPurchasePotential = Some(23.93),
-    address = Some("33 weena"),
-    city = Some("Rotterdam"),
-    state = None,
-    zipCode = None,
-    website = Some("www.google.com"),
-    phone = None,
-    segment = None,
-    primaryMenu = Some("sause"),
-    secondaryMenu = None,
-
+    sourceEntityId = "10002662",
+    sourceName = "FIREFLY",
+    isActive = true,
+    dateCreated = Some(Timestamp.valueOf("2018-10-08 22:53:51")),
+    dateUpdated = Some(Timestamp.valueOf("2018-10-08 22:53:52")),
+    conceptName = Some("SWEETFIN POKE"),
+    numberOfUnits = Some(9),
+    numberOfStates = Some(1),
+    estimatedAnnualSales = Some(BigDecimal("15168900.12")),
+    estimatedPurchasePotential = Some(BigDecimal("4550670.14")),
+    address = Some("1st Lane"),
+    city = Some("New York"),
+    state = Some("New York"),
+    zipCode = Some("12112AA"),
+    website = Some("www.sweetfinpoke.com"),
+    phone = Some("1234"),
+    segment = Some("Fast Casual"),
+    primaryMenu = Some("OTHER ASIAN"),
+    secondaryMenu = Some("OTHER ASIAN"),
     additionalFields = Map(),
     ingestionErrors = Map()
   )
-
 }

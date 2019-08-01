@@ -54,7 +54,8 @@ object OperatorAcmConverter extends Converter[Operator, AcmOperator] with Transf
       SOCIAL_COMMERCIAL = op.socialCommercial,
       STRATEGIC_CHANNEL = op.strategicChannel,
       GLOBAL_CHANNEL = op.globalChannel,
-      GLOBAL_SUBCHANNEL = op.globalSubChannel
+      GLOBAL_SUBCHANNEL = op.globalSubChannel,
+      OPERATOR_ID = op.concatId
     )
   }
 }

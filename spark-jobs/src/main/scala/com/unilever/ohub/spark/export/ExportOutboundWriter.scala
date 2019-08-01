@@ -36,7 +36,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag, Outbou
 
   private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet
 
-  private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[DomainType]): Dataset[OutboundType]
+  private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[DomainType]): Dataset[OutboundType]
 
   def entityName(): String
 
