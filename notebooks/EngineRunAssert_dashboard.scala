@@ -123,7 +123,7 @@ def getOutboundCount(runId: String, domain: String) = {
     case "loyaltypoints" => "loyalties"
     case _ => domain
   }
-  val outboundAcm = readCsv(s"dbfs:/mnt/engine/outbound/${domain}/${runId}/UFS_${acmDomain.toUpperCase()}*.csv")
+  val outboundAcm = readCsv(s"dbfs:/mnt/outbound/${domain}/${runId}/UFS_${acmDomain.toUpperCase()}*.csv")
   val outboundAcmCount = tryCount(() => outboundAcm.count())
   (outboundDispatchCount, outboundAcmCount)
 }
