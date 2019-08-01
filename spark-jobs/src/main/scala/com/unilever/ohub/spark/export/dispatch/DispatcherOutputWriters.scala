@@ -157,15 +157,15 @@ object CampaignSendOutboundWriter extends ExportOutboundWriter[CampaignSend, Dis
   override def entityName(): String = "CW_SENDINGS"
 }
 
-//object ChainOutboundWriter extends ExportOutboundWriter[Chain, DispatchCampaignSend] with DispatcherOptions {
-//  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[CampaignSend]) = {
-//    import spark.implicits._
-//
-//    dataSet.map(CampaignSendDispatcherConverter.convert(_))
-//  }
-//
-//  override def entityName(): String = "CW_SENDINGS"
-//}
-//
+object ChainOutboundWriter extends ExportOutboundWriter[Chain, DispatchChain] with DispatcherOptions {
+  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[Chain]) = {
+    import spark.implicits._
+
+    dataSet.map(ChainDispatchConverter.convert(_))
+  }
+
+  override def entityName(): String = "CHAINS"
+}
+
 
 
