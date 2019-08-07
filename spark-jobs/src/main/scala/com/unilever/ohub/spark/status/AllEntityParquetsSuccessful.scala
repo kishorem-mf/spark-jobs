@@ -29,10 +29,8 @@ object AllEntityParquetsSuccessful extends SparkJob[AllEntityParquetsSuccessfulC
   private def successFileExists(location: String)(implicit spark: SparkSession): Boolean = {
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
     val exists = fs.exists(new Path(location, "_SUCCESS"))
-    exists match {
-      case true => log.info(s"_SUCCESS file found in ${location}")
-      case false => log.info(s"No _SUCCESS file found in ${location}")
-    }
+    if(exists) log.info(s"_SUCCESS file found in ${location}")
+    else log.info(s"No _SUCCESS file found in ${location}")
     exists
   }
 
