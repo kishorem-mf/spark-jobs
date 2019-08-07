@@ -47,6 +47,8 @@ object CampaignBounceHashWriter extends DomainEntityHashWriter[CampaignBounce]
 
 object CampaignClickHashWriter extends DomainEntityHashWriter[CampaignClick]
 
+object ChainHashWriter extends DomainEntityHashWriter[Chain]
+
 abstract class DomainEntityHashWriter[DomainType <: DomainEntity: TypeTag] extends SparkJob[HashWriterConfig] {
 
   override private[spark] def defaultConfig = HashWriterConfig()
