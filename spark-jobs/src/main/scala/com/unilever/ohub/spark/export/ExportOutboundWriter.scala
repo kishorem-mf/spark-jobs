@@ -18,7 +18,7 @@ import scala.reflect.runtime.universe._
 
 object TargetType extends Enumeration {
   type TargetType = Value
-  val ACM, DISPATCHER = Value
+  val ACM, DISPATCHER, DATASCIENCE, MEPS = Value
 }
 
 case class OutboundConfig(
@@ -28,28 +28,7 @@ case class OutboundConfig(
                            outboundLocation: String = "outbound-location"
                          ) extends SparkJobConfig
 
-abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag, OutboundType <: OutboundEntity] extends SparkJob[OutboundConfig] with CsvOptions {
-
-  override private[spark] def defaultConfig = OutboundConfig()
-
-  private[export] def goldenRecordOnlyFilter(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet.filter(_.isGoldenRecord)
-
-  private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet
-
-  private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[DomainType]): Dataset[OutboundType]
-
-  def entityName(): String
-
-  val csvOptions = Map()
-
-  def filename(targetType: TargetType): String = {
-    val timestampFile = LocalDateTime.now().minusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
-    targetType match {
-      case ACM ⇒ "UFS_" + entityName() + "_" + timestampFile + ".csv"
-      case DISPATCHER ⇒ "UFS_DISPATCHER" + "_" + entityName() + "_" + timestampFile + ".csv"
-    }
-  }
-
+abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig] {
   override private[spark] def configParser(): OptionParser[OutboundConfig] =
     new scopt.OptionParser[OutboundConfig]("Spark job default") {
       head("run a spark job with default config.", "1.0")
@@ -69,6 +48,33 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag, Outbou
       version("1.0")
       help("help") text "help text"
     }
+
+  override private[spark] def defaultConfig = OutboundConfig()
+}
+
+abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extends SparkJobWithOutboundExportConfig with CsvOptions {
+
+  private[export] def goldenRecordOnlyFilter(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet.filter(_.isGoldenRecord)
+
+  private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[DomainType], config: OutboundConfig) = dataSet
+
+  private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[DomainType]): Dataset[_]
+
+  def entityName(): String
+
+  val csvOptions = Map()
+
+  val onlyExportChangedRows = true
+
+  def mergeCsvFiles(targetType: TargetType) = true
+
+  def filename(targetType: TargetType): String = {
+    val timestampFile = LocalDateTime.now().minusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
+    targetType match {
+      case ACM ⇒ "UFS_" + entityName() + "_" + timestampFile + ".csv"
+      case DISPATCHER ⇒ "UFS_DISPATCHER" + "_" + entityName() + "_" + timestampFile + ".csv"
+    }
+  }
 
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     import spark.implicits._
@@ -90,30 +96,50 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag, Outbou
       case _ ⇒ integratedEntities
     }
 
-    val columnsInOrder = domainEntities.columns :+ "hasChanged"
-    val result: Dataset[DomainType] = filterDataSet(spark, domainEntities)
-      .join(hashesInputFile, Seq("concatId"), JoinType.LeftOuter)
-      .withColumn("hasChanged", when('hasChanged.isNull, true).otherwise('hasChanged))
-      .filter($"hasChanged")
+    val columnsInOrder = domainEntities.columns
+    val filtered: Dataset[DomainType] = filterDataSet(spark, domainEntities, config)
+
+    val processedChanged =
+      onlyExportChangedRows match {
+        case true =>  filterOnlyChangedRows(filtered, hashesInputFile, spark)
+        case false => filtered
+      }
+
+    val result = processedChanged
       .select(columnsInOrder.head, columnsInOrder.tail: _*)
       .as[DomainType]
 
     writeToCsv(config, convertDataSet(spark, result), spark)
   }
 
-  def writeToCsv(config: OutboundConfig, ds: Dataset[OutboundType], sparkSession: SparkSession): Unit = {
+  def filterOnlyChangedRows(dataset: Dataset[DomainType], hashesInputFile: Dataset[DomainEntityHash], spark: SparkSession) : Dataset[DomainType] = {
+    import spark.implicits._
+
+    dataset
+      .join(hashesInputFile, Seq("concatId"), JoinType.LeftOuter)
+      .withColumn("hasChanged", when('hasChanged.isNull, true).otherwise('hasChanged))
+      .filter($"hasChanged")
+      .drop("hasChanged")
+      .as[DomainType]
+  }
+
+  def writeToCsv(config: OutboundConfig, ds: Dataset[_], sparkSession: SparkSession): Unit = {
     val outputFilePath = new Path(config.outboundLocation)
     val temporaryPath = new Path(outputFilePath, UUID.randomUUID().toString)
-    ds
+    val writeableData = ds
       .write
       .mode(SaveMode.Overwrite)
       .option("encoding", "UTF-8")
       .option("header", "false")
       .options(options)
-      .csv(temporaryPath.toString)
 
-    val header = ds.columns.map(c ⇒ if (mustQuotesFields) "\"" + c + "\"" else c).mkString(delimiter)
-    mergeDirectoryToOneFile(temporaryPath, new Path(outputFilePath, filename(config.targetType)), sparkSession, header)
+    mergeCsvFiles(config.targetType) match {
+      case true => writeableData
+        .csv(temporaryPath.toString)
+        val header = ds.columns.map(c ⇒ if (mustQuotesFields) "\"" + c + "\"" else c).mkString(delimiter)
+        mergeDirectoryToOneFile(temporaryPath, new Path(outputFilePath, filename(config.targetType)), sparkSession, header)
+      case false => writeableData.csv(outputFilePath.toString)
+    }
   }
 
   def mergeDirectoryToOneFile(sourceDirectory: Path, outputFile: Path, spark: SparkSession, header: String) = {
@@ -138,6 +164,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag, Outbou
 
     val tmpCsvSourceDirectory: Path = moveOnlyCsvFilesToOtherDirectory
     FileUtil.copyMerge(fs, tmpCsvSourceDirectory, fs, outputFile, true, spark.sparkContext.hadoopConfiguration, null)
+    fs.delete(sourceDirectory, true)
   }
 
   def createHeaderFile(fs: FileSystem, sourceDirectory: Path, header: String): Path = {

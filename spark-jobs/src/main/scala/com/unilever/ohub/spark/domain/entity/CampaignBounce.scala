@@ -4,10 +4,14 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.domain.DomainExportWriter
+
+object CampaignBounceDomainExportWriter extends DomainExportWriter[CampaignBounce]
 
 object CampaignBounce extends DomainEntityCompanion {
   val customerType = "CONTACTPERSON"
   override val engineFolderName = "campaignbounces"
+  override val domainExportWriter: Option[DomainExportWriter[CampaignBounce]] = Some(CampaignBounceDomainExportWriter)
 }
 
 case class CampaignBounce(
@@ -51,4 +55,6 @@ case class CampaignBounce(
                            // other fields
                            additionalFields: Map[String, String],
                            ingestionErrors: Map[String, IngestionError]
-                         ) extends DomainEntity {}
+                         ) extends DomainEntity {
+  override def getCompanion: DomainEntityCompanion = CampaignBounce
+}
