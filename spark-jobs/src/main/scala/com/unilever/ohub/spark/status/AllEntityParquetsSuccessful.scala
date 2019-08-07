@@ -43,7 +43,6 @@ object AllEntityParquetsSuccessful extends SparkJob[AllEntityParquetsSuccessfulC
 
     unsuccessfulDomains.length > 0 match {
       case true  ⇒ {
-        log.info(s"Entities without success file found, throwing exception to let the job fail.")
         throw new NotAllEntitesSuccessfulException(s"Entities without success file: ${unsuccessfulDomains.map(_.getClass.getSimpleName).mkString(", ")}.")
       }
       case false ⇒ log.info("All success files present")
