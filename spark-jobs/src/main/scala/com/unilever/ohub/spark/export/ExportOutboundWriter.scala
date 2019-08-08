@@ -67,6 +67,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
   val onlyExportChangedRows = true
 
   def mergeCsvFiles(targetType: TargetType) = true
+  // When merging, headers are based on the dataset columns (and not writen by DataSet.write.csv)
+  private def shouldWriteHeaders(targetType: TargetType) = (!mergeCsvFiles(targetType)).toString
 
   def filename(targetType: TargetType): String = {
     val timestampFile = LocalDateTime.now().minusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
@@ -131,7 +133,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       .write
       .mode(SaveMode.Overwrite)
       .option("encoding", "UTF-8")
-      .option("header", "false")
+      .option("header", shouldWriteHeaders(config.targetType))
       .options(options)
 
     mergeCsvFiles(config.targetType) match {

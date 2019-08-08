@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter
 
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityHash, DomainEntityUtils}
 import com.unilever.ohub.spark.export.TargetType.{DATASCIENCE, MEPS, TargetType}
-import com.unilever.ohub.spark.export.{ExportOutboundWriter, OutboundConfig, SparkJobWithOutboundExportConfig}
+import com.unilever.ohub.spark.export.{CsvOptions, ExportOutboundWriter, OutboundConfig, SparkJobWithOutboundExportConfig}
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{Dataset, SparkSession}
 
@@ -17,7 +17,15 @@ object DomainExportWriter {
   ).toMap[TargetType, Seq[String]]
 }
 
-abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends ExportOutboundWriter[DomainType] {
+trait DomainExportOptions extends CsvOptions {
+  override val delimiter: String = ";"
+
+  override val extraOptions = Map(
+    "delimiter" -> delimiter
+  )
+}
+
+abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends ExportOutboundWriter[DomainType] with DomainExportOptions {
   override val onlyExportChangedRows: Boolean = false
 
   override def mergeCsvFiles(targetType: TargetType): Boolean = {
