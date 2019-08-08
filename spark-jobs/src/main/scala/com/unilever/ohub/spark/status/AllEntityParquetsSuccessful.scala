@@ -29,21 +29,18 @@ object AllEntityParquetsSuccessful extends SparkJob[AllEntityParquetsSuccessfulC
   private def successFileExists(location: String)(implicit spark: SparkSession): Boolean = {
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
     val exists = fs.exists(new Path(location, "_SUCCESS"))
-    exists match {
-      case true => log.info(s"_SUCCESS file found in ${location}")
-      case false => log.info(s"No _SUCCESS file found in ${location}")
-    }
+    if(exists) log.info(s"_SUCCESS file found in ${location}")
+    else log.info(s"No _SUCCESS file found in ${location}")
     exists
   }
 
   def checkAllSuccessFiles(basePath: String, runId: String)(implicit spark: SparkSession) = {
-    val allDomainCompanions = DomainEntityUtils.getDomainCompanionObjects
+    val allDomainCompanions = DomainEntityUtils.domainCompanionObjects
     val unsuccessfulDomains = allDomainCompanions
       .filter((domainCompanion: DomainEntityCompanion) ⇒ !successFileExists(s"${basePath}/${runId}/${domainCompanion.engineFolderName}.parquet"))
 
     unsuccessfulDomains.length > 0 match {
       case true  ⇒ {
-        log.info(s"Entities without success file found, throwing exception to let the job fail.")
         throw new NotAllEntitesSuccessfulException(s"Entities without success file: ${unsuccessfulDomains.map(_.getClass.getSimpleName).mkString(", ")}.")
       }
       case false ⇒ log.info("All success files present")

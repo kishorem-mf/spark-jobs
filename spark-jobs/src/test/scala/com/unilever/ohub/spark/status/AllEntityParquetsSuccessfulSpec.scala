@@ -43,7 +43,7 @@ class AllEntityParquetsSuccessfulSpec extends SparkJobSpec {
       implicit val runDir = resourcesPath.resolve(runId)
 
       try {
-        createSuccessFilesFor(DomainEntityUtils.getDomainCompanionObjects)
+        createSuccessFilesFor(DomainEntityUtils.domainCompanionObjects)
         SUT.checkAllSuccessFiles(resourcesPath.toAbsolutePath.toString, runId)
       } finally {
         removeFolder(runDir)
@@ -55,7 +55,7 @@ class AllEntityParquetsSuccessfulSpec extends SparkJobSpec {
       implicit val runDir = resourcesPath.resolve(runId)
 
       val excluded = ContactPerson
-      val allButExcluded = DomainEntityUtils.getDomainCompanionObjects.filter(_ != excluded)
+      val allButExcluded = DomainEntityUtils.domainCompanionObjects.filter(_ != excluded)
 
       try {
         createSuccessFilesFor(allButExcluded)
