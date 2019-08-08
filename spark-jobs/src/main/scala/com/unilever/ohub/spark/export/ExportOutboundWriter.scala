@@ -124,8 +124,9 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
   }
 
   def writeToCsv(config: OutboundConfig, ds: Dataset[_], sparkSession: SparkSession): Unit = {
-    val outputFilePath = new Path(config.outboundLocation)
-    val temporaryPath = new Path(outputFilePath, UUID.randomUUID().toString)
+    val outputFolderPath = new Path(config.outboundLocation)
+    val temporaryPath = new Path(outputFolderPath, UUID.randomUUID().toString)
+    val outputFilePath = new Path(outputFolderPath, filename(config.targetType))
     val writeableData = ds
       .write
       .mode(SaveMode.Overwrite)
@@ -137,7 +138,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       case true => writeableData
         .csv(temporaryPath.toString)
         val header = ds.columns.map(c ⇒ if (mustQuotesFields) "\"" + c + "\"" else c).mkString(delimiter)
-        mergeDirectoryToOneFile(temporaryPath, new Path(outputFilePath, filename(config.targetType)), sparkSession, header)
+        mergeDirectoryToOneFile(temporaryPath, outputFilePath, sparkSession, header)
       case false => writeableData.csv(outputFilePath.toString)
     }
   }

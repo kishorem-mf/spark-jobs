@@ -72,9 +72,3 @@ case class Order(
                 ) extends DomainEntity {
   override def getCompanion: DomainEntityCompanion = Order
 }
-
-object a {
-  def main(args: Array[String]): Unit = {
-    println(Seq("a") ++ Seq("b"))
-  }
-}
