@@ -56,7 +56,7 @@ object OrderOutboundWriter extends ExportOutboundWriter[Order] with AcmOptions {
     dataSet.map(OrderAcmConverter.convert(_))
   }
 
-  override private[spark] def filterDataSet(spark: SparkSession, dataSet: Dataset[Order], config: OutboundConfig) = {
+  override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[Order], config: OutboundConfig) = {
     import spark.implicits._
     dataSet.filter(!$"type".isin("SSD", "TRANSFER"));
   }
@@ -65,7 +65,7 @@ object OrderOutboundWriter extends ExportOutboundWriter[Order] with AcmOptions {
 }
 
 object OrderLineOutboundWriter extends ExportOutboundWriter[OrderLine] with AcmOptions {
-  override private[spark] def filterDataSet(spark: SparkSession, dataSet: Dataset[OrderLine], config: OutboundConfig) = {
+  override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[OrderLine], config: OutboundConfig) = {
     dataSet.filter(o ⇒ {
       o.orderType match {
         case Some(t) ⇒ !(t.equals("SSD") || t.equals("TRANSFER"))
@@ -88,7 +88,7 @@ object ActivityOutboundWriter extends ExportOutboundWriter[Activity] with AcmOpt
     dataSet.map(ActivityAcmConverter.convert(_))
   }
 
-  override private[spark] def filterDataSet(spark: SparkSession, dataSet: Dataset[Activity], config: OutboundConfig) = {
+  override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[Activity], config: OutboundConfig) = {
     import spark.implicits._
     dataSet.filter($"customerType" === "CONTACTPERSON")
   }

@@ -54,6 +54,8 @@ abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig]
 
 abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extends SparkJobWithOutboundExportConfig with CsvOptions {
 
+  override private[spark] def defaultConfig = OutboundConfig()
+
   private[export] def goldenRecordOnlyFilter(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet.filter(_.isGoldenRecord)
 
   private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[DomainType], config: OutboundConfig) = dataSet
@@ -101,11 +103,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     val columnsInOrder = domainEntities.columns
     val filtered: Dataset[DomainType] = filterDataSet(spark, domainEntities, config)
 
-    val processedChanged =
-      onlyExportChangedRows match {
-        case true =>  filterOnlyChangedRows(filtered, hashesInputFile, spark)
-        case false => filtered
-      }
+    val processedChanged = if(onlyExportChangedRows) filterOnlyChangedRows(filtered, hashesInputFile, spark) else filtered
 
     val result = processedChanged
       .select(columnsInOrder.head, columnsInOrder.tail: _*)
@@ -136,13 +134,11 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       .option("header", shouldWriteHeaders(config.targetType))
       .options(options)
 
-    mergeCsvFiles(config.targetType) match {
-      case true => writeableData
-        .csv(temporaryPath.toString)
-        val header = ds.columns.map(c ⇒ if (mustQuotesFields) "\"" + c + "\"" else c).mkString(delimiter)
-        mergeDirectoryToOneFile(temporaryPath, outputFilePath, sparkSession, header)
-      case false => writeableData.csv(outputFilePath.toString)
-    }
+    if(mergeCsvFiles(config.targetType)) {
+      writeableData.csv(temporaryPath.toString)
+      val header = ds.columns.map(c ⇒ if (mustQuotesFields) "\"" + c + "\"" else c).mkString(delimiter)
+      mergeDirectoryToOneFile(temporaryPath, outputFilePath, sparkSession, header)
+    } else writeableData.csv(outputFilePath.toString)
   }
 
   def mergeDirectoryToOneFile(sourceDirectory: Path, outputFile: Path, spark: SparkSession, header: String) = {

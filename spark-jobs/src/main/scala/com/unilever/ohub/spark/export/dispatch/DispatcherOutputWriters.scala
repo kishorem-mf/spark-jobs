@@ -57,7 +57,7 @@ object OrderOutboundWriter extends ExportOutboundWriter[Order] with DispatcherOp
     dataSet.map(OrderDispatchConverter.convert(_))
   }
 
-  override private[spark] def filterDataSet(spark: SparkSession, dataSet: Dataset[Order], config: OutboundConfig) = {
+  override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[Order], config: OutboundConfig) = {
     import spark.implicits._
     dataSet.filter(!$"type".isin("SSD", "TRANSFER"));
   }
@@ -89,7 +89,7 @@ object ActivityOutboundWriter extends ExportOutboundWriter[Activity] with Dispat
     dataSet.map(ActivityDispatcherConverter.convert(_))
   }
 
-  override private[spark] def filterDataSet(spark: SparkSession, dataSet: Dataset[Activity], config: OutboundConfig) = {
+  override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[Activity], config: OutboundConfig) = {
     import spark.implicits._
     dataSet.filter($"customerType" === "CONTACTPERSON")
   }
