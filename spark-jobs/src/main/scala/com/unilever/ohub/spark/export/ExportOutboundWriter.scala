@@ -153,11 +153,11 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       //Move all csv files to different directory so we don't make a mistake of merging other files from the source directory
       val tmpCsvSourceDirectory = new Path(sourceDirectory.getParent, UUID.randomUUID().toString)
       fs.mkdirs(tmpCsvSourceDirectory)
-      val csvFiles = fs.listStatus(sourceDirectory)
+      fs.listStatus(sourceDirectory)
         .filter(p ⇒ p.isFile)
         .filter(p ⇒ p.getPath.getName.endsWith(".csv"))
         .map(_.getPath)
-        .map(fs.rename(_, tmpCsvSourceDirectory))
+        .foreach(fs.rename(_, tmpCsvSourceDirectory))
       tmpCsvSourceDirectory
     }
 
