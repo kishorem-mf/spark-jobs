@@ -42,6 +42,9 @@ object ContactPersonMatchingJoiner extends BaseMatchingJoiner[ContactPerson] {
   }
 
   override private[merging] def markGoldenAndGroup(entity: ContactPerson, isGoldenRecord: Boolean, groupId: String): ContactPerson = {
-    entity.copy(ohubId = Some(groupId), isGoldenRecord = isGoldenRecord)
+    entity.ohubId match {
+      case Some(_) => entity.copy(isGoldenRecord = isGoldenRecord)
+      case None => entity.copy(ohubId = Some(groupId), isGoldenRecord = isGoldenRecord)
+    }
   }
 }
