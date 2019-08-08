@@ -95,12 +95,9 @@ display(ingestedPerDay)
 
 
 val aggHistWindow = Window.partitionBy($"ingestDay")
-// val lowerBound = new Timestamp(0)
 val ingestedPerDay = integrated
   .withColumn("ingestDay", date_trunc("DAY", $"ohubUpdated"))
   .groupBy($"ingestDay").count()
-//   .withColumn("firstDay", lit(to_date(lit("2000-01-01"), "yyyy-MM-dd")))
-//   .withColumn("totalAmmountOfRecords", sum($"count").over(aggHistWindow.rangeBetween(lit(to_date(lit("2000-01-01"), "yyyy-MM-dd")), $"ingestDay")))
   .filter($"ingestDay" > lowerBound)  
   .orderBy($"ingestDay".asc, $"count".desc)
 
