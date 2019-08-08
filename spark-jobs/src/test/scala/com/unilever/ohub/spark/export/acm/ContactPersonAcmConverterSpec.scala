@@ -65,7 +65,8 @@ import org.scalatest.{FunSpec, Matchers}
             HAS_REGISTRATION = "Y",
             REGISTRATION_DATE = "2015/09/30 14:23:01",
             HAS_CONFIRMED_REGISTRATION = "Y",
-            CONFIRMED_REGISTRATION_DATE = "2015/09/30 14:23:01")
+            CONFIRMED_REGISTRATION_DATE = "2015/09/30 14:23:01",
+            CONTACTPERSON_ID = "AU~WUFOO~AB123")
 
         actualAcmContactPerson shouldBe expectedAcmContactPerson
       }
