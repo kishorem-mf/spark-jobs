@@ -10,7 +10,7 @@ object ActivityDomainExportWriter extends DomainExportWriter[Activity]
 
 object Activity extends DomainEntityCompanion {
   override val engineFolderName: String = "activities"
-  override val domainExportWriter: Option[DomainExportWriter[_]] = Some(ActivityDomainExportWriter)
+  override val domainExportWriter: Option[DomainExportWriter[Activity]] = Some(ActivityDomainExportWriter)
 }
 
 case class Activity(

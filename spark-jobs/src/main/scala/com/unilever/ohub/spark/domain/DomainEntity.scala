@@ -47,5 +47,5 @@ object DomainEntityCompanion {
 trait DomainEntityCompanion {
   val engineFolderName: String
   val excludedFieldsForCsvExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForCsvExport
-  val domainExportWriter: Option[DomainExportWriter[_]]
+  val domainExportWriter: Option[DomainExportWriter[_ <: DomainEntity]]
 }
