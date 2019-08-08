@@ -16,7 +16,7 @@ trait DispatcherOptions extends CsvOptions {
 }
 
 object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] with DispatcherOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[ContactPerson]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[ContactPerson]) = {
     import spark.implicits._
     dataSet.map(ContactPersonDispatchConverter.convert(_))
   }
@@ -25,7 +25,7 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
 }
 
 object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with DispatcherOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[Operator]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Operator]) = {
     import spark.implicits._
     dataSet.map(OperatorDispatchConverter.convert(_))
   }
@@ -34,7 +34,7 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with Dispat
 }
 
 object SubscriptionOutboundWriter extends ExportOutboundWriter[Subscription] with DispatcherOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[Subscription]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Subscription]) = {
     import spark.implicits._
     dataSet.map(SubscriptionDispatchConverter.convert(_))
   }
@@ -43,7 +43,7 @@ object SubscriptionOutboundWriter extends ExportOutboundWriter[Subscription] wit
 }
 
 object ProductOutboundWriter extends ExportOutboundWriter[Product] with DispatcherOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[Product]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Product]) = {
     import spark.implicits._
     dataSet.map(ProductDispatchConverter.convert(_))
   }
@@ -52,12 +52,12 @@ object ProductOutboundWriter extends ExportOutboundWriter[Product] with Dispatch
 }
 
 object OrderOutboundWriter extends ExportOutboundWriter[Order] with DispatcherOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[Order]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Order]) = {
     import spark.implicits._
     dataSet.map(OrderDispatchConverter.convert(_))
   }
 
-  override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[Order], config: OutboundConfig) = {
+  override private[spark] def filterDataSet(spark: SparkSession, dataSet: Dataset[Order], config: OutboundConfig) = {
     import spark.implicits._
     dataSet.filter(!$"type".isin("SSD", "TRANSFER"));
   }
@@ -66,7 +66,7 @@ object OrderOutboundWriter extends ExportOutboundWriter[Order] with DispatcherOp
 }
 
 object OrderLineOutboundWriter extends ExportOutboundWriter[OrderLine] with DispatcherOptions {
-  override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[OrderLine], config: OutboundConfig) = {
+  override private[spark] def filterDataSet(spark: SparkSession, dataSet: Dataset[OrderLine], config: OutboundConfig) = {
     dataSet.filter(o ⇒ {
       o.orderType match {
         case Some(t) ⇒ !(t.equals("SSD") || t.equals("TRANSFER"))
@@ -75,7 +75,7 @@ object OrderLineOutboundWriter extends ExportOutboundWriter[OrderLine] with Disp
     });
   }
 
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[OrderLine]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[OrderLine]) = {
     import spark.implicits._
     dataSet.map(OrderLineDispatchConverter.convert(_))
   }
@@ -84,12 +84,12 @@ object OrderLineOutboundWriter extends ExportOutboundWriter[OrderLine] with Disp
 }
 
 object ActivityOutboundWriter extends ExportOutboundWriter[Activity] with DispatcherOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[Activity]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Activity]) = {
     import spark.implicits._
     dataSet.map(ActivityDispatcherConverter.convert(_))
   }
 
-  override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[Activity], config: OutboundConfig) = {
+  override private[spark] def filterDataSet(spark: SparkSession, dataSet: Dataset[Activity], config: OutboundConfig) = {
     import spark.implicits._
     dataSet.filter($"customerType" === "CONTACTPERSON")
   }
@@ -98,7 +98,7 @@ object ActivityOutboundWriter extends ExportOutboundWriter[Activity] with Dispat
 }
 
 object LoyaltyPointsOutboundWriter extends ExportOutboundWriter[LoyaltyPoints] with DispatcherOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[LoyaltyPoints]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[LoyaltyPoints]) = {
     import spark.implicits._
     dataSet.map(LoyaltyPointsDispatcherConverter.convert(_))
   }
@@ -107,7 +107,7 @@ object LoyaltyPointsOutboundWriter extends ExportOutboundWriter[LoyaltyPoints] w
 }
 
 object CampaignOutboundWriter extends ExportOutboundWriter[Campaign] with DispatcherOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[Campaign]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Campaign]) = {
     import spark.implicits._
 
     dataSet.map(CampaignDispatcherConverter.convert(_))
@@ -117,7 +117,7 @@ object CampaignOutboundWriter extends ExportOutboundWriter[Campaign] with Dispat
 }
 
 object CampaignBounceOutboundWriter extends ExportOutboundWriter[CampaignBounce] with DispatcherOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[CampaignBounce]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[CampaignBounce]) = {
     import spark.implicits._
 
     dataSet.map(CampaignBounceDispatcherConverter.convert(_))
@@ -127,7 +127,7 @@ object CampaignBounceOutboundWriter extends ExportOutboundWriter[CampaignBounce]
 }
 
 object CampaignClickOutboundWriter extends ExportOutboundWriter[CampaignClick] with DispatcherOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[CampaignClick]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[CampaignClick]) = {
     import spark.implicits._
 
     dataSet.map(CampaignClickDispatcherConverter.convert(_))
@@ -137,7 +137,7 @@ object CampaignClickOutboundWriter extends ExportOutboundWriter[CampaignClick] w
 }
 
 object CampaignOpenOutboundWriter extends ExportOutboundWriter[CampaignOpen] with DispatcherOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[CampaignOpen]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[CampaignOpen]) = {
     import spark.implicits._
 
     dataSet.map(CampaignOpenDispatcherConverter.convert(_))
@@ -147,7 +147,7 @@ object CampaignOpenOutboundWriter extends ExportOutboundWriter[CampaignOpen] wit
 }
 
 object CampaignSendOutboundWriter extends ExportOutboundWriter[CampaignSend] with DispatcherOptions {
-  override private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[CampaignSend]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[CampaignSend]) = {
     import spark.implicits._
 
     dataSet.map(CampaignSendDispatcherConverter.convert(_))
@@ -156,7 +156,7 @@ object CampaignSendOutboundWriter extends ExportOutboundWriter[CampaignSend] wit
   override def entityName(): String = "CW_SENDINGS"
 }
 
-object ChainOutboundWriter extends ExportOutboundWriter[Chain, DispatchChain] with DispatcherOptions {
+object ChainOutboundWriter extends ExportOutboundWriter[Chain] with DispatcherOptions {
   override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Chain]) = {
     import spark.implicits._
 
