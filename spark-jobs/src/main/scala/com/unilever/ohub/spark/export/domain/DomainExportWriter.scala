@@ -38,12 +38,16 @@ abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends 
 
   private val domainEntityComanion = DomainEntityUtils.domainCompanionOf[DomainType]
 
+  def customExportFiltering(spark: SparkSession, dataSet: Dataset[DomainType], targetType: TargetType): Dataset[DomainType] = dataSet
+
   override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[DomainType], config: OutboundConfig): Dataset[DomainType] = {
     import spark.implicits._
 
+    val preFiltered = customExportFiltering(spark, dataSet, config.targetType)
+
     DomainExportWriter.countryFilterConfig.get(config.targetType) match {
-      case Some(visibleCountryCodes) => dataSet.filter($"countryCode".isin(visibleCountryCodes: _*))
-      case _ => dataSet
+      case Some(visibleCountryCodes) => preFiltered.filter($"countryCode".isin(visibleCountryCodes: _*))
+      case _ => preFiltered
     }
   }
 
