@@ -15,5 +15,5 @@ case class AcmLoyaltyPoints(
                              REWARD_NAME: String,
                              REWARD_IMAGE_URL: String,
                              REWARD_LDP_URL: String,
-                             REWARD_EANCODE: String,
-                             LOYALTY_POINT_ID: String) extends OutboundEntity
+                             REWARD_EANCODE: String) extends OutboundEntity
+                             //LOYALTY_POINT_ID: String)
