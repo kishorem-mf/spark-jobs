@@ -4,10 +4,16 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.domain.DomainExportWriter
+
+object ProductDomainExportWriter extends DomainExportWriter[Product]
 
 object Product extends DomainEntityCompanion {
   val customerType = "PRODUCT"
   override val engineFolderName = "products"
+  override val excludedFieldsForCsvExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForCsvExport ++
+    Seq("additives", "allergens", "dietetics", "nutrientTypes", "nutrientValues", "productCodes")
+  override val domainExportWriter: Option[DomainExportWriter[Product]] = Some(ProductDomainExportWriter)
 }
 
 case class Product(
@@ -101,4 +107,6 @@ case class Product(
                     // other fields
                     additionalFields: Map[String, String],
                     ingestionErrors: Map[String, IngestionError]
-                  ) extends DomainEntity
+                  ) extends DomainEntity {
+  override def getCompanion: DomainEntityCompanion = Product
+}

@@ -4,9 +4,13 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.domain.DomainExportWriter
+
+object LoyaltyPointsDomainExportWriter extends DomainExportWriter[LoyaltyPoints]
 
 object LoyaltyPoints extends DomainEntityCompanion {
   override val engineFolderName: String = "loyaltypoints"
+  override val domainExportWriter: Option[DomainExportWriter[LoyaltyPoints]] = Some(LoyaltyPointsDomainExportWriter)
 }
 
 case class LoyaltyPoints(
@@ -46,4 +50,6 @@ case class LoyaltyPoints(
                           // other fields
                           additionalFields: Map[String, String],
                           ingestionErrors: Map[String, IngestionError]
-                        ) extends DomainEntity {}
+                        ) extends DomainEntity {
+  override def getCompanion: DomainEntityCompanion = LoyaltyPoints
+}

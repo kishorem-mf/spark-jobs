@@ -3,6 +3,7 @@ package com.unilever.ohub.spark.domain
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
+import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object DomainEntity {
   case class IngestionError(originalColumnName: String, inputValue: Option[String], exceptionMessage: String)
@@ -36,8 +37,15 @@ trait DomainEntity extends Product {
 
   // ENABLE IF THE ENTITY SHOULDN'T BE CREATED WHEN INGESTION ERRORS ARE PRESENT
   // assert(ingestionErrors.isEmpty, s"can't create domain entity due to '${ingestionErrors.size}' ingestion error(s): '${ingestionErrors.keySet.toSeq.sorted.mkString(",")}'")
+  def getCompanion : DomainEntityCompanion
+}
+
+object DomainEntityCompanion {
+  val defaultExcludedFieldsForCsvExport = Seq("additionalFields", "ingestionErrors")
 }
 
 trait DomainEntityCompanion {
   val engineFolderName: String
-};
+  val excludedFieldsForCsvExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForCsvExport
+  val domainExportWriter: Option[DomainExportWriter[_ <: DomainEntity]]
+}

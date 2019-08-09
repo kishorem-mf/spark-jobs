@@ -4,10 +4,14 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.domain.DomainExportWriter
+
+object ChainDomainExportWriter extends DomainExportWriter[Chain]
 
 object Chain extends DomainEntityCompanion {
   val customerType = "CHAIN"
   override val engineFolderName: String = "chains"
+  override val domainExportWriter: Option[DomainExportWriter[Chain]] = Some(ChainDomainExportWriter)
 }
 
 case class Chain(
@@ -41,5 +45,7 @@ case class Chain(
                   secondaryMenu: Option[String],
                   additionalFields: Map[String, String],
                   ingestionErrors: Map[String, IngestionError]
-                ) extends DomainEntity
+                ) extends DomainEntity {
+  override def getCompanion: DomainEntityCompanion = Chain
+}
 
