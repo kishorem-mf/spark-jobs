@@ -4,6 +4,8 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.ExportOutboundWriter
+import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, ProductDWWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ProductDomainExportWriter extends DomainExportWriter[Product]
@@ -14,6 +16,9 @@ object Product extends DomainEntityCompanion {
   override val excludedFieldsForCsvExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForCsvExport ++
     Seq("additives", "allergens", "dietetics", "nutrientTypes", "nutrientValues", "productCodes")
   override val domainExportWriter: Option[DomainExportWriter[Product]] = Some(ProductDomainExportWriter)
+  override val acmExportWriter: Option[ExportOutboundWriter[Product]] = Some(com.unilever.ohub.spark.export.acm.ProductOutboundWriter)
+  override val dispatchExportWriter: Option[ExportOutboundWriter[Product]] = Some(com.unilever.ohub.spark.export.dispatch.ProductOutboundWriter)
+  override val azureDwWriter: Option[AzureDWWriter[Product]] = Some(ProductDWWriter)
 }
 
 case class Product(

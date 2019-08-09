@@ -4,6 +4,8 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.ExportOutboundWriter
+import com.unilever.ohub.spark.export.azuredw.{AnswerDWWriter, AzureDWWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object AnswerDomainExportWriter extends DomainExportWriter[Answer]
@@ -11,6 +13,9 @@ object AnswerDomainExportWriter extends DomainExportWriter[Answer]
 object Answer extends DomainEntityCompanion {
   override val engineFolderName: String = "answers"
   override val domainExportWriter: Option[DomainExportWriter[Answer]] = Some(AnswerDomainExportWriter)
+  override val acmExportWriter: Option[ExportOutboundWriter[Answer]] = None
+  override val dispatchExportWriter: Option[ExportOutboundWriter[Answer]] = None
+  override val azureDwWriter: Option[AzureDWWriter[Answer]] = Some(AnswerDWWriter)
 }
 
 case class Answer(

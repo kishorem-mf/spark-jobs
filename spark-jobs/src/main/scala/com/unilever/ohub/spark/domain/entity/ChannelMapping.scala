@@ -4,12 +4,17 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.ExportOutboundWriter
+import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, ChannelMappingDWWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ChannelMapping extends DomainEntityCompanion {
   val customerType = "OPERATOR"
   override val engineFolderName: String = "channelmappings"
   override val domainExportWriter: Option[DomainExportWriter[ChannelMapping]] = None
+  override val acmExportWriter: Option[ExportOutboundWriter[ChannelMapping]] = None
+  override val dispatchExportWriter: Option[ExportOutboundWriter[ChannelMapping]] = None
+  override val azureDwWriter: Option[AzureDWWriter[ChannelMapping]] = Some(ChannelMappingDWWriter)
 }
 
 object ChannelReference {

@@ -4,6 +4,8 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.ExportOutboundWriter
+import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, OperatorDWWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object OperatorDomainExportWriter extends DomainExportWriter[Operator]
@@ -12,6 +14,9 @@ object Operator extends DomainEntityCompanion {
   val customerType = "OPERATOR"
   override val engineFolderName = "operators"
   override val domainExportWriter: Option[DomainExportWriter[Operator]] = Some(OperatorDomainExportWriter)
+  override val acmExportWriter: Option[ExportOutboundWriter[Operator]] = Some(com.unilever.ohub.spark.export.acm.OperatorOutboundWriter)
+  override val dispatchExportWriter: Option[ExportOutboundWriter[Operator]] = Some(com.unilever.ohub.spark.export.dispatch.OperatorOutboundWriter)
+  override val azureDwWriter: Option[AzureDWWriter[Operator]] = Some(OperatorDWWriter)
 }
 
 case class Operator(

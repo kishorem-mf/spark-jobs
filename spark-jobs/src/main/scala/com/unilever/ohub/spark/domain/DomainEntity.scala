@@ -3,6 +3,8 @@ package com.unilever.ohub.spark.domain
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
+import com.unilever.ohub.spark.export.ExportOutboundWriter
+import com.unilever.ohub.spark.export.azuredw.AzureDWWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object DomainEntity {
@@ -48,4 +50,7 @@ trait DomainEntityCompanion {
   val engineFolderName: String
   val excludedFieldsForCsvExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForCsvExport
   val domainExportWriter: Option[DomainExportWriter[_ <: DomainEntity]]
+  val acmExportWriter: Option[ExportOutboundWriter[_ <: DomainEntity]]
+  val dispatchExportWriter: Option[ExportOutboundWriter[_ <: DomainEntity]]
+  val azureDwWriter: Option[AzureDWWriter[_ <: DomainEntity]]
 }

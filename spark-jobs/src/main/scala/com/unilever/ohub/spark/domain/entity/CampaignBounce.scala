@@ -4,6 +4,9 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.ExportOutboundWriter
+import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, CampaignBounceDWWriter}
+import com.unilever.ohub.spark.export.dispatch.CampaignBounceOutboundWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object CampaignBounceDomainExportWriter extends DomainExportWriter[CampaignBounce]
@@ -12,7 +15,11 @@ object CampaignBounce extends DomainEntityCompanion {
   val customerType = "CONTACTPERSON"
   override val engineFolderName = "campaignbounces"
   override val domainExportWriter: Option[DomainExportWriter[CampaignBounce]] = Some(CampaignBounceDomainExportWriter)
+  override val acmExportWriter: Option[ExportOutboundWriter[CampaignBounce]] = None
+  override val dispatchExportWriter: Option[ExportOutboundWriter[CampaignBounce]] = Some(CampaignBounceOutboundWriter)
+  override val azureDwWriter: Option[AzureDWWriter[CampaignBounce]] = Some(CampaignBounceDWWriter)
 }
+
 
 case class CampaignBounce(
                            // generic fields
