@@ -65,7 +65,8 @@ val exportDomains = Seq(
                         "campaignclicks",
                         "campaignbounces",
                         "campaignsends",
-                        "campaignopens"
+                        "campaignopens",
+                        "chains"
 )
 
 val allDomainsFinished = !exportDomains.map(domain => hasSuccessFile(s"dbfs:/mnt/engine/integrated/${runId}/${domain}.parquet")).contains(false)

@@ -5,6 +5,8 @@
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql._
 
+spark.conf.set("spark.databricks.io.cache.enabled", "true")
+
 def hasSuccessFile(path: String): Boolean = {
   try {
     val files = dbutils.fs.ls(path)
@@ -98,18 +100,20 @@ def getChangedCount(runId: String, domain: String) = {
   if (hasSuccessFile(hashDir)) {
     val changed = getChangedRows(domain, runId)
     val changedCount = tryCount(() => changed.count())
-    val orderChangedCount = domain match {
+    val customChangedCount = domain match {
       case "orders" => tryCount(() => changed.filter(!$"type".isin("SSD", "TRANSFER")).count())
       case "orderlines" => tryCount(() => changed.filter($"orderType".isNull || !$"orderType".isin("SSD", "TRANSFER")).count())
+      case "activities" => tryCount(() => changed.filter($"customerType" === "CONTACTPERSON").count())
       case _ => 0L
     }
     val changedGoldenCount = tryCount(() => changed.filter($"isGoldenRecord").count())
-    val orderChangedGoldenCount = domain match {
+    val customChangedGoldenCount = domain match {
       case "orders" => tryCount(() => changed.filter(!$"type".isin("SSD", "TRANSFER") && $"isGoldenRecord").count())
       case "orderlines" => tryCount(() => changed.filter(($"orderType".isNull || !$"orderType".isin("SSD", "TRANSFER")) && $"isGoldenRecord").count())
+      case "activities" => tryCount(() => changed.filter($"customerType" === "CONTACTPERSON" && $"isGoldenRecord").count())
       case _ => 0L
     }
-    (changedCount, orderChangedCount, changedGoldenCount, orderChangedGoldenCount)
+    (changedCount, customChangedCount, changedGoldenCount, customChangedGoldenCount)
   } else (-1L, -1L, -1L, -1L)
 }
 
@@ -169,9 +173,9 @@ def getCounts(runId: String, domains: String*) = {
     "ingestionErrorsCount",
     "integratedCount",
     "changedCount",
-    "orderChangedCount",
+    "customChangedCount",
     "changedGoldenCount",
-    "orderChangedGoldenCount",
+    "customChangedGoldenCount",
     "outboundDispatchCount",
     "outboundAcmCount"
   )
@@ -204,7 +208,8 @@ val allDomains = Seq(
   "campaignclicks",
   "campaignbounces",
   "campaignsends",
-  "campaignopens"
+  "campaignopens",
+  "chains"
 )
 
 // COMMAND ----------
@@ -237,7 +242,8 @@ val exportedToDispatch = Seq(
   "campaignbounces",
   "campaigns",
   "campaignsends",
-  "campaignopens"
+  "campaignopens",
+  "chains"
 )
 
 // COMMAND ----------
@@ -249,16 +255,16 @@ val asserts = counts
   .withColumn("assertNoIngestionsErrors", $"ingestionErrorsCount" === 0)
 
 // Asserts for orders and orderlines
-val orderAsserts = asserts
-  .filter($"domain".isin("orders", "orderlines"))
-  .withColumn("assertDispatchExportComplete", $"assertPipelineFinished" && $"orderChangedCount" === $"outboundDispatchCount")
-  .withColumn("assertAcmExportComplete", $"assertPipelineFinished" && $"orderChangedGoldenCount" === $"outboundAcmCount")
+val customAsserts = asserts
+  .filter($"domain".isin("activities", "orders", "orderlines"))
+  .withColumn("assertDispatchExportComplete", $"assertPipelineFinished" && $"customChangedCount" === $"outboundDispatchCount")
+  .withColumn("assertAcmExportComplete", $"assertPipelineFinished" && $"customChangedGoldenCount" === $"outboundAcmCount")
 
 val allCountsAsserts = asserts
   .filter(!$"domain".isin("orders", "orderlines"))
   .withColumn("assertDispatchExportComplete", $"assertPipelineFinished" && (!$"domain".isin(exportedToDispatch:_*)) || ($"changedCount" === $"outboundDispatchCount"))
   .withColumn("assertAcmExportComplete", $"assertPipelineFinished" && (!$"domain".isin(exportedToAcm:_*)) || ($"changedGoldenCount" === $"outboundAcmCount"))
-  .union(orderAsserts)
+  .union(customAsserts)
 
 val allAsserts = allCountsAsserts.select("domain", allCountsAsserts.columns.filter(_.startsWith("assert")):_*)
 val assertResult = allAsserts
