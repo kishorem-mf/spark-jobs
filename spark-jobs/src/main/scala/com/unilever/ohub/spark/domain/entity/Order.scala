@@ -4,9 +4,20 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.TargetType.{TargetType, MEPS}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
+import org.apache.spark.sql.{Dataset, SparkSession}
 
-object OrderDomainExportWriter extends DomainExportWriter[Order]
+object OrderDomainExportWriter extends DomainExportWriter[Order] {
+  override def customExportFiltering(spark: SparkSession, dataSet: Dataset[Order], targetType: TargetType) = {
+    import spark.implicits._
+
+    targetType match {
+      case MEPS => dataSet.filter($"sourceName" =!= "ARMSTRONG")
+      case _ => dataSet
+    }
+  }
+}
 
 object Order extends DomainEntityCompanion {
   val customerType = "ORDER"
