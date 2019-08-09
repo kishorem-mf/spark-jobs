@@ -4,10 +4,14 @@ import java.sql.{Date, Timestamp}
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.domain.DomainExportWriter
+
+object ContactPersonDomainExportWriter extends DomainExportWriter[ContactPerson]
 
 object ContactPerson extends DomainEntityCompanion {
   val customerType = "CONTACTPERSON"
   override val engineFolderName = "contactpersons"
+  override val domainExportWriter: Option[DomainExportWriter[ContactPerson]] = Some(ContactPersonDomainExportWriter)
 }
 
 case class ContactPerson(
@@ -78,9 +82,9 @@ case class ContactPerson(
                           // other fields
                           additionalFields: Map[String, String],
                           ingestionErrors: Map[String, IngestionError]
-                        ) extends DomainEntity
+                        ) extends DomainEntity {
+  override def getCompanion: DomainEntityCompanion = ContactPerson
+}
 
-case class InvalidEmail(
-                         emailAddress: String
-                       )
+case class InvalidEmail(emailAddress: String)
 

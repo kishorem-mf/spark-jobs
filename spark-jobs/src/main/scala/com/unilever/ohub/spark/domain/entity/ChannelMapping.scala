@@ -4,10 +4,12 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ChannelMapping extends DomainEntityCompanion {
   val customerType = "OPERATOR"
   override val engineFolderName: String = "channelmappings"
+  override val domainExportWriter: Option[DomainExportWriter[ChannelMapping]] = None
 }
 
 object ChannelReference {
@@ -51,4 +53,7 @@ case class ChannelMapping(
                            // other fields
                            additionalFields: Map[String, String],
                            ingestionErrors: Map[String, IngestionError]
-                         ) extends DomainEntity
+                         ) extends DomainEntity {
+  override def getCompanion: DomainEntityCompanion = ChannelMapping
+
+}

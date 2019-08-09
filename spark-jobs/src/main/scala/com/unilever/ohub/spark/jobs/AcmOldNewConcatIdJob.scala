@@ -27,7 +27,7 @@ private object OperatorOldNewConverter extends Converter[Operator, OldNew] with 
 }
 
 
-object ContactPersonOldNewWriter extends ExportOutboundWriter[ContactPerson, OldNew] with AcmOptions {
+object ContactPersonOldNewWriter extends ExportOutboundWriter[ContactPerson] with AcmOptions {
   override def entityName(): String = "cp_old_new"
 
   override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[ContactPerson]) = {
@@ -41,7 +41,7 @@ object ContactPersonOldNewWriter extends ExportOutboundWriter[ContactPerson, Old
   }
 }
 
-object OperatorOldNewWriter extends ExportOutboundWriter[Operator, OldNew] with AcmOptions {
+object OperatorOldNewWriter extends ExportOutboundWriter[Operator] with AcmOptions {
   override def entityName(): String = "op_old_new"
 
   override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Operator]) = {
