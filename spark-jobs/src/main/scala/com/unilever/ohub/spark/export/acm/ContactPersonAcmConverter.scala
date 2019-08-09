@@ -62,8 +62,8 @@ object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPers
       HAS_REGISTRATION = cp.hasRegistration.booleanToYNU,
       REGISTRATION_DATE = cp.registrationDate,
       HAS_CONFIRMED_REGISTRATION = cp.hasConfirmedRegistration.booleanToYNU,
-      CONFIRMED_REGISTRATION_DATE = cp.confirmedRegistrationDate,
-      CONTACTPERSON_ID = cp.concatId
+      CONFIRMED_REGISTRATION_DATE = cp.confirmedRegistrationDate
+      //CONTACTPERSON_ID = cp.concatId
     )
   }
 }
