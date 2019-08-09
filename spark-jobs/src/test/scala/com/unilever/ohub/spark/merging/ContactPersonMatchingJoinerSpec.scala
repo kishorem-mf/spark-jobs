@@ -23,14 +23,17 @@ class ContactPersonMatchingJoinerSpec extends SparkJobSpec with TestContactPerso
   private val contactPersons = Seq(
     // start Group 1
     defaultContactPerson.copy(concatId = "cp-1", sourceName = "a",
+      ohubId = None,
       dateUpdated = Some(new Timestamp(3L)), // Golden --> newest: DateUpdated is prefered for goldenrecord picking
       dateCreated = Some(new Timestamp(1L)),
       ohubUpdated = new Timestamp(1L)),
     defaultContactPerson.copy(concatId = "cp-2", sourceName = "b",
+      ohubId = None,
       dateUpdated = Some(new Timestamp(2L)),
       dateCreated = Some(new Timestamp(3L)),
       ohubUpdated = new Timestamp(3L)),
     defaultContactPerson.copy(concatId = "cp-3", sourceName = "c",
+      ohubId = None,
       dateUpdated = Some(new Timestamp(1L)),
       dateCreated = Some(new Timestamp(3L)),
       ohubUpdated = new Timestamp(3L)),
@@ -38,15 +41,19 @@ class ContactPersonMatchingJoinerSpec extends SparkJobSpec with TestContactPerso
     defaultContactPerson.copy(concatId = "cp-4", sourceName = "d", dateUpdated = Some(new Timestamp(1L))), // not in MATCHES
     // start Group 2
     defaultContactPerson.copy(concatId = "cp-5", sourceName = "x",
+      ohubId = None,
       ohubUpdated = new Timestamp(3L)), // Golden --> newest
     defaultContactPerson.copy(concatId = "cp-6", sourceName = "y",
+      ohubId = None,
       ohubUpdated = new Timestamp(1L)),
     // end Group 2
     // start Group 3
     defaultContactPerson.copy(concatId = "cp-7", sourceName = "z1",
+      ohubId = None,
       dateCreated = Some(new Timestamp(1L)),
       ohubUpdated = new Timestamp(3L)),
     defaultContactPerson.copy(concatId = "cp-8", sourceName = "z2",
+      ohubId = None,
       dateCreated = Some(new Timestamp(3L)), // Golden --> newest dateCreated is preferred
       ohubUpdated = new Timestamp(1L))
   // end Group 3

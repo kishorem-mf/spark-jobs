@@ -24,7 +24,12 @@ object OperatorMatchingJoiner extends BaseMatchingJoiner[Operator] {
       .flatMap(markGoldenRecordAndGroupIdFn)
   }
 
+
+  // The entity.ohubId will be present only during migration (when we consider integrated as ingested)
   override private[merging] def markGoldenAndGroup(entity: Operator, isGoldenRecord: Boolean, groupId: String): Operator = {
-    entity.copy(ohubId = Some(groupId), isGoldenRecord = isGoldenRecord)
+    entity.ohubId match {
+      case Some(_) => entity.copy(isGoldenRecord = isGoldenRecord)
+      case None    => entity.copy(ohubId = Some(groupId), isGoldenRecord = isGoldenRecord)
+    }
   }
 }

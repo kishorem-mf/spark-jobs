@@ -41,7 +41,11 @@ object ContactPersonMatchingJoiner extends BaseMatchingJoiner[ContactPerson] {
     entities.sortBy(cp ⇒ (cp.dateUpdated, cp.dateCreated, cp.ohubUpdated)).reverse.head
   }
 
+  // The entity.ohubId will be present only during migration (when we consider integrated as ingested)
   override private[merging] def markGoldenAndGroup(entity: ContactPerson, isGoldenRecord: Boolean, groupId: String): ContactPerson = {
-    entity.copy(ohubId = Some(groupId), isGoldenRecord = isGoldenRecord)
+    entity.ohubId match {
+      case Some(_) => entity.copy(isGoldenRecord = isGoldenRecord)
+      case None => entity.copy(ohubId = Some(groupId), isGoldenRecord = isGoldenRecord)
+    }
   }
 }
