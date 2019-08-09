@@ -208,7 +208,8 @@ val allDomains = Seq(
   "campaignclicks",
   "campaignbounces",
   "campaignsends",
-  "campaignopens"
+  "campaignopens",
+  "chains"
 )
 
 // COMMAND ----------
@@ -241,7 +242,8 @@ val exportedToDispatch = Seq(
   "campaignbounces",
   "campaigns",
   "campaignsends",
-  "campaignopens"
+  "campaignopens",
+  "chains"
 )
 
 // COMMAND ----------
