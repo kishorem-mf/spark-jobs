@@ -10,5 +10,4 @@ case class AcmProduct(
                        MRDR_CODE: String,
                        CREATED_AT: String,
                        UPDATED_AT: String,
-                       DELETE_FLAG: String,
-                       PRODUCT_ID: String) extends OutboundEntity
+                       DELETE_FLAG: String) extends OutboundEntity
