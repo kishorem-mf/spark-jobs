@@ -10,7 +10,7 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object OperatorDomainExportWriter extends DomainExportWriter[Operator]
 
-object Operator extends DomainEntityCompanion {
+object Operator extends DomainEntityCompanion[Operator] {
   val customerType = "OPERATOR"
   override val engineFolderName = "operators"
   override val domainExportWriter: Option[DomainExportWriter[Operator]] = Some(OperatorDomainExportWriter)

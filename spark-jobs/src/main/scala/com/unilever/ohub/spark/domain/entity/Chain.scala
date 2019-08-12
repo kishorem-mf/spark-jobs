@@ -11,7 +11,7 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ChainDomainExportWriter extends DomainExportWriter[Chain]
 
-object Chain extends DomainEntityCompanion {
+object Chain extends DomainEntityCompanion[Chain] {
   val customerType = "CHAIN"
   override val engineFolderName: String = "chains"
   override val domainExportWriter: Option[DomainExportWriter[Chain]] = Some(ChainDomainExportWriter)

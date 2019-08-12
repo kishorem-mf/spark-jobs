@@ -10,7 +10,7 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ActivityDomainExportWriter extends DomainExportWriter[Activity]
 
-object Activity extends DomainEntityCompanion {
+object Activity extends DomainEntityCompanion[Activity] {
   override val engineFolderName: String = "activities"
   override val domainExportWriter: Option[DomainExportWriter[Activity]] = Some(ActivityDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[Activity]] = Some(com.unilever.ohub.spark.export.acm.ActivityOutboundWriter)

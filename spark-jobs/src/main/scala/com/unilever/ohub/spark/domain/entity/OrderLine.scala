@@ -21,7 +21,7 @@ object OrderLineDomainExportWriter extends DomainExportWriter[OrderLine] {
   }
 }
 
-object OrderLine extends DomainEntityCompanion {
+object OrderLine extends DomainEntityCompanion[OrderLine] {
   val customerType = "ORDERLINE"
   override val engineFolderName = "orderlines"
   override val domainExportWriter: Option[DomainExportWriter[OrderLine]] = Some(OrderLineDomainExportWriter)

@@ -10,7 +10,7 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ProductDomainExportWriter extends DomainExportWriter[Product]
 
-object Product extends DomainEntityCompanion {
+object Product extends DomainEntityCompanion[Product] {
   val customerType = "PRODUCT"
   override val engineFolderName = "products"
   override val excludedFieldsForCsvExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForCsvExport ++

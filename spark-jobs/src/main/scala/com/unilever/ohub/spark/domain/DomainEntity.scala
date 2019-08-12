@@ -39,18 +39,18 @@ trait DomainEntity extends Product {
 
   // ENABLE IF THE ENTITY SHOULDN'T BE CREATED WHEN INGESTION ERRORS ARE PRESENT
   // assert(ingestionErrors.isEmpty, s"can't create domain entity due to '${ingestionErrors.size}' ingestion error(s): '${ingestionErrors.keySet.toSeq.sorted.mkString(",")}'")
-  def getCompanion : DomainEntityCompanion
+  def getCompanion : DomainEntityCompanion[_ <: DomainEntity]
 }
 
 object DomainEntityCompanion {
   val defaultExcludedFieldsForCsvExport = Seq("additionalFields", "ingestionErrors")
 }
 
-trait DomainEntityCompanion {
+trait DomainEntityCompanion[DomainEntityType <: DomainEntity] {
   val engineFolderName: String
   val excludedFieldsForCsvExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForCsvExport
-  val domainExportWriter: Option[DomainExportWriter[_ <: DomainEntity]]
-  val acmExportWriter: Option[ExportOutboundWriter[_ <: DomainEntity]]
-  val dispatchExportWriter: Option[ExportOutboundWriter[_ <: DomainEntity]]
-  val azureDwWriter: Option[AzureDWWriter[_ <: DomainEntity]]
+  val domainExportWriter: Option[DomainExportWriter[DomainEntityType]]
+  val acmExportWriter: Option[ExportOutboundWriter[DomainEntityType]]
+  val dispatchExportWriter: Option[ExportOutboundWriter[DomainEntityType]]
+  val azureDwWriter: Option[AzureDWWriter[DomainEntityType]]
 }

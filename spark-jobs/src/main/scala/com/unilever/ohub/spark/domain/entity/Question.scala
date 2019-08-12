@@ -10,7 +10,7 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object QuestionDomainExportWriter extends DomainExportWriter[Question]
 
-object Question extends DomainEntityCompanion {
+object Question extends DomainEntityCompanion[Question] {
   override val engineFolderName: String = "questions"
   override val domainExportWriter: Option[DomainExportWriter[Question]] = Some(QuestionDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[Question]] = None

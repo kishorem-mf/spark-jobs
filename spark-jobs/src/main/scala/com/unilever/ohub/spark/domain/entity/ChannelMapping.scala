@@ -8,7 +8,7 @@ import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, ChannelMappingDWWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
-object ChannelMapping extends DomainEntityCompanion {
+object ChannelMapping extends DomainEntityCompanion[ChannelMapping] {
   val customerType = "OPERATOR"
   override val engineFolderName: String = "channelmappings"
   override val domainExportWriter: Option[DomainExportWriter[ChannelMapping]] = None

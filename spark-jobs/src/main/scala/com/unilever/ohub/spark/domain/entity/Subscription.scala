@@ -10,7 +10,7 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object SubscriptionDomainExportWriter extends DomainExportWriter[Subscription]
 
-object Subscription extends DomainEntityCompanion {
+object Subscription extends DomainEntityCompanion[Subscription] {
   val customerType = "SUBSCRIPTION"
   override val engineFolderName: String = "subscriptions"
   override val domainExportWriter: Option[DomainExportWriter[Subscription]] = Some(SubscriptionDomainExportWriter)

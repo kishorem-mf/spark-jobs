@@ -11,7 +11,7 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object CampaignClickDomainExportWriter extends DomainExportWriter[CampaignClick]
 
-object CampaignClick extends DomainEntityCompanion {
+object CampaignClick extends DomainEntityCompanion[CampaignClick] {
   val customerType = "CONTACTPERSON"
   override val engineFolderName = "campaignclicks"
   override val domainExportWriter: Option[DomainExportWriter[CampaignClick]] = Some(CampaignClickDomainExportWriter)
