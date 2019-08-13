@@ -2,8 +2,8 @@ package com.unilever.ohub.spark.export.azuredw
 
 import java.sql.Timestamp
 
-import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity._
+import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityUtils}
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
@@ -43,7 +43,7 @@ case class LogRow(
   rowCount: Int
 )
 
-class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJob[AzureDWConfiguration] {
+abstract class SparkJobWithAzureDWConfiguration extends SparkJob[AzureDWConfiguration] {
 
   override private[spark] def defaultConfig = AzureDWConfiguration()
 
@@ -82,6 +82,10 @@ class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJob[Azure
       version("1.0")
       help("help") text "help text"
     }
+}
+
+abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJobWithAzureDWConfiguration {
+
 
   /** Removes the map fields because resulting on an error when queried in Azure DW. */
   private def dropUnnecessaryFields(dataSet: Dataset[DomainType]): DataFrame = {
@@ -232,4 +236,27 @@ object SubscriptionDWWriter extends AzureDWWriter[Subscription]
 
 object ChainDWWriter extends AzureDWWriter[Chain]
 
-
+/**
+  * Runs concrete [[com.unilever.ohub.spark.export.azuredw.AzureDWWriter]]'s run method for all
+  * [[com.unilever.ohub.spark.domain.DomainEntity]]s azureDwWriter values.
+  *
+  * When running this job, do bear in mind that the input location is now a folder, the entity name will be appended to it
+  * to determine the location.
+  *
+  * F.e. to export data from runId "2019-08-06" provide "integratedInputFile" as:
+  * "dbfs:/mnt/engine/integrated/2019-08-06"
+  * In this case CP will be fetched from:
+  * "dbfs:/mnt/engine/integrated/2019-08-06/contactpersons.parquet"
+  **/
+object AllDispatchOutboundWriter extends SparkJobWithAzureDWConfiguration {
+  override def run(spark: SparkSession, config: AzureDWConfiguration, storage: Storage): Unit = {
+    DomainEntityUtils.domainCompanionObjects
+      .par
+      .filter(_.azureDwWriter.isDefined)
+      .foreach((entity) => {
+        val writer = entity.azureDwWriter.get
+        val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
+        writer.run(spark, config.copy(integratedInputFile = integratedLocation), storage)
+      })
+  }
+}

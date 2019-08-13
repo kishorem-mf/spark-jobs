@@ -4,14 +4,20 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.ExportOutboundWriter
+import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, CampaignOpenDWWriter}
+import com.unilever.ohub.spark.export.dispatch.CampaignOpenOutboundWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object CampaignOpenDomainExportWriter extends DomainExportWriter[CampaignOpen]
 
-object CampaignOpen extends DomainEntityCompanion {
+object CampaignOpen extends DomainEntityCompanion[CampaignOpen] {
   val customerType = "CONTACTPERSON"
   override val engineFolderName = "campaignopens"
   override val domainExportWriter: Option[DomainExportWriter[CampaignOpen]] = Some(CampaignOpenDomainExportWriter)
+  override val acmExportWriter: Option[ExportOutboundWriter[CampaignOpen]] = None
+  override val dispatchExportWriter: Option[ExportOutboundWriter[CampaignOpen]] = Some(CampaignOpenOutboundWriter)
+  override val azureDwWriter: Option[AzureDWWriter[CampaignOpen]] = Some(CampaignOpenDWWriter)
 }
 
 case class CampaignOpen(
@@ -53,5 +59,5 @@ case class CampaignOpen(
                          additionalFields: Map[String, String],
                          ingestionErrors: Map[String, IngestionError]
                        ) extends DomainEntity {
-  override def getCompanion: DomainEntityCompanion = CampaignOpen
+  override def getCompanion: DomainEntityCompanion[CampaignOpen] = CampaignOpen
 }

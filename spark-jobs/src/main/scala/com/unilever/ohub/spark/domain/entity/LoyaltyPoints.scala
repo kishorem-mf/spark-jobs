@@ -4,13 +4,18 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.ExportOutboundWriter
+import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, LoyaltyPointsDWWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object LoyaltyPointsDomainExportWriter extends DomainExportWriter[LoyaltyPoints]
 
-object LoyaltyPoints extends DomainEntityCompanion {
+object LoyaltyPoints extends DomainEntityCompanion[LoyaltyPoints] {
   override val engineFolderName: String = "loyaltypoints"
   override val domainExportWriter: Option[DomainExportWriter[LoyaltyPoints]] = Some(LoyaltyPointsDomainExportWriter)
+  override val acmExportWriter: Option[ExportOutboundWriter[LoyaltyPoints]] = Some(com.unilever.ohub.spark.export.acm.LoyaltyPointsOutboundWriter)
+  override val dispatchExportWriter: Option[ExportOutboundWriter[LoyaltyPoints]] = Some(com.unilever.ohub.spark.export.dispatch.LoyaltyPointsOutboundWriter)
+  override val azureDwWriter: Option[AzureDWWriter[LoyaltyPoints]] = Some(LoyaltyPointsDWWriter)
 }
 
 case class LoyaltyPoints(
@@ -51,5 +56,5 @@ case class LoyaltyPoints(
                           additionalFields: Map[String, String],
                           ingestionErrors: Map[String, IngestionError]
                         ) extends DomainEntity {
-  override def getCompanion: DomainEntityCompanion = LoyaltyPoints
+  override def getCompanion: DomainEntityCompanion[LoyaltyPoints] = LoyaltyPoints
 }

@@ -3,6 +3,8 @@ package com.unilever.ohub.spark.domain
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
+import com.unilever.ohub.spark.export.ExportOutboundWriter
+import com.unilever.ohub.spark.export.azuredw.AzureDWWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object DomainEntity {
@@ -37,15 +39,18 @@ trait DomainEntity extends Product {
 
   // ENABLE IF THE ENTITY SHOULDN'T BE CREATED WHEN INGESTION ERRORS ARE PRESENT
   // assert(ingestionErrors.isEmpty, s"can't create domain entity due to '${ingestionErrors.size}' ingestion error(s): '${ingestionErrors.keySet.toSeq.sorted.mkString(",")}'")
-  def getCompanion : DomainEntityCompanion
+  def getCompanion : DomainEntityCompanion[_ <: DomainEntity]
 }
 
 object DomainEntityCompanion {
   val defaultExcludedFieldsForCsvExport = Seq("additionalFields", "ingestionErrors")
 }
 
-trait DomainEntityCompanion {
+trait DomainEntityCompanion[DomainEntityType <: DomainEntity] {
   val engineFolderName: String
   val excludedFieldsForCsvExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForCsvExport
-  val domainExportWriter: Option[DomainExportWriter[_ <: DomainEntity]]
+  val domainExportWriter: Option[DomainExportWriter[DomainEntityType]]
+  val acmExportWriter: Option[ExportOutboundWriter[DomainEntityType]]
+  val dispatchExportWriter: Option[ExportOutboundWriter[DomainEntityType]]
+  val azureDwWriter: Option[AzureDWWriter[DomainEntityType]]
 }

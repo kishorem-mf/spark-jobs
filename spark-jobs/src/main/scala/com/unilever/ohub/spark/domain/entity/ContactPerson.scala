@@ -4,14 +4,19 @@ import java.sql.{Date, Timestamp}
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.ExportOutboundWriter
+import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, ContactPersonDWWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ContactPersonDomainExportWriter extends DomainExportWriter[ContactPerson]
 
-object ContactPerson extends DomainEntityCompanion {
+object ContactPerson extends DomainEntityCompanion[ContactPerson] {
   val customerType = "CONTACTPERSON"
   override val engineFolderName = "contactpersons"
   override val domainExportWriter: Option[DomainExportWriter[ContactPerson]] = Some(ContactPersonDomainExportWriter)
+  override val acmExportWriter: Option[ExportOutboundWriter[ContactPerson]] = Some(com.unilever.ohub.spark.export.acm.ContactPersonOutboundWriter)
+  override val dispatchExportWriter: Option[ExportOutboundWriter[ContactPerson]] = Some(com.unilever.ohub.spark.export.dispatch.ContactPersonOutboundWriter)
+  override val azureDwWriter: Option[AzureDWWriter[ContactPerson]] = Some(ContactPersonDWWriter)
 }
 
 case class ContactPerson(
@@ -83,7 +88,7 @@ case class ContactPerson(
                           additionalFields: Map[String, String],
                           ingestionErrors: Map[String, IngestionError]
                         ) extends DomainEntity {
-  override def getCompanion: DomainEntityCompanion = ContactPerson
+  override def getCompanion: DomainEntityCompanion[ContactPerson] = ContactPerson
 }
 
 case class InvalidEmail(emailAddress: String)

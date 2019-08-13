@@ -4,7 +4,9 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.TargetType.{MEPS, TargetType}
+import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, OrderLineDWWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 import org.apache.spark.sql.{Dataset, SparkSession}
 
@@ -19,10 +21,13 @@ object OrderLineDomainExportWriter extends DomainExportWriter[OrderLine] {
   }
 }
 
-object OrderLine extends DomainEntityCompanion {
+object OrderLine extends DomainEntityCompanion[OrderLine] {
   val customerType = "ORDERLINE"
   override val engineFolderName = "orderlines"
   override val domainExportWriter: Option[DomainExportWriter[OrderLine]] = Some(OrderLineDomainExportWriter)
+  override val acmExportWriter: Option[ExportOutboundWriter[OrderLine]] = Some(com.unilever.ohub.spark.export.acm.OrderLineOutboundWriter)
+  override val dispatchExportWriter: Option[ExportOutboundWriter[OrderLine]] = Some(com.unilever.ohub.spark.export.dispatch.OrderLineOutboundWriter)
+  override val azureDwWriter: Option[AzureDWWriter[OrderLine]] = Some(OrderLineDWWriter)
 }
 
 case class OrderLine(
@@ -58,5 +63,5 @@ case class OrderLine(
                       additionalFields: Map[String, String],
                       ingestionErrors: Map[String, IngestionError]
                     ) extends DomainEntity {
-  override def getCompanion: DomainEntityCompanion = OrderLine
+  override def getCompanion: DomainEntityCompanion[OrderLine] = OrderLine
 }

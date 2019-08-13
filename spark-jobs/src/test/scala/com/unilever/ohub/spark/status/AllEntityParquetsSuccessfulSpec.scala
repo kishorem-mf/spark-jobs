@@ -1,12 +1,12 @@
 package com.unilever.ohub.spark.status
 
-import java.nio.file.{ Files, Path }
+import java.nio.file.{Files, Path}
 import java.util.UUID
 
 import com.unilever.ohub.spark.SharedSparkSession._
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.entity.ContactPerson
-import com.unilever.ohub.spark.domain.{ DomainEntityCompanion, DomainEntityUtils }
+import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion, DomainEntityUtils}
 
 import scala.reflect.io.Directory
 
@@ -14,7 +14,7 @@ class AllEntityParquetsSuccessfulSpec extends SparkJobSpec {
   implicit val sparksession = spark
   val SUT = AllEntityParquetsSuccessful
 
-  private def createSuccessFilesFor(entities: Seq[DomainEntityCompanion])(implicit runDir: Path): Unit = {
+  private def createSuccessFilesFor(entities: Seq[DomainEntityCompanion[_ <: DomainEntity]])(implicit runDir: Path): Unit = {
     Files.createDirectories(runDir)
     entities.map(_.engineFolderName).foreach((entity) ⇒ {
       val entityDir = runDir.resolve(s"${entity}.parquet")

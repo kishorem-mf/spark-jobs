@@ -4,14 +4,20 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
+import com.unilever.ohub.spark.export.ExportOutboundWriter
+import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, ChainDWWriter}
+import com.unilever.ohub.spark.export.dispatch.ChainOutboundWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ChainDomainExportWriter extends DomainExportWriter[Chain]
 
-object Chain extends DomainEntityCompanion {
+object Chain extends DomainEntityCompanion[Chain] {
   val customerType = "CHAIN"
   override val engineFolderName: String = "chains"
   override val domainExportWriter: Option[DomainExportWriter[Chain]] = Some(ChainDomainExportWriter)
+  override val acmExportWriter: Option[ExportOutboundWriter[Chain]] = None
+  override val dispatchExportWriter: Option[ExportOutboundWriter[Chain]] = Some(ChainOutboundWriter)
+  override val azureDwWriter: Option[AzureDWWriter[Chain]] = Some(ChainDWWriter)
 }
 
 case class Chain(
@@ -46,6 +52,6 @@ case class Chain(
                   additionalFields: Map[String, String],
                   ingestionErrors: Map[String, IngestionError]
                 ) extends DomainEntity {
-  override def getCompanion: DomainEntityCompanion = Chain
+  override def getCompanion: DomainEntityCompanion[Chain] = Chain
 }
 

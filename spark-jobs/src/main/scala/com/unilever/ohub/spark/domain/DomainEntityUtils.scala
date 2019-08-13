@@ -14,7 +14,7 @@ object DomainEntityUtils {
     *
     * @return
     */
-  lazy val domainCompanionObjects: Array[DomainEntityCompanion] = {
+  lazy val domainCompanionObjects: Array[DomainEntityCompanion[_ <: DomainEntity]] = {
     val reflections = new Reflections(classOf[DomainEntity].getPackage.getName)
     val types = reflections.getSubTypesOf[DomainEntity](classOf[DomainEntity])
 
@@ -22,12 +22,12 @@ object DomainEntityUtils {
       .map(_.asInstanceOf[java.lang.Class[DomainEntity]])
       .map((domainEntityClass) ⇒ {
         val module = mirror.staticModule(domainEntityClass.getName)
-        mirror.reflectModule(module).instance.asInstanceOf[DomainEntityCompanion]
+        mirror.reflectModule(module).instance.asInstanceOf[DomainEntityCompanion[_ <: DomainEntity]]
       })
   }
 
-  def domainCompanionOf[T](implicit tag: TypeTag[T]): DomainEntityCompanion = {
+  def domainCompanionOf[T](implicit tag: TypeTag[T]): DomainEntityCompanion[_ <: DomainEntity] = {
     val companionModule = tag.tpe.typeSymbol.companion.asModule
-    mirror.reflectModule(companionModule).instance.asInstanceOf[DomainEntityCompanion]
+    mirror.reflectModule(companionModule).instance.asInstanceOf[DomainEntityCompanion[_ <: DomainEntity]]
   }
 }

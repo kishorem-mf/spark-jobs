@@ -1,7 +1,9 @@
 package com.unilever.ohub.spark.export.acm
 
+import com.unilever.ohub.spark.domain.DomainEntityUtils
 import com.unilever.ohub.spark.domain.entity._
-import com.unilever.ohub.spark.export.{CsvOptions, ExportOutboundWriter, OutboundConfig}
+import com.unilever.ohub.spark.export.{CsvOptions, ExportOutboundWriter, OutboundConfig, SparkJobWithOutboundExportConfig}
+import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{Dataset, SparkSession}
 
 trait AcmOptions extends CsvOptions {
@@ -105,3 +107,27 @@ object LoyaltyPointsOutboundWriter extends ExportOutboundWriter[LoyaltyPoints] w
   override def entityName(): String = "LOYALTIES"
 }
 
+/**
+  * Runs concrete [[com.unilever.ohub.spark.export.ExportOutboundWriter]]'s run method for all
+  * [[com.unilever.ohub.spark.domain.DomainEntity]]s acmExportWriter values.
+  *
+  * When running this job, do bear in mind that the input location is now a folder, the entity name will be appended to it
+  * to determine the location.
+  *
+  * F.e. to export data from runId "2019-08-06" provide "integratedInputFile" as:
+  * "dbfs:/mnt/engine/integrated/2019-08-06"
+  * In this case CP will be fetched from:
+  * "dbfs:/mnt/engine/integrated/2019-08-06/contactpersons.parquet"
+  **/
+object AllAcmOutboundWriter extends SparkJobWithOutboundExportConfig {
+  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
+    DomainEntityUtils.domainCompanionObjects
+      .par
+      .filter(_.acmExportWriter.isDefined)
+      .foreach((entity) => {
+        val writer = entity.acmExportWriter.get
+        val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
+        writer.run(spark, config.copy(integratedInputFile = integratedLocation), storage)
+      })
+  }
+}

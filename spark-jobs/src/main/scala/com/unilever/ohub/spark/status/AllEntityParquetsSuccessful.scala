@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.status
 
-import com.unilever.ohub.spark.domain.{DomainEntityCompanion, DomainEntityUtils}
+import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion, DomainEntityUtils}
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -37,7 +37,7 @@ object AllEntityParquetsSuccessful extends SparkJob[AllEntityParquetsSuccessfulC
   def checkAllSuccessFiles(basePath: String, runId: String)(implicit spark: SparkSession) = {
     val allDomainCompanions = DomainEntityUtils.domainCompanionObjects
     val unsuccessfulDomains = allDomainCompanions
-      .filter((domainCompanion: DomainEntityCompanion) ⇒ !successFileExists(s"${basePath}/${runId}/${domainCompanion.engineFolderName}.parquet"))
+      .filter((domainCompanion: DomainEntityCompanion[_ <: DomainEntity]) ⇒ !successFileExists(s"${basePath}/${runId}/${domainCompanion.engineFolderName}.parquet"))
 
     unsuccessfulDomains.length > 0 match {
       case true  ⇒ {
