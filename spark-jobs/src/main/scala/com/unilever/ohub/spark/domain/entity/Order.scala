@@ -86,5 +86,5 @@ case class Order(
                   additionalFields: Map[String, String],
                   ingestionErrors: Map[String, IngestionError]
                 ) extends DomainEntity {
-  override def getCompanion: DomainEntityCompanion = Order
+  override def getCompanion: DomainEntityCompanion[Order] = Order
 }

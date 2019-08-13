@@ -46,5 +46,5 @@ case class Answer(
                    additionalFields: Map[String, String],
                    ingestionErrors: Map[String, IngestionError]
                  ) extends DomainEntity {
-  override def getCompanion: DomainEntityCompanion = Answer
+  override def getCompanion: DomainEntityCompanion[Answer] = Answer
 }

@@ -53,5 +53,5 @@ case class Activity(
                      additionalFields: Map[String, String],
                      ingestionErrors: Map[String, IngestionError]
                    ) extends DomainEntity {
-  override def getCompanion: DomainEntityCompanion = Activity
+  override def getCompanion: DomainEntityCompanion[Activity] = Activity
 }

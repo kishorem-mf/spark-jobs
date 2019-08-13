@@ -62,5 +62,5 @@ case class CampaignSend(
                          additionalFields: Map[String, String],
                          ingestionErrors: Map[String, IngestionError]
                        ) extends DomainEntity {
-  override def getCompanion: DomainEntityCompanion = CampaignSend
+  override def getCompanion: DomainEntityCompanion[CampaignSend] = CampaignSend
 }

@@ -88,7 +88,7 @@ case class ContactPerson(
                           additionalFields: Map[String, String],
                           ingestionErrors: Map[String, IngestionError]
                         ) extends DomainEntity {
-  override def getCompanion: DomainEntityCompanion = ContactPerson
+  override def getCompanion: DomainEntityCompanion[ContactPerson] = ContactPerson
 }
 
 case class InvalidEmail(emailAddress: String)

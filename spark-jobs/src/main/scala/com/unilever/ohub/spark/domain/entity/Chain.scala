@@ -52,6 +52,6 @@ case class Chain(
                   additionalFields: Map[String, String],
                   ingestionErrors: Map[String, IngestionError]
                 ) extends DomainEntity {
-  override def getCompanion: DomainEntityCompanion = Chain
+  override def getCompanion: DomainEntityCompanion[Chain] = Chain
 }
 

@@ -49,6 +49,6 @@ case class Subscription(
                          additionalFields: Map[String, String],
                          ingestionErrors: Map[String, IngestionError]
                        ) extends DomainEntity {
-  override def getCompanion: DomainEntityCompanion = Subscription
+  override def getCompanion: DomainEntityCompanion[Subscription] = Subscription
 }
 

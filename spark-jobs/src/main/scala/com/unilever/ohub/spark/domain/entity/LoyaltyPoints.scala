@@ -56,5 +56,5 @@ case class LoyaltyPoints(
                           additionalFields: Map[String, String],
                           ingestionErrors: Map[String, IngestionError]
                         ) extends DomainEntity {
-  override def getCompanion: DomainEntityCompanion = LoyaltyPoints
+  override def getCompanion: DomainEntityCompanion[LoyaltyPoints] = LoyaltyPoints
 }

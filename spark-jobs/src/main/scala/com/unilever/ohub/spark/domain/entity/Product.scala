@@ -113,5 +113,5 @@ case class Product(
                     additionalFields: Map[String, String],
                     ingestionErrors: Map[String, IngestionError]
                   ) extends DomainEntity {
-  override def getCompanion: DomainEntityCompanion = Product
+  override def getCompanion: DomainEntityCompanion[Product] = Product
 }
