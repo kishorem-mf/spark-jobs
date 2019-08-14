@@ -254,14 +254,16 @@ val asserts = counts
   .withColumn("assertAllIngested", $"inboundUniqueCount" === $"ingestedCount")
   .withColumn("assertNoIngestionsErrors", $"ingestionErrorsCount" === 0)
 
-// Asserts for orders and orderlines
+val customAssertDomains = Seq("activities", "orders", "orderlines")
+
+// Asserts for activities, orders and orderlines
 val customAsserts = asserts
-  .filter($"domain".isin("activities", "orders", "orderlines"))
+  .filter($"domain".isin(customAssertDomains :_*))
   .withColumn("assertDispatchExportComplete", $"assertPipelineFinished" && $"customChangedCount" === $"outboundDispatchCount")
   .withColumn("assertAcmExportComplete", $"assertPipelineFinished" && $"customChangedGoldenCount" === $"outboundAcmCount")
 
 val allCountsAsserts = asserts
-  .filter(!$"domain".isin("orders", "orderlines"))
+  .filter(!$"domain".isin(customAssertDomains :_*))
   .withColumn("assertDispatchExportComplete", $"assertPipelineFinished" && (!$"domain".isin(exportedToDispatch:_*)) || ($"changedCount" === $"outboundDispatchCount"))
   .withColumn("assertAcmExportComplete", $"assertPipelineFinished" && (!$"domain".isin(exportedToAcm:_*)) || ($"changedGoldenCount" === $"outboundAcmCount"))
   .union(customAsserts)
