@@ -2,9 +2,9 @@ package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.entity.CampaignSend
 import com.unilever.ohub.spark.export.dispatch.model.DispatchCampaignSend
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object CampaignSendDispatcherConverter extends Converter[CampaignSend, DispatchCampaignSend] with TransformationFunctions with DispatchTransformationFunctions {
+object CampaignSendDispatcherConverter extends Converter[CampaignSend, DispatchCampaignSend] with TypeConversionFunctions with DispatchTransformationFunctions {
   override def convert(send: CampaignSend): DispatchCampaignSend =
     DispatchCampaignSend(
       CP_ORIG_INTEGRATION_ID = send.contactPersonConcatId,

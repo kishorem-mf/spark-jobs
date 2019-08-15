@@ -2,9 +2,9 @@ package com.unilever.ohub.spark.export.acm
 
 import com.unilever.ohub.spark.domain.entity.Product
 import com.unilever.ohub.spark.export.acm.model.AcmProduct
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object ProductAcmConverter extends Converter[Product, AcmProduct] with TransformationFunctions with AcmTransformationFunctions {
+object ProductAcmConverter extends Converter[Product, AcmProduct] with TypeConversionFunctions with AcmTransformationFunctions {
 
   override def convert(product: Product): AcmProduct = {
     AcmProduct(

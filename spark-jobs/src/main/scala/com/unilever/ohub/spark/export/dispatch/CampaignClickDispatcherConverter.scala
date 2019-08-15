@@ -2,9 +2,9 @@ package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.entity.CampaignClick
 import com.unilever.ohub.spark.export.dispatch.model.DispatchCampaignClick
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object CampaignClickDispatcherConverter extends Converter[CampaignClick, DispatchCampaignClick] with TransformationFunctions with DispatchTransformationFunctions {
+object CampaignClickDispatcherConverter extends Converter[CampaignClick, DispatchCampaignClick] with TypeConversionFunctions with DispatchTransformationFunctions {
 
   override def convert(click: CampaignClick): DispatchCampaignClick = {
     DispatchCampaignClick(

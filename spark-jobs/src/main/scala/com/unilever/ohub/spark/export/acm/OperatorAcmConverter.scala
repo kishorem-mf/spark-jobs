@@ -3,9 +3,9 @@ package com.unilever.ohub.spark.export.acm
 import com.unilever.ohub.spark.DomainDataProvider
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.export.acm.model.AcmOperator
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object OperatorAcmConverter extends Converter[Operator, AcmOperator] with TransformationFunctions with AcmTransformationFunctions {
+object OperatorAcmConverter extends Converter[Operator, AcmOperator] with TypeConversionFunctions with AcmTransformationFunctions {
 
   override def convert(op: Operator): AcmOperator = {
     AcmOperator(

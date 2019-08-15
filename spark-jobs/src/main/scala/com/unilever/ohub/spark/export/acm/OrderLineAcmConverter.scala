@@ -2,9 +2,9 @@ package com.unilever.ohub.spark.export.acm
 
 import com.unilever.ohub.spark.domain.entity.OrderLine
 import com.unilever.ohub.spark.export.acm.model.AcmOrderLine
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object OrderLineAcmConverter extends Converter[OrderLine, AcmOrderLine] with TransformationFunctions with AcmTransformationFunctions {
+object OrderLineAcmConverter extends Converter[OrderLine, AcmOrderLine] with TypeConversionFunctions with AcmTransformationFunctions {
 
   override def convert(orderLine: OrderLine): AcmOrderLine = {
     AcmOrderLine(

@@ -3,9 +3,9 @@ package com.unilever.ohub.spark.export.dispatch
 import com.unilever.ohub.spark.domain.entity.Product
 import com.unilever.ohub.spark.export.dispatch.ContactPersonDispatchConverter.booleanToYNConverter
 import com.unilever.ohub.spark.export.dispatch.model.DispatchProduct
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object ProductDispatchConverter extends Converter[Product, DispatchProduct] with TransformationFunctions with DispatchTransformationFunctions {
+object ProductDispatchConverter extends Converter[Product, DispatchProduct] with TypeConversionFunctions with DispatchTransformationFunctions {
 
   override def convert(product: Product): DispatchProduct = {
     DispatchProduct(

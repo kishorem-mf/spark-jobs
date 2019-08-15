@@ -2,9 +2,9 @@ package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.entity.Subscription
 import com.unilever.ohub.spark.export.dispatch.model.DispatchSubscription
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object SubscriptionDispatchConverter extends Converter[Subscription, DispatchSubscription] with TransformationFunctions with DispatchTransformationFunctions {
+object SubscriptionDispatchConverter extends Converter[Subscription, DispatchSubscription] with TypeConversionFunctions with DispatchTransformationFunctions {
 
   override def convert(subscription: Subscription): DispatchSubscription = {
     DispatchSubscription(

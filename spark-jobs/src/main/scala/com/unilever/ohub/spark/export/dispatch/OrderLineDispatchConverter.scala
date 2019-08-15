@@ -2,9 +2,9 @@ package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.entity.OrderLine
 import com.unilever.ohub.spark.export.dispatch.model.DispatchOrderLine
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object OrderLineDispatchConverter extends Converter[OrderLine, DispatchOrderLine] with TransformationFunctions with DispatchTransformationFunctions {
+object OrderLineDispatchConverter extends Converter[OrderLine, DispatchOrderLine] with TypeConversionFunctions with DispatchTransformationFunctions {
 
   override def convert(orderline: OrderLine): DispatchOrderLine = {
     DispatchOrderLine(

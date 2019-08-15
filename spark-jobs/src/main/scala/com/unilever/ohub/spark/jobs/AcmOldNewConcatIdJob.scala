@@ -10,7 +10,7 @@ import org.apache.spark.sql.{Dataset, SparkSession}
 case class OldNew(oldConcatId: String, concatId: String) extends OutboundEntity
 
 
-private object ContactPersonOldNewConverter extends Converter[ContactPerson, OldNew] with TransformationFunctions {
+private object ContactPersonOldNewConverter extends Converter[ContactPerson, OldNew] with TypeConversionFunctions {
   override def convert(cp: ContactPerson): OldNew =
     OldNew(
       oldConcatId = new ConcatPersonOldOhubConverter(DomainDataProvider().sourceIds).convert(cp.concatId),
@@ -18,7 +18,7 @@ private object ContactPersonOldNewConverter extends Converter[ContactPerson, Old
     )
 }
 
-private object OperatorOldNewConverter extends Converter[Operator, OldNew] with TransformationFunctions {
+private object OperatorOldNewConverter extends Converter[Operator, OldNew] with TypeConversionFunctions {
   override def convert(op: Operator): OldNew =
     OldNew(
       oldConcatId = new OperatorOldOhubConverter(DomainDataProvider().sourceIds).convert(op.concatId),

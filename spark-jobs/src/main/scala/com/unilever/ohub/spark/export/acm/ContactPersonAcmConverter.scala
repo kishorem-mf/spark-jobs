@@ -3,9 +3,9 @@ package com.unilever.ohub.spark.export.acm
 import com.unilever.ohub.spark.DomainDataProvider
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.export.acm.model.AcmContactPerson
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPerson] with TransformationFunctions with AcmTransformationFunctions {
+object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPerson] with TypeConversionFunctions with AcmTransformationFunctions {
 
   override def convert(cp: ContactPerson): AcmContactPerson = {
     AcmContactPerson(

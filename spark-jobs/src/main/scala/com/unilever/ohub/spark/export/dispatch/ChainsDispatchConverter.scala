@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.entity.Chain
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 import com.unilever.ohub.spark.export.dispatch.model.DispatchChain
 
 object ChainDispatchConverter extends Converter[Chain, DispatchChain] with DispatchTransformationFunctions {

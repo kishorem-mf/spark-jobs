@@ -2,9 +2,9 @@ package com.unilever.ohub.spark.export.acm
 
 import com.unilever.ohub.spark.domain.entity.Order
 import com.unilever.ohub.spark.export.acm.model.AcmOrder
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object OrderAcmConverter extends Converter[Order, AcmOrder] with TransformationFunctions with AcmTransformationFunctions {
+object OrderAcmConverter extends Converter[Order, AcmOrder] with TypeConversionFunctions with AcmTransformationFunctions {
 
   override def convert(order: Order): AcmOrder = {
     AcmOrder(

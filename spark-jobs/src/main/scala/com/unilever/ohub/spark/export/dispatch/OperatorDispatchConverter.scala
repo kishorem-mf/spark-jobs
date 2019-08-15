@@ -2,9 +2,9 @@ package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.export.dispatch.model.DispatchOperator
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object OperatorDispatchConverter extends Converter[Operator, DispatchOperator] with TransformationFunctions with DispatchTransformationFunctions {
+object OperatorDispatchConverter extends Converter[Operator, DispatchOperator] with TypeConversionFunctions with DispatchTransformationFunctions {
 
   override def convert(operator: Operator): DispatchOperator = {
     DispatchOperator(

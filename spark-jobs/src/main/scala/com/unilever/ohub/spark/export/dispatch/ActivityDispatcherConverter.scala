@@ -2,9 +2,9 @@ package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.entity.Activity
 import com.unilever.ohub.spark.export.dispatch.model.DispatchActivity
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object ActivityDispatcherConverter extends Converter[Activity, DispatchActivity] with TransformationFunctions with DispatchTransformationFunctions {
+object ActivityDispatcherConverter extends Converter[Activity, DispatchActivity] with TypeConversionFunctions with DispatchTransformationFunctions {
   override def convert(activity: Activity): DispatchActivity =
     DispatchActivity(
       CP_ORIG_INTEGRATION_ID = activity.contactPersonConcatId,
