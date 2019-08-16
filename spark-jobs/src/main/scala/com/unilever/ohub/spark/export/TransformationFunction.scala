@@ -51,12 +51,20 @@ class ClearInvalidEmail(emailValid: Option[Boolean]) extends ClearField(emailVal
   override val description: String = "Clears the email address when it is invalid"
 }
 
-object GenderToNumeric extends TransformationFunction[String] {
-  def impl(gender: String) = CleanString.impl(gender) match {
-    case "M" ⇒ "1"
-    case "F" ⇒ "2"
-    case _ ⇒ "0"
+object GenderToNumeric extends TransformationFunction[Option[String]] {
+  def impl(gender: Option[String]) = {
+    CleanString.impl(gender.getOrElse("")) match {
+      case "M" ⇒ "1"
+      case "F" ⇒ "2"
+      case _ ⇒ "0"
+    }
   }
 
   val description = "Cleans the gender string and converts \"M\" -> \"1\", \"F\" -> \"2\" and otherwise \"0\""
+}
+
+object WeeksClosedToOpened extends TransformationFunction[Int] {
+  def impl(weeksClosed: Int) = if (52 - weeksClosed < 0) 0.toString else (52 - weeksClosed).toString
+
+  val description: String = "Converts weeksClosed to weeksOpened (disregarding years with 52+ weeks). F.e. 12 closed result in 40 opened."
 }
