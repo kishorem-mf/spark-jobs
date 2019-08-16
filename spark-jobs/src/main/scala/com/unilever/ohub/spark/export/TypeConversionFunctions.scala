@@ -16,12 +16,12 @@ trait TypeConversionFunctions {
 
     if (x.getClass.isAssignableFrom(Double.getClass)) {
       doubleToString(x.asInstanceOf[Double])
-    }  else {
+    } else {
       x match {
         case None => ""
         case value: Timestamp => value
         case Some(value: Timestamp) => value
-        case Some(value: Int) => Some(value) // TODO remove optional conversions after all converters are using getValue
+        case Some(value: Int) => value.toString // TODO remove optional conversions after all converters are using getValue
         case Some(value: Double) => value
         case value: BigDecimal => value
         case Some(value: BigDecimal) => value
@@ -33,17 +33,17 @@ trait TypeConversionFunctions {
     }
   }
 
-  protected[export] implicit def optionalStringToString(x: Option[String]): String = x.getOrElse("")
+//  protected[export] implicit def optionalStringToString(x: Option[String]): String = x.getOrElse("")
 
-  protected[export] implicit def optionalIntToString(x: Option[Int]): String = x.map(_.toString).getOrElse("")
+//  protected[export] implicit def optionalIntToString(x: Option[Int]): String = x.map(_.toString).getOrElse("")
 
-  protected[export] implicit def optionalDoubleToString(x: Option[Double]): String = x.map(_.formatted("%.2f")).getOrElse("")
+//  protected[export] implicit def optionalDoubleToString(x: Option[Double]): String = x.map(_.formatted("%.2f")).getOrElse("")
 
   protected[export] implicit def doubleToString(d: Double): String = d.formatted("%.2f")
 
   protected[export] implicit def bigDecimalToString(bigDecimal: BigDecimal): String = bigDecimalTo2Decimals(bigDecimal)
 
-  protected[export] implicit def optionalBigDecimalToString(input: Option[BigDecimal]): String = input.map(bigDecimalTo2Decimals)
+//  protected[export] implicit def optionalBigDecimalToString(input: Option[BigDecimal]): String = input.map(bigDecimalTo2Decimals)
 
 //  @TransformFunctionDesciption("Function inverts the value and converts it to Y of N")
   protected[export] def invertedBooleanToYNConverter = (bool: Boolean) ⇒ if (bool) "N" else "Y"
@@ -52,13 +52,13 @@ trait TypeConversionFunctions {
 
   implicit def opt2opt(opt: Option[Boolean]) = new BooleanOptional(opt)
 
-  protected[export] implicit def optionalTimestampToString(input: Option[Timestamp]): String = input.getOrElse("")
+//  protected[export] implicit def optionalTimestampToString(input: Option[Timestamp]): String = input.getOrElse("")
 
-  protected[export] implicit def formatDateWithPattern(input: Option[Date]): String = input.getOrElse("")
+//  protected[export] implicit def formatDateWithPattern(input: Option[Date]): String = input.getOrElse("")
 
-  protected[export] implicit def timestampToString(input: Timestamp): String = input
+  protected[export] implicit def timestampToString(input: Timestamp): String = input.toString
 
-  protected[export] implicit def formatDateWithPattern(input: Date): String = input
+  protected[export] implicit def formatDateWithPattern(input: Date): String = input.toString
 
 
   protected[export] def clearField(input: Option[String], cleanYN: Option[Boolean]): Option[String] =

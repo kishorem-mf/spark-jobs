@@ -2,13 +2,17 @@ package com.unilever.ohub.spark.export.acm
 
 import java.util.regex.Pattern
 
-abstract class OldOhubConverter(sourceIds: Map[String, Int]) {
+import com.unilever.ohub.spark.export.TransformationFunction
+
+abstract class OldOhubConverter(sourceIds: Map[String, Int]) extends TransformationFunction[String]{
 
   val CONCAT_PATTERN = Pattern.compile("^(.+?)~(.+?)~(.+)$")
 
   def partyTypeId(): String
 
-  final def convert(value: String): String = {
+  def convert(value: String) = impl(value) // TODO remove this overload
+
+  final def impl(value: String): String = {
     val matcher = CONCAT_PATTERN.matcher(value);
     if (matcher.matches()) {
       var sourceId = sourceIds.getOrElse(matcher.group(2), "");
@@ -17,6 +21,8 @@ abstract class OldOhubConverter(sourceIds: Map[String, Int]) {
       return value;
     }
   }
+
+  val description = "Converts new concatId to the old OHUB_1.0 representation(countryCode~sourceEntityId~partyTypeId~sourceId). F.e. AU~WUFOO~AB123 -> AU~AB123~3~19"
 }
 
 class OperatorOldOhubConverter(sourceIds: Map[String, Int]) extends OldOhubConverter(sourceIds: Map[String, Int]) {

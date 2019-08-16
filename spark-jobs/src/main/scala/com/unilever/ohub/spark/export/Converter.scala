@@ -1,16 +1,18 @@
 package com.unilever.ohub.spark.export
 
 import com.unilever.ohub.spark.domain.DomainEntity
+import org.apache.log4j.{LogManager, Logger}
 
-import scala.annotation.StaticAnnotation
 import scala.reflect.runtime.universe._
 
 
-trait Converter[DomainType <: DomainEntity, OutboundType <: OutboundEntity] {
+trait Converter[DomainType <: DomainEntity, OutboundType <: OutboundEntity] extends TypeConversionFunctions {
+
+  private val log: Logger = LogManager.getLogger(getClass)
 
   def convert(d: DomainType): OutboundType
 
-  def getValue[T: TypeTag](name: String, transformFunction: Option[TransformationFunction[T]] = None)(implicit input: DomainType, explain: Boolean = false) = {
+  def getValue[T: TypeTag](name: String, transformFunction: Option[TransformationFunction[T]] = None)(implicit input: DomainType, explain: Boolean): AnyRef = {
     val field = input.getClass.getDeclaredField(name)
     if (explain) {
       lazy val className = input.getClass.getSimpleName
@@ -26,12 +28,24 @@ trait Converter[DomainType <: DomainEntity, OutboundType <: OutboundEntity] {
       field.setAccessible(true)
       val value = field.get(input)
       if (transformFunction.isDefined) {
-        transformFunction.get.impl(value.asInstanceOf[T])
+
+        def tryInvocation(value: AnyRef, function: TransformationFunction[T]): AnyRef = {
+          try {
+            transformFunction.get.impl(value.asInstanceOf[T])
+          } catch {
+            case _: ClassCastException => {
+              value match {
+                case None => ""
+                case Some(optVal) => tryInvocation(optVal.asInstanceOf[AnyRef], function)
+              }
+            }
+          }
+        }
+
+        tryInvocation(value, transformFunction.get)
       } else {
         value
       }
     }
   }
 }
-
-class TransformFunctionDesciption(description: String) extends StaticAnnotation
