@@ -16,7 +16,7 @@ object OrderLineAcmConverter extends Converter[OrderLine, AcmOrderLine] with Typ
       PRD_INTEGRATION_ID = getValue("productOhubId"),
       CAMPAIGN_LABEL = getValue("campaignLabel"),
       COMMENTS = getValue("comment"),
-      DELETED_FLAG = getValue("isActive", Some(InvertedBooleanToYNConverter))
+      DELETED_FLAG = getValue("isActive", InvertedBooleanToYNConverter)
     )
   }
 

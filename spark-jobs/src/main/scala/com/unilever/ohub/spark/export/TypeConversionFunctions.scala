@@ -26,28 +26,15 @@ trait TypeConversionFunctions {
     }
   }
 
-  //  protected[export] implicit def optionalStringToString(x: Option[String]): String = x.getOrElse("")
-
-  //  protected[export] implicit def optionalIntToString(x: Option[Int]): String = x.map(_.toString).getOrElse("")
-
-  //  protected[export] implicit def optionalDoubleToString(x: Option[Double]): String = x.map(_.formatted("%.2f")).getOrElse("")
-
   protected[export] implicit def doubleToString(d: Double): String = d.formatted("%.2f")
 
   protected[export] implicit def bigDecimalToString(bigDecimal: BigDecimal): String = bigDecimalTo2Decimals(bigDecimal)
 
-  //  protected[export] implicit def optionalBigDecimalToString(input: Option[BigDecimal]): String = input.map(bigDecimalTo2Decimals)
-
-  //  @TransformFunctionDesciption("Function inverts the value and converts it to Y of N")
   protected[export] def invertedBooleanToYNConverter = (bool: Boolean) ⇒ if (bool) "N" else "Y"
 
   protected[export] def booleanToYNConverter = (bool: Boolean) ⇒ if (bool) "Y" else "N"
 
   implicit def opt2opt(opt: Option[Boolean]) = new BooleanOptional(opt)
-
-  //  protected[export] implicit def optionalTimestampToString(input: Option[Timestamp]): String = input.getOrElse("")
-
-  //  protected[export] implicit def formatDateWithPattern(input: Option[Date]): String = input.getOrElse("")
 
   protected[export] implicit def timestampToString(input: Timestamp): String = input.toString
 

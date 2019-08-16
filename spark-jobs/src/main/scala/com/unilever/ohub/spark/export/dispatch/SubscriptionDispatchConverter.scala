@@ -13,12 +13,12 @@ object SubscriptionDispatchConverter extends Converter[Subscription, DispatchSub
       COUNTRY_CODE = getValue("countryCode"),
       CREATED_AT = getValue("ohubCreated"),
       UPDATED_AT = getValue("ohubUpdated"),
-      DELETE_FLAG = getValue("isActive", Some(InvertedBooleanToYNConverter)),
+      DELETE_FLAG = getValue("isActive", InvertedBooleanToYNConverter),
       NL_NAME = getValue("subscriptionType"),
       REGION = getValue("countryCode"),
-      SUBSCRIBED = getValue("hasSubscription", Some(BooleanTo10Converter)),
+      SUBSCRIBED = getValue("hasSubscription", BooleanTo10Converter),
       SUBSCRIPTION_DATE = getValue("subscriptionDate"),
-      SUBSCRIPTION_CONFIRMED = getValue("hasConfirmedSubscription", Some(BooleanTo10Converter)),
+      SUBSCRIPTION_CONFIRMED = getValue("hasConfirmedSubscription", BooleanTo10Converter),
       SUBSCRIPTION_CONFIRMED_DATE = getValue("confirmedSubscriptionDate")
     )
   }

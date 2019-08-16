@@ -14,7 +14,7 @@ object ChainDispatchConverter extends Converter[Chain, DispatchChain] with Dispa
       CUSTOMER_TYPE = getValue("customerType"),
       CREATED_AT = getValue("ohubCreated"),
       UPDATED_AT = getValue("ohubUpdated"),
-      DELETE_FLAG = getValue("isActive", Some(InvertedBooleanToYNConverter)),
+      DELETE_FLAG = getValue("isActive", InvertedBooleanToYNConverter),
 
       CONCEPT_NAME = getValue("conceptName"),
       NUM_OF_UNITS = getValue("numberOfUnits"),

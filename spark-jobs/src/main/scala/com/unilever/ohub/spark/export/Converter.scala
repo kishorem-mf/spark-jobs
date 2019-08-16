@@ -2,6 +2,7 @@ package com.unilever.ohub.spark.export
 
 import com.unilever.ohub.spark.domain.DomainEntity
 import org.apache.log4j.{LogManager, Logger}
+import org.codehaus.jackson.map.ObjectMapper
 
 import scala.reflect.runtime.universe._
 
@@ -12,18 +13,26 @@ trait Converter[DomainType <: DomainEntity, OutboundType <: OutboundEntity] exte
 
   def convert(implicit d: DomainType, explain: Boolean = false): OutboundType
 
-  def getValue[T: TypeTag](name: String, transformFunction: Option[TransformationFunction[T]] = None)(implicit input: DomainType, explain: Boolean = false): AnyRef = {
+  def getValue[T: TypeTag](name: String, transformFunction: TransformationFunction[T])(implicit input: DomainType, explain: Boolean): AnyRef = getValue(name, Some(transformFunction))
+
+  def getValue[T: TypeTag](name: String, transformFunction: Option[TransformationFunction[T]] = None)(implicit input: DomainType, explain: Boolean): AnyRef = {
     val field = input.getClass.getDeclaredField(name)
     if (explain) {
-      lazy val className = input.getClass.getSimpleName
+      val mappingInfo = new ObjectMapper().createObjectNode()
 
-      val fromEntity = s"From entity: $className\n"
-      val fromField = s"From field name: $name\n"
-      val fromType = s"From field type: ${field.getGenericType.getTypeName}\n"
+      mappingInfo.put("fromEntity", input.getClass.getSimpleName)
+      mappingInfo.put("fromFieldName", name)
+      mappingInfo.put("fromFieldType", field.getGenericType.getTypeName)
+
       val transform =
-        if (transformFunction.isDefined) s"Transforming using ${transformFunction.get.getClass.getSimpleName}, desciption: ${transformFunction.get.description}"
-        else ""
-      fromEntity + fromField + fromType + transform
+        if (transformFunction.isDefined) {
+          val transformInfo = mappingInfo.objectNode()
+          transformInfo.put("function", transformFunction.get.getClass.getSimpleName)
+          transformInfo.put("description", transformFunction.get.description)
+          mappingInfo.put("transform", transformInfo)
+        }
+
+      mappingInfo.toString
     } else {
       field.setAccessible(true)
       val value = field.get(input)

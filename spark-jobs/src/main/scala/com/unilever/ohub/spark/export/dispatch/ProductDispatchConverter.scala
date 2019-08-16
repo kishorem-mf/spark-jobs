@@ -14,7 +14,7 @@ object ProductDispatchConverter extends Converter[Product, DispatchProduct] with
       UPDATED_AT = getValue("ohubUpdated"),
       PRODUCT_NAME = getValue("name"),
       EAN_CODE = getValue("eanConsumerUnit"),
-      DELETE_FLAG = getValue("isActive", Some(InvertedBooleanToYNConverter)),
+      DELETE_FLAG = getValue("isActive", InvertedBooleanToYNConverter),
       MRDR_CODE = getValue("code"),
       PRD_INTEGRATION_ID = getValue("concatId"),
       EAN_CODE_DISPATCH_UNIT = getValue("eanDistributionUnit"),

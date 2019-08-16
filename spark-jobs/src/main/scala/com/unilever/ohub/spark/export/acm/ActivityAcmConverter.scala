@@ -11,7 +11,7 @@ object ActivityAcmConverter extends Converter[Activity, AcmActivity] with AcmTra
       ACTIVITY_ID = getValue("concatId"),
       COUNTRY_CODE = getValue("countryCode"),
       CP_ORIG_INTEGRATION_ID = getValue("contactPersonOhubId"),
-      DELETE_FLAG = getValue("isActive", Some(InvertedBooleanToYNConverter)),
+      DELETE_FLAG = getValue("isActive", InvertedBooleanToYNConverter),
       DATE_CREATED = getValue("dateCreated"),
       DATE_UPDATED = getValue("dateUpdated"),
       DETAILS = getValue("details"),

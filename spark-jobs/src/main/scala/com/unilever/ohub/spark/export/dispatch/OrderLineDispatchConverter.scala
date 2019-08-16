@@ -10,7 +10,7 @@ object OrderLineDispatchConverter extends Converter[OrderLine, DispatchOrderLine
     DispatchOrderLine(
       COUNTRY_CODE = getValue("countryCode"),
       SOURCE = getValue("sourceName"),
-      DELETE_FLAG = getValue("isActive", Some(InvertedBooleanToYNConverter)),
+      DELETE_FLAG = getValue("isActive", InvertedBooleanToYNConverter),
       ORD_INTEGRATION_ID = getValue("orderConcatId"),
       ODL_INTEGRATION_ID = getValue("concatId"),
       PRD_INTEGRATION_ID = getValue("productConcatId"),

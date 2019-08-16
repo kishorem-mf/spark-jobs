@@ -39,7 +39,7 @@ object OrderAcmConverter extends Converter[Order, AcmOrder] with TypeConversionF
       INVOICE_COUNTRY = getValue("invoiceOperatorCountry"),
       COMMENTS = getValue("comment"),
       VAT = getValue("vat"),
-      DELETED_FLAG = getValue("isActive", Some(InvertedBooleanToYNConverter))
+      DELETED_FLAG = getValue("isActive", InvertedBooleanToYNConverter)
     )
   }
 }

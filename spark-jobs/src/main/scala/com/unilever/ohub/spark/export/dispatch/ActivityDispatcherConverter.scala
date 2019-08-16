@@ -13,7 +13,7 @@ object ActivityDispatcherConverter extends Converter[Activity, DispatchActivity]
       COUNTRY_CODE = getValue("countryCode"),
       CREATED_AT = getValue("ohubCreated"),
       UPDATED_AT = getValue("ohubUpdated"),
-      DELETE_FLAG = getValue("isActive", Some(InvertedBooleanToYNConverter)),
+      DELETE_FLAG = getValue("isActive", InvertedBooleanToYNConverter),
       CONTACT_DATE = getValue("activityDate"),
       ACTION_TYPE = getValue("actionType"),
       ACTIVITY_NAME = getValue("name"),
