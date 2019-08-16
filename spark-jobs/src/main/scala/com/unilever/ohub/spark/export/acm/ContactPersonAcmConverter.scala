@@ -7,10 +7,7 @@ import com.unilever.ohub.spark.export.acm.model.AcmContactPerson
 
 object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPerson] with AcmTransformationFunctions {
 
-  override def convert(cp: ContactPerson): AcmContactPerson = {
-    implicit val input: ContactPerson = cp
-    implicit val explain = false
-
+  override def convert(implicit cp: ContactPerson, explain: Boolean = false): AcmContactPerson = {
     AcmContactPerson(
       CP_ORIG_INTEGRATION_ID = getValue("ohubId"),
       CP_LNKD_INTEGRATION_ID = getValue("concatId", Some(new ConcatPersonOldOhubConverter(DomainDataProvider().sourceIds))),

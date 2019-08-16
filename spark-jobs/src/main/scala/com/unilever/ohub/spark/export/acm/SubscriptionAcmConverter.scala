@@ -6,9 +6,7 @@ import com.unilever.ohub.spark.export.{BooleanToYNConverter, BooleanToYNUCoverte
 
 object SubscriptionAcmConverter extends Converter[Subscription, AcmSubscription] with TypeConversionFunctions with AcmTransformationFunctions {
 
-  override def convert(subscription: Subscription): AcmSubscription = {
-    implicit val subsc = subscription
-
+  override def convert(implicit subscription: Subscription, explain: Boolean = false): AcmSubscription = {
     AcmSubscription(
       COUNTRY_CODE = getValue("countryCode"),
       SUBSCRIBE_FLAG = getValue("hasSubscription", Some(BooleanToYNConverter)),

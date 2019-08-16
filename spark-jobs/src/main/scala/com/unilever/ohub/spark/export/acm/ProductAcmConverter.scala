@@ -6,9 +6,7 @@ import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter, 
 
 object ProductAcmConverter extends Converter[Product, AcmProduct] with TypeConversionFunctions with AcmTransformationFunctions {
 
-  override def convert(product: Product): AcmProduct = {
-    implicit val pd = product
-
+  override def convert(implicit product: Product, explain: Boolean = false): AcmProduct = {
     AcmProduct(
       COUNTY_CODE = getValue("countryCode"),
       PRODUCT_NAME = getValue("name"),

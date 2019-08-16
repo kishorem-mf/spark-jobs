@@ -2,26 +2,27 @@ package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.entity.CampaignSend
 import com.unilever.ohub.spark.export.dispatch.model.DispatchCampaignSend
-import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
+import com.unilever.ohub.spark.export.{BooleanTo10Converter, Converter, TypeConversionFunctions}
 
 object CampaignSendDispatcherConverter extends Converter[CampaignSend, DispatchCampaignSend] with TypeConversionFunctions with DispatchTransformationFunctions {
-  override def convert(send: CampaignSend): DispatchCampaignSend =
+  override def convert(implicit send: CampaignSend, explain: Boolean = false): DispatchCampaignSend = {
     DispatchCampaignSend(
-      CP_ORIG_INTEGRATION_ID = send.contactPersonConcatId,
-      CWS_INTEGRATION_ID = send.concatId,
-      CWS_DATE = send.sendDate,
-      COUNTRY_CODE = send.countryCode,
-      CAMPAIGN_NAME = send.campaignName,
-      WAVE_NAME = send.waveName,
-      CHANNEL = send.communicationChannel,
-      CAMPAIGN_WAVE_RESPONSE_ID = send.deliveryLogId,
-      CONTROL_POPULATION = booleanTo10Converter(send.isControlGroupMember),
-      PROOF_GROUP_MEMBER = booleanTo10Converter(send.isProofGroupMember),
-      SELECTION_FOR_OFFLINE_CHANNELS = send.selectionForOfflineChannels,
-      CAMPAIGN_ID = send.campaignId,
-      DELIVERY_ID = send.deliveryId,
-      CAMPAIGN_CONCAT_ID = send.campaignConcatId,
-      CREATED_AT = send.ohubCreated,
-      UPDATED_AT = send.ohubUpdated
+      CP_ORIG_INTEGRATION_ID = getValue("contactPersonConcatId"),
+      CWS_INTEGRATION_ID = getValue("concatId"),
+      CWS_DATE = getValue("sendDate"),
+      COUNTRY_CODE = getValue("countryCode"),
+      CAMPAIGN_NAME = getValue("campaignName"),
+      WAVE_NAME = getValue("waveName"),
+      CHANNEL = getValue("communicationChannel"),
+      CAMPAIGN_WAVE_RESPONSE_ID = getValue("deliveryLogId"),
+      CONTROL_POPULATION = getValue("isControlGroupMember", Some(BooleanTo10Converter)),
+      PROOF_GROUP_MEMBER = getValue("isProofGroupMember", Some(BooleanTo10Converter)),
+      SELECTION_FOR_OFFLINE_CHANNELS = getValue("selectionForOfflineChannels"),
+      CAMPAIGN_ID = getValue("campaignId"),
+      DELIVERY_ID = getValue("deliveryId"),
+      CAMPAIGN_CONCAT_ID = getValue("campaignConcatId"),
+      CREATED_AT = getValue("ohubCreated"),
+      UPDATED_AT = getValue("ohubUpdated")
     )
+  }
 }

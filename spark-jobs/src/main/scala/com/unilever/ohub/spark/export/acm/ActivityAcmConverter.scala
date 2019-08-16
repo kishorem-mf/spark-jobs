@@ -6,10 +6,7 @@ import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter}
 
 object ActivityAcmConverter extends Converter[Activity, AcmActivity] with AcmTransformationFunctions {
 
-  override def convert(activity: Activity): AcmActivity = {
-    implicit val act: Activity = activity
-    implicit val explain: Boolean = false
-
+  override def convert(implicit activity: Activity, explain: Boolean = false): AcmActivity = {
     AcmActivity(
       ACTIVITY_ID = getValue("concatId"),
       COUNTRY_CODE = getValue("countryCode"),

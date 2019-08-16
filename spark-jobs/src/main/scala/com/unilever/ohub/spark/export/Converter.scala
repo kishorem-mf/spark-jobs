@@ -10,7 +10,7 @@ trait Converter[DomainType <: DomainEntity, OutboundType <: OutboundEntity] exte
 
   private val log: Logger = LogManager.getLogger(getClass)
 
-  def convert(d: DomainType): OutboundType // TODO add implicit entity and explain bool here
+  def convert(implicit d: DomainType, explain: Boolean = false): OutboundType
 
   def getValue[T: TypeTag](name: String, transformFunction: Option[TransformationFunction[T]] = None)(implicit input: DomainType, explain: Boolean = false): AnyRef = {
     val field = input.getClass.getDeclaredField(name)

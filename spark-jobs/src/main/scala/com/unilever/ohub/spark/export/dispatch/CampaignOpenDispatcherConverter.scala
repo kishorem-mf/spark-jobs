@@ -6,14 +6,14 @@ import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
 object CampaignOpenDispatcherConverter extends Converter[CampaignOpen, DispatchCampaignOpen] with TypeConversionFunctions with DispatchTransformationFunctions {
 
-  override def convert(open: CampaignOpen): DispatchCampaignOpen = {
+  override def convert(implicit open: CampaignOpen, explain: Boolean = false): DispatchCampaignOpen = {
     DispatchCampaignOpen(
-      TRACKING_ID = open.trackingId,
-      CAMPAIGN_WAVE_RESPONSE_ID = open.deliveryLogId,
-      COUNTRY_CODE = open.countryCode,
-      OPEN_DATE = open.openDate,
-      CREATED_AT = open.ohubCreated,
-      UPDATED_AT = open.ohubUpdated
+      TRACKING_ID = getValue("trackingId"),
+      CAMPAIGN_WAVE_RESPONSE_ID = getValue("deliveryLogId"),
+      COUNTRY_CODE = getValue("countryCode"),
+      OPEN_DATE = getValue("openDate"),
+      CREATED_AT = getValue("ohubCreated"),
+      UPDATED_AT = getValue("ohubUpdated")
     )
   }
 }

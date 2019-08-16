@@ -6,9 +6,7 @@ import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter, 
 
 object OrderLineAcmConverter extends Converter[OrderLine, AcmOrderLine] with TypeConversionFunctions with AcmTransformationFunctions {
 
-  override def convert(orderLine: OrderLine): AcmOrderLine = {
-    implicit val ol = orderLine
-
+  override def convert(implicit orderLine: OrderLine, explain: Boolean = false): AcmOrderLine = {
     AcmOrderLine(
       ORDERLINE_ID = getValue("concatId"),
       ORD_INTEGRATION_ID = getValue("orderConcatId"),

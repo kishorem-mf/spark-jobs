@@ -6,9 +6,7 @@ import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter, 
 
 object OrderAcmConverter extends Converter[Order, AcmOrder] with TypeConversionFunctions with AcmTransformationFunctions {
 
-  override def convert(order: Order): AcmOrder = {
-    implicit val od = order
-
+  override def convert(implicit order: Order, explain: Boolean = false): AcmOrder = {
     AcmOrder(
       ORDER_ID = getValue("concatId"),
       REF_ORDER_ID = getValue("sourceEntityId"),

@@ -7,9 +7,7 @@ import com.unilever.ohub.spark.export._
 
 object OperatorAcmConverter extends Converter[Operator, AcmOperator] with TypeConversionFunctions with AcmTransformationFunctions {
 
-  override def convert(op: Operator): AcmOperator = {
-    implicit val oper = op
-
+  override def convert(implicit op: Operator, explain: Boolean = false): AcmOperator = {
     AcmOperator(
       OPR_ORIG_INTEGRATION_ID = getValue("ohubId"),
       OPR_LNKD_INTEGRATION_ID = getValue("concatId", Some(new OperatorOldOhubConverter(DomainDataProvider().sourceIds))),

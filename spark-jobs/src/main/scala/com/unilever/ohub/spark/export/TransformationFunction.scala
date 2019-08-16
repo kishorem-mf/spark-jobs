@@ -6,10 +6,22 @@ trait TransformationFunction[T] {
   val description: String
 }
 
+object BooleanToYNConverter extends TransformationFunction[Boolean] {
+  def impl(bool: Boolean) = if (bool) "Y" else "N"
+
+  val description: String = "Transforms a boolean to Y(es) of N(o)"
+}
+
 object InvertedBooleanToYNConverter extends TransformationFunction[Boolean] {
   def impl(bool: Boolean) = if (bool) "N" else "Y"
 
   val description: String = "Inverts the value and converts it to Y(es) or N(o). f.e. true wil become \"N\""
+}
+
+object BooleanTo10Converter extends TransformationFunction[Boolean] {
+  def impl(bool: Boolean) = if (bool) "1" else "0"
+
+  val description: String = "Converts the value to 1 or 0. f.e. true wil become \"1\""
 }
 
 object InvertedBooleanTo10Converter extends TransformationFunction[Boolean] {
@@ -28,12 +40,6 @@ object BooleanToYNUCoverter extends TransformationFunction[Option[Boolean]] {
   def impl(opt: Option[Boolean]) = opt.fold("U")(b ⇒ if (b) "Y" else "N")
 
   val description: String = "Transforms a boolean to Y(es) N(o) or U(nspecified)"
-}
-
-object BooleanToYNConverter extends TransformationFunction[Boolean] {
-  def impl(bool: Boolean) = if (bool) "Y" else "N"
-
-  val description: String = "Transforms a boolean to Y(es) of N(o)"
 }
 
 class ClearField(cleanYN: Option[Boolean]) extends TransformationFunction[String] {
@@ -66,5 +72,11 @@ object GenderToNumeric extends TransformationFunction[Option[String]] {
 object WeeksClosedToOpened extends TransformationFunction[Int] {
   def impl(weeksClosed: Int) = if (52 - weeksClosed < 0) 0.toString else (52 - weeksClosed).toString
 
-  val description: String = "Converts weeksClosed to weeksOpened (disregarding years with 52+ weeks). F.e. 12 closed result in 40 opened."
+  val description: String = "Converts weeksClosed to weeksOpened (disregarding years with 52+ weeks). F.e. 12 closed result in 40 opened"
+}
+
+object ToUpperCase extends TransformationFunction[String] {
+  def impl(input: String) = input.toUpperCase
+
+  val description: String = "Converts string to upperCase"
 }

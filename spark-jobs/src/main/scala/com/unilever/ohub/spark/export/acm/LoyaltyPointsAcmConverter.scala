@@ -6,9 +6,7 @@ import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
 object LoyaltyPointsAcmConverter extends Converter[LoyaltyPoints, AcmLoyaltyPoints] with TypeConversionFunctions with AcmTransformationFunctions {
 
-  override def convert(loyaltyPoints: LoyaltyPoints): AcmLoyaltyPoints = {
-    implicit val lp = loyaltyPoints
-
+  override def convert(implicit loyaltyPoints: LoyaltyPoints, explain: Boolean = false): AcmLoyaltyPoints = {
     model.AcmLoyaltyPoints(
       CP_ORIG_INTEGRATION_ID = getValue("contactPersonOhubId"),
       COUNTRY_CODE = getValue("countryCode"),

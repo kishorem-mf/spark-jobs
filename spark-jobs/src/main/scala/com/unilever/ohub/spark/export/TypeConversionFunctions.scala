@@ -15,12 +15,13 @@ trait TypeConversionFunctions {
       case Some(value: Timestamp) => value
       case Some(value: Int) => value.toString // TODO remove optional conversions after all converters are using getValue
       case Some(value: Double) => value
-      case value: BigDecimal => value
       case Some(value: BigDecimal) => value
       case Some(value: Date) => value
       case Some(value: String) => value
+      case value: BigDecimal => value
       case value: String => value
       case value: java.lang.Integer => value.toString
+      case value: java.lang.Boolean => value.toString
       case _ => throw new IllegalArgumentException(s"No explicit cast specified from anyref to ${x.getClass}")
     }
   }
