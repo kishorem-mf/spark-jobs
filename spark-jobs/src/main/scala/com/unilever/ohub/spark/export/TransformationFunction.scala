@@ -36,7 +36,7 @@ object CleanString extends TransformationFunction[String] {
   val description: String = "Removes characters that are not always supported by systems (f.e. ⓒ╠☣☺♡♥♪❤\uE2B1)"
 }
 
-object BooleanToYNUCoverter extends TransformationFunction[Option[Boolean]] {
+object BooleanToYNUConverter extends TransformationFunction[Option[Boolean]] {
   def impl(opt: Option[Boolean]) = opt.fold("U")(b ⇒ if (b) "Y" else "N")
 
   val description: String = "Transforms a boolean to Y(es) N(o) or U(nspecified)"

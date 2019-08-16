@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.export.acm
 
 import com.unilever.ohub.spark.domain.entity.Subscription
 import com.unilever.ohub.spark.export.acm.model.AcmSubscription
-import com.unilever.ohub.spark.export.{BooleanToYNConverter, BooleanToYNUCoverter, Converter, InvertedBooleanToYNConverter, TypeConversionFunctions}
+import com.unilever.ohub.spark.export.{BooleanToYNConverter, BooleanToYNUConverter, Converter, InvertedBooleanToYNConverter, TypeConversionFunctions}
 
 object SubscriptionAcmConverter extends Converter[Subscription, AcmSubscription] with TypeConversionFunctions with AcmTransformationFunctions {
 
@@ -13,7 +13,7 @@ object SubscriptionAcmConverter extends Converter[Subscription, AcmSubscription]
       DATE_CREATED = getValue("ohubCreated"),
       DATE_UPDATED = getValue("ohubUpdated"),
       SUBSCRIPTION_DATE = getValue("subscriptionDate"),
-      SUBSCRIPTION_CONFIRMED = getValue("hasConfirmedSubscription", BooleanToYNUCoverter),
+      SUBSCRIPTION_CONFIRMED = getValue("hasConfirmedSubscription", BooleanToYNUConverter),
       SUBSCRIPTION_CONFIRMED_DATE = getValue("confirmedSubscriptionDate"),
       FAIR_KITCHENS_SIGN_UP_TYPE = getValue("fairKitchensSignUpType"),
       COMMUNICATION_CHANNEL = getValue("communicationChannel"),
