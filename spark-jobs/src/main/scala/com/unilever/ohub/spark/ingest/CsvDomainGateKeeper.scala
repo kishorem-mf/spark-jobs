@@ -14,7 +14,8 @@ case class CsvDomainConfig(
     fieldSeparator: String = "field-separator",
     override val deduplicateOnConcatId: Boolean = true,
     override val strictIngestion: Boolean = true,
-    override val showErrorSummary: Boolean = true
+    override val showErrorSummary: Boolean = true,
+    countryCodeOutputFile: String = "country-code-output-file"
 ) extends DomainConfig
 
 abstract class CsvDomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends DomainGateKeeper[DomainType, Row, CsvDomainConfig] {
@@ -46,6 +47,9 @@ abstract class CsvDomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends 
       opt[Boolean]("showErrorSummary") optional () action { (x, c) ⇒
         c.copy(showErrorSummary = x)
       } text "showErrorSummary is a boolean property"
+      opt[String]("countryCodeOutputFile") optional () action { (x, c) ⇒
+        c.copy(countryCodeOutputFile = x)
+      } text "countryCodeOutputFile is a string property"
 
       version("1.0")
       help("help") text "help text"
@@ -71,4 +75,24 @@ abstract class CsvDomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends 
 
   def determineFieldSeparator(config: CsvDomainConfig): String =
     if ("field-separator" == config.fieldSeparator) defaultFieldSeparator else config.fieldSeparator
+
+  //def distinctcountryCode(spark: SparkSession, storage: Storage, config: CsvDomainConfig)
+   protected def distinctcountryCode(spark: SparkSession, storage: Storage, config: CsvDomainConfig): Dataset[Row] = {
+    val fieldSeparator = determineFieldSeparator(config)
+    val result = storage
+      .readFromCsv(
+        location = config.inputFile,
+        fieldSeparator = fieldSeparator,
+        hasHeaders = hasHeaders
+      )
+
+    val numberOfFields = result.schema.fields.length
+    if (numberOfFields == 1) {
+      log.error(s"Number of fields in schema is '$numberOfFields', probably the fieldSeparator is specified incorrectly, currently it's '$fieldSeparator', which resulted in the following schema: ${result.schema}.")
+      System.exit(1)
+    }
+
+     val countrycode = result.select("countryCode").distinct
+     countrycode
+  }
 }
