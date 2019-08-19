@@ -77,7 +77,8 @@ abstract class CsvDomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends 
     if ("field-separator" == config.fieldSeparator) defaultFieldSeparator else config.fieldSeparator
 
   //def distinctcountryCode(spark: SparkSession, storage: Storage, config: CsvDomainConfig)
-   protected def distinctcountryCode(spark: SparkSession, storage: Storage, config: CsvDomainConfig): Dataset[Row] = {
+   protected def distinctcountryCode(spark: SparkSession, storage: Storage, config: CsvDomainConfig): Dataset[Row] =
+   {
     val fieldSeparator = determineFieldSeparator(config)
     val result = storage
       .readFromCsv(
@@ -93,6 +94,7 @@ abstract class CsvDomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends 
     }
 
      val countrycode = result.select("countryCode").distinct
+     storage.writeToParquet(countrycode, config.countryCodeOutputFile, partitionByValue)
      countrycode
   }
 }
