@@ -43,8 +43,6 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
 
   protected def read(spark: SparkSession, storage: Storage, config: Config): Dataset[RowType]
 
-  protected def distinctCountryCodesToParquet(spark: SparkSession, storage: Storage, config: Config): Unit
-
   private def transform(
     transformFn: DomainTransformer ⇒ RowType ⇒ DomainType
   ): RowType ⇒ Either[ErrorMessage, DomainType] =
@@ -141,9 +139,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
       storage.writeToParquet(domainEntities, config.outputFile, partitionByValue)
     }
 
-    if (!config.countryCodeOutputFile.isEmpty) {
-      distinctCountryCodesToParquet(spark, storage, config)
-    }
+
   }
 
 }
