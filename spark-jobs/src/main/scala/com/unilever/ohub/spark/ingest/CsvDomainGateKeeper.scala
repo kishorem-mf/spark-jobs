@@ -14,8 +14,7 @@ case class CsvDomainConfig(
     fieldSeparator: String = "field-separator",
     override val deduplicateOnConcatId: Boolean = true,
     override val strictIngestion: Boolean = true,
-    override val showErrorSummary: Boolean = true,
-    override val countryCodeOutputFile: String = ""
+    override val showErrorSummary: Boolean = true
 ) extends DomainConfig
 
 abstract class CsvDomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends DomainGateKeeper[DomainType, Row, CsvDomainConfig] {
@@ -47,9 +46,6 @@ abstract class CsvDomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends 
       opt[Boolean]("showErrorSummary") optional () action { (x, c) ⇒
         c.copy(showErrorSummary = x)
       } text "showErrorSummary is a boolean property"
-      opt[String]("countryCodeOutputFile") optional () action { (x, c) ⇒
-        c.copy(countryCodeOutputFile = x)
-      } text "countryCodeOutputFile is a string property"
 
       version("1.0")
       help("help") text "help text"
@@ -77,19 +73,4 @@ abstract class CsvDomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends 
     if ("field-separator" == config.fieldSeparator) defaultFieldSeparator else config.fieldSeparator
 
 
-   override protected def distinctCountryCodesToParquet(spark: SparkSession, storage: Storage, config: CsvDomainConfig): Unit =
-   {
-    val fieldSeparator = determineFieldSeparator(config)
-    val result = storage
-      .readFromCsv(
-        location = config.inputFile,
-        fieldSeparator = fieldSeparator,
-        hasHeaders = hasHeaders
-      )
-
-
-     val countrycode = result.select("countryCode").distinct
-     storage.writeToParquet(countrycode, config.countryCodeOutputFile)
-
-  }
 }
