@@ -8,7 +8,7 @@ object GlobalSettings extends AutoPlugin {
   override val requires = plugins.JvmPlugin
 
   override val projectSettings = Seq(
-    scalaVersion := "2.11.12",
+    scalaVersion := "2.12.8",
     libraryDependencies ++= projectDependencies
   ) ++ testSettings ++ scoverageSettings ++ forceDepsSettings
 
@@ -32,6 +32,7 @@ object GlobalSettings extends AutoPlugin {
     "org.scalatest" %% "scalatest" % "3.0.5" % "test,it",
     "org.scalamock" %% "scalamock" % "4.1.0" % "test,it",
     "org.reflections" % "reflections" % "0.9.11"
+
   )
 
   /**
