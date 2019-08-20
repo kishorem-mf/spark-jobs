@@ -43,7 +43,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
 
   protected def read(spark: SparkSession, storage: Storage, config: Config): Dataset[RowType]
 
-  protected def distinctCountryCode(spark: SparkSession, storage: Storage, config: Config): Unit
+  protected def distinctCountryCodesToParquet(spark: SparkSession, storage: Storage, config: Config): Unit
 
   private def transform(
     transformFn: DomainTransformer ⇒ RowType ⇒ DomainType
@@ -142,7 +142,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
     }
 
     if (!config.countryCodeOutputFile.isEmpty) {
-      distinctCountryCode(spark, storage, config)
+      distinctCountryCodesToParquet(spark, storage, config)
     }
   }
 

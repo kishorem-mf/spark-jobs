@@ -77,7 +77,7 @@ abstract class CsvDomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends 
     if ("field-separator" == config.fieldSeparator) defaultFieldSeparator else config.fieldSeparator
 
 
-   override protected def distinctCountryCode(spark: SparkSession, storage: Storage, config: CsvDomainConfig): Unit =
+   override protected def distinctCountryCodesToParquet(spark: SparkSession, storage: Storage, config: CsvDomainConfig): Unit =
    {
     val fieldSeparator = determineFieldSeparator(config)
     val result = storage
