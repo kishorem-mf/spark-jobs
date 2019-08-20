@@ -20,6 +20,7 @@ object DomainGateKeeper {
     val deduplicateOnConcatId: Boolean = true
     val strictIngestion: Boolean = true
     val showErrorSummary: Boolean = true
+    val countryCodeOutputFile: String = ""
   }
 
   object implicits {
@@ -41,6 +42,8 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
   private[spark] def writeEmptyParquet(spark: SparkSession, storage: Storage, location: String): Unit
 
   protected def read(spark: SparkSession, storage: Storage, config: Config): Dataset[RowType]
+
+  protected def distinctCountryCode(spark: SparkSession, storage: Storage, config: Config): Unit
 
   private def transform(
     transformFn: DomainTransformer ⇒ RowType ⇒ DomainType
@@ -97,6 +100,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
         } else {
           log.error(s"WRITE PARQUET FILE ANYWAY (ERRONEOUS ENTITIES ARE NEGLECTED).")
         }
+
       }
     }
 
@@ -136,5 +140,10 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
     } else {
       storage.writeToParquet(domainEntities, config.outputFile, partitionByValue)
     }
+
+    if (!config.countryCodeOutputFile.isEmpty) {
+      distinctCountryCode(spark, storage, config)
+    }
   }
+
 }
