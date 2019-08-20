@@ -20,8 +20,7 @@ object DomainGateKeeper {
     val deduplicateOnConcatId: Boolean = true
     val strictIngestion: Boolean = true
     val showErrorSummary: Boolean = true
-    val countryCodeOutputFile: String = ""
-  }
+    }
 
   object implicits {
     // if we upgrade our scala version, we can probably get rid of this encoder too (because Either has become a Product in scala 2.12)
