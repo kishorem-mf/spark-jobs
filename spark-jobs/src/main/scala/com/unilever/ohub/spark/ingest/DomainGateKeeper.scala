@@ -74,7 +74,9 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
     import spark.implicits._
 
     def handleErrors(config: Config, result: Dataset[Either[ErrorMessage, DomainType]]): Unit = {
-      val errors: Dataset[ErrorMessage] = result.filter(_.isLeft).map(_.left.get)
+      val errors: Dataset[ErrorMessage] = result
+        .filter((res:Either[ErrorMessage, DomainType]) => res.isLeft)
+        .map((err:Either[ErrorMessage, DomainType]) => err.left.get)
 
       if (errors.head(1).nonEmpty) { // do something with the errors here
         val errorResult =
@@ -109,7 +111,8 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
 
     // deduplicate incoming domain entities by selecting the 'newest' entity per unique concatId.
     val domainEntitiesMapped: Dataset[DomainType] = result
-      .filter(_.isRight).map(_.right.get)
+      .filter((res:Either[ErrorMessage, DomainType]) => res.isRight)
+      .map((domain:Either[ErrorMessage, DomainType]) => domain.right.get)
 
     val isSub = if (domainEntitiesMapped.count() == 0L) false
 
