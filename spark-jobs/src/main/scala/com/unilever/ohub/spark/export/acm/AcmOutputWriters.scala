@@ -73,7 +73,7 @@ object OrderLineOutboundWriter extends ExportOutboundWriter[OrderLine] with AcmO
         case Some(t) ⇒ !(t.equals("SSD") || t.equals("TRANSFER"))
         case None ⇒ true
       }
-    });
+    })
   }
 
   override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[OrderLine]) = {

@@ -1,6 +1,9 @@
 package com.unilever.ohub.spark.export.acm
 
 import java.sql.Timestamp
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 import com.unilever.ohub.spark.domain.entity.TestActivities
 import com.unilever.ohub.spark.export.acm.model.AcmActivity
@@ -33,16 +36,18 @@ class ActivityAcmConverterSpec extends FunSpec with TestActivities with Matchers
       val activity = defaultActivity.copy(dateCreated = Some(Timestamp.valueOf("2015-06-30 13:47:00.0")), dateUpdated = Some(Timestamp.valueOf("2015-06-30 13:47:00.0")))
       val result = SUT.convert(activity, true)
 
+      val exampleDateTime = DateTimeFormatter.ofPattern(SUT.timestampPattern).format(LocalDateTime.now().truncatedTo(ChronoUnit.HOURS))
+
       val expectedAcmActivity = AcmActivity(
-        ACTIVITY_ID = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"concatId\",\"fromFieldType\":\"java.lang.String\"}",
-        COUNTRY_CODE = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"countryCode\",\"fromFieldType\":\"java.lang.String\"}",
-        CP_ORIG_INTEGRATION_ID = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"contactPersonOhubId\",\"fromFieldType\":\"scala.Option<java.lang.String>\"}",
-        DELETE_FLAG = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"isActive\",\"fromFieldType\":\"boolean\",\"transform\":{\"function\":\"InvertedBooleanToYNConverter$\",\"description\":\"Inverts the value and converts it to Y(es) or N(o). f.e. true wil become \\\"N\\\"\"}}",
-        DATE_CREATED = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"dateCreated\",\"fromFieldType\":\"scala.Option<java.sql.Timestamp>\"}",
-        DATE_UPDATED = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"dateUpdated\",\"fromFieldType\":\"scala.Option<java.sql.Timestamp>\"}",
-        DETAILS = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"details\",\"fromFieldType\":\"scala.Option<java.lang.String>\"}",
-        TYPE = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"actionType\",\"fromFieldType\":\"scala.Option<java.lang.String>\"}",
-        NAME = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"name\",\"fromFieldType\":\"scala.Option<java.lang.String>\"}")
+        ACTIVITY_ID = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"concatId\",\"fromFieldType\":\"String\",\"fromFieldOptional\":false}",
+        COUNTRY_CODE = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"countryCode\",\"fromFieldType\":\"String\",\"fromFieldOptional\":false}",
+        CP_ORIG_INTEGRATION_ID = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"contactPersonOhubId\",\"fromFieldType\":\"String\",\"fromFieldOptional\":true}",
+        DELETE_FLAG = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"isActive\",\"fromFieldType\":\"boolean\",\"fromFieldOptional\":true,\"transform\":{\"function\":\"InvertedBooleanToYNConverter$\",\"description\":\"Inverts the value and converts it to Y(es) or N(o). f.e. true wil become \\\"N\\\"\"}}",
+        DATE_CREATED = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"dateCreated\",\"fromFieldType\":\"Timestamp\",\"fromFieldOptional\":true,\"datePattern\":\"yyyy/MM/dd HH:mm:ss\",\"exampleDate\":\"" + exampleDateTime + "\"}",
+        DATE_UPDATED = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"dateUpdated\",\"fromFieldType\":\"Timestamp\",\"fromFieldOptional\":true,\"datePattern\":\"yyyy/MM/dd HH:mm:ss\",\"exampleDate\":\"" + exampleDateTime + "\"}",
+        DETAILS = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"details\",\"fromFieldType\":\"String\",\"fromFieldOptional\":true}",
+        TYPE = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"actionType\",\"fromFieldType\":\"String\",\"fromFieldOptional\":true}",
+        NAME = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"name\",\"fromFieldType\":\"String\",\"fromFieldOptional\":true}")
 
       result shouldBe expectedAcmActivity
     }
