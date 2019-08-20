@@ -15,7 +15,7 @@ case class CsvDomainConfig(
     override val deduplicateOnConcatId: Boolean = true,
     override val strictIngestion: Boolean = true,
     override val showErrorSummary: Boolean = true,
-    countryCodeOutputFile: String = "country-code-output-file"
+    override val countryCodeOutputFile: String = ""
 ) extends DomainConfig
 
 abstract class CsvDomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends DomainGateKeeper[DomainType, Row, CsvDomainConfig] {
@@ -76,8 +76,8 @@ abstract class CsvDomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends 
   def determineFieldSeparator(config: CsvDomainConfig): String =
     if ("field-separator" == config.fieldSeparator) defaultFieldSeparator else config.fieldSeparator
 
-  //def distinctcountryCode(spark: SparkSession, storage: Storage, config: CsvDomainConfig)
-   protected def distinctcountryCode(spark: SparkSession, storage: Storage, config: CsvDomainConfig): Dataset[Row] =
+
+   override protected def distinctCountryCode(spark: SparkSession, storage: Storage, config: CsvDomainConfig): Unit =
    {
     val fieldSeparator = determineFieldSeparator(config)
     val result = storage
@@ -87,14 +87,9 @@ abstract class CsvDomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends 
         hasHeaders = hasHeaders
       )
 
-    val numberOfFields = result.schema.fields.length
-    if (numberOfFields == 1) {
-      log.error(s"Number of fields in schema is '$numberOfFields', probably the fieldSeparator is specified incorrectly, currently it's '$fieldSeparator', which resulted in the following schema: ${result.schema}.")
-      System.exit(1)
-    }
 
      val countrycode = result.select("countryCode").distinct
-     storage.writeToParquet(countrycode, config.countryCodeOutputFile, partitionByValue)
-     countrycode
+     storage.writeToParquet(countrycode, config.countryCodeOutputFile)
+
   }
 }
