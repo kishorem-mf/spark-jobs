@@ -71,6 +71,4 @@ abstract class CsvDomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends 
 
   def determineFieldSeparator(config: CsvDomainConfig): String =
     if ("field-separator" == config.fieldSeparator) defaultFieldSeparator else config.fieldSeparator
-
-
 }
