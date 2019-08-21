@@ -3,30 +3,35 @@ package com.unilever.ohub.spark.export
 trait TransformationFunction[T] {
   def impl(input: T): String
 
+  val exampleValue: String = ""
   val description: String
 }
 
 object BooleanToYNConverter extends TransformationFunction[Boolean] {
   def impl(bool: Boolean) = if (bool) "Y" else "N"
 
+  override val exampleValue: String = "Y"
   val description: String = "Transforms a boolean to Y(es) of N(o)"
 }
 
 object InvertedBooleanToYNConverter extends TransformationFunction[Boolean] {
   def impl(bool: Boolean) = if (bool) "N" else "Y"
 
+  override val exampleValue: String = "Y"
   val description: String = "Inverts the value and converts it to Y(es) or N(o). f.e. true wil become \"N\""
 }
 
 object BooleanTo10Converter extends TransformationFunction[Boolean] {
   def impl(bool: Boolean) = if (bool) "1" else "0"
 
+  override val exampleValue: String = "1"
   val description: String = "Converts the value to 1 or 0. f.e. true wil become \"1\""
 }
 
 object InvertedBooleanTo10Converter extends TransformationFunction[Boolean] {
   def impl(bool: Boolean) = if (bool) "0" else "1"
 
+  override val exampleValue: String = "1"
   val description: String = "Inverts the value and converts it to 1 or 0. f.e. true wil become \"0\""
 }
 
@@ -39,6 +44,7 @@ object CleanString extends TransformationFunction[String] {
 object BooleanToYNUConverter extends TransformationFunction[Option[Boolean]] {
   def impl(opt: Option[Boolean]) = opt.fold("U")(b ⇒ if (b) "Y" else "N")
 
+  override val exampleValue: String = "Y"
   val description: String = "Transforms a boolean to Y(es) N(o) or U(nspecified)"
 }
 
@@ -66,6 +72,7 @@ object GenderToNumeric extends TransformationFunction[Option[String]] {
     }
   }
 
+  override val exampleValue: String = "1"
   val description = "Cleans the gender string and converts \"M\" -> \"1\", \"F\" -> \"2\" and otherwise \"0\""
 }
 

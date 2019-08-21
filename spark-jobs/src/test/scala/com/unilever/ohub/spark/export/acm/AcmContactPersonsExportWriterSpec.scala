@@ -44,7 +44,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
     }
 
     it("Should contain header") {
-      SUT.export(contactPersons, hashes, config, spark)
+      SUT.export(contactPersons, hashes, config.copy(mappingOutputLocation = Some("~/Downloads/test")), spark)
 
       val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
       val csvFile = fs.listStatus(new Path(config.outboundLocation)).find(status => status.getPath.getName.contains("UFS_RECIPIENTS")).get

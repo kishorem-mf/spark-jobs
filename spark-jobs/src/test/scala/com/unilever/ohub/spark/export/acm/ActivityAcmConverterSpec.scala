@@ -5,8 +5,12 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.unilever.ohub.spark.domain.entity.TestActivities
 import com.unilever.ohub.spark.export.acm.model.AcmActivity
+import com.unilever.ohub.spark.export.{FieldMapping, InvertedBooleanToYNConverter}
 import org.scalatest.{FunSpec, Matchers}
 
 class ActivityAcmConverterSpec extends FunSpec with TestActivities with Matchers {
@@ -38,16 +42,26 @@ class ActivityAcmConverterSpec extends FunSpec with TestActivities with Matchers
 
       val exampleDateTime = DateTimeFormatter.ofPattern(SUT.timestampPattern).format(LocalDateTime.now().truncatedTo(ChronoUnit.HOURS))
 
+      val mapper = new ObjectMapper() with ScalaObjectMapper
+      mapper.registerModule(DefaultScalaModule)
+
+      val fieldMapping = FieldMapping(
+        fromEntity = "Activity",
+        fromField = "",
+        fromType = "String",
+        required = true
+      )
+
       val expectedAcmActivity = AcmActivity(
-        ACTIVITY_ID = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"concatId\",\"fromFieldType\":\"String\",\"fromFieldOptional\":false}",
-        COUNTRY_CODE = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"countryCode\",\"fromFieldType\":\"String\",\"fromFieldOptional\":false}",
-        CP_ORIG_INTEGRATION_ID = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"contactPersonOhubId\",\"fromFieldType\":\"String\",\"fromFieldOptional\":true}",
-        DELETE_FLAG = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"isActive\",\"fromFieldType\":\"boolean\",\"fromFieldOptional\":true,\"transform\":{\"function\":\"InvertedBooleanToYNConverter$\",\"description\":\"Inverts the value and converts it to Y(es) or N(o). f.e. true wil become \\\"N\\\"\"}}",
-        DATE_CREATED = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"dateCreated\",\"fromFieldType\":\"Timestamp\",\"fromFieldOptional\":true,\"datePattern\":\"yyyy/MM/dd HH:mm:ss\",\"exampleDate\":\"" + exampleDateTime + "\"}",
-        DATE_UPDATED = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"dateUpdated\",\"fromFieldType\":\"Timestamp\",\"fromFieldOptional\":true,\"datePattern\":\"yyyy/MM/dd HH:mm:ss\",\"exampleDate\":\"" + exampleDateTime + "\"}",
-        DETAILS = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"details\",\"fromFieldType\":\"String\",\"fromFieldOptional\":true}",
-        TYPE = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"actionType\",\"fromFieldType\":\"String\",\"fromFieldOptional\":true}",
-        NAME = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"name\",\"fromFieldType\":\"String\",\"fromFieldOptional\":true}")
+        ACTIVITY_ID = mapper.writeValueAsString(fieldMapping.copy(fromField = "concatId")),
+        COUNTRY_CODE = mapper.writeValueAsString(fieldMapping.copy(fromField = "countryCode")),
+        CP_ORIG_INTEGRATION_ID = mapper.writeValueAsString(fieldMapping.copy(fromField = "contactPersonOhubId", required = false)),
+        DELETE_FLAG = mapper.writeValueAsString(fieldMapping.copy(fromField = "isActive", fromType = "boolean", transformation = InvertedBooleanToYNConverter.description, exampleValue = InvertedBooleanToYNConverter.exampleValue)),
+        DATE_CREATED = mapper.writeValueAsString(fieldMapping.copy(fromField = "dateCreated", fromType = "Timestamp", pattern = SUT.timestampPattern, exampleValue = exampleDateTime, required = false)),
+        DATE_UPDATED = mapper.writeValueAsString(fieldMapping.copy(fromField = "dateUpdated", fromType = "Timestamp", pattern = SUT.timestampPattern, exampleValue = exampleDateTime, required = false)),
+        DETAILS = mapper.writeValueAsString(fieldMapping.copy(fromField = "details", required = false)),
+        TYPE = mapper.writeValueAsString(fieldMapping.copy(fromField = "actionType", required = false)),
+        NAME = mapper.writeValueAsString(fieldMapping.copy(fromField = "name", required = false)))
 
       result shouldBe expectedAcmActivity
     }

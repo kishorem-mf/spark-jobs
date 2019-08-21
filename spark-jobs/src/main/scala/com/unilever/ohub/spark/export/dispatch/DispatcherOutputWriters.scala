@@ -189,7 +189,8 @@ object AllDispatchOutboundWriter extends SparkJobWithOutboundExportConfig {
         val writer = entity.dispatchExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
         val hashesLocation = if(config.hashesInputFile.isDefined) Some(s"${config.hashesInputFile.get}/${entity.engineFolderName}.parquet") else None
-        writer.run(spark, config.copy(integratedInputFile = integratedLocation, hashesInputFile = hashesLocation), storage)
+        val mappingOutputLocation = if (config.mappingOutputLocation.isDefined) Some(s"${config.mappingOutputLocation.get}/${entity.engineFolderName}.json") else None
+        writer.run(spark, config.copy(integratedInputFile = integratedLocation, hashesInputFile = hashesLocation, mappingOutputLocation = mappingOutputLocation), storage)
       })
   }
 }

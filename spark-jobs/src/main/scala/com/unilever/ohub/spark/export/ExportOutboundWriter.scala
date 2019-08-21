@@ -4,6 +4,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityHash}
 import com.unilever.ohub.spark.export.TargetType.{ACM, DISPATCHER, TargetType}
 import com.unilever.ohub.spark.sql.JoinType
@@ -25,7 +26,8 @@ case class OutboundConfig(
                            integratedInputFile: String = "integrated-input-file",
                            hashesInputFile: Option[String] = None,
                            targetType: TargetType = ACM,
-                           outboundLocation: String = "outbound-location"
+                           outboundLocation: String = "outbound-location",
+                           mappingOutputLocation: Option[String] = None
                          ) extends SparkJobConfig
 
 abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig] {
@@ -45,6 +47,9 @@ abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig]
       opt[String]("hashesInputFile") optional() action { (x, c) ⇒
         c.copy(hashesInputFile = Some(x))
       } text "hashesInputFile is a string property"
+      opt[String]("mappingOutputLocation") optional() action { (x, c) =>
+        c.copy(mappingOutputLocation = Some(x))
+      } text "mappingOutputFile is a string property"
       version("1.0")
       help("help") text "help text"
     }
@@ -62,13 +67,18 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[DomainType]): Dataset[_]
 
+  private[export] def explainConversion: Option[DomainType => _ <: OutboundEntity] = None
+
   def entityName(): String
 
   val csvOptions = Map()
 
   val onlyExportChangedRows = true
 
+  val mapper = new ObjectMapper()
+
   def mergeCsvFiles(targetType: TargetType) = true
+
   // When merging, headers are based on the dataset columns (and not writen by DataSet.write.csv)
   private def shouldWriteHeaders(targetType: TargetType) = (!mergeCsvFiles(targetType)).toString
 
@@ -103,16 +113,25 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     val columnsInOrder = domainEntities.columns
     val filtered: Dataset[DomainType] = filterDataSet(spark, domainEntities, config)
 
-    val processedChanged = if(onlyExportChangedRows) filterOnlyChangedRows(filtered, hashesInputFile, spark) else filtered
+    val processedChanged = if (onlyExportChangedRows) filterOnlyChangedRows(filtered, hashesInputFile, spark) else filtered
 
     val result = processedChanged
       .select(columnsInOrder.head, columnsInOrder.tail: _*)
       .as[DomainType]
 
+    if (config.mappingOutputLocation.isDefined && explainConversion.isDefined) {
+      log.info(s"ConversionExplanation found, writing output to ${config.mappingOutputLocation.get}")
+      val mapping = explainConversion.get.apply(domainEntities.head)
+      Seq(mapping).toDF
+        .coalesce(1)
+        .write.mode(SaveMode.Overwrite)
+        .json(config.mappingOutputLocation.get)
+    }
+
     writeToCsv(config, convertDataSet(spark, result), spark)
   }
 
-  def filterOnlyChangedRows(dataset: Dataset[DomainType], hashesInputFile: Dataset[DomainEntityHash], spark: SparkSession) : Dataset[DomainType] = {
+  def filterOnlyChangedRows(dataset: Dataset[DomainType], hashesInputFile: Dataset[DomainEntityHash], spark: SparkSession): Dataset[DomainType] = {
     import spark.implicits._
 
     dataset
@@ -134,7 +153,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       .option("header", shouldWriteHeaders(config.targetType))
       .options(options)
 
-    if(mergeCsvFiles(config.targetType)) {
+    if (mergeCsvFiles(config.targetType)) {
       writeableData.csv(temporaryPath.toString)
       val header = ds.columns.map(c ⇒ if (mustQuotesFields) "\"" + c + "\"" else c).mkString(delimiter)
       mergeDirectoryToOneFile(temporaryPath, outputFilePath, sparkSession, header)
@@ -174,6 +193,21 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     val br = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"))
     try {
       br.write(header + "\n")
+    } finally {
+      if (out != null) br.close()
+    }
+    headerFile
+  }
+
+  def writeToJson(spark: SparkSession, outputDirectory: Path, mapping: OutboundEntity): Unit = {
+    import java.io.{BufferedWriter, OutputStreamWriter}
+    val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
+
+    val headerFile = new Path(outputDirectory, "_" + UUID.randomUUID().toString + ".csv")
+    val out = fs.create(headerFile)
+    val br = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"))
+    try {
+      //      br.write(header + "\n")
     } finally {
       if (out != null) br.close()
     }

@@ -13,7 +13,6 @@ trait AcmOptions extends CsvOptions {
   override val extraOptions = Map(
     "delimiter" -> delimiter
   )
-
 }
 
 object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] with AcmOptions {
@@ -21,6 +20,8 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
     import spark.implicits._
     dataSet.map(ContactPersonAcmConverter.convert(_))
   }
+
+  override def explainConversion = Some((input: ContactPerson) => ContactPersonAcmConverter.convert(input, true))
 
   override def entityName(): String = "RECIPIENTS"
 }
@@ -128,7 +129,8 @@ object AllAcmOutboundWriter extends SparkJobWithOutboundExportConfig {
         val writer = entity.acmExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
         val hashesLocation = if(config.hashesInputFile.isDefined) Some(s"${config.hashesInputFile.get}/${entity.engineFolderName}.parquet") else None
-        writer.run(spark, config.copy(integratedInputFile = integratedLocation, hashesInputFile = hashesLocation), storage)
+        val mappingOutputLocation = if (config.mappingOutputLocation.isDefined) Some(s"${config.mappingOutputLocation.get}/${entity.engineFolderName}.json") else None
+        writer.run(spark, config.copy(integratedInputFile = integratedLocation, hashesInputFile = hashesLocation, mappingOutputLocation = mappingOutputLocation), storage)
       })
   }
 }

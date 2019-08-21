@@ -4,9 +4,13 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.entity.TestActivities
 import com.unilever.ohub.spark.export.dispatch.model.DispatchActivity
+import com.unilever.ohub.spark.export.{FieldMapping, InvertedBooleanToYNConverter}
 
 class ActivityDispatcherConverterSpec extends SparkJobSpec with TestActivities {
 
@@ -38,18 +42,28 @@ class ActivityDispatcherConverterSpec extends SparkJobSpec with TestActivities {
 
       val exampleDateTime = DateTimeFormatter.ofPattern(SUT.timestampPattern).format(LocalDateTime.now().truncatedTo(ChronoUnit.HOURS))
 
+      val mapper = new ObjectMapper() with ScalaObjectMapper
+      mapper.registerModule(DefaultScalaModule)
+
+      val fieldMapping = FieldMapping(
+        fromEntity = "Activity",
+        fromField = "",
+        fromType = "String",
+        required = true
+      )
+
       val expectedActivity = DispatchActivity(
-        CP_ORIG_INTEGRATION_ID = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"contactPersonConcatId\",\"fromFieldType\":\"String\",\"fromFieldOptional\":true}",
-        RAC_INTEGRATION_ID = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"concatId\",\"fromFieldType\":\"String\",\"fromFieldOptional\":false}",
-        SOURCE = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"sourceName\",\"fromFieldType\":\"String\",\"fromFieldOptional\":false}",
-        COUNTRY_CODE = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"countryCode\",\"fromFieldType\":\"String\",\"fromFieldOptional\":false}",
-        CREATED_AT = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"ohubCreated\",\"fromFieldType\":\"Timestamp\",\"fromFieldOptional\":false,\"datePattern\":\"yyyy-MM-dd HH:mm:ss\",\"exampleDate\":\"" + exampleDateTime + "\"}",
-        UPDATED_AT = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"ohubUpdated\",\"fromFieldType\":\"Timestamp\",\"fromFieldOptional\":false,\"datePattern\":\"yyyy-MM-dd HH:mm:ss\",\"exampleDate\":\"" + exampleDateTime + "\"}",
-        DELETE_FLAG = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"isActive\",\"fromFieldType\":\"boolean\",\"fromFieldOptional\":true,\"transform\":{\"function\":\"InvertedBooleanToYNConverter$\",\"description\":\"Inverts the value and converts it to Y(es) or N(o). f.e. true wil become \\\"N\\\"\"}}",
-        CONTACT_DATE = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"activityDate\",\"fromFieldType\":\"Timestamp\",\"fromFieldOptional\":true,\"datePattern\":\"yyyy-MM-dd HH:mm:ss\",\"exampleDate\":\"" + exampleDateTime + "\"}",
-        ACTION_TYPE = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"actionType\",\"fromFieldType\":\"String\",\"fromFieldOptional\":true}",
-        ACTIVITY_NAME = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"name\",\"fromFieldType\":\"String\",\"fromFieldOptional\":true}",
-        ACTIVITY_DETAILS = "{\"fromEntity\":\"Activity\",\"fromFieldName\":\"details\",\"fromFieldType\":\"String\",\"fromFieldOptional\":true}"
+        CP_ORIG_INTEGRATION_ID = mapper.writeValueAsString(fieldMapping.copy(fromField = "contactPersonConcatId", required = false)),
+        RAC_INTEGRATION_ID = mapper.writeValueAsString(fieldMapping.copy(fromField = "concatId")),
+        SOURCE = mapper.writeValueAsString(fieldMapping.copy(fromField = "sourceName")),
+        COUNTRY_CODE = mapper.writeValueAsString(fieldMapping.copy(fromField = "countryCode")),
+        CREATED_AT = mapper.writeValueAsString(fieldMapping.copy(fromField = "ohubCreated", fromType = "Timestamp", pattern = SUT.timestampPattern, exampleValue = exampleDateTime)),
+        UPDATED_AT = mapper.writeValueAsString(fieldMapping.copy(fromField = "ohubUpdated", fromType = "Timestamp", pattern = SUT.timestampPattern, exampleValue = exampleDateTime)),
+        DELETE_FLAG = mapper.writeValueAsString(fieldMapping.copy(fromField = "isActive", fromType = "boolean", transformation = InvertedBooleanToYNConverter.description, exampleValue = InvertedBooleanToYNConverter.exampleValue)),
+        CONTACT_DATE = mapper.writeValueAsString(fieldMapping.copy(fromField = "activityDate", fromType = "Timestamp", pattern = SUT.timestampPattern, exampleValue = exampleDateTime, required = false)),
+        ACTION_TYPE = mapper.writeValueAsString(fieldMapping.copy(fromField = "actionType", required = false)),
+        ACTIVITY_NAME = mapper.writeValueAsString(fieldMapping.copy(fromField = "name", required = false)),
+        ACTIVITY_DETAILS = mapper.writeValueAsString(fieldMapping.copy(fromField = "details", required = false))
       )
 
       result shouldBe expectedActivity
