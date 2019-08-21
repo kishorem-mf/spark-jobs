@@ -54,7 +54,7 @@ abstract class SparkJobWithAzureDWConfiguration extends SparkJob[AzureDWConfigur
       opt[String]("integratedInputFile") required() action { (x, c) ⇒
         c.copy(integratedInputFile = x)
       } text "integratedInputFile is a string property"
-      opt[String]("entityName") required() action { (x, c) ⇒
+      opt[String]("entityName") optional() action { (x, c) ⇒
         c.copy(entityName = x)
       } text "dbTable is a string property"
       opt[String]("dbUrl") required() action { (x, c) ⇒
@@ -241,14 +241,14 @@ object ChainDWWriter extends AzureDWWriter[Chain]
   * [[com.unilever.ohub.spark.domain.DomainEntity]]s azureDwWriter values.
   *
   * When running this job, do bear in mind that the input location is now a folder, the entity name will be appended to it
-  * to determine the location.
+  * to determine the location and the target table.
   *
   * F.e. to export data from runId "2019-08-06" provide "integratedInputFile" as:
   * "dbfs:/mnt/engine/integrated/2019-08-06"
   * In this case CP will be fetched from:
   * "dbfs:/mnt/engine/integrated/2019-08-06/contactpersons.parquet"
   **/
-object AllDispatchOutboundWriter extends SparkJobWithAzureDWConfiguration {
+object AllDWOutboundWriter extends SparkJobWithAzureDWConfiguration {
   override def run(spark: SparkSession, config: AzureDWConfiguration, storage: Storage): Unit = {
     DomainEntityUtils.domainCompanionObjects
       .par
@@ -256,7 +256,7 @@ object AllDispatchOutboundWriter extends SparkJobWithAzureDWConfiguration {
       .foreach((entity) => {
         val writer = entity.azureDwWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
-        writer.run(spark, config.copy(integratedInputFile = integratedLocation), storage)
+        writer.run(spark, config.copy(integratedInputFile = integratedLocation, entityName = entity.engineFolderName), storage)
       })
   }
 }
