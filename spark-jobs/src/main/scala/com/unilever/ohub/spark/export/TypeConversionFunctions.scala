@@ -43,3 +43,4 @@ trait TypeConversionFunctions {
   protected[export] implicit def timestampToString(input: Timestamp): String = DateTimeFormatter.ofPattern(timestampPattern).format(input.toLocalDateTime)
 
   protected[export] implicit def formatDateWithPattern(input: Date): String = DateTimeFormatter.ofPattern(datePattern).format(input.toLocalDate)
+}
