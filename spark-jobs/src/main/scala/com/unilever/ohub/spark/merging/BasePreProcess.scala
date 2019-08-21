@@ -69,8 +69,8 @@ abstract class BasePreProcess[T <: DomainEntity: TypeTag] extends SparkJob[PrePr
       opt[String]("deltaPreProcessedOutputFile") required () action { (x, c) ⇒
         c.copy(deltaPreProcessedOutputFile = x)
       } text "deltaPreProcessedOutputFile is a string property"
-      opt[Option[String]]("countryCodeOutputFile") optional() action { (x, c) ⇒
-        c.copy(countryCodeOutputFile = x)
+      opt[String]("countryCodeOutputFile") optional() action { (x, c) ⇒
+        c.copy(countryCodeOutputFile = Some(x))
       } text "countryCodeOutputFile is a string property"
 
       version("1.0")
