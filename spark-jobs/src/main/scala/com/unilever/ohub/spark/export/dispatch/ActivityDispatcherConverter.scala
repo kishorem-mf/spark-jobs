@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.domain.entity.Activity
 import com.unilever.ohub.spark.export.dispatch.model.DispatchActivity
 import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter, TypeConversionFunctions}
 
-object ActivityDispatcherConverter extends Converter[Activity, DispatchActivity] with TypeConversionFunctions with DispatchTransformationFunctions {
+object ActivityDispatcherConverter extends Converter[Activity, DispatchActivity] with TypeConversionFunctions with DispatchTypeConversionFunctions {
   override def convert(implicit activity: Activity, explain: Boolean = false): DispatchActivity = {
     DispatchActivity(
       CP_ORIG_INTEGRATION_ID = getValue("contactPersonConcatId"),

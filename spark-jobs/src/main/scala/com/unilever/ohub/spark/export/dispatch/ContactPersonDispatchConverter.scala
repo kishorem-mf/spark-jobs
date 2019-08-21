@@ -1,10 +1,10 @@
 package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.entity.ContactPerson
-import com.unilever.ohub.spark.export.dispatch.model.DispatchContactPerson
 import com.unilever.ohub.spark.export._
+import com.unilever.ohub.spark.export.dispatch.model.DispatchContactPerson
 
-object ContactPersonDispatchConverter extends Converter[ContactPerson, DispatchContactPerson] with TypeConversionFunctions with DispatchTransformationFunctions {
+object ContactPersonDispatchConverter extends Converter[ContactPerson, DispatchContactPerson] with TypeConversionFunctions with DispatchTypeConversionFunctions {
 
   override def convert(implicit cp: ContactPerson, explain: Boolean = false): DispatchContactPerson = {
     DispatchContactPerson(

@@ -2,9 +2,9 @@ package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.entity.Order
 import com.unilever.ohub.spark.export.dispatch.model.DispatchOrder
-import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter, ToUpperCase, TypeConversionFunctions}
+import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter, TypeConversionFunctions}
 
-object OrderDispatchConverter extends Converter[Order, DispatchOrder] with TypeConversionFunctions with DispatchTransformationFunctions {
+object OrderDispatchConverter extends Converter[Order, DispatchOrder] with TypeConversionFunctions with DispatchTypeConversionFunctions {
 
   override def convert(implicit order: Order, explain: Boolean = false): DispatchOrder = {
     DispatchOrder(

@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.domain.entity.CampaignBounce
 import com.unilever.ohub.spark.export.dispatch.model.DispatchCampaignBounce
 import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object CampaignBounceDispatcherConverter extends Converter[CampaignBounce, DispatchCampaignBounce] with TypeConversionFunctions with DispatchTransformationFunctions {
+object CampaignBounceDispatcherConverter extends Converter[CampaignBounce, DispatchCampaignBounce] with TypeConversionFunctions with DispatchTypeConversionFunctions {
 
   override def convert(implicit bounce: CampaignBounce, explain: Boolean = false): DispatchCampaignBounce = {
     DispatchCampaignBounce(

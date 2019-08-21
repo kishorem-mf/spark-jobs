@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.domain.entity.Product
 import com.unilever.ohub.spark.export.acm.model.AcmProduct
 import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter, TypeConversionFunctions}
 
-object ProductAcmConverter extends Converter[Product, AcmProduct] with TypeConversionFunctions with AcmTransformationFunctions {
+object ProductAcmConverter extends Converter[Product, AcmProduct] with TypeConversionFunctions with AcmTypeConversionFunctions {
 
   override def convert(implicit product: Product, explain: Boolean = false): AcmProduct = {
     AcmProduct(

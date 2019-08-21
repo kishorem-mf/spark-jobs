@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.domain.entity.Subscription
 import com.unilever.ohub.spark.export.dispatch.model.DispatchSubscription
 import com.unilever.ohub.spark.export.{BooleanTo10Converter, Converter, InvertedBooleanToYNConverter, TypeConversionFunctions}
 
-object SubscriptionDispatchConverter extends Converter[Subscription, DispatchSubscription] with TypeConversionFunctions with DispatchTransformationFunctions {
+object SubscriptionDispatchConverter extends Converter[Subscription, DispatchSubscription] with TypeConversionFunctions with DispatchTypeConversionFunctions {
 
   override def convert(implicit subscription: Subscription, explain: Boolean = false): DispatchSubscription = {
     DispatchSubscription(

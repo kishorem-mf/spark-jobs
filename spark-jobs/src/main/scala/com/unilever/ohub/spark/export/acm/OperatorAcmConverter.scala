@@ -2,10 +2,10 @@ package com.unilever.ohub.spark.export.acm
 
 import com.unilever.ohub.spark.DomainDataProvider
 import com.unilever.ohub.spark.domain.entity.Operator
-import com.unilever.ohub.spark.export.acm.model.AcmOperator
 import com.unilever.ohub.spark.export._
+import com.unilever.ohub.spark.export.acm.model.AcmOperator
 
-object OperatorAcmConverter extends Converter[Operator, AcmOperator] with TypeConversionFunctions with AcmTransformationFunctions {
+object OperatorAcmConverter extends Converter[Operator, AcmOperator] with TypeConversionFunctions with AcmTypeConversionFunctions {
 
   override def convert(implicit op: Operator, explain: Boolean = false): AcmOperator = {
     AcmOperator(

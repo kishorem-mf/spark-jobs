@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.domain.entity.LoyaltyPoints
 import com.unilever.ohub.spark.export.dispatch.model.DispatchLoyaltyPoints
 import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object LoyaltyPointsDispatcherConverter extends Converter[LoyaltyPoints, DispatchLoyaltyPoints] with TypeConversionFunctions with DispatchTransformationFunctions {
+object LoyaltyPointsDispatcherConverter extends Converter[LoyaltyPoints, DispatchLoyaltyPoints] with TypeConversionFunctions with DispatchTypeConversionFunctions {
 
   override def convert(implicit points: LoyaltyPoints, explain: Boolean = false): DispatchLoyaltyPoints = {
     DispatchLoyaltyPoints(

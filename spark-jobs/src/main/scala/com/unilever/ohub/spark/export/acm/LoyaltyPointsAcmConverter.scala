@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.domain.entity.LoyaltyPoints
 import com.unilever.ohub.spark.export.acm.model.AcmLoyaltyPoints
 import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object LoyaltyPointsAcmConverter extends Converter[LoyaltyPoints, AcmLoyaltyPoints] with TypeConversionFunctions with AcmTransformationFunctions {
+object LoyaltyPointsAcmConverter extends Converter[LoyaltyPoints, AcmLoyaltyPoints] with TypeConversionFunctions with AcmTypeConversionFunctions {
 
   override def convert(implicit loyaltyPoints: LoyaltyPoints, explain: Boolean = false): AcmLoyaltyPoints = {
     model.AcmLoyaltyPoints(

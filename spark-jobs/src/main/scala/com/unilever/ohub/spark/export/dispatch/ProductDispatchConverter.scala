@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.domain.entity.Product
 import com.unilever.ohub.spark.export.dispatch.model.DispatchProduct
 import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter, TypeConversionFunctions}
 
-object ProductDispatchConverter extends Converter[Product, DispatchProduct] with TypeConversionFunctions with DispatchTransformationFunctions {
+object ProductDispatchConverter extends Converter[Product, DispatchProduct] with TypeConversionFunctions with DispatchTypeConversionFunctions {
 
   override def convert(implicit product: Product, explain: Boolean = false): DispatchProduct = {
     DispatchProduct(

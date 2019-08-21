@@ -10,7 +10,7 @@ private[export] object BooleanToADConverter extends TransformationFunction[Boole
   val description: String = "Converts a boolean: true -> A(ctive) or  false -> D(eactivated)"
 }
 
-object OperatorDispatchConverter extends Converter[Operator, DispatchOperator] with TypeConversionFunctions with DispatchTransformationFunctions {
+object OperatorDispatchConverter extends Converter[Operator, DispatchOperator] with TypeConversionFunctions with DispatchTypeConversionFunctions {
 
   override def convert(implicit operator: Operator, explain: Boolean = false): DispatchOperator = {
     DispatchOperator(

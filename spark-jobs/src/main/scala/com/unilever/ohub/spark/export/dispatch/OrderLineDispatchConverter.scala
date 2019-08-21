@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.domain.entity.OrderLine
 import com.unilever.ohub.spark.export.dispatch.model.DispatchOrderLine
 import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter, TypeConversionFunctions}
 
-object OrderLineDispatchConverter extends Converter[OrderLine, DispatchOrderLine] with TypeConversionFunctions with DispatchTransformationFunctions {
+object OrderLineDispatchConverter extends Converter[OrderLine, DispatchOrderLine] with TypeConversionFunctions with DispatchTypeConversionFunctions {
 
   override def convert(implicit orderline: OrderLine, explain: Boolean = false): DispatchOrderLine = {
     DispatchOrderLine(

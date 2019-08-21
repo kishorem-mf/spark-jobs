@@ -2,9 +2,9 @@ package com.unilever.ohub.spark.export.acm
 
 import com.unilever.ohub.spark.domain.entity.Subscription
 import com.unilever.ohub.spark.export.acm.model.AcmSubscription
-import com.unilever.ohub.spark.export.{BooleanToYNConverter, BooleanToYNUConverter, Converter, InvertedBooleanToYNConverter, TypeConversionFunctions}
+import com.unilever.ohub.spark.export._
 
-object SubscriptionAcmConverter extends Converter[Subscription, AcmSubscription] with TypeConversionFunctions with AcmTransformationFunctions {
+object SubscriptionAcmConverter extends Converter[Subscription, AcmSubscription] with TypeConversionFunctions with AcmTypeConversionFunctions {
 
   override def convert(implicit subscription: Subscription, explain: Boolean = false): AcmSubscription = {
     AcmSubscription(

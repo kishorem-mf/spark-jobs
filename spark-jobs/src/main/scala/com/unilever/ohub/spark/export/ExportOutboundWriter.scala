@@ -4,7 +4,9 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.{JsonMappingException, ObjectMapper}
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityHash}
 import com.unilever.ohub.spark.export.TargetType.{ACM, DISPATCHER, TargetType}
 import com.unilever.ohub.spark.sql.JoinType
@@ -57,6 +59,11 @@ abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig]
   override private[spark] def defaultConfig = OutboundConfig()
 }
 
+object ExportOutboundWriter {
+  val mapper = new ObjectMapper() with ScalaObjectMapper
+  mapper.registerModule(DefaultScalaModule)
+}
+
 abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extends SparkJobWithOutboundExportConfig with CsvOptions {
 
   override private[spark] def defaultConfig = OutboundConfig()
@@ -74,8 +81,6 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
   val csvOptions = Map()
 
   val onlyExportChangedRows = true
-
-  val mapper = new ObjectMapper()
 
   def mergeCsvFiles(targetType: TargetType) = true
 
@@ -119,13 +124,11 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       .select(columnsInOrder.head, columnsInOrder.tail: _*)
       .as[DomainType]
 
-    if (config.mappingOutputLocation.isDefined && explainConversion.isDefined) {
+    if (config.mappingOutputLocation.isDefined && explainConversion.isDefined && domainEntities.head(1).nonEmpty) {
       log.info(s"ConversionExplanation found, writing output to ${config.mappingOutputLocation.get}")
       val mapping = explainConversion.get.apply(domainEntities.head)
-      Seq(mapping).toDF
-        .coalesce(1)
-        .write.mode(SaveMode.Overwrite)
-        .json(config.mappingOutputLocation.get)
+      deserializeJsonFields(mapping)
+      writeToJson(spark, new Path(config.mappingOutputLocation.get), deserializeJsonFields(mapping))
     }
 
     writeToCsv(config, convertDataSet(spark, result), spark)
@@ -199,18 +202,41 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     headerFile
   }
 
-  def writeToJson(spark: SparkSession, outputDirectory: Path, mapping: OutboundEntity): Unit = {
+  /**
+   * This function works for objects that only contain string fields with JSON content. The object is transformed to
+   * a map with jsonNodes so the mapper can convert it to one JSON object (without escaped JSON as values).
+   *
+   * F.e. {"key": "{\"name\": \"nested object\"}"}
+   * will become a map[String, JsonNode] which can be written (by the objectMapper) like
+   * {"key": {"name": "nested object"}}
+   *
+   * @param subject
+   * @return
+   */
+  private def deserializeJsonFields(subject: Any): Map[String, Any] = {
+    try {
+      (Map[String, Any]() /: subject.getClass.getDeclaredFields) { (a, f) =>
+        f.setAccessible(true)
+        a + (f.getName -> ExportOutboundWriter.mapper.readTree(f.get(subject).asInstanceOf[String]))
+      }
+    } catch {
+      case e: JsonMappingException => {
+        log.error(s"Unable to serialize all fields from ${subject.toString}", e)
+        Map("subject" -> subject.toString, "exception" -> e.toString)
+      }
+    }
+  }
+
+  private def writeToJson(spark: SparkSession, outputDirectory: Path, subject: Any): Unit = {
     import java.io.{BufferedWriter, OutputStreamWriter}
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
 
-    val headerFile = new Path(outputDirectory, "_" + UUID.randomUUID().toString + ".csv")
-    val out = fs.create(headerFile)
+    val out = fs.create(outputDirectory, true)
     val br = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"))
     try {
-      //      br.write(header + "\n")
+      ExportOutboundWriter.mapper.writeValue(br, subject)
     } finally {
       if (out != null) br.close()
     }
-    headerFile
   }
 }

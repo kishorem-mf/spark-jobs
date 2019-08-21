@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.domain.entity.Activity
 import com.unilever.ohub.spark.export.acm.model.AcmActivity
 import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter}
 
-object ActivityAcmConverter extends Converter[Activity, AcmActivity] with AcmTransformationFunctions {
+object ActivityAcmConverter extends Converter[Activity, AcmActivity] with AcmTypeConversionFunctions {
 
   override def convert(implicit activity: Activity, explain: Boolean = false): AcmActivity = {
     AcmActivity(

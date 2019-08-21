@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.domain.entity.CampaignSend
 import com.unilever.ohub.spark.export.dispatch.model.DispatchCampaignSend
 import com.unilever.ohub.spark.export.{BooleanTo10Converter, Converter, TypeConversionFunctions}
 
-object CampaignSendDispatcherConverter extends Converter[CampaignSend, DispatchCampaignSend] with TypeConversionFunctions with DispatchTransformationFunctions {
+object CampaignSendDispatcherConverter extends Converter[CampaignSend, DispatchCampaignSend] with TypeConversionFunctions with DispatchTypeConversionFunctions {
   override def convert(implicit send: CampaignSend, explain: Boolean = false): DispatchCampaignSend = {
     DispatchCampaignSend(
       CP_ORIG_INTEGRATION_ID = getValue("contactPersonConcatId"),

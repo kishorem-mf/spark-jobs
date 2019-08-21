@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.domain.entity.Campaign
 import com.unilever.ohub.spark.export.dispatch.model.DispatchCampaign
 import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object CampaignDispatcherConverter extends Converter[Campaign, DispatchCampaign] with TypeConversionFunctions with DispatchTransformationFunctions {
+object CampaignDispatcherConverter extends Converter[Campaign, DispatchCampaign] with TypeConversionFunctions with DispatchTypeConversionFunctions {
   override def convert(implicit campaign: Campaign, explain: Boolean = false): DispatchCampaign = {
     DispatchCampaign(
       CP_ORIG_INTEGRATION_ID = getValue("contactPersonConcatId"),

@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.domain.entity.Chain
 import com.unilever.ohub.spark.export.dispatch.model.DispatchChain
 import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter}
 
-object ChainDispatchConverter extends Converter[Chain, DispatchChain] with DispatchTransformationFunctions {
+object ChainDispatchConverter extends Converter[Chain, DispatchChain] with DispatchTypeConversionFunctions {
 
   override def convert(implicit chain: Chain, explain: Boolean = false): DispatchChain = {
     DispatchChain(

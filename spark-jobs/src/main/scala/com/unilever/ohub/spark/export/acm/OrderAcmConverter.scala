@@ -4,7 +4,7 @@ import com.unilever.ohub.spark.domain.entity.Order
 import com.unilever.ohub.spark.export.acm.model.AcmOrder
 import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter, TypeConversionFunctions}
 
-object OrderAcmConverter extends Converter[Order, AcmOrder] with TypeConversionFunctions with AcmTransformationFunctions {
+object OrderAcmConverter extends Converter[Order, AcmOrder] with TypeConversionFunctions with AcmTypeConversionFunctions {
 
   override def convert(implicit order: Order, explain: Boolean = false): AcmOrder = {
     AcmOrder(
