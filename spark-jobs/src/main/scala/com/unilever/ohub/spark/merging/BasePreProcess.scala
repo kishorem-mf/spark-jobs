@@ -49,7 +49,7 @@ case class PreProcessConfig(
     integratedInputFile: String = "path-to-integrated-input-file",
     deltaInputFile: String = "path-to-delta-input-file",
     deltaPreProcessedOutputFile: String = "path-to-delta-pre-processed-output-file",
-    countryCodeOutputFile: String =""
+    countryCodeOutputFile: Option[String] = None
 ) extends SparkJobConfig
 
 abstract class BasePreProcess[T <: DomainEntity: TypeTag] extends SparkJob[PreProcessConfig] {
@@ -69,7 +69,7 @@ abstract class BasePreProcess[T <: DomainEntity: TypeTag] extends SparkJob[PrePr
       opt[String]("deltaPreProcessedOutputFile") required () action { (x, c) ⇒
         c.copy(deltaPreProcessedOutputFile = x)
       } text "deltaPreProcessedOutputFile is a string property"
-      opt[String]("countryCodeOutputFile") optional() action { (x, c) ⇒
+      opt[Option[String]]("countryCodeOutputFile") optional() action { (x, c) ⇒
         c.copy(countryCodeOutputFile = x)
       } text "countryCodeOutputFile is a string property"
 
@@ -101,7 +101,7 @@ abstract class BasePreProcess[T <: DomainEntity: TypeTag] extends SparkJob[PrePr
     val deltaInputFile = storage.readFromParquet[T](config.deltaInputFile)
     val distinctCountryCodeAsParquet = deltaInputFile.select("countryCode").distinct
 
-    storage.writeToParquet(distinctCountryCodeAsParquet, config.countryCodeOutputFile)
+    storage.writeToParquet(distinctCountryCodeAsParquet, config.countryCodeOutputFile.get)
 
   }
   override def run(spark: SparkSession, config: PreProcessConfig, storage: Storage): Unit = {
@@ -116,7 +116,7 @@ abstract class BasePreProcess[T <: DomainEntity: TypeTag] extends SparkJob[PrePr
     storage.writeToParquet(preProcessedDeltaDomainEntities, config.deltaPreProcessedOutputFile)
 
     //Only for OP and CP the distinctCountryCode is determined
-    if (config.countryCodeOutputFile.isEmpty) {
+    if (config.countryCodeOutputFile.isDefined) {
       log.info(
         s"distinctCountryCode is not determined for [${config.deltaInputFile}]]"
       )
