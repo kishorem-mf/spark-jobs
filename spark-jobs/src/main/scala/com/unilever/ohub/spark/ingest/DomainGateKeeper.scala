@@ -1,12 +1,12 @@
 package com.unilever.ohub.spark.ingest
 
-import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity._
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql._
 import DomainGateKeeper._
-import org.apache.spark.sql.expressions.{Window, WindowSpec}
+import org.apache.spark.sql.expressions.{ Window, WindowSpec }
 import org.apache.spark.sql.functions._
 
 import scala.reflect.runtime.universe._
@@ -30,7 +30,7 @@ object DomainGateKeeper {
 
 }
 
-abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag, RowType, Config <: DomainConfig] extends SparkJob[Config] {
+abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Config <: DomainConfig] extends SparkJob[Config] {
 
   import DomainGateKeeper.implicits._
 
@@ -57,8 +57,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag, RowType, C
   /**
     * Function that sorts the partitioned window.
     * Only the first row is ingested, the others are discarded.
-    *
-    * @param spark      sparksession, user for implicits import
+    * @param spark sparksession, user for implicits import
     * @param windowSpec windowspec that is sorted by this function
     * @return a sorted dedplicationWindowSpec
     */
@@ -98,7 +97,6 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag, RowType, C
         } else {
           log.error(s"WRITE PARQUET FILE ANYWAY (ERRONEOUS ENTITIES ARE NEGLECTED).")
         }
-
       }
     }
 
@@ -117,7 +115,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag, RowType, C
 
     else domainEntitiesMapped.head match {
       case s: Subscription ⇒ true
-      case _ ⇒ false
+      case _               ⇒ false
     }
     val w = sortDeduplicationWindowSpec(spark, Window.partitionBy($"concatId"))
 
@@ -138,8 +136,5 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag, RowType, C
     } else {
       storage.writeToParquet(domainEntities, config.outputFile, partitionByValue)
     }
-
-
   }
-
 }
