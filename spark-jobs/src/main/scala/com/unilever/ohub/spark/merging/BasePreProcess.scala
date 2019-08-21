@@ -94,15 +94,12 @@ abstract class BasePreProcess[T <: DomainEntity: TypeTag] extends SparkJob[PrePr
       .as[T]
   }
 
-  protected def saveDistinctCountryCodesToParquet(spark: SparkSession, storage: Storage, config: PreProcessConfig): Unit =
-  {
+  protected def saveDistinctCountryCodesToParquet(spark: SparkSession, storage: Storage, config: PreProcessConfig): Unit = {
     //This method takes the distinct country code and saves it in engine blob storage only for OP and CP
 
     val deltaInputFile = storage.readFromParquet[T](config.deltaInputFile)
     val distinctCountryCodeAsParquet = deltaInputFile.select("countryCode").distinct
-
     storage.writeToParquet(distinctCountryCodeAsParquet, config.countryCodeOutputFile.get)
-
   }
   override def run(spark: SparkSession, config: PreProcessConfig, storage: Storage): Unit = {
     log.info(s"Pre process delta domain entities with integrated [${config.integratedInputFile}] and delta" +
