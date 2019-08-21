@@ -1,12 +1,12 @@
 package com.unilever.ohub.spark.ingest
 
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity._
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql._
 import DomainGateKeeper._
-import org.apache.spark.sql.expressions.{ Window, WindowSpec }
+import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
 
 import scala.reflect.runtime.universe._
@@ -20,7 +20,7 @@ object DomainGateKeeper {
     val deduplicateOnConcatId: Boolean = true
     val strictIngestion: Boolean = true
     val showErrorSummary: Boolean = true
-    }
+  }
 
   object implicits {
     // if we upgrade our scala version, we can probably get rid of this encoder too (because Either has become a Product in scala 2.12)
@@ -30,7 +30,7 @@ object DomainGateKeeper {
 
 }
 
-abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Config <: DomainConfig] extends SparkJob[Config] {
+abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag, RowType, Config <: DomainConfig] extends SparkJob[Config] {
 
   import DomainGateKeeper.implicits._
 
@@ -43,8 +43,8 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
   protected def read(spark: SparkSession, storage: Storage, config: Config): Dataset[RowType]
 
   private def transform(
-    transformFn: DomainTransformer ⇒ RowType ⇒ DomainType
-  ): RowType ⇒ Either[ErrorMessage, DomainType] =
+                         transformFn: DomainTransformer ⇒ RowType ⇒ DomainType
+                       ): RowType ⇒ Either[ErrorMessage, DomainType] =
     row ⇒
       try {
         val entity = transformFn(DomainTransformer())(row)
@@ -55,12 +55,13 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
       }
 
   /**
-   * Function that sorts the partitioned window.
-   * Only the first row is ingested, the others are discarded.
-   * @param spark sparksession, user for implicits import
-   * @param windowSpec windowspec that is sorted by this function
-   * @return a sorted dedplicationWindowSpec
-   */
+    * Function that sorts the partitioned window.
+    * Only the first row is ingested, the others are discarded.
+    *
+    * @param spark      sparksession, user for implicits import
+    * @param windowSpec windowspec that is sorted by this function
+    * @return a sorted dedplicationWindowSpec
+    */
   protected def sortDeduplicationWindowSpec(spark: SparkSession, windowSpec: WindowSpec): WindowSpec = {
     import spark.implicits._
 
@@ -116,7 +117,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
 
     else domainEntitiesMapped.head match {
       case s: Subscription ⇒ true
-      case _               ⇒ false
+      case _ ⇒ false
     }
     val w = sortDeduplicationWindowSpec(spark, Window.partitionBy($"concatId"))
 
