@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-import com.fasterxml.jackson.databind.{JsonMappingException, ObjectMapper}
+import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityHash}
@@ -62,6 +62,10 @@ abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig]
 object ExportOutboundWriter {
   val mapper = new ObjectMapper() with ScalaObjectMapper
   mapper.registerModule(DefaultScalaModule)
+
+  def jsonStringToNode(jsonString: String, isRetry: Boolean = false): JsonNode = {
+    if (jsonString != "") mapper.readTree(jsonString) else mapper.createObjectNode()
+  }
 }
 
 abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extends SparkJobWithOutboundExportConfig with CsvOptions {
@@ -127,7 +131,6 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     if (config.mappingOutputLocation.isDefined && explainConversion.isDefined && domainEntities.head(1).nonEmpty) {
       log.info(s"ConversionExplanation found, writing output to ${config.mappingOutputLocation.get}")
       val mapping = explainConversion.get.apply(domainEntities.head)
-      deserializeJsonFields(mapping)
       writeToJson(spark, new Path(config.mappingOutputLocation.get), deserializeJsonFields(mapping))
     }
 
@@ -214,16 +217,9 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
    * @return
    */
   private def deserializeJsonFields(subject: Any): Map[String, Any] = {
-    try {
-      (Map[String, Any]() /: subject.getClass.getDeclaredFields) { (a, f) =>
-        f.setAccessible(true)
-        a + (f.getName -> ExportOutboundWriter.mapper.readTree(f.get(subject).asInstanceOf[String]))
-      }
-    } catch {
-      case e: JsonMappingException => {
-        log.error(s"Unable to serialize all fields from ${subject.toString}", e)
-        Map("subject" -> subject.toString, "exception" -> e.toString)
-      }
+    (Map[String, Any]() /: subject.getClass.getDeclaredFields) { (a, f) =>
+      f.setAccessible(true)
+      a + (f.getName -> ExportOutboundWriter.jsonStringToNode(f.get(subject).asInstanceOf[String]))
     }
   }
 

@@ -45,7 +45,6 @@ object SubscriptionOutboundWriter extends ExportOutboundWriter[Subscription] wit
 
   override def explainConversion = Some((input: Subscription) => SubscriptionAcmConverter.convert(input, true))
 
-
   override def entityName(): String = "SUBSCRIPTIONS"
 }
 
@@ -56,7 +55,6 @@ object ProductOutboundWriter extends ExportOutboundWriter[Product] with AcmOptio
   }
 
   override def explainConversion = Some((input: Product) => ProductAcmConverter.convert(input, true))
-
 
   override def entityName(): String = "PRODUCTS"
 }
@@ -106,7 +104,6 @@ object ActivityOutboundWriter extends ExportOutboundWriter[Activity] with AcmOpt
 
   override def explainConversion = Some((input: Activity) => ActivityAcmConverter.convert(input, true))
 
-
   override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[Activity], config: OutboundConfig) = {
     import spark.implicits._
     dataSet.filter($"customerType" === "CONTACTPERSON")
@@ -122,7 +119,6 @@ object LoyaltyPointsOutboundWriter extends ExportOutboundWriter[LoyaltyPoints] w
   }
 
   override def explainConversion = Some((input: LoyaltyPoints) => LoyaltyPointsAcmConverter.convert(input, true))
-
 
   override def entityName(): String = "LOYALTIES"
 }
@@ -148,7 +144,7 @@ object AllAcmOutboundWriter extends SparkJobWithOutboundExportConfig {
         val writer = entity.acmExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
         val hashesLocation = if (config.hashesInputFile.isDefined) Some(s"${config.hashesInputFile.get}/${entity.engineFolderName}.parquet") else None
-        val mappingOutputLocation = if (config.mappingOutputLocation.isDefined) Some(s"${config.mappingOutputLocation.get}/${config.targetType}-${writer.entityName()}-mapping.json") else None
+        val mappingOutputLocation = if (config.mappingOutputLocation.isDefined) Some(s"${config.mappingOutputLocation.get}/${config.targetType}_${writer.entityName()}_MAPPING.json") else None
         writer.run(spark, config.copy(integratedInputFile = integratedLocation, hashesInputFile = hashesLocation, mappingOutputLocation = mappingOutputLocation), storage)
       })
   }

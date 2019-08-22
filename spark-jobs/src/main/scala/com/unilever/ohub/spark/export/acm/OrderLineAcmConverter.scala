@@ -19,5 +19,4 @@ object OrderLineAcmConverter extends Converter[OrderLine, AcmOrderLine] with Typ
       DELETED_FLAG = getValue("isActive", InvertedBooleanToYNConverter)
     )
   }
-
 }

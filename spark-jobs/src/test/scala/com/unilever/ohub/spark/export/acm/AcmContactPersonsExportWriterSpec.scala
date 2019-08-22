@@ -64,7 +64,8 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
       mapper.registerModule(DefaultScalaModule)
 
       val conversionMapping = mapper.readTree(new File(mappingLocation.toString))
-      conversionMapping.size() > 1 shouldBe true
+      conversionMapping.size() > 50 shouldBe true
+      conversionMapping.get("REGISTRATION_DATE").size() shouldBe 8
     }
   }
 
