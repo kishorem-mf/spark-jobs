@@ -22,7 +22,7 @@ trait TypeConversionFunctions {
       case None => ""
       case value: Timestamp => value
       case Some(value: Timestamp) => value
-      case Some(value: Int) => value.toString // TODO remove optional conversions after all converters are using getValue
+      case Some(value: Int) => value.toString
       case Some(value: Double) => value
       case Some(value: BigDecimal) => value
       case Some(value: Date) => value

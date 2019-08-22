@@ -13,7 +13,7 @@ case class OldNew(oldConcatId: String, concatId: String) extends OutboundEntity
 private object ContactPersonOldNewConverter extends Converter[ContactPerson, OldNew] with TypeConversionFunctions {
   override def convert(implicit cp: ContactPerson, explain: Boolean = false): OldNew =
     OldNew(
-      oldConcatId = new ConcatPersonOldOhubConverter(DomainDataProvider().sourceIds).convert(cp.concatId),
+      oldConcatId = new ConcatPersonOldOhubConverter(DomainDataProvider().sourceIds).impl(cp.concatId),
       concatId = cp.concatId
     )
 }
@@ -21,7 +21,7 @@ private object ContactPersonOldNewConverter extends Converter[ContactPerson, Old
 private object OperatorOldNewConverter extends Converter[Operator, OldNew] with TypeConversionFunctions {
   override def convert(implicit op: Operator, explain: Boolean = false): OldNew =
     OldNew(
-      oldConcatId = new OperatorOldOhubConverter(DomainDataProvider().sourceIds).convert(op.concatId),
+      oldConcatId = new OperatorOldOhubConverter(DomainDataProvider().sourceIds).impl(op.concatId),
       concatId = op.concatId
     )
 }
