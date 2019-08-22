@@ -140,7 +140,7 @@ object AllAcmOutboundWriter extends SparkJobWithOutboundExportConfig {
     DomainEntityUtils.domainCompanionObjects
       .par
       .filter(_.acmExportWriter.isDefined)
-      .foreach((entity) => {
+      .foreach(entity => {
         val writer = entity.acmExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
         val hashesLocation = if (config.hashesInputFile.isDefined) Some(s"${config.hashesInputFile.get}/${entity.engineFolderName}.parquet") else None
