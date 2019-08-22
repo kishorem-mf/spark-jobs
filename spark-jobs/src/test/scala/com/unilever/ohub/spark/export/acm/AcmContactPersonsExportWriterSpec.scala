@@ -47,6 +47,16 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
       result.collect().head.toString() should include("AU~AB123~3~19")
     }
 
+    it("Should fitler based on coutryCodes") {
+      val configWithCountries = config.copy(countryCodes = Some(Seq("NL")))
+
+      SUT.export(contactPersons, hashes, configWithCountries, spark)
+
+      val result = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
+
+      result.collect().length shouldBe 0
+    }
+
     it("Should contain header") {
       SUT.export(contactPersons, hashes, config, spark)
 
