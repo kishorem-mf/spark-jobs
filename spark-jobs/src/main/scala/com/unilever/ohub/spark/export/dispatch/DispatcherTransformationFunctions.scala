@@ -5,5 +5,5 @@ import com.unilever.ohub.spark.export.TransformationFunction
 object ToUpperCase extends TransformationFunction[String] {
   def impl(input: String) = input.toUpperCase
 
-  val description: String = "Converts string to upperCase"
+  val description: String = "Converts the string to upperCase"
 }
