@@ -25,7 +25,8 @@ case class OutboundConfig(
                            integratedInputFile: String = "integrated-input-file",
                            hashesInputFile: Option[String] = None,
                            targetType: TargetType = ACM,
-                           outboundLocation: String = "outbound-location"
+                           outboundLocation: String = "outbound-location",
+                           countryCodes: Option[Seq[String]] = None
                          ) extends SparkJobConfig
 
 abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig] {
@@ -45,6 +46,9 @@ abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig]
       opt[String]("hashesInputFile") optional() action { (x, c) ⇒
         c.copy(hashesInputFile = Some(x))
       } text "hashesInputFile is a string property"
+      opt[Seq[String]]("countryCodes") optional() action { (x, c) =>
+        c.copy(countryCodes = Some(x))
+      } text "countryCodes is a string array"
       version("1.0")
       help("help") text "help text"
     }
@@ -69,6 +73,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
   val onlyExportChangedRows = true
 
   def mergeCsvFiles(targetType: TargetType) = true
+
   // When merging, headers are based on the dataset columns (and not writen by DataSet.write.csv)
   private def shouldWriteHeaders(targetType: TargetType) = (!mergeCsvFiles(targetType)).toString
 
@@ -100,10 +105,12 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       case _ ⇒ integratedEntities
     }
 
-    val columnsInOrder = domainEntities.columns
-    val filtered: Dataset[DomainType] = filterDataSet(spark, domainEntities, config)
+    val filteredByCountries = if (config.countryCodes.isDefined) domainEntities.filter($"countryCode".isin(config.countryCodes.get :_*)) else domainEntities
 
-    val processedChanged = if(onlyExportChangedRows) filterOnlyChangedRows(filtered, hashesInputFile, spark) else filtered
+    val columnsInOrder = filteredByCountries.columns
+    val filtered: Dataset[DomainType] = filterDataSet(spark, filteredByCountries, config)
+
+    val processedChanged = if (onlyExportChangedRows) filterOnlyChangedRows(filtered, hashesInputFile, spark) else filtered
 
     val result = processedChanged
       .select(columnsInOrder.head, columnsInOrder.tail: _*)
@@ -112,7 +119,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     writeToCsv(config, convertDataSet(spark, result), spark)
   }
 
-  def filterOnlyChangedRows(dataset: Dataset[DomainType], hashesInputFile: Dataset[DomainEntityHash], spark: SparkSession) : Dataset[DomainType] = {
+  def filterOnlyChangedRows(dataset: Dataset[DomainType], hashesInputFile: Dataset[DomainEntityHash], spark: SparkSession): Dataset[DomainType] = {
     import spark.implicits._
 
     dataset
@@ -134,7 +141,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       .option("header", shouldWriteHeaders(config.targetType))
       .options(options)
 
-    if(mergeCsvFiles(config.targetType)) {
+    if (mergeCsvFiles(config.targetType)) {
       writeableData.csv(temporaryPath.toString)
       val header = ds.columns.map(c ⇒ if (mustQuotesFields) "\"" + c + "\"" else c).mkString(delimiter)
       mergeDirectoryToOneFile(temporaryPath, outputFilePath, sparkSession, header)

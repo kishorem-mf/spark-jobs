@@ -43,8 +43,8 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
   protected def read(spark: SparkSession, storage: Storage, config: Config): Dataset[RowType]
 
   private def transform(
-    transformFn: DomainTransformer ⇒ RowType ⇒ DomainType
-  ): RowType ⇒ Either[ErrorMessage, DomainType] =
+                         transformFn: DomainTransformer ⇒ RowType ⇒ DomainType
+                       ): RowType ⇒ Either[ErrorMessage, DomainType] =
     row ⇒
       try {
         val entity = transformFn(DomainTransformer())(row)
@@ -55,12 +55,12 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity: TypeTag, RowType, Co
       }
 
   /**
-   * Function that sorts the partitioned window.
-   * Only the first row is ingested, the others are discarded.
-   * @param spark sparksession, user for implicits import
-   * @param windowSpec windowspec that is sorted by this function
-   * @return a sorted dedplicationWindowSpec
-   */
+    * Function that sorts the partitioned window.
+    * Only the first row is ingested, the others are discarded.
+    * @param spark sparksession, user for implicits import
+    * @param windowSpec windowspec that is sorted by this function
+    * @return a sorted dedplicationWindowSpec
+    */
   protected def sortDeduplicationWindowSpec(spark: SparkSession, windowSpec: WindowSpec): WindowSpec = {
     import spark.implicits._
 
