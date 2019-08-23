@@ -127,7 +127,13 @@ object AllAcmOutboundWriter extends SparkJobWithOutboundExportConfig {
       .foreach((entity) => {
         val writer = entity.acmExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
-        writer.run(spark, config.copy(integratedInputFile = integratedLocation), storage)
+        val hashLocation = config.hashesInputFile.map( x => x + s"/${entity.engineFolderName}.parquet" )
+        writer.run(
+          spark,
+          config.copy(
+            integratedInputFile = integratedLocation,
+            hashesInputFile = hashLocation),
+          storage)
       })
   }
 }
