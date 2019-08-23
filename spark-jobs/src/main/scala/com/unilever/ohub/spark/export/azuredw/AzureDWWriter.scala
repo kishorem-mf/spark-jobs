@@ -111,8 +111,9 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
     val maxOhubUpdated = storage.readAzureDWQuery(
       spark = spark, dbUrl = config.dbUrl, userName = config.dbUsername,
       userPassword = config.dbPassword, dbTempDir = config.dbTempDir,
-      query = s"select max(ohubUpdated) as maxOhubUpdated from ${config.dbSchema}.${config.entityName}"
+      query = s"select isnull(max(ohubUpdated), '2019-01-01') as maxOhubUpdated from ${config.dbSchema}.${config.entityName}"
     ).select("maxOhubUpdated").rdd.map(r ⇒ r(0)).collect()(0).toString
+    // TODO: review the logging mechanism
 
     val loggingDF = Seq(LogRow(
       entityName = config.entityName,
