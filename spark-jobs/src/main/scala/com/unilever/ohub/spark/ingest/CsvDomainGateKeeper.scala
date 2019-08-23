@@ -9,13 +9,13 @@ import scopt.OptionParser
 import scala.reflect.runtime.universe._
 
 case class CsvDomainConfig(
-    inputFile: String = "path-to-input-file",
-    override val outputFile: String = "path-to-output-file",
-    fieldSeparator: String = "field-separator",
-    override val deduplicateOnConcatId: Boolean = true,
-    override val strictIngestion: Boolean = true,
-    override val showErrorSummary: Boolean = true
-) extends DomainConfig
+                            inputFile: String = "path-to-input-file",
+                            override val outputFile: String = "path-to-output-file",
+                            fieldSeparator: String = "field-separator",
+                            override val deduplicateOnConcatId: Boolean = true,
+                            override val strictIngestion: Boolean = true,
+                            override val showErrorSummary: Boolean = true
+                          ) extends DomainConfig
 
 abstract class CsvDomainGateKeeper[DomainType <: DomainEntity: TypeTag] extends DomainGateKeeper[DomainType, Row, CsvDomainConfig] {
 
