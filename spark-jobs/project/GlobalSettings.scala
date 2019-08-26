@@ -8,7 +8,7 @@ object GlobalSettings extends AutoPlugin {
   override val requires = plugins.JvmPlugin
 
   override val projectSettings = Seq(
-    scalaVersion := "2.11.8",
+    scalaVersion := "2.11.12",
     libraryDependencies ++= projectDependencies
   ) ++ testSettings ++ scoverageSettings ++ forceDepsSettings
 
