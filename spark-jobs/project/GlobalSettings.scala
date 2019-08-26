@@ -28,10 +28,11 @@ object GlobalSettings extends AutoPlugin {
   )
 
   lazy val projectDependencies = Seq(
-    "com.github.scopt" %% "scopt" % "3.7.0",
-    "org.scalatest" %% "scalatest" % "3.0.5" % "test,it",
-    "org.scalamock" %% "scalamock" % "4.1.0" % "test,it",
+    "com.github.scopt" %% "scopt" % "3.7.1",
+    "org.scalatest" %% "scalatest" % "3.0.8" % "test,it",
+    "org.scalamock" %% "scalamock" % "4.4.0" % "test,it",
     "org.reflections" % "reflections" % "0.9.11"
+
   )
 
   /**
