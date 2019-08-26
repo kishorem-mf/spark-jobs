@@ -198,17 +198,17 @@ object ChainOutboundWriter extends ExportOutboundWriter[Chain] with DispatcherOp
 }
 
 /**
-  * Runs concrete [[com.unilever.ohub.spark.export.ExportOutboundWriter]]'s run method for all
-  * [[com.unilever.ohub.spark.domain.DomainEntity]]s dispatchExportWriter values.
-  *
-  * When running this job, do bear in mind that the input location is now a folder, the entity name will be appended to it
-  * to determine the location.
-  *
-  * F.e. to export data from runId "2019-08-06" provide "integratedInputFile" as:
-  * "dbfs:/mnt/engine/integrated/2019-08-06"
-  * In this case CP will be fetched from:
-  * "dbfs:/mnt/engine/integrated/2019-08-06/contactpersons.parquet"
-  **/
+ * Runs concrete [[com.unilever.ohub.spark.export.ExportOutboundWriter]]'s run method for all
+ * [[com.unilever.ohub.spark.domain.DomainEntity]]s dispatchExportWriter values.
+ *
+ * When running this job, do bear in mind that the input location is now a folder, the entity name will be appended to it
+ * to determine the location.
+ *
+ * F.e. to export data from runId "2019-08-06" provide "integratedInputFile" as:
+ * "dbfs:/mnt/engine/integrated/2019-08-06"
+ * In this case CP will be fetched from:
+ * "dbfs:/mnt/engine/integrated/2019-08-06/contactpersons.parquet"
+ **/
 object AllDispatchOutboundWriter extends SparkJobWithOutboundExportConfig {
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     DomainEntityUtils.domainCompanionObjects
@@ -217,9 +217,15 @@ object AllDispatchOutboundWriter extends SparkJobWithOutboundExportConfig {
       .foreach(entity => {
         val writer = entity.dispatchExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
-        val hashesLocation = if(config.hashesInputFile.isDefined) Some(s"${config.hashesInputFile.get}/${entity.engineFolderName}.parquet") else None
-        val mappingOutputLocation = if (config.mappingOutputLocation.isDefined) Some(s"${config.mappingOutputLocation.get}/${config.targetType}_${writer.entityName()}_MAPPING.json") else None
-        writer.run(spark, config.copy(integratedInputFile = integratedLocation, hashesInputFile = hashesLocation, mappingOutputLocation = mappingOutputLocation), storage)
+        val hashLocation = config.hashesInputFile.map(x => x + s"/${entity.engineFolderName}.parquet")
+        val mappingOutputLocation = config.mappingOutputLocation.map(mappingOutput => s"${mappingOutput}/${config.targetType}_${writer.entityName()}_MAPPING.json")
+        writer.run(
+          spark,
+          config.copy(
+            integratedInputFile = integratedLocation,
+            hashesInputFile = hashLocation,
+            mappingOutputLocation = mappingOutputLocation),
+          storage)
       })
   }
 }
