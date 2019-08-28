@@ -76,7 +76,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   override private[spark] def defaultConfig = OutboundConfig()
 
-  private[export] def goldenRecordOnlyFilter(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet.filter(_.isGoldenRecord)
+  private[export] def goldenRecordOnlyFilter(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet.filter( (row:DomainType) => row.isGoldenRecord)
 
   private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[DomainType], config: OutboundConfig) = dataSet
 
