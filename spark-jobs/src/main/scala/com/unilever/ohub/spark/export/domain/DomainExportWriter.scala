@@ -104,7 +104,8 @@ object AllDomainEntitiesWriter extends SparkJobWithOutboundExportConfig {
       .foreach((entity) => {
         val writer = entity.domainExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
-        writer.run(spark, config.copy(integratedInputFile = integratedLocation), storage)
+        val hashesLocation = if(config.hashesInputFile.isDefined) Some(s"${config.hashesInputFile.get}/${entity.engineFolderName}.parquet") else None
+        writer.run(spark, config.copy(integratedInputFile = integratedLocation, hashesInputFile = hashesLocation), storage)
       })
   }
 }

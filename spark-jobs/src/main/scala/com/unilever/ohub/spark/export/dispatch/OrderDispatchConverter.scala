@@ -2,47 +2,47 @@ package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.entity.Order
 import com.unilever.ohub.spark.export.dispatch.model.DispatchOrder
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter, TypeConversionFunctions}
 
-object OrderDispatchConverter extends Converter[Order, DispatchOrder] with TransformationFunctions with DispatchTransformationFunctions {
+object OrderDispatchConverter extends Converter[Order, DispatchOrder] with TypeConversionFunctions with DispatchTypeConversionFunctions {
 
-  override def convert(order: Order): DispatchOrder = {
+  override def convert(implicit order: Order, explain: Boolean = false): DispatchOrder = {
     DispatchOrder(
-      SOURCE_ID = order.sourceEntityId,
-      ORD_INTEGRATION_ID = order.concatId,
-      COUNTRY_CODE = order.countryCode,
-      SOURCE = order.sourceName,
-      DELETED_FLAG = booleanToYNConverter(!order.isActive),
-      CREATED_AT = order.ohubCreated,
-      UPDATED_AT = order.ohubUpdated,
-      ORDER_TYPE = order.`type`.toUpperCase,
-      CP_ORIG_INTEGRATION_ID = order.contactPersonConcatId,
-      OPR_ORIG_INTEGRATION_ID = order.operatorConcatId,
-      WHOLESALER = order.distributorName,
-      WHOLESALER_ID = order.distributorId,
-      WHOLESALER_CUSTOMER_NUMBER = order.distributorOperatorId,
-      WHOLESALER_LOCATION = order.distributorLocation,
-      TRANSACTION_DATE = order.transactionDate,
-      ORDER_UID = order.orderUid,
-      CAMPAIGN_CODE = order.campaignCode,
-      CAMPAIGN_NAME = order.campaignName,
-      DELIVERY_STREET = order.deliveryOperatorStreet,
-      DELIVERY_HOUSE_NUMBER = order.deliveryOperatorHouseNumber,
-      DELIVERY_HOUSE_NUMBER_EXT = order.deliveryOperatorHouseNumberExtension,
-      DELIVERY_POST_CODE = order.deliveryOperatorZipCode,
-      DELIVERY_CITY = order.deliveryOperatorCity,
-      DELIVERY_STATE = order.deliveryOperatorState,
-      DELIVERY_COUNTRY = order.deliveryOperatorCountry,
-      INVOICE_NAME = order.invoiceOperatorName,
-      INVOICE_STREET = order.invoiceOperatorStreet,
-      INVOICE_HOUSE_NUMBER = order.invoiceOperatorHouseNumber,
-      INVOICE_HOUSE_NUMBER_EXT = order.invoiceOperatorHouseNumberExtension,
-      INVOICE_ZIPCODE = order.invoiceOperatorZipCode,
-      INVOICE_CITY = order.invoiceOperatorCity,
-      INVOICE_STATE = order.invoiceOperatorState,
-      INVOICE_COUNTRY = order.invoiceOperatorCountry,
-      COMMENTS = order.comment,
-      VAT = order.vat
+      SOURCE_ID = getValue("sourceEntityId"),
+      ORD_INTEGRATION_ID = getValue("concatId"),
+      COUNTRY_CODE = getValue("countryCode"),
+      SOURCE = getValue("sourceName"),
+      DELETED_FLAG = getValue("isActive", InvertedBooleanToYNConverter),
+      CREATED_AT = getValue("ohubCreated"),
+      UPDATED_AT = getValue("ohubUpdated"),
+      ORDER_TYPE = getValue("type", ToUpperCase),
+      CP_ORIG_INTEGRATION_ID = getValue("contactPersonConcatId"),
+      OPR_ORIG_INTEGRATION_ID = getValue("operatorConcatId"),
+      WHOLESALER = getValue("distributorName"),
+      WHOLESALER_ID = getValue("distributorId"),
+      WHOLESALER_CUSTOMER_NUMBER = getValue("distributorOperatorId"),
+      WHOLESALER_LOCATION = getValue("distributorLocation"),
+      TRANSACTION_DATE = getValue("transactionDate"),
+      ORDER_UID = getValue("orderUid"),
+      CAMPAIGN_CODE = getValue("campaignCode"),
+      CAMPAIGN_NAME = getValue("campaignName"),
+      DELIVERY_STREET = getValue("deliveryOperatorStreet"),
+      DELIVERY_HOUSE_NUMBER = getValue("deliveryOperatorHouseNumber"),
+      DELIVERY_HOUSE_NUMBER_EXT = getValue("deliveryOperatorHouseNumberExtension"),
+      DELIVERY_POST_CODE = getValue("deliveryOperatorZipCode"),
+      DELIVERY_CITY = getValue("deliveryOperatorCity"),
+      DELIVERY_STATE = getValue("deliveryOperatorState"),
+      DELIVERY_COUNTRY = getValue("deliveryOperatorCountry"),
+      INVOICE_NAME = getValue("invoiceOperatorName"),
+      INVOICE_STREET = getValue("invoiceOperatorStreet"),
+      INVOICE_HOUSE_NUMBER = getValue("invoiceOperatorHouseNumber"),
+      INVOICE_HOUSE_NUMBER_EXT = getValue("invoiceOperatorHouseNumberExtension"),
+      INVOICE_ZIPCODE = getValue("invoiceOperatorZipCode"),
+      INVOICE_CITY = getValue("invoiceOperatorCity"),
+      INVOICE_STATE = getValue("invoiceOperatorState"),
+      INVOICE_COUNTRY = getValue("invoiceOperatorCountry"),
+      COMMENTS = getValue("comment"),
+      VAT = getValue("vat")
     )
   }
 }

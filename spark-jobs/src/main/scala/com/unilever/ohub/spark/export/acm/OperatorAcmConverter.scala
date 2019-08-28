@@ -2,60 +2,58 @@ package com.unilever.ohub.spark.export.acm
 
 import com.unilever.ohub.spark.DomainDataProvider
 import com.unilever.ohub.spark.domain.entity.Operator
+import com.unilever.ohub.spark.export._
 import com.unilever.ohub.spark.export.acm.model.AcmOperator
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
 
-object OperatorAcmConverter extends Converter[Operator, AcmOperator] with TransformationFunctions with AcmTransformationFunctions {
+object OperatorAcmConverter extends Converter[Operator, AcmOperator] with TypeConversionFunctions with AcmTypeConversionFunctions {
 
-  override def convert(op: Operator): AcmOperator = {
+  override def convert(implicit op: Operator, explain: Boolean = false): AcmOperator = {
     AcmOperator(
-      OPR_ORIG_INTEGRATION_ID = op.ohubId.get,
-      OPR_LNKD_INTEGRATION_ID = new OperatorOldOhubConverter(DomainDataProvider().sourceIds).convert(op.concatId),
-      GOLDEN_RECORD_FLAG = booleanToYNConverter(op.isGoldenRecord),
-      COUNTRY_CODE = op.countryCode,
-      NAME = op.name.map(cleanString),
-      CHANNEL = op.channel,
-      SUB_CHANNEL = op.subChannel,
-      REGION = op.region,
-      OTM = op.otm,
-      PREFERRED_PARTNER = op.distributorName.map(cleanString),
-      STREET = op.street,
-      HOUSE_NUMBER = op.houseNumber,
-      ZIPCODE = op.zipCode,
-      CITY = op.city,
-      COUNTRY = op.countryName,
-      AVERAGE_SELLING_PRICE = op.averagePrice,
-      NUMBER_OF_COVERS = op.totalDishes,
-      NUMBER_OF_WEEKS_OPEN = op.weeksClosed.map { weeksClosed ⇒
-        if (52 - weeksClosed < 0) 0 else 52 - weeksClosed
-      },
-      NUMBER_OF_DAYS_OPEN = op.daysOpen,
-      CONVENIENCE_LEVEL = op.cookingConvenienceLevel,
-      RESPONSIBLE_EMPLOYEE = op.salesRepresentative,
-      NPS_POTENTIAL = op.netPromoterScore,
-      CHAIN_KNOTEN = op.chainId,
-      CHAIN_NAME = op.chainName.map(cleanString),
-      DATE_CREATED = op.dateCreated,
-      DATE_UPDATED = op.dateUpdated,
-      DELETE_FLAG = booleanToYNConverter(!op.isActive),
-      WHOLESALER_OPERATOR_ID = op.distributorOperatorId,
-      PRIVATE_HOUSEHOLD = op.isPrivateHousehold.booleanToYN,
-      VAT = op.vat,
-      OPEN_ON_MONDAY = op.isOpenOnMonday.booleanToYN,
-      OPEN_ON_TUESDAY = op.isOpenOnTuesday.booleanToYN,
-      OPEN_ON_WEDNESDAY = op.isOpenOnWednesday.booleanToYN,
-      OPEN_ON_THURSDAY = op.isOpenOnThursday.booleanToYN,
-      OPEN_ON_FRIDAY = op.isOpenOnFriday.booleanToYN,
-      OPEN_ON_SATURDAY = op.isOpenOnSaturday.booleanToYN,
-      OPEN_ON_SUNDAY = op.isOpenOnSunday.booleanToYN,
-      KITCHEN_TYPE = op.kitchenType.map(cleanString),
-      LOCAL_CHANNEL = op.localChannel,
-      CHANNEL_USAGE = op.channelUsage,
-      SOCIAL_COMMERCIAL = op.socialCommercial,
-      STRATEGIC_CHANNEL = op.strategicChannel,
-      GLOBAL_CHANNEL = op.globalChannel,
-      GLOBAL_SUBCHANNEL = op.globalSubChannel
-     // OPERATOR_ID = op.concatId
+      OPR_ORIG_INTEGRATION_ID = getValue("ohubId"),
+      OPR_LNKD_INTEGRATION_ID = getValue("concatId", new OperatorOldOhubConverter(DomainDataProvider().sourceIds)),
+      GOLDEN_RECORD_FLAG = getValue("isGoldenRecord", BooleanToYNConverter),
+      COUNTRY_CODE = getValue("countryCode"),
+      NAME = getValue("name", CleanString),
+      CHANNEL = getValue("channel"),
+      SUB_CHANNEL = getValue("subChannel"),
+      REGION = getValue("region"),
+      OTM = getValue("otm"),
+      PREFERRED_PARTNER = getValue("distributorName", CleanString),
+      STREET = getValue("street"),
+      HOUSE_NUMBER = getValue("houseNumber"),
+      ZIPCODE = getValue("zipCode"),
+      CITY = getValue("city"),
+      COUNTRY = getValue("countryName"),
+      AVERAGE_SELLING_PRICE = getValue("averagePrice"),
+      NUMBER_OF_COVERS = getValue("totalDishes"),
+      NUMBER_OF_WEEKS_OPEN = getValue("weeksClosed", WeeksClosedToOpened),
+      NUMBER_OF_DAYS_OPEN = getValue("daysOpen"),
+      CONVENIENCE_LEVEL = getValue("cookingConvenienceLevel"),
+      RESPONSIBLE_EMPLOYEE = getValue("salesRepresentative"),
+      NPS_POTENTIAL = getValue("netPromoterScore"),
+      CHAIN_KNOTEN = getValue("chainId"),
+      CHAIN_NAME = getValue("chainName", CleanString),
+      DATE_CREATED = getValue("dateCreated"),
+      DATE_UPDATED = getValue("dateUpdated"),
+      DELETE_FLAG = getValue("isActive", InvertedBooleanToYNConverter),
+      WHOLESALER_OPERATOR_ID = getValue("distributorOperatorId"),
+      PRIVATE_HOUSEHOLD = getValue("isPrivateHousehold", BooleanToYNConverter),
+      VAT = getValue("vat"),
+      OPEN_ON_MONDAY = getValue("isOpenOnMonday", BooleanToYNConverter),
+      OPEN_ON_TUESDAY = getValue("isOpenOnTuesday", BooleanToYNConverter),
+      OPEN_ON_WEDNESDAY = getValue("isOpenOnWednesday", BooleanToYNConverter),
+      OPEN_ON_THURSDAY = getValue("isOpenOnThursday", BooleanToYNConverter),
+      OPEN_ON_FRIDAY = getValue("isOpenOnFriday", BooleanToYNConverter),
+      OPEN_ON_SATURDAY = getValue("isOpenOnSaturday", BooleanToYNConverter),
+      OPEN_ON_SUNDAY = getValue("isOpenOnSunday", BooleanToYNConverter),
+      KITCHEN_TYPE = getValue("kitchenType", CleanString),
+      LOCAL_CHANNEL = getValue("localChannel"),
+      CHANNEL_USAGE = getValue("channelUsage"),
+      SOCIAL_COMMERCIAL = getValue("socialCommercial"),
+      STRATEGIC_CHANNEL = getValue("strategicChannel"),
+      GLOBAL_CHANNEL = getValue("globalChannel"),
+      GLOBAL_SUBCHANNEL = getValue("globalSubChannel")
+     // OPERATOR_ID = getValue("concatId")
     )
   }
 }

@@ -1,17 +1,24 @@
 package com.unilever.ohub.spark.export.acm
 
-import java.sql
-import java.sql.Timestamp
-import java.time.format.DateTimeFormatter
+import com.unilever.ohub.spark.export.{CleanString, TransformationFunction}
 
-import com.unilever.ohub.spark.export.TransformationFunctions
 
-trait AcmTransformationFunctions extends TransformationFunctions {
+object InvertedBooleanTo10Converter extends TransformationFunction[Boolean] {
+  def impl(bool: Boolean) = if (bool) "0" else "1"
 
-  protected[acm] implicit def optionalTimestampToString(input: Option[Timestamp]): String = input.map(t ⇒ formatWithPattern(t)).getOrElse("")
+  override val exampleValue: String = "1"
+  val description: String = "Inverts the value and converts it to 1 or 0. f.e. true wil become \"0\""
+}
 
-  protected[acm] implicit def formatDateWithPattern(input: Option[sql.Date]): String = input.map(t ⇒ DateTimeFormatter.ofPattern("yyyy/MM/dd").format(t.toLocalDate)).getOrElse("")
+object GenderToNumeric extends TransformationFunction[Option[String]] {
+  def impl(gender: Option[String]) = {
+    CleanString.impl(gender.getOrElse("")) match {
+      case "M" ⇒ "1"
+      case "F" ⇒ "2"
+      case _ ⇒ "0"
+    }
+  }
 
-  protected[acm] implicit def formatWithPattern(input: Timestamp): String = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").format(input.toLocalDateTime)
-
+  override val exampleValue: String = "1"
+  val description = "Cleans the gender string and converts \"M\" -> \"1\", \"F\" -> \"2\" and otherwise \"0\""
 }

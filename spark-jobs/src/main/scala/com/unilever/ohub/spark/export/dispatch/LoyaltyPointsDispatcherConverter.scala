@@ -2,20 +2,20 @@ package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.entity.LoyaltyPoints
 import com.unilever.ohub.spark.export.dispatch.model.DispatchLoyaltyPoints
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
 
-object LoyaltyPointsDispatcherConverter extends Converter[LoyaltyPoints, DispatchLoyaltyPoints] with TransformationFunctions with DispatchTransformationFunctions {
+object LoyaltyPointsDispatcherConverter extends Converter[LoyaltyPoints, DispatchLoyaltyPoints] with TypeConversionFunctions with DispatchTypeConversionFunctions {
 
-  override def convert(points: LoyaltyPoints): DispatchLoyaltyPoints = {
+  override def convert(implicit points: LoyaltyPoints, explain: Boolean = false): DispatchLoyaltyPoints = {
     DispatchLoyaltyPoints(
-      CP_ORIG_INTEGRATION_ID = points.contactPersonConcatId,
-      COUNTRY_CODE = points.countryCode,
-      CP_LNKD_INTEGRATION_ID = points.contactPersonOhubId,
-      EARNED = points.totalEarned,
-      SPENT = points.totalSpent,
-      ACTUAL = points.totalActual,
-      GOAL = points.rewardGoal,
-      UPDATED_AT = points.ohubUpdated
+      CP_ORIG_INTEGRATION_ID = getValue("contactPersonConcatId"),
+      COUNTRY_CODE = getValue("countryCode"),
+      CP_LNKD_INTEGRATION_ID = getValue("contactPersonOhubId"),
+      EARNED = getValue("totalEarned"),
+      SPENT = getValue("totalSpent"),
+      ACTUAL = getValue("totalActual"),
+      GOAL = getValue("rewardGoal"),
+      UPDATED_AT = getValue("ohubUpdated")
     )
   }
 }

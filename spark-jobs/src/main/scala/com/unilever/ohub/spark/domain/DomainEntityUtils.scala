@@ -31,3 +31,4 @@ object DomainEntityUtils {
     mirror.reflectModule(companionModule).instance.asInstanceOf[DomainEntityCompanion[_ <: DomainEntity]]
   }
 }
+
