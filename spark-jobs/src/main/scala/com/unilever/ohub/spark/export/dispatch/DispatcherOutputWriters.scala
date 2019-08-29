@@ -217,13 +217,13 @@ object AllDispatchOutboundWriter extends SparkJobWithOutboundExportConfig {
       .foreach(entity => {
         val writer = entity.dispatchExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
-        val hashLocation = config.hashesInputFile.map(x => x + s"/${entity.engineFolderName}.parquet")
+        val previousIntegratedLocation = s"${config.previousIntegratedInputFile}/${entity.engineFolderName}.parquet"
         val mappingOutputLocation = config.mappingOutputLocation.map(mappingOutput => s"${mappingOutput}/${config.targetType}_${writer.entityName()}_MAPPING.json")
         writer.run(
           spark,
           config.copy(
             integratedInputFile = integratedLocation,
-            hashesInputFile = hashLocation,
+            previousIntegratedInputFile = previousIntegratedLocation,
             mappingOutputLocation = mappingOutputLocation),
           storage)
       })

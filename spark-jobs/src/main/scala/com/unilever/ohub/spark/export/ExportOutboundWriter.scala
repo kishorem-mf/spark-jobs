@@ -26,7 +26,7 @@ object TargetType extends Enumeration {
 
 case class OutboundConfig(
                            integratedInputFile: String = "integrated-input-file",
-                           hashesInputFile: Option[String] = None,
+                           previousIntegratedInputFile: String = "previous-integrated-input-file",
                            targetType: TargetType = ACM,
                            outboundLocation: String = "outbound-location",
                            countryCodes: Option[Seq[String]] = None,
@@ -47,9 +47,9 @@ abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig]
       opt[String]("integratedInputFile") required() action { (x, c) ⇒
         c.copy(integratedInputFile = x)
       } text "integratedInputFile is a string property"
-      opt[String]("hashesInputFile") optional() action { (x, c) ⇒
-        c.copy(hashesInputFile = Some(x))
-      } text "hashesInputFile is a string property"
+      opt[String]("previousIntegratedInputFile") optional() action { (x, c) ⇒
+        c.copy(previousIntegratedInputFile = x)
+      } text "previousIntegratedInputFile is a string property"
       opt[Seq[String]]("countryCodes") optional() action { (x, c) =>
         c.copy(countryCodes = Some(x))
       } text "countryCodes is a string array"
@@ -107,14 +107,10 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
     log.info(s"writing integrated entities [${config.integratedInputFile}] to outbound export csv file for ACM and DDB.")
 
-    val hashesInputFile = config.hashesInputFile match {
-      case Some(location) ⇒ storage.readFromParquet[DomainEntityHash](location)
-      case None ⇒ spark.createDataset(Seq[DomainEntityHash]())
-    }
-    export(storage.readFromParquet[DomainType](config.integratedInputFile), hashesInputFile, config, spark);
+    export(storage.readFromParquet[DomainType](config.integratedInputFile), storage.readFromParquet[DomainType](config.previousIntegratedInputFile), config, spark);
   }
 
-  def export(integratedEntities: Dataset[DomainType], hashesInputFile: Dataset[DomainEntityHash], config: OutboundConfig, spark: SparkSession) {
+  def export(integratedEntities: Dataset[DomainType], previousIntegratedEntities: Dataset[DomainType], config: OutboundConfig, spark: SparkSession) {
     import spark.implicits._
 
     val domainEntities = config.targetType match {
@@ -127,7 +123,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     val columnsInOrder = filteredByCountries.columns
     val filtered: Dataset[DomainType] = filterDataSet(spark, filteredByCountries, config)
 
-    val processedChanged = if (onlyExportChangedRows) filterOnlyChangedRows(filtered, hashesInputFile, spark) else filtered
+    val processedChanged = if (onlyExportChangedRows) filterOnlyChangedRows(filtered, previousIntegratedEntities, spark) else filtered
 
     val result = processedChanged
       .select(columnsInOrder.head, columnsInOrder.tail: _*)
@@ -142,15 +138,26 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     writeToCsv(config, convertDataSet(spark, result), spark)
   }
 
-  def filterOnlyChangedRows(dataset: Dataset[DomainType], hashesInputFile: Dataset[DomainEntityHash], spark: SparkSession): Dataset[DomainType] = {
+  def filterOnlyChangedRows(dataset: Dataset[DomainType], previousIntegratedFile: Dataset[DomainType], spark: SparkSession): Dataset[DomainType] = {
     import spark.implicits._
 
-    dataset
-      .join(hashesInputFile, Seq("concatId"), JoinType.LeftOuter)
-      .withColumn("hasChanged", when('hasChanged.isNull, true).otherwise('hasChanged))
-      .filter($"hasChanged")
-      .drop("hasChanged")
-      .as[DomainType]
+    val excludedColumns = Seq(
+      "id",
+      "creationTimestamp",
+      "ohubCreated",
+      "ohubUpdated",
+      "additionalFields",
+      "ingestionErrors"
+    )
+
+    val originalJoinColumns = dataset.columns.filter(!excludedColumns.contains(_))
+
+    val joinClause = originalJoinColumns
+                     .map((columnName: String) => dataset(columnName) <=> previousIntegratedFile(columnName))
+                     .reduce((prev, curr) => prev && curr)
+
+    dataset.join(previousIntegratedFile, joinClause, JoinType.LeftAnti).as[DomainType]
+
   }
 
   def writeToCsv(config: OutboundConfig, ds: Dataset[_], sparkSession: SparkSession): Unit = {

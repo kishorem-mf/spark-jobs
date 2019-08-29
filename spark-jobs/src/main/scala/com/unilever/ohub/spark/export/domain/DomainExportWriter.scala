@@ -70,15 +70,7 @@ abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends 
 
     log.info(s"writing integrated entities [${entityName()}] to outbound export csv file for ${config.targetType.toString}")
 
-    val hashesInputFile = config.hashesInputFile match {
-      case Some(location) ⇒ {
-        val hashLocation = s"${location}/${entityName()}.parquet"
-        storage.readFromParquet[DomainEntityHash](hashLocation)
-      }
-      case None ⇒ spark.createDataset(Seq[DomainEntityHash]())
-    }
-
-    export(storage.readFromParquet[DomainType](config.integratedInputFile), hashesInputFile, config, spark)
+    export(storage.readFromParquet[DomainType](config.integratedInputFile), storage.readFromParquet[DomainType](config.previousIntegratedInputFile), config, spark)
   }
 
   override def entityName() = domainEntityComanion.engineFolderName
@@ -104,8 +96,11 @@ object AllDomainEntitiesWriter extends SparkJobWithOutboundExportConfig {
       .foreach((entity) => {
         val writer = entity.domainExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
-        val hashesLocation = if(config.hashesInputFile.isDefined) Some(s"${config.hashesInputFile.get}/${entity.engineFolderName}.parquet") else None
-        writer.run(spark, config.copy(integratedInputFile = integratedLocation, hashesInputFile = hashesLocation), storage)
+        val previousIntegratedLocation = s"${config.previousIntegratedInputFile}/${entity.engineFolderName}.parquet"
+        writer.run(spark, config.copy(
+          integratedInputFile = integratedLocation,
+          previousIntegratedInputFile = previousIntegratedLocation
+        ), storage)
       })
   }
 }

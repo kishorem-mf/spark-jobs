@@ -37,7 +37,7 @@ object ContactPersonOldNewWriter extends ExportOutboundWriter[ContactPerson] wit
   }
 
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
-    super.run(spark, config.copy(hashesInputFile = None), storage)
+    super.run(spark, config, storage)
   }
 }
 
@@ -51,7 +51,7 @@ object OperatorOldNewWriter extends ExportOutboundWriter[Operator] with AcmOptio
   }
 
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
-    super.run(spark, config.copy(hashesInputFile = None), storage)
+    super.run(spark, config, storage)
   }
 }
 
