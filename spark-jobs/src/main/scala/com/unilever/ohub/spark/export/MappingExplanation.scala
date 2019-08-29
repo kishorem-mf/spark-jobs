@@ -34,7 +34,6 @@ trait MappingExplanation[DomainType <: DomainEntity] extends TypeConversionFunct
     def isDataTypeRequired(genericType: String) = !genericType.contains("scala.Option<")
 
     val dataType = getDataType()
-    //    val dataType = getDataType(field.getGenericType.getTypeName)
 
     val fieldMapping = FieldMapping(
       fromEntity = input.getClass.getSimpleName,
