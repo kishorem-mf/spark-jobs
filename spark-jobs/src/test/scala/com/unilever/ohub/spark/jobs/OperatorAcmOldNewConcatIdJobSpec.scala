@@ -4,8 +4,7 @@ import java.util.UUID
 
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.DomainEntityHash
-import com.unilever.ohub.spark.domain.entity.{Chain, TestContactPersons, TestOperators}
+import com.unilever.ohub.spark.domain.entity.{Operator, TestContactPersons, TestOperators}
 import com.unilever.ohub.spark.export.OutboundConfig
 import com.unilever.ohub.spark.outbound.InMemStorage
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -17,17 +16,17 @@ class OperatorAcmOldNewConcatIdJobSpec extends SparkJobSpec with TestContactPers
 
   private val op = defaultOperator.copy(isGoldenRecord = true, concatId = "BE~KANGAROO~14")
   private val operators = Seq(op, defaultOperator).toDataset
-  private val hashes = {
+  private val prevInteg = {
     import spark.implicits._
 
-    spark.createDataset[DomainEntityHash](Seq[DomainEntityHash]())
+    spark.createDataset[Operator](Seq[Operator]())
   }
 
   private val config = OutboundConfig(
     integratedInputFile = "integrated",
     outboundLocation = UUID.randomUUID().toString
   )
-  val storage = new InMemStorage(spark, operators, hashes)
+  val storage = new InMemStorage(spark, operators, prevInteg)
 
   after {
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)

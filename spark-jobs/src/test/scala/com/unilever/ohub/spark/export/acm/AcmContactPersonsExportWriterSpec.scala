@@ -23,14 +23,14 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
   private val unchangedCP = defaultContactPerson.copy(isGoldenRecord = true, concatId = "A~B~C")
   private val SUT = com.unilever.ohub.spark.export.acm.ContactPersonOutboundWriter
   private val contactPersons = Seq(changedCP, unchangedCP, defaultContactPerson).toDataset
-  private val hashes = Seq[DomainEntityHash](DomainEntityHash(changedCP.concatId, Some(true), Some("some-hash")), DomainEntityHash(unchangedCP.concatId, Some(false), Some("hash"))).toDataset
+  private val prevIntegrated = Seq(unchangedCP, defaultContactPerson).toDataset
   private val outboundLocation = UUID.randomUUID().toString
   private val config = export.OutboundConfig(
     integratedInputFile = "integrated",
     outboundLocation = outboundLocation,
     targetType = TargetType.ACM
   )
-  val storage = new InMemStorage(spark, contactPersons, hashes)
+  val storage = new InMemStorage(spark, contactPersons, prevIntegrated)
 
   after {
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
@@ -39,7 +39,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
 
   describe("ACM csv generation") {
     it("Should write correct csv") {
-      SUT.export(contactPersons, hashes, config, spark)
+      SUT.export(contactPersons, prevIntegrated, config, spark)
 
       val result = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
@@ -50,7 +50,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
     it("Should fitler based on coutryCodes") {
       val configWithCountries = config.copy(countryCodes = Some(Seq("NL")))
 
-      SUT.export(contactPersons, hashes, configWithCountries, spark)
+      SUT.export(contactPersons, prevIntegrated, configWithCountries, spark)
 
       val result = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
@@ -58,7 +58,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
     }
 
     it("Should contain header") {
-      SUT.export(contactPersons, hashes, config, spark)
+      SUT.export(contactPersons, prevIntegrated, config, spark)
 
       val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
       val csvFile = fs.listStatus(new Path(config.outboundLocation)).find(status => status.getPath.getName.contains("UFS_RECIPIENTS")).get
@@ -68,7 +68,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
 
     it("Should write the conversionMapping in json format") {
       val mappingLocation = new Path(outboundLocation, "contactperson-mapping.json")
-      SUT.export(contactPersons, hashes, config.copy(mappingOutputLocation = Some(mappingLocation.toString)), spark)
+      SUT.export(contactPersons, prevIntegrated, config.copy(mappingOutputLocation = Some(mappingLocation.toString)), spark)
 
       val mapper = new ObjectMapper() with ScalaObjectMapper
       mapper.registerModule(DefaultScalaModule)

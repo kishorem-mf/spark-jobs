@@ -19,11 +19,11 @@ class ContactPersonDomainExportWriterSpecs extends SparkJobSpec with BeforeAndAf
   private val pkCP1 = defaultContactPerson.copy(concatId = "PK~CP1", countryCode = "PK")
   private val pkCP2 = defaultContactPerson.copy(concatId = "PK~CP2", countryCode = "PK")
   private val contactPersons = Seq(pkCP1, pkCP2, auCP1).toDataset
-  private val hashes = Seq[DomainEntityHash](DomainEntityHash(pkCP1.concatId, Some(true), Some("some-hash")), DomainEntityHash(pkCP2.concatId, Some(false), Some("hash"))).toDataset
+  private val prevInteg = Seq(pkCP1.copy(isActive = false),pkCP2).toDataset
 
   val SUT = ContactPerson.domainExportWriter.get
 
-  val storage = new InMemStorage(spark, contactPersons, hashes)
+  val storage = new InMemStorage(spark, contactPersons, prevInteg)
 
   private val config = export.OutboundConfig(
     integratedInputFile = "integratedFolder",
@@ -40,7 +40,7 @@ class ContactPersonDomainExportWriterSpecs extends SparkJobSpec with BeforeAndAf
       it("Should filter based on allowed countryCodes") {
         val mepsConfig = config.copy(targetType = MEPS)
 
-        SUT.export(contactPersons, hashes, mepsConfig, spark)
+        SUT.export(contactPersons, prevInteg, mepsConfig, spark)
         val result = storage.readFromCsv(mepsConfig.outboundLocation, new DomainExportOptions {}.delimiter, true).orderBy($"concatId".asc).collect()
 
         result.length shouldBe 2
@@ -53,7 +53,7 @@ class ContactPersonDomainExportWriterSpecs extends SparkJobSpec with BeforeAndAf
       it("Should output all CP's and skip merging (also use a different output folder)") {
         val dbConfig = config.copy(targetType = DATASCIENCE)
 
-        SUT.export(contactPersons, hashes, dbConfig, spark)
+        SUT.export(contactPersons, prevInteg, dbConfig, spark)
         val result = storage.readFromCsv(s"${dbConfig.outboundLocation}/${ContactPerson.engineFolderName}/datascience", new DomainExportOptions {}.delimiter, true).orderBy($"concatId".asc).collect()
 
         result.length shouldBe 3
