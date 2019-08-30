@@ -112,7 +112,6 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       case None => spark.createDataset[DomainType](Seq())
     }
 
-    if (config.previousIntegratedInputFile.isDefined)
     export(storage.readFromParquet[DomainType](config.integratedInputFile), previousIntegratedFile, config, spark);
   }
 
