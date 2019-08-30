@@ -56,7 +56,7 @@ class ActivityAcmConverterSpec extends FunSpec with TestActivities with Matchers
         ACTIVITY_ID = mapper.writeValueAsString(fieldMapping.copy(fromField = "concatId")),
         COUNTRY_CODE = mapper.writeValueAsString(fieldMapping.copy(fromField = "countryCode")),
         CP_ORIG_INTEGRATION_ID = mapper.writeValueAsString(fieldMapping.copy(fromField = "contactPersonOhubId", required = false)),
-        DELETE_FLAG = mapper.writeValueAsString(fieldMapping.copy(fromField = "isActive", fromType = "boolean", transformation = InvertedBooleanToYNConverter.description, exampleValue = InvertedBooleanToYNConverter.exampleValue)),
+        DELETE_FLAG = mapper.writeValueAsString(fieldMapping.copy(fromField = "isActive", fromType = "Boolean", transformation = InvertedBooleanToYNConverter.description, exampleValue = InvertedBooleanToYNConverter.exampleValue)),
         DATE_CREATED = mapper.writeValueAsString(fieldMapping.copy(fromField = "dateCreated", fromType = "Timestamp", pattern = SUT.timestampPattern, exampleValue = exampleDateTime, required = false)),
         DATE_UPDATED = mapper.writeValueAsString(fieldMapping.copy(fromField = "dateUpdated", fromType = "Timestamp", pattern = SUT.timestampPattern, exampleValue = exampleDateTime, required = false)),
         DETAILS = mapper.writeValueAsString(fieldMapping.copy(fromField = "details", required = false)),

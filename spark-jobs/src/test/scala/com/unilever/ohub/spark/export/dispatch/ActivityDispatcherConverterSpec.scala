@@ -59,7 +59,7 @@ class ActivityDispatcherConverterSpec extends SparkJobSpec with TestActivities {
         COUNTRY_CODE = mapper.writeValueAsString(fieldMapping.copy(fromField = "countryCode")),
         CREATED_AT = mapper.writeValueAsString(fieldMapping.copy(fromField = "ohubCreated", fromType = "Timestamp", pattern = SUT.timestampPattern, exampleValue = exampleDateTime)),
         UPDATED_AT = mapper.writeValueAsString(fieldMapping.copy(fromField = "ohubUpdated", fromType = "Timestamp", pattern = SUT.timestampPattern, exampleValue = exampleDateTime)),
-        DELETE_FLAG = mapper.writeValueAsString(fieldMapping.copy(fromField = "isActive", fromType = "boolean", transformation = InvertedBooleanToYNConverter.description, exampleValue = InvertedBooleanToYNConverter.exampleValue)),
+        DELETE_FLAG = mapper.writeValueAsString(fieldMapping.copy(fromField = "isActive", fromType = "Boolean", transformation = InvertedBooleanToYNConverter.description, exampleValue = InvertedBooleanToYNConverter.exampleValue)),
         CONTACT_DATE = mapper.writeValueAsString(fieldMapping.copy(fromField = "activityDate", fromType = "Timestamp", pattern = SUT.timestampPattern, exampleValue = exampleDateTime, required = false)),
         ACTION_TYPE = mapper.writeValueAsString(fieldMapping.copy(fromField = "actionType", required = false)),
         ACTIVITY_NAME = mapper.writeValueAsString(fieldMapping.copy(fromField = "name", required = false)),
