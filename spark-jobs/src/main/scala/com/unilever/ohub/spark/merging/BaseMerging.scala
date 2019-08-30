@@ -26,9 +26,10 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
 
     val mergeableRecords = ds
       .filter($"isActive")
+      .withColumn("dateUpdatedExtra", when(col("dateUpdated").isNull, col("dateCreated")).otherwise(col("dateUpdated")))
       .withColumn("group_row_num", row_number().over(orderByDatesWindow))
       .filter($"group_row_num" <= mergeGroupSizeCap)
-      .drop("additionalFields", "ingestionErrors")
+      .drop("additionalFields", "ingestionErrors", "dateUpdatedExtra")
 
     setFieldsToLatestValue(
       spark,
