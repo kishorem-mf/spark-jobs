@@ -70,7 +70,12 @@ abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends 
 
     log.info(s"writing integrated entities [${entityName()}] to outbound export csv file for ${config.targetType.toString}")
 
-    export(storage.readFromParquet[DomainType](config.integratedInputFile), storage.readFromParquet[DomainType](config.previousIntegratedInputFile), config, spark)
+    val previousIntegratedFile = config.previousIntegratedInputFile match {
+      case Some(location) => storage.readFromParquet[DomainType](location)
+      case None => spark.createDataset[DomainType](Seq())
+    }
+
+    export(storage.readFromParquet[DomainType](config.integratedInputFile), previousIntegratedFile, config, spark)
   }
 
   override def entityName() = domainEntityComanion.engineFolderName
@@ -96,7 +101,7 @@ object AllDomainEntitiesWriter extends SparkJobWithOutboundExportConfig {
       .foreach((entity) => {
         val writer = entity.domainExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
-        val previousIntegratedLocation = s"${config.previousIntegratedInputFile}/${entity.engineFolderName}.parquet"
+        val previousIntegratedLocation = if (config.previousIntegratedInputFile.isDefined) Some(s"${config.previousIntegratedInputFile.get}/${entity.engineFolderName}.parquet") else None
         writer.run(spark, config.copy(
           integratedInputFile = integratedLocation,
           previousIntegratedInputFile = previousIntegratedLocation

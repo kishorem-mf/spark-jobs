@@ -26,7 +26,7 @@ object TargetType extends Enumeration {
 
 case class OutboundConfig(
                            integratedInputFile: String = "integrated-input-file",
-                           previousIntegratedInputFile: String = "previous-integrated-input-file",
+                           previousIntegratedInputFile: Option[String] = None,
                            targetType: TargetType = ACM,
                            outboundLocation: String = "outbound-location",
                            countryCodes: Option[Seq[String]] = None,
@@ -48,7 +48,7 @@ abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig]
         c.copy(integratedInputFile = x)
       } text "integratedInputFile is a string property"
       opt[String]("previousIntegratedInputFile") optional() action { (x, c) ⇒
-        c.copy(previousIntegratedInputFile = x)
+        c.copy(previousIntegratedInputFile = Some(x))
       } text "previousIntegratedInputFile is a string property"
       opt[Seq[String]]("countryCodes") optional() action { (x, c) =>
         c.copy(countryCodes = Some(x))
@@ -107,7 +107,13 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
     log.info(s"writing integrated entities [${config.integratedInputFile}] to outbound export csv file for ACM and DDB.")
 
-    export(storage.readFromParquet[DomainType](config.integratedInputFile), storage.readFromParquet[DomainType](config.previousIntegratedInputFile), config, spark);
+    val previousIntegratedFile = config.previousIntegratedInputFile match {
+      case Some(location) => storage.readFromParquet[DomainType](location)
+      case None => spark.createDataset[DomainType](Seq())
+    }
+
+    if (config.previousIntegratedInputFile.isDefined)
+    export(storage.readFromParquet[DomainType](config.integratedInputFile), previousIntegratedFile, config, spark);
   }
 
   def export(integratedEntities: Dataset[DomainType], previousIntegratedEntities: Dataset[DomainType], config: OutboundConfig, spark: SparkSession) {
@@ -152,6 +158,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
     val originalJoinColumns = dataset.columns.filter(!excludedColumns.contains(_))
 
+    // This will result in forming condition "dataset(col1) <=> prevInteg(col1) AND dataset(col2) <=> prevInteg(col2)  and so on
     val joinClause = originalJoinColumns
                      .map((columnName: String) => dataset(columnName) <=> previousIntegratedFile(columnName))
                      .reduce((prev, curr) => prev && curr)
