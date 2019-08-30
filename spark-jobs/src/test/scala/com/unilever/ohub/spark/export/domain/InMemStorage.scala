@@ -1,6 +1,6 @@
-package com.unilever.ohub.spark.outbound
+package com.unilever.ohub.spark.export.domain
 
-import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityHash}
+import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.storage.DefaultStorage
 import org.apache.spark.sql.{Column, Dataset, Encoders, SparkSession}
 

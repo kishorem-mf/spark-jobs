@@ -3,10 +3,8 @@ package com.unilever.ohub.spark.export.domain
 import java.util.UUID
 
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.domain.DomainEntityHash
 import com.unilever.ohub.spark.domain.entity.{Order, OrderLine, TestOrderLines, TestOrders}
 import com.unilever.ohub.spark.export.TargetType.MEPS
-import com.unilever.ohub.spark.outbound.InMemStorage
 import com.unilever.ohub.spark.{SparkJobSpec, export}
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.scalatest.BeforeAndAfter

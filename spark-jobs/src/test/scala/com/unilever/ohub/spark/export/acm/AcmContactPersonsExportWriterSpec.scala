@@ -7,10 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.domain.DomainEntityHash
 import com.unilever.ohub.spark.domain.entity.TestContactPersons
 import com.unilever.ohub.spark.export.TargetType
-import com.unilever.ohub.spark.outbound.InMemStorage
+import com.unilever.ohub.spark.export.domain.InMemStorage
 import com.unilever.ohub.spark.{SparkJobSpec, export}
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.scalatest.{BeforeAndAfter, Matchers}

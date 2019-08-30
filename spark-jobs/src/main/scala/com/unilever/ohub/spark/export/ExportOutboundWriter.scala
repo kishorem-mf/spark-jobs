@@ -7,7 +7,7 @@ import java.util.UUID
 import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityHash}
+import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.export.TargetType.{ACM, DISPATCHER, TargetType}
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage

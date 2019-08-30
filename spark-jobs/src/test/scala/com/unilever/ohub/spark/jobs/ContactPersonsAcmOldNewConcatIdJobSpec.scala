@@ -7,7 +7,7 @@ import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity.{ContactPerson, TestContactPersons, TestOperators}
 import com.unilever.ohub.spark.export.OutboundConfig
-import com.unilever.ohub.spark.outbound.InMemStorage
+import com.unilever.ohub.spark.export.domain.InMemStorage
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.scalatest.{BeforeAndAfter, Matchers}
 

@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.export.domain
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityHash, DomainEntityUtils}
+import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityUtils}
 import com.unilever.ohub.spark.export.TargetType.{DATASCIENCE, MEPS, TargetType}
 import com.unilever.ohub.spark.export.{CsvOptions, ExportOutboundWriter, OutboundConfig, SparkJobWithOutboundExportConfig}
 import com.unilever.ohub.spark.storage.Storage
