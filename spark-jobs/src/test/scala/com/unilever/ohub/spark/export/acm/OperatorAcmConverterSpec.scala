@@ -83,6 +83,12 @@ class OperatorAcmConverterSpec extends SparkJobSpec with TestOperators {
 
       result shouldBe expectedAcmOperator
     }
+    it("Fill date created value for date updated if provided date updated value is empty") {
+      val cp = defaultOperator.copy(dateUpdated = Option.empty)
+      val actualDispatchContactPerson = SUT.convert(cp)
+
+      assert(actualDispatchContactPerson.DATE_UPDATED equals ("2017/10/16 18:09:49"))
+    }
   }
 
 }

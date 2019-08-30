@@ -33,7 +33,7 @@ object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPers
       CITY = getValue("city", CleanString),
       COUNTRY = getValue("countryName"),
       DATE_CREATED = getValue("dateCreated"),
-      DATE_UPDATED = getValue("dateUpdated"),
+      DATE_UPDATED = cp.dateUpdated.orElse(cp.dateCreated),
       DATE_OF_BIRTH = getValue("birthDate"),
       PREFERRED = getValue("isPreferredContact", BooleanToYNUConverter),
       ROLE = getValue("jobTitle"),

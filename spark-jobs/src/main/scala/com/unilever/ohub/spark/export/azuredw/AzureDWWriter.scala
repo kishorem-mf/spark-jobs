@@ -10,6 +10,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
 import scopt.OptionParser
 
 import scala.reflect.runtime.universe._
+import org.apache.spark.sql.functions.when
 
 /**
   * Configuration for the Azure Datawarehouse
@@ -86,6 +87,7 @@ abstract class SparkJobWithAzureDWConfiguration extends SparkJob[AzureDWConfigur
 
 abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJobWithAzureDWConfiguration {
 
+  def inputUpdatedDate(dataSet: DataFrame): DataFrame = dataSet.toDF()
 
   /** Removes the map fields because resulting on an error when queried in Azure DW. */
   private def dropUnnecessaryFields(dataSet: Dataset[DomainType]): DataFrame = {
@@ -158,7 +160,7 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
       s"fs.azure.account.key.${config.blobStorageContainer}.blob.core.windows.net", config.blobStorageKey)
 
     val integratedEntity: Dataset[DomainType] = storage.readFromParquet[DomainType](config.integratedInputFile)
-    val result = dropUnnecessaryFields(integratedEntity)
+    val result = inputUpdatedDate(dropUnnecessaryFields(integratedEntity))
 
     val dbTable: String = config.entityName
     val dbSchema: String = config.dbSchema
@@ -219,11 +221,24 @@ object CampaignSendDWWriter extends AzureDWWriter[CampaignSend]
 
 object ChannelMappingDWWriter extends AzureDWWriter[ChannelMapping]
 
-object ContactPersonDWWriter extends AzureDWWriter[ContactPerson]
+object ContactPersonDWWriter extends AzureDWWriter[ContactPerson] {
+  def inputUpdatedDate(spark: SparkSession, dataFrame: DataFrame): DataFrame = {
+    import spark.implicits._
+
+    dataFrame.withColumn("dateUpdated", when($"dateUpdated".isNotNull, $"dateUpdated").otherwise($"dateCreated"))
+  };
+}
 
 object LoyaltyPointsDWWriter extends AzureDWWriter[LoyaltyPoints]
 
-object OperatorDWWriter extends AzureDWWriter[Operator]
+object OperatorDWWriter extends AzureDWWriter[Operator] {
+
+  def inputUpdatedDate(spark: SparkSession, dataFrame: DataFrame): DataFrame = {
+    import spark.implicits._
+
+    dataFrame.withColumn("dateUpdated", when($"dateUpdated".isNotNull, $"dateUpdated").otherwise($"dateCreated"))
+  };
+}
 
 object OrderDWWriter extends AzureDWWriter[Order]
 

@@ -90,5 +90,13 @@ import org.scalatest.{FunSpec, Matchers}
 
         assert(actualDispatchContactPerson.GENDER equals ("0"))
       }
+
+      it("Fill date created value for date updated if provided date updated value is empty") {
+        val cp = defaultContactPerson.copy(dateUpdated = Option.empty)
+        val actualDispatchContactPerson = SUT.convert(cp)
+
+        assert(actualDispatchContactPerson.DATE_UPDATED.equals("2015/06/30 13:47:00"))
+      }
+
     }
   }
