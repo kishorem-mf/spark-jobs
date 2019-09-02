@@ -34,7 +34,7 @@ object OperatorAcmConverter extends Converter[Operator, AcmOperator] with TypeCo
       CHAIN_KNOTEN = getValue("chainId"),
       CHAIN_NAME = getValue("chainName", CleanString),
       DATE_CREATED = getValue("dateCreated"),
-      DATE_UPDATED = if (op.dateUpdated.isDefined) getValue("dateUpdated") else getValue("dateCreated"),
+      DATE_UPDATED = getValue("dateUpdated", new DateUpdatedOrCreated(op.dateUpdated, op.dateCreated)),
       DELETE_FLAG = getValue("isActive", InvertedBooleanToYNConverter),
       WHOLESALER_OPERATOR_ID = getValue("distributorOperatorId"),
       PRIVATE_HOUSEHOLD = getValue("isPrivateHousehold", BooleanToYNConverter),
