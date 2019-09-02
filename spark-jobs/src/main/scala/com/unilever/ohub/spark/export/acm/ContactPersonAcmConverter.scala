@@ -7,10 +7,13 @@ import com.unilever.ohub.spark.export.acm.model.AcmContactPerson
 
 object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPerson] with AcmTypeConversionFunctions {
 
+  implicit val domainDataProvider: DomainDataProvider = DomainDataProvider()
+  val contactPersonOldOhubConverter: ConcatPersonOldOhubConverter = new ConcatPersonOldOhubConverter(domainDataProvider.sourceIds)
+
   override def convert(implicit cp: ContactPerson, explain: Boolean = false): AcmContactPerson = {
     AcmContactPerson(
       CP_ORIG_INTEGRATION_ID = getValue("ohubId"),
-      CP_LNKD_INTEGRATION_ID = getValue("concatId", new ConcatPersonOldOhubConverter(DomainDataProvider().sourceIds)),
+      CP_LNKD_INTEGRATION_ID = getValue("concatId", contactPersonOldOhubConverter),
       OPR_ORIG_INTEGRATION_ID = getValue("operatorOhubId"),
       GOLDEN_RECORD_FLAG = getValue("isGoldenRecord", BooleanToYNConverter),
       EMAIL_OPTOUT = getValue("hasEmailOptOut", BooleanToYNUConverter),
@@ -33,7 +36,7 @@ object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPers
       CITY = getValue("city", CleanString),
       COUNTRY = getValue("countryName"),
       DATE_CREATED = getValue("dateCreated"),
-      DATE_UPDATED = if (cp.dateUpdated.isDefined) getValue("dateUpdated") else getValue("dateCreated"),
+      DATE_UPDATED = getValue("dateUpdated", new DateUpdatedOrCreated(cp.dateUpdated, cp.dateCreated)),
       DATE_OF_BIRTH = getValue("birthDate"),
       PREFERRED = getValue("isPreferredContact", BooleanToYNUConverter),
       ROLE = getValue("jobTitle"),

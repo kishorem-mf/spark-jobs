@@ -1,7 +1,9 @@
 package com.unilever.ohub.spark.export
 
+import java.sql.Timestamp
+
 trait TransformationFunction[T] {
-  def impl(input: T): String
+  def impl(input: T): Any
 
   val exampleValue: String = ""
   val description: String
@@ -13,7 +15,6 @@ object BooleanTo10Converter extends TransformationFunction[Boolean] {
   override val exampleValue: String = "1"
   val description: String = "Converts the value to 1 or 0. f.e. true wil become \"1\""
 }
-
 object BooleanToYNConverter extends TransformationFunction[Boolean] {
   def impl(bool: Boolean) = if (bool) "Y" else "N"
 
@@ -41,19 +42,10 @@ object CleanString extends TransformationFunction[String] {
   val description: String = "Removes characters that are not always supported by systems (f.e. ⓒ╠☣☺♡♥♪❤\uE2B1) and removes leading and trailing spaces"
 }
 
-class ClearField(cleanYN: Option[Boolean]) extends TransformationFunction[String] {
-  def impl(input: String): String =
-    cleanYN match {
-      case Some(true) => input
-      case Some(false) => ""
-      case None => input
-    }
-
-  val description: String = "Clears the field when needed"
-}
-
-class ClearInvalidEmail(emailValid: Option[Boolean]) extends ClearField(emailValid) {
+class ClearInvalidEmail(isValid: Option[Boolean]) extends TransformationFunction[String] {
   override val description: String = "Clears the email address when it is not valid (configured in OHUB)"
+
+  def impl(input: String): String = if (isValid.isDefined && !isValid.get) "" else input
 }
 
 object WeeksClosedToOpened extends TransformationFunction[Int] {
@@ -62,3 +54,10 @@ object WeeksClosedToOpened extends TransformationFunction[Int] {
   val description: String = "Converts weeksClosed to weeksOpened (disregarding years with 52+ weeks). F.e. 12 closed result in 40 opened"
 }
 
+class DateUpdatedOrCreated(dateUpdated: Option[Timestamp], dateCreated: Option[Timestamp]) extends TransformationFunction[Option[Timestamp]] {
+  override val description: String = "Gets the dateUpdated, or when not supplied, takes the dateUpdated"
+
+  override def impl(input: Option[Timestamp]): Any = {
+    dateUpdated.orElse(dateCreated).getOrElse(None)
+  }
+}

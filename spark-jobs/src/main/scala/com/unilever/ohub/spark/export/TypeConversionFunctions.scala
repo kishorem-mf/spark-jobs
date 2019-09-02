@@ -17,7 +17,7 @@ trait TypeConversionFunctions {
   protected[export] val timestampPattern = "yyyy-MM-dd hh:mm:ss:SSS"
   protected[export] val datePattern = "yyyy-MM-dd"
 
-  protected[export] implicit def anyRefToString(x: AnyRef): String = {
+  protected[export] implicit def anyToString(x: Any): String = {
     x match {
       case None => ""
       case value: Timestamp => value
@@ -32,7 +32,7 @@ trait TypeConversionFunctions {
       case value: java.lang.Integer => value.toString
       case value: java.lang.Boolean => value.toString
       case value: FieldMapping => mapper.writeValueAsString(value)
-      case _ => throw new IllegalArgumentException(s"No explicit cast specified from anyref to ${x.getClass}")
+      case _ => throw new IllegalArgumentException(s"No explicit cast specified from Any to ${x.getClass}")
     }
   }
 
