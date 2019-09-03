@@ -17,39 +17,39 @@ object ContactPersonUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with 
   // When it is decided to select golden record based on source instead of newest, remove
   // this override def pickGoldenRecord(...
   /**
-   * Get the newest contactPerson(based on dateUpdated, dateCreated, ohubUpdated and isGoldenRecord) to mark as golden record.
-   *
-   * @param sourcePreference -- not used
-   * @param entities
-   * @return
-   */
+    * Get the newest contactPerson(based on dateUpdated, dateCreated, ohubUpdated and isGoldenRecord) to mark as golden record.
+    *
+    * @param sourcePreference -- not used
+    * @param entities
+    * @return
+    */
   override def pickGoldenRecord(sourcePreference: Map[String, Int], entities: Seq[ContactPerson]): ContactPerson = {
 
     implicit def ordered: Ordering[Timestamp] = new Ordering[Timestamp] {
       def compare(x: Timestamp, y: Timestamp): Int = x compareTo y
     }
 
-    entities.map(c ⇒ PickDatesForContactPerson(if (c.dateUpdated.isDefined) c.dateUpdated else c.dateCreated, c.dateCreated, c))
+    val wrapped = entities
+      .map(c ⇒ PickDatesForContactPerson(if (c.dateUpdated.isDefined) c.dateUpdated else c.dateCreated, c.dateCreated, c))
+    val newest = wrapped.sortBy(w ⇒ (w.dateUpdated, w.dateCreated, w.cp.ohubUpdated)).reverse.head
 
-    val newest = entities.sortBy(cp ⇒ (cp.dateUpdated, cp.dateCreated, cp.ohubUpdated)).reverse.head
-
-    val newestCPs = entities.filter((c) ⇒
-      c.dateUpdated == newest.dateUpdated &&
+    val newestCPs = wrapped
+      .filter(c ⇒ c.dateUpdated == newest.dateUpdated &&
         c.dateCreated == newest.dateCreated &&
-        c.ohubUpdated == newest.ohubUpdated
-    )
+        c.cp.ohubUpdated == newest.cp.ohubUpdated
+      )
 
     // If there is 1 or more golden records with the newest dates that is golden, pick one of those
-    val newestGolden = newestCPs.filter(_.isGoldenRecord)
-    if (newestGolden.size > 0) newestGolden(0)
-    else newest
+    val newestGolden = newestCPs.filter(w => w.cp.isGoldenRecord)
+    if (newestGolden.size > 0) newestGolden(0).cp
+    else newest.cp
   }
 
   def transform(
-    spark: SparkSession,
-    contactPersons: Dataset[ContactPerson],
-    sourcePreference: Map[String, Int]
-  ): Dataset[ContactPerson] = {
+                 spark: SparkSession,
+                 contactPersons: Dataset[ContactPerson],
+                 sourcePreference: Map[String, Int]
+               ): Dataset[ContactPerson] = {
     import spark.implicits._
 
     contactPersons
