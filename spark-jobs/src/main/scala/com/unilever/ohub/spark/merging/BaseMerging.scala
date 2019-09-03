@@ -19,17 +19,16 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
     val groupWindow = Window.partitionBy($"ohubId")
 
     val orderByDatesWindow = groupWindow.orderBy(
-      $"dateUpdated".desc_nulls_last,
+      when($"dateUpdated".isNull, $"dateCreated").otherwise($"dateUpdated").desc_nulls_last,
       $"dateCreated".desc_nulls_last,
       $"ohubUpdated".desc
     )
 
     val mergeableRecords = ds
       .filter($"isActive")
-      .withColumn("dateUpdatedExtra", when(col("dateUpdated").isNull, col("dateCreated")).otherwise(col("dateUpdated")))
       .withColumn("group_row_num", row_number().over(orderByDatesWindow))
       .filter($"group_row_num" <= mergeGroupSizeCap)
-      .drop("additionalFields", "ingestionErrors", "dateUpdatedExtra")
+      .drop("additionalFields", "ingestionErrors")
 
     setFieldsToLatestValue(
       spark,
