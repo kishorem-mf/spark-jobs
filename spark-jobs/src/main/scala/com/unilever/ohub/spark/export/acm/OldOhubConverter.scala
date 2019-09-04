@@ -12,9 +12,9 @@ abstract class OldOhubConverter(sourceIds: Map[String, Int]) {
     val matcher = CONCAT_PATTERN.matcher(value);
     if (matcher.matches()) {
       var sourceId = sourceIds.getOrElse(matcher.group(2), "");
-      return matcher.group(1) + "~" + matcher.group(3) + "~" + partyTypeId() + "~" + sourceId;
+      matcher.group(1) + "~" + matcher.group(3) + "~" + partyTypeId() + "~" + sourceId
     } else {
-      return value;
+      value
     }
   }
 }

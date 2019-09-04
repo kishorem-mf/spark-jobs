@@ -32,6 +32,7 @@ class InMemDomainDataProvider() extends DomainDataProvider with Serializable {
   }
 
   override lazy val channelReferences: Map[String, ChannelReference] = {
+    val globalSubChannelIdx = 4
     Source.fromInputStream(this.getClass.getResourceAsStream("/channel_references.csv"))
       .getLines()
       .toSeq
@@ -42,7 +43,7 @@ class InMemDomainDataProvider() extends DomainDataProvider with Serializable {
         socialCommercial = Some(lineParts(1)),
         strategicChannel = lineParts(2),
         globalChannel = lineParts(3),
-        globalSubChannel = lineParts(4)
+        globalSubChannel = lineParts(globalSubChannelIdx)
       ))
       .map(ref ⇒ ref.channelReferenceId -> ref)
       .toMap

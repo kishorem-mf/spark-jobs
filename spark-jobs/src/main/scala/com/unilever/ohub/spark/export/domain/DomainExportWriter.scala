@@ -65,7 +65,7 @@ abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends 
     }
   }
 
-  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage) = {
+  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     import spark.implicits._
 
     log.info(s"writing integrated entities [${entityName()}] to outbound export csv file for ${config.targetType.toString}")
@@ -81,7 +81,7 @@ abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends 
     export(storage.readFromParquet[DomainType](config.integratedInputFile), hashesInputFile, config, spark)
   }
 
-  override def entityName() = domainEntityComanion.engineFolderName
+  override def entityName(): String = domainEntityComanion.engineFolderName
 }
 
 /**

@@ -9,6 +9,7 @@ import org.apache.spark.sql.Row
 
 object OperatorConverter extends CommonDomainGateKeeper[Operator] with OperatorEmptyParquetWriter {
 
+  // scalastyle:off method.length
   override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Operator = { transformer ⇒
     row ⇒
       import transformer._

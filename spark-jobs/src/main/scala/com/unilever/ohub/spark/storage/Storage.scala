@@ -27,12 +27,7 @@ trait Storage {
 
   def writeAzureDWTable(
     df: DataFrame,
-    jdbcDriverClass: String = "com.databricks.spark.sqldw",
-    dbUrl: String,
-    dbTable: String,
-    userName: String,
-    userPassword: String,
-    dbTempDir: String,
+    dBConfig: DBConfig,
     preActions: String = "",
     postActions: String = "",
     saveMode: SaveMode = SaveMode.Overwrite
@@ -71,7 +66,9 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       if (it.hasNext) {
         val nextPath = it.next().getPath
         toList(it, arr :+ nextPath)
-      } else arr
+      } else {
+        arr
+      }
     }
 
     toList(fs.listFiles(path, true))
@@ -88,8 +85,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .parquet(location)
 
     val parquetSelectDF = {
-      if (selectColumns.nonEmpty) parquetDF.select(selectColumns: _*)
-      else parquetDF
+      if (selectColumns.nonEmpty) parquetDF.select(selectColumns: _*) else parquetDF
     }
 
     parquetSelectDF.as[T]
@@ -132,41 +128,31 @@ class DefaultStorage(spark: SparkSession) extends Storage {
    * Configuration for the Azure Datawarehouse
    *
    * @param df
-   * @param jdbcDriverClass
-   * @param dbUrl        : example "jdbc:sqlserver://ufs-marketing.database.windows.net:1433;database=ufs-marketing;",
-   * @param dbTable      destination table as schema.tablename
-   * @param userName
-   * @param userPassword :
-   * @param dbTempDir    : temp bucket, wasb protocol only accepted
-   *                    eg. "wasbs://outbound@ohub2storagedev.blob.core.windows.net/DW"
-   * @param preActions   a sequence of statements separated by ; executed before writing
-   * @param postActions  a sequence of statements separated by ; executed after writing
+   * @param dBConfig a object of type DBConfig
+   * @param preActions a sequence of statements separated by ; executed before writing
+   * @param postActions a sequence of statements separated by ; executed after writing
    */
   override def writeAzureDWTable(
     df: DataFrame,
-    jdbcDriverClass: String = "com.databricks.spark.sqldw",
-    dbUrl: String,
-    dbTable: String,
-    userName: String,
-    userPassword: String,
-    dbTempDir: String,
+    dBConfig: DBConfig,
     preActions: String = "",
     postActions: String = "",
     saveMode: SaveMode = SaveMode.Overwrite
   ): Unit = {
 
-    val fullDbURL: String = s"${dbUrl};user=${userName};password=${userPassword}"
+    val fullDbURL: String = s"${dBConfig.dbUrl};user=${dBConfig.userName};password=${dBConfig.userPassword}"
 
+    val maxStringLegnth = 4000
     df
       .write
-      .format(jdbcDriverClass)
+      .format(dBConfig.jdbcDriverClass)
       .option("url", fullDbURL)
       .option("forwardSparkAzureStorageCredentials", "true")
-      .option("dbTable", dbTable)
-      .option("tempDir", dbTempDir)
+      .option("dbTable", dBConfig.dbTable)
+      .option("tempDir", dBConfig.dbTempDir)
       .option("preActions", preActions)
       .option("postActions", postActions)
-      .option("maxStrLength", 4000)
+      .option("maxStrLength", maxStringLegnth)
       .mode(saveMode)
       .save
   }
@@ -204,3 +190,5 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .load()
   }
 }
+
+case class DBConfig(jdbcDriverClass:String = "com.databricks.spark.sqldw", dbUrl: String, dbTable:String, userName: String, userPassword:String, dbTempDir:String)

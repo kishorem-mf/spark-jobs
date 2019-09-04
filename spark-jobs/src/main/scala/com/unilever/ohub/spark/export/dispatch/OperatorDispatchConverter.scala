@@ -6,6 +6,7 @@ import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
 
 object OperatorDispatchConverter extends Converter[Operator, DispatchOperator] with TransformationFunctions with DispatchTransformationFunctions {
 
+  // scalastyle:off method.length
   override def convert(operator: Operator): DispatchOperator = {
     DispatchOperator(
       COUNTRY_CODE = operator.countryCode,

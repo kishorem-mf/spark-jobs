@@ -77,10 +77,11 @@ abstract class DomainEntityHashWriter[DomainType <: DomainEntity: TypeTag] exten
     val md5Hash: String ⇒ String = input ⇒ {
       import java.security.MessageDigest
       import java.math.BigInteger
+      val hexRadix = 16
       val md = MessageDigest.getInstance("MD5")
       val digest = md.digest(input.getBytes)
       val bigInt = new BigInteger(1, digest)
-      val hashedString = bigInt.toString(16)
+      val hashedString = bigInt.toString(hexRadix)
       hashedString
     }
 

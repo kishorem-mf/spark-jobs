@@ -7,6 +7,7 @@ import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
 
 object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPerson] with TransformationFunctions with AcmTransformationFunctions {
 
+  // scalastyle:off method.length
   override def convert(cp: ContactPerson): AcmContactPerson = {
     AcmContactPerson(
       CP_ORIG_INTEGRATION_ID = cp.ohubId,

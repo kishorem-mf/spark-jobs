@@ -73,10 +73,7 @@ class DomainTransformer() extends Serializable {
       Option(row.getString(fieldIndex)).filterNot(_.trim.isEmpty) // treat empty strings as None
     } catch {
       case e: IllegalArgumentException ⇒
-        if (e.getMessage contains "does not exist.") {
-          None
-        } else
-          throw e
+        if (e.getMessage contains "does not exist.") None else throw e
     }
   }
 
