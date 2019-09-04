@@ -2,12 +2,12 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.entity.{ OrderLine, Product }
+import com.unilever.ohub.spark.domain.entity.{OrderLine, Product}
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{ collect_list, first, lit, when, row_number }
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 case class OrderLineMergingConfig(
@@ -75,9 +75,8 @@ object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
     deduplicatedOrderLines
       .joinWith(products, $"productConcatId" === products("concatId"), "left")
       .map {
-        case (order, product) ⇒
-          if (product == null) order
-          else order.copy(productOhubId = product.ohubId)
+        case (order, product) => order.copy(productOhubId = product.ohubId)
+        case (order, _) => order
       }
   }
 

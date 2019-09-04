@@ -10,23 +10,22 @@ import org.apache.spark.sql.expressions.{UserDefinedFunction, Window}
 import org.apache.spark.sql.functions._
 
 case class ExactMatchIngestedWithDbConfig(
-    integratedInputFile: String = "path-to-integrated-input-file",
-    deltaInputFile: String = "path-to-delta-input-file",
-    matchedExactOutputFile: String = "path-to-matched-exact-output-file",
-    unmatchedIntegratedOutputFile: String = "path-to-unmatched-integrated-output-file",
-    unmatchedDeltaOutputFile: String = "path-to-unmatched-delta-output-file"
-) extends SparkJobConfig
+                                           integratedInputFile: String = "path-to-integrated-input-file",
+                                           deltaInputFile: String = "path-to-delta-input-file",
+                                           matchedExactOutputFile: String = "path-to-matched-exact-output-file",
+                                           unmatchedIntegratedOutputFile: String = "path-to-unmatched-integrated-output-file",
+                                           unmatchedDeltaOutputFile: String = "path-to-unmatched-delta-output-file"
+                                         ) extends SparkJobConfig
 
 trait GroupingFunctions {
 
   val createOhubIdUdf: UserDefinedFunction = udf((d: Double) ⇒ UUID.nameUUIDFromBytes(d.toString.getBytes).toString)
 
-  def matchColumns[T <: DomainEntity: Encoder](
-    integrated: Dataset[T],
-    delta: Dataset[T],
-    groupingColumns: Seq[String],
-    notNullColoumns: Seq[String])(implicit spark: SparkSession): Dataset[T] = {
-    import spark.implicits._
+  def matchColumns[T <: DomainEntity : Encoder](
+                                                 integrated: Dataset[T],
+                                                 delta: Dataset[T],
+                                                 groupingColumns: Seq[String],
+                                                 notNullColoumns: Seq[String])(implicit spark: SparkSession): Dataset[T] = {
 
     val sameColumns = groupingColumns.map(col)
     val notNullCheckColumns = notNullColoumns.map(col)
@@ -57,15 +56,22 @@ object DataFrameHelpers extends GroupingFunctions {
 
     /**
      * Concatenate all the specified
-     * @param cols and create new column with name
+     *
+     * @param cols               and create new column with name
      * @param name
      * @param convertToLowerCase is used to make convert all column values to lower case. By default it is false
      */
     def concatenateColumns(name: String, cols: Seq[Column], convertToLowerCase: Boolean = false)(implicit spark: SparkSession): Dataset[_] = {
-      df.withColumn(name, concat(cols.map(c ⇒
-        when(c.isNull, "").otherwise(
-          if (!convertToLowerCase) c
-          else trim(lower(c)))): _*))
+      df.withColumn(name,
+        concat(cols.map(c ⇒
+          when(c.isNull, "").otherwise(
+            if (!convertToLowerCase) {
+              c
+            } else {
+              trim(lower(c))
+            }
+          )
+        ): _*))
     }
 
     def addOhubId(implicit spark: SparkSession): Dataset[_] = {
@@ -118,9 +124,9 @@ object DataFrameHelpers extends GroupingFunctions {
     }
 
     /**
-      * Keep rows where all columns are not null and not empty
-      */
-    def columnsCondition(cols: Seq[Column], colCondition:Column): Dataset[_] = {
+     * Keep rows where all columns are not null and not empty
+     */
+    def columnsCondition(cols: Seq[Column], colCondition: Column): Dataset[_] = {
       def condition(col: Column): Column = colCondition
 
       df.filter(cols.map(c ⇒ condition(c)).reduce(_ and _))

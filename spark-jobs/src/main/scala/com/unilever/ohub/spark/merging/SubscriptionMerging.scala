@@ -47,9 +47,8 @@ object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] with Grou
     allSubscriptions
       .joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), JoinType.Left)
       .map {
-        case (subscription, cpn) ⇒
-          if (cpn == null) subscription
-          else subscription.copy(contactPersonOhubId = cpn.ohubId)
+        case (subscription: Subscription, cpn: ContactPerson) ⇒ subscription.copy(contactPersonOhubId = cpn.ohubId)
+        case (subscription, _) ⇒ subscription
       }
       .withColumn("orderDate", when($"confirmedSubscriptionDate".isNotNull, $"confirmedSubscriptionDate").otherwise($"subscriptionDate"))
       .withColumn("rn", row_number.over(w))

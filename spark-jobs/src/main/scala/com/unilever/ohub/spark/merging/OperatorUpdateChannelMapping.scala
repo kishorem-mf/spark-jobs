@@ -8,21 +8,21 @@ import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 case class OperatorUpdateChannelMappingConfig(
-    channelMappingsInputFile: String = "channel-mappings-input-file",
-    operatorsInputFile: String = "operators-input-file",
-    outputFile: String = "path-to-output-file"
-) extends SparkJobConfig
+                                               channelMappingsInputFile: String = "channel-mappings-input-file",
+                                               operatorsInputFile: String = "operators-input-file",
+                                               outputFile: String = "path-to-output-file"
+                                             ) extends SparkJobConfig
 
 object OperatorUpdateChannelMapping extends SparkJob[OperatorUpdateChannelMappingConfig] {
 
-  override def defaultConfig = OperatorUpdateChannelMappingConfig()
+  override def defaultConfig: OperatorUpdateChannelMappingConfig = OperatorUpdateChannelMappingConfig()
 
   def transform(
-    spark: SparkSession,
-    operators: Dataset[Operator],
-    channelMappings: Dataset[ChannelMapping],
-    channelReferences: Map[String, ChannelReference]
-  ): Dataset[Operator] = {
+                 spark: SparkSession,
+                 operators: Dataset[Operator],
+                 channelMappings: Dataset[ChannelMapping],
+                 channelReferences: Map[String, ChannelReference]
+               ): Dataset[Operator] = {
     import spark.implicits._
 
     operators.as("op")
@@ -50,13 +50,13 @@ object OperatorUpdateChannelMapping extends SparkJob[OperatorUpdateChannelMappin
   override private[spark] def configParser(): OptionParser[OperatorUpdateChannelMappingConfig] =
     new scopt.OptionParser[OperatorUpdateChannelMappingConfig]("Subscriptions merging") {
       head("enriches operators with channelMapping data", "1.0")
-      opt[String]("channelMappingsInputFile") required () action { (x, c) ⇒
+      opt[String]("channelMappingsInputFile") required() action { (x, c) ⇒
         c.copy(channelMappingsInputFile = x)
       } text "channelMappingsInputFile is a string property"
-      opt[String]("operatorsInputFile") required () action { (x, c) ⇒
+      opt[String]("operatorsInputFile") required() action { (x, c) ⇒
         c.copy(operatorsInputFile = x)
       } text "operatorsInputFile is a string property"
-      opt[String]("outputFile") optional () action { (x, c) ⇒
+      opt[String]("outputFile") optional() action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
 

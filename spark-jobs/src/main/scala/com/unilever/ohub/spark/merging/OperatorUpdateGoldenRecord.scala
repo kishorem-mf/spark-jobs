@@ -9,25 +9,24 @@ import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 case class OperatorUpdateGoldenRecordConfig(
-    inputFile: String = "path-to-input-file",
-    checkpointFile: String = "path-to-checkpoint-file",
-    outputFile: String = "path-to-output-file"
-) extends SparkJobConfig
-
+                                             inputFile: String = "path-to-input-file",
+                                             checkpointFile: String = "path-to-checkpoint-file",
+                                             outputFile: String = "path-to-output-file"
+                                           ) extends SparkJobConfig
 object OperatorUpdateGoldenRecord extends SparkJob[OperatorUpdateGoldenRecordConfig] with GoldenRecordPicking[Operator] {
   def markGoldenRecord(sourcePreference: Map[String, Int])(operators: Seq[Operator]): Seq[Operator] = {
     val goldenRecord = pickGoldenRecord(sourcePreference, operators)
     operators.map(o ⇒ o.copy(isGoldenRecord = o == goldenRecord))
   }
 
+  // scalastyle:off magic.number
   def transform(
-    spark: SparkSession,
-    operators: Dataset[Operator],
-    sourcePreference: Map[String, Int],
-    sizeThreshold: Int = 250000
-  ): Dataset[Operator] = {
+                 spark: SparkSession,
+                 operators: Dataset[Operator],
+                 sourcePreference: Map[String, Int],
+                 sizeThreshold: Int = 250000
+               ): Dataset[Operator] = {
     import spark.implicits._
-
     val ohubIdHavingEnormousGroups: Array[String] = operators
       .groupBy("ohubId")
       .count
@@ -62,18 +61,20 @@ object OperatorUpdateGoldenRecord extends SparkJob[OperatorUpdateGoldenRecordCon
     goldenRecordCorrect.unionByName(goldenRecordCheap)
   }
 
+  // scalastyle:on magic.number
+
   override private[spark] def defaultConfig = OperatorUpdateGoldenRecordConfig()
 
   override private[spark] def configParser(): OptionParser[OperatorUpdateGoldenRecordConfig] =
     new scopt.OptionParser[OperatorUpdateGoldenRecordConfig]("Question merging") {
       head("merges questions into an integrated questions output file.", "1.0")
-      opt[String]("inputFile") required () action { (x, c) ⇒
+      opt[String]("inputFile") required() action { (x, c) ⇒
         c.copy(inputFile = x)
       } text "inputFile is a string property"
-      opt[String]("checkpointFile") required () action { (x, c) ⇒
+      opt[String]("checkpointFile") required() action { (x, c) ⇒
         c.copy(checkpointFile = x)
       } text "checkpointFile is a string property"
-      opt[String]("outputFile") required () action { (x, c) ⇒
+      opt[String]("outputFile") required() action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
 

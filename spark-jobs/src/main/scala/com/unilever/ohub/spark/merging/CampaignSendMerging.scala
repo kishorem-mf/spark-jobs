@@ -2,20 +2,20 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.entity.{ CampaignSend, ContactPerson, Operator }
+import com.unilever.ohub.spark.domain.entity.{CampaignSend, ContactPerson, Operator}
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 case class CampaignSendMergingConfig(
-    contactPersonIntegrated: String = "contact-person-integrated",
-    operatorIntegrated: String = "operator-integrated",
-    previousIntegrated: String = "previous-integrated-campaigns",
-    campaignSendInputFile: String = "campaign-send-input-file",
-    outputFile: String = "path-to-output-file"
-) extends SparkJobConfig
+                                      contactPersonIntegrated: String = "contact-person-integrated",
+                                      operatorIntegrated: String = "operator-integrated",
+                                      previousIntegrated: String = "previous-integrated-campaigns",
+                                      campaignSendInputFile: String = "campaign-send-input-file",
+                                      outputFile: String = "path-to-output-file"
+                                    ) extends SparkJobConfig
 
 /**
  * Simple merging which only passes the latest version of a campaignSend entity
@@ -24,12 +24,12 @@ case class CampaignSendMergingConfig(
 object CampaignSendMerging extends SparkJob[CampaignSendMergingConfig] {
 
   def transform(
-    spark: SparkSession,
-    campaignSends: Dataset[CampaignSend],
-    contactPersons: Dataset[ContactPerson],
-    operators: Dataset[Operator],
-    previousIntegrated: Dataset[CampaignSend]
-  ): Dataset[CampaignSend] = {
+                 spark: SparkSession,
+                 campaignSends: Dataset[CampaignSend],
+                 contactPersons: Dataset[ContactPerson],
+                 operators: Dataset[Operator],
+                 previousIntegrated: Dataset[CampaignSend]
+               ): Dataset[CampaignSend] = {
     import spark.implicits._
 
     previousIntegrated
@@ -46,16 +46,14 @@ object CampaignSendMerging extends SparkJob[CampaignSendMergingConfig] {
       // update cpn ids
       .joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), JoinType.Left)
       .map {
-        case (send, cpn) ⇒
-          if (cpn == null) send
-          else send.copy(contactPersonOhubId = cpn.ohubId)
+        case (send: CampaignSend, cpn: ContactPerson) ⇒ send.copy(contactPersonOhubId = cpn.ohubId)
+        case (send, _) ⇒ send
       }
       // update opr ids
       .joinWith(operators, $"operatorConcatId" === operators("concatId"), JoinType.Left)
       .map {
-        case (send, opr) ⇒
-          if (opr == null) send
-          else send.copy(operatorOhubId = opr.ohubId)
+        case (send: CampaignSend, opr: Operator) ⇒ send.copy(operatorOhubId = opr.ohubId)
+        case (send, _) => send
       }
   }
 
@@ -64,19 +62,19 @@ object CampaignSendMerging extends SparkJob[CampaignSendMergingConfig] {
   override private[spark] def configParser(): OptionParser[CampaignSendMergingConfig] =
     new scopt.OptionParser[CampaignSendMergingConfig]("Order merging") {
       head("merges campaignsSends into an integrated campaignSends output file.", "1.0")
-      opt[String]("contactPersonIntegrated") required () action { (x, c) ⇒
+      opt[String]("contactPersonIntegrated") required() action { (x, c) ⇒
         c.copy(contactPersonIntegrated = x)
       } text "contactPersonIntegrated is a string property"
-      opt[String]("operatorIntegrated") required () action { (x, c) ⇒
+      opt[String]("operatorIntegrated") required() action { (x, c) ⇒
         c.copy(operatorIntegrated = x)
       } text "operatorIntegrated is a string property"
-      opt[String]("campaignSendInputFile") required () action { (x, c) ⇒
+      opt[String]("campaignSendInputFile") required() action { (x, c) ⇒
         c.copy(campaignSendInputFile = x)
       } text "campaignSendInputFilec is a string property"
-      opt[String]("previousIntegrated") optional () action { (x, c) ⇒
+      opt[String]("previousIntegrated") optional() action { (x, c) ⇒
         c.copy(previousIntegrated = x)
       } text "previousIntegrated is a string property"
-      opt[String]("outputFile") required () action { (x, c) ⇒
+      opt[String]("outputFile") required() action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
 
