@@ -120,7 +120,7 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
       it("should merge 2 records from the same group") {
         val tcResult = result.filter(_.ohubId == Some("tcMerge"))
         tcResult.length shouldBe 1
-        tcResult.head.name shouldBe opMerge1.name
+        tcResult.head.name shouldBe opMerge2.name
       }
 
       it("should merge groups based on multiple date columns") {

@@ -17,21 +17,29 @@ trait GoldenRecordPicking[DomainType <: DomainEntity] {
         var date1 = new Timestamp(0)
         var date2 = new Timestamp(0)
 
-        if (o1.dateUpdated.isEmpty && o2.dateUpdated.isEmpty) {
-          date1 = o1.dateCreated.getOrElse(lowDate)
-          date2 = o2.dateCreated.getOrElse(lowDate)
-        } else if (!o1.dateUpdated.isEmpty && o2.dateUpdated.isEmpty) {
-          date1 = o1.dateUpdated.getOrElse(lowDate)
-          date2 = o2.dateCreated.getOrElse(lowDate)
-        } else if (o1.dateUpdated.isEmpty && !o2.dateUpdated.isEmpty) {
-          date1 = o1.dateCreated.getOrElse(lowDate)
-          date2 = o2.dateUpdated.getOrElse(lowDate)
-        } else if ((!o1.dateUpdated.isEmpty && !o2.dateUpdated.isEmpty) && o1.dateUpdated.equals(o2.dateUpdated)) {
-          date1 = o1.dateCreated.getOrElse(lowDate)
-          date2 = o2.dateCreated.getOrElse(lowDate)
-        } else if ((!o1.dateUpdated.isEmpty && !o2.dateUpdated.isEmpty) && !o1.dateUpdated.equals(o2.dateUpdated)) {
-          date1 = o1.dateUpdated.getOrElse(lowDate)
-          date2 = o2.dateUpdated.getOrElse(lowDate)
+        val isO2DateUpdatedEmpty = o2.dateUpdated.isEmpty
+
+        if (o1.dateUpdated.isEmpty) {
+          if (isO2DateUpdatedEmpty) {
+            date1 = o1.dateCreated.getOrElse(lowDate)
+            date2 = o2.dateCreated.getOrElse(lowDate)
+          } else {
+            date1 = o1.dateCreated.getOrElse(lowDate)
+            date2 = o2.dateUpdated.getOrElse(lowDate)
+          }
+        } else {
+          if (isO2DateUpdatedEmpty) {
+            date1 = o1.dateUpdated.getOrElse(lowDate)
+            date2 = o2.dateCreated.getOrElse(lowDate)
+          } else {
+            if (o1.dateUpdated.equals(o2.dateUpdated)) {
+              date1 = o1.dateCreated.getOrElse(lowDate)
+              date2 = o2.dateCreated.getOrElse(lowDate)
+            } else {
+              date1 = o1.dateUpdated.getOrElse(lowDate)
+              date2 = o2.dateUpdated.getOrElse(lowDate)
+            }
+          }
         }
 
         if (date1.equals(date2) && o1.isGoldenRecord) o1 // If it already was golden and dates are the same: prefer that one

@@ -200,7 +200,7 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
       it("should merge 2 records from the same group") {
         val tcResult = result.filter(_.ohubId == Some("tcMerge"))
         tcResult.length shouldBe 1
-        tcResult.head.firstName shouldBe cpMerge1.firstName
+        tcResult.head.firstName shouldBe cpMerge2.firstName
       }
 
       it("should merge groups based on multiple date columns") {
