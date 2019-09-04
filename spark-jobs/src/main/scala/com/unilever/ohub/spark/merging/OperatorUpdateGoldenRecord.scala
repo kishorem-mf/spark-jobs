@@ -19,12 +19,11 @@ object OperatorUpdateGoldenRecord extends SparkJob[OperatorUpdateGoldenRecordCon
     operators.map(o ⇒ o.copy(isGoldenRecord = o == goldenRecord))
   }
 
-  // scalastyle:off magic.number
   def transform(
                  spark: SparkSession,
                  operators: Dataset[Operator],
                  sourcePreference: Map[String, Int],
-                 sizeThreshold: Int = 250000
+                 sizeThreshold: Int = 250000 // scalastyle:ignore
                ): Dataset[Operator] = {
     import spark.implicits._
     val ohubIdHavingEnormousGroups: Array[String] = operators
@@ -60,8 +59,6 @@ object OperatorUpdateGoldenRecord extends SparkJob[OperatorUpdateGoldenRecordCon
 
     goldenRecordCorrect.unionByName(goldenRecordCheap)
   }
-
-  // scalastyle:on magic.number
 
   override private[spark] def defaultConfig = OperatorUpdateGoldenRecordConfig()
 
