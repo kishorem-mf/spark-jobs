@@ -4,6 +4,9 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
+import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityHash}
 import com.unilever.ohub.spark.export.TargetType.{ACM, DISPATCHER, TargetType}
 import com.unilever.ohub.spark.sql.JoinType
@@ -26,7 +29,8 @@ case class OutboundConfig(
                            hashesInputFile: Option[String] = None,
                            targetType: TargetType = ACM,
                            outboundLocation: String = "outbound-location",
-                           countryCodes: Option[Seq[String]] = None
+                           countryCodes: Option[Seq[String]] = None,
+                           mappingOutputLocation: Option[String] = None
                          ) extends SparkJobConfig
 
 abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig] {
@@ -49,11 +53,23 @@ abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig]
       opt[Seq[String]]("countryCodes") optional() action { (x, c) =>
         c.copy(countryCodes = Some(x))
       } text "countryCodes is a string array"
+      opt[String]("mappingOutputLocation") optional() action { (x, c) =>
+        c.copy(mappingOutputLocation = Some(x))
+      } text "mappingOutputFile is a string property"
       version("1.0")
       help("help") text "help text"
     }
 
   override private[spark] def defaultConfig = OutboundConfig()
+}
+
+object ExportOutboundWriter {
+  val mapper = new ObjectMapper() with ScalaObjectMapper
+  mapper.registerModule(DefaultScalaModule)
+
+  def jsonStringToNode(jsonString: String, isRetry: Boolean = false): JsonNode = {
+    if (jsonString != "") mapper.readTree(jsonString) else mapper.createObjectNode()
+  }
 }
 
 abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extends SparkJobWithOutboundExportConfig with CsvOptions {
@@ -66,14 +82,15 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[DomainType]): Dataset[_]
 
+  private[export] def explainConversion: Option[DomainType => _ <: OutboundEntity] = None
+
   def entityName(): String
 
   val csvOptions = Map()
 
   val onlyExportChangedRows = true
 
-  def mergeCsvFiles(targetType: TargetType): Boolean = true
-
+  def mergeCsvFiles(targetType: TargetType):Boolean = true
   // When merging, headers are based on the dataset columns (and not writen by DataSet.write.csv)
   private def shouldWriteHeaders(targetType: TargetType) = (!mergeCsvFiles(targetType)).toString
 
@@ -94,7 +111,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       case Some(location) ⇒ storage.readFromParquet[DomainEntityHash](location)
       case None ⇒ spark.createDataset(Seq[DomainEntityHash]())
     }
-    export(storage.readFromParquet[DomainType](config.integratedInputFile), hashesInputFile, config, spark);
+    export(storage.readFromParquet[DomainType](config.integratedInputFile), hashesInputFile, config, spark)
   }
 
   def export(integratedEntities: Dataset[DomainType], hashesInputFile: Dataset[DomainEntityHash], config: OutboundConfig, spark: SparkSession) {
@@ -115,6 +132,12 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     val result = processedChanged
       .select(columnsInOrder.head, columnsInOrder.tail: _*)
       .as[DomainType]
+
+    if (config.mappingOutputLocation.isDefined && explainConversion.isDefined && domainEntities.head(1).nonEmpty) {
+      log.info(s"ConversionExplanation found, writing output to ${config.mappingOutputLocation.get}")
+      val mapping = explainConversion.get.apply(domainEntities.head)
+      writeToJson(spark, new Path(config.mappingOutputLocation.get), deserializeJsonFields(mapping))
+    }
 
     writeToCsv(config, convertDataSet(spark, result), spark)
   }
@@ -171,7 +194,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     }
 
     val tmpCsvSourceDirectory: Path = moveOnlyCsvFilesToOtherDirectory
-    FileUtil.copyMerge(fs, tmpCsvSourceDirectory, fs, outputFile, true, spark.sparkContext.hadoopConfiguration, null) // scalastyle:off
+    FileUtil.copyMerge(fs, tmpCsvSourceDirectory, fs, outputFile, true, spark.sparkContext.hadoopConfiguration, null) // scalastyle:ignore
     fs.delete(sourceDirectory, true)
   }
 
@@ -187,5 +210,36 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       if (out != null) br.close()
     }
     headerFile
+  }
+
+  /**
+   * This function works for objects that only contain string fields with JSON content. The object is transformed to
+   * a map with jsonNodes so the mapper can convert it to one JSON object (without escaped JSON as values).
+   *
+   * F.e. {"key": "{\"name\": \"nested object\"}"}
+   * will become a map[String, JsonNode] which can be written (by the objectMapper) like
+   * {"key": {"name": "nested object"}}
+   *
+   * @param subject
+   * @return
+   */
+  private def deserializeJsonFields(subject: Any): Map[String, Any] = {
+    (Map[String, Any]() /: subject.getClass.getDeclaredFields) { (a, f) =>
+      f.setAccessible(true)
+      a + (f.getName -> ExportOutboundWriter.jsonStringToNode(f.get(subject).asInstanceOf[String]))
+    }
+  }
+
+  private def writeToJson(spark: SparkSession, outputDirectory: Path, subject: Any): Unit = {
+    import java.io.{BufferedWriter, OutputStreamWriter}
+    val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
+
+    val out = fs.create(outputDirectory, true)
+    val br = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"))
+    try {
+      ExportOutboundWriter.mapper.writeValue(br, subject)
+    } finally {
+      if (out != null) br.close()
+    }
   }
 }

@@ -31,8 +31,8 @@ object GlobalSettings extends AutoPlugin {
     "com.github.scopt" %% "scopt" % "3.7.1",
     "org.scalatest" %% "scalatest" % "3.0.8" % "test,it",
     "org.scalamock" %% "scalamock" % "4.4.0" % "test,it",
-    "org.reflections" % "reflections" % "0.9.11"
-
+    "org.reflections" % "reflections" % "0.9.11",
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.9"
   )
 
   /**

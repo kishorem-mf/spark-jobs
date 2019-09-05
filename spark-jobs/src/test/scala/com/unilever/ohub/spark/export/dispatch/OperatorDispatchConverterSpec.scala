@@ -18,7 +18,9 @@ class OperatorDispatchConverterSpec extends SparkJobSpec with TestOperators {
         socialCommercial = Some("social-commercial"),
         strategicChannel = Some("strategic-channel"),
         globalChannel = Some("global-channel"),
-        globalSubChannel = Some("global-sub-channel")
+        globalSubChannel = Some("global-sub-channel"),
+        hasEmailOptOut = None,
+        hasTelemarketingOptOut = Some(true)
       )
       val result = SUT.convert(operatorToConvert)
 
@@ -56,8 +58,8 @@ class OperatorDispatchConverterSpec extends SparkJobSpec with TestOperators {
           CHAIN_KNOTEN= "chain-id",
           CHAIN_NAME= "chainname",
           DM_OPT_OUT= "N",
-          EMAIL_OPT_OUT= "N",
-          FIXED_OPT_OUT= "N",
+          EMAIL_OPT_OUT= "U",
+          FIXED_OPT_OUT= "Y",
           MOBILE_OPT_OUT= "N",
           FAX_OPT_OUT= "N",
           KITCHEN_TYPE= "kitchentype",

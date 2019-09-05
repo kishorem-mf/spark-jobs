@@ -142,7 +142,6 @@ class DefaultStorage(spark: SparkSession) extends Storage {
 
     val fullDbURL: String = s"${dBConfig.dbUrl};user=${dBConfig.userName};password=${dBConfig.userPassword}"
 
-    val maxStringLegnth = 4000
     df
       .write
       .format(dBConfig.jdbcDriverClass)
@@ -152,7 +151,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .option("tempDir", dBConfig.dbTempDir)
       .option("preActions", preActions)
       .option("postActions", postActions)
-      .option("maxStrLength", maxStringLegnth)
+      .option("maxStrLength", 4000)  // scalastyle:ignore
       .mode(saveMode)
       .save
   }

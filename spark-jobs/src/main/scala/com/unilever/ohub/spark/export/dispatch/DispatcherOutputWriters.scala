@@ -2,6 +2,7 @@ package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.DomainEntityUtils
 import com.unilever.ohub.spark.domain.entity._
+import com.unilever.ohub.spark.export.dispatch.model._
 import com.unilever.ohub.spark.export.{CsvOptions, ExportOutboundWriter, OutboundConfig, SparkJobWithOutboundExportConfig}
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{Dataset, SparkSession}
@@ -23,6 +24,9 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
     dataSet.map(ContactPersonDispatchConverter.convert(_))
   }
 
+  override def explainConversion: Option[ContactPerson => DispatchContactPerson] = Some((input: ContactPerson) => ContactPersonDispatchConverter.convert(input, true))
+
+
   override def entityName(): String = "CONTACT_PERSONS"
 }
 
@@ -31,6 +35,8 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with Dispat
     import spark.implicits._
     dataSet.map(OperatorDispatchConverter.convert(_))
   }
+
+  override def explainConversion: Option[Operator => DispatchOperator] = Some((input: Operator) => OperatorDispatchConverter.convert(input, true))
 
   override def entityName(): String = "OPERATORS"
 }
@@ -41,6 +47,8 @@ object SubscriptionOutboundWriter extends ExportOutboundWriter[Subscription] wit
     dataSet.map(SubscriptionDispatchConverter.convert(_))
   }
 
+  override def explainConversion: Option[Subscription => DispatchSubscription] = Some((input: Subscription) => SubscriptionDispatchConverter.convert(input, true))
+
   override def entityName(): String = "SUBSCRIPTIONS"
 }
 
@@ -50,6 +58,8 @@ object ProductOutboundWriter extends ExportOutboundWriter[Product] with Dispatch
     dataSet.map(ProductDispatchConverter.convert(_))
   }
 
+  override def explainConversion: Option[Product => DispatchProduct] = Some((input: Product) => ProductDispatchConverter.convert(input, true))
+
   override def entityName(): String = "ORDER_PRODUCTS"
 }
 
@@ -58,6 +68,8 @@ object OrderOutboundWriter extends ExportOutboundWriter[Order] with DispatcherOp
     import spark.implicits._
     dataSet.map(OrderDispatchConverter.convert(_))
   }
+
+  override def explainConversion: Option[Order => DispatchOrder] = Some((input: Order) => OrderDispatchConverter.convert(input, true))
 
   override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[Order], config: OutboundConfig) = {
     import spark.implicits._
@@ -82,6 +94,8 @@ object OrderLineOutboundWriter extends ExportOutboundWriter[OrderLine] with Disp
     dataSet.map(OrderLineDispatchConverter.convert(_))
   }
 
+  override def explainConversion: Option[OrderLine => DispatchOrderLine] = Some((input: OrderLine) => OrderLineDispatchConverter.convert(input, true))
+
   override def entityName(): String = "ORDER_LINES"
 }
 
@@ -90,6 +104,8 @@ object ActivityOutboundWriter extends ExportOutboundWriter[Activity] with Dispat
     import spark.implicits._
     dataSet.map(ActivityDispatcherConverter.convert(_))
   }
+
+  override def explainConversion: Option[Activity => DispatchActivity] = Some((input: Activity) => ActivityDispatcherConverter.convert(input, true))
 
   override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[Activity], config: OutboundConfig) = {
     import spark.implicits._
@@ -105,6 +121,8 @@ object LoyaltyPointsOutboundWriter extends ExportOutboundWriter[LoyaltyPoints] w
     dataSet.map(LoyaltyPointsDispatcherConverter.convert(_))
   }
 
+  override def explainConversion: Option[LoyaltyPoints => DispatchLoyaltyPoints] = Some((input: LoyaltyPoints) => LoyaltyPointsDispatcherConverter.convert(input, true))
+
   override def entityName(): String = "LOYALTIES"
 }
 
@@ -114,6 +132,8 @@ object CampaignOutboundWriter extends ExportOutboundWriter[Campaign] with Dispat
 
     dataSet.map(CampaignDispatcherConverter.convert(_))
   }
+
+  override def explainConversion: Option[Campaign => DispatchCampaign] = Some((input: Campaign) => CampaignDispatcherConverter.convert(input, true))
 
   override def entityName(): String = "CAMPAIGNS"
 }
@@ -125,6 +145,8 @@ object CampaignBounceOutboundWriter extends ExportOutboundWriter[CampaignBounce]
     dataSet.map(CampaignBounceDispatcherConverter.convert(_))
   }
 
+  override def explainConversion: Option[CampaignBounce => DispatchCampaignBounce] = Some((input: CampaignBounce) => CampaignBounceDispatcherConverter.convert(input, true))
+
   override def entityName(): String = "CW_BOUNCES"
 }
 
@@ -134,6 +156,8 @@ object CampaignClickOutboundWriter extends ExportOutboundWriter[CampaignClick] w
 
     dataSet.map(CampaignClickDispatcherConverter.convert(_))
   }
+
+  override def explainConversion: Option[CampaignClick => DispatchCampaignClick] = Some((input: CampaignClick) => CampaignClickDispatcherConverter.convert(input, true))
 
   override def entityName(): String = "CW_CLICKS"
 }
@@ -145,6 +169,8 @@ object CampaignOpenOutboundWriter extends ExportOutboundWriter[CampaignOpen] wit
     dataSet.map(CampaignOpenDispatcherConverter.convert(_))
   }
 
+  override def explainConversion: Option[CampaignOpen => DispatchCampaignOpen] = Some((input: CampaignOpen) => CampaignOpenDispatcherConverter.convert(input, true))
+
   override def entityName(): String = "CW_OPENS"
 }
 
@@ -155,6 +181,8 @@ object CampaignSendOutboundWriter extends ExportOutboundWriter[CampaignSend] wit
     dataSet.map(CampaignSendDispatcherConverter.convert(_))
   }
 
+  override def explainConversion: Option[CampaignSend => DispatchCampaignSend] = Some((input: CampaignSend) => CampaignSendDispatcherConverter.convert(input, true))
+
   override def entityName(): String = "CW_SENDINGS"
 }
 
@@ -164,6 +192,8 @@ object ChainOutboundWriter extends ExportOutboundWriter[Chain] with DispatcherOp
 
     dataSet.map(ChainDispatchConverter.convert(_))
   }
+
+  override def explainConversion: Option[Chain => DispatchChain] = Some((input: Chain) => ChainDispatchConverter.convert(input, true))
 
   override def entityName(): String = "CHAINS"
 }
@@ -185,15 +215,17 @@ object AllDispatchOutboundWriter extends SparkJobWithOutboundExportConfig {
     DomainEntityUtils.domainCompanionObjects
       .par
       .filter(_.dispatchExportWriter.isDefined)
-      .foreach((entity) => {
+      .foreach(entity => {
         val writer = entity.dispatchExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
-        val hashLocation = config.hashesInputFile.map( x => x + s"/${entity.engineFolderName}.parquet" )
+        val hashLocation = config.hashesInputFile.map(x => x + s"/${entity.engineFolderName}.parquet")
+        val mappingOutputLocation = config.mappingOutputLocation.map(mappingOutput => s"${mappingOutput}/${config.targetType}_${writer.entityName()}_MAPPING.json")
         writer.run(
           spark,
           config.copy(
             integratedInputFile = integratedLocation,
-            hashesInputFile = hashLocation),
+            hashesInputFile = hashLocation,
+            mappingOutputLocation = mappingOutputLocation),
           storage)
       })
   }

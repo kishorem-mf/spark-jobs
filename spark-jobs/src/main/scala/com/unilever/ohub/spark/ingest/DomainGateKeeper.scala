@@ -119,7 +119,6 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag, RowType, C
 
   private def handleErrors(config: Config, result: Dataset[Either[ErrorMessage, DomainType]], spark: SparkSession, storage: Storage) = {
     import spark.implicits._
-    val noOfRows = 100
     val errors: Dataset[ErrorMessage] = result
       .filter((res: Either[ErrorMessage, DomainType]) => res.isLeft)
       .map((err: Either[ErrorMessage, DomainType]) => err.left.get)
@@ -137,7 +136,7 @@ abstract class DomainGateKeeper[DomainType <: DomainEntity : TypeTag, RowType, C
         }
 
       storage.writeToParquet(errorResult, config.outputFile + ".errors")
-      errorResult.show(numRows = noOfRows, truncate = false)
+      errorResult.show(numRows = 100, truncate = false) // scalastyle:ignore
 
       if (config.strictIngestion) {
         log.error(s"NO PARQUET FILE WRITTEN, FAIL FAST NOW.")

@@ -2,22 +2,21 @@ package com.unilever.ohub.spark.export.acm
 
 import com.unilever.ohub.spark.domain.entity.OrderLine
 import com.unilever.ohub.spark.export.acm.model.AcmOrderLine
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter, TypeConversionFunctions}
 
-object OrderLineAcmConverter extends Converter[OrderLine, AcmOrderLine] with TransformationFunctions with AcmTransformationFunctions {
+object OrderLineAcmConverter extends Converter[OrderLine, AcmOrderLine] with TypeConversionFunctions with AcmTypeConversionFunctions {
 
-  override def convert(orderLine: OrderLine): AcmOrderLine = {
+  override def convert(implicit orderLine: OrderLine, explain: Boolean = false): AcmOrderLine = {
     AcmOrderLine(
-      ORDERLINE_ID = orderLine.concatId,
-      ORD_INTEGRATION_ID = orderLine.orderConcatId,
-      QUANTITY = orderLine.quantityOfUnits.toString,
-      AMOUNT = orderLine.amount,
-      LOYALTY_POINTS = orderLine.loyaltyPoints,
-      PRD_INTEGRATION_ID = orderLine.productOhubId,
-      CAMPAIGN_LABEL = orderLine.campaignLabel,
-      COMMENTS = orderLine.comment,
-      DELETED_FLAG = booleanToYNConverter(!orderLine.isActive)
+      ORDERLINE_ID = getValue("concatId"),
+      ORD_INTEGRATION_ID = getValue("orderConcatId"),
+      QUANTITY = getValue("quantityOfUnits"),
+      AMOUNT = getValue("amount"),
+      LOYALTY_POINTS = getValue("loyaltyPoints"),
+      PRD_INTEGRATION_ID = getValue("productOhubId"),
+      CAMPAIGN_LABEL = getValue("campaignLabel"),
+      COMMENTS = getValue("comment"),
+      DELETED_FLAG = getValue("isActive", InvertedBooleanToYNConverter)
     )
   }
-
 }

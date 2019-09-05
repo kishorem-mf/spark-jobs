@@ -1,32 +1,31 @@
 package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.entity.Product
-import com.unilever.ohub.spark.export.dispatch.ContactPersonDispatchConverter.booleanToYNConverter
 import com.unilever.ohub.spark.export.dispatch.model.DispatchProduct
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter, TypeConversionFunctions}
 
-object ProductDispatchConverter extends Converter[Product, DispatchProduct] with TransformationFunctions with DispatchTransformationFunctions {
+object ProductDispatchConverter extends Converter[Product, DispatchProduct] with TypeConversionFunctions with DispatchTypeConversionFunctions {
 
-  override def convert(product: Product): DispatchProduct = {
+  override def convert(implicit product: Product, explain: Boolean = false): DispatchProduct = {
     DispatchProduct(
-      COUNTRY_CODE = product.countryCode,
-      SOURCE = product.sourceName,
-      CREATED_AT = product.ohubCreated,
-      UPDATED_AT = product.ohubUpdated,
-      PRODUCT_NAME = product.name,
-      EAN_CODE = product.eanConsumerUnit,
-      DELETE_FLAG = booleanToYNConverter(!product.isActive),
-      MRDR_CODE = product.code,
-      PRD_INTEGRATION_ID = product.concatId,
-      EAN_CODE_DISPATCH_UNIT = product.eanDistributionUnit,
-      CATEGORY = product.categoryByMarketeer,
-      SUB_CATEGORY = product.subCategoryByMarketeer,
-      BRAND = product.brandCode,
-      SUB_BRAND = product.subBrandCode,
-      ITEM_TYPE = product.`type`,
-      UNIT = product.unit,
-      UNIT_PRICE_CURRENCY = product.currency,
-      UNIT_PRICE = product.unitPrice
+      COUNTRY_CODE = getValue("countryCode"),
+      SOURCE = getValue("sourceName"),
+      CREATED_AT = getValue("ohubCreated"),
+      UPDATED_AT = getValue("ohubUpdated"),
+      PRODUCT_NAME = getValue("name"),
+      EAN_CODE = getValue("eanConsumerUnit"),
+      DELETE_FLAG = getValue("isActive", InvertedBooleanToYNConverter),
+      MRDR_CODE = getValue("code"),
+      PRD_INTEGRATION_ID = getValue("concatId"),
+      EAN_CODE_DISPATCH_UNIT = getValue("eanDistributionUnit"),
+      CATEGORY = getValue("categoryByMarketeer"),
+      SUB_CATEGORY = getValue("subCategoryByMarketeer"),
+      BRAND = getValue("brandCode"),
+      SUB_BRAND = getValue("subBrandCode"),
+      ITEM_TYPE = getValue("type"),
+      UNIT = getValue("unit"),
+      UNIT_PRICE_CURRENCY = getValue("currency"),
+      UNIT_PRICE = getValue("unitPrice")
     )
   }
 }

@@ -2,21 +2,22 @@ package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.entity.Activity
 import com.unilever.ohub.spark.export.dispatch.model.DispatchActivity
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter, TypeConversionFunctions}
 
-object ActivityDispatcherConverter extends Converter[Activity, DispatchActivity] with TransformationFunctions with DispatchTransformationFunctions {
-  override def convert(activity: Activity): DispatchActivity =
+object ActivityDispatcherConverter extends Converter[Activity, DispatchActivity] with TypeConversionFunctions with DispatchTypeConversionFunctions {
+  override def convert(implicit activity: Activity, explain: Boolean = false): DispatchActivity = {
     DispatchActivity(
-      CP_ORIG_INTEGRATION_ID = activity.contactPersonConcatId,
-      RAC_INTEGRATION_ID = activity.concatId,
-      SOURCE = activity.sourceName,
-      COUNTRY_CODE = activity.countryCode,
-      CREATED_AT = activity.ohubCreated,
-      UPDATED_AT = activity.ohubUpdated,
-      DELETE_FLAG = booleanToYNConverter(!activity.isActive),
-      CONTACT_DATE = activity.activityDate,
-      ACTION_TYPE = activity.actionType,
-      ACTIVITY_NAME = activity.name,
-      ACTIVITY_DETAILS = activity.details
+      CP_ORIG_INTEGRATION_ID = getValue("contactPersonConcatId"),
+      RAC_INTEGRATION_ID = getValue("concatId"),
+      SOURCE = getValue("sourceName"),
+      COUNTRY_CODE = getValue("countryCode"),
+      CREATED_AT = getValue("ohubCreated"),
+      UPDATED_AT = getValue("ohubUpdated"),
+      DELETE_FLAG = getValue("isActive", InvertedBooleanToYNConverter),
+      CONTACT_DATE = getValue("activityDate"),
+      ACTION_TYPE = getValue("actionType"),
+      ACTIVITY_NAME = getValue("name"),
+      ACTIVITY_DETAILS = getValue("details")
     )
+  }
 }

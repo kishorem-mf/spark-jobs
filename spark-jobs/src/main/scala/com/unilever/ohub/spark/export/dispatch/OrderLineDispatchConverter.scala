@@ -2,27 +2,27 @@ package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.entity.OrderLine
 import com.unilever.ohub.spark.export.dispatch.model.DispatchOrderLine
-import com.unilever.ohub.spark.export.{Converter, TransformationFunctions}
+import com.unilever.ohub.spark.export.{Converter, InvertedBooleanToYNConverter, TypeConversionFunctions}
 
-object OrderLineDispatchConverter extends Converter[OrderLine, DispatchOrderLine] with TransformationFunctions with DispatchTransformationFunctions {
+object OrderLineDispatchConverter extends Converter[OrderLine, DispatchOrderLine] with TypeConversionFunctions with DispatchTypeConversionFunctions {
 
-  override def convert(orderline: OrderLine): DispatchOrderLine = {
+  override def convert(implicit orderline: OrderLine, explain: Boolean = false): DispatchOrderLine = {
     DispatchOrderLine(
-      COUNTRY_CODE = orderline.countryCode,
-      SOURCE = orderline.sourceName,
-      DELETE_FLAG = booleanToYNConverter(!orderline.isActive),
-      ORD_INTEGRATION_ID = orderline.orderConcatId,
-      ODL_INTEGRATION_ID = orderline.concatId,
-      PRD_INTEGRATION_ID = orderline.productConcatId,
-      CAMPAIGN_LABEL = orderline.campaignLabel,
-      COMMENTS = orderline.comment,
-      QUANTITY = orderline.quantityOfUnits.toString,
-      AMOUNT = orderline.amount,
-      LOYALTY_POINTS = orderline.loyaltyPoints,
-      UNIT_PRICE = orderline.pricePerUnit,
-      UNIT_PRICE_CURRENCY = orderline.currency,
-      ODS_CREATED = orderline.ohubCreated,
-      ODS_UPDATED = orderline.ohubUpdated
+      COUNTRY_CODE = getValue("countryCode"),
+      SOURCE = getValue("sourceName"),
+      DELETE_FLAG = getValue("isActive", InvertedBooleanToYNConverter),
+      ORD_INTEGRATION_ID = getValue("orderConcatId"),
+      ODL_INTEGRATION_ID = getValue("concatId"),
+      PRD_INTEGRATION_ID = getValue("productConcatId"),
+      CAMPAIGN_LABEL = getValue("campaignLabel"),
+      COMMENTS = getValue("comment"),
+      QUANTITY = getValue("quantityOfUnits"),
+      AMOUNT = getValue("amount"),
+      LOYALTY_POINTS = getValue("loyaltyPoints"),
+      UNIT_PRICE = getValue("pricePerUnit"),
+      UNIT_PRICE_CURRENCY = getValue("currency"),
+      ODS_CREATED = getValue("ohubCreated"),
+      ODS_UPDATED = getValue("ohubUpdated")
     )
   }
 }
