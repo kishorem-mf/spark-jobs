@@ -11,7 +11,7 @@ object BooleanTo10Converter extends TransformationFunction[Boolean] {
   def impl(bool: Boolean) = if (bool) "1" else "0"
 
   override val exampleValue: String = "1"
-  val description: String = "Converts the value to 1 or 0. f.e. true wil become \"1\""
+  val description: String = "Converts the value to 1 or 0. f.e. true will become \"1\""
 }
 
 object BooleanToYNConverter extends TransformationFunction[Boolean] {
@@ -32,7 +32,7 @@ object InvertedBooleanToYNConverter extends TransformationFunction[Boolean] {
   def impl(bool: Boolean) = if (bool) "N" else "Y"
 
   override val exampleValue: String = "Y"
-  val description: String = "Inverts the value and converts it to Y(es) or N(o). f.e. true wil become \"N\""
+  val description: String = "Inverts the value and converts it to Y(es) or N(o). f.e. true will become \"N\""
 }
 
 object CleanString extends TransformationFunction[String] {
