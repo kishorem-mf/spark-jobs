@@ -18,14 +18,14 @@ object BooleanToYNConverter extends TransformationFunction[Boolean] {
   def impl(bool: Boolean) = if (bool) "Y" else "N"
 
   override val exampleValue: String = "Y"
-  val description: String = "Transforms a boolean to Y(es) of N(o)"
+  val description: String = "Transforms a boolean to Y(es) or N(o)"
 }
 
 object BooleanToYNUConverter extends TransformationFunction[Option[Boolean]] {
   def impl(opt: Option[Boolean]) = opt.fold("U")(b ⇒ if (b) "Y" else "N")
 
   override val exampleValue: String = "Y"
-  val description: String = "Transforms a boolean to Y(es) N(o) or U(nspecified)"
+  val description: String = "Transforms a boolean to Y(es), N(o) or U(nspecified)"
 }
 
 object InvertedBooleanToYNConverter extends TransformationFunction[Boolean] {
@@ -41,18 +41,13 @@ object CleanString extends TransformationFunction[String] {
   val description: String = "Removes characters that are not always supported by systems (f.e. ⓒ╠☣☺♡♥♪❤\uE2B1) and removes leading and trailing spaces"
 }
 
-class ClearField(cleanYN: Option[Boolean]) extends TransformationFunction[String] {
+class ClearInvalidEmail(emailValid: Option[Boolean]) extends TransformationFunction[String] {
   def impl(input: String): String =
-    cleanYN match {
-      case Some(true) => input
+    emailValid match {
       case Some(false) => ""
-      case None => input
+      case _ => input
     }
 
-  val description: String = "Clears the field when needed"
-}
-
-class ClearInvalidEmail(emailValid: Option[Boolean]) extends ClearField(emailValid) {
   override val description: String = "Clears the email address when it is not valid (configured in OHUB)"
 }
 
