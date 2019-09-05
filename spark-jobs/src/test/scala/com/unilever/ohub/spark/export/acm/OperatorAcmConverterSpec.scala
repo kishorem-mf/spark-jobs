@@ -83,7 +83,9 @@ class OperatorAcmConverterSpec extends SparkJobSpec with TestOperators {
 
       result shouldBe expectedAcmOperator
     }
-    it("Fill date created value for date updated if provided date updated value is empty") {
+    it("GIVEN a existing record without a dateUpdated but with a dateCreated" +
+      "WHEN delivering this record to the ACM" +
+      "THEN dateCreated is copied into dateUpdated") {
       val cp = defaultOperator.copy(dateUpdated = Option.empty)
       val actualDispatchContactPerson = SUT.convert(cp)
 
