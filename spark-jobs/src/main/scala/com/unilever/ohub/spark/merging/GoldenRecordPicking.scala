@@ -17,6 +17,7 @@ trait GoldenRecordPicking[DomainType <: DomainEntity] {
         var dateCreatedOrUpdated1 = new Timestamp(0)
         var dateCreatedOrUpdated2 = new Timestamp(0)
 
+        //TODO : Refactor this code because of merged golden record logic.
         val isO2DateUpdatedEmpty = o2.dateUpdated.isEmpty
 
         (o1.dateUpdated.isEmpty,isO2DateUpdatedEmpty) match {

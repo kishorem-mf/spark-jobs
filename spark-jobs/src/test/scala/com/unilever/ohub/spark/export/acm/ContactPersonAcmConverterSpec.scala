@@ -91,7 +91,7 @@ import org.scalatest.{FunSpec, Matchers}
         assert(actualDispatchContactPerson.GENDER equals ("0"))
       }
 
-      it("Fill date created value for date updated if provided date updated value is empty") {
+      it("should fill date created value for date updated if latter is empty") {
         val cp = defaultContactPerson.copy(dateUpdated = Option.empty)
         val actualDispatchContactPerson = SUT.convert(cp)
 
