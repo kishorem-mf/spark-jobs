@@ -38,9 +38,7 @@ class GoldenRecordPickingSpec extends SparkJobSpec with TestOperators {
       assert(golden.sourceName === "sourceA")
     }
 
-    it("GIVEN an existing record without a dateUpdated but with a dateCreated" +
-      "WHEN selecting the most recent record within a group of matched records" +
-      "THEN the dateCreated is used as the dateUpdated") {
+    it("should pick the operator updated date if not null if sourcePreferences are equal") {
       val sourcePreferences = Map(
         "sourceA" -> 1,
         "sourceB" -> 1
