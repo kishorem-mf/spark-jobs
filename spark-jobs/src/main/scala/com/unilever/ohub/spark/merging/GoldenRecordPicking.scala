@@ -19,25 +19,19 @@ trait GoldenRecordPicking[DomainType <: DomainEntity] {
 
         val isO2DateUpdatedEmpty = o2.dateUpdated.isEmpty
 
-        if (o1.dateUpdated.isEmpty) {
-          if (isO2DateUpdatedEmpty) {
-            dateCreatedOrUpdated1 = o1.dateCreated.getOrElse(lowDate)
+        (o1.dateUpdated.isEmpty,isO2DateUpdatedEmpty) match {
+          case (true,true) => dateCreatedOrUpdated1 = o1.dateCreated.getOrElse(lowDate)
             dateCreatedOrUpdated2 = o2.dateCreated.getOrElse(lowDate)
-          } else {
-            dateCreatedOrUpdated1 = o1.dateCreated.getOrElse(lowDate)
+          case (true, false) => dateCreatedOrUpdated1 = o1.dateCreated.getOrElse(lowDate)
             dateCreatedOrUpdated2 = o2.dateUpdated.getOrElse(lowDate)
-          }
-        } else {
-          if (isO2DateUpdatedEmpty) {
-            dateCreatedOrUpdated1 = o1.dateUpdated.getOrElse(lowDate)
-            dateCreatedOrUpdated2 = o2.dateCreated.getOrElse(lowDate)
-          } else {
-            if (o1.dateUpdated.equals(o2.dateUpdated)) {
-              dateCreatedOrUpdated1 = o1.dateCreated.getOrElse(lowDate)
+          case (false,_) => isO2DateUpdatedEmpty match {
+            case true =>dateCreatedOrUpdated1 = o1.dateUpdated.getOrElse(lowDate)
               dateCreatedOrUpdated2 = o2.dateCreated.getOrElse(lowDate)
-            } else {
-              dateCreatedOrUpdated1 = o1.dateUpdated.getOrElse(lowDate)
-              dateCreatedOrUpdated2 = o2.dateUpdated.getOrElse(lowDate)
+            case false  => o1.dateUpdated.equals(o2.dateUpdated) match {
+              case true =>dateCreatedOrUpdated1 = o1.dateCreated.getOrElse(lowDate)
+                dateCreatedOrUpdated2 = o2.dateCreated.getOrElse(lowDate)
+              case false =>dateCreatedOrUpdated1 = o1.dateUpdated.getOrElse(lowDate)
+                dateCreatedOrUpdated2 = o2.dateUpdated.getOrElse(lowDate)
             }
           }
         }

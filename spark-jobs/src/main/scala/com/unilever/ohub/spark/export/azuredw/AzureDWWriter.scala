@@ -160,7 +160,8 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
       s"fs.azure.account.key.${config.blobStorageContainer}.blob.core.windows.net", config.blobStorageKey)
 
     val integratedEntity: Dataset[DomainType] = storage.readFromParquet[DomainType](config.integratedInputFile)
-    val result = inputUpdatedDate(dropUnnecessaryFields(integratedEntity))
+    val frame = dropUnnecessaryFields(integratedEntity)
+    val result = inputUpdatedDate(frame)
 
     val dbTable: String = config.entityName
     val dbSchema: String = config.dbSchema

@@ -20,13 +20,15 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
       val opMerge1 = defaultOperator.copy(
         dateUpdated = Some(new Timestamp(1L)),
         name = Some("newerOp"),
-        ohubId = Some("tcMerge")
+        ohubId = Some("tcMerge"),
+        dateCreated = Some(Timestamp.valueOf("2017-10-16 18:09:49"))
       )
 
       val opMerge2 = defaultOperator.copy(
         dateUpdated = None,
         name = Some("olderOp"),
-        ohubId = Some("tcMerge")
+        ohubId = Some("tcMerge"),
+        dateCreated = Some(Timestamp.valueOf("2017-10-17 18:09:49"))
       )
 
       val opNull1 = defaultOperator.copy(
