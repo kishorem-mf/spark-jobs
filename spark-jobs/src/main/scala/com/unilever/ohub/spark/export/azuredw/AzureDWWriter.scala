@@ -267,9 +267,13 @@ object ChainDWWriter extends AzureDWWriter[Chain]
   **/
 object AllDWOutboundWriter extends SparkJobWithAzureDWConfiguration {
   override def run(spark: SparkSession, config: AzureDWConfiguration, storage: Storage): Unit = {
+
+    val excludedEntities = Seq("answers")
+
     DomainEntityUtils.domainCompanionObjects
       .par
       .filter(_.azureDwWriter.isDefined)
+      .filterNot(entity => excludedEntities.contains(entity.engineFolderName))
       .foreach((entity) => {
         val writer = entity.azureDwWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"

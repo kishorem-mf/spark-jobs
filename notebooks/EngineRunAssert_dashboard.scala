@@ -119,7 +119,20 @@ def getChangedCount(runId: String, domain: String) = {
 
 def getOutboundCount(runId: String, domain: String) = {
   // Outbound doesn't produce a _SUCCESS file
-  val outboundDispatch = readCsv(s"dbfs:/mnt/outbound/${domain}/${runId}/UFS_DISPATCH*.csv") // Dispatcher uses pilcrow as seperator(not ';'), so only count will work fine a.t.m.
+  val dispatcherDomain = domain match { 
+    // ACM uses different filenames for some entities
+    case "activities" => "contact_person_activities"
+    case "contactpersons" => "contact_persons"
+    case "campaignbounces" => "cw_bounces"
+    case "campaignclicks" => "cw_clicks"
+    case "campaignopens" => "cw_opens"
+    case "campaignsends" => "cw_sendings"
+    case "loyaltypoints" => "loyalties"
+    case "orderlines" => "order_lines"
+    case "products" => "order_products"
+    case _ => domain
+  }
+  val outboundDispatch = readCsv(s"dbfs:/mnt/outbound/${runId}/UFS_DISPATCHER_${dispatcherDomain.toUpperCase()}*.csv") // Dispatcher uses pilcrow as seperator(not ';'), so only count will work fine a.t.m.
   val outboundDispatchCount = tryCount(() => outboundDispatch.count())
   val acmDomain = domain match { 
     // ACM uses different filenames for some entities
@@ -127,7 +140,7 @@ def getOutboundCount(runId: String, domain: String) = {
     case "loyaltypoints" => "loyalties"
     case _ => domain
   }
-  val outboundAcm = readCsv(s"dbfs:/mnt/outbound/${domain}/${runId}/UFS_${acmDomain.toUpperCase()}*.csv")
+  val outboundAcm = readCsv(s"dbfs:/mnt/outbound/${runId}/UFS_${acmDomain.toUpperCase()}*.csv")
   val outboundAcmCount = tryCount(() => outboundAcm.count())
   (outboundDispatchCount, outboundAcmCount)
 }

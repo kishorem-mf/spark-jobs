@@ -13,27 +13,27 @@ object BooleanTo10Converter extends TransformationFunction[Boolean] {
   def impl(bool: Boolean) = if (bool) "1" else "0"
 
   override val exampleValue: String = "1"
-  val description: String = "Converts the value to 1 or 0. f.e. true wil become \"1\""
+  val description: String = "Converts the value to 1 or 0. f.e. true will become \"1\""
 }
 object BooleanToYNConverter extends TransformationFunction[Boolean] {
   def impl(bool: Boolean) = if (bool) "Y" else "N"
 
   override val exampleValue: String = "Y"
-  val description: String = "Transforms a boolean to Y(es) of N(o)"
+  val description: String = "Transforms a boolean to Y(es) or N(o)"
 }
 
 object BooleanToYNUConverter extends TransformationFunction[Option[Boolean]] {
   def impl(opt: Option[Boolean]) = opt.fold("U")(b ⇒ if (b) "Y" else "N")
 
   override val exampleValue: String = "Y"
-  val description: String = "Transforms a boolean to Y(es) N(o) or U(nspecified)"
+  val description: String = "Transforms a boolean to Y(es), N(o) or U(nspecified)"
 }
 
 object InvertedBooleanToYNConverter extends TransformationFunction[Boolean] {
   def impl(bool: Boolean) = if (bool) "N" else "Y"
 
   override val exampleValue: String = "Y"
-  val description: String = "Inverts the value and converts it to Y(es) or N(o). f.e. true wil become \"N\""
+  val description: String = "Inverts the value and converts it to Y(es) or N(o). f.e. true will become \"N\""
 }
 
 object CleanString extends TransformationFunction[String] {
@@ -42,10 +42,15 @@ object CleanString extends TransformationFunction[String] {
   val description: String = "Removes characters that are not always supported by systems (f.e. ⓒ╠☣☺♡♥♪❤\uE2B1) and removes leading and trailing spaces"
 }
 
-class ClearInvalidEmail(isValid: Option[Boolean]) extends TransformationFunction[String] {
+class ClearInvalidEmail(emailValid: Option[Boolean]) extends TransformationFunction[String] {
+  def impl(input: String): String =
+    emailValid match {
+      case Some(false) => ""
+      case _ => input
+    }
+
   override val description: String = "Clears the email address when it is not valid (configured in OHUB)"
 
-  def impl(input: String): String = if (isValid.isDefined && !isValid.get) "" else input
 }
 
 object WeeksClosedToOpened extends TransformationFunction[Int] {
