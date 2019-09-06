@@ -87,7 +87,7 @@ abstract class SparkJobWithAzureDWConfiguration extends SparkJob[AzureDWConfigur
 
 abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJobWithAzureDWConfiguration {
 
-  def inputUpdatedDate(dataSet: DataFrame): DataFrame = dataSet.toDF()
+  def UpdatedDateFrame(dataSet: DataFrame): DataFrame = dataSet.toDF()
 
   /** Removes the map fields because resulting on an error when queried in Azure DW. */
   private def dropUnnecessaryFields(dataSet: Dataset[DomainType]): DataFrame = {
@@ -161,7 +161,7 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
 
     val integratedEntity: Dataset[DomainType] = storage.readFromParquet[DomainType](config.integratedInputFile)
     val frame = dropUnnecessaryFields(integratedEntity)
-    val result = inputUpdatedDate(frame)
+    val result = UpdatedDateFrame(frame)
 
     val dbTable: String = config.entityName
     val dbSchema: String = config.dbSchema

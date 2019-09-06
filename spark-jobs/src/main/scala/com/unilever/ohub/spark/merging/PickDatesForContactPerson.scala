@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 
-case class PickDatesForContactPerson(
-                                      dateUpdated: Option[Timestamp],
-                                      dateCreated: Option[Timestamp],
-                                      cp: ContactPerson)
+case class PickDatesForContactPerson(cp: ContactPerson) {
+  val dateUpdated = cp.dateUpdated.orElse(cp.dateCreated)
+  val dateCreated = cp.dateCreated
+}

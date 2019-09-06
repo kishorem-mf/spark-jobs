@@ -29,11 +29,11 @@ object ContactPersonUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with 
       def compare(x: Timestamp, y: Timestamp): Int = x compareTo y
     }
 
-    val wrappedEntity = entities
-      .map(c ⇒ PickDatesForContactPerson(if (c.dateUpdated.isDefined) c.dateUpdated else c.dateCreated, c.dateCreated, c))
-    val newest = wrappedEntity.sortBy(wrapped ⇒ (wrapped.dateUpdated, wrapped.dateCreated, wrapped.cp.ohubUpdated)).reverse.head
+    val wrappedCp = entities
+      .map(PickDatesForContactPerson)
+    val newest = wrappedCp.sortBy(wrapped ⇒ (wrapped.dateUpdated, wrapped.dateCreated, wrapped.cp.ohubUpdated)).reverse.head
 
-    val newestCPs = wrappedEntity
+    val newestCPs = wrappedCp
       .filter(c ⇒ c.dateUpdated == newest.dateUpdated &&
         c.dateCreated == newest.dateCreated &&
         c.cp.ohubUpdated == newest.cp.ohubUpdated
