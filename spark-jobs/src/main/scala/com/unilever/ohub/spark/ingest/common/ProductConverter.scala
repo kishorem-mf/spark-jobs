@@ -9,6 +9,7 @@ import org.apache.spark.sql.Row
 
 object ProductConverter extends CommonDomainGateKeeper[Product] with ProductEmptyParquetWriter {
 
+  // scalastyle:off method.length
   override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Product = { transformer ⇒
     row ⇒
       import transformer._

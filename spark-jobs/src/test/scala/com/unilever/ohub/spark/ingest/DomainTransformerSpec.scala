@@ -29,7 +29,7 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
 
     "throw a mandatory constraint exception" when {
       "an domainFieldName column has a null value" in {
-        val row = new GenericRowWithSchema(List(null).toArray, StructType(List(StructField(domainFieldName, DataTypes.StringType, nullable = true))))
+        val row = new GenericRowWithSchema(List(null).toArray, StructType(List(StructField(domainFieldName, DataTypes.StringType, nullable = true)))) // scalastyle:ignore
 
         val actualException = intercept[MandatoryFieldException] {
           domainTransformer.mandatory(domainFieldName)(row)
@@ -73,7 +73,7 @@ class DomainTransformerSpec extends WordSpec with Matchers with MockFactory {
 
     "resolve to None" when {
       "an domain-field-name column has a null value" in {
-        val row = new GenericRowWithSchema(List(null).toArray, StructType(List(StructField(domainFieldName, DataTypes.StringType, nullable = true))))
+        val row = new GenericRowWithSchema(List(null).toArray, StructType(List(StructField(domainFieldName, DataTypes.StringType, nullable = true)))) // scalastyle:ignore
 
         val value = domainTransformer.optional(domainFieldName)(row)
 

@@ -2,20 +2,20 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.entity.{ OrderLine, Product }
+import com.unilever.ohub.spark.domain.entity.{OrderLine, Product}
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{ collect_list, first, lit, when, row_number }
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 case class OrderLineMergingConfig(
-    orderLineInputFile: String = "order-input-file",
-    previousIntegrated: String = "previous-integrated-orderlines",
-    productsIntegrated: String = "products-input-file",
-    outputFile: String = "path-to-output-file"
-) extends SparkJobConfig
+                                   orderLineInputFile: String = "order-input-file",
+                                   previousIntegrated: String = "previous-integrated-orderlines",
+                                   productsIntegrated: String = "products-input-file",
+                                   outputFile: String = "path-to-output-file"
+                                 ) extends SparkJobConfig
 
 object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
 
@@ -29,11 +29,11 @@ object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
   }
 
   def transform(
-    spark: SparkSession,
-    orderLines: Dataset[OrderLine],
-    previousIntegrated: Dataset[OrderLine],
-    products: Dataset[Product]
-  ): Dataset[OrderLine] = {
+                 spark: SparkSession,
+                 orderLines: Dataset[OrderLine],
+                 previousIntegrated: Dataset[OrderLine],
+                 products: Dataset[Product]
+               ): Dataset[OrderLine] = {
     import spark.implicits._
 
     val allOrderLines = previousIntegrated
@@ -75,9 +75,8 @@ object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
     deduplicatedOrderLines
       .joinWith(products, $"productConcatId" === products("concatId"), "left")
       .map {
-        case (order, product) ⇒
-          if (product == null) order
-          else order.copy(productOhubId = product.ohubId)
+        case (orderline: OrderLine, product: Product) => orderline.copy(productOhubId = product.ohubId)
+        case (orderline, _) => orderline
       }
   }
 
@@ -86,16 +85,16 @@ object OrderLineMerging extends SparkJob[OrderLineMergingConfig] {
   override private[spark] def configParser(): OptionParser[OrderLineMergingConfig] =
     new scopt.OptionParser[OrderLineMergingConfig]("Order merging") {
       head("merges orders into an integrated order output file.", "1.0")
-      opt[String]("orderLineInputFile") required () action { (x, c) ⇒
+      opt[String]("orderLineInputFile") required() action { (x, c) ⇒
         c.copy(orderLineInputFile = x)
       } text "orderLineInputFile is a string property"
-      opt[String]("previousIntegrated") optional () action { (x, c) ⇒
+      opt[String]("previousIntegrated") optional() action { (x, c) ⇒
         c.copy(previousIntegrated = x)
       } text "previousIntegrated is a string property"
-      opt[String]("productsIntegrated") optional () action { (x, c) ⇒
+      opt[String]("productsIntegrated") optional() action { (x, c) ⇒
         c.copy(productsIntegrated = x)
       } text "productsIntegrated is a string property"
-      opt[String]("outputFile") required () action { (x, c) ⇒
+      opt[String]("outputFile") required() action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
 

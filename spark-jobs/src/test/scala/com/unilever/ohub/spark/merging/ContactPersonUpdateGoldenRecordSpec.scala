@@ -17,12 +17,12 @@ class ContactPersonUpdateGoldenRecordSpec extends SparkJobSpec with TestContactP
     it("should favor Newest contact person based on dateCreated and mark it as a golden record") {
       val contactPersons: Dataset[ContactPerson] = Seq[ContactPerson](
         defaultContactPerson.copy(ohubId = Some("ohub-id-1"), sourceName = "EMAKINA",
-          dateCreated = Some(new Timestamp(2l)),
-          ohubUpdated = new Timestamp(1l)
+          dateCreated = Some(new Timestamp(2L)),
+          ohubUpdated = new Timestamp(1L)
         ),
         defaultContactPerson.copy(ohubId = Some("ohub-id-1"), sourceName = "WEB_EVENT",
-          dateCreated = Some(new Timestamp(1l)),
-          ohubUpdated = new Timestamp(2l)
+          dateCreated = Some(new Timestamp(1L)),
+          ohubUpdated = new Timestamp(2L)
         )
       ).toDataset
 
@@ -40,10 +40,10 @@ class ContactPersonUpdateGoldenRecordSpec extends SparkJobSpec with TestContactP
     it("should favor Newest contact person based on ohubUpdated and mark it as a golden record") {
       val contactPersons: Dataset[ContactPerson] = Seq[ContactPerson](
         defaultContactPerson.copy(ohubId = Some("ohub-id-1"), sourceName = "EMAKINA",
-          ohubUpdated = new Timestamp(2l)
+          ohubUpdated = new Timestamp(2L)
         ),
         defaultContactPerson.copy(ohubId = Some("ohub-id-1"), sourceName = "WEB_EVENT",
-          ohubUpdated = new Timestamp(1l)
+          ohubUpdated = new Timestamp(1L)
         )
       ).toDataset
 
@@ -61,14 +61,14 @@ class ContactPersonUpdateGoldenRecordSpec extends SparkJobSpec with TestContactP
     it("should favor Newest contact person based on dateUpdated and mark it as a golden record") {
       val contactPersons: Dataset[ContactPerson] = Seq[ContactPerson](
         defaultContactPerson.copy(ohubId = Some("ohub-id-1"), sourceName = "EMAKINA",
-          dateUpdated = Some(new Timestamp(2l)),
-          dateCreated = Some(new Timestamp(1l)),
-          ohubUpdated = new Timestamp(1l)
+          dateUpdated = Some(new Timestamp(2L)),
+          dateCreated = Some(new Timestamp(1L)),
+          ohubUpdated = new Timestamp(1L)
         ),
         defaultContactPerson.copy(ohubId = Some("ohub-id-1"), sourceName = "WEB_EVENT",
-          dateUpdated = Some(new Timestamp(1l)),
-          dateCreated = Some(new Timestamp(2l)),
-          ohubUpdated = new Timestamp(2l)
+          dateUpdated = Some(new Timestamp(1L)),
+          dateCreated = Some(new Timestamp(2L)),
+          ohubUpdated = new Timestamp(2L)
         )
       ).toDataset
 
@@ -86,15 +86,15 @@ class ContactPersonUpdateGoldenRecordSpec extends SparkJobSpec with TestContactP
     it("should favor contact person based on isGoldenRecord and mark it as a golden record") {
       val contactPersons: Dataset[ContactPerson] = Seq[ContactPerson](
         defaultContactPerson.copy(ohubId = Some("ohub-id-1"), sourceName = "EMAKINA",
-          dateUpdated = Some(new Timestamp(2l)),
-          dateCreated = Some(new Timestamp(1l)),
-          ohubUpdated = new Timestamp(1l),
+          dateUpdated = Some(new Timestamp(2L)),
+          dateCreated = Some(new Timestamp(1L)),
+          ohubUpdated = new Timestamp(1L),
           isGoldenRecord = true
         ),
         defaultContactPerson.copy(ohubId = Some("ohub-id-1"), sourceName = "WEB_EVENT",
-          dateUpdated = Some(new Timestamp(2l)),
-          dateCreated = Some(new Timestamp(1l)),
-          ohubUpdated = new Timestamp(1l)
+          dateUpdated = Some(new Timestamp(2L)),
+          dateCreated = Some(new Timestamp(1L)),
+          ohubUpdated = new Timestamp(1L)
         )
       ).toDataset
 

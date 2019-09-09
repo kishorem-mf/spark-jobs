@@ -80,7 +80,7 @@ abstract class DomainEntityHashWriter[DomainType <: DomainEntity: TypeTag] exten
       val md = MessageDigest.getInstance("MD5")
       val digest = md.digest(input.getBytes)
       val bigInt = new BigInteger(1, digest)
-      val hashedString = bigInt.toString(16)
+      val hashedString = bigInt.toString(16) // scalastyle:ignore
       hashedString
     }
 

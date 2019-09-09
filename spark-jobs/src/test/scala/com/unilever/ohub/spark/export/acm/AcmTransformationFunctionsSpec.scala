@@ -12,51 +12,51 @@ class AcmTransformationFunctionsSpec extends FunSpec with AcmTypeConversionFunct
 
   describe("When you have a true boolean value") {
     it("should convert to 1") {
-      assert(BooleanTo10Converter.impl(true) == "1")
+      assert(BooleanTo10Converter.impl(true) === "1")
     }
     it("should convert to 0") {
-      assert(InvertedBooleanTo10Converter.impl(true) == "0")
+      assert(InvertedBooleanTo10Converter.impl(true) === "0")
     }
     it("should convert to Y") {
-      assert(BooleanToYNConverter.impl(true) == "Y")
+      assert(BooleanToYNConverter.impl(true) === "Y")
     }
 
     it("should convert to Y with unknown converter") {
-      assert(BooleanToYNUConverter.impl(Some(true)) == "Y")
+      assert(BooleanToYNUConverter.impl(Some(true)) === "Y")
     }
   }
 
   describe("When you have a false boolean value") {
     it("should convert to 0") {
-      assert(BooleanTo10Converter.impl(false) == "0")
+      assert(BooleanTo10Converter.impl(false) === "0")
     }
     it("should convert to N") {
-      assert(BooleanToYNConverter.impl(false) == "N")
+      assert(BooleanToYNConverter.impl(false) === "N")
     }
     it("should convert to N with unknown converter") {
-      assert(BooleanToYNUConverter.impl(Some(false)) == "N")
+      assert(BooleanToYNUConverter.impl(Some(false)) === "N")
     }
   }
 
   describe("When you have an undefined boolean value") {
     it("should convert to U") {
       val value: Option[Boolean] = Option.empty
-      assert(BooleanToYNUConverter.impl(value) == "U")
+      assert(BooleanToYNUConverter.impl(value) === "U")
     }
   }
 
   describe("When gender needs to be translated") {
     it("should convert to M to 1") {
-      assert(GenderToNumeric.impl(Some("M")) == "1")
+      assert(GenderToNumeric.impl(Some("M")) === "1")
     }
     it("should convert to F to 2") {
-      assert(GenderToNumeric.impl(Some("F")) == "2")
+      assert(GenderToNumeric.impl(Some("F")) === "2")
     }
     it("should convert to None to 0") {
-      assert(GenderToNumeric.impl(None) == "0")
+      assert(GenderToNumeric.impl(None) === "0")
     }
     it("should clean the string") {
-      assert(GenderToNumeric.impl(Some("       F\u0021\u0023\u0025")) == "2")
+      assert(GenderToNumeric.impl(Some("       F\u0021\u0023\u0025")) === "2")
     }
   }
 
@@ -68,47 +68,47 @@ class AcmTransformationFunctionsSpec extends FunSpec with AcmTypeConversionFunct
 
   describe("When string contains a weird character") {
     it("should only remove that character") {
-      assert(CleanString.impl("test˵˶˹˻˼˽") == "test")
+      assert(CleanString.impl("test˵˶˹˻˼˽") === "test")
     }
   }
 
   describe("When string contains a dash character") {
     it("should remove that character") {
-      assert(CleanString.impl("jean-pierre") == "jeanpierre")
+      assert(CleanString.impl("jean-pierre") === "jeanpierre")
     }
   }
 
   describe("When string only contains a dot") {
     it("should remove that character and return empty string") {
-      assert(CleanString.impl(".") == "")
+      assert(CleanString.impl(".") === "")
     }
   }
 
   describe("When converting timestamp") {
     it("should convert to ACM wished format") {
       val ts = LocalDateTime.of(2019, 11, 12, 10, 11, 12)
-      assert(acmFunctions.timestampToString(Timestamp.valueOf(ts)) == "2019/11/12 10:11:12")
+      assert(acmFunctions.timestampToString(Timestamp.valueOf(ts)) === "2019/11/12 10:11:12")
     }
   }
 
   describe("When you have a BigDecimal with lots of digits after the .") {
     it("should convert it and round it up when necessary") {
-      assert(acmFunctions.bigDecimalTo2Decimals(BigDecimal("12.909")) == 12.91)
+      assert(acmFunctions.bigDecimalTo2Decimals(BigDecimal("12.909")) === 12.91)
     }
     it("should convert it and not round it up") {
-      assert(acmFunctions.bigDecimalTo2Decimals(BigDecimal("12.901")) == 12.90)
+      assert(acmFunctions.bigDecimalTo2Decimals(BigDecimal("12.901")) === 12.90)
     }
   }
 
   describe("When you have a 2 decimal BigDecimal") {
     it("should convert it without applying round up") {
-      assert(acmFunctions.bigDecimalTo2Decimals(BigDecimal("12.96")) == 12.96)
+      assert(acmFunctions.bigDecimalTo2Decimals(BigDecimal("12.96")) === 12.96)
     }
   }
 
   describe("When you have a zero exp BigDecimal") {
     it("should convert it to 0.0") {
-      assert(acmFunctions.bigDecimalTo2Decimals(BigDecimal("0E-18")) == 0.0)
+      assert(acmFunctions.bigDecimalTo2Decimals(BigDecimal("0E-18")) === 0.0)
     }
   }
 }

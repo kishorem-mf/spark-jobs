@@ -2,66 +2,65 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
-import com.unilever.ohub.spark.domain.entity.{ ContactPerson, Operator, Order }
-import com.unilever.ohub.spark.storage.Storage
+import com.unilever.ohub.spark.domain.entity.{ContactPerson, Operator, Order}
 import com.unilever.ohub.spark.sql.JoinType
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import com.unilever.ohub.spark.storage.Storage
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 case class OrderMergingConfig(
-    contactPersonInputFile: String = "contact-person-input-file",
-    operatorInputFile: String = "operator-input-file",
-    previousIntegrated: String = "previous-integrated-orders",
-    orderInputFile: String = "order-input-file",
-    outputFile: String = "path-to-output-file"
-) extends SparkJobConfig
+                               contactPersonInputFile: String = "contact-person-input-file",
+                               operatorInputFile: String = "operator-input-file",
+                               previousIntegrated: String = "previous-integrated-orders",
+                               orderInputFile: String = "order-input-file",
+                               outputFile: String = "path-to-output-file"
+                             ) extends SparkJobConfig
 
 // Technically not really order MERGING, but we need to update foreign key IDs in the other records
 object OrderMerging extends SparkJob[OrderMergingConfig] {
 
   def transform(
-    spark: SparkSession,
-    orders: Dataset[Order],
-    previousIntegrated: Dataset[Order],
-    operators: Dataset[Operator],
-    contactPersons: Dataset[ContactPerson]
-  ): Dataset[Order] = {
+                 spark: SparkSession,
+                 orders: Dataset[Order],
+                 previousIntegrated: Dataset[Order],
+                 operators: Dataset[Operator],
+                 contactPersons: Dataset[ContactPerson]
+               ): Dataset[Order] = {
     import spark.implicits._
 
-    val allOrders =
-      previousIntegrated
-        .joinWith(orders, previousIntegrated("concatId") === orders("concatId"), JoinType.FullOuter)
-        .map {
-          case (integrated, order) ⇒
-            if (order == null) {
-              integrated
-            } else {
-              val ohubId = if (integrated == null) Some(UUID.randomUUID().toString) else integrated.ohubId
-              val orderUid: Option[String] =
-                if (order.orderUid.isDefined)
-                  order.orderUid
-                else if (integrated != null && integrated.orderUid.isDefined)
-                  integrated.orderUid
-                else
-                  Some(UUID.randomUUID().toString)
+    val mergedOrders = mergeOrders(spark, orders, previousIntegrated)
 
-              order.copy(ohubId = ohubId, orderUid = orderUid, isGoldenRecord = true)
-            }
-        }
-
-    allOrders
+    mergedOrders
       .joinWith(operators, $"operatorConcatId" === operators("concatId"), "left")
       .map {
-        case (order, op) ⇒
-          if (op == null) order
-          else order.copy(operatorOhubId = op.ohubId)
+        case (order: Order, op: Operator) => order.copy(operatorOhubId = op.ohubId)
+        case (order: Order, _) ⇒ order
       }
       .joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), "left")
       .map {
-        case (order, cpn) ⇒
-          if (cpn == null) order
-          else order.copy(contactPersonOhubId = cpn.ohubId)
+        case (order: Order, cpn: ContactPerson) => order.copy(contactPersonOhubId = cpn.ohubId)
+        case (order, _) ⇒ order
+      }
+  }
+
+  private def mergeOrders(spark: SparkSession,
+                          orders: Dataset[Order],
+                          previousIntegrated: Dataset[Order]) = {
+    import spark.implicits._
+    previousIntegrated
+      .joinWith(orders, previousIntegrated("concatId") === orders("concatId"), JoinType.FullOuter)
+      .map {
+        case (integrated: Order, order: Order) ⇒ {
+          val orderUid: Option[String] = order.orderUid.orElse(integrated.orderUid).orElse(Some(UUID.randomUUID().toString))
+          order.copy(ohubId = integrated.ohubId, orderUid = orderUid, isGoldenRecord = true)
+        }
+        case (integrated: Order, _) => integrated
+        case (_, order: Order) => order.copy(
+          ohubId = Some(UUID.randomUUID().toString),
+          orderUid = order.orderUid.orElse(Some(UUID.randomUUID().toString)),
+          isGoldenRecord = true
+        )
       }
   }
 
@@ -70,19 +69,19 @@ object OrderMerging extends SparkJob[OrderMergingConfig] {
   override private[spark] def configParser(): OptionParser[OrderMergingConfig] =
     new scopt.OptionParser[OrderMergingConfig]("Order merging") {
       head("merges orders into an integrated order output file.", "1.0")
-      opt[String]("contactPersonInputFile") required () action { (x, c) ⇒
+      opt[String]("contactPersonInputFile") required() action { (x, c) ⇒
         c.copy(contactPersonInputFile = x)
       } text "contactPersonInputFile is a string property"
-      opt[String]("operatorInputFile") required () action { (x, c) ⇒
+      opt[String]("operatorInputFile") required() action { (x, c) ⇒
         c.copy(operatorInputFile = x)
       } text "operatorInputFile is a string property"
-      opt[String]("orderInputFile") required () action { (x, c) ⇒
+      opt[String]("orderInputFile") required() action { (x, c) ⇒
         c.copy(orderInputFile = x)
       } text "orderInputFile is a string property"
-      opt[String]("previousIntegrated") optional () action { (x, c) ⇒
+      opt[String]("previousIntegrated") optional() action { (x, c) ⇒
         c.copy(previousIntegrated = x)
       } text "previousIntegrated is a string property"
-      opt[String]("outputFile") required () action { (x, c) ⇒
+      opt[String]("outputFile") required() action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
 

@@ -17,6 +17,8 @@ trait TypeConversionFunctions {
   protected[export] val timestampPattern = "yyyy-MM-dd hh:mm:ss:SSS"
   protected[export] val datePattern = "yyyy-MM-dd"
 
+  // scalastyle:off
+  // cyclomatic complexity to high, but code is easy to read code, so suppressing it
   protected[export] implicit def anyRefToString(x: AnyRef): String = {
     x match {
       case None => ""
@@ -35,6 +37,8 @@ trait TypeConversionFunctions {
       case _ => throw new IllegalArgumentException(s"No explicit cast specified from anyref to ${x.getClass}")
     }
   }
+
+  // scalastyle:on
 
   protected[export] implicit def doubleToString(d: Double): String = d.formatted("%.2f")
 

@@ -39,8 +39,11 @@ object ContactPersonUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with 
 
     // If there is 1 or more golden records with the newest dates that is golden, pick one of those
     val newestGolden = newestCPs.filter(_.isGoldenRecord)
-    if (newestGolden.size > 0) newestGolden(0)
-    else newest
+    if (newestGolden.size > 0) {
+      newestGolden(0)
+    } else {
+      newest
+    }
   }
 
   def transform(
