@@ -87,7 +87,7 @@ abstract class SparkJobWithAzureDWConfiguration extends SparkJob[AzureDWConfigur
 
 abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJobWithAzureDWConfiguration {
 
-  def UpdatedDateFrame(dataSet: DataFrame): DataFrame = dataSet.toDF()
+  def updateDataFrame(dataSet: DataFrame): DataFrame = dataSet.toDF()
 
   /** Removes the map fields because resulting on an error when queried in Azure DW. */
   private def dropUnnecessaryFields(dataSet: Dataset[DomainType]): DataFrame = {
@@ -161,7 +161,7 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
 
     val integratedEntity: Dataset[DomainType] = storage.readFromParquet[DomainType](config.integratedInputFile)
     val frame = dropUnnecessaryFields(integratedEntity)
-    val result = UpdatedDateFrame(frame)
+    val result = updateDataFrame(frame)
 
     val dbTable: String = config.entityName
     val dbSchema: String = config.dbSchema
@@ -223,7 +223,7 @@ object CampaignSendDWWriter extends AzureDWWriter[CampaignSend]
 object ChannelMappingDWWriter extends AzureDWWriter[ChannelMapping]
 
 object ContactPersonDWWriter extends AzureDWWriter[ContactPerson] {
-  def inputUpdatedDate(spark: SparkSession, dataFrame: DataFrame): DataFrame = {
+  def updateDataFrame(spark: SparkSession, dataFrame: DataFrame): DataFrame = {
     import spark.implicits._
 
     dataFrame.withColumn("dateUpdated", when($"dateUpdated".isNotNull, $"dateUpdated").otherwise($"dateCreated"))
@@ -234,7 +234,7 @@ object LoyaltyPointsDWWriter extends AzureDWWriter[LoyaltyPoints]
 
 object OperatorDWWriter extends AzureDWWriter[Operator] {
 
-  def inputUpdatedDate(spark: SparkSession, dataFrame: DataFrame): DataFrame = {
+  def updateDataFrame(spark: SparkSession, dataFrame: DataFrame): DataFrame = {
     import spark.implicits._
 
     dataFrame.withColumn("dateUpdated", when($"dateUpdated".isNotNull, $"dateUpdated").otherwise($"dateCreated"))
