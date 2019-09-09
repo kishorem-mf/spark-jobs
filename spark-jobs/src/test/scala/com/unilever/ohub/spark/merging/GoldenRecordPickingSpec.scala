@@ -38,7 +38,7 @@ class GoldenRecordPickingSpec extends SparkJobSpec with TestOperators {
       assert(golden.sourceName === "sourceA")
     }
 
-    it("should pick the operator updated date if not null if sourcePreferences are equal") {
+    it("should pick the operator date created if date updated are equal and sourcePreferences are equal") {
       val sourcePreferences = Map(
         "sourceA" -> 1,
         "sourceB" -> 1
@@ -50,6 +50,34 @@ class GoldenRecordPickingSpec extends SparkJobSpec with TestOperators {
       val golden = Foo().pickGoldenRecord(sourcePreferences, operators)
 
       assert(golden.sourceName === "sourceB")
+    }
+
+    it("should pick the operator updated date if not null if sourcePreferences are equal") {
+      val sourcePreferences = Map(
+        "sourceA" -> 1,
+        "sourceB" -> 1
+      )
+      val operators = Seq(
+        defaultOperatorWithSourceName("sourceA").copy(dateUpdated = Option.empty, dateCreated = Some(Timestamp.valueOf("2017-04-28 12:00:00"))),
+        defaultOperatorWithSourceName("sourceB").copy(dateUpdated = Some(Timestamp.valueOf("2017-04-26 12:00:00")), dateCreated = Some(Timestamp.valueOf("2017-04-25 12:00:00")))
+      )
+      val golden = Foo().pickGoldenRecord(sourcePreferences, operators)
+
+      assert(golden.sourceName === "sourceA")
+    }
+
+    it("should pick the created date if date updated is null and if sourcePreferences are equal") {
+      val sourcePreferences = Map(
+        "sourceA" -> 1,
+        "sourceB" -> 1
+      )
+      val operators = Seq(
+        defaultOperatorWithSourceName("sourceA").copy(dateUpdated = Option.empty, dateCreated = Some(Timestamp.valueOf("2017-04-28 12:00:00"))),
+        defaultOperatorWithSourceName("sourceB").copy(dateUpdated = Option.empty, dateCreated = Some(Timestamp.valueOf("2017-04-25 12:00:00")))
+      )
+      val golden = Foo().pickGoldenRecord(sourcePreferences, operators)
+
+      assert(golden.sourceName === "sourceA")
     }
 
 

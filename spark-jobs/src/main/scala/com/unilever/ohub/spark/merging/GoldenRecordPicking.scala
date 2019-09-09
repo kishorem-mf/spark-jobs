@@ -14,31 +14,11 @@ trait GoldenRecordPicking[DomainType <: DomainEntity] {
       if (preference1 < preference2) o1
       else if (preference1 > preference2) o2
       else { // same source preference
-        var dateCreatedOrUpdated1 = new Timestamp(0)
-        var dateCreatedOrUpdated2 = new Timestamp(0)
+        val o1Date = o1.dateUpdated.orElse(o1.dateCreated).getOrElse(new Timestamp(0))
+        val o2Date = o2.dateUpdated.orElse(o2.dateCreated).getOrElse(new Timestamp(0))
 
-        //TODO : Refactor this code because of merged golden record logic.
-        val isO2DateUpdatedEmpty = o2.dateUpdated.isEmpty
-
-        (o1.dateUpdated.isEmpty,isO2DateUpdatedEmpty) match {
-          case (true,true) => dateCreatedOrUpdated1 = o1.dateCreated.getOrElse(lowDate)
-            dateCreatedOrUpdated2 = o2.dateCreated.getOrElse(lowDate)
-          case (true, false) => dateCreatedOrUpdated1 = o1.dateCreated.getOrElse(lowDate)
-            dateCreatedOrUpdated2 = o2.dateUpdated.getOrElse(lowDate)
-          case (false,_) => isO2DateUpdatedEmpty match {
-            case true =>dateCreatedOrUpdated1 = o1.dateUpdated.getOrElse(lowDate)
-              dateCreatedOrUpdated2 = o2.dateCreated.getOrElse(lowDate)
-            case false  => o1.dateUpdated.equals(o2.dateUpdated) match {
-              case true =>dateCreatedOrUpdated1 = o1.dateCreated.getOrElse(lowDate)
-                dateCreatedOrUpdated2 = o2.dateCreated.getOrElse(lowDate)
-              case false =>dateCreatedOrUpdated1 = o1.dateUpdated.getOrElse(lowDate)
-                dateCreatedOrUpdated2 = o2.dateUpdated.getOrElse(lowDate)
-            }
-          }
-        }
-
-        if (dateCreatedOrUpdated1.equals(dateCreatedOrUpdated2) && o1.isGoldenRecord) o1 // If it already was golden and dates are the same: prefer that one
-        else if (dateCreatedOrUpdated1.after(dateCreatedOrUpdated2)) o1
+        if (o1Date.equals(o2Date) && o1.isGoldenRecord) o1 // If it already was golden and dates are the same: prefer that one
+        else if (o1Date.after(o2Date)) o1
         else o2
       }
     })
