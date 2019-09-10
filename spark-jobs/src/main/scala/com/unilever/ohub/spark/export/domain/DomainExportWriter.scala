@@ -71,10 +71,7 @@ abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends 
     log.info(s"writing integrated entities [${entityName()}] to outbound export csv file for ${config.targetType.toString}")
 
     val hashesInputFile = config.hashesInputFile match {
-      case Some(location) ⇒ {
-        val hashLocation = s"${location}/${entityName()}.parquet"
-        storage.readFromParquet[DomainEntityHash](hashLocation)
-      }
+      case Some(location) ⇒ storage.readFromParquet[DomainEntityHash](location)
       case None ⇒ spark.createDataset(Seq[DomainEntityHash]())
     }
 
@@ -85,17 +82,17 @@ abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends 
 }
 
 /**
-  * Runs concrete [[com.unilever.ohub.spark.export.domain.DomainExportWriter]]'s run method for all
-  * [[com.unilever.ohub.spark.domain.DomainEntity]]s.
-  *
-  * When running this job, do bear in mind that the input location is now a folder, the entity name will be appended to it
-  * to determine the location.
-  *
-  * F.e. to export data from runId "2019-08-06" provide "integratedInputFile" as:
-  * "dbfs:/mnt/engine/integrated/2019-08-06"
-  * In this case CP will be fetched from:
-  * "dbfs:/mnt/engine/integrated/2019-08-06/contactpersons.parquet"
-  **/
+ * Runs concrete [[com.unilever.ohub.spark.export.domain.DomainExportWriter]]'s run method for all
+ * [[com.unilever.ohub.spark.domain.DomainEntity]]s.
+ *
+ * When running this job, do bear in mind that the input location is now a folder, the entity name will be appended to it
+ * to determine the location.
+ *
+ * F.e. to export data from runId "2019-08-06" provide "integratedInputFile" as:
+ * "dbfs:/mnt/engine/integrated/2019-08-06"
+ * In this case CP will be fetched from:
+ * "dbfs:/mnt/engine/integrated/2019-08-06/contactpersons.parquet"
+ **/
 object AllDomainEntitiesWriter extends SparkJobWithOutboundExportConfig {
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     DomainEntityUtils.domainCompanionObjects
@@ -104,7 +101,7 @@ object AllDomainEntitiesWriter extends SparkJobWithOutboundExportConfig {
       .foreach((entity) => {
         val writer = entity.domainExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
-        val hashesLocation = if(config.hashesInputFile.isDefined) Some(s"${config.hashesInputFile.get}/${entity.engineFolderName}.parquet") else None
+        val hashesLocation = if (config.hashesInputFile.isDefined) Some(s"${config.hashesInputFile.get}/${entity.engineFolderName}.parquet") else None
         writer.run(spark, config.copy(integratedInputFile = integratedLocation, hashesInputFile = hashesLocation), storage)
       })
   }
