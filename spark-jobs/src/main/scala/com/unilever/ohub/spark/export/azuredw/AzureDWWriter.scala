@@ -87,7 +87,7 @@ abstract class SparkJobWithAzureDWConfiguration extends SparkJob[AzureDWConfigur
 
 abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJobWithAzureDWConfiguration {
 
-  def updateDataFrame(dataSet: DataFrame): DataFrame = dataSet.toDF()
+  def updateDataFrame(dataSet: DataFrame): DataFrame = dataSet
 
   /** Removes the map fields because resulting on an error when queried in Azure DW. */
   private def dropUnnecessaryFields(dataSet: Dataset[DomainType]): DataFrame = {
@@ -227,7 +227,7 @@ object ContactPersonDWWriter extends AzureDWWriter[ContactPerson] {
     import spark.implicits._
 
     dataFrame.withColumn("dateUpdated", when($"dateUpdated".isNotNull, $"dateUpdated").otherwise($"dateCreated"))
-  };
+  }
 }
 
 object LoyaltyPointsDWWriter extends AzureDWWriter[LoyaltyPoints]
@@ -238,7 +238,7 @@ object OperatorDWWriter extends AzureDWWriter[Operator] {
     import spark.implicits._
 
     dataFrame.withColumn("dateUpdated", when($"dateUpdated".isNotNull, $"dateUpdated").otherwise($"dateCreated"))
-  };
+  }
 }
 
 object OrderDWWriter extends AzureDWWriter[Order]
