@@ -4,7 +4,7 @@ import java.util.regex.Pattern
 
 import com.unilever.ohub.spark.export.TransformationFunction
 
-abstract class OldOhubConverter(sourceIds: Map[String, Int]) extends TransformationFunction[String]{
+abstract class OldOhubConverter(sourceIds: Map[String, Int]) extends TransformationFunction[String] {
 
   val CONCAT_PATTERN = Pattern.compile("^(.+?)~(.+?)~(.+)$")
 
@@ -13,9 +13,7 @@ abstract class OldOhubConverter(sourceIds: Map[String, Int]) extends Transformat
   final def impl(value: String): String = {
     val matcher = CONCAT_PATTERN.matcher(value);
     if (matcher.matches()) {
-
       val sourceId = sourceIds.getOrElse(matcher.group(2), "")
-
       matcher.group(1) + "~" + matcher.group(3) + "~" + partyTypeId() + "~" + sourceId
     } else {
       value
@@ -29,6 +27,6 @@ class OperatorOldOhubConverter(sourceIds: Map[String, Int]) extends OldOhubConve
   override def partyTypeId(): String = "1"
 }
 
-class ConcatPersonOldOhubConverter(sourceIds: Map[String, Int]) extends OldOhubConverter(sourceIds: Map[String, Int]) {
+class ConcatPersonOldOhubConverter(sourceIds: Map[String, Int]) extends OldOhubConverter(sourceIds) {
   override def partyTypeId(): String = "3"
 }

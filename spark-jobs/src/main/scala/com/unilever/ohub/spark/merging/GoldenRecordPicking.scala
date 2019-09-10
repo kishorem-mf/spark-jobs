@@ -13,9 +13,10 @@ trait GoldenRecordPicking[DomainType <: DomainEntity] {
       val preference2 = sourcePreference.getOrElse(o2.sourceName, Int.MaxValue)
       if (preference1 < preference2) o1 else if (preference1 > preference2) { o2 }
       else { // same source preference
-        val created1 = o1.dateCreated.getOrElse(lowDate)
-        val created2 = o2.dateCreated.getOrElse(lowDate)
-        if (created1.equals(created2) && o1.isGoldenRecord || created1.after(created2)) o1 else o2 /*If it already was golden and dates are the same: prefer that one */
+        val o1Date = o1.dateUpdated.orElse(o1.dateCreated).getOrElse(new Timestamp(0))
+        val o2Date = o2.dateUpdated.orElse(o2.dateCreated).getOrElse(new Timestamp(0))
+
+        if (o1Date.equals(o2Date) && o1.isGoldenRecord || o1Date.after(o2Date)) o1 else o2 // If it already was golden and dates are the same: prefer that one
       }
     })
   }
