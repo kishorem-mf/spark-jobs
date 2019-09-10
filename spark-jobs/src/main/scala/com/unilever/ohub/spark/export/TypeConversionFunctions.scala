@@ -19,7 +19,6 @@ trait TypeConversionFunctions {
 
   // scalastyle:off
   // cyclomatic complexity to high, but code is easy to read code, so suppressing it
-  protected[export] implicit def anyRefToString(x: AnyRef): String = {
   protected[export] implicit def anyToString(x: Any): String = {
     x match {
       case None => ""
@@ -38,7 +37,6 @@ trait TypeConversionFunctions {
       case _ => throw new IllegalArgumentException(s"No explicit cast specified from Any to ${x.getClass}")
     }
   }
-
   // scalastyle:on
 
   protected[export] implicit def doubleToString(d: Double): String = d.formatted("%.2f")

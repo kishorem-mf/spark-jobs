@@ -6,11 +6,11 @@ import com.unilever.ohub.spark.domain.entity._
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityUtils}
 import com.unilever.ohub.spark.storage.{DBConfig, Storage}
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import org.apache.spark.sql.functions.when
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
 import scopt.OptionParser
 
 import scala.reflect.runtime.universe._
-import org.apache.spark.sql.functions.when
 
 /**
   * Configuration for the Azure Datawarehouse
@@ -201,7 +201,6 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
 
     // Logging info to Azure DW
     logToAzureDWTable(spark, storage, config, jobDuration)
-
   }
 }
 
