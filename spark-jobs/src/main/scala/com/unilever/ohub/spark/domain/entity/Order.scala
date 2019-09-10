@@ -11,7 +11,7 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 import org.apache.spark.sql.{Dataset, SparkSession}
 
 object OrderDomainExportWriter extends DomainExportWriter[Order] {
-  override def customExportFiltering(spark: SparkSession, dataSet: Dataset[Order], targetType: TargetType) = {
+  override def customExportFiltering(spark: SparkSession, dataSet: Dataset[Order], targetType: TargetType): Dataset[Order] = {
     import spark.implicits._
 
     targetType match {

@@ -4,8 +4,8 @@ import com.unilever.ohub.spark.DefaultConfig
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{ col, row_number }
-import org.apache.spark.sql.{ DataFrame, Dataset, SparkSession }
+import org.apache.spark.sql.functions.{col, row_number}
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 case class Consent(
     optInFields: List[String] = List(),
@@ -85,8 +85,6 @@ object ContactPersonCreatePerfectGoldenRecord extends BaseMerging[ContactPerson]
 
     import spark.implicits._
 
-    var tempDF: DataFrame = null
-    var joinedDf: DataFrame = null
     val channels = List("email", "mobile", "telemarketing", "fax", "directMail")
 
     val dfMergedMostRecent: Dataset[ContactPerson] = super.transform(spark, contactPersons)
@@ -104,7 +102,7 @@ object ContactPersonCreatePerfectGoldenRecord extends BaseMerging[ContactPerson]
           consentFieldsByChannel(channel).sortingDateFields
     } //TODO: replace with foreach or list comprehension
 
-    tempDF = dfMergedMostRecent.drop(removeColumns: _*)
+    var tempDF = dfMergedMostRecent.drop(removeColumns: _*)
 
     // Fill in the channel fields for each channel
     for (channel ← channels) {

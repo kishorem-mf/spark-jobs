@@ -93,11 +93,11 @@ class CustomParsersSpec extends FunSpec with Matchers {
 
   describe("toBoolean") {
     it("should parse true correctly") {
-      assert(toBoolean("TRUE") == true)
+      assert(toBoolean("TRUE"))
     }
 
     it("should parse false correctly") {
-      assert(toBoolean("false") == false)
+      assert(!toBoolean("false"))
     }
 
     it("should parse empty string to None") {

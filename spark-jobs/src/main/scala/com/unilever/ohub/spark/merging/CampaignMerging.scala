@@ -2,11 +2,11 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.entity.{ Campaign, ContactPerson, Operator }
+import com.unilever.ohub.spark.domain.entity.{Campaign, ContactPerson}
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 case class CampaignMergingConfig(
@@ -44,9 +44,8 @@ object CampaignMerging extends SparkJob[CampaignMergingConfig] {
       // update cpn ids
       .joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), JoinType.Left)
       .map {
-        case (campaign, cpn) ⇒
-          if (cpn == null) campaign
-          else campaign.copy(contactPersonOhubId = cpn.ohubId)
+        case (campaign: Campaign, cpn: ContactPerson) => campaign.copy(contactPersonOhubId = cpn.ohubId)
+        case (campaign, _) => campaign
       }
   }
 

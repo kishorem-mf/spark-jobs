@@ -2,6 +2,7 @@ package com.unilever.ohub.spark.export.acm
 
 import com.unilever.ohub.spark.domain.DomainEntityUtils
 import com.unilever.ohub.spark.domain.entity._
+import com.unilever.ohub.spark.export.acm.model._
 import com.unilever.ohub.spark.export.{CsvOptions, ExportOutboundWriter, OutboundConfig, SparkJobWithOutboundExportConfig}
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{Dataset, SparkSession}
@@ -22,7 +23,7 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
     dataSet.map(ContactPersonAcmConverter.convert(_))
   }
 
-  override def explainConversion = Some((input: ContactPerson) => ContactPersonAcmConverter.convert(input, true))
+  override def explainConversion: Option[ContactPerson => AcmContactPerson] = Some((input: ContactPerson) => ContactPersonAcmConverter.convert(input, true))
 
   override def entityName(): String = "RECIPIENTS"
 }
@@ -33,7 +34,7 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with AcmOpt
     dataSet.map(OperatorAcmConverter.convert(_))
   }
 
-  override def explainConversion = Some((input: Operator) => OperatorAcmConverter.convert(input, true))
+  override def explainConversion: Option[Operator => AcmOperator] = Some((input: Operator) => OperatorAcmConverter.convert(input, true))
 
   override def entityName(): String = "OPERATORS"
 }
@@ -44,7 +45,7 @@ object SubscriptionOutboundWriter extends ExportOutboundWriter[Subscription] wit
     dataSet.map(SubscriptionAcmConverter.convert(_))
   }
 
-  override def explainConversion = Some((input: Subscription) => SubscriptionAcmConverter.convert(input, true))
+  override def explainConversion: Option[Subscription => AcmSubscription] = Some((input: Subscription) => SubscriptionAcmConverter.convert(input, true))
 
   override def entityName(): String = "SUBSCRIPTIONS"
 }
@@ -55,7 +56,7 @@ object ProductOutboundWriter extends ExportOutboundWriter[Product] with AcmOptio
     dataSet.map(ProductAcmConverter.convert(_))
   }
 
-  override def explainConversion = Some((input: Product) => ProductAcmConverter.convert(input, true))
+  override def explainConversion: Option[Product => AcmProduct] = Some((input: Product) => ProductAcmConverter.convert(input, true))
 
   override def entityName(): String = "PRODUCTS"
 }
@@ -66,7 +67,7 @@ object OrderOutboundWriter extends ExportOutboundWriter[Order] with AcmOptions {
     dataSet.map(OrderAcmConverter.convert(_))
   }
 
-  override def explainConversion = Some((input: Order) => OrderAcmConverter.convert(input, true))
+  override def explainConversion: Option[Order => AcmOrder] = Some((input: Order) => OrderAcmConverter.convert(input, true))
 
 
   override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[Order], config: OutboundConfig) = {
@@ -92,7 +93,7 @@ object OrderLineOutboundWriter extends ExportOutboundWriter[OrderLine] with AcmO
     dataSet.map(OrderLineAcmConverter.convert(_))
   }
 
-  override def explainConversion = Some((input: OrderLine) => OrderLineAcmConverter.convert(input, true))
+  override def explainConversion: Option[OrderLine => AcmOrderLine] = Some((input: OrderLine) => OrderLineAcmConverter.convert(input, true))
 
   override def entityName(): String = "ORDERLINES"
 }
@@ -103,7 +104,7 @@ object ActivityOutboundWriter extends ExportOutboundWriter[Activity] with AcmOpt
     dataSet.map(ActivityAcmConverter.convert(_))
   }
 
-  override def explainConversion = Some((input: Activity) => ActivityAcmConverter.convert(input, true))
+  override def explainConversion: Option[Activity => AcmActivity] = Some((input: Activity) => ActivityAcmConverter.convert(input, true))
 
   override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[Activity], config: OutboundConfig) = {
     import spark.implicits._
@@ -119,23 +120,23 @@ object LoyaltyPointsOutboundWriter extends ExportOutboundWriter[LoyaltyPoints] w
     dataSet.map(LoyaltyPointsAcmConverter.convert(_))
   }
 
-  override def explainConversion = Some((input: LoyaltyPoints) => LoyaltyPointsAcmConverter.convert(input, true))
+  override def explainConversion: Option[LoyaltyPoints => AcmLoyaltyPoints] = Some((input: LoyaltyPoints) => LoyaltyPointsAcmConverter.convert(input, true))
 
   override def entityName(): String = "LOYALTIES"
 }
 
 /**
- * Runs concrete [[com.unilever.ohub.spark.export.ExportOutboundWriter]]'s run method for all
- * [[com.unilever.ohub.spark.domain.DomainEntity]]s acmExportWriter values.
- *
- * When running this job, do bear in mind that the input location is now a folder, the entity name will be appended to it
- * to determine the location.
- *
- * F.e. to export data from runId "2019-08-06" provide "integratedInputFile" as:
- * "dbfs:/mnt/engine/integrated/2019-08-06"
- * In this case CP will be fetched from:
- * "dbfs:/mnt/engine/integrated/2019-08-06/contactpersons.parquet"
- **/
+  * Runs concrete [[com.unilever.ohub.spark.export.ExportOutboundWriter]]'s run method for all
+  * [[com.unilever.ohub.spark.domain.DomainEntity]]s acmExportWriter values.
+  *
+  * When running this job, do bear in mind that the input location is now a folder, the entity name will be appended to it
+  * to determine the location.
+  *
+  * F.e. to export data from runId "2019-08-06" provide "integratedInputFile" as:
+  * "dbfs:/mnt/engine/integrated/2019-08-06"
+  * In this case CP will be fetched from:
+  * "dbfs:/mnt/engine/integrated/2019-08-06/contactpersons.parquet"
+  **/
 object AllAcmOutboundWriter extends SparkJobWithOutboundExportConfig {
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     DomainEntityUtils.domainCompanionObjects

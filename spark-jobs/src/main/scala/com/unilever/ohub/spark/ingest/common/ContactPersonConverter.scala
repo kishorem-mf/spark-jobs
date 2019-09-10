@@ -9,6 +9,7 @@ import org.apache.spark.sql.Row
 
 object ContactPersonConverter extends CommonDomainGateKeeper[ContactPerson] with ContactPersonEmptyParquetWriter {
 
+  // scalastyle:off method.length
   override def toDomainEntity: DomainTransformer ⇒ Row ⇒ ContactPerson = { transformer ⇒
     row ⇒
       import transformer._

@@ -7,6 +7,7 @@ import com.unilever.ohub.spark.export.acm.model.AcmContactPerson
 
 object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPerson] with AcmTypeConversionFunctions {
 
+  // scalastyle:off method.length
   implicit val domainDataProvider: DomainDataProvider = DomainDataProvider()
   val contactPersonOldOhubConverter: ConcatPersonOldOhubConverter = new ConcatPersonOldOhubConverter(domainDataProvider.sourceIds)
 

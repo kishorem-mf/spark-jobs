@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity._
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityUtils}
-import com.unilever.ohub.spark.storage.Storage
+import com.unilever.ohub.spark.storage.{DBConfig, Storage}
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
 import scopt.OptionParser
@@ -25,24 +25,24 @@ import org.apache.spark.sql.functions.when
   *
   */
 case class AzureDWConfiguration(
-  integratedInputFile: String = "integrated-input-file",
-  entityName: String = "entity-name",
-  dbUrl: String = "jdbc:sqlserver://ufs-marketing.database.windows.net:1433;database=ufs-marketing;",
-  dbUsername: String = "db-username",
-  dbPassword: String = "db-password",
-  dbSchema: String = "ohub2",
-  dbTempDir: String = "wasbs://outbound@ohub2storagedev.blob.core.windows.net/DW",
-  blobStorageContainer: String = "ohub2storagedev",
-  blobStorageKey: String = ""
-) extends SparkJobConfig
+                                 integratedInputFile: String = "integrated-input-file",
+                                 entityName: String = "entity-name",
+                                 dbUrl: String = "jdbc:sqlserver://ufs-marketing.database.windows.net:1433;database=ufs-marketing;",
+                                 dbUsername: String = "db-username",
+                                 dbPassword: String = "db-password",
+                                 dbSchema: String = "ohub2",
+                                 dbTempDir: String = "wasbs://outbound@ohub2storagedev.blob.core.windows.net/DW",
+                                 blobStorageContainer: String = "ohub2storagedev",
+                                 blobStorageKey: String = ""
+                               ) extends SparkJobConfig
 
 case class LogRow(
-  entityName: String,
-  loadingDate: java.sql.Timestamp,
-  latestContentDate: java.sql.Timestamp,
-  loadingTimeSec: Int,
-  rowCount: Int
-)
+                   entityName: String,
+                   loadingDate: java.sql.Timestamp,
+                   latestContentDate: java.sql.Timestamp,
+                   loadingTimeSec: Int,
+                   rowCount: Int
+                 )
 
 abstract class SparkJobWithAzureDWConfiguration extends SparkJob[AzureDWConfiguration] {
 
@@ -127,11 +127,11 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
 
     storage.writeAzureDWTable(
       df = loggingDF,
-      dbUrl = config.dbUrl,
-      dbTable = "eng.logging_staging",
-      userName = config.dbUsername,
-      userPassword = config.dbPassword,
-      dbTempDir = config.dbTempDir,
+      DBConfig(dbUrl = config.dbUrl,
+        dbTable = "eng.logging_staging",
+        userName = config.dbUsername,
+        userPassword = config.dbPassword,
+        dbTempDir = config.dbTempDir),
       saveMode = SaveMode.Append
     )
   }
@@ -156,8 +156,7 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
     log.info(s"Writing integrated entities [${config.integratedInputFile}] to Azure DW in the table [${config.entityName}].")
 
     // Add blob storage key to hadoop configuration for wasb protocol connection required by the tempo staging directory
-    spark.sparkContext.hadoopConfiguration.set(
-      s"fs.azure.account.key.${config.blobStorageContainer}.blob.core.windows.net", config.blobStorageKey)
+    spark.sparkContext.hadoopConfiguration.set(s"fs.azure.account.key.${config.blobStorageContainer}.blob.core.windows.net", config.blobStorageKey)
 
     val integratedEntity: Dataset[DomainType] = storage.readFromParquet[DomainType](config.integratedInputFile)
     val frame = dropUnnecessaryFields(integratedEntity)
@@ -187,11 +186,11 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
 
     storage.writeAzureDWTable(
       df = result,
-      dbUrl = config.dbUrl,
-      dbTable = dbFullTableName,
-      userName = config.dbUsername,
-      userPassword = config.dbPassword,
-      dbTempDir = config.dbTempDir,
+      DBConfig(dbUrl = config.dbUrl,
+        dbTable = dbFullTableName,
+        userName = config.dbUsername,
+        userPassword = config.dbPassword,
+        dbTempDir = config.dbTempDir),
       preActions = dropRowLevelSecurityPolicyAction,
       postActions = createRowLevelSecurityPolicyAction,
       saveMode = SaveMode.Overwrite
