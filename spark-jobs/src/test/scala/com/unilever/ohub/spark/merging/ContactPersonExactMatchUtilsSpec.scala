@@ -13,7 +13,8 @@ class ContactPersonExactMatchUtilsSpec extends SparkJobSpec with TestContactPers
   lazy implicit val implicitSpark: SparkSession = spark
 
   private val contactPersonA1 = defaultContactPersonWithSourceEntityId("100").copy(ohubId = Some("AAA"), firstName = Some("Jan"), emailAddress = Some("jan@server.com"), mobileNumber = Some("12345"))
-  private val contactPersonA2 = defaultContactPersonWithSourceEntityId("101").copy(ohubId = Some("AAA"), firstName = Some("Jan"), emailAddress = Some("jan@server.com"), mobileNumber = None)
+  private val contactPersonA2 = defaultContactPersonWithSourceEntityId("101")
+    .copy(ohubId = Some("AAA"), firstName = Some("Jan"), emailAddress = Some("jan@server.com"), mobileNumber = None)
   private val contactPersonA3 = defaultContactPersonWithSourceEntityId("102").copy(ohubId = Some("AAA2"), firstName = Some("unknown"), emailAddress = None, mobileNumber = Some("12345"))
   private val contactPersonA4 = defaultContactPersonWithSourceEntityId("103").copy(ohubId = Some("AAA1"), firstName = Some("Jan"), emailAddress = Some("jan@server.com"), mobileNumber = Some("54321"))
 
@@ -24,13 +25,18 @@ class ContactPersonExactMatchUtilsSpec extends SparkJobSpec with TestContactPers
 
   private val contactPerson12 = defaultContactPersonWithSourceEntityId("108").copy(ohubId = Some("AAA"), firstName = Some("Jan"), emailAddress = Some("jan@server.com"), mobileNumber = Some("12345"))
   private val contactPerson13 = defaultContactPersonWithSourceEntityId("109").copy(ohubId = Some("BBB1"), firstName = Some("Jan1"), emailAddress = Some("Jan1@server.com"), mobileNumber = Some("1234"))
-  private val contactPersonA14 = defaultContactPersonWithSourceEntityId("110").copy(ohubId = Some("BBB"), firstName = Some("Jan2"), emailAddress = Some("Jan2@server.com"), mobileNumber = Some("123456"))
-  private val contactPersonA15 = defaultContactPersonWithSourceEntityId("111").copy(ohubId = Some("CCC"), firstName = Some("Jan3"), emailAddress = Some("JAN@server.com"), mobileNumber = Some("123457"))
+  private val contactPersonA14 = defaultContactPersonWithSourceEntityId("110")
+    .copy(ohubId = Some("BBB"), firstName = Some("Jan2"), emailAddress = Some("Jan2@server.com"), mobileNumber = Some("123456"))
+  private val contactPersonA15 = defaultContactPersonWithSourceEntityId("111")
+    .copy(ohubId = Some("CCC"), firstName = Some("Jan3"), emailAddress = Some("JAN@server.com"), mobileNumber = Some("123457"))
 
   private val contactPerson16 = defaultContactPersonWithSourceEntityId("112").copy(ohubId = Some("AAA"), firstName = Some("Jan"), emailAddress = Some("jan@server.com"), mobileNumber = Some("12345"))
-  private val contactPerson17 = defaultContactPersonWithSourceEntityId("113").copy(ohubId = Some("BBB1"), firstName = Some("Jan1"), emailAddress = Some("Jan1@server.com"), mobileNumber = Some("12345"))
-  private val contactPersonA18 = defaultContactPersonWithSourceEntityId("114").copy(ohubId = Some("BBB"), firstName = Some("Jan2"), emailAddress = Some("Jan2@server.com"), mobileNumber = Some("12345"))
-  private val contactPersonA19 = defaultContactPersonWithSourceEntityId("115").copy(ohubId = Some("CCC"), firstName = Some("Jan3"), emailAddress = Some("Jan3@server.com"), mobileNumber = Some("12345"))
+  private val contactPerson17 = defaultContactPersonWithSourceEntityId("113")
+    .copy(ohubId = Some("BBB1"), firstName = Some("Jan1"), emailAddress = Some("Jan1@server.com"), mobileNumber = Some("12345"))
+  private val contactPersonA18 = defaultContactPersonWithSourceEntityId("114")
+    .copy(ohubId = Some("BBB"), firstName = Some("Jan2"), emailAddress = Some("Jan2@server.com"), mobileNumber = Some("12345"))
+  private val contactPersonA19 = defaultContactPersonWithSourceEntityId("115")
+    .copy(ohubId = Some("CCC"), firstName = Some("Jan3"), emailAddress = Some("Jan3@server.com"), mobileNumber = Some("12345"))
 
   private val COPY_GENERATED = "COPY_GENERATED"
 
@@ -144,7 +150,7 @@ class ContactPersonExactMatchUtilsSpec extends SparkJobSpec with TestContactPers
 
   private def createDataset(contactPersons: ContactPerson*): Dataset[ContactPerson] = contactPersons.toDataset
 
-  def copyOhubIds(expectedSet: Set[ResultExactContactPerson], actualSet: Map[String, ContactPerson]) = {
+  def copyOhubIds(expectedSet: Set[ResultExactContactPerson], actualSet: Map[String, ContactPerson]): Set[ResultExactContactPerson] = {
     expectedSet.map { result ⇒
       if (result.ohubId.contains(COPY_GENERATED)) {
         result.copy(ohubId = actualSet.get(result.sourceEntityId).flatMap(_.ohubId))
@@ -154,7 +160,7 @@ class ContactPersonExactMatchUtilsSpec extends SparkJobSpec with TestContactPers
     }
   }
 
-  def convertDataSetToMap(dataSet: Dataset[ContactPerson]) =
+  def convertDataSetToMap(dataSet: Dataset[ContactPerson]): Map[String, ContactPerson] =
     dataSet.collect().toSeq.map(cp ⇒ cp.sourceEntityId -> cp).toMap
 
 }

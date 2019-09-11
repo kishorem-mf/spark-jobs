@@ -20,13 +20,15 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
       val opMerge1 = defaultOperator.copy(
         dateUpdated = Some(new Timestamp(1L)),
         name = Some("newerOp"),
-        ohubId = Some("tcMerge")
+        ohubId = Some("tcMerge"),
+        dateCreated = Some(Timestamp.valueOf("2017-10-16 18:09:49"))
       )
 
       val opMerge2 = defaultOperator.copy(
         dateUpdated = None,
         name = Some("olderOp"),
-        ohubId = Some("tcMerge")
+        ohubId = Some("tcMerge"),
+        dateCreated = Some(Timestamp.valueOf("2017-10-17 18:09:49"))
       )
 
       val opNull1 = defaultOperator.copy(
@@ -120,7 +122,7 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
       it("should merge 2 records from the same group") {
         val tcResult = result.filter(_.ohubId == Some("tcMerge"))
         tcResult.length shouldBe 1
-        tcResult.head.name shouldBe opMerge1.name
+        tcResult.head.name shouldBe opMerge2.name
       }
 
       it("should merge groups based on multiple date columns") {

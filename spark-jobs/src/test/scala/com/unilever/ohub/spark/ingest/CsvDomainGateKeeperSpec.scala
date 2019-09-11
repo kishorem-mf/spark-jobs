@@ -13,8 +13,8 @@ object CsvDomainGateKeeperSpec {
 trait CsvDomainGateKeeperSpec[DomainType <: DomainEntity] extends SparkJobSpec {
   import CsvDomainGateKeeperSpec._
 
-  def SUT: CsvDomainGateKeeper[DomainType]
-  def outputFile = ""
+  def SUT: CsvDomainGateKeeper[DomainType] // scalastyle:ignore
+  def outputFile:String = ""
 
   def runJobWith(inputFile: InputFile)(assertFn: Dataset[DomainType] ⇒ Unit): Unit =
     runJobWith(CsvDomainConfig(inputFile, outputFile))(assertFn)

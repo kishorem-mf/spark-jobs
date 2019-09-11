@@ -37,13 +37,14 @@ class InMemDomainDataProvider() extends DomainDataProvider with Serializable {
       .toSeq
       .drop(1)
       .map(_.split(";"))
-      .map(lineParts ⇒ ChannelReference(
-        channelReferenceId = lineParts(0),
-        socialCommercial = Some(lineParts(1)),
-        strategicChannel = lineParts(2),
-        globalChannel = lineParts(3),
-        globalSubChannel = lineParts(4)
-      ))
+      .map {
+        case Array(channelReferenceId, socialCommercial, strategicChannel, globalChannel, globalSubChannel, _, _) ⇒ ChannelReference(
+          channelReferenceId = channelReferenceId,
+          socialCommercial = Some(socialCommercial),
+          strategicChannel = strategicChannel,
+          globalChannel = globalChannel,
+          globalSubChannel = globalSubChannel)
+      }
       .map(ref ⇒ ref.channelReferenceId -> ref)
       .toMap
   }

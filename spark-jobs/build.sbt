@@ -11,3 +11,11 @@ assembly / assemblyMergeStrategy := {
 assembly / assemblyShadeRules := Seq(
   ShadeRule.rename("com.google.common.**" -> "repackaged.com.google.common.@1").inAll
 )
+
+lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
+
+compileScalastyle := scalastyle.in(Compile).toTask("").value
+
+scalastyleFailOnWarning := true
+
+(compile in Compile) := ((compile in Compile) dependsOn compileScalastyle).value

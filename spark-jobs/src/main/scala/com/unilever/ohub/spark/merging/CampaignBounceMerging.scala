@@ -2,20 +2,20 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.entity.{ CampaignBounce, ContactPerson, Operator }
+import com.unilever.ohub.spark.domain.entity.{CampaignBounce, ContactPerson, Operator}
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 case class CampaignBounceMergingConfig(
-    contactPersonIntegrated: String = "contact-person-integrated",
-    operatorIntegrated: String = "operator-integrated",
-    previousIntegrated: String = "previous-integrated-campaigns",
-    campaignBounceInputFile: String = "campaign-bounce-input-file",
-    outputFile: String = "path-to-output-file"
-) extends SparkJobConfig
+                                        contactPersonIntegrated: String = "contact-person-integrated",
+                                        operatorIntegrated: String = "operator-integrated",
+                                        previousIntegrated: String = "previous-integrated-campaigns",
+                                        campaignBounceInputFile: String = "campaign-bounce-input-file",
+                                        outputFile: String = "path-to-output-file"
+                                      ) extends SparkJobConfig
 
 /**
  * Simple merging which only passes the latest version of a campaignBounce entity
@@ -24,12 +24,12 @@ case class CampaignBounceMergingConfig(
 object CampaignBounceMerging extends SparkJob[CampaignBounceMergingConfig] {
 
   def transform(
-    spark: SparkSession,
-    campaignBounces: Dataset[CampaignBounce],
-    contactPersons: Dataset[ContactPerson],
-    operators: Dataset[Operator],
-    previousIntegrated: Dataset[CampaignBounce]
-  ): Dataset[CampaignBounce] = {
+                 spark: SparkSession,
+                 campaignBounces: Dataset[CampaignBounce],
+                 contactPersons: Dataset[ContactPerson],
+                 operators: Dataset[Operator],
+                 previousIntegrated: Dataset[CampaignBounce]
+               ): Dataset[CampaignBounce] = {
     import spark.implicits._
 
     previousIntegrated
@@ -46,16 +46,14 @@ object CampaignBounceMerging extends SparkJob[CampaignBounceMergingConfig] {
       // update cpn ids
       .joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), JoinType.Left)
       .map {
-        case (bounce, cpn) ⇒
-          if (cpn == null) bounce
-          else bounce.copy(contactPersonOhubId = cpn.ohubId)
+        case (bounce: CampaignBounce, cpn: ContactPerson) => bounce.copy(contactPersonOhubId = cpn.ohubId)
+        case (bounce, _) ⇒ bounce
       }
       // update opr ids
       .joinWith(operators, $"operatorConcatId" === operators("concatId"), JoinType.Left)
       .map {
-        case (bounce, opr) ⇒
-          if (opr == null) bounce
-          else bounce.copy(operatorOhubId = opr.ohubId)
+        case (bounce: CampaignBounce, opr: Operator) ⇒ bounce.copy(operatorOhubId = opr.ohubId)
+        case (bounce, _) => bounce
       }
   }
 
@@ -64,19 +62,19 @@ object CampaignBounceMerging extends SparkJob[CampaignBounceMergingConfig] {
   override private[spark] def configParser(): OptionParser[CampaignBounceMergingConfig] =
     new scopt.OptionParser[CampaignBounceMergingConfig]("Order merging") {
       head("merges campaignsBounces into an integrated campaignBounces output file.", "1.0")
-      opt[String]("contactPersonIntegrated") required () action { (x, c) ⇒
+      opt[String]("contactPersonIntegrated") required() action { (x, c) ⇒
         c.copy(contactPersonIntegrated = x)
       } text "contactPersonIntegrated is a string property"
-      opt[String]("operatorIntegrated") required () action { (x, c) ⇒
+      opt[String]("operatorIntegrated") required() action { (x, c) ⇒
         c.copy(operatorIntegrated = x)
       } text "operatorIntegrated is a string property"
-      opt[String]("campaignBounceInputFile") required () action { (x, c) ⇒
+      opt[String]("campaignBounceInputFile") required() action { (x, c) ⇒
         c.copy(campaignBounceInputFile = x)
       } text "campaignBounceInputFile is a string property"
-      opt[String]("previousIntegrated") optional () action { (x, c) ⇒
+      opt[String]("previousIntegrated") optional() action { (x, c) ⇒
         c.copy(previousIntegrated = x)
       } text "previousIntegrated is a string property"
-      opt[String]("outputFile") required () action { (x, c) ⇒
+      opt[String]("outputFile") required() action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
 

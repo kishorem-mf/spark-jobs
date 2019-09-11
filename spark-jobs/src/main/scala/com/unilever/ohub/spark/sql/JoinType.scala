@@ -2,20 +2,26 @@ package com.unilever.ohub.spark.sql
 
 import scala.language.implicitConversions
 
-sealed trait JoinType { self ⇒
+sealed trait JoinType {
+  self ⇒
+
+  // scalastyle:off
+  // cyclomatic complexity to high, but code is easy to read code, so suppressing it
   private def value: String = self match {
-    case JoinType.Cross      ⇒ "cross"
-    case JoinType.Full       ⇒ "full"
-    case JoinType.FullOuter  ⇒ "full_outer"
-    case JoinType.Inner      ⇒ "inner"
-    case JoinType.Left       ⇒ "left"
-    case JoinType.LeftAnti   ⇒ "left_anti"
-    case JoinType.LeftOuter  ⇒ "left_outer"
-    case JoinType.LeftSemi   ⇒ "left_semi"
-    case JoinType.Outer      ⇒ "outer"
-    case JoinType.Right      ⇒ "right"
+    case JoinType.Cross ⇒ "cross"
+    case JoinType.Full ⇒ "full"
+    case JoinType.FullOuter ⇒ "full_outer"
+    case JoinType.Inner ⇒ "inner"
+    case JoinType.Left ⇒ "left"
+    case JoinType.LeftAnti ⇒ "left_anti"
+    case JoinType.LeftOuter ⇒ "left_outer"
+    case JoinType.LeftSemi ⇒ "left_semi"
+    case JoinType.Outer ⇒ "outer"
+    case JoinType.Right ⇒ "right"
     case JoinType.RightOuter ⇒ "right_outer"
   }
+
+  // scalastyle:on
 }
 
 object JoinType {
@@ -42,4 +48,5 @@ object JoinType {
   object Right extends JoinType
 
   object RightOuter extends JoinType
+
 }

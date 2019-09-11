@@ -2,11 +2,11 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.entity.{ CampaignOpen, ContactPerson, Operator }
+import com.unilever.ohub.spark.domain.entity.{CampaignOpen, ContactPerson, Operator}
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 case class CampaignOpenMergingConfig(
@@ -46,16 +46,14 @@ object CampaignOpenMerging extends SparkJob[CampaignOpenMergingConfig] {
       // update cpn ids
       .joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), JoinType.Left)
       .map {
-        case (open, cpn) ⇒
-          if (cpn == null) open
-          else open.copy(contactPersonOhubId = cpn.ohubId)
+        case (open: CampaignOpen, cpn: ContactPerson) => open.copy(contactPersonOhubId = cpn.ohubId)
+        case (open, _) => open
       }
       // update opr ids
       .joinWith(operators, $"operatorConcatId" === operators("concatId"), JoinType.Left)
       .map {
-        case (open, opr) ⇒
-          if (opr == null) open
-          else open.copy(operatorOhubId = opr.ohubId)
+        case (open: CampaignOpen, opr: Operator) => open.copy(operatorOhubId = opr.ohubId)
+        case (open, _) => open
       }
   }
 

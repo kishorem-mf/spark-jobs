@@ -24,12 +24,15 @@ object AnonymizeContactPersonJob extends SparkJob[PersonalInformationConfig] {
     import org.apache.spark.sql.functions._
     import spark.implicits._
 
+    val numBits = 256
+
     val extendedCP = contactPersons
-      .withColumn("hashedEmailAddress", upper(sha2(col("emailAddress"), 256)))
-      .withColumn("hashedMobileNumber", upper(sha2(col("mobileNumber"), 256)))
+      .withColumn("hashedEmailAddress", upper(sha2(col("emailAddress"), numBits)))
+      .withColumn("hashedMobileNumber", upper(sha2(col("mobileNumber"), numBits)))
       .as[ContactPerson]
     extendedCP
-      .joinWith(maskedContactPersons, extendedCP("hashedEmailAddress") === maskedContactPersons("hashedEmailAddress") || extendedCP("hashedMobileNumber") === maskedContactPersons("hashedMobileNumber"), "left")
+      .joinWith(maskedContactPersons, extendedCP("hashedEmailAddress") === maskedContactPersons("hashedEmailAddress") ||
+        extendedCP("hashedMobileNumber") === maskedContactPersons("hashedMobileNumber"), "left")
       .map {
         case (cp: ContactPerson, _: AnonymizedContactPersonIdentifier) ⇒
           cp.copy(firstName = hiddenValue, lastName = hiddenValue, emailAddress = hiddenValue, phoneNumber = hiddenValue, mobileNumber = hiddenValue, zipCode = hiddenValue)

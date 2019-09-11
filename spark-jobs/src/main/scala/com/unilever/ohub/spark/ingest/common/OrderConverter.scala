@@ -9,6 +9,7 @@ import org.apache.spark.sql.Row
 
 object OrderConverter extends CommonDomainGateKeeper[Order] with OrderEmptyParquetWriter {
 
+  // scalastyle:off method.length
   override def toDomainEntity: DomainTransformer ⇒ Row ⇒ Order = { transformer ⇒
     row ⇒
       import transformer._

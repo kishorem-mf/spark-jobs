@@ -5,13 +5,15 @@ import com.unilever.ohub.spark.export._
 import com.unilever.ohub.spark.export.dispatch.model.DispatchOperator
 
 private[export] object BooleanToADConverter extends TransformationFunction[Boolean] {
-  def impl(input: Boolean) = if (input) "A" else "D"
+
+  def impl(input: Boolean):String = if (input) "A" else "D"
 
   val description: String = "Converts a boolean: true -> A(ctive) or  false -> D(eactivated)"
 }
 
 object OperatorDispatchConverter extends Converter[Operator, DispatchOperator] with TypeConversionFunctions with DispatchTypeConversionFunctions {
 
+  // scalastyle:off method.length
   override def convert(implicit operator: Operator, explain: Boolean = false): DispatchOperator = {
     DispatchOperator(
       COUNTRY_CODE = getValue("countryCode"),

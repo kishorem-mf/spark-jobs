@@ -65,7 +65,7 @@ abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends 
     }
   }
 
-  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage) = {
+  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     import spark.implicits._
 
     log.info(s"writing integrated entities [${entityName()}] to outbound export csv file for ${config.targetType.toString}")
@@ -78,21 +78,21 @@ abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends 
     export(storage.readFromParquet[DomainType](config.integratedInputFile), previousIntegratedFile, config, spark)
   }
 
-  override def entityName() = domainEntityComanion.engineFolderName
+  override def entityName(): String = domainEntityComanion.engineFolderName
 }
 
 /**
-  * Runs concrete [[com.unilever.ohub.spark.export.domain.DomainExportWriter]]'s run method for all
-  * [[com.unilever.ohub.spark.domain.DomainEntity]]s.
-  *
-  * When running this job, do bear in mind that the input location is now a folder, the entity name will be appended to it
-  * to determine the location.
-  *
-  * F.e. to export data from runId "2019-08-06" provide "integratedInputFile" as:
-  * "dbfs:/mnt/engine/integrated/2019-08-06"
-  * In this case CP will be fetched from:
-  * "dbfs:/mnt/engine/integrated/2019-08-06/contactpersons.parquet"
-  **/
+ * Runs concrete [[com.unilever.ohub.spark.export.domain.DomainExportWriter]]'s run method for all
+ * [[com.unilever.ohub.spark.domain.DomainEntity]]s.
+ *
+ * When running this job, do bear in mind that the input location is now a folder, the entity name will be appended to it
+ * to determine the location.
+ *
+ * F.e. to export data from runId "2019-08-06" provide "integratedInputFile" as:
+ * "dbfs:/mnt/engine/integrated/2019-08-06"
+ * In this case CP will be fetched from:
+ * "dbfs:/mnt/engine/integrated/2019-08-06/contactpersons.parquet"
+ **/
 object AllDomainEntitiesWriter extends SparkJobWithOutboundExportConfig {
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     DomainEntityUtils.domainCompanionObjects

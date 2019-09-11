@@ -20,13 +20,15 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
       val cpMerge1 = defaultContactPerson.copy(
         dateUpdated = Some(new Timestamp(1L)),
         firstName = Some("newerOp"),
-        ohubId = Some("tcMerge")
+        ohubId = Some("tcMerge"),
+        dateCreated = Some(Timestamp.valueOf("2017-10-16 18:09:49"))
       )
 
       val cpMerge2 = defaultContactPerson.copy(
         dateUpdated = None,
         firstName = Some("olderOp"),
-        ohubId = Some("tcMerge")
+        ohubId = Some("tcMerge"),
+        dateCreated = Some(Timestamp.valueOf("2017-10-17 18:09:49"))
       )
 
       val cpNull1 = defaultContactPerson.copy(
@@ -200,7 +202,7 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
       it("should merge 2 records from the same group") {
         val tcResult = result.filter(_.ohubId == Some("tcMerge"))
         tcResult.length shouldBe 1
-        tcResult.head.firstName shouldBe cpMerge1.firstName
+        tcResult.head.firstName shouldBe cpMerge2.firstName
       }
 
       it("should merge groups based on multiple date columns") {

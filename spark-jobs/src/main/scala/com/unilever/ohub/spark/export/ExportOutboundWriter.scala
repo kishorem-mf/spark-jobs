@@ -76,7 +76,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   override private[spark] def defaultConfig = OutboundConfig()
 
-  private[export] def goldenRecordOnlyFilter(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet.filter( (row:DomainType) => row.isGoldenRecord)
+  private[export] def goldenRecordOnlyFilter(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet.filter((row: DomainType) => row.isGoldenRecord)
 
   private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[DomainType], config: OutboundConfig) = dataSet
 
@@ -90,7 +90,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   val onlyExportChangedRows = true
 
-  def mergeCsvFiles(targetType: TargetType) = true
+  def mergeCsvFiles(targetType: TargetType):Boolean = true
   // When merging, headers are based on the dataset columns (and not writen by DataSet.write.csv)
   private def shouldWriteHeaders(targetType: TargetType) = (!mergeCsvFiles(targetType)).toString
 
@@ -123,7 +123,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       case _ ⇒ integratedEntities
     }
 
-    val filteredByCountries = if (config.countryCodes.isDefined) domainEntities.filter($"countryCode".isin(config.countryCodes.get :_*)) else domainEntities
+    val filteredByCountries = if (config.countryCodes.isDefined) domainEntities.filter($"countryCode".isin(config.countryCodes.get: _*)) else domainEntities
 
     val columnsInOrder = filteredByCountries.columns
     val filtered: Dataset[DomainType] = filterDataSet(spark, filteredByCountries, config)
@@ -181,10 +181,12 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       writeableData.csv(temporaryPath.toString)
       val header = ds.columns.map(c ⇒ if (mustQuotesFields) "\"" + c + "\"" else c).mkString(delimiter)
       mergeDirectoryToOneFile(temporaryPath, outputFilePath, sparkSession, header)
-    } else writeableData.csv(outputFilePath.toString)
+    } else {
+      writeableData.csv(outputFilePath.toString)
+    }
   }
 
-  def mergeDirectoryToOneFile(sourceDirectory: Path, outputFile: Path, spark: SparkSession, header: String) = {
+  def mergeDirectoryToOneFile(sourceDirectory: Path, outputFile: Path, spark: SparkSession, header: String): Boolean = {
     log.info(s"Merging to one directory [${sourceDirectory}] to ${outputFile}")
 
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
@@ -205,7 +207,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     }
 
     val tmpCsvSourceDirectory: Path = moveOnlyCsvFilesToOtherDirectory
-    FileUtil.copyMerge(fs, tmpCsvSourceDirectory, fs, outputFile, true, spark.sparkContext.hadoopConfiguration, null)
+    FileUtil.copyMerge(fs, tmpCsvSourceDirectory, fs, outputFile, true, spark.sparkContext.hadoopConfiguration, null) // scalastyle:ignore
     fs.delete(sourceDirectory, true)
   }
 
