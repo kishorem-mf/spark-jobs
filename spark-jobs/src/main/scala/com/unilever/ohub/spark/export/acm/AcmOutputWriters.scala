@@ -145,14 +145,14 @@ object AllAcmOutboundWriter extends SparkJobWithOutboundExportConfig {
       .foreach(entity => {
         val writer = entity.acmExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
-        val hashLocation = config.hashesInputFile.map(x => x + s"/${entity.engineFolderName}.parquet")
-        val mappingOutputLocation = config.mappingOutputLocation.map(mappingOutboundLocation => s"${mappingOutboundLocation}/${config.targetType}_${writer.entityName()}_MAPPING.json")
+        val previousIntegratedLocation = if (config.previousIntegratedInputFile.isDefined) Some(s"${config.previousIntegratedInputFile.get}/${entity.engineFolderName}.parquet") else None
+        val mappingOutputLocation1 = config.mappingOutputLocation.map(mappingOutboundLocation => s"${mappingOutboundLocation}/${config.targetType}_${writer.entityName()}_MAPPING.json")
         writer.run(
           spark,
           config.copy(
             integratedInputFile = integratedLocation,
-            hashesInputFile = hashLocation,
-            mappingOutputLocation = mappingOutputLocation),
+            previousIntegratedInputFile = previousIntegratedLocation,
+            mappingOutputLocation = mappingOutputLocation1),
           storage)
       })
   }

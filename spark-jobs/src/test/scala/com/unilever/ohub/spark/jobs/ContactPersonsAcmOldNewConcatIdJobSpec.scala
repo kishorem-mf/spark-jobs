@@ -4,10 +4,10 @@ import java.util.UUID
 
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.DomainEntityHash
-import com.unilever.ohub.spark.domain.entity.{TestContactPersons, TestOperators}
+import com.unilever.ohub.spark.domain.DomainEntity
+import com.unilever.ohub.spark.domain.entity.{ContactPerson, TestContactPersons, TestOperators}
 import com.unilever.ohub.spark.export.OutboundConfig
-import com.unilever.ohub.spark.outbound.InMemStorage
+import com.unilever.ohub.spark.export.domain.InMemStorage
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.scalatest.{BeforeAndAfter, Matchers}
 
@@ -17,16 +17,16 @@ class ContactPersonsAcmOldNewConcatIdJobSpec extends SparkJobSpec with TestConta
 
   private val cp = defaultContactPerson.copy(isGoldenRecord = true, concatId = "NL~ARMSTRONG~12")
   private val contactPersons = Seq(cp, defaultContactPerson).toDataset
-  private val hashes = {
+  private val prevInteg = {
     import spark.implicits._
 
-    spark.createDataset[DomainEntityHash](Seq[DomainEntityHash]())
+    spark.createDataset[ContactPerson](Seq[ContactPerson]())
   }
   private val config = OutboundConfig(
     integratedInputFile = "integrated",
     outboundLocation = UUID.randomUUID().toString
   )
-  val storage = new InMemStorage(spark, contactPersons, hashes)
+  val storage = new InMemStorage(spark, contactPersons, prevInteg)
 
   after {
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)

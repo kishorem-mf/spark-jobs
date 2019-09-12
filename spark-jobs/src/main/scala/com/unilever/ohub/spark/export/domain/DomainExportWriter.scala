@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.export.domain
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityHash, DomainEntityUtils}
+import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityUtils}
 import com.unilever.ohub.spark.export.TargetType.{DATASCIENCE, MEPS, TargetType}
 import com.unilever.ohub.spark.export.{CsvOptions, ExportOutboundWriter, OutboundConfig, SparkJobWithOutboundExportConfig}
 import com.unilever.ohub.spark.storage.Storage
@@ -70,12 +70,12 @@ abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends 
 
     log.info(s"writing integrated entities [${entityName()}] to outbound export csv file for ${config.targetType.toString}")
 
-    val hashesInputFile = config.hashesInputFile match {
-      case Some(location) ⇒ storage.readFromParquet[DomainEntityHash](location)
-      case None ⇒ spark.createDataset(Seq[DomainEntityHash]())
+    val previousIntegratedFile = config.previousIntegratedInputFile match {
+      case Some(location) => storage.readFromParquet[DomainType](location)
+      case None => spark.createDataset[DomainType](Seq())
     }
 
-    export(storage.readFromParquet[DomainType](config.integratedInputFile), hashesInputFile, config, spark)
+    export(storage.readFromParquet[DomainType](config.integratedInputFile), previousIntegratedFile, config, spark)
   }
 
   override def entityName(): String = domainEntityComanion.engineFolderName
@@ -101,8 +101,11 @@ object AllDomainEntitiesWriter extends SparkJobWithOutboundExportConfig {
       .foreach((entity) => {
         val writer = entity.domainExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
-        val hashesLocation = if (config.hashesInputFile.isDefined) Some(s"${config.hashesInputFile.get}/${entity.engineFolderName}.parquet") else None
-        writer.run(spark, config.copy(integratedInputFile = integratedLocation, hashesInputFile = hashesLocation), storage)
+        val previousIntegratedLocation = if (config.previousIntegratedInputFile.isDefined) Some(s"${config.previousIntegratedInputFile.get}/${entity.engineFolderName}.parquet") else None
+        writer.run(spark, config.copy(
+          integratedInputFile = integratedLocation,
+          previousIntegratedInputFile = previousIntegratedLocation
+        ), storage)
       })
   }
 }

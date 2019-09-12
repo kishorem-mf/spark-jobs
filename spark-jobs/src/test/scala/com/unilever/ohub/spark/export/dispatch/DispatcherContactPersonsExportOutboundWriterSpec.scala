@@ -3,10 +3,9 @@ package com.unilever.ohub.spark.export.dispatch
 import java.util.UUID
 
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.domain.DomainEntityHash
 import com.unilever.ohub.spark.domain.entity.TestContactPersons
 import com.unilever.ohub.spark.export.TargetType
-import com.unilever.ohub.spark.outbound.InMemStorage
+import com.unilever.ohub.spark.export.domain.InMemStorage
 import com.unilever.ohub.spark.{SparkJobSpec, export}
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.scalatest.BeforeAndAfter
@@ -18,13 +17,13 @@ class DispatcherContactPersonsExportOutboundWriterSpec extends SparkJobSpec with
   private val cp = defaultContactPerson.copy(isGoldenRecord = true)
   private val SUT = com.unilever.ohub.spark.export.dispatch.ContactPersonOutboundWriter
   private val contactPersons = Seq(cp, defaultContactPerson).toDataset
-  private val hashes = Seq[DomainEntityHash](DomainEntityHash(cp.concatId, Some(true), Some("some-hash"))).toDataset
+  private val prevInteg = Seq(cp.copy(isActive = false)).toDataset
   private val config = export.OutboundConfig(
     integratedInputFile = "integrated",
     outboundLocation = UUID.randomUUID().toString,
     targetType = TargetType.DISPATCHER
   )
-  val storage = new InMemStorage(spark, contactPersons, hashes)
+  val storage = new InMemStorage(spark, contactPersons, prevInteg)
 
   after {
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
@@ -33,7 +32,7 @@ class DispatcherContactPersonsExportOutboundWriterSpec extends SparkJobSpec with
 
   describe("DDB csv generation") {
     it("Should write correct csv") {
-      SUT.export(contactPersons, hashes, config, spark)
+      SUT.export(contactPersons, prevInteg, config, spark)
 
       val result = storage.readFromCsv(config.outboundLocation, new DispatcherOptions {}.delimiter, true)
       assert(result.collect().length >= 1)
@@ -41,14 +40,14 @@ class DispatcherContactPersonsExportOutboundWriterSpec extends SparkJobSpec with
     }
 
     it("Should export golden and non golden records") {
-      SUT.export(contactPersons, hashes, config, spark)
+      SUT.export(contactPersons, prevInteg, config, spark)
 
       val result = storage.readFromCsv(config.outboundLocation, new DispatcherOptions {}.delimiter, true)
       assert(result.collect().length == 2)
     }
 
     it("Should contain header with quotes") {
-      SUT.export(contactPersons, hashes, config, spark)
+      SUT.export(contactPersons, prevInteg, config, spark)
 
       val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
       val csvFile = fs.listStatus(new Path(config.outboundLocation)).find(status => status.getPath.getName.contains("UFS")).get
