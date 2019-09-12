@@ -19,7 +19,7 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
     val groupWindow = Window.partitionBy($"ohubId")
 
     val orderByDatesWindow = groupWindow.orderBy(
-      when($"dateUpdated".isNull, $"dateCreated").otherwise($"dateUpdated").desc_nulls_last,
+      $"dateUpdated".desc_nulls_last,
       $"dateCreated".desc_nulls_last,
       $"ohubUpdated".desc
     )
