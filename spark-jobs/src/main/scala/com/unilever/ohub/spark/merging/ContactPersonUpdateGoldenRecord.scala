@@ -29,22 +29,20 @@ object ContactPersonUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with 
       def compare(x: Timestamp, y: Timestamp): Int = x compareTo y
     }
 
-    val wrappedCp = entities
-      .map(PickDatesForContactPerson)
-    val newest = wrappedCp.sortBy(wrapped ⇒ (wrapped.dateUpdated, wrapped.dateCreated, wrapped.cp.ohubUpdated)).reverse.head
+    val newest = entities.sortBy(cp ⇒ (cp.dateUpdated, cp.dateCreated, cp.ohubUpdated)).reverse.head
 
-    val newestCPs = wrappedCp
-      .filter(c ⇒ c.dateUpdated == newest.dateUpdated &&
+    val newestCPs = entities.filter((c) ⇒
+      c.dateUpdated == newest.dateUpdated &&
         c.dateCreated == newest.dateCreated &&
-        c.cp.ohubUpdated == newest.cp.ohubUpdated
-      )
+        c.ohubUpdated == newest.ohubUpdated
+    )
 
     // If there is 1 or more golden records with the newest dates that is golden, pick one of those
-    val newestGolden = newestCPs.filter(row => row.cp.isGoldenRecord)
+    val newestGolden = newestCPs.filter(_.isGoldenRecord)
     if (newestGolden.size > 0) {
-      newestGolden(0).cp
+      newestGolden(0)
     } else {
-      newest.cp
+      newest
     }
   }
 

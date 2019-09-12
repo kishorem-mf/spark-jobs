@@ -63,11 +63,3 @@ object WeeksClosedToOpened extends TransformationFunction[Int] {
 
   val description: String = "Converts weeksClosed to weeksOpened (disregarding years with 52+ weeks). F.e. 12 closed result in 40 opened"
 }
-
-class DateUpdatedOrCreated(dateUpdated: Option[Timestamp], dateCreated: Option[Timestamp]) extends TransformationFunction[Option[Timestamp]] {
-  override val description: String = "Gets the dateUpdated, or when not supplied, takes the dateUpdated"
-
-  override def impl(input: Option[Timestamp]): Any = {
-    dateUpdated.orElse(dateCreated).getOrElse(None)
-  }
-}
