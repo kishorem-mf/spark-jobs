@@ -265,5 +265,77 @@ class SubscriptionMergingSpec extends SparkJobSpec with TestSubscription with Te
         ("s4", true, result.filter(_.concatId == "s4").head.ohubId, None)
       )
     }
+
+    it("should consider dateUpdated for ordering subscriptions when  confirmedSubscriptionDate and subscriptionDate is null") {
+      val previous: Dataset[Subscription] = spark.createDataset(Seq())
+      val input: Dataset[Subscription] = spark.createDataset(Seq(
+        defaultSubscription.copy(
+          concatId = "s1",
+          isGoldenRecord = false,
+          ohubId = None,
+          contactPersonConcatId = "cpn1",
+          contactPersonOhubId = None,
+          subscriptionType = "default_newsletter_opt_in",
+          subscriptionDate = None,
+          confirmedSubscriptionDate = None,
+          dateUpdated = Some(Timestamp.valueOf("2015-06-30 13:49:00.0"))
+        ),
+        defaultSubscription.copy(
+          concatId = "s2",
+          isGoldenRecord = false,
+          ohubId = None,
+          contactPersonConcatId = "cpn2",
+          contactPersonOhubId = None,
+          subscriptionType = "default_newsletter_opt_in",
+          subscriptionDate = None,
+          confirmedSubscriptionDate = None,
+          dateUpdated = Some(Timestamp.valueOf("2015-06-28 13:49:00.0"))
+        )
+      ))
+
+      val result = SUT.transform(spark, input, previous, contactPersons).collect()
+
+      result.map(_.ohubId).distinct.size shouldBe 1
+      result.map(s ⇒ s.concatId -> s.isGoldenRecord).toSet shouldBe Set(
+        ("s1", true),
+        ("s2", false)
+      )
+    }
+
+    it("should consider dateUpdated for ordering subscriptions when  confirmedSubscriptionDate and subscriptionDate are same") {
+      val previous: Dataset[Subscription] = spark.createDataset(Seq())
+      val input: Dataset[Subscription] = spark.createDataset(Seq(
+        defaultSubscription.copy(
+          concatId = "s1",
+          isGoldenRecord = false,
+          ohubId = None,
+          contactPersonConcatId = "cpn1",
+          contactPersonOhubId = None,
+          subscriptionType = "default_newsletter_opt_in",
+          subscriptionDate = Some(Timestamp.valueOf("2018-06-30 13:49:00.0")),
+          confirmedSubscriptionDate = Some(Timestamp.valueOf("2018-06-30 13:49:00.0")),
+          dateUpdated = Some(Timestamp.valueOf("2019-07-30 13:49:00.0"))
+        ),
+        defaultSubscription.copy(
+          concatId = "s2",
+          isGoldenRecord = false,
+          ohubId = None,
+          contactPersonConcatId = "cpn2",
+          contactPersonOhubId = None,
+          subscriptionType = "default_newsletter_opt_in",
+          subscriptionDate = Some(Timestamp.valueOf("2018-06-30 13:49:00.0")),
+          confirmedSubscriptionDate = Some(Timestamp.valueOf("2018-06-30 13:49:00.0")),
+          dateUpdated = None
+        )
+      ))
+
+      val result = SUT.transform(spark, input, previous, contactPersons).collect()
+
+      result.map(_.ohubId).distinct.size shouldBe 1
+      result.map(s ⇒ s.concatId -> s.isGoldenRecord).toSet shouldBe Set(
+        ("s1", true),
+        ("s2", false)
+      )
+    }
   }
 }

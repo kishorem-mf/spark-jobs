@@ -41,7 +41,7 @@ object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] with Grou
             }
         }
 
-    val w = Window.partitionBy($"contactPersonOhubId", $"subscriptionType").orderBy($"orderDate".desc_nulls_last)
+    val w = Window.partitionBy($"contactPersonOhubId", $"subscriptionType").orderBy($"orderDate".desc_nulls_last, $"dateUpdated".desc_nulls_last)
     val w2 = Window.partitionBy($"contactPersonOhubId", $"subscriptionType").orderBy($"ohubId".desc_nulls_last)
 
     allSubscriptions
