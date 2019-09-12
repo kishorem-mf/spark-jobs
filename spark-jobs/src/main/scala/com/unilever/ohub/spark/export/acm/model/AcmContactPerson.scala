@@ -55,6 +55,7 @@ case class AcmContactPerson(
                              HAS_REGISTRATION: String,
                              REGISTRATION_DATE: String,
                              HAS_CONFIRMED_REGISTRATION: String,
-                             CONFIRMED_REGISTRATION_DATE: String
+                             CONFIRMED_REGISTRATION_DATE: String,
+                             SOURCE_IDS: String
                             // CONTACTPERSON_ID: String
                            ) extends OutboundEntity

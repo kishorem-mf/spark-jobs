@@ -62,7 +62,8 @@ object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPers
       HAS_REGISTRATION = getValue("hasRegistration", BooleanToYNUConverter),
       REGISTRATION_DATE = getValue("registrationDate"),
       HAS_CONFIRMED_REGISTRATION = getValue("hasConfirmedRegistration", BooleanToYNUConverter),
-      CONFIRMED_REGISTRATION_DATE = getValue("confirmedRegistrationDate")
+      CONFIRMED_REGISTRATION_DATE = getValue("confirmedRegistrationDate"),
+      SOURCE_IDS = getValue("sourceName", FormatSourceIDsConverter)
       //CONTACTPERSON_ID = cp.concatId
     )
   }

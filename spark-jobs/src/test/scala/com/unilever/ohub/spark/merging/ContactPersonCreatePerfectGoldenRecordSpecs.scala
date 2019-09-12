@@ -19,16 +19,32 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
 
       val cpMerge1 = defaultContactPerson.copy(
         dateUpdated = Some(new Timestamp(1L)),
-        firstName = Some("newerOp"),
+        firstName = Some("olderOp"),
         ohubId = Some("tcMerge"),
-        dateCreated = Some(Timestamp.valueOf("2017-10-16 18:09:49"))
+        dateCreated = Some(Timestamp.valueOf("2017-10-16 18:09:49")),
+        sourceName = "EMAKINA"
       )
 
       val cpMerge2 = defaultContactPerson.copy(
         dateUpdated = None,
-        firstName = Some("olderOp"),
+        firstName = Some("newerOp"),
         ohubId = Some("tcMerge"),
-        dateCreated = Some(Timestamp.valueOf("2017-10-17 18:09:49"))
+        dateCreated = Some(Timestamp.valueOf("2017-10-17 18:09:49")),
+        sourceName = "FUZZIT"
+      )
+
+      val cpMerge3 = defaultContactPerson.copy(
+        dateUpdated = None,
+        firstName = Some("anotherOldOp"),
+        ohubId = Some("tcMerge"),
+        sourceName = "FUZZIT"
+      )
+
+      val cpNoMerging = defaultContactPerson.copy(
+        dateUpdated = Some(new Timestamp(1L)),
+        firstName = Some("newerOp1"),
+        ohubId = Some("tcNoMerging"),
+        sourceName = "EMAKINA"
       )
 
       val cpNull1 = defaultContactPerson.copy(
@@ -184,14 +200,15 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
         hasFaxOptOut = Some(true)
       )
 
-      val input = Seq(cpMerge1, cpMerge2, cpNull1, cpNull2, cpInactive, cpNewest1, cpNewest2, cpNewest3,
-        cpSameDateUpdated1, cpSameDateUpdated2, cpSameDateUpdated3
+
+      val input = Seq(cpMerge1, cpMerge2, cpMerge3, cpNull1, cpNull2, cpInactive, cpNewest1, cpNewest2, cpNewest3,
+        cpSameDateUpdated1, cpSameDateUpdated2, cpSameDateUpdated3, cpNoMerging
       ).toDataset
 
       val result = SUT.transform(spark, input).collect
 
       it("should output 1 record for each group with active ContactPersons") {
-        result.length shouldBe (4)
+        result.length shouldBe (5)
       }
 
       it("should not output inactive groups") {
@@ -203,6 +220,13 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
         val tcResult = result.filter(_.ohubId == Some("tcMerge"))
         tcResult.length shouldBe 1
         tcResult.head.firstName shouldBe cpMerge2.firstName
+        tcResult.head.sourceName shouldBe "EMAKINA,FUZZIT"
+      }
+
+      it("should not merge sources when there is only 1 group") {
+        val tcResult = result.filter(_.ohubId == Some("tcNoMerging"))
+        tcResult.length shouldBe 1
+        tcResult.head.sourceName shouldBe "EMAKINA"
       }
 
       it("should merge groups based on multiple date columns") {

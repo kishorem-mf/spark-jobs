@@ -52,7 +52,8 @@ object OperatorAcmConverter extends Converter[Operator, AcmOperator] with TypeCo
       SOCIAL_COMMERCIAL = getValue("socialCommercial"),
       STRATEGIC_CHANNEL = getValue("strategicChannel"),
       GLOBAL_CHANNEL = getValue("globalChannel"),
-      GLOBAL_SUBCHANNEL = getValue("globalSubChannel")
+      GLOBAL_SUBCHANNEL = getValue("globalSubChannel"),
+      SOURCE_IDS = getValue("sourceName", FormatSourceIDsConverter)
      // OPERATOR_ID = getValue("concatId")
     )
   }
