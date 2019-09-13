@@ -161,11 +161,9 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
     val integratedEntity: Dataset[DomainType] = storage.readFromParquet[DomainType](config.integratedInputFile)
     val frame = dropUnnecessaryFields(integratedEntity)
     val result = updateDataFrame(frame)
-
     val dbTable: String = config.entityName
     val dbSchema: String = config.dbSchema
     val dbFullTableName: String = Seq(dbSchema, dbTable).mkString(".")
-
     // The row-level function is defined on the security schema, together with the policies
     val securityPolicyObject: String = s"Security.McoPolicy_ohub2_${dbTable}"
     val securityFunctionObject: String = s"Security.fn_securitypredicate_mco"
