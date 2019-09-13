@@ -8,10 +8,13 @@ import com.unilever.ohub.spark.export.acm.model.AcmContactPerson
 object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPerson] with AcmTypeConversionFunctions {
 
   // scalastyle:off method.length
+  implicit val domainDataProvider: DomainDataProvider = DomainDataProvider()
+  val contactPersonOldOhubConverter: ConcatPersonOldOhubConverter = new ConcatPersonOldOhubConverter(domainDataProvider.sourceIds)
+
   override def convert(implicit cp: ContactPerson, explain: Boolean = false): AcmContactPerson = {
     AcmContactPerson(
       CP_ORIG_INTEGRATION_ID = getValue("ohubId"),
-      CP_LNKD_INTEGRATION_ID = getValue("concatId", new ConcatPersonOldOhubConverter(DomainDataProvider().sourceIds)),
+      CP_LNKD_INTEGRATION_ID = getValue("concatId", contactPersonOldOhubConverter),
       OPR_ORIG_INTEGRATION_ID = getValue("operatorOhubId"),
       GOLDEN_RECORD_FLAG = getValue("isGoldenRecord", BooleanToYNConverter),
       EMAIL_OPTOUT = getValue("hasEmailOptOut", BooleanToYNUConverter),
