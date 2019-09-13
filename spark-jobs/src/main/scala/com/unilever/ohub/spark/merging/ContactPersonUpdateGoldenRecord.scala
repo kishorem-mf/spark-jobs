@@ -17,12 +17,12 @@ object ContactPersonUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with 
   // When it is decided to select golden record based on source instead of newest, remove
   // this override def pickGoldenRecord(...
   /**
-    * Get the newest contactPerson(based on dateUpdated, dateCreated, ohubUpdated and isGoldenRecord) to mark as golden record.
-    *
-    * @param sourcePreference -- not used
-    * @param entities
-    * @return
-    */
+   * Get the newest contactPerson(based on dateUpdated, dateCreated, ohubUpdated and isGoldenRecord) to mark as golden record.
+   *
+   * @param sourcePreference -- not used
+   * @param entities
+   * @return
+   */
   override def pickGoldenRecord(sourcePreference: Map[String, Int], entities: Seq[ContactPerson]): ContactPerson = {
 
     implicit def ordered: Ordering[Timestamp] = new Ordering[Timestamp] {
@@ -47,10 +47,10 @@ object ContactPersonUpdateGoldenRecord extends SparkJobWithDefaultDbConfig with 
   }
 
   def transform(
-                 spark: SparkSession,
-                 contactPersons: Dataset[ContactPerson],
-                 sourcePreference: Map[String, Int]
-               ): Dataset[ContactPerson] = {
+    spark: SparkSession,
+    contactPersons: Dataset[ContactPerson],
+    sourcePreference: Map[String, Int]
+  ): Dataset[ContactPerson] = {
     import spark.implicits._
 
     contactPersons

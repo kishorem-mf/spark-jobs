@@ -86,6 +86,7 @@ abstract class SparkJobWithAzureDWConfiguration extends SparkJob[AzureDWConfigur
 
 abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJobWithAzureDWConfiguration {
 
+
   /** Removes the map fields because resulting on an error when queried in Azure DW. */
   private def dropUnnecessaryFields(dataSet: Dataset[DomainType]): DataFrame = {
 
@@ -197,6 +198,7 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
 
     // Logging info to Azure DW
     logToAzureDWTable(spark, storage, config, jobDuration)
+
   }
 }
 

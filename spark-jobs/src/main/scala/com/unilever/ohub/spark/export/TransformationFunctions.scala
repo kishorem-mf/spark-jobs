@@ -1,9 +1,7 @@
 package com.unilever.ohub.spark.export
 
-import java.sql.Timestamp
-
 trait TransformationFunction[T] {
-  def impl(input: T): Any
+  def impl(input: T): String
 
   val exampleValue: String = ""
   val description: String
@@ -15,6 +13,7 @@ object BooleanTo10Converter extends TransformationFunction[Boolean] {
   override val exampleValue: String = "1"
   val description: String = "Converts the value to 1 or 0. f.e. true will become \"1\""
 }
+
 object BooleanToYNConverter extends TransformationFunction[Boolean] {
   def impl(bool: Boolean): String = if (bool) "Y" else "N"
 
@@ -55,7 +54,6 @@ class ClearInvalidEmail(emailValid: Option[Boolean]) extends TransformationFunct
     }
 
   override val description: String = "Clears the email address when it is not valid (configured in OHUB)"
-
 }
 
 object WeeksClosedToOpened extends TransformationFunction[Int] {
@@ -63,3 +61,4 @@ object WeeksClosedToOpened extends TransformationFunction[Int] {
 
   val description: String = "Converts weeksClosed to weeksOpened (disregarding years with 52+ weeks). F.e. 12 closed result in 40 opened"
 }
+
