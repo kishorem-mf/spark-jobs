@@ -42,7 +42,9 @@ object OrderDispatchConverter extends Converter[Order, DispatchOrder] with TypeC
       INVOICE_STATE = getValue("invoiceOperatorState"),
       INVOICE_COUNTRY = getValue("invoiceOperatorCountry"),
       COMMENTS = getValue("comment"),
-      VAT = getValue("vat")
+      VAT = getValue("vat"),
+      TOTAL_VALUE_ORDER_AMOUNT = getValue("amount"),
+      TOTAL_VALUE_ORDER_CURRENCY = getValue("currency")
     )
   }
 }
