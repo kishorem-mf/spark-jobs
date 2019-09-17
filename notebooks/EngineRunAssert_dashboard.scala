@@ -8,6 +8,8 @@ import org.apache.spark.sql.expressions.Window
 
 spark.conf.set("spark.databricks.io.cache.enabled", "true")
 
+val (runId, previousRunId) = getRunDates()
+
 def hasSuccessFile(path: String): Boolean = {
   try {
     val files = dbutils.fs.ls(path)
@@ -53,21 +55,24 @@ def tryCount(countFunc: () => Long) : Long = {
   }
 }
 
- def getExecDateOf(day:String) = {
+ def getRunDates() = {
   import java.text.SimpleDateFormat
-  import java.util.{Calendar, Date}
+  import java.util.Calendar
 
   // Get datestring for yesterday (== last run ID a.t.m.)
   val runIdFormat = new SimpleDateFormat("yyyy-MM-dd")
   val runDate: Calendar = Calendar.getInstance()
-  day match {
-    case "latestRun"   => runDate.add(Calendar.DATE, -1)
-    case "previousRun" => runDate.add(Calendar.DATE, -2)
-  }
-  runIdFormat.format(runDate.getTime())
+
+  runDate.add(Calendar.DATE, -1)
+  val runId = runIdFormat.format(runDate.getTime())
+
+  runDate.add(Calendar.DATE, -1)
+  val prevRunId = runIdFormat.format(runDate.getTime())
+
+  (runId,prevRunId)
 }
 
-def compareIntegratedData(prevInteg:Dataset[Row], newInteg: Dataset[Row]) : Dataset[Row] = {
+def getChangedRowFromIntegratedParquets(prevInteg:Dataset[Row], newInteg: Dataset[Row]) : Dataset[Row] = {
   val excludeCols = Seq("id",
       "creationTimestamp",
       "ohubCreated",
@@ -127,7 +132,7 @@ def getChangedRows(domain: String, runId: String, previousRunId: String) = {
   val latestInteg   = readParquet(s"dbfs:/mnt/engine/integrated/${runId}/${domain}.parquet")
   try {
    
-    compareIntegratedData(previousInteg.withColumn("isNewInteg", lit(false)),
+    getChangedRowFromIntegratedParquets(previousInteg.withColumn("isNewInteg", lit(false)),
                           latestInteg.withColumn("isNewInteg", lit(true)))
     
   } catch {
@@ -136,7 +141,6 @@ def getChangedRows(domain: String, runId: String, previousRunId: String) = {
 }
 
 def getChangedCount(runId: String, domain: String) = {
-  val previousRunId = getExecDateOf("previousRun")
   val prevIntegDir = s"dbfs:/mnt/engine/integrated/${previousRunId}/${domain}.parquet"
   if (hasSuccessFile(prevIntegDir)) {
     val changed = getChangedRows(domain, runId, previousRunId)
@@ -236,8 +240,6 @@ def getCounts(runId: String, domains: String*) = {
 }
 
 // COMMAND ----------
-
-val runId = getExecDateOf("latestRun")
 
 // All entities that are counted
 val allDomains = Seq(
