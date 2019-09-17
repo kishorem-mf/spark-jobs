@@ -4,8 +4,11 @@
 // Util functions + global imports
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql._
+import org.apache.spark.sql.expressions.Window
 
 spark.conf.set("spark.databricks.io.cache.enabled", "true")
+
+val (runId, previousRunId) = getRunDates()
 
 def hasSuccessFile(path: String): Boolean = {
   try {
@@ -52,6 +55,45 @@ def tryCount(countFunc: () => Long) : Long = {
   }
 }
 
+ def getRunDates() = {
+  import java.text.SimpleDateFormat
+  import java.util.Calendar
+
+  // Get datestring for yesterday (== last run ID a.t.m.)
+  val runIdFormat = new SimpleDateFormat("yyyy-MM-dd")
+  val runDate: Calendar = Calendar.getInstance()
+
+  runDate.add(Calendar.DATE, -1)
+  val runId = runIdFormat.format(runDate.getTime())
+
+  runDate.add(Calendar.DATE, -1)
+  val prevRunId = runIdFormat.format(runDate.getTime())
+
+  (runId,prevRunId)
+}
+
+def getChangedRowFromIntegratedParquets(prevInteg:Dataset[Row], newInteg: Dataset[Row]) : Dataset[Row] = {
+  val excludeCols = Seq("id",
+      "creationTimestamp",
+      "ohubCreated",
+      "ohubUpdated",
+      "additionalFields",
+      "ingestionErrors", 
+      "isNewInteg")
+
+  val groupedCols: Array[String] = prevInteg.columns.intersect(newInteg.columns)
+                                .filterNot(excludeCols.contains(_))
+  
+  val groupWindow = Window.partitionBy(groupedCols.map(c => col(c)) : _*)
+
+  prevInteg.unionByName(newInteg)
+   .withColumn("group_size", count($"isNewInteg").over(groupWindow))
+   .filter($"group_size" === 1)
+   .filter($"isNewInteg")
+   .drop("group_size", "isNewInteg")
+  
+}
+
 // COMMAND ----------
 
 // Counts for seperate stages. If no _SUCCESS file is present in the corresponding dir, -1 wil be returned as count
@@ -85,20 +127,23 @@ def getIntegratedCount(runId: String, domain: String) = {
   } else -1L
 }
 
-def getChangedRows(domain: String, runId: String) = {
-  val hash = readParquet(s"dbfs:/mnt/engine/hash/${runId}/${domain}.parquet")
-  val rows = readParquet(s"dbfs:/mnt/engine/integrated/${runId}/${domain}.parquet")
+def getChangedRows(domain: String, runId: String, previousRunId: String) = {
+  val previousInteg = readParquet(s"dbfs:/mnt/engine/integrated/${previousRunId}/${domain}.parquet")
+  val latestInteg   = readParquet(s"dbfs:/mnt/engine/integrated/${runId}/${domain}.parquet")
   try {
-    rows.join(hash, rows("concatId") === hash("concatId"), "inner").filter("hasChanged").drop(hash.columns:_*)
+   
+    getChangedRowFromIntegratedParquets(previousInteg.withColumn("isNewInteg", lit(false)),
+                          latestInteg.withColumn("isNewInteg", lit(true)))
+    
   } catch {
     case _ : Exception => spark.emptyDataFrame
   }
 }
 
 def getChangedCount(runId: String, domain: String) = {
-  val hashDir = s"dbfs:/mnt/engine/hash/${runId}/${domain}.parquet"
-  if (hasSuccessFile(hashDir)) {
-    val changed = getChangedRows(domain, runId)
+  val prevIntegDir = s"dbfs:/mnt/engine/integrated/${previousRunId}/${domain}.parquet"
+  if (hasSuccessFile(prevIntegDir)) {
+    val changed = getChangedRows(domain, runId, previousRunId)
     val changedCount = tryCount(() => changed.count())
     val customChangedCount = domain match {
       case "orders" => tryCount(() => changed.filter(!$"type".isin("SSD", "TRANSFER")).count())
@@ -195,15 +240,6 @@ def getCounts(runId: String, domains: String*) = {
 }
 
 // COMMAND ----------
-
-import java.text.SimpleDateFormat
-import java.util.{Calendar, Date}
-
-// Get datestring for yesterday (== last run ID a.t.m.)
-val runIdFormat = new SimpleDateFormat("yyyy-MM-dd")
-val lastRunDate = Calendar.getInstance()
-lastRunDate.add(Calendar.DATE, -1)
-val runId = runIdFormat.format(lastRunDate.getTime())
 
 // All entities that are counted
 val allDomains = Seq(
