@@ -53,8 +53,7 @@ object OperatorAcmConverter extends Converter[Operator, AcmOperator] with TypeCo
       STRATEGIC_CHANNEL = getValue("strategicChannel"),
       GLOBAL_CHANNEL = getValue("globalChannel"),
       GLOBAL_SUBCHANNEL = getValue("globalSubChannel"),
-      TARGET_OHUB_ID = getValue("additionalFields", new GetAdditionalField("targetOhubId"))
-     // OPERATOR_ID = getValue("concatId")
+      TARGET_OHUB_ID = getValue("additionalFields", GetTargetOhubId)
     )
   }
 }

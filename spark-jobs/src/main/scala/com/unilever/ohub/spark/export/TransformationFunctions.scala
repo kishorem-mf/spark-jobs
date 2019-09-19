@@ -55,15 +55,18 @@ class ClearInvalidEmail(emailValid: Option[Boolean]) extends TransformationFunct
 
   override val description: String = "Clears the email address when it is not valid (configured in OHUB)"
 }
-
-class GetAdditionalField(keyName: String) extends TransformationFunction[Map[String, String]] {
+/*This is exclusively used for ACM Operator and Contactperson exporter.
+  This method currently fetches targetOhubId from additionalFields map
+  If in case if we want to fetch other values from additionalFields then we need to instantiate (class)
+ */
+object GetTargetOhubId extends TransformationFunction[Map[String, String]] {
   def impl(input: Map[String, String]): String =
-    input.contains(keyName) match {
-      case true => input(keyName)
+    input.contains("targetOhubId") match {
+      case true => input("targetOhubId")
       case _ => ""
     }
 
-  override val description: String = "retrieves value from additional fields"
+  override val description: String = "retrieves targetOhubId value from additional fields"
 }
 
 object WeeksClosedToOpened extends TransformationFunction[Int] {
