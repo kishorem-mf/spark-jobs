@@ -71,6 +71,7 @@ object GetTargetOhubId extends TransformationFunction[Map[String, String]] {
       case true => input("targetOhubId")
       case _ => ""
     }
+
   override val description: String = "retrieves targetOhubId value from additional fields"
 }
 
