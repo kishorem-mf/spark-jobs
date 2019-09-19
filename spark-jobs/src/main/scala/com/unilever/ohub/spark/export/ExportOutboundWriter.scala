@@ -84,7 +84,11 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   private[export] def explainConversion: Option[DomainType => _ <: OutboundEntity] = None
 
-  private[export] def getDeletedOhubIdsFromPreviousIntegrated(spark: SparkSession, filteredChanges: Dataset[DomainType], previousIntegratedEntities: Dataset[DomainType], integratedEntities: Dataset[DomainType]) = filteredChanges
+  private[export] def getDeletedOhubIdsFromPreviousIntegrated(
+         spark: SparkSession,
+         filteredChanges: Dataset[DomainType],
+         previousIntegratedEntities: Dataset[DomainType],
+         integratedEntities: Dataset[DomainType]) : Dataset[DomainType] = filteredChanges
 
 
   def entityName(): String
