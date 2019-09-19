@@ -48,7 +48,9 @@ class OrderDispatchConverterSpec extends SparkJobSpec with TestOrders {
         INVOICE_STATE = "invoiceOperatorState",
         INVOICE_COUNTRY = "invoiceOperatorCountry",
         COMMENTS = "",
-        VAT = ""
+        VAT = "",
+        TOTAL_VALUE_ORDER_AMOUNT = "10.00",
+        TOTAL_VALUE_ORDER_CURRENCY = "EUR"
       )
 
       result shouldBe expectedOrder
