@@ -56,6 +56,6 @@ case class AcmOperator(
                         SOCIAL_COMMERCIAL: String,
                         STRATEGIC_CHANNEL: String,
                         GLOBAL_CHANNEL: String,
-                        GLOBAL_SUBCHANNEL: String
-                        //OPERATOR_ID: String
+                        GLOBAL_SUBCHANNEL: String,
+                        TARGET_OHUB_ID: String
                       ) extends OutboundEntity

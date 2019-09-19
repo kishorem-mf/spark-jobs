@@ -26,6 +26,12 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
   override def explainConversion: Option[ContactPerson => AcmContactPerson] = Some((input: ContactPerson) => ContactPersonAcmConverter.convert(input, true))
 
   override def entityName(): String = "RECIPIENTS"
+
+  override def getDeletedOhubIdsFromPreviousIntegrated(spark: SparkSession, filteredChanges: Dataset[ContactPerson], previousIntegratedEntities: Dataset[ContactPerson], integratedEntities: Dataset[ContactPerson]) = {
+    val datasetWithTargetOhubId = getDeletedOhubIdsWithTargetId(spark, previousIntegratedEntities, integratedEntities)
+
+    filteredChanges.unionByName(datasetWithTargetOhubId)
+  }
 }
 
 object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with AcmOptions {
@@ -37,6 +43,12 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with AcmOpt
   override def explainConversion: Option[Operator => AcmOperator] = Some((input: Operator) => OperatorAcmConverter.convert(input, true))
 
   override def entityName(): String = "OPERATORS"
+
+  override def getDeletedOhubIdsFromPreviousIntegrated(spark: SparkSession, filteredChanges: Dataset[Operator], previousIntegratedEntities: Dataset[Operator], integratedEntities: Dataset[Operator]) = {
+    val datasetWithTargetOhubId = getDeletedOhubIdsWithTargetId(spark, previousIntegratedEntities, integratedEntities)
+    filteredChanges.unionByName(datasetWithTargetOhubId)
+  }
+
 }
 
 object SubscriptionOutboundWriter extends ExportOutboundWriter[Subscription] with AcmOptions {

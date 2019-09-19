@@ -84,6 +84,9 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   private[export] def explainConversion: Option[DomainType => _ <: OutboundEntity] = None
 
+  private[export] def getDeletedOhubIdsFromPreviousIntegrated(spark: SparkSession, filteredChanges: Dataset[DomainType], previousIntegratedEntities: Dataset[DomainType], integratedEntities: Dataset[DomainType]) = filteredChanges
+
+
   def entityName(): String
 
   val csvOptions = Map()
@@ -128,7 +131,9 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     val columnsInOrder = filteredByCountries.columns
     val filtered: Dataset[DomainType] = filterDataSet(spark, filteredByCountries, config)
 
-    val processedChanged = if (onlyExportChangedRows) filterOnlyChangedRows(filtered, previousIntegratedEntities, spark) else filtered
+    val filteredChanges = if (onlyExportChangedRows) filterOnlyChangedRows(filtered, previousIntegratedEntities, spark) else filtered
+
+    val processedChanged = getDeletedOhubIdsFromPreviousIntegrated(spark, filteredChanges, previousIntegratedEntities, integratedEntities)
 
     val result = processedChanged
       .select(columnsInOrder.head, columnsInOrder.tail: _*)
@@ -254,5 +259,28 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     } finally {
       if (out != null) br.close()
     }
+  }
+
+  private[export] def getDeletedOhubIdsWithTargetId(spark: SparkSession, prevIntegratedDS: Dataset[DomainType], integratedDS: Dataset[DomainType]) = {
+
+    import spark.implicits._
+    import org.apache.spark.sql.functions._
+
+    val appendTargetOhubIdToAdditionalFields = (additionalFieldsMap: Map[String, String], targetOhubId: String) =>
+      additionalFieldsMap + ("targetOhubId" -> targetOhubId)
+    val setAdditionalFields = udf(appendTargetOhubIdToAdditionalFields)
+
+    val deletedOhubIdDataset = prevIntegratedDS
+      .filter($"isGoldenRecord")
+      .join(integratedDS.filter($"isGoldenRecord"), Seq("ohubId"), "left_anti")
+      .withColumn("isActive", lit(false))
+
+    deletedOhubIdDataset
+      .join(integratedDS, Seq("concatId"), "left")
+      .select(deletedOhubIdDataset("*"), integratedDS("ohubId") as ("targetOhubId"))
+      .withColumn("additionalFields", setAdditionalFields($"additionalFields", $"targetOhubId"))
+      .drop("targetOhubId")
+      .as[DomainType]
+
   }
 }

@@ -56,6 +56,16 @@ class ClearInvalidEmail(emailValid: Option[Boolean]) extends TransformationFunct
   override val description: String = "Clears the email address when it is not valid (configured in OHUB)"
 }
 
+class GetAdditionalField(keyName: String) extends TransformationFunction[Map[String, String]] {
+  def impl(input: Map[String, String]): String =
+    input.contains(keyName) match {
+      case true => input(keyName)
+      case _ => ""
+    }
+
+  override val description: String = "retrieves value from additional fields"
+}
+
 object WeeksClosedToOpened extends TransformationFunction[Int] {
   def impl(weeksClosed: Int): String = if (52 - weeksClosed < 0) 0.toString else (52 - weeksClosed).toString
 
