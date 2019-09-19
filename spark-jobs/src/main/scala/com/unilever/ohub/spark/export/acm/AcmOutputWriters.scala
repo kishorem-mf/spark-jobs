@@ -27,7 +27,11 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
 
   override def entityName(): String = "RECIPIENTS"
 
-  override def getDeletedOhubIdsFromPreviousIntegrated(spark: SparkSession, filteredChanges: Dataset[ContactPerson], previousIntegratedEntities: Dataset[ContactPerson], integratedEntities: Dataset[ContactPerson]) = {
+  override def getDeletedOhubIdsFromPreviousIntegrated(
+        spark: SparkSession,
+       filteredChanges: Dataset[ContactPerson],
+       previousIntegratedEntities: Dataset[ContactPerson],
+       integratedEntities: Dataset[ContactPerson]) : Dataset[ContactPerson]  = {
     val datasetWithTargetOhubId = getDeletedOhubIdsWithTargetId(spark, previousIntegratedEntities, integratedEntities)
 
     filteredChanges.unionByName(datasetWithTargetOhubId)
@@ -44,7 +48,11 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with AcmOpt
 
   override def entityName(): String = "OPERATORS"
 
-  override def getDeletedOhubIdsFromPreviousIntegrated(spark: SparkSession, filteredChanges: Dataset[Operator], previousIntegratedEntities: Dataset[Operator], integratedEntities: Dataset[Operator]) = {
+  override def getDeletedOhubIdsFromPreviousIntegrated(
+      spark: SparkSession,
+      filteredChanges: Dataset[Operator],
+      previousIntegratedEntities: Dataset[Operator],
+      integratedEntities: Dataset[Operator]): Dataset[Operator]  = {
     val datasetWithTargetOhubId = getDeletedOhubIdsWithTargetId(spark, previousIntegratedEntities, integratedEntities)
     filteredChanges.unionByName(datasetWithTargetOhubId)
   }
