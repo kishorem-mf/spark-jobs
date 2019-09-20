@@ -6,6 +6,7 @@ import com.unilever.ohub.spark.domain.entity._
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityUtils}
 import com.unilever.ohub.spark.storage.{DBConfig, Storage}
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import org.apache.spark.sql.functions.when
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
 import scopt.OptionParser
 
@@ -86,6 +87,7 @@ abstract class SparkJobWithAzureDWConfiguration extends SparkJob[AzureDWConfigur
 
 abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends SparkJobWithAzureDWConfiguration {
 
+  def updateDataFrame(dataSet: DataFrame): DataFrame = dataSet
 
   /** Removes the map fields because resulting on an error when queried in Azure DW. */
   private def dropUnnecessaryFields(dataSet: Dataset[DomainType]): DataFrame = {
@@ -157,12 +159,11 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
     spark.sparkContext.hadoopConfiguration.set(s"fs.azure.account.key.${config.blobStorageContainer}.blob.core.windows.net", config.blobStorageKey)
 
     val integratedEntity: Dataset[DomainType] = storage.readFromParquet[DomainType](config.integratedInputFile)
-    val result = dropUnnecessaryFields(integratedEntity)
-
+    val frame = dropUnnecessaryFields(integratedEntity)
+    val result = updateDataFrame(frame)
     val dbTable: String = config.entityName
     val dbSchema: String = config.dbSchema
     val dbFullTableName: String = Seq(dbSchema, dbTable).mkString(".")
-
     // The row-level function is defined on the security schema, together with the policies
     val securityPolicyObject: String = s"Security.McoPolicy_ohub2_${dbTable}"
     val securityFunctionObject: String = s"Security.fn_securitypredicate_mco"
@@ -218,11 +219,24 @@ object CampaignSendDWWriter extends AzureDWWriter[CampaignSend]
 
 object ChannelMappingDWWriter extends AzureDWWriter[ChannelMapping]
 
-object ContactPersonDWWriter extends AzureDWWriter[ContactPerson]
+object ContactPersonDWWriter extends AzureDWWriter[ContactPerson] {
+  def updateDataFrame(spark: SparkSession, dataFrame: DataFrame): DataFrame = {
+    import spark.implicits._
+
+    dataFrame.withColumn("dateUpdated", when($"dateUpdated".isNotNull, $"dateUpdated").otherwise($"dateCreated"))
+  }
+}
 
 object LoyaltyPointsDWWriter extends AzureDWWriter[LoyaltyPoints]
 
-object OperatorDWWriter extends AzureDWWriter[Operator]
+object OperatorDWWriter extends AzureDWWriter[Operator] {
+
+  def updateDataFrame(spark: SparkSession, dataFrame: DataFrame): DataFrame = {
+    import spark.implicits._
+
+    dataFrame.withColumn("dateUpdated", when($"dateUpdated".isNotNull, $"dateUpdated").otherwise($"dateCreated"))
+  }
+}
 
 object OrderDWWriter extends AzureDWWriter[Order]
 
