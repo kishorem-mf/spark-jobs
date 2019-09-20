@@ -112,6 +112,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
 
       result.collect().length shouldBe 2
       result.filter($"DELETE_FLAG" === "0").collect().length shouldBe 2
+      result.filter($"DELETE_FLAG" === "0").select("CP_ORIG_INTEGRATION_ID").collect().mkString(":") should include ("[3]:[2]")
     }
 
     it("should export only golden records and when OhubId has changed in new integrated mark it as deleted with targetOhubId") {
@@ -131,36 +132,43 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
 
       SUT.export(integratedDs, prevIntegratedDs, config, spark)
 
-      val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
+      val result = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
       result.collect().length shouldBe 2
-      result.filter($"DELETE_FLAG" === "0").collect().length shouldBe 1
-      result.filter($"DELETE_FLAG" === "1").select($"TARGET_OHUB_ID").collect().head.toString() should include("3")
+      result.filter($"DELETE_FLAG" === "0").collect() should have length 1
+      result.filter($"DELETE_FLAG" === "0").select("CP_LNKD_INTEGRATION_ID").collect().head.toString() should include("AU~104~3~19")
+      result.filter($"DELETE_FLAG" === "1").select("TARGET_OHUB_ID","CP_LNKD_INTEGRATION_ID").collect().head.mkString(":") should include("3:AU~103~3~19")
+
     }
 
-  it("should export only golden records and when all ohubId has changed in integrated , then delete ones should be sent") {
-    val integratedDs = Seq(
-      defaultContactPerson.copy(concatId = "AU~WUFOO~101", ohubId = Some("3")),
-      defaultContactPerson.copy(concatId = "AU~WUFOO~102", ohubId = Some("3")),
-      defaultContactPerson.copy(concatId = "AU~WUFOO~103", ohubId = Some("3")),
-      defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("3"), isGoldenRecord = true)
-    ).toDataset
+    it("should export only golden records and when all ohubId has changed in integrated , then delete ones should be sent") {
 
-    val prevIntegratedDs = Seq(
-      defaultContactPerson.copy(concatId = "AU~WUFOO~101", ohubId = Some("1"), isGoldenRecord = true),
-      defaultContactPerson.copy(concatId = "AU~WUFOO~102", ohubId = Some("1")),
-      defaultContactPerson.copy(concatId = "AU~WUFOO~103", ohubId = Some("2"), isGoldenRecord = true),
-      defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("2"))
-    ).toDataset
+      val integratedDs = Seq(
+        defaultContactPerson.copy(concatId = "AU~WUFOO~101", ohubId = Some("3")),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~102", ohubId = Some("3")),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~103", ohubId = Some("3")),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("3"), isGoldenRecord = true)
+      ).toDataset
 
-    SUT.export(integratedDs, prevIntegratedDs, config, spark)
+      val prevIntegratedDs = Seq(
+        defaultContactPerson.copy(concatId = "AU~WUFOO~101", ohubId = Some("1"), isGoldenRecord = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~102", ohubId = Some("1")),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~103", ohubId = Some("2"), isGoldenRecord = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("2"))
+      ).toDataset
 
-    val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
+      SUT.export(integratedDs, prevIntegratedDs, config, spark)
 
-    result.collect().length shouldBe 3
-    result.filter($"DELETE_FLAG" === "0").collect().length shouldBe 1
-    result.filter($"DELETE_FLAG" === "1").collect().length shouldBe 2
-  }
+      val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
+
+      result.collect().length shouldBe 3
+      result.filter($"DELETE_FLAG" === "0").collect().length shouldBe 1
+      result.filter($"DELETE_FLAG" === "1").collect().length shouldBe 2
+
+      result.filter($"DELETE_FLAG" === "0").select("CP_LNKD_INTEGRATION_ID").collect().head.toString() should include("AU~104~3~19")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "2").select("TARGET_OHUB_ID","CP_LNKD_INTEGRATION_ID", "DELETE_FLAG").collect().head.mkString(":") should include("3:AU~103~3~19:1")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "1").select("TARGET_OHUB_ID","CP_LNKD_INTEGRATION_ID", "DELETE_FLAG").collect().head.mkString(":") should include("3:AU~101~3~19:1")
+    }
 }
 
   def readFirstLine(path: Path, fs: FileSystem) = {

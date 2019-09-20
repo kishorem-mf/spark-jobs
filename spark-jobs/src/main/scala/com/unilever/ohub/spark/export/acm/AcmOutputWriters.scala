@@ -29,12 +29,12 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
 
   override def getDeletedOhubIdsFromPreviousIntegrated(
         spark: SparkSession,
-       filteredChanges: Dataset[ContactPerson],
+        filteredEntities: Dataset[ContactPerson],
        previousIntegratedEntities: Dataset[ContactPerson],
        integratedEntities: Dataset[ContactPerson]) : Dataset[ContactPerson]  = {
     val datasetWithTargetOhubId = getDeletedOhubIdsWithTargetId(spark, previousIntegratedEntities, integratedEntities)
 
-    filteredChanges.unionByName(datasetWithTargetOhubId)
+    filteredEntities.unionByName(datasetWithTargetOhubId)
   }
 }
 
@@ -50,11 +50,11 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with AcmOpt
 
   override def getDeletedOhubIdsFromPreviousIntegrated(
       spark: SparkSession,
-      filteredChanges: Dataset[Operator],
+      filteredEntities: Dataset[Operator],
       previousIntegratedEntities: Dataset[Operator],
       integratedEntities: Dataset[Operator]): Dataset[Operator]  = {
     val datasetWithTargetOhubId = getDeletedOhubIdsWithTargetId(spark, previousIntegratedEntities, integratedEntities)
-    filteredChanges.unionByName(datasetWithTargetOhubId)
+    filteredEntities.unionByName(datasetWithTargetOhubId)
   }
 
 }

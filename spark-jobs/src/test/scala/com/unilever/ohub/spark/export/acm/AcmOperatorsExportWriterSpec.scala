@@ -1,13 +1,9 @@
 package com.unilever.ohub.spark.export.acm
 
-import java.io.{BufferedReader, File, InputStreamReader}
 import java.util.UUID
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.domain.entity.{Operator, TestContactPersons, TestOperators}
+import com.unilever.ohub.spark.domain.entity.TestOperators
 import com.unilever.ohub.spark.export.TargetType
 import com.unilever.ohub.spark.export.domain.InMemStorage
 import com.unilever.ohub.spark.{SparkJobSpec, export}
@@ -80,8 +76,9 @@ class AcmOperatorsExportWriterSpec extends SparkJobSpec with TestOperators with 
       val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
       result.collect().length shouldBe 2
-      result.filter($"DELETE_FLAG" === "N").collect().length shouldBe 1
-      result.filter($"DELETE_FLAG" === "Y").select($"TARGET_OHUB_ID").collect().head.toString() should include("3")
+      result.filter($"DELETE_FLAG" === "N").collect() should have length 1
+      result.filter($"DELETE_FLAG" === "N").select("OPR_LNKD_INTEGRATION_ID").collect().head.toString() should include("AU~104~1~19")
+      result.filter($"DELETE_FLAG" === "Y").select("TARGET_OHUB_ID", "OPR_LNKD_INTEGRATION_ID").collect().head.mkString(":") should include("3:AU~103~1~19")
     }
 
   it("should export only golden records and when all ohubId has changed in integrated , then delete ones should be sent") {
@@ -106,6 +103,11 @@ class AcmOperatorsExportWriterSpec extends SparkJobSpec with TestOperators with 
     result.collect().length shouldBe 3
     result.filter($"DELETE_FLAG" === "N").collect().length shouldBe 1
     result.filter($"DELETE_FLAG" === "Y").collect().length shouldBe 2
+
+    result.filter($"DELETE_FLAG" === "N").select("OPR_LNKD_INTEGRATION_ID").collect().head.toString() should include("AU~104~1~19")
+    result.filter($"OPR_ORIG_INTEGRATION_ID" === "2").select("TARGET_OHUB_ID","OPR_LNKD_INTEGRATION_ID", "DELETE_FLAG").collect().head.mkString(":") should include("3:AU~103~1~19:Y")
+    result.filter($"OPR_ORIG_INTEGRATION_ID" === "1").select("TARGET_OHUB_ID","OPR_LNKD_INTEGRATION_ID", "DELETE_FLAG").collect().head.mkString(":") should include("3:AU~101~1~19:Y")
+
   }
 }
 }
