@@ -86,9 +86,9 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   private[export] def getDeletedOhubIdsFromPreviousIntegrated(
          spark: SparkSession,
-         filteredChanges: Dataset[DomainType],
+         filteredEntities: Dataset[DomainType],
          previousIntegratedEntities: Dataset[DomainType],
-         integratedEntities: Dataset[DomainType]) : Dataset[DomainType] = filteredChanges
+         integratedEntities: Dataset[DomainType]) : Dataset[DomainType] = filteredEntities
 
 
   def entityName(): String
@@ -265,6 +265,9 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     }
   }
 
+  /*
+    This method is used only for Contactperson and Operators entity to send the deleted OHubIDs to ACM
+   */
   private[export] def getDeletedOhubIdsWithTargetId(spark: SparkSession, prevIntegratedDS: Dataset[DomainType], integratedDS: Dataset[DomainType]) = {
 
     import spark.implicits._

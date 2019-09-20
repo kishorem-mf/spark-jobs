@@ -132,7 +132,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
 
       SUT.export(integratedDs, prevIntegratedDs, config, spark)
 
-      val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
+      val result = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
       result.collect().length shouldBe 2
       result.filter($"DELETE_FLAG" === "0").collect().length shouldBe 1

@@ -1,13 +1,9 @@
 package com.unilever.ohub.spark.export.acm
 
-import java.io.{BufferedReader, File, InputStreamReader}
 import java.util.UUID
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.domain.entity.{Operator, TestContactPersons, TestOperators}
+import com.unilever.ohub.spark.domain.entity.TestOperators
 import com.unilever.ohub.spark.export.TargetType
 import com.unilever.ohub.spark.export.domain.InMemStorage
 import com.unilever.ohub.spark.{SparkJobSpec, export}
