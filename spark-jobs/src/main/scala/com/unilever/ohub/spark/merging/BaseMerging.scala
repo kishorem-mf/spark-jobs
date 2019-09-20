@@ -28,6 +28,7 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
       .filter($"isActive")
       .withColumn("group_row_num", row_number().over(orderByDatesWindow))
       .filter($"group_row_num" <= mergeGroupSizeCap)
+      .withColumn("sourceName", concat_ws(",", sort_array(collect_set("sourceName").over(groupWindow))))
       .drop("additionalFields", "ingestionErrors")
 
     setFieldsToLatestValue(

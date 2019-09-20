@@ -19,16 +19,32 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
 
       val opMerge1 = defaultOperator.copy(
         dateUpdated = Some(new Timestamp(1L)),
-        name = Some("newerOp"),
+        name = Some("olderOp"),
         ohubId = Some("tcMerge"),
-        dateCreated = Some(Timestamp.valueOf("2017-10-16 18:09:49"))
+        dateCreated = Some(Timestamp.valueOf("2017-10-16 18:09:49")),
+        sourceName = "EMAKINA"
       )
 
       val opMerge2 = defaultOperator.copy(
         dateUpdated = None,
-        name = Some("olderOp"),
+        name = Some("anotherOldOp"),
         ohubId = Some("tcMerge"),
-        dateCreated = Some(Timestamp.valueOf("2017-10-17 18:09:49"))
+        sourceName = "FUZZIT"
+      )
+
+      val opMerge3 = defaultOperator.copy(
+        dateUpdated = None,
+        name = Some("newerOp"),
+        ohubId = Some("tcMerge"),
+        dateCreated = Some(Timestamp.valueOf("2017-10-17 18:09:49")),
+        sourceName = "FUZZIT"
+      )
+
+      val opNoMerging = defaultOperator.copy(
+        dateUpdated = None,
+        name = Some("olderOp1"),
+        ohubId = Some("tcNoMerging"),
+        sourceName = "EMAKINA"
       )
 
       val opNull1 = defaultOperator.copy(
@@ -104,14 +120,14 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
         ohubId = Some("tcSameDateUpdated")
       )
 
-      val input = Seq(opMerge1, opMerge2, opNull1, opNull2, opInactive, opNewest1, opNewest2, opNewest3,
-        opSameDateUpdated1, opSameDateUpdated2, opSameDateUpdated3
+      val input = Seq(opMerge1, opMerge2, opMerge3, opNull1, opNull2, opInactive, opNewest1, opNewest2, opNewest3,
+        opSameDateUpdated1, opSameDateUpdated2, opSameDateUpdated3, opNoMerging
       ).toDataset
 
       val result = SUT.transform(spark, input).collect
 
       it("should output 1 record for each group with active operators") {
-        result.length shouldBe (4)
+        result.length shouldBe (5)
       }
 
       it("should not output inactive groups") {
@@ -122,7 +138,14 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
       it("should merge 2 records from the same group") {
         val tcResult = result.filter(_.ohubId == Some("tcMerge"))
         tcResult.length shouldBe 1
-        tcResult.head.name shouldBe opMerge2.name
+        tcResult.head.name shouldBe opMerge3.name
+        tcResult.head.sourceName shouldBe "EMAKINA,FUZZIT"
+      }
+
+      it("should not merge sources when there is only 1 group") {
+        val tcResult = result.filter(_.ohubId == Some("tcNoMerging"))
+        tcResult.length shouldBe 1
+        tcResult.head.sourceName shouldBe "EMAKINA"
       }
 
       it("should merge groups based on multiple date columns") {

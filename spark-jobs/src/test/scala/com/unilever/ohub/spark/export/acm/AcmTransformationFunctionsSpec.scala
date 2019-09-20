@@ -3,9 +3,8 @@ package com.unilever.ohub.spark.export.acm
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-import com.unilever.ohub.spark.export.{BooleanTo10Converter, BooleanToYNConverter, BooleanToYNUConverter, CleanString}
+import com.unilever.ohub.spark.export.{BooleanTo10Converter, BooleanToYNConverter, BooleanToYNUConverter, CleanString, FormatSourceIDsConverter}
 import org.scalatest.FunSpec
-
 class AcmTransformationFunctionsSpec extends FunSpec with AcmTypeConversionFunctions {
 
   var acmFunctions = new AcmTypeConversionFunctions {}
@@ -81,6 +80,18 @@ class AcmTransformationFunctionsSpec extends FunSpec with AcmTypeConversionFunct
   describe("When string only contains a dot") {
     it("should remove that character and return empty string") {
       assert(CleanString.impl(".") === "")
+    }
+  }
+
+  describe("When string contains Source Names seperated with comma") {
+    it("should fetch corresponding sourceIds and return string separated with hypen") {
+      assert(FormatSourceIDsConverter.impl("FILE,FUZZIT,WEBUPDATER") == "-1-3-2-")
+    }
+    it("should fetch corresponding sourceIds and return string separated with hypen and exclude non existing sources") {
+      assert(FormatSourceIDsConverter.impl("FUZZIT,NON-EXISTING") == "-3-")
+    }
+    it("should fetch return an empty string if no values are available") {
+      assert(FormatSourceIDsConverter.impl(",NON-EXISTING") == "")
     }
   }
 

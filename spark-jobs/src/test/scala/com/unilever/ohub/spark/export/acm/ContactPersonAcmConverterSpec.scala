@@ -65,8 +65,8 @@ import org.scalatest.{FunSpec, Matchers}
             HAS_REGISTRATION = "Y",
             REGISTRATION_DATE = "2015/09/30 14:23:01",
             HAS_CONFIRMED_REGISTRATION = "Y",
-            CONFIRMED_REGISTRATION_DATE = "2015/09/30 14:23:01")
-            //CONTACTPERSON_ID = "AU~WUFOO~AB123")
+            CONFIRMED_REGISTRATION_DATE = "2015/09/30 14:23:01",
+            SOURCE_IDS = "-19-")
 
         actualAcmContactPerson shouldBe expectedAcmContactPerson
       }
@@ -90,5 +90,25 @@ import org.scalatest.{FunSpec, Matchers}
 
         assert(actualDispatchContactPerson.GENDER equals ("0"))
       }
+
+      it("It should convert sourcenames mapping when all of the sources are available") {
+        val cp = defaultContactPerson.copy(isGoldenRecord = true).copy(sourceName="FACEBOOK,GAZPACHO")
+        val actualDispatchContactPerson = SUT.convert(cp)
+
+        assert(actualDispatchContactPerson.SOURCE_IDS equals "-51-54-")
+      }
+      it("It should convert sourcenames mapping when some of the sources aren't available") {
+        val cp = defaultContactPerson.copy(isGoldenRecord = true).copy(sourceName="FACEBOOK,NON-EXISTING-SOURCE")
+        val actualDispatchContactPerson = SUT.convert(cp)
+
+        assert(actualDispatchContactPerson.SOURCE_IDS equals "-51-")
+      }
+      it("It should concatenate sourcenames mapping correctly when all of the sources are available") {
+        val cp = defaultContactPerson.copy(isGoldenRecord = true).copy(sourceName="NON-EXISTING,ANOTHER-NON-EXISISTING")
+        val actualDispatchContactPerson = SUT.convert(cp)
+
+        assert(actualDispatchContactPerson.SOURCE_IDS equals "")
+      }
+
     }
   }

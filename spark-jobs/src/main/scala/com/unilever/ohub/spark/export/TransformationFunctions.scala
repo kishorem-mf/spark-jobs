@@ -2,6 +2,8 @@ package com.unilever.ohub.spark.export
 
 import java.sql.Timestamp
 
+import com.unilever.ohub.spark.DomainDataProvider
+
 trait TransformationFunction[T] {
   def impl(input: T): Any
 
@@ -15,6 +17,7 @@ object BooleanTo10Converter extends TransformationFunction[Boolean] {
   override val exampleValue: String = "1"
   val description: String = "Converts the value to 1 or 0. f.e. true will become \"1\""
 }
+
 object BooleanToYNConverter extends TransformationFunction[Boolean] {
   def impl(bool: Boolean): String = if (bool) "Y" else "N"
 
@@ -70,4 +73,16 @@ class DateUpdatedOrCreated(dateUpdated: Option[Timestamp], dateCreated: Option[T
   override def impl(input: Option[Timestamp]): Any = {
     dateUpdated.orElse(dateCreated).getOrElse(None)
   }
+}
+
+object FormatSourceIDsConverter extends TransformationFunction[String] {
+  def impl(sourceNames: String): String = {
+    val separator = "-"
+    val sourcesMap = DomainDataProvider().sourceIds
+    val sourceIdArr = sourceNames.split(",").flatMap(sourcesMap.get).mkString("-")
+    if (sourceIdArr.isEmpty) "" else s"$separator" + sourceIdArr + s"$separator"
+  }
+
+  override val exampleValue: String = "-3-2-1-"
+  val description: String = "Converts sourceNames to sourceIds seperated by hyphen"
 }
