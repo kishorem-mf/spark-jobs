@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  full_testrun:
+    build: .
+    volumes:
+      - ../spark-jobs/target/scala-2.11:/usr/local/artefacts/sparkjobs
+      - ../name-matching/dist:/usr/local/artefacts/name-matching/egg/
+      - ../name-matching/string_matching_package:/usr/local/artefacts/name-matching/main/
+      - ./pipelines:/usr/local/pipelines
+      - ./it-test:/usr/local/it-test
+    command: bash -c "bash /usr/local/pipelines/all_pipelines.sh;pytest /usr/local/it-test/tests/"
+  interactive_testrun:
+    build: .
+    volumes:
+      - ../spark-jobs/target/scala-2.11:/usr/local/artefacts/sparkjobs
+      - ../name-matching/dist:/usr/local/artefacts/name-matching/egg/
+      - ../name-matching/string_matching_package:/usr/local/artefacts/name-matching/main/
+      - ./pipelines:/usr/local/pipelines
+      - ./it-test:/usr/local/it-test
+    command: bash
