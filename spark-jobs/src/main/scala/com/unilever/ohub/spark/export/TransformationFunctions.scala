@@ -74,6 +74,19 @@ object GetTargetOhubId extends TransformationFunction[Map[String, String]] {
 
   override val description: String = "retrieves targetOhubId value from additional fields"
 }
+/*This is exclusively used for ACM Operator and Contactperson exporter.
+  This method currently fetches targetOhubId from additionalFields map
+  If in case if we want to fetch other values from additionalFields then we need to instantiate (class)
+ */
+object GetTargetOhubId extends TransformationFunction[Map[String, String]] {
+  def impl(input: Map[String, String]): String =
+    input.contains("targetOhubId") match {
+      case true => input("targetOhubId")
+      case _ => ""
+    }
+
+  override val description: String = "retrieves targetOhubId value from additional fields"
+}
 
 object WeeksClosedToOpened extends TransformationFunction[Int] {
   def impl(weeksClosed: Int): String = if (52 - weeksClosed < 0) 0.toString else (52 - weeksClosed).toString
