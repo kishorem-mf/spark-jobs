@@ -84,7 +84,7 @@ abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends 
 }
 
 object OperatorDomainExportWriter extends DomainExportWriter[Operator] {
-  override def convertDataSet(spark: SparkSession, dataSet: Dataset[Operator]) = {
+  override def convertDataSet(spark: SparkSession, dataSet: Dataset[Operator]): DataFrame = {
     import spark.implicits._
     dataSet
       .withColumn("dateUpdated", when($"dateUpdated".isNull, $"dateCreated") otherwise($"dateUpdated"))
@@ -92,7 +92,7 @@ object OperatorDomainExportWriter extends DomainExportWriter[Operator] {
   }
 }
 object ContactPersonDomainExportWriter extends DomainExportWriter[ContactPerson] {
-  override def convertDataSet(spark: SparkSession, dataSet: Dataset[ContactPerson]) = {
+  override def convertDataSet(spark: SparkSession, dataSet: Dataset[ContactPerson]): DataFrame = {
     import spark.implicits._
     dataSet
       .withColumn("dateUpdated", when($"dateUpdated".isNull, $"dateCreated") otherwise($"dateUpdated"))
