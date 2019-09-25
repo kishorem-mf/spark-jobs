@@ -66,7 +66,8 @@ import org.scalatest.{FunSpec, Matchers}
             REGISTRATION_DATE = "2015/09/30 14:23:01",
             HAS_CONFIRMED_REGISTRATION = "Y",
             CONFIRMED_REGISTRATION_DATE = "2015/09/30 14:23:01",
-            SOURCE_IDS = "-19-")
+            SOURCE_IDS = "-19-",
+            TARGET_OHUB_ID = "")
 
         actualAcmContactPerson shouldBe expectedAcmContactPerson
       }
@@ -84,6 +85,7 @@ import org.scalatest.{FunSpec, Matchers}
         assert(actualDispatchContactPerson.ORG_EMAIL_ADDRESS contains("jwilliams@downunder.au"))
         assert(actualDispatchContactPerson.EMAIL_ADDRESS contains("jwilliams@downunder.au"))
       }
+
       it("It should convert GENDER to 0 when empty") {
         val cp = defaultContactPerson.copy(isGoldenRecord = true).copy(gender = None)
         val actualDispatchContactPerson = SUT.convert(cp)
@@ -108,6 +110,13 @@ import org.scalatest.{FunSpec, Matchers}
         val actualDispatchContactPerson = SUT.convert(cp)
 
         assert(actualDispatchContactPerson.SOURCE_IDS equals "")
+      }
+
+      it("TargetOhubId is not empty when additionalField is set") {
+        val cp = defaultContactPerson.copy(isGoldenRecord = true, additionalFields = Map("targetOhubId" -> "AC234"))
+        val actualAcmContactPerson = SUT.convert(cp)
+
+        assert(actualAcmContactPerson.TARGET_OHUB_ID equals ("AC234"))
       }
 
     }
