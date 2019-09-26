@@ -59,6 +59,15 @@ class ContactPersonDomainExportWriterSpecs extends SparkJobSpec with BeforeAndAf
         result(1).getString(result(1).fieldIndex("concatId")) shouldBe pkCP1.concatId
         result(2).getString(result(2).fieldIndex("concatId")) shouldBe pkCP2.concatId
       }
+
+      it("Should output all CP'and if dateUpdated is null then should contain dateCreated value)") {
+        val dbConfig = config.copy(targetType = DATASCIENCE)
+        SUT.export(contactPersons, prevInteg, dbConfig, spark)
+        val result = storage.readFromCsv(s"${dbConfig.outboundLocation}/${ContactPerson.engineFolderName}/datascience", new DomainExportOptions {}.delimiter, true).orderBy($"concatId".asc).collect()
+        result.length shouldBe 3
+        result(0).getString(result(0).fieldIndex("dateUpdated")) equals  result(0).getString(result(0).fieldIndex("dateCreated"))
+        result(0).getString(result(0).fieldIndex("dateUpdated")) nonEmpty
+      }
     }
   }
 }

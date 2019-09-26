@@ -8,12 +8,10 @@ import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, ContactPersonDWWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
-object ContactPersonDomainExportWriter extends DomainExportWriter[ContactPerson]
-
 object ContactPerson extends DomainEntityCompanion[ContactPerson] {
   val customerType = "CONTACTPERSON"
   override val engineFolderName = "contactpersons"
-  override val domainExportWriter: Option[DomainExportWriter[ContactPerson]] = Some(ContactPersonDomainExportWriter)
+  override val domainExportWriter: Option[DomainExportWriter[ContactPerson]] = Some(com.unilever.ohub.spark.export.domain.ContactPersonDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[ContactPerson]] = Some(com.unilever.ohub.spark.export.acm.ContactPersonOutboundWriter)
   override val dispatchExportWriter: Option[ExportOutboundWriter[ContactPerson]] = Some(com.unilever.ohub.spark.export.dispatch.ContactPersonOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[ContactPerson]] = Some(ContactPersonDWWriter)

@@ -3,11 +3,13 @@ package com.unilever.ohub.spark.export.domain
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+import com.unilever.ohub.spark.domain.entity.{ContactPerson, Operator}
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityUtils}
 import com.unilever.ohub.spark.export.TargetType.{DATASCIENCE, MEPS, TargetType}
 import com.unilever.ohub.spark.export.{CsvOptions, ExportOutboundWriter, OutboundConfig, SparkJobWithOutboundExportConfig}
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.functions.when
 
 import scala.reflect.runtime.universe._
 
@@ -36,7 +38,7 @@ abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends 
     }
   }
 
-  private val domainEntityComanion = DomainEntityUtils.domainCompanionOf[DomainType]
+  protected val domainEntityCompanion = DomainEntityUtils.domainCompanionOf[DomainType]
 
   def customExportFiltering(spark: SparkSession, dataSet: Dataset[DomainType], targetType: TargetType): Dataset[DomainType] = dataSet
 
@@ -52,7 +54,7 @@ abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends 
   }
 
   override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[DomainType]) = {
-    dataSet.drop(domainEntityComanion.excludedFieldsForCsvExport: _*)
+    dataSet.drop(domainEntityCompanion.excludedFieldsForCsvExport: _*)
   }
 
   override def filename(targetType: TargetType): String = {
@@ -78,7 +80,24 @@ abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends 
     export(storage.readFromParquet[DomainType](config.integratedInputFile), previousIntegratedFile, config, spark)
   }
 
-  override def entityName(): String = domainEntityComanion.engineFolderName
+  override def entityName(): String = domainEntityCompanion.engineFolderName
+}
+
+object OperatorDomainExportWriter extends DomainExportWriter[Operator] {
+  override def convertDataSet(spark: SparkSession, dataSet: Dataset[Operator]): DataFrame = {
+    import spark.implicits._
+    dataSet
+      .withColumn("dateUpdated", when($"dateUpdated".isNull, $"dateCreated") otherwise($"dateUpdated"))
+      .drop(domainEntityCompanion.excludedFieldsForCsvExport: _*)
+  }
+}
+object ContactPersonDomainExportWriter extends DomainExportWriter[ContactPerson] {
+  override def convertDataSet(spark: SparkSession, dataSet: Dataset[ContactPerson]): DataFrame = {
+    import spark.implicits._
+    dataSet
+      .withColumn("dateUpdated", when($"dateUpdated".isNull, $"dateCreated") otherwise($"dateUpdated"))
+      .drop(domainEntityCompanion.excludedFieldsForCsvExport: _*)
+  }
 }
 
 /**
