@@ -7,10 +7,10 @@ import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityUtils}
 import com.unilever.ohub.spark.storage.{DBConfig, Storage}
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.spark.sql.functions.{col, udf, when}
-import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import scopt.OptionParser
 
-import Function.chain
+import scala.Function.chain
 import scala.reflect.runtime.universe._
 
 /**
@@ -267,6 +267,11 @@ object QuestionDWWriter extends AzureDWWriter[Question]
 object SubscriptionDWWriter extends AzureDWWriter[Subscription]
 
 object ChainDWWriter extends AzureDWWriter[Chain]
+
+object OperatorChangeLogDWWriter extends AzureDWWriter[OperatorChangeLog]
+
+object ContactPersonChangeLogDWWriter extends AzureDWWriter[ContactPersonChangeLog]
+
 
 /**
  * Runs concrete [[com.unilever.ohub.spark.export.azuredw.AzureDWWriter]]'s run method for all
