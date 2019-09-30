@@ -21,7 +21,7 @@ trait SparkJob[Config <: SparkJobConfig] { self ⇒
   private[spark] def invokeRunWithConfig(config: Config): Unit = {
     val jobName = self.getClass.getSimpleName
 
-    val spark = SparkSession
+    implicit val spark = SparkSession
       .builder()
       .appName(jobName)
       .getOrCreate()
