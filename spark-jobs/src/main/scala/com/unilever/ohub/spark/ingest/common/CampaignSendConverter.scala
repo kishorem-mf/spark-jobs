@@ -30,7 +30,7 @@ object CampaignSendConverter extends CommonDomainGateKeeper[CampaignSend] with C
         ohubUpdated = ohubCreated,
         dateCreated = optional("dateCreated", parseDateTimeUnsafe()),
         dateUpdated = optional("dateUpdated", parseDateTimeUnsafe()),
-        ohubId = Option.empty,
+        ohubId = Option.empty[String],
         isGoldenRecord = true, // Not specified when is true in mapping, so always golden...
 
         deliveryLogId = mandatory("deliveryLogId"),
@@ -39,14 +39,14 @@ object CampaignSendConverter extends CommonDomainGateKeeper[CampaignSend] with C
         deliveryId = mandatory("deliveryId"),
         deliveryName = mandatory("deliveryName"),
         communicationChannel = mandatory("communicationChannel"),
-        operatorConcatId = optional("operatorConcatId"),
-        operatorOhubId = Option.empty,
+        operatorConcatId = Option.empty[String],
+        operatorOhubId = optional("operatorOhubId"),
         sendDate = mandatory("sendDate", parseDateTimeUnsafe()),
         isControlGroupMember = mandatory("isControlGroupMember", toBoolean),
         isProofGroupMember = mandatory("isProofGroupMember", toBoolean),
         selectionForOfflineChannels = mandatory("selectionForOfflineChannels"),
-        contactPersonConcatId = mandatory("contactPersonConcatId"),
-        contactPersonOhubId = Option.empty,
+        contactPersonConcatId = Option.empty[String],
+        contactPersonOhubId = mandatory("contactPersonOhubId"),
         waveName = mandatory("waveName"),
 
         additionalFields = additionalFields,

@@ -32,6 +32,7 @@ DATA_CONTACTPERSONS_DELTA_GOLDEN_RECORDS="${DATA_ROOT_DIR}intermediate/contactpe
 DATA_CONTACTPERSONS_COMBINED="${DATA_ROOT_DIR}intermediate/contactpersons_combined.parquet"
 DATA_CONTACTPERSONS_UPDATED_REFERENCES="${DATA_ROOT_DIR}intermediate/contactpersons_updated_references.parquet"
 DATA_CONTACTPERSONS_UPDATED_VALID_EMAIL="${DATA_ROOT_DIR}intermediate/contactpersons_updated_valid_email.parquet"
+DATA_CONTACTPERSONS_CREATED_GOLDEN_RECORDS="${DATA_ROOT_DIR}output/integrated/contactpersons_golden"
 
 echo
 echo ContactPersonEmptyIntegratedWriter
@@ -105,3 +106,9 @@ echo ContactPersonUpdateGoldenRecord
 spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonUpdateGoldenRecord" ${SPARK_JOBS_JAR} \
                --inputFile=${DATA_CONTACTPERSONS_UPDATED_VALID_EMAIL} \
                --outputFile=${DATA_CONTACTPERSONS_INTEGRATED_OUTPUT}
+
+echo
+echo ContactPersonCreatePerfectGoldenRecord
+spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonCreatePerfectGoldenRecord" ${SPARK_JOBS_JAR} \
+               --inputFile=${DATA_CONTACTPERSONS_INTEGRATED_OUTPUT} \
+               --outputFile=${DATA_CONTACTPERSONS_CREATED_GOLDEN_RECORDS}

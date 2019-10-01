@@ -14,8 +14,8 @@ DATA_INGESTED="${DATA_ROOT_DIR}ingested/common/campaign_sends.parquet"
 DATA_PRE_PROCESSED="${DATA_ROOT_DIR}intermediate/campaign_sends_pre_processed.parquet"
 DATA_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/campaign_sends"
 
-DATA_OP_INTEGRATED_INPUT="${DATA_ROOT_DIR}input/integrated/operators"
-DATA_CP_INTEGRATED_INPUT="${DATA_ROOT_DIR}input/integrated/contactpersons"
+DATA_OP_GOLDEN_INTEGRATED_INPUT="${DATA_ROOT_DIR}output/integrated/operators_golden"
+DATA_CP_GOLDEN_INTEGRATED_INPUT="${DATA_ROOT_DIR}output/integrated/contactpersons_golden"
 
 echo
 echo CampaignSendEmptyIntegratedWriter
@@ -41,6 +41,6 @@ echo CampaignSendMerging
 spark-submit    --class="com.unilever.ohub.spark.merging.CampaignSendMerging" ${SPARK_JOBS_JAR} \
                 --campaignSendInputFile=${DATA_PRE_PROCESSED} \
                 --previousIntegrated=${DATA_INTEGRATED_INPUT} \
-                --operatorIntegrated=${DATA_OP_INTEGRATED_INPUT} \
-                --contactPersonIntegrated=${DATA_CP_INTEGRATED_INPUT} \
+                --operatorGolden=${DATA_OP_GOLDEN_INTEGRATED_INPUT} \
+                --contactPersonGolden=${DATA_CP_GOLDEN_INTEGRATED_INPUT} \
                 --outputFile=${DATA_INTEGRATED_OUTPUT}

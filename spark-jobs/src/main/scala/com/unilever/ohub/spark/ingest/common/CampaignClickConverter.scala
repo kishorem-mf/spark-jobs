@@ -30,7 +30,7 @@ object CampaignClickConverter extends CommonDomainGateKeeper[CampaignClick] with
         ohubUpdated = ohubCreated,
         dateCreated = optional("dateCreated", parseDateTimeUnsafe()),
         dateUpdated = optional("dateUpdated", parseDateTimeUnsafe()),
-        ohubId = Option.empty,
+        ohubId = Option.empty[String],
         isGoldenRecord = true, // Not specified when is true in mapping, so always golden...
 
         trackingId = mandatory("trackingId"),
@@ -41,14 +41,14 @@ object CampaignClickConverter extends CommonDomainGateKeeper[CampaignClick] with
         campaignName = optional("campaignName"),
         deliveryId = mandatory("deliveryId"),
         deliveryName = mandatory("deliveryName"),
-        contactPersonConcatId = mandatory("contactPersonConcatId"),
-        contactPersonOhubId = Option.empty,
+        contactPersonConcatId = Option.empty[String],
+        contactPersonOhubId = mandatory("contactPersonOhubId"),
         isOnMobileDevice = mandatory("isOnMobileDevice", toBoolean),
         operatingSystem = optional("operatingSystem"),
         browserName = optional("browserName"),
         browserVersion = optional("browserVersion"),
-        operatorConcatId = optional("operatorConcatId"),
-        operatorOhubId = Option.empty,
+        operatorConcatId = Option.empty[String],
+        operatorOhubId = optional("operatorOhubId"),
         deliveryLogId = optional("deliveryLogId"),
 
         additionalFields = additionalFields,

@@ -43,8 +43,8 @@ case class Campaign(
                      isGoldenRecord: Boolean,
 
                      // Specific fields
-                     contactPersonConcatId: String,
-                     contactPersonOhubId: Option[String],
+                     contactPersonConcatId: Option[String],
+                     contactPersonOhubId: String,
                      campaignId: String,
                      campaignName: Option[String],
                      deliveryId: String,

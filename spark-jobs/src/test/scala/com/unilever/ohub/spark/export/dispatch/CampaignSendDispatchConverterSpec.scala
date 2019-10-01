@@ -13,7 +13,7 @@ class CampaignSendDispatchConverterSpec extends SparkJobSpec with TestCampaignSe
       val result = SUT.convert(defaultCampaignSend)
 
       val expectedCampaignSend = DispatchCampaignSend(
-        CP_ORIG_INTEGRATION_ID = "NL~1003499146~10037~25006~ULNL~3~4",
+        CP_ORIG_INTEGRATION_ID = "NL~OHUB~1003499146",
         CWS_INTEGRATION_ID = "b3a6208c~NL~EMAKINA~1003499146~2018-10-08T22:53:51",
         CWS_DATE = "2016-03-28 21:16:50",
         COUNTRY_CODE = "NL",

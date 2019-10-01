@@ -54,8 +54,8 @@ case class CampaignSend(
                          isControlGroupMember: Boolean,
                          isProofGroupMember: Boolean,
                          selectionForOfflineChannels: String,
-                         contactPersonConcatId: String,
-                         contactPersonOhubId: Option[String],
+                         contactPersonConcatId: Option[String],
+                         contactPersonOhubId: String,
                          waveName: String,
 
                          // other fields
