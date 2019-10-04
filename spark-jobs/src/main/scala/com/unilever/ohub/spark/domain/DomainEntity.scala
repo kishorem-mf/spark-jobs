@@ -44,11 +44,13 @@ trait DomainEntity extends Product {
 
 object DomainEntityCompanion {
   val defaultExcludedFieldsForCsvExport = Seq("additionalFields", "ingestionErrors")
+  val defaultExcludedFieldsForParquetExport = Seq.empty[String]
 }
 
 trait DomainEntityCompanion[DomainEntityType <: DomainEntity] {
   val engineFolderName: String
   val excludedFieldsForCsvExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForCsvExport
+  val defaultExcludedFieldsForParquetExport = Seq.empty[String]
   val domainExportWriter: Option[DomainExportWriter[DomainEntityType]]
   val acmExportWriter: Option[ExportOutboundWriter[DomainEntityType]]
   val dispatchExportWriter: Option[ExportOutboundWriter[DomainEntityType]]

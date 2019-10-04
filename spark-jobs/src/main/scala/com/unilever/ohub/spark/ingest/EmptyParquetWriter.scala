@@ -167,3 +167,23 @@ trait ChainEmptyParquetWriter extends EmptyParquetWriter[Chain] {
     spark.createDataset[Chain](Seq[Chain]())
   }
 }
+
+trait OperatorChangeLogEmptyParquetWriter extends EmptyParquetWriter[OperatorChangeLog] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[OperatorChangeLog] = {
+    import spark.implicits._
+
+    spark.createDataset[OperatorChangeLog](Seq[OperatorChangeLog]())
+  }
+}
+
+trait ContactPersonChangeLogEmptyParquetWriter extends EmptyParquetWriter[ContactPersonChangeLog] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[ContactPersonChangeLog] = {
+    import spark.implicits._
+
+    spark.createDataset[ContactPersonChangeLog](Seq[ContactPersonChangeLog]())
+  }
+}
+
+

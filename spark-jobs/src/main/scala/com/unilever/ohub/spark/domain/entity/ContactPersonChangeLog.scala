@@ -11,12 +11,16 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 object ContactPersonChangeLogDomainExportWriter extends DomainExportWriter[ContactPersonChangeLog]
 
 object ContactPersonChangeLog extends DomainEntityCompanion[ContactPersonChangeLog] {
-  override val engineFolderName: String = "contactperson_change_log"
+
+  override val engineFolderName: String = "contactpersons_change_log"
   override val domainExportWriter: Option[DomainExportWriter[ContactPersonChangeLog]] = Some(ContactPersonChangeLogDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = None
   override val azureDwWriter: Option[AzureDWWriter[ContactPersonChangeLog]] = Some(ContactPersonChangeLogDWWriter)
   override val excludedFieldsForCsvExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForCsvExport ++
+    Seq("id", "creationTimestamp", "countryCode", "customerType", "sourceEntityId", "sourceName", "isActive", "ohubCreated", "ohubUpdated",
+      "dateCreated", "dateUpdated", "isGoldenRecord")
+  override val defaultExcludedFieldsForParquetExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForParquetExport ++
     Seq("id", "creationTimestamp", "countryCode", "customerType", "sourceEntityId", "sourceName", "isActive", "ohubCreated", "ohubUpdated",
       "dateCreated", "dateUpdated", "isGoldenRecord")
 }

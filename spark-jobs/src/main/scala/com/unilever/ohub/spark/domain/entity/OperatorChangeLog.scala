@@ -12,7 +12,8 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 object OperatorChangeLogDomainExportWriter extends DomainExportWriter[OperatorChangeLog]
 
 object OperatorChangeLog extends DomainEntityCompanion[OperatorChangeLog] {
-  override val engineFolderName: String = "operator_change_log"
+
+  override val engineFolderName: String = "operators_change_log"
   override val domainExportWriter: Option[DomainExportWriter[OperatorChangeLog]] = Some(OperatorChangeLogDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[OperatorChangeLog]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[OperatorChangeLog]] = None
@@ -20,6 +21,9 @@ object OperatorChangeLog extends DomainEntityCompanion[OperatorChangeLog] {
   override val excludedFieldsForCsvExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForCsvExport ++
     Seq("id", "creationTimestamp", "countryCode", "customerType", "sourceEntityId", "sourceName", "isActive", "ohubCreated", "ohubUpdated",
     "dateCreated", "dateUpdated", "isGoldenRecord")
+  override val defaultExcludedFieldsForParquetExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForParquetExport ++
+    Seq("id", "creationTimestamp", "countryCode", "customerType", "sourceEntityId", "sourceName", "isActive", "ohubCreated", "ohubUpdated",
+      "dateCreated", "dateUpdated", "isGoldenRecord")
 }
 
 case class OperatorChangeLog(

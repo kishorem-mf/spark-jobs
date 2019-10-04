@@ -90,6 +90,8 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
 
   def updateDataFrame(dataframe: DataFrame): DataFrame = dataframe
 
+  private val domainEntityCompanion = DomainEntityUtils.domainCompanionOf[DomainType]
+
   /** Removes the map fields because resulting on an error when queried in Azure DW. */
   private def dropUnnecessaryFields(dataFrame: DataFrame): DataFrame = {
 
@@ -117,8 +119,12 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
 
   }
 
+  private def excludeColumns(dataFrame: DataFrame) = {
+    dataFrame.drop(domainEntityCompanion.defaultExcludedFieldsForParquetExport: _*)
+  }
+
   def transform(df: DataFrame): DataFrame = {
-    val pipeline: DataFrame => DataFrame = chain(List(dropUnnecessaryFields, cutLongStrings, updateDataFrame))
+    val pipeline: DataFrame => DataFrame = chain(List(dropUnnecessaryFields, cutLongStrings, updateDataFrame, excludeColumns))
     pipeline(df)
   }
 
