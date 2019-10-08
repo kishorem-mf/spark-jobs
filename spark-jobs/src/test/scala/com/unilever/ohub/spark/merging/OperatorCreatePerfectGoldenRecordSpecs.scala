@@ -4,9 +4,9 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.TestOperators
+import com.unilever.ohub.spark.domain.entity.TestOperatorsGolden
 
-class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOperators {
+class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOperatorsGolden {
   import spark.implicits._
 
   private val SUT = OperatorCreatePerfectGoldenRecord;
@@ -17,7 +17,7 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
       // only 1 full transform is performed. (see https://issues.apache.org/jira/browse/SPARK-7276). On the cluster this
       // is no real deal-breaker a.t.m. Since merging performs fine for a full set of data.
 
-      val opMerge1 = defaultOperator.copy(
+      val opMerge1 = defaultOperatorGolden.copy(
         dateUpdated = Some(new Timestamp(1L)),
         name = Some("olderOp"),
         ohubId = Some("tcMerge"),
@@ -25,14 +25,14 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
         sourceName = "EMAKINA"
       )
 
-      val opMerge2 = defaultOperator.copy(
+      val opMerge2 = defaultOperatorGolden.copy(
         dateUpdated = None,
         name = Some("anotherOldOp"),
         ohubId = Some("tcMerge"),
         sourceName = "FUZZIT"
       )
 
-      val opMerge3 = defaultOperator.copy(
+      val opMerge3 = defaultOperatorGolden.copy(
         dateUpdated = None,
         name = Some("newerOp"),
         ohubId = Some("tcMerge"),
@@ -40,28 +40,28 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
         sourceName = "FUZZIT"
       )
 
-      val opNoMerging = defaultOperator.copy(
+      val opNoMerging = defaultOperatorGolden.copy(
         dateUpdated = None,
         name = Some("olderOp1"),
         ohubId = Some("tcNoMerging"),
         sourceName = "EMAKINA"
       )
 
-      val opNull1 = defaultOperator.copy(
+      val opNull1 = defaultOperatorGolden.copy(
         dateUpdated = Some(new Timestamp(1L)),
         name = None,
         ohubId = Some("tcNull")
       )
 
-      val opNull2 = defaultOperator.copy(
+      val opNull2 = defaultOperatorGolden.copy(
         dateUpdated = None,
         name = Some("olderOp"),
         ohubId = Some("tcNull")
       )
 
-      val opInactive = defaultOperator.copy(isActive = false, ohubId = Some("tcInactive"))
+      val opInactive = defaultOperatorGolden.copy(isActive = false, ohubId = Some("tcInactive"))
 
-      val opNewest1 = defaultOperator.copy(
+      val opNewest1 = defaultOperatorGolden.copy(
         dateUpdated = Some(new Timestamp(1L)),
         dateCreated = Some(new Timestamp(1L)),
         ohubUpdated = new Timestamp(1L),
@@ -71,7 +71,7 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
         ohubId = Some("tcNewest")
       )
 
-      val opNewest2 = defaultOperator.copy(
+      val opNewest2 = defaultOperatorGolden.copy(
         dateUpdated = None,
         dateCreated = Some(new Timestamp(1L)),
         ohubUpdated = new Timestamp(1L),
@@ -81,7 +81,7 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
         ohubId = Some("tcNewest")
       )
 
-      val opNewest3 = defaultOperator.copy(
+      val opNewest3 = defaultOperatorGolden.copy(
         dateUpdated = None,
         dateCreated = None,
         ohubUpdated = new Timestamp(1L),
@@ -90,7 +90,7 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
         ohubId = Some("tcNewest")
       )
 
-      val opSameDateUpdated1 = defaultOperator.copy(
+      val opSameDateUpdated1 = defaultOperatorGolden.copy(
         dateUpdated = Some(new Timestamp(1561413600000L)), // 06/25/2019
         dateCreated = Some(new Timestamp(1560981600000L)), // 06/20/2019
         ohubUpdated = new Timestamp(1561845600000L), // 06/30/2019
@@ -100,7 +100,7 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
         ohubId = Some("tcSameDateUpdated")
       )
 
-      val opSameDateUpdated2 = defaultOperator.copy(
+      val opSameDateUpdated2 = defaultOperatorGolden.copy(
         dateUpdated = Some(new Timestamp(1561413600000L)), // 06/25/2019
         dateCreated = Some(new Timestamp(1560204000000L)), // 06/11/2019
         ohubUpdated = new Timestamp(1561845600000L), // 06/30/2019
@@ -110,7 +110,7 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
         ohubId = Some("tcSameDateUpdated")
       )
 
-      val opSameDateUpdated3 = defaultOperator.copy(
+      val opSameDateUpdated3 = defaultOperatorGolden.copy(
         dateUpdated = Some(new Timestamp(1561413600000L)), // 06/25/2019
         dateCreated = Some(new Timestamp(1559340000000L)), // 06/01/2019
         ohubUpdated = new Timestamp(1561845600000L), // 06/30/2019

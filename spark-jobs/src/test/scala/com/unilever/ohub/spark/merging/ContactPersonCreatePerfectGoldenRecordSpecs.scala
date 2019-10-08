@@ -4,9 +4,9 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.TestContactPersons
+import com.unilever.ohub.spark.domain.entity.TestContactPersonsGolden
 
-class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestContactPersons {
+class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestContactPersonsGolden {
   import spark.implicits._
 
   private val SUT = ContactPersonCreatePerfectGoldenRecord
@@ -17,7 +17,7 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
       // only 1 full transform is performed. (see https://issues.apache.org/jira/browse/SPARK-7276). On the cluster this
       // is no real deal-breaker a.t.m. Since merging performs fine for a full set of data.
 
-      val cpMerge1 = defaultContactPerson.copy(
+      val cpMerge1 = defaultContactPersonGolden.copy(
         dateUpdated = Some(new Timestamp(1L)),
         firstName = Some("olderOp"),
         ohubId = Some("tcMerge"),
@@ -25,7 +25,7 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
         sourceName = "EMAKINA"
       )
 
-      val cpMerge2 = defaultContactPerson.copy(
+      val cpMerge2 = defaultContactPersonGolden.copy(
         dateUpdated = None,
         firstName = Some("newerOp"),
         ohubId = Some("tcMerge"),
@@ -33,35 +33,35 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
         sourceName = "FUZZIT"
       )
 
-      val cpMerge3 = defaultContactPerson.copy(
+      val cpMerge3 = defaultContactPersonGolden.copy(
         dateUpdated = None,
         firstName = Some("anotherOldOp"),
         ohubId = Some("tcMerge"),
         sourceName = "FUZZIT"
       )
 
-      val cpNoMerging = defaultContactPerson.copy(
+      val cpNoMerging = defaultContactPersonGolden.copy(
         dateUpdated = Some(new Timestamp(1L)),
         firstName = Some("newerOp1"),
         ohubId = Some("tcNoMerging"),
         sourceName = "EMAKINA"
       )
 
-      val cpNull1 = defaultContactPerson.copy(
+      val cpNull1 = defaultContactPersonGolden.copy(
         dateUpdated = Some(new Timestamp(1L)),
         firstName = None,
         ohubId = Some("tcNull")
       )
 
-      val cpNull2 = defaultContactPerson.copy(
+      val cpNull2 = defaultContactPersonGolden.copy(
         dateUpdated = None,
         firstName = Some("olderCp"),
         ohubId = Some("tcNull")
       )
 
-      val cpInactive = defaultContactPerson.copy(isActive = false, ohubId = Some("tcInactive"))
+      val cpInactive = defaultContactPersonGolden.copy(isActive = false, ohubId = Some("tcInactive"))
 
-      val cpNewest1 = defaultContactPerson.copy(
+      val cpNewest1 = defaultContactPersonGolden.copy(
         dateUpdated = Some(new Timestamp(1L)),
         dateCreated = Some(new Timestamp(1L)),
         ohubUpdated = new Timestamp(1L),
@@ -73,7 +73,7 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
         mobileDoubleOptInDate = Some(Timestamp.valueOf("2015-09-30 14:23:05.0"))
       )
 
-      val cpNewest2 = defaultContactPerson.copy(
+      val cpNewest2 = defaultContactPersonGolden.copy(
         dateUpdated = None,
         dateCreated = Some(new Timestamp(1L)),
         ohubUpdated = new Timestamp(1L),
@@ -83,7 +83,7 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
         ohubId = Some("tcNewest")
       )
 
-      val cpNewest3 = defaultContactPerson.copy(
+      val cpNewest3 = defaultContactPersonGolden.copy(
         dateUpdated = None,
         dateCreated = None,
         ohubUpdated = new Timestamp(1L),
@@ -92,7 +92,7 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
         ohubId = Some("tcNewest")
       )
 
-      val cpSameDateUpdated1 = defaultContactPerson.copy(
+      val cpSameDateUpdated1 = defaultContactPersonGolden.copy(
         dateUpdated = Some(new Timestamp(1561413600000L)), // 06/25/2019
         dateCreated = Some(new Timestamp(1560981600000L)), // 06/20/2019
         ohubUpdated = new Timestamp(1561845600000L), // 06/30/2019
@@ -128,7 +128,7 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
         hasFaxOptOut = Some(false)
       )
 
-      val cpSameDateUpdated2 = defaultContactPerson.copy(
+      val cpSameDateUpdated2 = defaultContactPersonGolden.copy(
         dateUpdated = Some(new Timestamp(1561413600000L)), // 06/25/2019
         dateCreated = Some(new Timestamp(1560204000000L)), // 06/11/2019
         ohubUpdated = new Timestamp(1561845600000L), // 06/30/2019
@@ -164,7 +164,7 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
         hasFaxOptOut = Some(true)
       )
 
-      val cpSameDateUpdated3 = defaultContactPerson.copy(
+      val cpSameDateUpdated3 = defaultContactPersonGolden.copy(
         dateUpdated = Some(new Timestamp(1561413600000L)), // 06/25/2019
         dateCreated = Some(new Timestamp(1559340000000L)), // 06/01/2019
         ohubUpdated = new Timestamp(1561845600000L), // 06/30/2019

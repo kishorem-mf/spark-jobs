@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.DefaultConfig
-import com.unilever.ohub.spark.domain.entity.ContactPerson
+import com.unilever.ohub.spark.domain.entity.ContactPersonGolden
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.{col, row_number}
@@ -14,7 +14,7 @@ case class Consent(
     furtherSortingDateFields: List[String] = List("dateUpdated", "dateCreated", "ohubUpdated")
 )
 
-object ContactPersonCreatePerfectGoldenRecord extends BaseMerging[ContactPerson] {
+object ContactPersonCreatePerfectGoldenRecord extends BaseMerging[ContactPersonGolden] {
 
   val colOhubId = "ohubid"
   val colCounterField = "group_row_num"
@@ -81,13 +81,13 @@ object ContactPersonCreatePerfectGoldenRecord extends BaseMerging[ContactPerson]
       .drop(baseDateSetsForSorting: _*)
   }
 
-  override def transform(spark: SparkSession, contactPersons: Dataset[ContactPerson]): Dataset[ContactPerson] = {
+  override def transform(spark: SparkSession, contactPersons: Dataset[ContactPersonGolden]): Dataset[ContactPersonGolden] = {
 
     import spark.implicits._
 
     val channels = List("email", "mobile", "telemarketing", "fax", "directMail")
 
-    val dfMergedMostRecent: Dataset[ContactPerson] = super.transform(spark, contactPersons)
+    val dfMergedMostRecent: Dataset[ContactPersonGolden] = super.transform(spark, contactPersons)
 
 
     // Pre process: infer the values for mi
@@ -110,13 +110,13 @@ object ContactPersonCreatePerfectGoldenRecord extends BaseMerging[ContactPerson]
       tempDF = tempDF.join(dfMergedByChannel, Seq(colOhubId), "inner")
     }
 
-    tempDF.as[ContactPerson]
+    tempDF.as[ContactPersonGolden]
   }
 
   override def run(spark: SparkSession, config: DefaultConfig, storage: Storage): Unit = {
     log.info(s"Creating golden contact persons records based on [${config.inputFile}] and writing them to [${config.outputFile}]")
 
-    val entity = storage.readFromParquet[ContactPerson](config.inputFile)
+    val entity = storage.readFromParquet[ContactPersonGolden](config.inputFile)
 
     val transformed = transform(spark, entity)
 
