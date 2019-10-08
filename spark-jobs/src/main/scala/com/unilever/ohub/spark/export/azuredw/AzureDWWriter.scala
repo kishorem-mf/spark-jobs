@@ -7,10 +7,10 @@ import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityUtils}
 import com.unilever.ohub.spark.storage.{DBConfig, Storage}
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.spark.sql.functions.{col, udf, when}
-import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import scopt.OptionParser
 
-import Function.chain
+import scala.Function.chain
 import scala.reflect.runtime.universe._
 
 /**
@@ -90,6 +90,8 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
 
   def updateDataFrame(dataframe: DataFrame): DataFrame = dataframe
 
+  private val domainEntityCompanion = DomainEntityUtils.domainCompanionOf[DomainType]
+
   /** Removes the map fields because resulting on an error when queried in Azure DW. */
   private def dropUnnecessaryFields(dataFrame: DataFrame): DataFrame = {
 
@@ -117,8 +119,12 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
 
   }
 
+  private def excludeColumns(dataFrame: DataFrame) = {
+    dataFrame.drop(domainEntityCompanion.defaultExcludedFieldsForParquetExport: _*)
+  }
+
   def transform(df: DataFrame): DataFrame = {
-    val pipeline: DataFrame => DataFrame = chain(List(dropUnnecessaryFields, cutLongStrings, updateDataFrame))
+    val pipeline: DataFrame => DataFrame = chain(List(dropUnnecessaryFields, cutLongStrings, updateDataFrame, excludeColumns))
     pipeline(df)
   }
 
@@ -267,6 +273,11 @@ object QuestionDWWriter extends AzureDWWriter[Question]
 object SubscriptionDWWriter extends AzureDWWriter[Subscription]
 
 object ChainDWWriter extends AzureDWWriter[Chain]
+
+object OperatorChangeLogDWWriter extends AzureDWWriter[OperatorChangeLog]
+
+object ContactPersonChangeLogDWWriter extends AzureDWWriter[ContactPersonChangeLog]
+
 
 /**
  * Runs concrete [[com.unilever.ohub.spark.export.azuredw.AzureDWWriter]]'s run method for all
