@@ -186,4 +186,22 @@ trait ContactPersonChangeLogEmptyParquetWriter extends EmptyParquetWriter[Contac
   }
 }
 
+trait ContactPersonGoldenEmptyParquetWriter extends EmptyParquetWriter[ContactPersonGolden] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[ContactPersonGolden] = {
+    import spark.implicits._
+
+    spark.createDataset[ContactPersonGolden](Seq[ContactPersonGolden]())
+  }
+}
+
+trait OperatorGoldenEmptyParquetWriter extends EmptyParquetWriter[OperatorGolden] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[OperatorGolden] = {
+    import spark.implicits._
+
+    spark.createDataset[OperatorGolden](Seq[OperatorGolden]())
+  }
+}
+
 
