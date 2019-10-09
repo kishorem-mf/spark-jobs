@@ -28,7 +28,7 @@ class LoyaltyPointsAcmConverterSpec extends FunSpec with TestLoyaltyPoints with 
         SPENT = "15.00",
         ACTUAL = "15.00",
         GOAL = "15.00",
-        UPDATED_AT = "2015/06/30 13:49:00",
+        UPDATED_AT = "2015/06/30 13:47:00",
         REWARD_NAME = "REWARD NAME",
         REWARD_IMAGE_URL = "imageUrl.png",
         REWARD_LDP_URL = "imagePageUrl.png",
@@ -38,5 +38,12 @@ class LoyaltyPointsAcmConverterSpec extends FunSpec with TestLoyaltyPoints with 
 
       result shouldBe expectedAcmLoyaltyPoints
     }
+
+    it("fill date updated with date created if date updated is null") {
+      val lp = defaultLoyaltyPoints.copy(dateUpdated = Option.empty, dateCreated = Option(Timestamp.valueOf("2019-09-10 13:49:00.0")))
+      val actualAcmLoyaltyPoints = SUT.convert(lp)
+      assert(actualAcmLoyaltyPoints.UPDATED_AT equals ("2019/09/10 13:49:00"))
+    }
+
   }
 }
