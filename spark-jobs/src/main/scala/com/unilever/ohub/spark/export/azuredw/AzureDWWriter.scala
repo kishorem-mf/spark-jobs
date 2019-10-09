@@ -1,9 +1,11 @@
 package com.unilever.ohub.spark.export.azuredw
 
 import java.sql.Timestamp
+import java.time.LocalDateTime
 
 import com.unilever.ohub.spark.domain.entity._
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityUtils}
+import com.unilever.ohub.spark.export.azuredw.OperatorChangeLogDWWriter.{log, transform}
 import com.unilever.ohub.spark.storage.{DBConfig, Storage}
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.spark.sql.functions.{col, udf, when}
@@ -93,7 +95,7 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
   private val domainEntityCompanion = DomainEntityUtils.domainCompanionOf[DomainType]
 
   /** Removes the map fields because resulting on an error when queried in Azure DW. */
-  private def dropUnnecessaryFields(dataFrame: DataFrame): DataFrame = {
+  protected def dropUnnecessaryFields(dataFrame: DataFrame): DataFrame = {
 
     val mapFields: Array[String] = dataFrame.schema.fields.collect(
       { case field if field.dataType.typeName == "map" || field.dataType.typeName == "array" ⇒ field.name })
@@ -128,7 +130,7 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
     pipeline(df)
   }
 
-  private def logToAzureDWTable(spark: SparkSession, storage: Storage, config: AzureDWConfiguration, jobDuration: Int): Unit = {
+   def logToAzureDWTable(spark: SparkSession, storage: Storage, config: AzureDWConfiguration, jobDuration: Int): Unit = {
 
     import spark.implicits._
 
@@ -232,6 +234,8 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
   }
 }
 
+
+
 object ActivityDWWriter extends AzureDWWriter[Activity]
 
 object AnswerDWWriter extends AzureDWWriter[Answer]
@@ -274,10 +278,9 @@ object SubscriptionDWWriter extends AzureDWWriter[Subscription]
 
 object ChainDWWriter extends AzureDWWriter[Chain]
 
-object OperatorChangeLogDWWriter extends AzureDWWriter[OperatorChangeLog]
+object OperatorChangeLogDWWriter extends AzureDWWriterNoPolicy[OperatorChangeLog]
 
-object ContactPersonChangeLogDWWriter extends AzureDWWriter[ContactPersonChangeLog]
-
+object ContactPersonChangeLogDWWriter extends AzureDWWriterNoPolicy[ContactPersonChangeLog]
 
 /**
  * Runs concrete [[com.unilever.ohub.spark.export.azuredw.AzureDWWriter]]'s run method for all
