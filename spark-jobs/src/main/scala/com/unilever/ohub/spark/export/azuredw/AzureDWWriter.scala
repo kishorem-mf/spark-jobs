@@ -282,6 +282,10 @@ object OperatorChangeLogDWWriter extends AzureDWWriterNoPolicy[OperatorChangeLog
 
 object ContactPersonChangeLogDWWriter extends AzureDWWriterNoPolicy[ContactPersonChangeLog]
 
+object ContactPersonGoldenDWWriter extends AzureDWWriter[ContactPersonGolden]
+
+object OperatorGoldenDWWriter extends AzureDWWriter[OperatorGolden]
+
 /**
  * Runs concrete [[com.unilever.ohub.spark.export.azuredw.AzureDWWriter]]'s run method for all
  * [[com.unilever.ohub.spark.domain.DomainEntity]]s azureDwWriter values.

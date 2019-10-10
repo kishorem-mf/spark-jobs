@@ -1,11 +1,11 @@
 package com.unilever.ohub.spark.domain.entity
 
-import java.sql.{ Date, Timestamp }
+import java.sql.{Date, Timestamp}
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
-import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, ContactPersonDWWriter}
+import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, ContactPersonGoldenDWWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ContactPersonGoldenDomainExportWriter extends DomainExportWriter[ContactPersonGolden]
@@ -15,7 +15,7 @@ object ContactPersonGolden extends DomainEntityCompanion[ContactPersonGolden] {
   override val domainExportWriter: Option[DomainExportWriter[ContactPersonGolden]] = Some(ContactPersonGoldenDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[ContactPersonGolden]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[ContactPersonGolden]] = None
-  override val azureDwWriter: Option[AzureDWWriter[ContactPersonGolden]] = None
+  override val azureDwWriter: Option[AzureDWWriter[ContactPersonGolden]] = Some(ContactPersonGoldenDWWriter)
 }
 
 case class ContactPersonGolden(
