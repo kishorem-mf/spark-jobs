@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.dispatch.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.DispatcherOutboundEntity
 
 case class DispatchOperator(
     COUNTRY_CODE: String,
@@ -62,4 +62,4 @@ case class DispatchOperator(
     STRATEGIC_CHANNEL: String,
     GLOBAL_CHANNEL: String,
     GLOBAL_SUBCHANNEL: String
-) extends OutboundEntity
+) extends DispatcherOutboundEntity

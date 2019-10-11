@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.acm.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.ACMOutboundEntity
 
 case class AcmActivity(
     ACTIVITY_ID: String,
@@ -12,4 +12,4 @@ case class AcmActivity(
     DETAILS: String,
     SUBSCRIBED: String = "",
     TYPE: String,
-    NAME: String) extends OutboundEntity
+    NAME: String) extends ACMOutboundEntity

@@ -19,7 +19,7 @@ trait DispatcherOptions extends CsvOptions {
 }
 
 object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] with DispatcherOptions {
-  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[ContactPerson]) = {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[ContactPerson]): Dataset[DispatchContactPerson] = {
     import spark.implicits._
     dataSet.map(ContactPersonDispatchConverter.convert(_))
   }

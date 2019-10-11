@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.acm.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.ACMOutboundEntity
 
 case class AcmSubscription(
                             SUBSCRIPTION_ID: String,
@@ -17,4 +17,4 @@ case class AcmSubscription(
                             COMMUNICATION_CHANNEL: String,
                             SUBSCRIPTION_TYPE: String,
                             DELETED_FLAG: String
-                          ) extends OutboundEntity
+                          ) extends ACMOutboundEntity

@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.dispatch.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.DispatcherOutboundEntity
 
 case class DispatchCampaignOpen(
     TRACKING_ID: String,
@@ -9,5 +9,5 @@ case class DispatchCampaignOpen(
     OPEN_DATE: String,
     CREATED_AT: String,
     UPDATED_AT: String
-) extends OutboundEntity
+) extends DispatcherOutboundEntity
 

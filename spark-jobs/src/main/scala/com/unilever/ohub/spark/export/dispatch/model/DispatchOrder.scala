@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.dispatch.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.DispatcherOutboundEntity
 
 case class DispatchOrder(
     SOURCE_ID: String,
@@ -45,5 +45,5 @@ case class DispatchOrder(
     INVOICE_STATE: String,
     INVOICE_COUNTRY: String,
     COMMENTS: String,
-    VAT: String) extends OutboundEntity
+    VAT: String) extends DispatcherOutboundEntity
 

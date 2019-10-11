@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.dispatch.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.DispatcherOutboundEntity
 
 case class DispatchCampaignBounce(
     CAMPAIGN_WAVE_RESPONSE_ID: String,
@@ -10,4 +10,4 @@ case class DispatchCampaignBounce(
     FAILURE_REASON: String,
     CREATED_AT: String,
     UPDATED_AT: String
-) extends OutboundEntity
+) extends DispatcherOutboundEntity

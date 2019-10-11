@@ -19,6 +19,16 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
 
   import spark.implicits._
 
+  val storage = new InMemStorage(spark, contactPersons, prevIntegrated)
+  val previousMergedDs = Seq(
+    defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("3211"), concatId = "AU~OHUB~3211"),
+    defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("5555"), concatId = "AU~OHUB~5555")
+  ).toDataset
+  val mergedDs = Seq(
+    defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("3211"), concatId = "AU~OHUB~3211"),
+    defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("5555"), concatId = "AU~OHUB~5555"),
+    defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("8888"), concatId = "AU~OHUB~8888", firstName = Some("New incoming Record"))
+  ).toDataset
   private val changedCP = defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("1234"), concatId = "AU~WUFOO~1234")
   private val unchangedCP = defaultContactPerson.copy(isGoldenRecord = true, concatId = "AU~WUFOO~2345")
   private val SUT = com.unilever.ohub.spark.export.acm.ContactPersonOutboundWriter
@@ -30,17 +40,6 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
     outboundLocation = outboundLocation,
     targetType = TargetType.ACM
   )
-  val storage = new InMemStorage(spark, contactPersons, prevIntegrated)
-  val previousMergedDs = Seq(
-    defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("3211"), concatId = "AU~OHUB~3211"),
-    defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("5555"), concatId = "AU~OHUB~5555")
-  ).toDataset
-
-  val mergedDs = Seq(
-    defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("3211"), concatId = "AU~OHUB~3211"),
-    defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("5555"), concatId = "AU~OHUB~5555"),
-    defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("8888"), concatId = "AU~OHUB~8888", firstName = Some("New incoming Record"))
-  ).toDataset
 
   after {
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
@@ -78,7 +77,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
 
     it("Should write the conversionMapping in json format") {
       val mappingLocation = new Path(outboundLocation, "contactperson-mapping.json")
-      SUT.export(contactPersons, prevIntegrated,  mergedDs, previousMergedDs, config.copy(mappingOutputLocation = Some(mappingLocation.toString)), spark)
+      SUT.export(contactPersons, prevIntegrated, mergedDs, previousMergedDs, config.copy(mappingOutputLocation = Some(mappingLocation.toString)), spark)
 
       val mapper = new ObjectMapper() with ScalaObjectMapper
       mapper.registerModule(DefaultScalaModule)
@@ -237,6 +236,55 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
        */
       result.filter($"CP_ORIG_INTEGRATION_ID" === "2").select("TARGET_OHUB_ID", "CP_LNKD_INTEGRATION_ID", "DELETE_FLAG").collect().head.mkString(":") should include("3:AU~103~3~19:1")
       result.filter($"CP_ORIG_INTEGRATION_ID" === "1").select("TARGET_OHUB_ID", "CP_LNKD_INTEGRATION_ID", "DELETE_FLAG").collect().head.mkString(":") should include("3:AU~101~3~19:1")
+    }
+
+    it("should export new incoming merged ohubids to ACM only with emailAddress or phoneNumber") {
+
+      val prevIntegratedDS = Seq(
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("5555"), concatId = "AU~WUFOO~2345"),
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("5555"), concatId = "AU~WUFOO~0000")
+      ).toDataset
+
+      val integratedDs = Seq(
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("3211"), concatId = "AU~WUFOO~1234"),
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("5555"), concatId = "AU~WUFOO~2345"),
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("5555"), concatId = "AU~WUFOO~0000"),
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("8888"), concatId = "AU~WUFOO~4321",
+          firstName = Some("New incoming Record with email and phone"), emailAddress = Some("x@ohub.com"), mobileNumber = Some("090909")),
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("9999"), concatId = "AU~WUFOO~1919",
+          firstName = Some("New incoming Record with mobile only"), emailAddress = Some(""), mobileNumber = Some("090909")),
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("7777"), concatId = "AU~WUFOO~1717",
+          firstName = Some("New incoming Record with email only"), emailAddress = Some("x@ohub.com"), mobileNumber = None),
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("6666"), concatId = "AU~WUFOO~1616",
+          firstName = Some("New incoming Record without email nor phone"), emailAddress = Some(""), mobileNumber = None)
+      ).toDataset
+
+      val previousMergedDs = Seq(
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("3211"), concatId = "AU~OHUB~3211"),
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("5555"), concatId = "AU~OHUB~5555")
+      ).toDataset
+
+      val mergedDs = Seq(
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("3211"), concatId = "AU~OHUB~3211"),
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("5555"), concatId = "AU~OHUB~5555"),
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("8888"), concatId = "AU~OHUB~8888",
+          firstName = Some("New incoming Record with email and phone"), emailAddress = Some("x@ohub.com"), mobileNumber = Some("090909")),
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("9999"), concatId = "AU~OHUB~9999",
+          firstName = Some("New incoming Record with mobile only"), emailAddress = Some(""), mobileNumber = Some("090909")),
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("7777"), concatId = "AU~OHUB~7777",
+          firstName = Some("New incoming Record with email only"), emailAddress = Some("x@ohub.com"), mobileNumber = None),
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("6666"), concatId = "AU~OHUB~6666",
+          firstName = Some("New incoming Record without email nor phone"), emailAddress = Some(""), mobileNumber = None)
+      ).toDataset
+
+      SUT.export(integratedDs, prevIntegratedDS, mergedDs, previousMergedDs, config, spark)
+
+      val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
+
+      result.collect().length shouldBe 3
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "8888").select($"CP_LNKD_INTEGRATION_ID").collect().head.toString() should include("AU~8888~3~183")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "9999").select($"CP_LNKD_INTEGRATION_ID").collect().head.toString() should include("AU~9999~3~183")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "7777").select($"CP_LNKD_INTEGRATION_ID").collect().head.toString() should include("AU~7777~3~183")
     }
   }
 

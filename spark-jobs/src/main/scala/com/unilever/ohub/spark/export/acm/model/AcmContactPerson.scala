@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.acm.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.ACMOutboundEntity
 
 case class AcmContactPerson(
                              CP_ORIG_INTEGRATION_ID: String,
@@ -58,4 +58,4 @@ case class AcmContactPerson(
                              CONFIRMED_REGISTRATION_DATE: String,
                              SOURCE_IDS: String,
                              TARGET_OHUB_ID: String
-                           ) extends OutboundEntity
+                           ) extends ACMOutboundEntity

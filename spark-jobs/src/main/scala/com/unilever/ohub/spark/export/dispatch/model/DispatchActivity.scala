@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.dispatch.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.DispatcherOutboundEntity
 
 case class DispatchActivity(
     CP_ORIG_INTEGRATION_ID: String,
@@ -19,4 +19,4 @@ case class DispatchActivity(
     ACTIVITY_NAME: String,
     ACTIVITY_DETAILS: String,
     ACTIVITY_RESULT: String = ""
-) extends OutboundEntity
+) extends DispatcherOutboundEntity

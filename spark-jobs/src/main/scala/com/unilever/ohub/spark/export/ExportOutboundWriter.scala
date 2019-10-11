@@ -90,6 +90,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   private[export] def entitySpecificFilter(spark: SparkSession, dataSet: Dataset[DomainType], config: OutboundConfig) = dataSet
 
+  private[export] def postProcess[GenericOutboundEntity <: OutboundEntity](spark: SparkSession, dataSet: Dataset[_], config: OutboundConfig) = dataSet
+
   private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[DomainType]): Dataset[_]
 
   private[export] def explainConversion: Option[DomainType => _ <: OutboundEntity] = None
@@ -116,7 +118,11 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     import spark.implicits._
 
-    log.info(s"writing integrated entities [${config.integratedInputFile}] " +
+    log.info(
+      s"writing integrated entities ::   [${config.integratedInputFile}] " +
+      s"with parameters currentMerged :: [${config.currentMerged}]" +
+      s"with parameters previousMerged:: [${config.previousMerged}]" +
+      s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
       s"to outbound export csv file for ACM and DDB.")
 
     val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[DomainType](Nil))(storage.readFromParquet[DomainType](_))
@@ -177,7 +183,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       writeToJson(spark, new Path(config.mappingOutputLocation.get), deserializeJsonFields(mapping))
     }
 
-    writeToCsv(config, convertDataSet(spark, result), spark)
+    val outputDataset = postProcess(spark, convertDataSet(spark, result), config)
+    writeToCsv(config, outputDataset, spark)
   }
 
   def export(
@@ -204,7 +211,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       writeToJson(spark, new Path(config.mappingOutputLocation.get), deserializeJsonFields(mapping))
     }
 
-    writeToCsv(config, convertDataSet(spark, result), spark)
+    val outputDataset = postProcess(spark, convertDataSet(spark, result), config)
+    writeToCsv(config, outputDataset, spark)
   }
 
   def filterOnlyChangedRows(dataset: Dataset[DomainType], previousIntegratedFile: Dataset[DomainType], spark: SparkSession): Dataset[DomainType] = {

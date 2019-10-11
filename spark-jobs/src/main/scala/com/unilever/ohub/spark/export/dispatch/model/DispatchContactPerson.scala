@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.dispatch.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.DispatcherOutboundEntity
 
 case class DispatchContactPerson(
     COUNTRY_CODE: String,
@@ -55,4 +55,4 @@ case class DispatchContactPerson(
     MOB_CONFIRMED_OPT_IN: String,
     MOB_CONFIRMED_OPT_IN_DATE: String,
     MOB_OPT_OUT_DATE: String = ""
-) extends OutboundEntity
+) extends DispatcherOutboundEntity

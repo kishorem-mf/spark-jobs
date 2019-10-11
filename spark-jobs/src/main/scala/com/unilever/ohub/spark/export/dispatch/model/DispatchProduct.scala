@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.dispatch.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.DispatcherOutboundEntity
 
 case class DispatchProduct(
     COUNTRY_CODE: String,
@@ -21,4 +21,4 @@ case class DispatchProduct(
     UNIT: String,
     UNIT_PRICE_CURRENCY: String,
     UNIT_PRICE: String
-) extends OutboundEntity
+) extends DispatcherOutboundEntity

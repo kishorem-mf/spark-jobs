@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.export.acm
 import com.unilever.ohub.spark.domain.DomainEntityUtils
 import com.unilever.ohub.spark.domain.entity._
 import com.unilever.ohub.spark.export.acm.ContactPersonOutboundWriter.{export, log}
-import com.unilever.ohub.spark.export.acm.model._
+import com.unilever.ohub.spark.export.acm.model.{AcmContactPerson, _}
 import com.unilever.ohub.spark.export.{CsvOptions, ExportOutboundWriter, OutboundConfig, SparkJobWithOutboundExportConfig}
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{Dataset, SparkSession}
@@ -25,6 +25,11 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
     dataSet.map(ContactPersonAcmConverter.convert(_))
   }
 
+  override private[export] def postProcess[AcmContactPerson](spark: SparkSession, dataSet: Dataset[_], config: OutboundConfig) = {
+    import spark.implicits._
+    dataSet.filter( ($"EMAIL_ADDRESS".isNotNull && $"EMAIL_ADDRESS" =!= "" ) || ($"MOBILE_PHONE_NUMBER".isNotNull && $"MOBILE_PHONE_NUMBER" =!= "") )
+  }
+
   override def explainConversion: Option[ContactPerson => AcmContactPerson] = Some((input: ContactPerson) => ContactPersonAcmConverter.convert(input, true))
 
   override def entityName(): String = "RECIPIENTS"
@@ -32,8 +37,12 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     import spark.implicits._
 
-    log.info(s"writing integrated entities [${config.integratedInputFile}] to outbound export csv file for ACM and DDB.")
-
+    log.info(
+        s" For CP writing integrated entities ::   [${config.integratedInputFile}] " +
+        s"with parameters currentMerged :: [${config.currentMerged}]" +
+        s"with parameters previousMerged:: [${config.previousMerged}]" +
+        s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
+        s"to outbound export csv file for ACM and DDB.")
     val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_))
 
 
@@ -61,7 +70,12 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with AcmOpt
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     import spark.implicits._
 
-    log.info(s"writing integrated entities [${config.integratedInputFile}] to outbound export csv file for ACM and DDB.")
+    log.info(
+        s"For OP writing integrated entities ::   [${config.integratedInputFile}] " +
+        s"with parameters currentMerged :: [${config.currentMerged}]" +
+        s"with parameters previousMerged:: [${config.previousMerged}]" +
+        s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
+        s"to outbound export csv file for ACM and DDB.")
 
     val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[Operator](Nil))(storage.readFromParquet[Operator](_))
 
@@ -180,13 +194,23 @@ object AllAcmOutboundWriter extends SparkJobWithOutboundExportConfig {
       .foreach(entity => {
         val writer = entity.acmExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
-        val previousIntegratedLocation = if (config.previousIntegratedInputFile.isDefined) Some(s"${config.previousIntegratedInputFile.get}/${entity.engineFolderName}.parquet") else None
+        val previousIntegratedLocation = config.previousIntegratedInputFile.map(prevIntegLocation => s"${config.previousIntegratedInputFile.get}/${entity.engineFolderName}.parquet")
+
+        val currentMergedLocation = entity.engineGoldenFolderName.map(goldenFolderName => s"${config.integratedInputFile}/${entity.engineGoldenFolderName.get}.parquet")
+        val previousMergedLocation = if (config.previousIntegratedInputFile.isDefined) {
+          entity.engineGoldenFolderName.map(goldenFolderName => s"${config.previousIntegratedInputFile.get}/${entity.engineGoldenFolderName.get}.parquet")
+          } else {
+              None
+          }
+
         val mappingOutputLocation1 = config.mappingOutputLocation.map(mappingOutboundLocation => s"${mappingOutboundLocation}/${config.targetType}_${writer.entityName()}_MAPPING.json")
         writer.run(
           spark,
           config.copy(
             integratedInputFile = integratedLocation,
             previousIntegratedInputFile = previousIntegratedLocation,
+            currentMerged = currentMergedLocation,
+            previousMerged = previousMergedLocation,
             mappingOutputLocation = mappingOutputLocation1),
           storage)
       })
