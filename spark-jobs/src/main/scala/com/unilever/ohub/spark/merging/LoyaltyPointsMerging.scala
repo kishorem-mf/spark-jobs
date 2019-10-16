@@ -6,8 +6,11 @@ import com.unilever.ohub.spark.domain.entity.{ContactPerson, LoyaltyPoints, Oper
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions.row_number
+import org.apache.spark.sql.{Dataset, SQLImplicits, SparkSession}
 import scopt.OptionParser
+import org.apache.spark.sql.functions._
 
 case class LoyaltyPointsMergingConfig(
                                        contactPersonIntegrated: String = "contact-person-integrated",
@@ -28,7 +31,7 @@ object LoyaltyPointsMerging extends SparkJob[LoyaltyPointsMergingConfig] {
                ): Dataset[LoyaltyPoints] = {
     import spark.implicits._
 
-    previousIntegrated
+    val lp = previousIntegrated
       .joinWith(loyaltyPointsDS, previousIntegrated("concatId") === loyaltyPointsDS("concatId"), JoinType.FullOuter)
       // replace old
       .map {
@@ -37,11 +40,12 @@ object LoyaltyPointsMerging extends SparkJob[LoyaltyPointsMergingConfig] {
             integrated
           } else {
             val ohubId = if (integrated == null) Some(UUID.randomUUID().toString) else integrated.ohubId
-            loyaltyPoints.copy(ohubId = ohubId, isGoldenRecord = true)
+            loyaltyPoints.copy(ohubId = ohubId)
           }
       }
-      // update cpn ids
-      .joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), "left")
+
+    // update cpn ids
+    val mergeLP = lp.joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), "left")
       .map {
         case (loyaltyPoints: LoyaltyPoints, cpn: ContactPerson) => loyaltyPoints.copy(contactPersonOhubId = cpn.ohubId)
         case (loyaltyPoints, _) => loyaltyPoints
@@ -51,7 +55,19 @@ object LoyaltyPointsMerging extends SparkJob[LoyaltyPointsMergingConfig] {
       .map {
         case (loyaltyPoints: LoyaltyPoints, opr: Operator) => loyaltyPoints.copy(operatorOhubId = opr.ohubId)
         case (loyaltyPoints, _) => loyaltyPoints
-      }
+      }.withColumn("isGoldenRecord", lit(false)).as[LoyaltyPoints]
+
+    val goldenRecords = pickGoldenLP(mergeLP)(spark)
+
+    mergeLP.join(goldenRecords, mergeLP("concatId") === goldenRecords("concatId"), JoinType.LeftAnti).as[LoyaltyPoints].unionByName(goldenRecords)
+  }
+
+  private def pickGoldenLP(loyaltyPoints: Dataset[LoyaltyPoints])(spark: SparkSession) = {
+    import spark.implicits._
+    val w = Window.partitionBy($"contactPersonOhubId").orderBy($"dateUpdated".desc_nulls_last, $"ohubUpdated".desc_nulls_last)
+    loyaltyPoints.withColumn("rn", row_number.over(w))
+      .filter($"rn" === 1)
+      .drop($"rn").withColumn("isGoldenRecord", lit(true)).as[LoyaltyPoints]
   }
 
   override private[spark] def defaultConfig = LoyaltyPointsMergingConfig()

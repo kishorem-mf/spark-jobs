@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.export.acm
 
 import com.unilever.ohub.spark.domain.entity.LoyaltyPoints
 import com.unilever.ohub.spark.export.acm.model.AcmLoyaltyPoints
-import com.unilever.ohub.spark.export.{Converter, TypeConversionFunctions}
+import com.unilever.ohub.spark.export.{Converter, DateUpdatedOrCreated, TypeConversionFunctions}
 
 object LoyaltyPointsAcmConverter extends Converter[LoyaltyPoints, AcmLoyaltyPoints] with TypeConversionFunctions with AcmTypeConversionFunctions {
 
@@ -15,7 +15,7 @@ object LoyaltyPointsAcmConverter extends Converter[LoyaltyPoints, AcmLoyaltyPoin
       SPENT = getValue("totalSpent"),
       ACTUAL = getValue("totalActual"),
       GOAL = getValue("rewardGoal"),
-      UPDATED_AT = getValue("ohubUpdated"),
+      UPDATED_AT = getValue("dateUpdated", new DateUpdatedOrCreated(loyaltyPoints.dateUpdated, loyaltyPoints.dateCreated)),
       REWARD_NAME = getValue("rewardName"),
       REWARD_IMAGE_URL = getValue("rewardImageUrl"),
       REWARD_LDP_URL = getValue("rewardLandingPageUrl"),
