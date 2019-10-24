@@ -25,9 +25,9 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
     dataSet.map(ContactPersonAcmConverter.convert(_))
   }
 
-  override private[export] def postProcess[AcmContactPerson](spark: SparkSession, dataSet: Dataset[_], config: OutboundConfig) = {
+  override private[export] def filterValid[AcmContactPerson](spark: SparkSession, dataSet: Dataset[_], config: OutboundConfig) = {
     import spark.implicits._
-    dataSet.filter( ($"EMAIL_ADDRESS".isNotNull && $"EMAIL_ADDRESS" =!= "" ) || ($"MOBILE_PHONE_NUMBER".isNotNull && $"MOBILE_PHONE_NUMBER" =!= "") )
+    dataSet.filter( ($"emailAddress".isNotNull && $"emailAddress" =!= "" ) || ($"mobileNumber".isNotNull && $"mobileNumber" =!= "") )
   }
 
   override def explainConversion: Option[ContactPerson => AcmContactPerson] = Some((input: ContactPerson) => ContactPersonAcmConverter.convert(input, true))

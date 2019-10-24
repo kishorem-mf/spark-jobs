@@ -11,6 +11,7 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.export.TargetType.{ACM, DISPATCHER, TargetType}
 import com.unilever.ohub.spark.export.acm.ContactPersonOutboundWriter.getDeletedOhubIdsWithTargetId
+import com.unilever.ohub.spark.export.acm.model.AcmContactPerson
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
@@ -90,7 +91,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   private[export] def entitySpecificFilter(spark: SparkSession, dataSet: Dataset[DomainType], config: OutboundConfig) = dataSet
 
-  private[export] def postProcess[GenericOutboundEntity <: OutboundEntity](spark: SparkSession, dataSet: Dataset[_], config: OutboundConfig) = dataSet
+  private[export] def filterValid[GenericOutboundEntity <: OutboundEntity](spark: SparkSession, dataSet: Dataset[_], config: OutboundConfig) = dataSet
 
   private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[DomainType]): Dataset[_]
 
@@ -183,7 +184,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       writeToJson(spark, new Path(config.mappingOutputLocation.get), deserializeJsonFields(mapping))
     }
 
-    val outputDataset = postProcess(spark, convertDataSet(spark, result), config)
+    val outputDataset = filterValid(spark, convertDataSet(spark, result), config)
     writeToCsv(config, outputDataset, spark)
   }
 
@@ -198,7 +199,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     import spark.implicits._
 
     val deltaIntegrated = commonTransform(currentMerged, previousMerged, config, spark)
-    val processedChanged = deltaIntegrated.unionByName(getDeletedOhubIdsWithTargetId(spark, previousIntegrated, currentIntegrated))
+    val filtered = filterValid(spark, deltaIntegrated, config).as[DomainType]
+    val processedChanged = filtered.unionByName(getDeletedOhubIdsWithTargetId(spark, previousIntegrated, currentIntegrated))
 
     val columnsInOrder = currentIntegrated.columns
     val result = processedChanged
@@ -211,8 +213,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       writeToJson(spark, new Path(config.mappingOutputLocation.get), deserializeJsonFields(mapping))
     }
 
-    val outputDataset = postProcess(spark, convertDataSet(spark, result), config)
-    writeToCsv(config, outputDataset, spark)
+    writeToCsv(config, convertDataSet(spark, result), spark)
   }
 
   def filterOnlyChangedRows(dataset: Dataset[DomainType], previousIntegratedFile: Dataset[DomainType], spark: SparkSession): Dataset[DomainType] = {
