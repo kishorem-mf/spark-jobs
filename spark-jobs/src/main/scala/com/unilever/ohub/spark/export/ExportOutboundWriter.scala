@@ -8,16 +8,11 @@ import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.unilever.ohub.spark.domain.DomainEntity
-import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
-import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.export.TargetType.{ACM, DISPATCHER, TargetType}
-import com.unilever.ohub.spark.export.acm.ContactPersonOutboundWriter.getDeletedOhubIdsWithTargetId
-import com.unilever.ohub.spark.export.acm.model.AcmContactPerson
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
-import org.apache.spark.sql.functions.when
 import org.apache.spark.sql.{Dataset, SaveMode, SparkSession}
 import scopt.OptionParser
 
@@ -191,7 +186,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   def export(
     currentIntegrated: Dataset[DomainType],
-    previousIntegrated: Dataset[DomainType],
+    processedChanged: Dataset[DomainType] => Dataset[DomainType],
     currentMerged: Dataset[DomainType],
     previousMerged: Dataset[DomainType],
     config: OutboundConfig,
@@ -201,10 +196,10 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
     val deltaIntegrated = commonTransform(currentMerged, previousMerged, config, spark)
     val filtered = filterValid(spark, deltaIntegrated, config).as[DomainType]
-    val processedChanged = filtered.unionByName(getDeletedOhubIdsWithTargetId(spark, previousIntegrated, currentIntegrated,previousMerged, currentMerged))
+    val processedChangedDS = processedChanged(filtered)
 
     val columnsInOrder = currentIntegrated.columns
-    val result = processedChanged
+    val result = processedChangedDS
       .select(columnsInOrder.head, columnsInOrder.tail: _*)
       .as[DomainType]
 

@@ -49,17 +49,23 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
 
     log.info(
         s" For CP writing integrated entities ::   [${config.integratedInputFile}] " +
+
         s"with parameters currentMerged :: [${config.currentMerged}]" +
         s"with parameters previousMerged:: [${config.previousMerged}]" +
         s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
         s"to outbound export csv file for ACM and DDB.")
+
     val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_))
+    val currentIntegrated = storage.readFromParquet[ContactPerson](config.integratedInputFile)
+    val currentMerged = config.currentMerged.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_))
+    val previousMerged = config.previousMerged.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_))
+    val deletedOhubID = getDeletedOhubIdsWithTargetId(spark, previousIntegratedFile, currentIntegrated, previousMerged, currentMerged)
 
     export(
-      storage.readFromParquet[ContactPerson](config.integratedInputFile),
-      previousIntegratedFile,
-      config.currentMerged.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_)),
-      config.previousMerged.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_)),
+      currentIntegrated,
+      deletedOhubID.unionByName,
+      currentMerged,
+      previousMerged,
       config,
       spark
     )
@@ -80,22 +86,26 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with AcmOpt
     import spark.implicits._
 
     log.info(
-        s"For OP writing integrated entities ::   [${config.integratedInputFile}] " +
+      s"For OP writing integrated entities ::   [${config.integratedInputFile}] " +
         s"with parameters currentMerged :: [${config.currentMerged}]" +
         s"with parameters previousMerged:: [${config.previousMerged}]" +
         s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
         s"to outbound export csv file for ACM and DDB.")
 
     val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[Operator](Nil))(storage.readFromParquet[Operator](_))
+    val currentIntegrated = storage.readFromParquet[Operator](config.integratedInputFile)
+    val currentMerged = config.currentMerged.fold(spark.createDataset[Operator](Nil))(storage.readFromParquet[Operator](_))
+    val previousMerged = config.previousMerged.fold(spark.createDataset[Operator](Seq()))(storage.readFromParquet[Operator](_))
+    val deletedOhubID = getDeletedOhubIdsWithTargetId(spark, previousIntegratedFile, currentIntegrated, previousMerged, currentMerged)
 
     export(
-      storage.readFromParquet[Operator](config.integratedInputFile),
-      previousIntegratedFile,
-      config.currentMerged.fold(spark.createDataset[Operator](Nil))(storage.readFromParquet[Operator](_)),
-      config.previousMerged.fold(spark.createDataset[Operator](Seq()))(storage.readFromParquet[Operator](_)),
+      currentIntegrated,
+      deletedOhubID.unionByName,
+      currentMerged,
+      previousMerged,
       config,
       spark
-    );
+    )
   }
 
 }
@@ -142,8 +152,8 @@ object OrderOutboundWriter extends ExportOutboundWriter[Order] with AcmOptions {
 object OrderLineOutboundWriter extends ExportOutboundWriter[OrderLine] with AcmOptions {
   override private[export] def entitySpecificFilter(spark: SparkSession, dataSet: Dataset[OrderLine], config: OutboundConfig) = {
     dataSet.filter(o ⇒ {
-      o.orderType.fold(true)(t=> !(t.equals("SSD") || t.equals("TRANSFER")))
-      })
+      o.orderType.fold(true)(t => !(t.equals("SSD") || t.equals("TRANSFER")))
+    })
   }
 
   override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[OrderLine]) = {
@@ -208,9 +218,9 @@ object AllAcmOutboundWriter extends SparkJobWithOutboundExportConfig {
         val currentMergedLocation = entity.engineGoldenFolderName.map(goldenFolderName => s"${config.integratedInputFile}/${entity.engineGoldenFolderName.get}.parquet")
         val previousMergedLocation = if (config.previousIntegratedInputFile.isDefined) {
           entity.engineGoldenFolderName.map(goldenFolderName => s"${config.previousIntegratedInputFile.get}/${entity.engineGoldenFolderName.get}.parquet")
-          } else {
-              None
-          }
+        } else {
+          None
+        }
 
         val mappingOutputLocation1 = config.mappingOutputLocation.map(mappingOutboundLocation => s"${mappingOutboundLocation}/${config.targetType}_${writer.entityName()}_MAPPING.json")
         writer.run(

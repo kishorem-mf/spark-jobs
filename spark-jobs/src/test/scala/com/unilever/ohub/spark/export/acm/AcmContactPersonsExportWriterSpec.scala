@@ -9,6 +9,7 @@ import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.domain.entity.TestContactPersons
 import com.unilever.ohub.spark.export.TargetType
+import com.unilever.ohub.spark.export.acm.ContactPersonOutboundWriter.getDeletedOhubIdsWithTargetId
 import com.unilever.ohub.spark.export.domain.InMemStorage
 import com.unilever.ohub.spark.{SparkJobSpec, export}
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -49,7 +50,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
 
   describe("ACM csv generation") {
     it("Should write correct csv") {
-      SUT.export(contactPersons, prevIntegrated, mergedDs, previousMergedDs, config, spark)
+      SUT.export(contactPersons, getDeletedOhubIdsWithTargetId(spark, prevIntegrated, contactPersons, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, config, spark)
 
       val result = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
@@ -60,7 +61,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
     it("Should fitler based on coutryCodes") {
       val configWithCountries = config.copy(countryCodes = Some(Seq("NL")))
 
-      SUT.export(contactPersons, prevIntegrated, mergedDs, previousMergedDs, configWithCountries, spark)
+      SUT.export(contactPersons, getDeletedOhubIdsWithTargetId(spark, prevIntegrated, contactPersons, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, configWithCountries, spark)
 
       val result = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
@@ -68,7 +69,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
     }
 
     it("Should contain header") {
-      SUT.export(contactPersons, prevIntegrated, mergedDs, previousMergedDs, config, spark)
+      SUT.export(contactPersons, getDeletedOhubIdsWithTargetId(spark, prevIntegrated, contactPersons, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, config, spark)
 
       val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
       val csvFile = fs.listStatus(new Path(config.outboundLocation)).find(status => status.getPath.getName.contains("UFS_RECIPIENTS")).get
@@ -78,7 +79,8 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
 
     it("Should write the conversionMapping in json format") {
       val mappingLocation = new Path(outboundLocation, "contactperson-mapping.json")
-      SUT.export(contactPersons, prevIntegrated, mergedDs, previousMergedDs, config.copy(mappingOutputLocation = Some(mappingLocation.toString)), spark)
+      SUT.export(contactPersons, getDeletedOhubIdsWithTargetId(spark, prevIntegrated, contactPersons, previousMergedDs, mergedDs).unionByName,
+        mergedDs, previousMergedDs, config.copy(mappingOutputLocation = Some(mappingLocation.toString)), spark)
 
       val mapper = new ObjectMapper() with ScalaObjectMapper
       mapper.registerModule(DefaultScalaModule)
@@ -113,7 +115,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
         defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("8888"), concatId = "AU~OHUB~8888", firstName = Some("New incoming Record"))
       ).toDataset
 
-      SUT.export(integratedDs, prevIntegratedDS, mergedDs, previousMergedDs, config, spark)
+      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark, prevIntegratedDS, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, config, spark)
 
       val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
@@ -148,7 +150,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
         defaultContactPerson.copy(ohubId = Some("3"), concatId = "AU~OHUB~3", isGoldenRecord = true)
       ).toDataset
 
-      SUT.export(integratedDs, prevIntegratedDs, mergedDs, previousMergedDs, config, spark)
+      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark, prevIntegratedDs, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, config, spark)
 
       val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
@@ -188,7 +190,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
         defaultContactPerson.copy(ohubId = Some("3"), concatId = "AU~OHUB~3", isGoldenRecord = true)
       ).toDataset
 
-      SUT.export(integratedDs, prevIntegratedDs, mergedDs, previousMergedDs, config, spark)
+      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark,  prevIntegratedDs, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, config, spark)
 
       val result = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
@@ -230,7 +232,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
         defaultContactPerson.copy(ohubId = Some("3"), concatId = "AU~OHUB~3", isGoldenRecord = true)
       ).toDataset
 
-      SUT.export(integratedDs, prevIntegratedDs, mergedDs, previousMergedDs, config, spark)
+      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark, prevIntegratedDs, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, config, spark)
 
       val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
@@ -294,7 +296,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
           emailAddress = Some("inv2@ohub.com"), mobileNumber = Some("+31612345"), isEmailAddressValid = Some(false))
       ).toDataset
 
-      SUT.export(integratedDs, prevIntegratedDS, mergedDs, previousMergedDs, config, spark)
+      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark, prevIntegratedDS, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, config, spark)
 
       val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
@@ -335,7 +337,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
         defaultContactPerson.copy(ohubId = Some("2"), concatId = "AU~OHUB~2", isGoldenRecord = true, isActive = true)
       ).toDataset
 
-      SUT.export(integratedDs, prevIntegratedDs, mergedDs, previousMergedDs, config, spark)
+      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark, prevIntegratedDs, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, config, spark)
 
       val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
@@ -380,7 +382,7 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
         defaultContactPerson.copy(ohubId = Some("6"), concatId = "AU~OHUB~6", isGoldenRecord = true, firstName=Some("Matthew"))
       ).toDataset
 
-      SUT.export(integratedDs, prevIntegratedDs, mergedDs, previousMergedDs, config, spark)
+      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark, prevIntegratedDs, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, config, spark)
 
       val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
