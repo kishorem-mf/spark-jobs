@@ -13,7 +13,7 @@ import com.unilever.ohub.spark.export.domain.InMemStorage
 import com.unilever.ohub.spark.{SparkJobSpec, export}
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.{Dataset, Row}
-import org.scalatest.{BeforeAndAfter, Matchers}
+import org.scalatest.{Assertion, BeforeAndAfter, Matchers}
 
 class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPersons with BeforeAndAfter with Matchers {
 
@@ -162,19 +162,24 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
         defaultContactPerson.copy(concatId = "AU~WUFOO~101", ohubId = Some("1"), isGoldenRecord = true),
         defaultContactPerson.copy(concatId = "AU~WUFOO~102", ohubId = Some("1")),
         defaultContactPerson.copy(concatId = "AU~WUFOO~103", ohubId = Some("2"), isGoldenRecord = true),
-        defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("2"))
+        defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("2")),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~901", ohubId = Some("5"), isGoldenRecord = true, isActive = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~902", ohubId = Some("5"), isActive = true)
       ).toDataset
 
       val integratedDs = Seq(
         defaultContactPerson.copy(concatId = "AU~WUFOO~101", ohubId = Some("1"), isGoldenRecord = true),
         defaultContactPerson.copy(concatId = "AU~WUFOO~102", ohubId = Some("3")),
         defaultContactPerson.copy(concatId = "AU~WUFOO~103", ohubId = Some("3")),
-        defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("3"), isGoldenRecord = true)
+        defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("3"), isGoldenRecord = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~901", ohubId = Some("5"), isGoldenRecord = true, isActive = false),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~902", ohubId = Some("5"), isActive = false)
       ).toDataset
 
       val previousMergedDs = Seq(
         defaultContactPerson.copy(ohubId = Some("1"), concatId = "AU~OHUB~1", isGoldenRecord = true),
-        defaultContactPerson.copy(ohubId = Some("2"), concatId = "AU~OHUB~2", isGoldenRecord = true)
+        defaultContactPerson.copy(ohubId = Some("2"), concatId = "AU~OHUB~2", isGoldenRecord = true),
+        defaultContactPerson.copy(ohubId = Some("5"), concatId = "AU~OHUB~5", isGoldenRecord = true)
       ).toDataset
 
       val mergedDs = Seq(
@@ -186,15 +191,17 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
 
       val result = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
-      result.collect().length shouldBe 2
+      result.collect().length shouldBe 3
       result.filter($"DELETE_FLAG" === "0").collect().length shouldBe 1
       result.filter($"DELETE_FLAG" === "0").select("CP_ORIG_INTEGRATION_ID").collect().head.toString() should include("3")
-      result.filter($"DELETE_FLAG" === "1").collect().length shouldBe 1
+      result.filter($"DELETE_FLAG" === "1").collect().length shouldBe 2
 
       /* We hav e one inconsintency, for deleted records and their concatid.
        * Because we look at the integrated for determining the deleted records and target groups, the concatid also comes from the integrated
        */
-      result.filter($"DELETE_FLAG" === "1").select("TARGET_OHUB_ID", "CP_LNKD_INTEGRATION_ID").collect().head.mkString(":") should include("3:AU~103~3~19")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "2").select("TARGET_OHUB_ID", "CP_LNKD_INTEGRATION_ID").collect().head.mkString(":") should include("3:AU~103~3~19")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "5").select("TARGET_OHUB_ID").first.getString(0) should equal(null)
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "5").select("DELETE_FLAG").first.getString(0) should equal("1")
     }
 
     it("should export only golden records and when all ohubId has changed in integrated , then delete ones should be sent") {
@@ -285,6 +292,87 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
       result.filter($"CP_ORIG_INTEGRATION_ID" === "8888").select($"CP_LNKD_INTEGRATION_ID").collect().head.toString() should include("AU~8888~3~183")
       result.filter($"CP_ORIG_INTEGRATION_ID" === "9999").select($"CP_LNKD_INTEGRATION_ID").collect().head.toString() should include("AU~9999~3~183")
       result.filter($"CP_ORIG_INTEGRATION_ID" === "7777").select($"CP_LNKD_INTEGRATION_ID").collect().head.toString() should include("AU~7777~3~183")
+    }
+
+    it("should send DE-ACTIVATED groups as deleted") {
+
+      val prevIntegratedDs = Seq(
+        defaultContactPerson.copy(concatId = "AU~WUFOO~101", ohubId = Some("1"), isGoldenRecord = true, isActive = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~102", ohubId = Some("1"), isActive = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("2"), isGoldenRecord = true, isActive = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~105", ohubId = Some("2"), isGoldenRecord = true, isActive = true)
+      ).toDataset
+
+      val integratedDs = Seq(
+        defaultContactPerson.copy(concatId = "AU~WUFOO~101", ohubId = Some("1"), isGoldenRecord = true, isActive = false),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~102", ohubId = Some("1"), isActive = false),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("2"), isGoldenRecord = true, isActive = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~105", ohubId = Some("2"), isGoldenRecord = false, isActive = false)
+      ).toDataset
+
+      val previousMergedDs = Seq(
+        defaultContactPerson.copy(ohubId = Some("1"), concatId = "AU~OHUB~1", isGoldenRecord = true, isActive = true),
+        defaultContactPerson.copy(ohubId = Some("2"), concatId = "AU~OHUB~2", isGoldenRecord = true, isActive = true)
+      ).toDataset
+
+      val mergedDs = Seq(
+        defaultContactPerson.copy(ohubId = Some("2"), concatId = "AU~OHUB~2", isGoldenRecord = true, isActive = true)
+      ).toDataset
+
+      SUT.export(integratedDs, prevIntegratedDs, mergedDs, previousMergedDs, config, spark)
+
+      val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
+
+      result.collect().length shouldBe 1
+      result.filter($"DELETE_FLAG" === "0").collect().length shouldBe 0
+      result.filter($"DELETE_FLAG" === "1").collect().length shouldBe 1
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "1").select("TARGET_OHUB_ID").first.getString(0) should equal(null)
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "1").select("DELETE_FLAG").first.getString(0) should equal("1")
+    }
+
+    it("should send changed groups and DE-ACTIVATED without interfering with each other") {
+
+      val prevIntegratedDs = Seq(
+        defaultContactPerson.copy(concatId = "AU~WUFOO~101", ohubId = Some("1"), isGoldenRecord = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~102", ohubId = Some("1")),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~103", ohubId = Some("2"), isGoldenRecord = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("2")),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~901", ohubId = Some("5"), isGoldenRecord = true, isActive = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~902", ohubId = Some("5"), isActive = true)
+      ).toDataset
+
+      val integratedDs = Seq(
+        defaultContactPerson.copy(concatId = "AU~WUFOO~101", ohubId = Some("3")),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~102", ohubId = Some("3")),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~103", ohubId = Some("3")),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("3"), isGoldenRecord = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~901", ohubId = Some("5"), isGoldenRecord = true, isActive = false),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~902", ohubId = Some("5"), isActive = false)
+      ).toDataset
+
+      val previousMergedDs = Seq(
+        defaultContactPerson.copy(ohubId = Some("1"), concatId = "AU~OHUB~1", isGoldenRecord = true),
+        defaultContactPerson.copy(ohubId = Some("2"), concatId = "AU~OHUB~2", isGoldenRecord = true),
+        defaultContactPerson.copy(ohubId = Some("5"), concatId = "AU~OHUB~5", isGoldenRecord = true)
+      ).toDataset
+
+      val mergedDs = Seq(
+        defaultContactPerson.copy(ohubId = Some("3"), concatId = "AU~OHUB~3", isGoldenRecord = true)
+      ).toDataset
+
+      SUT.export(integratedDs, prevIntegratedDs, mergedDs, previousMergedDs, config, spark)
+
+      val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
+
+      result.collect().length shouldBe 4
+      result.filter($"DELETE_FLAG" === "0").collect().length shouldBe 1
+      result.filter($"DELETE_FLAG" === "1").collect().length shouldBe 3
+      result.filter($"DELETE_FLAG" === "0").select("CP_ORIG_INTEGRATION_ID").collect().head.toString() should include("3")
+
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "2").select("TARGET_OHUB_ID", "CP_LNKD_INTEGRATION_ID", "DELETE_FLAG").collect().head.mkString(":") should include("3:AU~103~3~19:1")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "1").select("TARGET_OHUB_ID", "CP_LNKD_INTEGRATION_ID", "DELETE_FLAG").collect().head.mkString(":") should include("3:AU~101~3~19:1")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "5").select("TARGET_OHUB_ID").first.getString(0) should equal(null)
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "5").select("DELETE_FLAG").first.getString(0) should equal("1")
     }
   }
 

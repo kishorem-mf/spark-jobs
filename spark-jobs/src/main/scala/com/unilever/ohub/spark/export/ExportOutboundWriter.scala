@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.unilever.ohub.spark.domain.DomainEntity
+import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.export.TargetType.{ACM, DISPATCHER, TargetType}
 import com.unilever.ohub.spark.export.acm.ContactPersonOutboundWriter.getDeletedOhubIdsWithTargetId
@@ -200,7 +201,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
     val deltaIntegrated = commonTransform(currentMerged, previousMerged, config, spark)
     val filtered = filterValid(spark, deltaIntegrated, config).as[DomainType]
-    val processedChanged = filtered.unionByName(getDeletedOhubIdsWithTargetId(spark, previousIntegrated, currentIntegrated))
+    val processedChanged = filtered.unionByName(getDeletedOhubIdsWithTargetId(spark, previousIntegrated, currentIntegrated,previousMerged, currentMerged))
 
     val columnsInOrder = currentIntegrated.columns
     val result = processedChanged
@@ -332,7 +333,13 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
   /*
     This method is used only for Contactperson and Operators entity to send the deleted OHubIDs to ACM
    */
-  private[export] def getDeletedOhubIdsWithTargetId(spark: SparkSession, prevIntegratedDS: Dataset[DomainType], integratedDS: Dataset[DomainType]) = {
+  private[export] def getDeletedOhubIdsWithTargetId(
+    spark: SparkSession,
+    prevIntegratedDS: Dataset[DomainType],
+    integratedDS: Dataset[DomainType],
+    prevMergedDS: Dataset[DomainType],
+    currMergedDS: Dataset[DomainType]
+  ) = {
 
     import spark.implicits._
     import org.apache.spark.sql.functions._
@@ -341,17 +348,32 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       additionalFieldsMap + ("targetOhubId" -> targetOhubId)
     val setAdditionalFields = udf(appendTargetOhubIdToAdditionalFields)
 
+    // Fetch the ohubid that changed group
     val deletedOhubIdDataset = prevIntegratedDS
       .filter($"isGoldenRecord")
       .join(integratedDS.filter($"isGoldenRecord"), Seq("ohubId"), "left_anti")
       .withColumn("isActive", lit(false))
 
-    deletedOhubIdDataset
+    val deletedOhubIdList = deletedOhubIdDataset.select("ohubId").map(r => r(0).toString).collect.toList
+
+    // Set the target_ohub_id
+    val groupChange = deletedOhubIdDataset
       .join(integratedDS, Seq("concatId"), "left")
       .select(deletedOhubIdDataset("*"), integratedDS("ohubId") as ("targetOhubId"))
       .withColumn("additionalFields", setAdditionalFields($"additionalFields", $"targetOhubId"))
       .drop("targetOhubId")
       .as[DomainType]
+
+    // Get the remaining ohubids to be deleted because have been disabled
+    val disabled = prevMergedDS.drop("additionalFields", "ingestionErrors")
+      .except(currMergedDS.drop("additionalFields", "ingestionErrors"))
+      .filter(!$"ohubId".isin(deletedOhubIdList: _*))
+      .withColumn("additionalFields",  typedLit(Map[String, String]()))
+      .withColumn("ingestionErrors", typedLit(Map[String, IngestionError]()))
+      .withColumn("isActive", lit(false))
+      .as[DomainType]
+
+    disabled.union(groupChange.select(disabled.columns.head, disabled.columns.tail: _*).as[DomainType])
 
   }
 }
