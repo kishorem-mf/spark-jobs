@@ -14,6 +14,7 @@ import com.unilever.ohub.spark.{SparkJobSpec, export}
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.{Dataset, Row}
 import org.scalatest.{Assertion, BeforeAndAfter, Matchers}
+import org.spark_project.dmg.pmml.True
 
 class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPersons with BeforeAndAfter with Matchers {
 
@@ -275,13 +276,15 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
         defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("3211"), concatId = "AU~OHUB~3211"),
         defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("5555"), concatId = "AU~OHUB~5555"),
         defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("8888"), concatId = "AU~OHUB~8888",
-          firstName = Some("New incoming Record with email and phone"), emailAddress = Some("x@ohub.com"), mobileNumber = Some("090909")),
+          emailAddress = Some("x@ohub.com"), mobileNumber = Some("090909"), isEmailAddressValid = Some(true)),
         defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("9999"), concatId = "AU~OHUB~9999",
-          firstName = Some("New incoming Record with mobile only"), emailAddress = Some(""), mobileNumber = Some("090909")),
+          emailAddress = Some(""), mobileNumber = Some("090909")),
         defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("7777"), concatId = "AU~OHUB~7777",
-          firstName = Some("New incoming Record with email only"), emailAddress = Some("x@ohub.com"), mobileNumber = None),
+          emailAddress = Some("x@ohub.com"), mobileNumber = None, isEmailAddressValid = Some(true)),
         defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("6666"), concatId = "AU~OHUB~6666",
-          firstName = Some("New incoming Record without email nor phone"), emailAddress = Some(""), mobileNumber = None)
+          emailAddress = Some(""), mobileNumber = None),
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("4444"), concatId = "AU~OHUB~4444",
+          emailAddress = Some("x@ohub.com"), mobileNumber = None, isEmailAddressValid = Some(false))
       ).toDataset
 
       SUT.export(integratedDs, prevIntegratedDS, mergedDs, previousMergedDs, config, spark)
@@ -338,7 +341,8 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
         defaultContactPerson.copy(concatId = "AU~WUFOO~103", ohubId = Some("2"), isGoldenRecord = true),
         defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("2")),
         defaultContactPerson.copy(concatId = "AU~WUFOO~901", ohubId = Some("5"), isGoldenRecord = true, isActive = true),
-        defaultContactPerson.copy(concatId = "AU~WUFOO~902", ohubId = Some("5"), isActive = true)
+        defaultContactPerson.copy(concatId = "AU~WUFOO~902", ohubId = Some("5"), isActive = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~906", ohubId = Some("6"), firstName=Some("Rob"), isActive = true)
       ).toDataset
 
       val integratedDs = Seq(
@@ -347,32 +351,41 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
         defaultContactPerson.copy(concatId = "AU~WUFOO~103", ohubId = Some("3")),
         defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("3"), isGoldenRecord = true),
         defaultContactPerson.copy(concatId = "AU~WUFOO~901", ohubId = Some("5"), isGoldenRecord = true, isActive = false),
-        defaultContactPerson.copy(concatId = "AU~WUFOO~902", ohubId = Some("5"), isActive = false)
+        defaultContactPerson.copy(concatId = "AU~WUFOO~902", ohubId = Some("5"), isActive = false),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~906", ohubId = Some("6"), firstName=Some("Matthew"), isActive = true)
       ).toDataset
 
       val previousMergedDs = Seq(
         defaultContactPerson.copy(ohubId = Some("1"), concatId = "AU~OHUB~1", isGoldenRecord = true),
         defaultContactPerson.copy(ohubId = Some("2"), concatId = "AU~OHUB~2", isGoldenRecord = true),
-        defaultContactPerson.copy(ohubId = Some("5"), concatId = "AU~OHUB~5", isGoldenRecord = true)
+        defaultContactPerson.copy(ohubId = Some("5"), concatId = "AU~OHUB~5", isGoldenRecord = true),
+        defaultContactPerson.copy(ohubId = Some("6"), concatId = "AU~OHUB~6", isGoldenRecord = true, firstName=Some("Rob"))
       ).toDataset
 
       val mergedDs = Seq(
-        defaultContactPerson.copy(ohubId = Some("3"), concatId = "AU~OHUB~3", isGoldenRecord = true)
+        defaultContactPerson.copy(ohubId = Some("3"), concatId = "AU~OHUB~3", isGoldenRecord = true),
+        defaultContactPerson.copy(ohubId = Some("6"), concatId = "AU~OHUB~6", isGoldenRecord = true, firstName=Some("Matthew"))
       ).toDataset
 
       SUT.export(integratedDs, prevIntegratedDs, mergedDs, previousMergedDs, config, spark)
 
       val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
-      result.collect().length shouldBe 4
-      result.filter($"DELETE_FLAG" === "0").collect().length shouldBe 1
+      result.collect().length shouldBe 5
+      result.filter($"DELETE_FLAG" === "0").collect().length shouldBe 2
       result.filter($"DELETE_FLAG" === "1").collect().length shouldBe 3
-      result.filter($"DELETE_FLAG" === "0").select("CP_ORIG_INTEGRATION_ID").collect().head.toString() should include("3")
+
+      // Delete flags
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "5").select("DELETE_FLAG").first.getString(0) should equal("1")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "5").select("TARGET_OHUB_ID").first.getString(0) should equal(null)
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "1").select("DELETE_FLAG").first.getString(0) should equal("1")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "2").select("DELETE_FLAG").first.getString(0) should equal("1")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "3").select("DELETE_FLAG").first.getString(0) should equal("0")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "6").select("DELETE_FLAG").first.getString(0) should equal("0")
 
       result.filter($"CP_ORIG_INTEGRATION_ID" === "2").select("TARGET_OHUB_ID", "CP_LNKD_INTEGRATION_ID", "DELETE_FLAG").collect().head.mkString(":") should include("3:AU~103~3~19:1")
       result.filter($"CP_ORIG_INTEGRATION_ID" === "1").select("TARGET_OHUB_ID", "CP_LNKD_INTEGRATION_ID", "DELETE_FLAG").collect().head.mkString(":") should include("3:AU~101~3~19:1")
-      result.filter($"CP_ORIG_INTEGRATION_ID" === "5").select("TARGET_OHUB_ID").first.getString(0) should equal(null)
-      result.filter($"CP_ORIG_INTEGRATION_ID" === "5").select("DELETE_FLAG").first.getString(0) should equal("1")
+
     }
   }
 
