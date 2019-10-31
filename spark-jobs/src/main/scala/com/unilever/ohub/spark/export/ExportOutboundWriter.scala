@@ -365,11 +365,13 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       .as[DomainType]
 
     // Get the remaining ohubids to be deleted because have been disabled
-    val disabled = prevMergedDS.drop("additionalFields", "ingestionErrors")
-      .except(currMergedDS.drop("additionalFields", "ingestionErrors"))
+    val disabled_ohubids = prevMergedDS.select("ohubId")
+      .except(currMergedDS.select("ohubId"))
       .filter(!$"ohubId".isin(deletedOhubIdList: _*))
-      .withColumn("additionalFields",  typedLit(Map[String, String]()))
-      .withColumn("ingestionErrors", typedLit(Map[String, IngestionError]()))
+      .map(r => r(0).toString).collect.toList
+
+    val disabled = prevMergedDS
+      .filter($"ohubId".isin(disabled_ohubids: _*))
       .withColumn("isActive", lit(false))
       .as[DomainType]
 
