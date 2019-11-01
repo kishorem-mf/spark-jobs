@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.acm.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.ACMOutboundEntity
 
 case class AcmOrderLine(
     ORDERLINE_ID: String,
@@ -13,4 +13,4 @@ case class AcmOrderLine(
     CAMPAIGN_LABEL: String,
     COMMENTS: String,
     DELETED_FLAG: String
-) extends OutboundEntity
+) extends ACMOutboundEntity

@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.acm.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.ACMOutboundEntity
 
 case class AcmProduct(
                        COUNTY_CODE: String,
@@ -10,4 +10,4 @@ case class AcmProduct(
                        MRDR_CODE: String,
                        CREATED_AT: String,
                        UPDATED_AT: String,
-                       DELETE_FLAG: String) extends OutboundEntity
+                       DELETE_FLAG: String) extends ACMOutboundEntity

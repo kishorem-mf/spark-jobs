@@ -22,7 +22,9 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
         firstName = Some("olderOp"),
         ohubId = Some("tcMerge"),
         dateCreated = Some(Timestamp.valueOf("2017-10-16 18:09:49")),
-        sourceName = "EMAKINA"
+        sourceName = "EMAKINA",
+        concatId = "whatever111",
+        countryCode = "BR"
       )
 
       val cpMerge2 = defaultContactPersonGolden.copy(
@@ -30,14 +32,18 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
         firstName = Some("newerOp"),
         ohubId = Some("tcMerge"),
         dateCreated = Some(Timestamp.valueOf("2017-10-17 18:09:49")),
-        sourceName = "FUZZIT"
+        sourceName = "FUZZIT",
+        concatId = "whatever222",
+        countryCode = "BR"
       )
 
       val cpMerge3 = defaultContactPersonGolden.copy(
         dateUpdated = None,
         firstName = Some("anotherOldOp"),
         ohubId = Some("tcMerge"),
-        sourceName = "FUZZIT"
+        sourceName = "FUZZIT",
+        concatId = "whatever333",
+        countryCode = "BR"
       )
 
       val cpNoMerging = defaultContactPersonGolden.copy(
@@ -209,6 +215,11 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
 
       it("should output 1 record for each group with active ContactPersons") {
         result.length shouldBe (5)
+      }
+
+      it("should calculate the concatid as Merged Concat ID") {
+        val tcResult = result.filter(_.ohubId == Some("tcMerge"))
+        tcResult.head.concatId shouldBe "BR~OHUB~tcMerge"
       }
 
       it("should not output inactive groups") {

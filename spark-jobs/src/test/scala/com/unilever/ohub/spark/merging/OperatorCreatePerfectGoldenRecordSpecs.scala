@@ -22,14 +22,18 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
         name = Some("olderOp"),
         ohubId = Some("tcMerge"),
         dateCreated = Some(Timestamp.valueOf("2017-10-16 18:09:49")),
-        sourceName = "EMAKINA"
+        sourceName = "EMAKINA",
+        concatId = "whatever",
+        countryCode = "BR"
       )
 
       val opMerge2 = defaultOperatorGolden.copy(
         dateUpdated = None,
         name = Some("anotherOldOp"),
         ohubId = Some("tcMerge"),
-        sourceName = "FUZZIT"
+        sourceName = "FUZZIT",
+        concatId = "whatever555",
+        countryCode = "BR"
       )
 
       val opMerge3 = defaultOperatorGolden.copy(
@@ -37,7 +41,9 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
         name = Some("newerOp"),
         ohubId = Some("tcMerge"),
         dateCreated = Some(Timestamp.valueOf("2017-10-17 18:09:49")),
-        sourceName = "FUZZIT"
+        sourceName = "FUZZIT",
+        concatId = "whatever666",
+        countryCode = "BR"
       )
 
       val opNoMerging = defaultOperatorGolden.copy(
@@ -128,6 +134,11 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
 
       it("should output 1 record for each group with active operators") {
         result.length shouldBe (5)
+      }
+
+      it("should calculate the concatid as Merged Concat ID") {
+        val tcResult = result.filter(_.ohubId == Some("tcMerge"))
+        tcResult.head.concatId shouldBe "BR~OHUB~tcMerge"
       }
 
       it("should not output inactive groups") {

@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.acm.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.ACMOutboundEntity
 
 case class AcmOrder(
                      ORDER_ID: String,
@@ -39,4 +39,4 @@ case class AcmOrder(
                      INVOICE_COUNTRY: String,
                      COMMENTS: String,
                      VAT: String,
-                     DELETED_FLAG: String) extends OutboundEntity
+                     DELETED_FLAG: String) extends ACMOutboundEntity

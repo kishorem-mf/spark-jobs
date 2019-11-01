@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.dispatch.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.DispatcherOutboundEntity
 
 case class DispatchChain(
                           CHAIN_INTEGRATION_ID: String,
@@ -24,4 +24,4 @@ case class DispatchChain(
                           SEGMENT: String = "",
                           PRIMARY_MENU: String = "",
                           SECONDARY_MENU: String = ""
-                        ) extends OutboundEntity
+                        ) extends DispatcherOutboundEntity

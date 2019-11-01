@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.dispatch.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.DispatcherOutboundEntity
 
 case class DispatchSubscription(
     CP_ORIG_INTEGRATION_ID: String,
@@ -15,4 +15,4 @@ case class DispatchSubscription(
     SUBSCRIPTION_DATE: String,
     SUBSCRIPTION_CONFIRMED: String,
     SUBSCRIPTION_CONFIRMED_DATE: String,
-    SUBSCRIPTION_EMAIL_ADDRESS: String = "") extends OutboundEntity
+    SUBSCRIPTION_EMAIL_ADDRESS: String = "") extends DispatcherOutboundEntity

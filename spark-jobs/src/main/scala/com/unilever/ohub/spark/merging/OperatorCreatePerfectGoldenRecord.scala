@@ -12,9 +12,9 @@ object OperatorCreatePerfectGoldenRecord extends BaseMerging[OperatorGolden] {
 
     log.info(s"Creating golden operators records based on [${config.inputFile}] and writing them to [${config.outputFile}]")
 
-    val entities = storage.readFromParquet[OperatorGolden](config.inputFile)
+    val entity = storage.readFromParquet[OperatorGolden](config.inputFile)
 
-    val transformed = transform(spark, entities)
+    val transformed = transform(spark, entity)
 
     storage.writeToParquet(transformed, config.outputFile)
   }

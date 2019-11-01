@@ -31,7 +31,7 @@ object CampaignBounceConverter extends CommonDomainGateKeeper[CampaignBounce] wi
       ohubUpdated                 = ohubCreated,
       dateCreated                 = optional(                   "dateCreated",          parseDateTimeUnsafe()),
       dateUpdated                 = optional(                   "dateUpdated",          parseDateTimeUnsafe()),
-      ohubId                      = Option.empty,
+      ohubId                      = Option.empty[String],
       isGoldenRecord              = true, // Not specified when is true in mapping, so always golden...
 
       deliveryLogId               = mandatory(                  "deliveryLogId"),
@@ -40,15 +40,15 @@ object CampaignBounceConverter extends CommonDomainGateKeeper[CampaignBounce] wi
       deliveryId                  = mandatory(                  "deliveryId"),
       deliveryName                = mandatory(                  "deliveryName"),
       communicationChannel        = mandatory(                  "communicationChannel"),
-      contactPersonConcatId       = mandatory(                  "contactPersonConcatId"),
-      contactPersonOhubId         = Option.empty,
+      contactPersonConcatId       = Option.empty[String],
+      contactPersonOhubId         = mandatory(                  "contactPersonOhubId"),
       bounceDate                  = mandatory(                  "bounceDate",           parseDateTimeUnsafe()),
       failureType                 = mandatory(                  "failureType"),
       failureReason               = mandatory(                  "failureReason"),
       isControlGroupMember        = mandatory(                  "isControlGroupMember",toBoolean),
       isProofGroupMember          = mandatory(                  "isProofGroupMember",  toBoolean),
-      operatorConcatId            = optional(                   "operatorConcatId"),
-      operatorOhubId              = Option.empty,
+      operatorConcatId            = Option.empty[String],
+      operatorOhubId              = optional(                   "operatorOhubId"),
 
       additionalFields            = additionalFields,
       ingestionErrors             = errors

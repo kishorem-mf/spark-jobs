@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.dispatch.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.DispatcherOutboundEntity
 
 case class DispatchOrderLine(
     COUNTRY_CODE: String,
@@ -18,4 +18,4 @@ case class DispatchOrderLine(
     UNIT_PRICE_CURRENCY: String,
     ODS_CREATED: String,
     ODS_UPDATED: String
-) extends OutboundEntity
+) extends DispatcherOutboundEntity

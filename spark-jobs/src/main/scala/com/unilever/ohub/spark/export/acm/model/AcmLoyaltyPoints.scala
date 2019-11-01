@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.export.acm.model
 
-import com.unilever.ohub.spark.export.OutboundEntity
+import com.unilever.ohub.spark.export.ACMOutboundEntity
 
 case class AcmLoyaltyPoints(
                              CP_ORIG_INTEGRATION_ID: String,
@@ -15,5 +15,5 @@ case class AcmLoyaltyPoints(
                              REWARD_NAME: String,
                              REWARD_IMAGE_URL: String,
                              REWARD_LDP_URL: String,
-                             REWARD_EANCODE: String) extends OutboundEntity
+                             REWARD_EANCODE: String) extends ACMOutboundEntity
                              //LOYALTY_POINT_ID: String)

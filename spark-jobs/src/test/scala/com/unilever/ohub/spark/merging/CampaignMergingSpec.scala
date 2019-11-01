@@ -82,7 +82,7 @@ class CampaignMergingSpec extends SparkJobSpec with TestCampaigns with TestConta
       result(3).ohubId shouldBe Some("oldId")
     }
 
-    it("should copy ohubId from contactperson and operator") {
+    it("should copy concatId from contactperson and operator") {
       val previous = Seq[Campaign]().toDataset
 
       val contactPerson = defaultContactPerson.copy(
@@ -91,7 +91,7 @@ class CampaignMergingSpec extends SparkJobSpec with TestCampaigns with TestConta
       )
 
       val updatedRecord = defaultCampaign.copy(
-        contactPersonConcatId = "123"
+        contactPersonOhubId = "456"
       )
 
       val contactPersons = spark.createDataset(Seq(contactPerson))
@@ -101,7 +101,7 @@ class CampaignMergingSpec extends SparkJobSpec with TestCampaigns with TestConta
       val result = SUT.transform(spark, input, contactPersons, previous).collect()
 
       result.length shouldBe 1
-      result(0).contactPersonOhubId shouldBe Some("456")
+      result(0).contactPersonConcatId shouldBe Some("123")
     }
   }
 }

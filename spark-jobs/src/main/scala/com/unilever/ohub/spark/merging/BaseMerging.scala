@@ -16,6 +16,12 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
   def transform(spark: SparkSession, ds: Dataset[T]): Dataset[T] = {
     import spark.implicits._
 
+
+    val calConcatId = udf((countryCode: String, ohubId: String) => {
+      val ohub2SourceName = "OHUB"
+      Seq(countryCode, ohub2SourceName, ohubId).mkString("~")
+    } )
+
     val groupWindow = Window.partitionBy($"ohubId")
 
     val orderByDatesWindow = groupWindow.orderBy(
@@ -41,6 +47,7 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
       .filter($"group_row_num" === 1)
       .drop("group_row_num")
       .withColumn("isGoldenRecord", lit(true))
+      .withColumn("concatId", calConcatId($"countryCode", $"ohubId"))
       .withColumn("additionalFields", typedLit(Map[String, String]()))
       .withColumn("ingestionErrors", typedLit(Map[String, IngestionError]()))
       .as[T]
@@ -71,8 +78,10 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
   }
 
   private[merging] def setFieldsToLatestValue(
-    spark: SparkSession, orderByDatesWindow: WindowSpec,
-    dataframe: DataFrame, excludeFields: Seq[String] = Seq(),
+    spark: SparkSession,
+    orderByDatesWindow: WindowSpec,
+    dataframe: DataFrame,
+    excludeFields: Seq[String] = Seq(),
     reversedOrderColumns: Seq[String] = Seq()
   ): DataFrame = {
     // Set all columns of dataset on the first value of it's newestNotNullWindow
@@ -81,7 +90,7 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
     val columns = dataframe.columns.filter(!excludeFields.contains(_))
     val columnsModified = columns.map(column ⇒ prefixNewColumn + column)
 
-    var dataframeModified: DataFrame = columns
+    val dataframeModified: DataFrame = columns
       .foldLeft(dataframe)(
         (op: DataFrame, column: String) ⇒ {
 

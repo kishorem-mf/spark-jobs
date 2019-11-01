@@ -10,8 +10,8 @@ import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OptionParser
 
 case class CampaignBounceMergingConfig(
-                                        contactPersonIntegrated: String = "contact-person-integrated",
-                                        operatorIntegrated: String = "operator-integrated",
+                                        contactPersonGolden: String = "contact-person-integrated",
+                                        operatorGolden: String = "operator-integrated",
                                         previousIntegrated: String = "previous-integrated-campaigns",
                                         campaignBounceInputFile: String = "campaign-bounce-input-file",
                                         outputFile: String = "path-to-output-file"
@@ -44,15 +44,15 @@ object CampaignBounceMerging extends SparkJob[CampaignBounceMergingConfig] {
           }
       }
       // update cpn ids
-      .joinWith(contactPersons, $"contactPersonConcatId" === contactPersons("concatId"), JoinType.Left)
+      .joinWith(contactPersons, $"contactPersonOhubId" === contactPersons("ohubId"), JoinType.Left)
       .map {
-        case (bounce: CampaignBounce, cpn: ContactPerson) => bounce.copy(contactPersonOhubId = cpn.ohubId)
+        case (bounce: CampaignBounce, cpn: ContactPerson) => bounce.copy(contactPersonConcatId = Some(cpn.concatId))
         case (bounce, _) ⇒ bounce
       }
       // update opr ids
-      .joinWith(operators, $"operatorConcatId" === operators("concatId"), JoinType.Left)
+      .joinWith(operators, $"operatorOhubId" === operators("ohubId"), JoinType.Left)
       .map {
-        case (bounce: CampaignBounce, opr: Operator) ⇒ bounce.copy(operatorOhubId = opr.ohubId)
+        case (bounce: CampaignBounce, opr: Operator) ⇒ bounce.copy(operatorConcatId = Some(opr.concatId))
         case (bounce, _) => bounce
       }
   }
@@ -62,12 +62,12 @@ object CampaignBounceMerging extends SparkJob[CampaignBounceMergingConfig] {
   override private[spark] def configParser(): OptionParser[CampaignBounceMergingConfig] =
     new scopt.OptionParser[CampaignBounceMergingConfig]("Order merging") {
       head("merges campaignsBounces into an integrated campaignBounces output file.", "1.0")
-      opt[String]("contactPersonIntegrated") required() action { (x, c) ⇒
-        c.copy(contactPersonIntegrated = x)
-      } text "contactPersonIntegrated is a string property"
-      opt[String]("operatorIntegrated") required() action { (x, c) ⇒
-        c.copy(operatorIntegrated = x)
-      } text "operatorIntegrated is a string property"
+      opt[String]("contactPersonGolden") required() action { (x, c) ⇒
+        c.copy(contactPersonGolden = x)
+      } text "contactPersonGolden is a string property"
+      opt[String]("operatorGolden") required() action { (x, c) ⇒
+        c.copy(operatorGolden = x)
+      } text "operatorGolden is a string property"
       opt[String]("campaignBounceInputFile") required() action { (x, c) ⇒
         c.copy(campaignBounceInputFile = x)
       } text "campaignBounceInputFile is a string property"
@@ -90,8 +90,8 @@ object CampaignBounceMerging extends SparkJob[CampaignBounceMergingConfig] {
 
     val campaignBounceRecords = storage.readFromParquet[CampaignBounce](config.campaignBounceInputFile)
     val previousIntegrated = storage.readFromParquet[CampaignBounce](config.previousIntegrated)
-    val contactPersons = storage.readFromParquet[ContactPerson](config.contactPersonIntegrated)
-    val operators = storage.readFromParquet[Operator](config.operatorIntegrated)
+    val contactPersons = storage.readFromParquet[ContactPerson](config.contactPersonGolden)
+    val operators = storage.readFromParquet[Operator](config.operatorGolden)
 
     val transformed = transform(spark, campaignBounceRecords, contactPersons, operators, previousIntegrated)
 

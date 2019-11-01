@@ -35,8 +35,8 @@ class CampaignConverterSpec extends CsvDomainGateKeeperSpec[Campaign] {
           ohubId = Option.empty,
           isGoldenRecord = true,
 
-          contactPersonConcatId = "US~ANTHEM~999654",
-          contactPersonOhubId = Option.empty,
+          contactPersonConcatId = None,
+          contactPersonOhubId = "999654",
           campaignId = "345882796",
           campaignName = Some("20180320_IC_AO_MAR19AfricaRisingNewsletter_NAM_us_en"),
           deliveryId = "347696686",

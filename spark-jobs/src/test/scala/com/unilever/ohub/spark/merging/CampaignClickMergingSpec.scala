@@ -85,7 +85,7 @@ class CampaignClickMergingSpec extends SparkJobSpec with TestCampaignClicks with
       result(3).ohubId shouldBe Some("oldId")
     }
 
-    it("should copy ohubId from contactperson and operator") {
+    it("should copy concatId from contactperson and operator") {
       val previous = Seq[CampaignClick]().toDataset
 
       val contactPerson = defaultContactPerson.copy(
@@ -99,8 +99,8 @@ class CampaignClickMergingSpec extends SparkJobSpec with TestCampaignClicks with
       )
 
       val updatedRecord = defaultCampaignClick.copy(
-        contactPersonConcatId = "123",
-        operatorConcatId = Some("789")
+        contactPersonOhubId = "456",
+        operatorOhubId = Some("101112")
       )
 
       val contactPersons = spark.createDataset(Seq(contactPerson))
@@ -112,8 +112,8 @@ class CampaignClickMergingSpec extends SparkJobSpec with TestCampaignClicks with
       val result = SUT.transform(spark, input, contactPersons, operators, previous).collect()
 
       result.length shouldBe 1
-      result(0).contactPersonOhubId shouldBe Some("456")
-      result(0).operatorOhubId shouldBe Some("101112")
+      result(0).contactPersonConcatId shouldBe Some("123")
+      result(0).operatorConcatId shouldBe Some("789")
     }
   }
 }

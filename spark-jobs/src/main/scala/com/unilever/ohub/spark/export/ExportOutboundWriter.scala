@@ -8,7 +8,11 @@ import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.unilever.ohub.spark.domain.DomainEntity
+import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
+import com.unilever.ohub.spark.domain.entity.ContactPerson
 import com.unilever.ohub.spark.export.TargetType.{ACM, DISPATCHER, TargetType}
+import com.unilever.ohub.spark.export.acm.ContactPersonOutboundWriter.getDeletedOhubIdsWithTargetId
+import com.unilever.ohub.spark.export.acm.model.AcmContactPerson
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
@@ -25,13 +29,15 @@ object TargetType extends Enumeration {
 }
 
 case class OutboundConfig(
-                           integratedInputFile: String = "integrated-input-file",
-                           previousIntegratedInputFile: Option[String] = None,
-                           targetType: TargetType = ACM,
-                           outboundLocation: String = "outbound-location",
-                           countryCodes: Option[Seq[String]] = None,
-                           mappingOutputLocation: Option[String] = None
-                         ) extends SparkJobConfig
+  integratedInputFile: String = "integrated-input-file",
+  previousIntegratedInputFile: Option[String] = None,
+  targetType: TargetType = ACM,
+  outboundLocation: String = "outbound-location",
+  countryCodes: Option[Seq[String]] = None,
+  mappingOutputLocation: Option[String] = None,
+  currentMerged: Option[String] = None,
+  previousMerged: Option[String] = None
+) extends SparkJobConfig
 
 abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig] {
   override private[spark] def configParser(): OptionParser[OutboundConfig] =
@@ -56,6 +62,12 @@ abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig]
       opt[String]("mappingOutputLocation") optional() action { (x, c) =>
         c.copy(mappingOutputLocation = Some(x))
       } text "mappingOutputFile is a string property"
+      opt[String]("currentMergedIntegratedInputFile") optional() action { (x, c) ⇒
+        c.copy(currentMerged = Some(x))
+      } text "current Merged Integrated InputFile is a string property"
+      opt[String]("previousMergedIntegratedInputFile") optional() action { (x, c) ⇒
+        c.copy(previousMerged = Some(x))
+      } text "previous Merged Integrated is a string property"
       version("1.0")
       help("help") text "help text"
     }
@@ -78,18 +90,13 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   private[export] def goldenRecordOnlyFilter(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet.filter((row: DomainType) => row.isGoldenRecord)
 
-  private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[DomainType], config: OutboundConfig) = dataSet
+  private[export] def entitySpecificFilter(spark: SparkSession, dataSet: Dataset[DomainType], config: OutboundConfig) = dataSet
+
+  private[export] def filterValid[GenericOutboundEntity <: OutboundEntity](spark: SparkSession, dataSet: Dataset[_], config: OutboundConfig) = dataSet
 
   private[export] def convertDataSet(spark: SparkSession, dataSet: Dataset[DomainType]): Dataset[_]
 
   private[export] def explainConversion: Option[DomainType => _ <: OutboundEntity] = None
-
-  private[export] def getDeletedOhubIdsFromPreviousIntegrated(
-         spark: SparkSession,
-         filteredEntities: Dataset[DomainType],
-         previousIntegratedEntities: Dataset[DomainType],
-         integratedEntities: Dataset[DomainType]) : Dataset[DomainType] = filteredEntities
-
 
   def entityName(): String
 
@@ -97,7 +104,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   val onlyExportChangedRows = true
 
-  def mergeCsvFiles(targetType: TargetType):Boolean = true
+  def mergeCsvFiles(targetType: TargetType): Boolean = true
+
   // When merging, headers are based on the dataset columns (and not writen by DataSet.write.csv)
   private def shouldWriteHeaders(targetType: TargetType) = (!mergeCsvFiles(targetType)).toString
 
@@ -112,40 +120,97 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     import spark.implicits._
 
-    log.info(s"writing integrated entities [${config.integratedInputFile}] to outbound export csv file for ACM and DDB.")
+    log.info(
+      s"writing integrated entities ::   [${config.integratedInputFile}] " +
+      s"with parameters currentMerged :: [${config.currentMerged}]" +
+      s"with parameters previousMerged:: [${config.previousMerged}]" +
+      s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
+      s"to outbound export csv file for ACM and DDB.")
 
-    val previousIntegratedFile = config.previousIntegratedInputFile match {
-      case Some(location) => storage.readFromParquet[DomainType](location)
-      case None => spark.createDataset[DomainType](Seq())
-    }
+    val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[DomainType](Nil))(storage.readFromParquet[DomainType](_))
 
-    export(storage.readFromParquet[DomainType](config.integratedInputFile), previousIntegratedFile, config, spark);
+    export(storage.readFromParquet[DomainType](config.integratedInputFile), previousIntegratedFile, config, spark)
   }
 
-  def export(integratedEntities: Dataset[DomainType], previousIntegratedEntities: Dataset[DomainType], config: OutboundConfig, spark: SparkSession) {
+  /** Get Different Rows between two datasets */
+  def getDifferentRows(spark: SparkSession, current: Dataset[DomainType], previous: Dataset[DomainType]): Dataset[DomainType] = {
+    if (onlyExportChangedRows) filterOnlyChangedRows(current, previous, spark) else current
+  }
+
+  /** Applies a set of pre-processing steps
+   *
+   * Transformations applied:
+   *  - filter golden records for (ACM only)
+   *  - filter on selected countries
+   *  - entity-specific transformations (implemented in subclass)
+   *
+   * @param dataset the current dataset
+   */
+  private def preProcess(spark: SparkSession, config: OutboundConfig, dataset: Dataset[DomainType]) = {
     import spark.implicits._
 
     val domainEntities = config.targetType match {
-      case ACM ⇒ goldenRecordOnlyFilter(spark, integratedEntities)
-      case _ ⇒ integratedEntities
+      case ACM ⇒ goldenRecordOnlyFilter(spark, dataset)
+      case _ ⇒ dataset
     }
 
     val filteredByCountries = if (config.countryCodes.isDefined) domainEntities.filter($"countryCode".isin(config.countryCodes.get: _*)) else domainEntities
+    entitySpecificFilter(spark, filteredByCountries, config)
+  }
 
-    val columnsInOrder = filteredByCountries.columns
-    val filtered: Dataset[DomainType] = filterDataSet(spark, filteredByCountries, config)
+  def commonTransform(integrated: Dataset[DomainType], previousIntegrated: Dataset[DomainType], config: OutboundConfig, spark: SparkSession
+  ): Dataset[DomainType] = {
+    val preProcessedDataset: Dataset[DomainType] = preProcess(spark, config, integrated)
+    getDifferentRows(spark, preProcessedDataset, previousIntegrated)
+  }
 
-    val filteredEntities = if (onlyExportChangedRows) filterOnlyChangedRows(filtered, previousIntegratedEntities, spark) else filtered
+  def export(
+    currentIntegrated: Dataset[DomainType],
+    previousIntegrated: Dataset[DomainType],
+    config: OutboundConfig,
+    spark: SparkSession
+  ) {
+    import spark.implicits._
 
-    val processedChanged = getDeletedOhubIdsFromPreviousIntegrated(spark, filteredEntities, previousIntegratedEntities, integratedEntities)
+    val deltaIntegrated = commonTransform(currentIntegrated, previousIntegrated, config, spark)
 
+    val columnsInOrder = currentIntegrated.columns
+    val result = deltaIntegrated
+      .select(columnsInOrder.head, columnsInOrder.tail: _*)
+      .as[DomainType]
+
+    if (config.mappingOutputLocation.isDefined && explainConversion.isDefined && currentIntegrated.head(1).nonEmpty) {
+      log.info(s"ConversionExplanation found, writing output to ${config.mappingOutputLocation.get}")
+      val mapping = explainConversion.get.apply(currentIntegrated.head)
+      writeToJson(spark, new Path(config.mappingOutputLocation.get), deserializeJsonFields(mapping))
+    }
+
+    val outputDataset = filterValid(spark, convertDataSet(spark, result), config)
+    writeToCsv(config, outputDataset, spark)
+  }
+
+  def export(
+    currentIntegrated: Dataset[DomainType],
+    previousIntegrated: Dataset[DomainType],
+    currentMerged: Dataset[DomainType],
+    previousMerged: Dataset[DomainType],
+    config: OutboundConfig,
+    spark: SparkSession
+  ) {
+    import spark.implicits._
+
+    val deltaIntegrated = commonTransform(currentMerged, previousMerged, config, spark)
+    val filtered = filterValid(spark, deltaIntegrated, config).as[DomainType]
+    val processedChanged = filtered.unionByName(getDeletedOhubIdsWithTargetId(spark, previousIntegrated, currentIntegrated,previousMerged, currentMerged))
+
+    val columnsInOrder = currentIntegrated.columns
     val result = processedChanged
       .select(columnsInOrder.head, columnsInOrder.tail: _*)
       .as[DomainType]
 
-    if (config.mappingOutputLocation.isDefined && explainConversion.isDefined && domainEntities.head(1).nonEmpty) {
+    if (config.mappingOutputLocation.isDefined && explainConversion.isDefined && currentIntegrated.head(1).nonEmpty) {
       log.info(s"ConversionExplanation found, writing output to ${config.mappingOutputLocation.get}")
-      val mapping = explainConversion.get.apply(domainEntities.head)
+      val mapping = explainConversion.get.apply(currentIntegrated.head)
       writeToJson(spark, new Path(config.mappingOutputLocation.get), deserializeJsonFields(mapping))
     }
 
@@ -168,8 +233,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
     // This will result in forming condition "dataset(col1) <=> prevInteg(col1) AND dataset(col2) <=> prevInteg(col2)  and so on
     val joinClause = originalJoinColumns
-                     .map((columnName: String) => dataset(columnName) <=> previousIntegratedFile(columnName))
-                     .reduce((prev, curr) => prev && curr)
+      .map((columnName: String) => dataset(columnName) <=> previousIntegratedFile(columnName))
+      .reduce((prev, curr) => prev && curr)
 
     dataset.join(previousIntegratedFile, joinClause, JoinType.LeftAnti).as[DomainType]
 
@@ -268,7 +333,13 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
   /*
     This method is used only for Contactperson and Operators entity to send the deleted OHubIDs to ACM
    */
-  private[export] def getDeletedOhubIdsWithTargetId(spark: SparkSession, prevIntegratedDS: Dataset[DomainType], integratedDS: Dataset[DomainType]) = {
+  private[export] def getDeletedOhubIdsWithTargetId(
+    spark: SparkSession,
+    prevIntegratedDS: Dataset[DomainType],
+    integratedDS: Dataset[DomainType],
+    prevMergedDS: Dataset[DomainType],
+    currMergedDS: Dataset[DomainType]
+  ) = {
 
     import spark.implicits._
     import org.apache.spark.sql.functions._
@@ -277,17 +348,34 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       additionalFieldsMap + ("targetOhubId" -> targetOhubId)
     val setAdditionalFields = udf(appendTargetOhubIdToAdditionalFields)
 
+    // Fetch the ohubid that changed group
     val deletedOhubIdDataset = prevIntegratedDS
       .filter($"isGoldenRecord")
       .join(integratedDS.filter($"isGoldenRecord"), Seq("ohubId"), "left_anti")
       .withColumn("isActive", lit(false))
 
-    deletedOhubIdDataset
+    val deletedOhubIdList = deletedOhubIdDataset.select("ohubId").map(r => r(0).toString).collect.toList
+
+    // Set the target_ohub_id
+    val groupChange = deletedOhubIdDataset
       .join(integratedDS, Seq("concatId"), "left")
       .select(deletedOhubIdDataset("*"), integratedDS("ohubId") as ("targetOhubId"))
       .withColumn("additionalFields", setAdditionalFields($"additionalFields", $"targetOhubId"))
       .drop("targetOhubId")
       .as[DomainType]
+
+    // Get the remaining ohubids to be deleted because have been disabled
+    val disabled_ohubids = prevMergedDS.select("ohubId")
+      .except(currMergedDS.select("ohubId"))
+      .filter(!$"ohubId".isin(deletedOhubIdList: _*))
+      .map(r => r(0).toString).collect.toList
+
+    val disabled = prevMergedDS
+      .filter($"ohubId".isin(disabled_ohubids: _*))
+      .withColumn("isActive", lit(false))
+      .as[DomainType]
+
+    disabled.union(groupChange.select(disabled.columns.head, disabled.columns.tail: _*).as[DomainType])
 
   }
 }

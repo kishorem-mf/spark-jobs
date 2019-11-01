@@ -42,7 +42,7 @@ abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends 
 
   def customExportFiltering(spark: SparkSession, dataSet: Dataset[DomainType], targetType: TargetType): Dataset[DomainType] = dataSet
 
-  override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[DomainType], config: OutboundConfig): Dataset[DomainType] = {
+  override private[export] def entitySpecificFilter(spark: SparkSession, dataSet: Dataset[DomainType], config: OutboundConfig): Dataset[DomainType] = {
     import spark.implicits._
 
     val preFiltered = customExportFiltering(spark, dataSet, config.targetType)

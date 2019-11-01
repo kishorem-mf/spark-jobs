@@ -2,7 +2,7 @@ package com.unilever.ohub.spark.export.acm
 
 import com.unilever.ohub.spark.domain.DomainEntityUtils
 import com.unilever.ohub.spark.domain.entity._
-import com.unilever.ohub.spark.export.acm.model._
+import com.unilever.ohub.spark.export.acm.model.{AcmContactPerson, _}
 import com.unilever.ohub.spark.export.{CsvOptions, ExportOutboundWriter, OutboundConfig, SparkJobWithOutboundExportConfig}
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{Dataset, SparkSession}
@@ -18,23 +18,44 @@ trait AcmOptions extends CsvOptions {
 }
 
 object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] with AcmOptions {
+
   override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[ContactPerson]) = {
     import spark.implicits._
     dataSet.map(ContactPersonAcmConverter.convert(_))
+  }
+
+  override private[export] def filterValid[AcmContactPerson](spark: SparkSession, dataSet: Dataset[_], config: OutboundConfig) = {
+    import spark.implicits._
+    dataSet.filter(
+      ($"emailAddress".isNotNull && $"emailAddress" =!= "" && $"isEmailAddressValid" === true) ||
+      ($"mobileNumber".isNotNull && $"mobileNumber" =!= "")
+    )
   }
 
   override def explainConversion: Option[ContactPerson => AcmContactPerson] = Some((input: ContactPerson) => ContactPersonAcmConverter.convert(input, true))
 
   override def entityName(): String = "RECIPIENTS"
 
-  override def getDeletedOhubIdsFromPreviousIntegrated(
-        spark: SparkSession,
-        filteredEntities: Dataset[ContactPerson],
-       previousIntegratedEntities: Dataset[ContactPerson],
-       integratedEntities: Dataset[ContactPerson]) : Dataset[ContactPerson]  = {
-    val datasetWithTargetOhubId = getDeletedOhubIdsWithTargetId(spark, previousIntegratedEntities, integratedEntities)
+  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
+    import spark.implicits._
 
-    filteredEntities.unionByName(datasetWithTargetOhubId)
+    log.info(
+        s" For CP writing integrated entities ::   [${config.integratedInputFile}] " +
+        s"with parameters currentMerged :: [${config.currentMerged}]" +
+        s"with parameters previousMerged:: [${config.previousMerged}]" +
+        s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
+        s"to outbound export csv file for ACM and DDB.")
+    val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_))
+
+
+    export(
+      storage.readFromParquet[ContactPerson](config.integratedInputFile),
+      previousIntegratedFile,
+      config.currentMerged.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_)),
+      config.previousMerged.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_)),
+      config,
+      spark
+    )
   }
 }
 
@@ -48,13 +69,26 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with AcmOpt
 
   override def entityName(): String = "OPERATORS"
 
-  override def getDeletedOhubIdsFromPreviousIntegrated(
-      spark: SparkSession,
-      filteredEntities: Dataset[Operator],
-      previousIntegratedEntities: Dataset[Operator],
-      integratedEntities: Dataset[Operator]): Dataset[Operator]  = {
-    val datasetWithTargetOhubId = getDeletedOhubIdsWithTargetId(spark, previousIntegratedEntities, integratedEntities)
-    filteredEntities.unionByName(datasetWithTargetOhubId)
+  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
+    import spark.implicits._
+
+    log.info(
+        s"For OP writing integrated entities ::   [${config.integratedInputFile}] " +
+        s"with parameters currentMerged :: [${config.currentMerged}]" +
+        s"with parameters previousMerged:: [${config.previousMerged}]" +
+        s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
+        s"to outbound export csv file for ACM and DDB.")
+
+    val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[Operator](Nil))(storage.readFromParquet[Operator](_))
+
+    export(
+      storage.readFromParquet[Operator](config.integratedInputFile),
+      previousIntegratedFile,
+      config.currentMerged.fold(spark.createDataset[Operator](Nil))(storage.readFromParquet[Operator](_)),
+      config.previousMerged.fold(spark.createDataset[Operator](Seq()))(storage.readFromParquet[Operator](_)),
+      config,
+      spark
+    );
   }
 
 }
@@ -90,7 +124,7 @@ object OrderOutboundWriter extends ExportOutboundWriter[Order] with AcmOptions {
   override def explainConversion: Option[Order => AcmOrder] = Some((input: Order) => OrderAcmConverter.convert(input, true))
 
 
-  override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[Order], config: OutboundConfig) = {
+  override private[export] def entitySpecificFilter(spark: SparkSession, dataSet: Dataset[Order], config: OutboundConfig) = {
     import spark.implicits._
     dataSet.filter(!$"type".isin("SSD", "TRANSFER"));
   }
@@ -99,13 +133,10 @@ object OrderOutboundWriter extends ExportOutboundWriter[Order] with AcmOptions {
 }
 
 object OrderLineOutboundWriter extends ExportOutboundWriter[OrderLine] with AcmOptions {
-  override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[OrderLine], config: OutboundConfig) = {
+  override private[export] def entitySpecificFilter(spark: SparkSession, dataSet: Dataset[OrderLine], config: OutboundConfig) = {
     dataSet.filter(o ⇒ {
-      o.orderType match {
-        case Some(t) ⇒ !(t.equals("SSD") || t.equals("TRANSFER"))
-        case None ⇒ true
-      }
-    })
+      o.orderType.fold(true)(t=> !(t.equals("SSD") || t.equals("TRANSFER")))
+      })
   }
 
   override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[OrderLine]) = {
@@ -126,7 +157,7 @@ object ActivityOutboundWriter extends ExportOutboundWriter[Activity] with AcmOpt
 
   override def explainConversion: Option[Activity => AcmActivity] = Some((input: Activity) => ActivityAcmConverter.convert(input, true))
 
-  override private[export] def filterDataSet(spark: SparkSession, dataSet: Dataset[Activity], config: OutboundConfig) = {
+  override private[export] def entitySpecificFilter(spark: SparkSession, dataSet: Dataset[Activity], config: OutboundConfig) = {
     import spark.implicits._
     dataSet.filter($"customerType" === "CONTACTPERSON")
   }
@@ -146,17 +177,17 @@ object LoyaltyPointsOutboundWriter extends ExportOutboundWriter[LoyaltyPoints] w
 }
 
 /**
-  * Runs concrete [[com.unilever.ohub.spark.export.ExportOutboundWriter]]'s run method for all
-  * [[com.unilever.ohub.spark.domain.DomainEntity]]s acmExportWriter values.
-  *
-  * When running this job, do bear in mind that the input location is now a folder, the entity name will be appended to it
-  * to determine the location.
-  *
-  * F.e. to export data from runId "2019-08-06" provide "integratedInputFile" as:
-  * "dbfs:/mnt/engine/integrated/2019-08-06"
-  * In this case CP will be fetched from:
-  * "dbfs:/mnt/engine/integrated/2019-08-06/contactpersons.parquet"
-  **/
+ * Runs concrete [[com.unilever.ohub.spark.export.ExportOutboundWriter]]'s run method for all
+ * [[com.unilever.ohub.spark.domain.DomainEntity]]s acmExportWriter values.
+ *
+ * When running this job, do bear in mind that the input location is now a folder, the entity name will be appended to it
+ * to determine the location.
+ *
+ * F.e. to export data from runId "2019-08-06" provide "integratedInputFile" as:
+ * "dbfs:/mnt/engine/integrated/2019-08-06"
+ * In this case CP will be fetched from:
+ * "dbfs:/mnt/engine/integrated/2019-08-06/contactpersons.parquet"
+ **/
 object AllAcmOutboundWriter extends SparkJobWithOutboundExportConfig {
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     DomainEntityUtils.domainCompanionObjects
@@ -165,13 +196,23 @@ object AllAcmOutboundWriter extends SparkJobWithOutboundExportConfig {
       .foreach(entity => {
         val writer = entity.acmExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
-        val previousIntegratedLocation = if (config.previousIntegratedInputFile.isDefined) Some(s"${config.previousIntegratedInputFile.get}/${entity.engineFolderName}.parquet") else None
+        val previousIntegratedLocation = config.previousIntegratedInputFile.map(prevIntegLocation => s"${config.previousIntegratedInputFile.get}/${entity.engineFolderName}.parquet")
+
+        val currentMergedLocation = entity.engineGoldenFolderName.map(goldenFolderName => s"${config.integratedInputFile}/${entity.engineGoldenFolderName.get}.parquet")
+        val previousMergedLocation = if (config.previousIntegratedInputFile.isDefined) {
+          entity.engineGoldenFolderName.map(goldenFolderName => s"${config.previousIntegratedInputFile.get}/${entity.engineGoldenFolderName.get}.parquet")
+          } else {
+              None
+          }
+
         val mappingOutputLocation1 = config.mappingOutputLocation.map(mappingOutboundLocation => s"${mappingOutboundLocation}/${config.targetType}_${writer.entityName()}_MAPPING.json")
         writer.run(
           spark,
           config.copy(
             integratedInputFile = integratedLocation,
             previousIntegratedInputFile = previousIntegratedLocation,
+            currentMerged = currentMergedLocation,
+            previousMerged = previousMergedLocation,
             mappingOutputLocation = mappingOutputLocation1),
           storage)
       })

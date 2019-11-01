@@ -13,7 +13,7 @@ class CampaignDispatchConverterSpec extends SparkJobSpec with TestCampaigns {
       val result = SUT.convert(defaultCampaign)
 
       val expectedCampaign = DispatchCampaign(
-        CP_ORIG_INTEGRATION_ID = "DE~ACM~b3a6208c-d7f6-44e2-80e2-f26d461f64c1",
+        CP_ORIG_INTEGRATION_ID = "DE~OHUB~b3a6208",
         COUNTRY_CODE = "NL",
         CAMPAIGN_NAME = "20160324 - Lipton",
         CAMPAIGN_SPECIFICATION = "Product Introduction",

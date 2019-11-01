@@ -30,7 +30,7 @@ object CampaignOpenConverter extends CommonDomainGateKeeper[CampaignOpen] with C
         ohubUpdated = ohubCreated,
         dateCreated = optional("dateCreated", parseDateTimeUnsafe()),
         dateUpdated = optional("dateUpdated", parseDateTimeUnsafe()),
-        ohubId = Option.empty,
+        ohubId = Option.empty[String],
         isGoldenRecord = true, // Not specified when is true in mapping, so always golden...
 
         trackingId = mandatory("trackingId"),
@@ -39,10 +39,10 @@ object CampaignOpenConverter extends CommonDomainGateKeeper[CampaignOpen] with C
         deliveryId = mandatory("deliveryId"),
         deliveryName = mandatory("deliveryName"),
         communicationChannel = mandatory("communicationChannel"),
-        contactPersonConcatId = mandatory("contactPersonConcatId"),
-        contactPersonOhubId = Option.empty,
-        operatorConcatId = optional("operatorConcatId"),
-        operatorOhubId = Option.empty,
+        contactPersonConcatId = Option.empty[String],
+        contactPersonOhubId = mandatory("contactPersonOhubId"),
+        operatorConcatId = Option.empty[String],
+        operatorOhubId = optional("operatorOhubId"),
         openDate = mandatory("openDate", parseDateTimeUnsafe()),
         deliveryLogId = optional("deliveryLogId"),
 

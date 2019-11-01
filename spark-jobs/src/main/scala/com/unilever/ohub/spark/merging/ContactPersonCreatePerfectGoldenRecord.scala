@@ -89,10 +89,6 @@ object ContactPersonCreatePerfectGoldenRecord extends BaseMerging[ContactPersonG
 
     val dfMergedMostRecent: Dataset[ContactPersonGolden] = super.transform(spark, contactPersons)
 
-
-    // Pre process: infer the values for mi
-
-
     // Remove colums that will be filled in later
     var removeColumns :List[String] = List.empty
     for (channel ← channels) {
@@ -100,7 +96,7 @@ object ContactPersonCreatePerfectGoldenRecord extends BaseMerging[ContactPersonG
         consentFieldsByChannel(channel).optInFields ++
           consentFieldsByChannel(channel).optOutFields ++
           consentFieldsByChannel(channel).sortingDateFields
-    } //TODO: replace with foreach or list comprehension
+    }
 
     var tempDF = dfMergedMostRecent.drop(removeColumns: _*)
 
