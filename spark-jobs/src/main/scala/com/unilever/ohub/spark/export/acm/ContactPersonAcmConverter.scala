@@ -27,7 +27,7 @@ object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPers
       TITLE = getValue("title"),
       GENDER = getValue("gender", GenderToNumeric),
       LANGUAGE = getValue("language"),
-      EMAIL_ADDRESS = getValue("emailAddress", new ClearInvalidEmail(cp.isEmailAddressValid)),
+      EMAIL_ADDRESS = getValue("emailAddress"),
       MOBILE_PHONE_NUMBER = getValue("mobileNumber"),
       PHONE_NUMBER = getValue("phoneNumber"),
       FAX_NUMBER = getValue("faxNumber"),

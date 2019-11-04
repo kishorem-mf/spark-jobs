@@ -50,6 +50,7 @@ object CleanString extends TransformationFunction[String] {
   val description: String = "Removes characters that are not always supported by systems (f.e. ⓒ╠☣☺♡♥♪❤\uE2B1) and removes leading and trailing spaces"
 }
 
+/* Transformation deprecated for invalid emails */
 class ClearInvalidEmail(emailValid: Option[Boolean]) extends TransformationFunction[String] {
   def impl(input: String): String =
     emailValid match {
