@@ -373,4 +373,47 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     disabled.union(groupChange.select(disabled.columns.head, disabled.columns.tail: _*).as[DomainType])
 
   }
+
+  /*
+    This method is used only for Contactperson and Operators entity to send the deleted OHubIDs to DBB
+   */
+  private[export] def getDeletedOhubIdsWithTargetIdDBB(
+                                                     spark: SparkSession,
+                                                     prevIntegratedDS: Dataset[DomainType],
+                                                     integratedDS: Dataset[DomainType],
+                                                     prevMergedDS: Dataset[DomainType],
+                                                     currMergedDS: Dataset[DomainType]
+                                                   ) = {
+
+    import spark.implicits._
+    import org.apache.spark.sql.functions._
+
+    // Fetch the ohubid that changed group
+    val deletedOhubIdDataset = prevIntegratedDS
+      .filter($"isGoldenRecord")
+      .join(integratedDS.filter($"isGoldenRecord"), Seq("ohubId"), "left_anti")
+      .withColumn("isActive", lit(false)).withColumn("isGoldenRecord", lit(false))
+
+    val deletedOhubIdList = deletedOhubIdDataset.select("ohubId").map(r => r(0).toString).collect.toList
+
+    // Set the target_ohub_id
+    val groupChange = deletedOhubIdDataset
+      .join(integratedDS, Seq("concatId"), "left")
+      .select(deletedOhubIdDataset("*"))
+      .as[DomainType]
+
+    // Get the remaining ohubids to be deleted because have been disabled
+    val disabled_ohubids = prevMergedDS.select("ohubId")
+      .except(currMergedDS.select("ohubId"))
+      .filter(!$"ohubId".isin(deletedOhubIdList: _*))
+      .map(r => r(0).toString).collect.toList
+
+    val disabled = prevMergedDS
+      .filter($"ohubId".isin(deletedOhubIdList ++ disabled_ohubids: _*))
+      .withColumn("isActive", lit(false))
+      .as[DomainType]
+
+    disabled.union(groupChange.select(disabled.columns.head, disabled.columns.tail: _*).as[DomainType])
+
+  }
 }

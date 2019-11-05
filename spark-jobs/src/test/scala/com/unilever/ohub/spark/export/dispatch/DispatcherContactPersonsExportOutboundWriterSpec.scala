@@ -5,7 +5,7 @@ import java.util.UUID
 import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.domain.entity.{ContactPerson, TestContactPersons}
 import com.unilever.ohub.spark.export.TargetType
-import com.unilever.ohub.spark.export.dispatch.ContactPersonOutboundWriter.commonTransform
+import com.unilever.ohub.spark.export.dispatch.ContactPersonOutboundWriter.{commonTransform, getDeletedOhubIdsWithTargetIdDBB}
 import com.unilever.ohub.spark.export.domain.InMemStorage
 import com.unilever.ohub.spark.{SparkJobSpec, export}
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -33,8 +33,8 @@ class DispatcherContactPersonsExportOutboundWriterSpec extends SparkJobSpec with
 
   describe("DDB csv generation") {
     it("Should write correct csv") {
-      val deletedIntegrated = commonTransform(contactPersons, prevInteg, config, spark).map(_.copy(isGoldenRecord = false))
-      SUT.export(contactPersons, deletedIntegrated.unionByName, spark.createDataset[ContactPerson](Nil), spark.createDataset[ContactPerson](Nil), config, spark)
+      val deltaIntegrated = commonTransform(contactPersons, prevInteg, config, spark).map(_.copy(isGoldenRecord = false))
+      SUT.export(contactPersons, deltaIntegrated.unionByName, spark.createDataset[ContactPerson](Nil), spark.createDataset[ContactPerson](Nil), config, spark)
 
       val result = storage.readFromCsv(config.outboundLocation, new DispatcherOptions {}.delimiter, true)
 
@@ -44,16 +44,16 @@ class DispatcherContactPersonsExportOutboundWriterSpec extends SparkJobSpec with
 
     it("Should export golden and non golden records") {
 
-      val deletedIntegrated = commonTransform(contactPersons, prevInteg, config, spark).map(_.copy(isGoldenRecord = false))
-      SUT.export(contactPersons, deletedIntegrated.unionByName, spark.createDataset[ContactPerson](Nil), spark.createDataset[ContactPerson](Nil), config, spark)
+      val deltaIntegrated = commonTransform(contactPersons, prevInteg, config, spark).map(_.copy(isGoldenRecord = false))
+      SUT.export(contactPersons, deltaIntegrated.unionByName, spark.createDataset[ContactPerson](Nil), spark.createDataset[ContactPerson](Nil), config, spark)
 
       val result = storage.readFromCsv(config.outboundLocation, new DispatcherOptions {}.delimiter, true)
       assert(result.collect().length == 2)
     }
 
     it("Should contain header with quotes") {
-      val deletedIntegrated = commonTransform(contactPersons, prevInteg, config, spark).map(_.copy(isGoldenRecord = false))
-      SUT.export(contactPersons, deletedIntegrated.unionByName, spark.createDataset[ContactPerson](Nil), spark.createDataset[ContactPerson](Nil), config, spark)
+      val deltaIntegrated = commonTransform(contactPersons, prevInteg, config, spark).map(_.copy(isGoldenRecord = false))
+      SUT.export(contactPersons, deltaIntegrated.unionByName, spark.createDataset[ContactPerson](Nil), spark.createDataset[ContactPerson](Nil), config, spark)
 
       val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
       val csvFile = fs.listStatus(new Path(config.outboundLocation)).find(status => status.getPath.getName.contains("UFS")).get
@@ -74,16 +74,48 @@ class DispatcherContactPersonsExportOutboundWriterSpec extends SparkJobSpec with
         defaultContactPerson.copy(ohubId = Some("3"), concatId = "AU~OHUB~3", isGoldenRecord = true)
       ).toDataset
 
-      val deletedIntegrated = commonTransform(contactPersons, prevInteg, config, spark).map(_.copy(isGoldenRecord = false))
-      SUT.export(contactPersons, deletedIntegrated.unionByName, mergedDs, previousMergedDs, config, spark)
+      val deltaIntegrated = commonTransform(contactPersons, prevInteg, config, spark).map(_.copy(isGoldenRecord = false))
+      SUT.export(contactPersons, deltaIntegrated.unionByName, mergedDs, previousMergedDs, config, spark)
 
 
       val result = storage.readFromCsv(config.outboundLocation, new DispatcherOptions {}.delimiter, true)
 
       result.collect().length shouldBe 3
-      result.filter($"CP_ORIG_INTEGRATION_ID" isin ("AU~OHUB~2", "AU~OHUB~1")).count shouldBe 0
+      result.filter($"CP_ORIG_INTEGRATION_ID" isin("AU~OHUB~2", "AU~OHUB~1")).count shouldBe 0
       result.filter($"CP_ORIG_INTEGRATION_ID" === "AU~OHUB~3").count shouldBe 1
       result.filter($"CP_ORIG_INTEGRATION_ID" === "AU~OHUB~3").select("GOLDEN_RECORD_FLAG").collect.headOption.map(_.getString(0)) shouldBe Some("Y")
+      result.filter($"GOLDEN_RECORD_FLAG" === "Y").count shouldBe 1
+      assert(result.head().get(0).equals("AU"))
+    }
+
+    it("Should write export to dispatcher with MPGR and integrated CP with DELETED_FLAG 'Y' If ohubId change") {
+
+      val previousMergedDs = Seq(
+        defaultContactPerson.copy(ohubId = Some("1"), concatId = "AU~OHUB~1", isGoldenRecord = true),
+        defaultContactPerson.copy(ohubId = Some("2"), concatId = "AU~OHUB~2", isGoldenRecord = true),
+        defaultContactPerson.copy(ohubId = Some("4"), concatId = "AU~OHUB~3", isGoldenRecord = true)
+      ).toDataset
+
+      val mergedDs = Seq(
+        defaultContactPerson.copy(ohubId = Some("1"), concatId = "AU~OHUB~1", isGoldenRecord = true),
+        defaultContactPerson.copy(ohubId = Some("2"), concatId = "AU~OHUB~2", isGoldenRecord = true),
+        defaultContactPerson.copy(ohubId = Some("3"), concatId = "AU~OHUB~3", isGoldenRecord = true)
+      ).toDataset
+
+      val deltaIntegrated = commonTransform(contactPersons, prevInteg, config, spark).map(_.copy(isGoldenRecord = false))
+      val deletedOhubID = getDeletedOhubIdsWithTargetIdDBB(spark, prevInteg, contactPersons, previousMergedDs, mergedDs)
+      SUT.export(contactPersons, deltaIntegrated.unionByName(deletedOhubID).unionByName, mergedDs, previousMergedDs, config, spark)
+
+
+      val result = storage.readFromCsv(config.outboundLocation, new DispatcherOptions {}.delimiter, true)
+
+      result.collect().length shouldBe 4
+      result.filter($"CP_ORIG_INTEGRATION_ID" isin("AU~OHUB~2", "AU~OHUB~1")).count shouldBe 0
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "AU~OHUB~3").count shouldBe 2
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "AU~OHUB~3" && $"CP_LNKD_INTEGRATION_ID" === "4").select("DELETE_FLAG").first()(0) shouldBe "Y"
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "AU~OHUB~3").select("GOLDEN_RECORD_FLAG").collect.headOption.map(_.getString(0)) shouldBe Some("Y")
+      result.filter($"GOLDEN_RECORD_FLAG" === "Y").count shouldBe 2
+      result.filter($"CP_LNKD_INTEGRATION_ID" === "4" && $"GOLDEN_RECORD_FLAG" === "Y").select("DELETE_FLAG").head.getString(0) shouldBe "Y"
       assert(result.head().get(0).equals("AU"))
     }
   }

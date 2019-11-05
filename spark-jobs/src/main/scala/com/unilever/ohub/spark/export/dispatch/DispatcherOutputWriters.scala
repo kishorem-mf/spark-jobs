@@ -34,21 +34,24 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
     import spark.implicits._
 
     log.info(
-      s" For CP writing integrated entities ::   [${config.integratedInputFile}] " +
-        s"with parameters currentMerged :: [${config.currentMerged}]" +
-        s"with parameters previousMerged:: [${config.previousMerged}]" +
-        s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
+      s" For CP writing integrated entities :::   [${config.integratedInputFile}] " +
+        s"with parameters currentMerged ::: [${config.currentMerged}]" +
+        s"with parameters previousMerged::: [${config.previousMerged}]" +
+        s"with parameters prevIntegrated::: [${config.previousIntegratedInputFile}]" +
         s"to outbound export csv file for ACM and DDB.")
 
     val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_))
     val currentIntegrated = storage.readFromParquet[ContactPerson](config.integratedInputFile)
-    val deletedIntegrated = commonTransform(currentIntegrated, previousIntegratedFile, config, spark).map(_.copy(isGoldenRecord = false))
+    val deltaIntegrated = commonTransform(currentIntegrated, previousIntegratedFile, config, spark).map(_.copy(isGoldenRecord = false))
+    val currentMerged = config.currentMerged.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_))
+    val previousMerged = config.previousMerged.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_))
+    val deletedOhubID = getDeletedOhubIdsWithTargetIdDBB(spark, previousIntegratedFile,currentIntegrated, previousMerged, currentMerged)
 
     export(
       currentIntegrated,
-      deletedIntegrated.unionByName,
-      config.currentMerged.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_)),
-      config.previousMerged.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_)),
+      deltaIntegrated.unionByName(deletedOhubID).unionByName,
+      currentMerged,
+      previousMerged,
       config,
       spark
     )
@@ -69,21 +72,25 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with Dispat
     import spark.implicits._
 
     log.info(
-      s"For OP writing integrated entities ::   [${config.integratedInputFile}] " +
-        s"with parameters currentMerged :: [${config.currentMerged}]" +
-        s"with parameters previousMerged:: [${config.previousMerged}]" +
-        s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
+      s"For OP writing integrated entities :::   [${config.integratedInputFile}] " +
+        s"with parameters currentMerged ::: [${config.currentMerged}]" +
+        s"with parameters previousMerged::: [${config.previousMerged}]" +
+        s"with parameters prevIntegrated::: [${config.previousIntegratedInputFile}]" +
         s"to outbound export csv file for ACM and DDB.")
 
     val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[Operator](Nil))(storage.readFromParquet[Operator](_))
     val currentIntegrated = storage.readFromParquet[Operator](config.integratedInputFile)
-    val deletedIntegrated = commonTransform(currentIntegrated, previousIntegratedFile, config, spark).map(_.copy(isGoldenRecord = false))
+    val deltaIntegrated = commonTransform(currentIntegrated, previousIntegratedFile, config, spark).map(_.copy(isGoldenRecord = false))
+    val currentMerged = config.currentMerged.fold(spark.createDataset[Operator](Nil))(storage.readFromParquet[Operator](_))
+    val previousMerged = config.previousMerged.fold(spark.createDataset[Operator](Nil))(storage.readFromParquet[Operator](_))
+    val deletedOhubID = getDeletedOhubIdsWithTargetIdDBB(spark, previousIntegratedFile, currentIntegrated, previousMerged, currentMerged)
+
 
     export(
       currentIntegrated,
-      deletedIntegrated.unionByName,
-      config.currentMerged.fold(spark.createDataset[Operator](Nil))(storage.readFromParquet[Operator](_)),
-      config.previousMerged.fold(spark.createDataset[Operator](Seq()))(storage.readFromParquet[Operator](_)),
+      deltaIntegrated.unionByName(deletedOhubID).unionByName,
+      currentMerged,
+      previousMerged,
       config,
       spark
     )
