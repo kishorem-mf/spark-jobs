@@ -5,7 +5,8 @@ import com.unilever.ohub.spark.domain.entity._
 import com.unilever.ohub.spark.export.acm.model.{AcmContactPerson, _}
 import com.unilever.ohub.spark.export.{CsvOptions, ExportOutboundWriter, OutboundConfig, SparkJobWithOutboundExportConfig}
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{Column, Dataset, SparkSession}
+import org.apache.spark.sql.functions.{lit, when}
 
 trait AcmOptions extends CsvOptions {
 
@@ -25,11 +26,18 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
   }
 
   override private[export] def filterValid[AcmContactPerson](spark: SparkSession, dataSet: Dataset[_], config: OutboundConfig) = {
+
     import spark.implicits._
-    dataSet.filter(
-      ($"emailAddress".isNotNull && $"emailAddress" =!= "" && $"isEmailAddressValid" === true) ||
-      ($"mobileNumber".isNotNull && $"mobileNumber" =!= "")
-    )
+
+    dataSet
+      .filter(
+        ($"emailAddress".isNotNull && $"emailAddress" =!= "") ||
+        ($"mobileNumber".isNotNull && $"mobileNumber" =!= "")
+      )
+      .withColumn("isActive",
+        when($"isEmailAddressValid" === lit(false) && ($"mobileNumber".isNull || $"mobileNumber" === ""),
+          lit(false)).otherwise($"isActive")
+      )
   }
 
   override def explainConversion: Option[ContactPerson => AcmContactPerson] = Some((input: ContactPerson) => ContactPersonAcmConverter.convert(input, true))
@@ -46,7 +54,6 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
         s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
         s"to outbound export csv file for ACM and DDB.")
     val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_))
-
 
     export(
       storage.readFromParquet[ContactPerson](config.integratedInputFile),

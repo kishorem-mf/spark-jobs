@@ -246,7 +246,8 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
       result.filter($"CP_ORIG_INTEGRATION_ID" === "1").select("TARGET_OHUB_ID", "CP_LNKD_INTEGRATION_ID", "DELETE_FLAG").collect().head.mkString(":") should include("3:AU~101~3~19:1")
     }
 
-    it("should export new incoming merged ohubids to ACM only with emailAddress or phoneNumber") {
+    it("should export new incoming merged ohubids to ACM only with emailAddress or phoneNumber" +
+      " and set delete=true when email is invalid and mobile number is empty" ) {
 
       val prevIntegratedDS = Seq(
         defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("5555"), concatId = "AU~WUFOO~2345"),
@@ -283,18 +284,30 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
           emailAddress = Some("x@ohub.com"), mobileNumber = None, isEmailAddressValid = Some(true)),
         defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("6666"), concatId = "AU~OHUB~6666",
           emailAddress = Some(""), mobileNumber = None),
+
+        // This we discard (send as delete) because email is invalid and no mobile is available
         defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("4444"), concatId = "AU~OHUB~4444",
-          emailAddress = Some("x@ohub.com"), mobileNumber = None, isEmailAddressValid = Some(false))
+          emailAddress = Some("inv1@ohub.com"), mobileNumber = None, isEmailAddressValid = Some(false)),
+
+        // This we keep because is reachable by SMS even though emailAddress is invalid
+        defaultContactPerson.copy(isGoldenRecord = true, ohubId = Some("3333"), concatId = "AU~OHUB~3333",
+          emailAddress = Some("inv2@ohub.com"), mobileNumber = Some("+31612345"), isEmailAddressValid = Some(false))
       ).toDataset
 
       SUT.export(integratedDs, prevIntegratedDS, mergedDs, previousMergedDs, config, spark)
 
       val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
-      result.collect().length shouldBe 3
+      result.collect().length shouldBe 5
       result.filter($"CP_ORIG_INTEGRATION_ID" === "8888").select($"CP_LNKD_INTEGRATION_ID").collect().head.toString() should include("AU~8888~3~183")
       result.filter($"CP_ORIG_INTEGRATION_ID" === "9999").select($"CP_LNKD_INTEGRATION_ID").collect().head.toString() should include("AU~9999~3~183")
       result.filter($"CP_ORIG_INTEGRATION_ID" === "7777").select($"CP_LNKD_INTEGRATION_ID").collect().head.toString() should include("AU~7777~3~183")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "3333").select($"DELETE_FLAG").first.getString(0) should equal("0")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "3333").select($"TARGET_OHUB_ID").first.getString(0) should equal(null)
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "3333").select($"EMAIL_ADDRESS").first.getString(0) should equal("inv2@ohub.com")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "3333").select($"MOBILE_PHONE_NUMBER").first.getString(0) should equal("+31612345")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "4444").select($"DELETE_FLAG").first.getString(0) should equal("1")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "4444").select($"EMAIL_ADDRESS").first.getString(0) should equal("inv1@ohub.com")
     }
 
     it("should send DE-ACTIVATED groups as deleted") {

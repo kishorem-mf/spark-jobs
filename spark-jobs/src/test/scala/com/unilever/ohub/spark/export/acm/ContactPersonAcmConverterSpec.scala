@@ -71,13 +71,7 @@ import org.scalatest.{FunSpec, Matchers}
 
         actualAcmContactPerson shouldBe expectedAcmContactPerson
       }
-      it("It should clean e-mail when email is marked as not valid") {
-        val cp = defaultContactPerson.copy(isGoldenRecord = true).copy(isEmailAddressValid = Some(false))
-        val actualAcmContactPerson = SUT.convert(cp)
 
-        assert(actualAcmContactPerson.ORG_EMAIL_ADDRESS isEmpty)
-        assert(actualAcmContactPerson.EMAIL_ADDRESS isEmpty)
-      }
       it("It should NOT clean e-mail when email is marked as valid") {
         val cp = defaultContactPerson.copy(isGoldenRecord = true).copy(isEmailAddressValid = Some(true))
         val actualDispatchContactPerson = SUT.convert(cp)
