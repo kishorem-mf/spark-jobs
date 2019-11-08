@@ -2,10 +2,13 @@ package com.unilever.ohub.spark.export.dispatch
 
 import com.unilever.ohub.spark.domain.DomainEntityUtils
 import com.unilever.ohub.spark.domain.entity._
+import com.unilever.ohub.spark.domain.utils.OperatorRef
 import com.unilever.ohub.spark.export.dispatch.model.{DispatchContactPerson, _}
-import com.unilever.ohub.spark.export.{CsvOptions, ExportOutboundWriter, OutboundConfig, SparkJobWithOutboundExportConfig}
+import com.unilever.ohub.spark.export.{CsvOptions, ExportOutboundWriter, OutboundConfig, OutboundEntity, SparkJobWithOutboundExportConfig}
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql._
+import org.apache.spark.sql.functions._
 
 trait DispatcherOptions extends CsvOptions {
 
@@ -30,6 +33,17 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
 
   override def entityName(): String = "CONTACT_PERSONS"
 
+  override def linkOperator[GenericOutboundEntity <: OutboundEntity](spark: SparkSession, operatorDS: Dataset[_], deltaDs: Dataset[_]): Dataset[_] = {
+    import spark.implicits._
+    deltaDs.joinWith(operatorDS.select("ohubId", "concatId")
+      .toDF("opr_ohub", "opr_concatId").as[OperatorRef], col("operatorOhubId") === col("opr_ohub"), "left").map {
+      case (cp: ContactPerson, opRef: OperatorRef) if cp.isGoldenRecord => cp.copy(operatorConcatId = Option(opRef.opr_concatId), sourceName = "OHUB",
+        sourceEntityId = cp.ohubId.getOrElse(cp.sourceEntityId))
+      case (cp: ContactPerson, _) if cp.isGoldenRecord => cp.copy(sourceName = "OHUB", sourceEntityId = cp.ohubId.getOrElse(cp.sourceEntityId))
+      case (cp: ContactPerson, _) => cp
+    }
+  }
+
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     import spark.implicits._
 
@@ -38,6 +52,7 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
         s"with parameters currentMerged ::: [${config.currentMerged}]" +
         s"with parameters previousMerged::: [${config.previousMerged}]" +
         s"with parameters prevIntegrated::: [${config.previousIntegratedInputFile}]" +
+        s"with parameters currentMergedOPR::: [${config.currentMergedOPR}]" +
         s"to outbound export csv file for ACM and DDB.")
 
     val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_))
@@ -45,13 +60,16 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
     val deltaIntegrated = commonTransform(currentIntegrated, previousIntegratedFile, config, spark).map(_.copy(isGoldenRecord = false))
     val currentMerged = config.currentMerged.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_))
     val previousMerged = config.previousMerged.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_))
-    val deletedOhubID = getDeletedOhubIdsWithTargetIdDBB(spark, previousIntegratedFile,currentIntegrated, previousMerged, currentMerged)
+    val deletedOhubID = getDeletedOhubIdsWithTargetIdDBB(spark, previousIntegratedFile, currentIntegrated, previousMerged, currentMerged)
+    val currentMergedOPR = config.currentMergedOPR.fold(spark.emptyDataFrame)(spark.read.parquet(_))
+
 
     export(
       currentIntegrated,
       deltaIntegrated.unionByName(deletedOhubID).unionByName,
       currentMerged,
       previousMerged,
+      currentMergedOPR,
       config,
       spark
     )
@@ -68,6 +86,15 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with Dispat
 
   override def entityName(): String = "OPERATORS"
 
+  override def linkOperator[GenericOutboundEntity <: OutboundEntity](spark: SparkSession, operatorDS: Dataset[_], deltaDs: Dataset[_]): Dataset[_] = {
+    import spark.implicits._
+    deltaDs.joinWith(operatorDS.select("ohubId", "concatId")
+      .toDF("opr_ohub", "opr_concatId").as[OperatorRef], col("operatorOhubId") === col("opr_ohub"), "left").map {
+      case (op: Operator, _) if op.isGoldenRecord => op.copy(sourceName = "OHUB", sourceEntityId = op.ohubId.getOrElse(op.sourceEntityId))
+      case (op: Operator, _) => op
+    }
+  }
+
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     import spark.implicits._
 
@@ -76,6 +103,7 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with Dispat
         s"with parameters currentMerged ::: [${config.currentMerged}]" +
         s"with parameters previousMerged::: [${config.previousMerged}]" +
         s"with parameters prevIntegrated::: [${config.previousIntegratedInputFile}]" +
+        s"with parameters currentMergedOPR::: [${config.currentMergedOPR}]" +
         s"to outbound export csv file for ACM and DDB.")
 
     val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[Operator](Nil))(storage.readFromParquet[Operator](_))
@@ -84,13 +112,14 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with Dispat
     val currentMerged = config.currentMerged.fold(spark.createDataset[Operator](Nil))(storage.readFromParquet[Operator](_))
     val previousMerged = config.previousMerged.fold(spark.createDataset[Operator](Nil))(storage.readFromParquet[Operator](_))
     val deletedOhubID = getDeletedOhubIdsWithTargetIdDBB(spark, previousIntegratedFile, currentIntegrated, previousMerged, currentMerged)
-
+    val currentMergedOPR = config.currentMergedOPR.fold(spark.emptyDataFrame)(spark.read.parquet(_))
 
     export(
       currentIntegrated,
       deltaIntegrated.unionByName(deletedOhubID).unionByName,
       currentMerged,
       previousMerged,
+      currentMergedOPR,
       config,
       spark
     )
@@ -281,10 +310,12 @@ object AllDispatchOutboundWriter extends SparkJobWithOutboundExportConfig {
         val previousIntegratedLocation = config.previousIntegratedInputFile.map(prevIntegLocation => s"$prevIntegLocation/${entity.engineFolderName}.parquet")
 
         val currentMergedLocation = entity.engineGoldenFolderName.map(goldenFolderName => s"${config.integratedInputFile}/${goldenFolderName}.parquet")
-        val previousMergedLocation = config.previousIntegratedInputFile.flatMap { previousIntegratedLocation=>
+        val previousMergedLocation = config.previousIntegratedInputFile.flatMap { previousIntegratedLocation =>
           entity.engineGoldenFolderName.map(goldenFolderName => s"$previousIntegratedLocation/$goldenFolderName.parquet")
         }
 
+
+        val currentMergedOPRLocation = entity.engineGoldenFolderName.find(_ == "contactpersons_golden").map(_ => s"${config.integratedInputFile}/operators_golden.parquet")
 
         writer.run(
           spark,
@@ -293,7 +324,8 @@ object AllDispatchOutboundWriter extends SparkJobWithOutboundExportConfig {
             previousIntegratedInputFile = previousIntegratedLocation,
             currentMerged = currentMergedLocation,
             previousMerged = previousMergedLocation,
-            mappingOutputLocation = mappingOutputLocation),
+            mappingOutputLocation = mappingOutputLocation,
+            currentMergedOPR = currentMergedOPRLocation),
           storage)
       })
   }

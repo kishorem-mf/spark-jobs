@@ -25,6 +25,7 @@ class AcmOperatorsExportWriterSpec extends SparkJobSpec with TestOperators with 
     outboundLocation = outboundLocation,
     targetType = TargetType.ACM
   )
+  private val emptyDF = spark.emptyDataFrame
 
   val storage = new InMemStorage(spark, operators, prevIntegrated)
 
@@ -61,7 +62,7 @@ class AcmOperatorsExportWriterSpec extends SparkJobSpec with TestOperators with 
         defaultOperator.copy(ohubId = Some("3"), concatId = "AU~OHUB~3", isGoldenRecord = true)
       ).toDataset
 
-      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark, prevIntegratedDs, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, config, spark)
+      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark, prevIntegratedDs, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, emptyDF, config, spark)
 
       val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
@@ -96,7 +97,7 @@ class AcmOperatorsExportWriterSpec extends SparkJobSpec with TestOperators with 
         defaultOperator.copy(ohubId = Some("3"), concatId = "AU~OHUB~3", isGoldenRecord = true)
       ).toDataset
 
-      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark, prevIntegratedDs, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, config, spark)
+      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark, prevIntegratedDs, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, emptyDF, config, spark)
 
       val result = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
@@ -136,7 +137,7 @@ class AcmOperatorsExportWriterSpec extends SparkJobSpec with TestOperators with 
         defaultOperator.copy(ohubId = Some("3"), concatId = "AU~OHUB~3", isGoldenRecord = true)
       ).toDataset
 
-      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark,  prevIntegratedDs, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, config, spark)
+      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark, prevIntegratedDs, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, emptyDF, config, spark)
 
       val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
@@ -177,7 +178,7 @@ class AcmOperatorsExportWriterSpec extends SparkJobSpec with TestOperators with 
         defaultOperator.copy(ohubId = Some("2"), concatId = "AU~OHUB~2", isGoldenRecord = true, isActive = true)
       ).toDataset
 
-      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark,  prevIntegratedDs, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, config, spark)
+      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark, prevIntegratedDs, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, emptyDF, config, spark)
 
       val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 
@@ -218,7 +219,7 @@ class AcmOperatorsExportWriterSpec extends SparkJobSpec with TestOperators with 
         defaultOperator.copy(ohubId = Some("3"), concatId = "AU~OHUB~3", isGoldenRecord = true)
       ).toDataset
 
-      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark,  prevIntegratedDs, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, config, spark)
+      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark, prevIntegratedDs, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, emptyDF, config, spark)
 
       val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
 

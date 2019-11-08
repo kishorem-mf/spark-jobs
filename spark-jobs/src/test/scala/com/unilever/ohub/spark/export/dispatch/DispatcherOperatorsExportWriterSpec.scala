@@ -26,6 +26,8 @@ class DispatcherOperatorsExportWriterSpec extends SparkJobSpec with TestOperator
     targetType = TargetType.DISPATCHER
   )
 
+  val emptyDF = spark.emptyDataFrame
+
   val storage = new InMemStorage(spark, operators, prevIntegrated)
 
   after {
@@ -62,7 +64,7 @@ class DispatcherOperatorsExportWriterSpec extends SparkJobSpec with TestOperator
       ).toDataset
 
       val deletedIntegrated = commonTransform(integratedDs, prevIntegratedDs, config, spark).map(_.copy(isGoldenRecord = false))
-      SUT.export(integratedDs, deletedIntegrated.unionByName, mergedDs, previousMergedDs, config, spark)
+      SUT.export(integratedDs, deletedIntegrated.unionByName, mergedDs, previousMergedDs, emptyDF, config, spark)
 
       val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new DispatcherOptions {}.delimiter, true)
       

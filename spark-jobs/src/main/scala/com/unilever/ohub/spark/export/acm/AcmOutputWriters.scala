@@ -32,7 +32,7 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
     dataSet
       .filter(
         ($"emailAddress".isNotNull && $"emailAddress" =!= "") ||
-        ($"mobileNumber".isNotNull && $"mobileNumber" =!= "")
+          ($"mobileNumber".isNotNull && $"mobileNumber" =!= "")
       )
       .withColumn("isActive",
         when($"isEmailAddressValid" === lit(false) && ($"mobileNumber".isNull || $"mobileNumber" === ""),
@@ -48,11 +48,12 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
     import spark.implicits._
 
     log.info(
-        s" For CP writing integrated entities ::   [${config.integratedInputFile}] " +
+      s" For CP writing integrated entities ::   [${config.integratedInputFile}] " +
 
         s"with parameters currentMerged :: [${config.currentMerged}]" +
         s"with parameters previousMerged:: [${config.previousMerged}]" +
         s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
+        s"with parameters currentMergedOPR:: [${config.currentMergedOPR}]" +
         s"to outbound export csv file for ACM and DDB.")
 
     val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_))
@@ -60,12 +61,14 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
     val currentMerged = config.currentMerged.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_))
     val previousMerged = config.previousMerged.fold(spark.createDataset[ContactPerson](Nil))(storage.readFromParquet[ContactPerson](_))
     val deletedOhubID = getDeletedOhubIdsWithTargetId(spark, previousIntegratedFile, currentIntegrated, previousMerged, currentMerged)
+    val currentMergedOPR = config.currentMergedOPR.fold(spark.emptyDataFrame)(spark.read.parquet(_))
 
     export(
       currentIntegrated,
       deletedOhubID.unionByName,
       currentMerged,
       previousMerged,
+      currentMergedOPR,
       config,
       spark
     )
@@ -90,6 +93,7 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with AcmOpt
         s"with parameters currentMerged :: [${config.currentMerged}]" +
         s"with parameters previousMerged:: [${config.previousMerged}]" +
         s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
+        s"with parameters currentMergedOPR:: [${config.currentMergedOPR}]" +
         s"to outbound export csv file for ACM and DDB.")
 
     val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[Operator](Nil))(storage.readFromParquet[Operator](_))
@@ -97,12 +101,14 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with AcmOpt
     val currentMerged = config.currentMerged.fold(spark.createDataset[Operator](Nil))(storage.readFromParquet[Operator](_))
     val previousMerged = config.previousMerged.fold(spark.createDataset[Operator](Seq()))(storage.readFromParquet[Operator](_))
     val deletedOhubID = getDeletedOhubIdsWithTargetId(spark, previousIntegratedFile, currentIntegrated, previousMerged, currentMerged)
+    val currentMergedOPR = config.currentMergedOPR.fold(spark.emptyDataFrame)(spark.read.parquet(_))
 
     export(
       currentIntegrated,
       deletedOhubID.unionByName,
       currentMerged,
       previousMerged,
+      currentMergedOPR,
       config,
       spark
     )

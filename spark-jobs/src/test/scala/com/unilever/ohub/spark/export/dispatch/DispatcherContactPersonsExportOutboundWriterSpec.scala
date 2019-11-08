@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.export.dispatch
 import java.util.UUID
 
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.domain.entity.{ContactPerson, TestContactPersons}
+import com.unilever.ohub.spark.domain.entity.{ContactPerson, TestContactPersons, TestOperators}
 import com.unilever.ohub.spark.export.TargetType
 import com.unilever.ohub.spark.export.dispatch.ContactPersonOutboundWriter.{commonTransform, getDeletedOhubIdsWithTargetIdDBB}
 import com.unilever.ohub.spark.export.domain.InMemStorage
@@ -11,7 +11,7 @@ import com.unilever.ohub.spark.{SparkJobSpec, export}
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.scalatest.BeforeAndAfter
 
-class DispatcherContactPersonsExportOutboundWriterSpec extends SparkJobSpec with TestContactPersons with BeforeAndAfter {
+class DispatcherContactPersonsExportOutboundWriterSpec extends SparkJobSpec with TestContactPersons with TestOperators with BeforeAndAfter {
 
   import spark.implicits._
 
@@ -25,6 +25,12 @@ class DispatcherContactPersonsExportOutboundWriterSpec extends SparkJobSpec with
     targetType = TargetType.DISPATCHER
   )
   val storage = new InMemStorage(spark, contactPersons, prevInteg)
+  val mergedOPR = Seq(
+    defaultOperator.copy(concatId = "AU~WUFOO~101", ohubId = Some("1"), isGoldenRecord = true),
+    defaultOperator.copy(concatId = "AU~WUFOO~102", ohubId = Some("1")),
+    defaultOperator.copy(concatId = "AU~WUFOO~103", ohubId = Some("2"), isGoldenRecord = true),
+    defaultOperator.copy(concatId = "AU~WUFOO~104", ohubId = Some("2"))
+  ).toDF
 
   after {
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
@@ -34,7 +40,7 @@ class DispatcherContactPersonsExportOutboundWriterSpec extends SparkJobSpec with
   describe("DDB csv generation") {
     it("Should write correct csv") {
       val deltaIntegrated = commonTransform(contactPersons, prevInteg, config, spark).map(_.copy(isGoldenRecord = false))
-      SUT.export(contactPersons, deltaIntegrated.unionByName, spark.createDataset[ContactPerson](Nil), spark.createDataset[ContactPerson](Nil), config, spark)
+      SUT.export(contactPersons, deltaIntegrated.unionByName, spark.createDataset[ContactPerson](Nil), spark.createDataset[ContactPerson](Nil), mergedOPR, config, spark)
 
       val result = storage.readFromCsv(config.outboundLocation, new DispatcherOptions {}.delimiter, true)
 
@@ -45,7 +51,7 @@ class DispatcherContactPersonsExportOutboundWriterSpec extends SparkJobSpec with
     it("Should export golden and non golden records") {
 
       val deltaIntegrated = commonTransform(contactPersons, prevInteg, config, spark).map(_.copy(isGoldenRecord = false))
-      SUT.export(contactPersons, deltaIntegrated.unionByName, spark.createDataset[ContactPerson](Nil), spark.createDataset[ContactPerson](Nil), config, spark)
+      SUT.export(contactPersons, deltaIntegrated.unionByName, spark.createDataset[ContactPerson](Nil), spark.createDataset[ContactPerson](Nil), mergedOPR, config, spark)
 
       val result = storage.readFromCsv(config.outboundLocation, new DispatcherOptions {}.delimiter, true)
       assert(result.collect().length == 2)
@@ -53,7 +59,7 @@ class DispatcherContactPersonsExportOutboundWriterSpec extends SparkJobSpec with
 
     it("Should contain header with quotes") {
       val deltaIntegrated = commonTransform(contactPersons, prevInteg, config, spark).map(_.copy(isGoldenRecord = false))
-      SUT.export(contactPersons, deltaIntegrated.unionByName, spark.createDataset[ContactPerson](Nil), spark.createDataset[ContactPerson](Nil), config, spark)
+      SUT.export(contactPersons, deltaIntegrated.unionByName, spark.createDataset[ContactPerson](Nil), spark.createDataset[ContactPerson](Nil), mergedOPR, config, spark)
 
       val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
       val csvFile = fs.listStatus(new Path(config.outboundLocation)).find(status => status.getPath.getName.contains("UFS")).get
@@ -75,7 +81,7 @@ class DispatcherContactPersonsExportOutboundWriterSpec extends SparkJobSpec with
       ).toDataset
 
       val deltaIntegrated = commonTransform(contactPersons, prevInteg, config, spark).map(_.copy(isGoldenRecord = false))
-      SUT.export(contactPersons, deltaIntegrated.unionByName, mergedDs, previousMergedDs, config, spark)
+      SUT.export(contactPersons, deltaIntegrated.unionByName, mergedDs, previousMergedDs, mergedOPR, config, spark)
 
 
       val result = storage.readFromCsv(config.outboundLocation, new DispatcherOptions {}.delimiter, true)
@@ -102,9 +108,12 @@ class DispatcherContactPersonsExportOutboundWriterSpec extends SparkJobSpec with
         defaultContactPerson.copy(ohubId = Some("3"), concatId = "AU~OHUB~3", isGoldenRecord = true)
       ).toDataset
 
+
+
+
       val deltaIntegrated = commonTransform(contactPersons, prevInteg, config, spark).map(_.copy(isGoldenRecord = false))
       val deletedOhubID = getDeletedOhubIdsWithTargetIdDBB(spark, prevInteg, contactPersons, previousMergedDs, mergedDs)
-      SUT.export(contactPersons, deltaIntegrated.unionByName(deletedOhubID).unionByName, mergedDs, previousMergedDs, config, spark)
+      SUT.export(contactPersons, deltaIntegrated.unionByName(deletedOhubID).unionByName, mergedDs, previousMergedDs, mergedOPR, config, spark)
 
 
       val result = storage.readFromCsv(config.outboundLocation, new DispatcherOptions {}.delimiter, true)

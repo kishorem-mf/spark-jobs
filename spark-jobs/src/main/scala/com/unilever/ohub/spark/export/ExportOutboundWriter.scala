@@ -13,7 +13,7 @@ import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
-import org.apache.spark.sql.{Dataset, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
 import scopt.OptionParser
 
 import scala.reflect.runtime.universe._
@@ -24,15 +24,16 @@ object TargetType extends Enumeration {
 }
 
 case class OutboundConfig(
-  integratedInputFile: String = "integrated-input-file",
-  previousIntegratedInputFile: Option[String] = None,
-  targetType: TargetType = ACM,
-  outboundLocation: String = "outbound-location",
-  countryCodes: Option[Seq[String]] = None,
-  mappingOutputLocation: Option[String] = None,
-  currentMerged: Option[String] = None,
-  previousMerged: Option[String] = None
-) extends SparkJobConfig
+                           integratedInputFile: String = "integrated-input-file",
+                           previousIntegratedInputFile: Option[String] = None,
+                           targetType: TargetType = ACM,
+                           outboundLocation: String = "outbound-location",
+                           countryCodes: Option[Seq[String]] = None,
+                           mappingOutputLocation: Option[String] = None,
+                           currentMerged: Option[String] = None,
+                           previousMerged: Option[String] = None,
+                           currentMergedOPR: Option[String] = None
+                         ) extends SparkJobConfig
 
 abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig] {
   override private[spark] def configParser(): OptionParser[OutboundConfig] =
@@ -93,6 +94,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   private[export] def explainConversion: Option[DomainType => _ <: OutboundEntity] = None
 
+  private[export] def linkOperator[GenericOutboundEntity <: OutboundEntity](spark: SparkSession, operatorDS: Dataset[_], deltaDs: Dataset[_]): Dataset[_] = deltaDs
+
   def entityName(): String
 
   val csvOptions = Map()
@@ -117,10 +120,11 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
     log.info(
       s"writing integrated entities ::   [${config.integratedInputFile}] " +
-      s"with parameters currentMerged :: [${config.currentMerged}]" +
-      s"with parameters previousMerged:: [${config.previousMerged}]" +
-      s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
-      s"to outbound export csv file for ACM and DDB.")
+        s"with parameters currentMerged :: [${config.currentMerged}]" +
+        s"with parameters previousMerged:: [${config.previousMerged}]" +
+        s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
+        s"with parameters currentMergedOPR:: [${config.currentMergedOPR}]" +
+        s"to outbound export csv file for ACM and DDB.")
 
     val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[DomainType](Nil))(storage.readFromParquet[DomainType](_))
 
@@ -154,17 +158,17 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
   }
 
   def commonTransform(integrated: Dataset[DomainType], previousIntegrated: Dataset[DomainType], config: OutboundConfig, spark: SparkSession
-  ): Dataset[DomainType] = {
+                     ): Dataset[DomainType] = {
     val preProcessedDataset: Dataset[DomainType] = preProcess(spark, config, integrated)
     getDifferentRows(spark, preProcessedDataset, previousIntegrated)
   }
 
   def export(
-    currentIntegrated: Dataset[DomainType],
-    previousIntegrated: Dataset[DomainType],
-    config: OutboundConfig,
-    spark: SparkSession
-  ) {
+              currentIntegrated: Dataset[DomainType],
+              previousIntegrated: Dataset[DomainType],
+              config: OutboundConfig,
+              spark: SparkSession
+            ) {
     import spark.implicits._
 
     val deltaIntegrated = commonTransform(currentIntegrated, previousIntegrated, config, spark)
@@ -185,21 +189,23 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
   }
 
   def export(
-    currentIntegrated: Dataset[DomainType],
-    processedChanged: Dataset[DomainType] => Dataset[DomainType],
-    currentMerged: Dataset[DomainType],
-    previousMerged: Dataset[DomainType],
-    config: OutboundConfig,
-    spark: SparkSession
-  ) {
+              currentIntegrated: Dataset[DomainType],
+              processedChanged: Dataset[DomainType] => Dataset[DomainType],
+              currentMerged: Dataset[DomainType],
+              previousMerged: Dataset[DomainType],
+              currentMergedOPR: DataFrame,
+              config: OutboundConfig,
+              spark: SparkSession
+            ) {
     import spark.implicits._
 
     val deltaIntegrated = commonTransform(currentMerged, previousMerged, config, spark)
     val filtered = filterValid(spark, deltaIntegrated, config).as[DomainType]
     val processedChangedDS = processedChanged(filtered)
+    val operatorLinking = linkOperator(spark,currentMergedOPR, processedChangedDS).as[DomainType]
 
     val columnsInOrder = currentIntegrated.columns
-    val result = processedChangedDS
+    val result = operatorLinking
       .select(columnsInOrder.head, columnsInOrder.tail: _*)
       .as[DomainType]
 
@@ -329,12 +335,12 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     This method is used only for Contactperson and Operators entity to send the deleted OHubIDs to ACM
    */
   private[export] def getDeletedOhubIdsWithTargetId(
-    spark: SparkSession,
-    prevIntegratedDS: Dataset[DomainType],
-    integratedDS: Dataset[DomainType],
-    prevMergedDS: Dataset[DomainType],
-    currMergedDS: Dataset[DomainType]
-  ) = {
+                                                     spark: SparkSession,
+                                                     prevIntegratedDS: Dataset[DomainType],
+                                                     integratedDS: Dataset[DomainType],
+                                                     prevMergedDS: Dataset[DomainType],
+                                                     currMergedDS: Dataset[DomainType]
+                                                   ) = {
 
     import spark.implicits._
     import org.apache.spark.sql.functions._
@@ -378,12 +384,12 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     This method is used only for Contactperson and Operators entity to send the deleted OHubIDs to DBB
    */
   private[export] def getDeletedOhubIdsWithTargetIdDBB(
-                                                     spark: SparkSession,
-                                                     prevIntegratedDS: Dataset[DomainType],
-                                                     integratedDS: Dataset[DomainType],
-                                                     prevMergedDS: Dataset[DomainType],
-                                                     currMergedDS: Dataset[DomainType]
-                                                   ) = {
+                                                        spark: SparkSession,
+                                                        prevIntegratedDS: Dataset[DomainType],
+                                                        integratedDS: Dataset[DomainType],
+                                                        prevMergedDS: Dataset[DomainType],
+                                                        currMergedDS: Dataset[DomainType]
+                                                      ) = {
 
     import spark.implicits._
     import org.apache.spark.sql.functions._
