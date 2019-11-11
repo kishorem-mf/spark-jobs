@@ -88,10 +88,9 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with Dispat
 
   override def linkOperator[GenericOutboundEntity <: OutboundEntity](spark: SparkSession, operatorDS: Dataset[_], deltaDs: Dataset[_]): Dataset[_] = {
     import spark.implicits._
-    deltaDs.joinWith(operatorDS.select("ohubId", "concatId")
-      .toDF("opr_ohub", "opr_concatId").as[OperatorRef], col("operatorOhubId") === col("opr_ohub"), "left").map {
-      case (op: Operator, _) if op.isGoldenRecord => op.copy(sourceName = "OHUB", sourceEntityId = op.ohubId.getOrElse(op.sourceEntityId))
-      case (op: Operator, _) => op
+    deltaDs.map {
+      case op: Operator if op.isGoldenRecord => op.copy(sourceName = "OHUB", sourceEntityId = op.ohubId.getOrElse(op.sourceEntityId))
+      case op: Operator => op
     }
   }
 
