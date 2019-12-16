@@ -128,7 +128,7 @@ def run(execDate: String, prevExecDate: String, prevInsightsPath: String, insigh
   
   val integratedDF = deltaIntegratedDF.unionByName(prevIntegratedDF)
   
-  writeToBlob(insightsOutputPath, integratedDF)
+  writeToCsv(insightsOutputPath, "DataCompleteness", integratedDF)
 }
 
 // COMMAND ----------
@@ -148,6 +148,4 @@ dbutils.widgets.text("prevExecDate", "", "")
 val prevExecDate = if(dbutils.widgets.get("prevExecDate") == "") execDate else dbutils.widgets.get("prevExecDate")
 
 run(execDate, prevExecDate, prevInsightsPath, insightsOutputPath)
-
-
 
