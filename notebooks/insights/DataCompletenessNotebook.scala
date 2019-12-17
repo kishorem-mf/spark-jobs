@@ -73,7 +73,7 @@ def getFileInsights(incomingFilePath: String) = {
     val incomingFileDF = readCsvFile(incomingFilePath).cache
     val totalRowCount = incomingFileDF.count
 
-    val (modelName, sourceName) = getModelAndSourceName(baseFileName)
+    val (sourceName, modelName) = getModelAndSourceName(baseFileName)
 
     val dataFilledPercentage = getDataFilledPercentage(incomingFileDF)
 
@@ -128,7 +128,7 @@ def run(execDate: String, prevExecDate: String, prevInsightsPath: String, insigh
   
   val integratedDF = deltaIntegratedDF.unionByName(prevIntegratedDF)
   
-  writeToCsv(insightsOutputPath, "DataCompleteness", integratedDF)
+  writeToCsv(insightsOutputPath, "DataCompletenessInsights", integratedDF)
 }
 
 // COMMAND ----------

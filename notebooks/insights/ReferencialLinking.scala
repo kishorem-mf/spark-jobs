@@ -1,4 +1,13 @@
 // Databricks notebook source
+// MAGIC %md
+// MAGIC ### Common methods initializing
+
+// COMMAND ----------
+
+// MAGIC %run ./BaseInsightExporter
+
+// COMMAND ----------
+
 import org.apache.spark.sql.functions.input_file_name
 import org.apache.spark.sql.functions.{concat,split, lit}
 import org.apache.spark.sql.functions._
@@ -478,7 +487,7 @@ var incomingData_ac_c = spark
         .option("header", true)
         .option("sep", ";")
         .option("inferSchema", value = true)
-        .csv("dbfs:/mnt/inbound/incoming/*/*CONTACTPERSON_ACTIVITIES*.csv")
+        .csv("dbfs:/mnt/inbound/incoming/*/*CONTACTPERSON_ACTIVITIES_*.csv")
         .select("CONTACT_PERSON_REF_ID","SOURCE_NAME")
 
 
@@ -911,70 +920,6 @@ unionByName(agg_sum_linked_cn_cp)
 
 // COMMAND ----------
 
-import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
-import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
-import java.util.UUID
-
-def writeToCsv(path: String, entity:String, ds: Dataset[_]): Unit = {
-    val outputFolderPath = new Path(path)
-    val temporaryPath = new Path(outputFolderPath, UUID.randomUUID().toString)
-    val outputFilePath = new Path(outputFolderPath, s"EntityLinking_merged.csv")
-    val writeableData = ds
-      .write
-      .mode(SaveMode.Overwrite)
-      .option("encoding", "UTF-8")
-      .option("header", "false")
-      .option("quoteAll","true")
-      .option("delimiter", ";")
-  
-      writeableData.csv(temporaryPath.toString)
-      val header = ds.columns.map(c ⇒ c).mkString(";")
-      mergeDirectoryToOneFile(temporaryPath, outputFilePath, spark, header)
-  
-  }
-
-  def mergeDirectoryToOneFile(sourceDirectory: Path, outputFile: Path, spark: SparkSession, header: String): Boolean = {
-
-    val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
-    //Create a new header file which start with a `_` because the files are merged based on alphabetical order so
-    //the header files will be merged first
-    createHeaderFile(fs, sourceDirectory, header)
-    
-    
-
-    def moveOnlyCsvFilesToOtherDirectory = {
-      //Move all csv files to different directory so we don't make a mistake of merging other files from the source directory
-      val tmpCsvSourceDirectory = new Path(sourceDirectory.getParent, UUID.randomUUID().toString)
-      fs.mkdirs(tmpCsvSourceDirectory)
-      fs.listStatus(sourceDirectory)
-        .filter(p ⇒ p.isFile)
-        .filter(p ⇒ p.getPath.getName.endsWith(".csv"))
-        .map(_.getPath)
-        .foreach(fs.rename(_, tmpCsvSourceDirectory))
-      tmpCsvSourceDirectory
-    }
-    
-    val tmpCsvSourceDirectory: Path = moveOnlyCsvFilesToOtherDirectory
-    FileUtil.copyMerge(fs, tmpCsvSourceDirectory, fs, outputFile, true, spark.sparkContext.hadoopConfiguration, null) // scalastyle:ignore
-    fs.delete(sourceDirectory, true)
-  }
-    
-    def createHeaderFile(fs: FileSystem, sourceDirectory: Path, header: String): Path = {
-    import java.io.{BufferedWriter, OutputStreamWriter}
-
-    val headerFile = new Path(sourceDirectory, "_" + UUID.randomUUID().toString + ".csv")
-    val out = fs.create(headerFile)
-    val br = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"))
-    try {
-      br.write(header + "\n")
-    } finally {
-      if (out != null) br.close()
-    }
-    headerFile
-  }
-
-// COMMAND ----------
-
 // MAGIC %python
 // MAGIC def file_exists(path):
 // MAGIC   try:
@@ -991,9 +936,5 @@ def writeToCsv(path: String, entity:String, ds: Dataset[_]): Unit = {
 
 // COMMAND ----------
 
-val insightsOutputPath = dbutils.widgets.get("insights_path")
-writeToCsv(insightsOutputPath,"dummy",combined)
-
-// COMMAND ----------
-
-
+val insightsOutputPath = dbutils.widgets.get("insights_output_path")
+writeToCsv(insightsOutputPath, "EntityLinkingInsights", combined)

@@ -82,7 +82,7 @@ def run(execDate: String, prevInsightsPath: String, insightsOutputPath: String) 
   
   val integratedDF = prevInsightsIntegratedDF.unionByName(deltaInsightsIntegratedDF)
   println("Total deltaInsightsIntegratedDF :: " + deltaInsightsIntegratedDF.count())
-  writeToCsv(insightsOutputPath, "FileUploadErrorsInsight", integratedDF)
+  writeToCsv(insightsOutputPath, "FileUploadErrorsInsights", integratedDF)
 }
 
 // COMMAND ----------
