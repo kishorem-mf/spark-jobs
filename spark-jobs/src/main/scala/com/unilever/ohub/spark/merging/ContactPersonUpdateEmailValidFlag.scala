@@ -21,7 +21,7 @@ object ContactPersonUpdateEmailValidFlag extends SparkJob[ContactPersonUpdateEma
     invalidEmails: Dataset[InvalidEmail]): Dataset[ContactPerson] = {
     import spark.implicits._
 
-    contactPersons.joinWith(invalidEmails, contactPersons("emailAddress") === invalidEmails("emailAddress"), "left").map {
+    contactPersons.joinWith(invalidEmails.dropDuplicates(), contactPersons("emailAddress") === invalidEmails("emailAddress"), "left").map {
       case (contactPerson: ContactPerson, _: InvalidEmail) ⇒ contactPerson.copy(isEmailAddressValid = Some(false))
       case (contactPerson: ContactPerson, _)               ⇒ contactPerson.copy(isEmailAddressValid = Some(true))
     }

@@ -47,5 +47,25 @@ class ContactPersonUpdateEmailValidFlagSpecs extends SparkJobSpec with TestConta
       result(0).isEmailAddressValid shouldBe Some(true)
       result(1).isEmailAddressValid shouldBe Some(false)
     }
+
+    it("should not create duplicate contactPersons if there are duplicate invalid emails ") {
+      val invalidContactPerson = defaultContactPerson.copy(
+        emailAddress = Some(invalidEmail.emailAddress),
+        concatId = "AU~OHUB1~123")
+      val validContactPerson = defaultContactPerson.copy(
+        emailAddress = Some("perfectlyValid@ufs.com"),
+        concatId = "AU~OHUB1~456")
+
+      val cpInput = Seq(invalidContactPerson, validContactPerson).toDataset
+      val ieInput = Seq(invalidEmail, invalidEmail).toDataset
+
+      val result = SUT.transform(spark, cpInput, ieInput).orderBy($"isEmailAddressValid".desc).collect()
+
+      result.length shouldBe 2
+      result(0).isEmailAddressValid shouldBe Some(true)
+      result(1).isEmailAddressValid shouldBe Some(false)
+
+      result.count(_.concatId === "AU~OHUB1~123") shouldBe 1
+    }
   }
 }
