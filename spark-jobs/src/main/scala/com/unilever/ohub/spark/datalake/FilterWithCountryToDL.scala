@@ -54,7 +54,7 @@ object FilterWithCountryToDL extends SparkJob[CopyToDLConfig] {
     def transform(incomingRawPath: String, datalakeRawPath: String, salesOrgToCountryMap: Map[String, String]) = {
       listCsvFiles(incomingRawPath).foreach { file =>
         val df = storage.readFromCsv(file, ";")
-        config.countries.split(",").foreach { country =>
+        config.countries.split(",").map(_.trim).foreach { country =>
           val cols = df.columns.toSeq
           val dropCols = cols.filter(_.startsWith("_"))
           val filterDF = (cols.map(_.toUpperCase) match {
@@ -66,8 +66,6 @@ object FilterWithCountryToDL extends SparkJob[CopyToDLConfig] {
             }
           }).drop(dropCols: _*)
           val fileName = file.split("/").last
-          println("::::::::::::::::::::::::::::::::::::::::::::::::::::::") //scalastyle:ignore
-          println(s"$datalakeRawPath$country/${config.folderDate}") //scalastyle:ignore
           DatalakeUtils.writeToCsv(s"$datalakeRawPath$country/${config.folderDate}", fileName, filterDF, spark)
         }
       }
