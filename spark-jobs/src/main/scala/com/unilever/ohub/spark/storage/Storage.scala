@@ -18,6 +18,8 @@ trait Storage {
 
   def readFromParquet[T <: Product: TypeTag](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
 
+  def getCsvFilePaths(fs: FileSystem, path: Path): Array[Path]
+
   def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq(), saveMode: SaveMode = SaveMode.Overwrite): Unit
 
   def readJdbcTable(dbUrl: String, dbTable: String, userName: String, userPassword: String, jdbcDriverClass: String = "org.postgresql.Driver"): DataFrame
@@ -61,7 +63,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .csv(location)
   }
 
-  private[storage] def getCsvFilePaths(fs: FileSystem, path: Path): Array[Path] = {
+  override def getCsvFilePaths(fs: FileSystem, path: Path): Array[Path] = {
     def toList(it: RemoteIterator[LocatedFileStatus], arr: List[Path] = List.empty): List[Path] = {
       if (it.hasNext) {
         val nextPath = it.next().getPath

@@ -28,5 +28,12 @@ case class TestDomainDataProvider(
                                      "WEBUPDATER" -> 2,
                                      "FUZZIT" -> 3,
                                      "DEX" -> 4
+                                   ),
+
+                                   salesOrgToCountryMap: Map[String, String] = Map(
+                                     "1300" -> "DE",
+                                     "4050" -> "PL",
+                                     "5220" -> "FI",
+                                     "1700" -> "IT"
                                    )
                                  ) extends DomainDataProvider

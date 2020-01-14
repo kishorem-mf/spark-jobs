@@ -10,6 +10,8 @@ trait DomainDataProvider {
   def channelReferences: Map[String, ChannelReference]
 
   def sourceIds: Map[String, Int]
+
+  val salesOrgToCountryMap: Map[String, String]
 }
 
 object DomainDataProvider {
@@ -58,6 +60,18 @@ class InMemDomainDataProvider() extends DomainDataProvider with Serializable {
       .drop(1)
       .map(_.split(";"))
       .map(lineParts ⇒ lineParts(0) -> lineParts(1).toInt)
+      .toMap
+  }
+
+  override lazy val salesOrgToCountryMap: Map[String, String] = {
+    Source
+      .fromInputStream(this.getClass.getResourceAsStream("/sales_org_to_country_map.csv"))
+      .getLines()
+      .toSeq
+      .filter(_.nonEmpty)
+      .drop(1)
+      .map(_.split(";"))
+      .map(lineParts ⇒ lineParts(1) -> lineParts(0))
       .toMap
   }
 }
