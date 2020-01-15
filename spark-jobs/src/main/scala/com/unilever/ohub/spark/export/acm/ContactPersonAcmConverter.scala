@@ -67,4 +67,5 @@ object ContactPersonAcmConverter extends Converter[ContactPerson, AcmContactPers
       TARGET_OHUB_ID = getValue("additionalFields", GetTargetOhubId)
     )
   }
+
 }
