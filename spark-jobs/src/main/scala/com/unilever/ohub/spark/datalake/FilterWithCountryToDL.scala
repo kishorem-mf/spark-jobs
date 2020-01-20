@@ -10,6 +10,8 @@ import java.net.URI
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.SparkSession
 
+import scala.util.Try
+
 case class CopyToDLConfig(
                            incomingRawPath: String = "incomingRawPath",
                            datalakeRawPath: String = "datalakeRawPath",
@@ -65,8 +67,11 @@ object FilterWithCountryToDL extends SparkJob[CopyToDLConfig] {
               case None => df
             }
           }).drop(dropCols: _*)
-          val fileName = file.split("/").last
-          DatalakeUtils.writeToCsv(s"$datalakeRawPath$country/${config.folderDate}", fileName, filterDF, spark)
+          Try(filterDF.first).toOption match {
+            case Some(_) => val fileName = file.split("/").last
+              DatalakeUtils.writeToCsv(s"$datalakeRawPath$country/${config.folderDate}", fileName, filterDF, spark)
+            case None => log.debug(s"No record for $country in ${file}")
+          }
         }
       }
     }
