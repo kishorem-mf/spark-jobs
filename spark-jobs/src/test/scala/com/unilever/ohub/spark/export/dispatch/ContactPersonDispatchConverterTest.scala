@@ -67,7 +67,7 @@ class ContactPersonDispatchConverterTest extends FunSpec with TestContactPersons
       val cp = defaultContactPerson.copy(isGoldenRecord = true).copy(isEmailAddressValid = Some(false))
       val actualDispatchContactPerson = SUT.convert(cp)
 
-      assert(actualDispatchContactPerson.EMAIL_ADDRESS isEmpty)
+      assert(defaultContactPerson.emailAddress.contains(actualDispatchContactPerson.EMAIL_ADDRESS))
     }
     it("It should NOT clean e-mail when email is marked as valid") {
       val cp = defaultContactPerson.copy(isGoldenRecord = true).copy(isEmailAddressValid = Some(true))
