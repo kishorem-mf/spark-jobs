@@ -29,7 +29,7 @@ object ContactPersonDispatchConverter extends Converter[ContactPerson, DispatchC
       CITY = getValue("city", CleanString),
       COUNTRY = getValue("countryName"),
       DM_OPT_OUT = getValue("hasDirectMailOptOut", BooleanToYNUConverter),
-      EMAIL_ADDRESS = getValue("emailAddress", new ClearInvalidEmail(cp.isEmailAddressValid)),
+      EMAIL_ADDRESS = getValue("emailAddress"),
       EMAIL_OPT_OUT = getValue("hasEmailOptOut", BooleanToYNUConverter),
       FIXED_OPT_OUT = getValue("hasTeleMarketingOptOut", BooleanToYNUConverter),
       FIXED_PHONE_NUMBER = getValue("phoneNumber"),
