@@ -8,8 +8,15 @@ object CustomParsers {
 
   def parseDateTimeUnsafe(dateTimePattern: String = "yyyyMMdd HH:mm:ss")(input: String): Timestamp = {
     val pattern = DateTimeFormatter.ofPattern(dateTimePattern)
-    val parsed = LocalDateTime.parse(input, pattern) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
-    Timestamp.valueOf(parsed)
+    var newInput = "";
+    if (input.contains("T")) {
+      newInput = input.replace("T", " ");
+      val parsed = LocalDateTime.parse(newInput, pattern) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
+      Timestamp.valueOf(parsed)
+    } else {
+      val parsed = LocalDateTime.parse(input, pattern) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
+      Timestamp.valueOf(parsed)
+    }
   }
 
   def parseDateUnsafe(datePattern: String = "yyyyMMdd")(input: String): Date = {
