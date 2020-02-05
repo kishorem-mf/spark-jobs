@@ -12,7 +12,7 @@ object CustomParsers {
     if (input.contains("T")) {
       newInput = input.replace("T", " ").replace("-", "")
       val last = newInput.split("\\s").last
-      if (last.equals("00:00")) {
+      if (last.length == 5) {
         pattern = DateTimeFormatter.ofPattern("yyyyMMdd HH:mm")
       }
       val parsed = LocalDateTime.parse(newInput, pattern) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
