@@ -7,10 +7,14 @@ import java.time.format.DateTimeFormatter
 object CustomParsers {
 
   def parseDateTimeUnsafe(dateTimePattern: String = "yyyyMMdd HH:mm:ss")(input: String): Timestamp = {
-    val pattern = DateTimeFormatter.ofPattern(dateTimePattern)
-    var newInput = "";
+    var pattern = DateTimeFormatter.ofPattern(dateTimePattern)
+    var newInput = ""
     if (input.contains("T")) {
-      newInput = input.replace("T", " ");
+      newInput = input.replace("T", " ").replace("-", "")
+      val last = newInput.split("\\s").last
+      if (last.equals("00:00")) {
+        pattern = DateTimeFormatter.ofPattern("yyyyMMdd HH:mm")
+      }
       val parsed = LocalDateTime.parse(newInput, pattern) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
       Timestamp.valueOf(parsed)
     } else {
