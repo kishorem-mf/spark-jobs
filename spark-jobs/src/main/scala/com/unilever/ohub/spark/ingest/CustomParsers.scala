@@ -3,8 +3,10 @@ package com.unilever.ohub.spark.ingest
 import java.sql.{ Date, Timestamp }
 import java.time._
 import java.time.format.DateTimeFormatter
+import org.apache.log4j.{ LogManager, Logger }
 
 object CustomParsers {
+  implicit protected val log: Logger = LogManager.getLogger(CustomParsers.getClass)
 
   def parseDateTimeUnsafe(dateTimePattern: String = "yyyyMMdd HH:mm:ss")(input: String): Timestamp = {
     var pattern = DateTimeFormatter.ofPattern(dateTimePattern)
@@ -16,9 +18,11 @@ object CustomParsers {
         pattern = DateTimeFormatter.ofPattern("yyyyMMdd HH:mm")
       }
       val parsed = LocalDateTime.parse(newInput, pattern) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
+      log.info(s"pattern [${pattern}] newInput [$newInput]")
       Timestamp.valueOf(parsed)
     } else {
       val parsed = LocalDateTime.parse(input, pattern) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
+      log.info(s"Again pattern [${pattern}] newInput [$input]")
       Timestamp.valueOf(parsed)
     }
   }
