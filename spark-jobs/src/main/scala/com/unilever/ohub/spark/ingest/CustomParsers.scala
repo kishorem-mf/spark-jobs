@@ -18,11 +18,11 @@ object CustomParsers {
         pattern = DateTimeFormatter.ofPattern("yyyyMMdd HH:mm")
       }
       val parsed = LocalDateTime.parse(newInput, pattern) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
-      log.info(s"pattern [${pattern}] newInput [$newInput]")
+      log.info(s"pattern [$pattern] newInput [$newInput]")
       Timestamp.valueOf(parsed)
     } else {
       val parsed = LocalDateTime.parse(input, pattern) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
-      log.info(s"Again pattern [${pattern}] newInput [$input]")
+      log.info(s"Again pattern [$pattern] newInput [$input]")
       Timestamp.valueOf(parsed)
     }
   }
