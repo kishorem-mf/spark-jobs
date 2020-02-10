@@ -1,29 +1,26 @@
 package com.unilever.ohub.spark.ingest
 
-import java.sql.{ Date, Timestamp }
+import java.sql.{Date, Timestamp}
 import java.time._
-import java.time.format.DateTimeFormatter
-import org.apache.log4j.{ LogManager, Logger }
+import java.time.format.{DateTimeFormatter, DateTimeParseException}
+
+import org.apache.log4j.{LogManager, Logger}
 
 object CustomParsers {
   implicit protected val log: Logger = LogManager.getLogger(CustomParsers.getClass)
 
   def parseDateTimeUnsafe(dateTimePattern: String = "yyyyMMdd HH:mm:ss")(input: String): Timestamp = {
-    var pattern = DateTimeFormatter.ofPattern(dateTimePattern)
-    var newInput = ""
-    if (input.contains("T")) {
-      newInput = input.replace("T", " ").replace("-", "")
-      val last = newInput.split("\\s").last
-      if (last.length == 5) {
-        pattern = DateTimeFormatter.ofPattern("yyyyMMdd HH:mm")
-      }
-      val parsed = LocalDateTime.parse(newInput, pattern) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
-      log.info(s"pattern [$pattern] newInput [$newInput]")
+    try {
+      val formatter = DateTimeFormatter.ofPattern("[yyyyMMdd HH:mm:ss]"
+        + "[yyyy-MM-dd'T'HH:mm:ss]"
+        + "[yyyy-MM-dd'T'HH:mm]")
+      val parsed = LocalDateTime.parse(input, formatter) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
       Timestamp.valueOf(parsed)
-    } else {
-      val parsed = LocalDateTime.parse(input, pattern) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
-      log.info(s"Again pattern [$pattern] newInput [$input]")
-      Timestamp.valueOf(parsed)
+    } catch {
+      case p: DateTimeParseException =>
+        val format = DateTimeFormatter.ofPattern(dateTimePattern)
+        val parsed = LocalDateTime.parse(input, format) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
+        Timestamp.valueOf(parsed)
     }
   }
 
