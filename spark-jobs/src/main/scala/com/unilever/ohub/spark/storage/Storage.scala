@@ -24,6 +24,8 @@ trait Storage {
 
   def readJdbcTable(dbUrl: String, dbTable: String, userName: String, userPassword: String, jdbcDriverClass: String = "org.postgresql.Driver"): DataFrame
 
+  def readJdbcBasedOnQuery(dbUrl: String, dbQuery: String, userName: String, userPassword: String, jdbcDriverClass: String = "org.postgresql.Driver"): DataFrame
+
   def writeJdbcTable(df: DataFrame, dbUrl: String, dbTable: String, userName: String, userPassword: String,
     jdbcDriverClass: String = "org.postgresql.Driver", saveMode: SaveMode = SaveMode.Overwrite): Unit
 
@@ -119,6 +121,15 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .jdbc(dbUrl, dbTable, connectionProperties(userName, userPassword))
   }
 
+  override def readJdbcBasedOnQuery(dbUrl: String, dbQuery: String, userName: String, userPassword: String, jdbcDriverClass: String= "org.postgresql.Driver"): DataFrame = {
+    spark.read.format("jdbc")
+      .option(JDBCOptions.JDBC_DRIVER_CLASS, jdbcDriverClass)
+      .option(JDBCOptions.JDBC_URL, dbUrl)
+      .option(JDBCOptions.JDBC_QUERY_STRING, dbQuery)
+      .option("user", userName)
+      .option("password", userPassword)
+      .load()
+  }
   private def connectionProperties(userName: String, userPassword: String) = {
     val connectionProperties = new Properties
     connectionProperties.put("user", userName)
