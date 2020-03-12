@@ -75,6 +75,7 @@ trait TestContactPersonsGolden {
     hasFaxOptOut = Some(true),
     webUpdaterId = None,
     isEmailAddressValid = None,
+    isMobileNumberValid = None,
     additionalFields = Map(),
     ingestionErrors = Map()
   )

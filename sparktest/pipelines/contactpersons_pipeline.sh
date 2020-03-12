@@ -17,6 +17,7 @@ RAW_CONTACTPERSONS_INPUT_PATH="${DATA_ROOT_DIR}raw/contactpersons/"
 
 DATA_OPERATORS_INTEGRATED_OUTPUT="${DATA_ROOT_DIR}output/integrated/operators"
 DATA_INVALID_EMAIL_INPUT="${DATA_ROOT_DIR}raw/reference/invalid_email.csv"
+DATA_INVALID_MOBILE_INPUT="${DATA_ROOT_DIR}raw/reference/invalid_mobile.csv"
 DATA_CONTACTPERSONS_INTEGRATED_INPUT="${DATA_ROOT_DIR}input/integrated/contactpersons"
 DATA_CONTACTPERSONS_RAW="${RAW_CONTACTPERSONS_INPUT_PATH}*.csv"
 DATA_CONTACTPERSONS_INGESTED="${DATA_ROOT_DIR}ingested/common/contactpersons.parquet"
@@ -32,6 +33,7 @@ DATA_CONTACTPERSONS_DELTA_GOLDEN_RECORDS="${DATA_ROOT_DIR}intermediate/contactpe
 DATA_CONTACTPERSONS_COMBINED="${DATA_ROOT_DIR}intermediate/contactpersons_combined.parquet"
 DATA_CONTACTPERSONS_UPDATED_REFERENCES="${DATA_ROOT_DIR}intermediate/contactpersons_updated_references.parquet"
 DATA_CONTACTPERSONS_UPDATED_VALID_EMAIL="${DATA_ROOT_DIR}intermediate/contactpersons_updated_valid_email.parquet"
+DATA_CONTACTPERSONS_UPDATED_VALID_MOBILE="${DATA_ROOT_DIR}intermediate/contactpersons_updated_valid_mobile.parquet"
 DATA_CONTACTPERSONS_CREATED_GOLDEN_RECORDS="${DATA_ROOT_DIR}output/integrated/contactpersons_golden"
 
 echo
@@ -96,15 +98,24 @@ spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonReferencing
                --operatorInputFile=${DATA_OPERATORS_INTEGRATED_OUTPUT} \
                --outputFile=${DATA_CONTACTPERSONS_UPDATED_REFERENCES}
 
+echo
+echo ContactPersonUpdateInvalidEmail
 spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonUpdateEmailValidFlag" ${SPARK_JOBS_JAR} \
                --contactPersonsInputFile=${DATA_CONTACTPERSONS_UPDATED_REFERENCES} \
                --invalidEmailAddressesInputFile=${DATA_INVALID_EMAIL_INPUT} \
                --outputFile=${DATA_CONTACTPERSONS_UPDATED_VALID_EMAIL}
 
 echo
+echo ContactPersonUpdateInvalidMobile
+spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonUpdateMobileValidFlag" ${SPARK_JOBS_JAR} \
+               --contactPersonsInputFile=${DATA_CONTACTPERSONS_UPDATED_REFERENCES} \
+               --invalidMobileNumberInputFile=${DATA_INVALID_MOBILE_INPUT} \
+               --outputFile=${DATA_CONTACTPERSONS_UPDATED_VALID_MOBILE}
+			   
+echo
 echo ContactPersonUpdateGoldenRecord
 spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonUpdateGoldenRecord" ${SPARK_JOBS_JAR} \
-               --inputFile=${DATA_CONTACTPERSONS_UPDATED_VALID_EMAIL} \
+               --inputFile=${DATA_CONTACTPERSONS_UPDATED_VALID_MOBILE} \
                --outputFile=${DATA_CONTACTPERSONS_INTEGRATED_OUTPUT}
 
 echo

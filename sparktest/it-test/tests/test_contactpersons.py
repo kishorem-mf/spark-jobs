@@ -34,6 +34,8 @@ class TestContactPersons(object):
         assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_updated_references.parquet", 990)
 
         assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_updated_valid_email.parquet", 990)
+        
+        assertDataframeCount(spark, "/usr/local/data/intermediate/contactpersons_updated_valid_mobile.parquet", 990)
 
         assertDataframeCount(spark, "/usr/local/data/output/integrated/contactpersons", 990)
 

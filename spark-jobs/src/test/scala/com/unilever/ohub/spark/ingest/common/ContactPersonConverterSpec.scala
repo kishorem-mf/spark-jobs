@@ -84,6 +84,7 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
             hasFaxOptOut = Some(true),
             webUpdaterId = None,
             isEmailAddressValid = Some(true),
+            isMobileNumberValid = Some(true),
             additionalFields = Map(),
             ingestionErrors = Map()
           )

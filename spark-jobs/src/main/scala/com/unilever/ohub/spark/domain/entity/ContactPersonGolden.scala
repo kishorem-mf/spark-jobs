@@ -82,6 +82,7 @@ case class ContactPersonGolden(
                           hasFaxOptOut: Option[Boolean],
                           webUpdaterId: Option[String],
                           isEmailAddressValid: Option[Boolean],
+                          isMobileNumberValid: Option[Boolean],
 
                           // other fields
                           additionalFields: Map[String, String],

@@ -720,7 +720,20 @@ val data = Seq(
 ,("FAIR_KITCHENS", "185")
 ,("CATERLYST", "186")
 ,("FIREFLY", "187")
-,("EXPORT", "188"))
+,("EXPORT", "188")
+,("GOOGLE", "189")
+,("UFS_ACADEMY_LITE", "190")
+,("DATA_SCIENCE_CLOUD", "191")
+,("GUVELLER", "192")
+,("ARAWIN", "193")
+,("FAIR", "194")
+,("TRADE_ACTIVATIONS", "195")
+,("DISTRIBUTOR_ACTIVATIONS", "196")
+,("MEJORES_ARROCES", "197")
+,("CLUB_HELLMANNS", "198")
+,("MARKETO", "199")
+,("OUNIVERSE", "200")
+,("OUT_OF_HOME", "201"))
 
 // COMMAND ----------
 

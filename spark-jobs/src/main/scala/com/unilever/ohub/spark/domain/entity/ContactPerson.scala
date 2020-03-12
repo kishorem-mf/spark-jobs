@@ -82,6 +82,7 @@ case class ContactPerson(
                           hasFaxOptOut: Option[Boolean],
                           webUpdaterId: Option[String],
                           isEmailAddressValid: Option[Boolean],
+                          isMobileNumberValid: Option[Boolean],
 
                           // other fields
                           additionalFields: Map[String, String],
@@ -91,4 +92,6 @@ case class ContactPerson(
 }
 
 case class InvalidEmail(emailAddress: String)
+
+case class InvalidMobile(mobileNumber: String)
 
