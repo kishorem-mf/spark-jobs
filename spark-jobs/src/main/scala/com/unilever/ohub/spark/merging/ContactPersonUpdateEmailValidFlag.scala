@@ -57,8 +57,7 @@ object ContactPersonUpdateEmailValidFlag extends SparkJob[ContactPersonUpdateEma
     implicit val invalidEmailEncoder: Encoder[InvalidEmail] = Encoders.product[InvalidEmail]
 
     val invalidEmails = storage
-      .readFromCsv(config.invalidEmailAddressesInputFile, ",")
-      .withColumnRenamed("email", "emailAddress")
+      .readFromCsv(config.invalidEmailAddressesInputFile, ";")
       .select("emailAddress")
       .as[InvalidEmail]
 

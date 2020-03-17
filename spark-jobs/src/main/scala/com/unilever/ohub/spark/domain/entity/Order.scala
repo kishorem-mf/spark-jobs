@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.domain.entity
 
-import java.sql.Timestamp
+import java.sql.{Date, Timestamp}
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
@@ -82,6 +82,10 @@ case class Order(
                   deliveryOperatorCity: Option[String],
                   deliveryOperatorState: Option[String],
                   deliveryOperatorCountry: Option[String],
+                  ufsClientNumber: Option[String],
+                  deliveryType: Option[String],
+                  preferredDeliveryDateOption: Option[String],
+                  preferredDeliveryDate: Option[Timestamp],
                   // other fields
                   additionalFields: Map[String, String],
                   ingestionErrors: Map[String, IngestionError]

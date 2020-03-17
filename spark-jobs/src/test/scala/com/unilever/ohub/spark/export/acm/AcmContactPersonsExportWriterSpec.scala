@@ -307,10 +307,11 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
       result.filter($"CP_ORIG_INTEGRATION_ID" === "7777").select($"CP_LNKD_INTEGRATION_ID").collect().head.toString() should include("AU~7777~3~183")
       result.filter($"CP_ORIG_INTEGRATION_ID" === "3333").select($"DELETE_FLAG").first.getString(0) should equal("0")
       result.filter($"CP_ORIG_INTEGRATION_ID" === "3333").select($"TARGET_OHUB_ID").first.getString(0) should equal(null)
-      result.filter($"CP_ORIG_INTEGRATION_ID" === "3333").select($"EMAIL_ADDRESS").first.getString(0) should equal("inv2@ohub.com")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "3333").select($"EMAIL_ADDRESS").first.getString(0) should equal(null)
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "3333").select($"ORG_EMAIL_ADDRESS").first.getString(0) should equal("inv2@ohub.com")
       result.filter($"CP_ORIG_INTEGRATION_ID" === "3333").select($"MOBILE_PHONE_NUMBER").first.getString(0) should equal("+31612345")
       result.filter($"CP_ORIG_INTEGRATION_ID" === "4444").select($"DELETE_FLAG").first.getString(0) should equal("1")
-      result.filter($"CP_ORIG_INTEGRATION_ID" === "4444").select($"EMAIL_ADDRESS").first.getString(0) should equal("inv1@ohub.com")
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "4444").select($"ORG_EMAIL_ADDRESS").first.getString(0) should equal("inv1@ohub.com")
     }
 
     it("should send DE-ACTIVATED groups as deleted") {
@@ -402,6 +403,47 @@ class AcmContactPersonsExportWriterSpec extends SparkJobSpec with TestContactPer
       result.filter($"CP_ORIG_INTEGRATION_ID" === "2").select("TARGET_OHUB_ID", "CP_LNKD_INTEGRATION_ID", "DELETE_FLAG").collect().head.mkString(":") should include("3:AU~103~3~19:1")
       result.filter($"CP_ORIG_INTEGRATION_ID" === "1").select("TARGET_OHUB_ID", "CP_LNKD_INTEGRATION_ID", "DELETE_FLAG").collect().head.mkString(":") should include("3:AU~101~3~19:1")
 
+    }
+
+    it("should set isActive to false when email and mobile number are invalid") {
+
+      val prevIntegratedDs = Seq(
+        defaultContactPerson.copy(concatId = "AU~WUFOO~101", ohubId = Some("1"), isGoldenRecord = true, isActive = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~102", ohubId = Some("1"), isActive = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("2"), isGoldenRecord = true, isActive = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~105", ohubId = Some("2"), isGoldenRecord = true, isActive = true)
+      ).toDataset
+
+      val integratedDs = Seq(
+        defaultContactPerson.copy(concatId = "AU~WUFOO~101", ohubId = Some("1"), isGoldenRecord = true, isActive = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~102", ohubId = Some("1"), isActive = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("2"), isGoldenRecord = true, isActive = true),
+        defaultContactPerson.copy(concatId = "AU~WUFOO~105", ohubId = Some("2"), isGoldenRecord = false, isActive = true)
+      ).toDataset
+
+      val previousMergedDs = Seq(
+        defaultContactPerson.copy(ohubId = Some("1"), concatId = "AU~OHUB~1", isGoldenRecord = true, isActive = true),
+        defaultContactPerson.copy(ohubId = Some("2"), concatId = "AU~OHUB~2", isGoldenRecord = true, isActive = true)
+      ).toDataset
+
+      val mergedDs = Seq(
+        defaultContactPerson.copy(ohubId = Some("1"), concatId = "AU~OHUB~1", isGoldenRecord = true, isActive = true,
+          isEmailAddressValid = Some(false), isMobileNumberValid = Some(false)),
+        defaultContactPerson.copy(ohubId = Some("2"), concatId = "AU~OHUB~2", isGoldenRecord = true, isActive = true,
+          emailAddress = null, isMobileNumberValid = Some(false)),
+        defaultContactPerson.copy(ohubId = Some("3"), concatId = "AU~OHUB~3", isGoldenRecord = true, isActive = true,
+          mobileNumber = None, isEmailAddressValid = Some(false))
+      ).toDataset
+
+      SUT.export(integratedDs, getDeletedOhubIdsWithTargetId(spark, prevIntegratedDs, integratedDs, previousMergedDs, mergedDs).unionByName, mergedDs, previousMergedDs, emptyDF, config, spark)
+
+      val result: Dataset[Row] = storage.readFromCsv(config.outboundLocation, new AcmOptions {}.delimiter, true)
+
+      result.collect().length shouldBe 3
+      //result.filter($"DELETE_FLAG" === "0").collect().length shouldBe 0
+      result.filter($"DELETE_FLAG" === "1").collect().length shouldBe 3
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "1").select("TARGET_OHUB_ID").first.getString(0) should equal(null)
+      result.filter($"CP_ORIG_INTEGRATION_ID" === "3").select("DELETE_FLAG").first.getString(0) should equal("1")
     }
   }
 

@@ -1,7 +1,8 @@
 package com.unilever.ohub.spark.insights
 
 import java.net.URI
-import java.util.UUID
+import java.text.SimpleDateFormat
+import java.util.{Calendar, UUID}
 
 import com.unilever.ohub.spark.SparkJobConfig
 import com.unilever.ohub.spark.storage.Storage
@@ -10,6 +11,11 @@ import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
 import org.apache.spark.sql.{SparkSession, _}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.expressions.Window
+import org.joda.time.format.DateTimeFormat
+import org.joda.time.{LocalDate, Period}
+
+import scala.collection.immutable.Stream.Empty
+import scala.util.control.Breaks._
 
 trait BaseInsightConfig extends SparkJobConfig {
   val incomingRawPath: String = "incomingRawPath"
@@ -45,7 +51,7 @@ object BaseInsightUtils {
   }
 
   def getBaseName(path: String): String = {
-    path.substring(path.lastIndexOf("UFS_"), path.lastIndexOf(".")).toUpperCase
+    path.substring(path.lastIndexOf("/UFS_") + 1, path.lastIndexOf(".")).toUpperCase
   }
 
   private def getAuditTrailData(storage: Storage, query:String, config: BaseInsightConfig)(implicit spark: SparkSession) = {
@@ -124,6 +130,61 @@ object BaseInsightUtils {
       .filter(path => path.substring(InsightConstants.BASE_FILE_NAME_INDEX, path.length) matches InsightConstants.DATA_COMPLETENESS_FILE_PATTERN)
   }
 
+  def listFiles(basePath: String, storage: Storage)(implicit spark: SparkSession): Seq[String] = {
+    val conf = new Configuration(spark.sparkContext.hadoopConfiguration)
+    val fs = FileSystem.get(new URI(basePath), conf)
+    storage.getCsvFilePaths(fs, new Path(basePath))
+      .map(_.toString)
+      .filter(path => path.substring(InsightConstants.BASE_FILE_NAME_INDEX, path.length) matches InsightConstants.DATA_COMPLETENESS_FILE_PATTERN)
+  }
+
+  private def getDatesInRange(fromDate: String, toDate: String) = {
+
+    def dateRange(from: LocalDate, to: LocalDate, step: Period): Iterator[LocalDate] =
+      Iterator.iterate(from)(_.plus(step)).takeWhile(!_.isAfter(to))
+
+    val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
+
+    val fromDateLoc = LocalDate.parse(fromDate, dateFormat)
+    val toDateLoc = LocalDate.parse(toDate, dateFormat)
+
+    dateRange(fromDateLoc, toDateLoc, new Period().withDays(1)).map(_.toString)
+  }
+
+  def listIncomingFiles(basePath: String, startDate:String, endDate:String, storage: Storage)
+                       (implicit spark: SparkSession): Seq[String] = {
+    val dateList = getDatesInRange(startDate, endDate)
+      .map(date => s"$basePath${date}")
+      .toList
+
+    var files = Seq("UFS_DUMMY_ROW.CSV")
+    for (dayOne <- dateList) {
+      breakable {
+        try{
+          files = files.union(listFiles(dayOne,storage))
+        } catch {
+          case ex: java.io.FileNotFoundException => break
+        }
+      }
+    }
+
+    files=dropFirstMatch(files,"UFS_DUMMY_ROW.CSV")
+    files
+  }
+
+  def dropFirstMatch[A](ls: Seq[A], value: A): Seq[A] = {
+    val index = ls.indexOf(value)  //index is -1 if there is no match
+    if (index < 0) {
+      ls
+    } else if (index == 0) {
+      ls.tail
+    } else {
+      // splitAt keeps the matching element in the second group
+      val (a, b) = ls.splitAt(index)
+      a ++ b.tail
+    }
+  }
+
 
   def writeToCsv(path: String, fileName: String, ds: Dataset[_])(implicit spark: SparkSession): Unit = {
     val outputFolderPath = new Path(path)
@@ -180,6 +241,57 @@ object BaseInsightUtils {
       if (out != null) br.close()
     }
     headerFile
+  }
+
+  def getLatestEngineRunDates():String = {
+    val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
+    var cal = Calendar.getInstance()
+
+    cal = Calendar.getInstance()
+    cal.add(Calendar.DATE, -1)
+    val dates=dateFormat.format(cal.getTime())
+    dates
+  }
+
+  def getParentOne(child: String): String = {
+    child match {
+      case "CONTACTPERSONS" => "operators"
+      case "ORDERLINES" => "orders"
+      case "SUBSCRIPTION" => "contactpersons"
+      case "LOYALTY" => "operators"
+      case "ORDERS" => "operators"
+      case "OPERATOR_ACTIVITIES" => "operators"
+      case "CONTACTPERSON_ACTIVITIES" => "contactpersons"
+      case _=>""
+    }
+  }
+
+  def getParentTwo(child: String): String = {
+    child match {
+      case "ORDERLINES" => "products"
+      case "ORDERS" => "contactpersons"
+      case "LOYALTY" => "contactpersons"
+      case _=>""
+    }
+  }
+
+  def getCampaignParent(child: String): String = {
+    child match {
+      case "CAMPAIGNS" => "contactpersons"
+      case "CAMPAIGN_SENDS" => "contactpersons"
+      case "CAMPAIGN_CLICKS" => "contactpersons"
+      case "CAMPAIGN_OPENS" => "contactpersons"
+      case "CAMPAIGN_BOUNCES" => "contactpersons"
+      case _=>""
+    }
+  }
+
+  def getParentModel(child:String, category:Int):String = {
+    category match {
+      case 1 => getParentOne(child)
+      case 2 => getParentTwo(child)
+      case 3 => getCampaignParent(child)
+    }
   }
 
 }

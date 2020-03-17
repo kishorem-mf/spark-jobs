@@ -30,14 +30,13 @@ object ContactPersonOutboundWriter extends ExportOutboundWriter[ContactPerson] w
     import spark.implicits._
 
     dataSet
-      .filter(
-        ($"emailAddress".isNotNull && $"emailAddress" =!= "") ||
-          ($"mobileNumber".isNotNull && $"mobileNumber" =!= "")
-      )
+      .filter(($"emailAddress".isNotNull && $"emailAddress" =!= "") || ($"mobileNumber".isNotNull && $"mobileNumber" =!= ""))
       .withColumn("isActive",
-        when($"isEmailAddressValid" === lit(false) && ($"mobileNumber".isNull || $"mobileNumber" === ""),
-          lit(false)).otherwise($"isActive")
-      )
+        when(($"isEmailAddressValid" === lit(false) && ($"mobileNumber".isNull || $"mobileNumber" === "")) ||
+          ($"isMobileNumberValid" === lit(false) && ($"emailAddress".isNull || $"emailAddress" === "")),
+          lit(false)).otherwise($"isActive"))
+      .withColumn("isActive", when( ($"isMobileNumberValid" === lit(false) && $"isEmailAddressValid" === lit(false)),
+        lit(false)) otherwise($"isActive"))
   }
 
   override def explainConversion: Option[ContactPerson => AcmContactPerson] = Some((input: ContactPerson) => ContactPersonAcmConverter.convert(input, true))

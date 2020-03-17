@@ -80,6 +80,14 @@ import org.scalatest.{FunSpec, Matchers}
         assert(actualDispatchContactPerson.EMAIL_ADDRESS contains("jwilliams@downunder.au"))
       }
 
+      it("It should clean mobile when mobileNumber is marked as inValid") {
+        val cp = defaultContactPerson.copy(isGoldenRecord = true).copy(isMobileNumberValid = Some(false))
+        val actualDispatchContactPerson = SUT.convert(cp)
+
+        assert(actualDispatchContactPerson.MOBILE_PHONE_NUMBER contains(""))
+        assert(actualDispatchContactPerson.ORG_MOBILE_PHONE_NUMBER contains("61612345678"))
+      }
+
       it("It should convert GENDER to 0 when empty") {
         val cp = defaultContactPerson.copy(isGoldenRecord = true).copy(gender = None)
         val actualDispatchContactPerson = SUT.convert(cp)

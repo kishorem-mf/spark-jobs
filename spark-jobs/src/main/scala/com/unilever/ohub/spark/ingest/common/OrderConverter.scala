@@ -70,6 +70,10 @@ object OrderConverter extends CommonDomainGateKeeper[Order] with OrderEmptyParqu
         deliveryOperatorCity = optional("deliveryOperatorCity"),
         deliveryOperatorState = optional("deliveryOperatorState"),
         deliveryOperatorCountry = optional("deliveryOperatorCountry"),
+        ufsClientNumber = optional("ufsClientNumber"),
+        deliveryType = optional("deliveryType"),
+        preferredDeliveryDateOption = optional("preferredDeliveryDateOption"),
+        preferredDeliveryDate = optional("preferredDeliveryDate", parseDateTimeUnsafe()),
         // other fields
         additionalFields = additionalFields,
         ingestionErrors = errors

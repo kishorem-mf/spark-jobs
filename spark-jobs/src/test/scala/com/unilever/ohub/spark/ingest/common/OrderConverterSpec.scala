@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.ingest.common
 
-import java.sql.Timestamp
+import java.sql.{Date, Timestamp}
 
 import com.unilever.ohub.spark.domain.entity.{ Order, TestOrders }
 import com.unilever.ohub.spark.ingest.{ CsvDomainConfig, CsvDomainGateKeeperSpec }
@@ -46,7 +46,11 @@ class OrderConverterSpec extends CsvDomainGateKeeperSpec[Order] with TestOrders 
           vat = Some(BigDecimal("12345")),
           amount = Some(BigDecimal("10")),
           operatorConcatId = Some("E1-1234"),
-          transactionDate = Some(Timestamp.valueOf("2015-09-30 14:23:00"))
+          transactionDate = Some(Timestamp.valueOf("2015-09-30 14:23:00")),
+          ufsClientNumber = Some("C1234"),
+          deliveryType = Some("DELIVERY"),
+          preferredDeliveryDateOption = Some("DATE"),
+          preferredDeliveryDate = Some(Timestamp.valueOf("2020-02-28 00:00:00"))
         )
 
         actualOrder shouldBe expectedOrder

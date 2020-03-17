@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.domain.entity
 
-import java.sql.Timestamp
+import java.sql.{Date, Timestamp}
 
 object TestOrders extends TestOrders
 
@@ -62,6 +62,10 @@ trait TestOrders {
     deliveryOperatorCity = Some("deliveryOperatorCity"),
     deliveryOperatorState = Some("deliveryOperatorState"),
     deliveryOperatorCountry = Some("deliveryOperatorCountry"),
+    ufsClientNumber = Some("C1234"),
+    deliveryType = Some("DELIVERY"),
+    preferredDeliveryDateOption = Some("DATE"),
+    preferredDeliveryDate = Some(Timestamp.valueOf("2020-02-28 00:00:00")),
     // other fields
     additionalFields = Map(),
     ingestionErrors = Map()

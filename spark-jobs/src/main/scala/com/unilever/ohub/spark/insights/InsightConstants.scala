@@ -4,6 +4,7 @@ object InsightConstants {
 
   val SEMICOLON = ";"
   val DATA_COMPLETENESS_FILENAME = "DataCompletenessInsights.csv"
+  val RECORD_LINKING_FILENAME = "EntityLinkingInsights.csv"
 
   val DATA_COMPLETENESS_FILE_PATTERN = "(^UFS_).*(\\.(?i)csv)"
   val BASE_FILE_NAME_INDEX = 38
