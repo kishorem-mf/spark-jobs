@@ -90,7 +90,7 @@ trait TestProducts {
     subCategoryByMarketeer = None,
     subCategoryCode = None,
     subCategoryName = None,
-    `type` = None,
+    `type` = Some("Loyalty"),
     unit = None,
     unitPrice = None,
     youtubeUrl = None,
