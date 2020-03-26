@@ -21,7 +21,8 @@ class ProductAcmConverterSpec extends FunSpec with TestProducts with Matchers {
         MRDR_CODE = "4567",
         CREATED_AT = "2015/06/30 13:49:00",
         UPDATED_AT = "2015/06/30 13:49:00",
-        DELETE_FLAG = "N"
+        DELETE_FLAG = "N",
+        TYPE = "Loyalty"
       )
 
       result shouldBe expectedAcmOrderLine

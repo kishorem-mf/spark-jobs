@@ -27,7 +27,7 @@ class ProductDispatchConverterSpec extends SparkJobSpec with TestProducts {
         SUB_CATEGORY = "",
         BRAND = "",
         SUB_BRAND = "",
-        ITEM_TYPE = "",
+        ITEM_TYPE = "Loyalty",
         UNIT = "",
         UNIT_PRICE_CURRENCY = "",
         UNIT_PRICE = ""

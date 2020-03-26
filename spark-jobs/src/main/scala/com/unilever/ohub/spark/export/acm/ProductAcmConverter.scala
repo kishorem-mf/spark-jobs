@@ -15,7 +15,8 @@ object ProductAcmConverter extends Converter[Product, AcmProduct] with TypeConve
       MRDR_CODE = getValue("code"),
       CREATED_AT = getValue("ohubCreated"),
       UPDATED_AT = getValue("ohubUpdated"),
-      DELETE_FLAG = getValue("isActive", InvertedBooleanToYNConverter)
+      DELETE_FLAG = getValue("isActive", InvertedBooleanToYNConverter),
+      TYPE = getValue("type")
     )
   }
 }

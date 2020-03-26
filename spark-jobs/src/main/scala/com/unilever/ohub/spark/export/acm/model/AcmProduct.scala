@@ -10,4 +10,5 @@ case class AcmProduct(
                        MRDR_CODE: String,
                        CREATED_AT: String,
                        UPDATED_AT: String,
-                       DELETE_FLAG: String) extends ACMOutboundEntity
+                       DELETE_FLAG: String,
+                       TYPE: String) extends ACMOutboundEntity

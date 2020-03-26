@@ -55,7 +55,7 @@ class AcmProductsExportWriterSpec
         .find(status => status.getPath.getName.contains("UFS_PRODUCTS"))
         .get
       val header = readFirstLine(csvFile.getPath, fs)
-      header shouldBe "COUNTY_CODE¶PRODUCT_NAME¶PRD_INTEGRATION_ID¶EAN_CODE¶MRDR_CODE¶CREATED_AT¶UPDATED_AT¶DELETE_FLAG"
+      header shouldBe "COUNTY_CODE¶PRODUCT_NAME¶PRD_INTEGRATION_ID¶EAN_CODE¶MRDR_CODE¶CREATED_AT¶UPDATED_AT¶DELETE_FLAG¶TYPE"
     }
 
     it("Should write correct csv") {
