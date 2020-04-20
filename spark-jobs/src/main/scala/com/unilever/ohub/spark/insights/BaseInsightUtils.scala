@@ -17,16 +17,18 @@ import org.joda.time.{LocalDate, Period}
 import scala.collection.immutable.Stream.Empty
 import scala.util.control.Breaks._
 
-trait BaseInsightConfig extends SparkJobConfig {
+
+
+trait BaseInsightConfig extends DatabaseConfig {
   val incomingRawPath: String = "incomingRawPath"
   val previousInsightsPath: String = "previousInsightsPath"
   val insightsOutputPath: String = "insightsOutputPath"
-  val databaseUrl: String = "databaseUrl"
-  val databaseUserName: String = "databaseUserName"
-  val databasePassword: String = "databasePassword"
+  override val databaseUrl: String = "databaseUrl"
+  override val databaseUserName: String = "databaseUserName"
+  override val databasePassword: String = "databasePassword"
 }
 
-object BaseInsightUtils {
+object BaseInsightUtils extends DatabaseUtils {
 
   val CSV_NAME_PATTERN_STRING= "UFS_([A-Z0-9_-]+)_" +
       "(CHAINS|LOYALTY|OPERATORS|OPERATOR_ACTIVITIES|OPERATOR_CLASSIFICATIONS|CONTACTPERSONS|CONTACTPERSON_ACTIVITIES|CONTACTPERSON_CLASSIFICATIONS|" +
@@ -54,20 +56,6 @@ object BaseInsightUtils {
     path.substring(path.lastIndexOf("/UFS_") + 1, path.lastIndexOf(".")).toUpperCase
   }
 
-  private def getAuditTrailData(storage: Storage, query:String, config: BaseInsightConfig)(implicit spark: SparkSession) = {
-    import spark.implicits._
-
-    storage.readJdbcBasedOnQuery(config.databaseUrl, query, config.databaseUserName, config.databasePassword)
-      .withColumn("file_name", upper($"file_name"))
-      .withColumnRenamed("file_name", "AUDIT_FILE_NAME")
-      .withColumnRenamed("timestamp", "CREATED_DATE")
-      .withColumnRenamed("status", "STATUS")
-      .withColumnRenamed("username", "USER_NAME")
-      .withColumnRenamed("reason_failed", "REASON_FAILED")
-      .withColumnRenamed("linked_file", "LINKED_FILE")
-      .withColumn("USER_NAME", when($"USER_NAME".contains("svc-b-da-"), expr("substring(USER_NAME, 18, length(USER_NAME))")) otherwise($"USER_NAME"))
-  }
-
   def getAuditTrailsForDataCompletenessInsights(storage: Storage, config: BaseInsightConfig)(implicit spark: SparkSession) : DataFrame = {
     val query = InsightConstants.AUDIT_TRAILS_QUERY
     getAuditTrailData(storage, query, config)
@@ -78,30 +66,6 @@ object BaseInsightUtils {
     getAuditTrailData(storage, query, config)
   }
 
-  private def getErrorsData(storage: Storage, config: BaseInsightConfig)(implicit spark: SparkSession) : DataFrame = {
-    val query = InsightConstants.FILE_UPLOAD_ERROR_QUERY
-    storage.readJdbcBasedOnQuery(config.databaseUrl, query, config.databaseUserName, config.databasePassword)
-  }
-
-  def getAdGroupUserData(storage: Storage, config: BaseInsightConfig)(implicit spark: SparkSession) : DataFrame = {
-    val query = InsightConstants.AD_GROUP_USERS_QUERY
-    storage.readJdbcBasedOnQuery(config.databaseUrl, query, config.databaseUserName, config.databasePassword)
-  }
-
-  def getBatchJobExecutionData(storage: Storage, config: BaseInsightConfig)(implicit spark: SparkSession) : DataFrame = {
-    val query = InsightConstants.BATCH_JOB_EXEC_QUERY
-    storage.readJdbcBasedOnQuery(config.databaseUrl, query, config.databaseUserName, config.databasePassword)
-  }
-
-  def getBatchStepExecutionData(storage: Storage, config: BaseInsightConfig)(implicit spark: SparkSession) : DataFrame = {
-    val query = InsightConstants.BATCH_STEP_QUERY
-    storage.readJdbcBasedOnQuery(config.databaseUrl, query, config.databaseUserName, config.databasePassword)
-  }
-
-  def getSpnData(storage: Storage, config: BaseInsightConfig)(implicit spark: SparkSession) : DataFrame = {
-    val query = InsightConstants.SPN_QUERY
-    storage.readJdbcBasedOnQuery(config.databaseUrl, query, config.databaseUserName, config.databasePassword)
-  }
 
   def getErrorsDataForFileUploadInsights(storage: Storage, config: BaseInsightConfig, filesList: Seq[String])(implicit spark: SparkSession) : DataFrame = {
     import spark.implicits._

@@ -111,7 +111,7 @@ spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonUpdateMobil
                --contactPersonsInputFile=${DATA_CONTACTPERSONS_UPDATED_REFERENCES} \
                --invalidMobileNumberInputFile=${DATA_INVALID_MOBILE_INPUT} \
                --outputFile=${DATA_CONTACTPERSONS_UPDATED_VALID_MOBILE}
-			   
+
 echo
 echo ContactPersonUpdateGoldenRecord
 spark-submit   --class="com.unilever.ohub.spark.merging.ContactPersonUpdateGoldenRecord" ${SPARK_JOBS_JAR} \

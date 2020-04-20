@@ -26,5 +26,5 @@ object SparkDependencies extends AutoPlugin {
     },
     libraryDependencies ++= sparkDependencies
   )
-
+  
 }

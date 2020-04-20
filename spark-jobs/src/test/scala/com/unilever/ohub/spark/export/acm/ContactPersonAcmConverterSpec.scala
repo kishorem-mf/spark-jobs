@@ -84,8 +84,8 @@ import org.scalatest.{FunSpec, Matchers}
         val cp = defaultContactPerson.copy(isGoldenRecord = true).copy(isMobileNumberValid = Some(false))
         val actualDispatchContactPerson = SUT.convert(cp)
 
-        assert(actualDispatchContactPerson.MOBILE_PHONE_NUMBER contains(""))
         assert(actualDispatchContactPerson.ORG_MOBILE_PHONE_NUMBER contains("61612345678"))
+        assert(actualDispatchContactPerson.MOBILE_PHONE_NUMBER contains(""))
       }
 
       it("It should convert GENDER to 0 when empty") {
