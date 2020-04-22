@@ -4,10 +4,24 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
 import java.util.UUID
 
+import com.unilever.ohub.spark.insights.{DatabaseConfig, DatabaseUtils}
+import com.unilever.ohub.spark.storage.Storage
+import org.apache.spark.sql.functions.date_format
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
 
 
-object DatalakeUtils {
+trait DataLakeConfig extends DatabaseConfig {
+  val country: String = " country_code"
+  val previousIntegratedPath: String = "previous integrated file path"
+  val outputPath: String = "output file path"
+  val fromDate: String = "errors to fetch from date"
+  val toDate: Option[String] = None
+  override val databaseUrl: String = "databaseUrl"
+  override val databaseUserName: String = "databaseUserName"
+  override val databasePassword: String = "databasePassword"
+}
+
+object DatalakeUtils extends DatabaseUtils {
 
   def bulkListLeafFiles(conf: Configuration, fs: FileSystem, spark: SparkSession, basep: String): Seq[String] = {
     val status = fs.listStatus(new Path(basep))
@@ -18,7 +32,7 @@ object DatalakeUtils {
   def writeToCsv(path: String, fileName: String, ds: Dataset[_], spark: SparkSession): Unit = {
     val outputFolderPath = new Path(path)
     val temporaryPath = new Path(outputFolderPath, UUID.randomUUID().toString)
-    val outputFilePath = new Path(outputFolderPath, s"${fileName}")
+    val outputFilePath = new Path(outputFolderPath, s"$fileName")
     val writeableData = ds
       .write
       .mode(SaveMode.Overwrite)
@@ -70,6 +84,15 @@ object DatalakeUtils {
       if (out != null) br.close()
     }
     headerFile
+  }
+
+  def getCountryBasedUploadErrors(storage: Storage, config: DataLakeConfig)(implicit spark: SparkSession) : DataFrame = {
+    import spark.implicits._
+
+    DatalakeUtils.getErrorsData(storage,config)
+        .filter(date_format($"timestamp", "yyyy-MM-dd") >= config.fromDate)
+        .filter(date_format($"timestamp", "yyyy-MM-dd") <= config.toDate.getOrElse(config.fromDate))
+        .filter($"country_code" === config.country)
   }
 
 }
