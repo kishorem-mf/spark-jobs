@@ -50,12 +50,14 @@ object FilterWithCountryToDL extends SparkJob[CopyToDLConfig] {
     def listCsvFiles(basep: String): Seq[String] = {
       val conf = new Configuration(spark.sparkContext.hadoopConfiguration)
       val fs = FileSystem.get(new URI(basep), conf)
-      storage.getCsvFilePaths(fs, new Path(basep)).map(_.toString)
+      storage.getCsvFilePath(fs, new Path(basep)).map(_.toString)
+
     }
 
     def transform(incomingRawPath: String, datalakeRawPath: String, salesOrgToCountryMap: Map[String, String]) = {
       listCsvFiles(incomingRawPath).foreach { file =>
         val df = storage.readFromCsv(file, ";")
+
         config.countries.split(",").map(_.trim).foreach { country =>
           val cols = df.columns.toSeq
           val dropCols = cols.filter(_.startsWith("_"))
@@ -63,7 +65,8 @@ object FilterWithCountryToDL extends SparkJob[CopyToDLConfig] {
             case col if col.contains("COUNTRY_CODE") => df.filter($"Country_Code" === country)
             case col if col.contains("COUNTRY CODE") => df.filter($"Country Code" === country)
             case _ => df.columns.find(_ == "SalesOrg") match {
-              case Some(column) => df.filter(col(column) === salesOrgToCountryMap(country))
+              case Some(column) =>
+                df.filter(col(column) === salesOrgToCountryMap.getOrElse(country, "ANY_STRING"))
               case None => df
             }
           }).drop(dropCols: _*)

@@ -2,6 +2,7 @@ package com.unilever.ohub.spark.storage
 
 import java.util.Properties
 
+import com.unilever.ohub.spark.Constants
 import org.apache.hadoop.fs._
 import org.apache.spark.sql._
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
@@ -19,6 +20,8 @@ trait Storage {
   def readFromParquet[T <: Product: TypeTag](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
 
   def getCsvFilePaths(fs: FileSystem, path: Path): Array[Path]
+
+  def getCsvFilePath(fs: FileSystem, path: Path): Array[Path]
 
   def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq(), saveMode: SaveMode = SaveMode.Overwrite): Unit
 
@@ -77,6 +80,21 @@ class DefaultStorage(spark: SparkSession) extends Storage {
 
     toList(fs.listFiles(path, true))
       .filter(_.getName.endsWith(".csv"))
+      .toArray
+  }
+
+  override def getCsvFilePath(fs: FileSystem, path: Path): Array[Path] = {
+    def toList(it: RemoteIterator[LocatedFileStatus], arr: List[Path] = List.empty): List[Path] = {
+      if (it.hasNext) {
+        val nextPath = it.next().getPath
+        toList(it, arr :+ nextPath)
+      } else {
+        arr
+      }
+    }
+
+    toList(fs.listFiles(path, true))
+      .filter(_.getName.matches(Constants.CSV_PATTERN))
       .toArray
   }
 
