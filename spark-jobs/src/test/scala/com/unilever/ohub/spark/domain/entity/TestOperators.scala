@@ -94,7 +94,7 @@ trait TestOperators {
     netPromoterScore            = Some(BigDecimal(75)),
     numberOfProductsFittingInMenu = Some(1),
     numberOfReviews             = Some(3),
-    oldIntegrationId            = Some("old-integration-id"),
+    oldIntegrationId            = None,
     operatorLeadScore           = Some(1),
     otm                         = Some("D"),
     otmEnteredBy                = Some("otm-entered-by"),

@@ -114,7 +114,8 @@ object FileUploadErrorInsigts extends SparkJob[FileUploadErrorsConfig] {
 
     implicit val sparkSession:SparkSession = spark
 
-    val previousIntegratedInsightsDF = storage.readFromCsv(config.previousInsightsPath, InsightConstants.SEMICOLON).cache()
+    val previousIntegratedInsightsDF = storage.readFromCsv(config.previousInsightsPath, InsightConstants.SEMICOLON,
+      true, InsightConstants.ESCAPE_BACKSLASH).cache()
 
     val deltaIntegratedInsightsDF = transform(config, storage)
 

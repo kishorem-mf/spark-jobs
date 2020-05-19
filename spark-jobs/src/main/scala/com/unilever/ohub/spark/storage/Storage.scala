@@ -14,7 +14,8 @@ trait Storage {
   def readFromCsv(
     location: String,
     fieldSeparator: String,
-    hasHeaders: Boolean = true
+    hasHeaders: Boolean = true,
+    escapeChar: String = "\""
   ): Dataset[Row]
 
   def readFromParquet[T <: Product: TypeTag](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
@@ -56,7 +57,8 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   override def readFromCsv(
     location: String,
     fieldSeparator: String,
-    hasHeaders: Boolean = true
+    hasHeaders: Boolean = true,
+    escapeChar: String = "\""
   ): Dataset[Row] = {
     spark
       .read
@@ -64,7 +66,7 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .option("sep", fieldSeparator)
       .option("inferSchema", value = false)
       .option("encoding", "UTF-8")
-      .option("escape", "\"")
+      .option("escape", escapeChar)
       .csv(location)
   }
 

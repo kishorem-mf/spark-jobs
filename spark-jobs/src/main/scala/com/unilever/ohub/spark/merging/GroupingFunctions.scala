@@ -5,6 +5,7 @@ import java.util.UUID
 import com.unilever.ohub.spark.SparkJobConfig
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.merging.DataFrameHelpers._
+import com.unilever.ohub.spark.sql.JoinType
 import org.apache.spark.sql._
 import org.apache.spark.sql.expressions.{UserDefinedFunction, Window}
 import org.apache.spark.sql.functions._
@@ -20,6 +21,35 @@ case class ExactMatchIngestedWithDbConfig(
 trait GroupingFunctions {
 
   val createOhubIdUdf: UserDefinedFunction = udf((d: Double) ⇒ UUID.nameUUIDFromBytes(d.toString.getBytes).toString)
+
+  def stitchOhubId[T <: DomainEntity : Encoder](
+                                                 integrated: Dataset[T],
+                                                 delta: Dataset[T],
+                                                 toColumn: String,
+                                                 fromColumn: Column,
+                                                 notNullColoumns: Seq[String])(implicit spark: SparkSession): Dataset[T] = {
+
+    val notNullCheckColumns = notNullColoumns.map(col)
+
+    val newWithStitch = delta
+      .columnsNotNullAndNotEmpty(notNullCheckColumns)
+      .alias("preprocessed")
+      .join(
+        integrated.select("ohubId").dropDuplicates(),
+        delta("oldIntegrationId") === integrated("ohubId"),"inner"
+      )
+      .select("preprocessed.*")
+      .stitchColumns(toColumn, fromColumn)
+      .as[T]
+
+    val deltaWithoutStitchIds = delta
+      .join(newWithStitch, Seq("concatId"), JoinType.LeftAnti)
+      .as[T]
+
+    deltaWithoutStitchIds
+      .unionByName(newWithStitch)
+      .as[T]
+  }
 
   def matchColumns[T <: DomainEntity : Encoder](
                                                  integrated: Dataset[T],
@@ -57,8 +87,8 @@ object DataFrameHelpers extends GroupingFunctions {
     /**
      * Concatenate all the specified
      *
-     * @param cols               and create new column with name
-     * @param name
+     * @param cols               and create new column with cols
+     * @param name               and create new column with name
      * @param convertToLowerCase is used to make convert all column values to lower case. By default it is false
      */
     def concatenateColumns(name: String, cols: Seq[Column], convertToLowerCase: Boolean = false)(implicit spark: SparkSession): Dataset[_] = {
@@ -73,6 +103,18 @@ object DataFrameHelpers extends GroupingFunctions {
           )
         ): _*))
     }
+
+
+    /**
+      * Stitch all the specified
+      *
+      * @param colTo               and create to column with name
+      * @param colFrom             and create from column with name
+      */
+    def stitchColumns( colTo: String, colFrom: Column)(implicit spark: SparkSession): Dataset[_] = {
+      df.withColumn(colTo,colFrom)
+    }
+
 
     def addOhubId(implicit spark: SparkSession): Dataset[_] = {
       import spark.implicits._

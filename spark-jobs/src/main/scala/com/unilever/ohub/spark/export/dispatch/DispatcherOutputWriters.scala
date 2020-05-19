@@ -208,6 +208,11 @@ object LoyaltyPointsOutboundWriter extends ExportOutboundWriter[LoyaltyPoints] w
 
   override def explainConversion: Option[LoyaltyPoints => DispatchLoyaltyPoints] = Some((input: LoyaltyPoints) => LoyaltyPointsDispatcherConverter.convert(input, true))
 
+  override private[export] def entitySpecificFilter(spark: SparkSession, dataSet: Dataset[LoyaltyPoints], config: OutboundConfig) = {
+    import spark.implicits._
+    dataSet.filter($"isGoldenRecord")
+  }
+
   override def entityName(): String = "LOYALTIES"
 }
 

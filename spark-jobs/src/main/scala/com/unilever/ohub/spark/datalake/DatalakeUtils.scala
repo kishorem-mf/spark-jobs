@@ -6,6 +6,7 @@ import java.util.UUID
 
 import com.unilever.ohub.spark.insights.{DatabaseConfig, DatabaseUtils}
 import com.unilever.ohub.spark.storage.Storage
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions.date_format
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
 
@@ -29,22 +30,23 @@ object DatalakeUtils extends DatabaseUtils {
   }
 
 
-  def writeToCsv(path: String, fileName: String, ds: Dataset[_], spark: SparkSession): Unit = {
-    val outputFolderPath = new Path(path)
-    val temporaryPath = new Path(outputFolderPath, UUID.randomUUID().toString)
-    val outputFilePath = new Path(outputFolderPath, s"$fileName")
-    val writeableData = ds
-      .write
-      .mode(SaveMode.Overwrite)
-      .option("encoding", "UTF-8")
-      .option("header", "false")
-      .option("quoteAll", "true")
-      .option("delimiter", ";")
+  def writeToCsv(path: String, fileName: String, ds: Dataset[_], scfile:RDD[String], spark: SparkSession): Unit = {
+    if(!scfile.first().contains(",")) {
+      val outputFolderPath = new Path(path)
+      val temporaryPath = new Path(outputFolderPath, UUID.randomUUID().toString)
+      val outputFilePath = new Path(outputFolderPath, s"$fileName")
+      val writeableData = ds
+        .write
+        .mode(SaveMode.Overwrite)
+        .option("encoding", "UTF-8")
+        .option("header", "false")
+        .option("quoteAll", "true")
+        .option("delimiter", ";")
 
-    writeableData.csv(temporaryPath.toString)
-    val header = ds.columns.map(c ⇒ "\"" + c + "\"").mkString(";")
-    mergeDirectoryToOneFile(temporaryPath, outputFilePath, spark, header)
-
+      writeableData.csv(temporaryPath.toString)
+      val header = ds.columns.map(c ⇒ "\"" + c + "\"").mkString(";")
+      mergeDirectoryToOneFile(temporaryPath, outputFilePath, spark, header)
+    }
   }
 
   def mergeDirectoryToOneFile(sourceDirectory: Path, outputFile: Path, spark: SparkSession, header: String): Boolean = {

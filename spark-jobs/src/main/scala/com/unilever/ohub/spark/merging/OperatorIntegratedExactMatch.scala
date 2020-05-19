@@ -41,8 +41,18 @@ object OperatorIntegratedExactMatch extends SparkJob[ExactMatchIngestedWithDbCon
     import spark.implicits._
     val columns = Seq("countryCode", "city", "street", "houseNumber", "houseNumberExtension", "zipCode", "name")
     val notNullColumns = Seq("name")
-    val matchedExact: Dataset[Operator] = matchColumns[Operator](integratedRecords, dailyDeltaRecords, columns,notNullColumns)
+    val goldenIds=dailyDeltaRecords.filter($"ohubId".isNotNull).as[Operator]
 
+    val matchedExact: Dataset[Operator] = matchColumns[Operator](integratedRecords,
+      dailyDeltaRecords, columns,notNullColumns)
+
+    val exactMatchNonGolden = matchedExact
+      .alias("NonGoldenExactMatch")
+      .join(goldenIds, Seq("concatId"), JoinType.LeftAnti)
+      .select("NonGoldenExactMatch.*")
+      .as[Operator]
+
+    val exactMatchAll = exactMatchNonGolden.unionByName(goldenIds)
     val oneRecordPerMatchingGroup = matchedExact
       .grabOneRecordPerGroup
       .as[Operator]
@@ -57,7 +67,7 @@ object OperatorIntegratedExactMatch extends SparkJob[ExactMatchIngestedWithDbCon
       .join(matchedExact, Seq("concatId"), JoinType.LeftAnti)
       .as[Operator]
 
-    (matchedExact, unmatchedIntegrated, unmatchedDelta)
+    (exactMatchAll, unmatchedIntegrated, unmatchedDelta)
   }
 
   override def run(spark: SparkSession, config: ExactMatchIngestedWithDbConfig, storage: Storage): Unit = {

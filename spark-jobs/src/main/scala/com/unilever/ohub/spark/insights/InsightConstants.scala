@@ -3,6 +3,7 @@ package com.unilever.ohub.spark.insights
 object InsightConstants {
 
   val SEMICOLON = ";"
+  val ESCAPE_BACKSLASH = "\\"
   val DATA_COMPLETENESS_FILENAME = "DataCompletenessInsights.csv"
   val RECORD_LINKING_FILENAME = "EntityLinkingInsights.csv"
 

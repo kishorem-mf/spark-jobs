@@ -10,6 +10,8 @@ class TestOperators(object):
 
         assertDataframeCount(spark, "/usr/local/data/intermediate/operators_pre_processed.parquet", 1000)
 
+        assertDataframeCount(spark, "/usr/local/data/intermediate/operators_stitch_id.parquet", 1000)
+
         assertDataframeCount(spark, "/usr/local/data/intermediate/operators_exact_matches.parquet", 1000)
 
         # integrated input is 769 as the reference records have to be passed to fuzzy logic
