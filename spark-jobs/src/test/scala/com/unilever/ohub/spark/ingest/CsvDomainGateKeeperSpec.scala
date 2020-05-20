@@ -22,8 +22,9 @@ trait CsvDomainGateKeeperSpec[DomainType <: DomainEntity] extends SparkJobSpec {
   def runJobWith(config: CsvDomainConfig)(assertFn: Dataset[DomainType] ⇒ Unit): Unit = {
     val mockStorage = mock[Storage]
 
+    val escapeChar = "\""
     // read input data
-    (mockStorage.readFromCsv _).expects(config.inputFile, SUT.determineFieldSeparator(config), SUT.hasHeaders)
+    (mockStorage.readFromCsv _).expects(config.inputFile, SUT.determineFieldSeparator(config), SUT.hasHeaders, escapeChar)
       .returns(
         spark
           .read

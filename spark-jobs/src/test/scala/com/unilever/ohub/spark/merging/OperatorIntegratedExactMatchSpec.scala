@@ -9,7 +9,8 @@ case class ResultOperator(
     sourceEntityId: String,
     ohubId: Option[String],
     name: Option[String],
-    street: Option[String] = None)
+    street: Option[String] = None,
+    oldIntegId: Option[String] = None)
 
 class OperatorIntegratedExactMatchSpec extends SparkJobSpec with TestOperators {
 
@@ -24,10 +25,21 @@ class OperatorIntegratedExactMatchSpec extends SparkJobSpec with TestOperators {
   private val recordA2 = defaultOperatorWithSourceEntityId("200").copy(ohubId = None, name = Some("Jan"))
 
   private val recordC1 = defaultOperatorWithSourceEntityId("300").copy(ohubId = None, name = Some("Jan"), street = Some("street1"))
-  private val recordC1_2 = defaultOperatorWithSourceEntityId("301").copy(ohubId = Some("AAA"), name = Some("Jan"), street = Some("street1"))
+  private val recordC1_2 = defaultOperatorWithSourceEntityId("301").copy(ohubId = Some("AAA"), name = Some("Jan"), street = Some("street2"))
+  private val recordC1_3 = defaultOperatorWithSourceEntityId("302").copy(ohubId = Some("MMM"), name = Some("FAN"), street = Some("street1"))
   private val recordD1 = defaultOperatorWithSourceEntityId("400").copy(ohubId = None, name = Some("Jan"), street = Some("street2"))
-  private val recordD1_2 = defaultOperatorWithSourceEntityId("401").copy(ohubId = None, name = Some("Jan"), street = Some("street2"))
+  private val recordD1_1 = defaultOperatorWithSourceEntityId("400").copy(ohubId = None, name = Some("Jan"), street = Some("street1"))
+  private val recordD1_2 = defaultOperatorWithSourceEntityId("401").copy(ohubId = Some("123"), name = Some("Jan"), street = Some("street2"), oldIntegrationId = Some("123"))
+  private val recordD1_3 = defaultOperatorWithSourceEntityId("402").copy(ohubId = Some("124"), name = Some("Jan"), street = Some("street2"), oldIntegrationId = Some("124"))
 
+  private val recordD1_4 = defaultOperatorWithSourceEntityId("400").copy(ohubId = None, name = Some("Jan"), street = Some("street2"))
+  private val recordD1_5 = defaultOperatorWithSourceEntityId("401").copy(ohubId = Some("124"), name = Some("Jan"), street = Some("street2"), oldIntegrationId = Some("124"))
+  private val recordD1_6 = defaultOperatorWithSourceEntityId("402").copy(ohubId = Some("124"), name = Some("Jan"), street = Some("street2"), oldIntegrationId = Some("124"))
+
+  private val recordD1_7 = defaultOperatorWithSourceEntityId("400").copy(ohubId = None, name = Some("Jan"), street = Some("street2"))
+  private val recordD1_8 = defaultOperatorWithSourceEntityId("401").copy(ohubId = Some("124"), name = Some("Jan"), street = Some("street3"), oldIntegrationId = Some("124"))
+  private val recordD1_9 = defaultOperatorWithSourceEntityId("402").copy(ohubId = Some("124"), name = Some("Jan"), street = Some("street4"), oldIntegrationId = Some("124"))
+  
   private val COPY_GENERATED = "COPY_GENERATED"
 
   describe("OperatorIntegratedExactMatch.transform") {
@@ -66,15 +78,119 @@ class OperatorIntegratedExactMatchSpec extends SparkJobSpec with TestOperators {
 
     it("should create separate groups if not all columns are equal") {
       val integratedContactPersons = createDataset(recordC1_2)
-      val deltaContactPersons = createDataset(recordD1)
+      val deltaContactPersons = createDataset(recordD1_1)
 
       val expectedMatchedExact = Set(
-        ResultOperator("301", Some("AAA"), Some("Jan"), street = Some("street1")),
-        ResultOperator("400", Some(COPY_GENERATED), Some("Jan"), street = Some("street2"))
+        ResultOperator("301", Some("AAA"), Some("Jan"), street = Some("street2")),
+        ResultOperator("400", Some(COPY_GENERATED), Some("Jan"), street = Some("street1"))
       )
       val expectedUnmatchedIntegrated = Set[ResultOperator](
-        ResultOperator("301", Some("AAA"), Some("Jan"), street = Some("street1")),
-        ResultOperator("400", Some(COPY_GENERATED), Some("Jan"), street = Some("street2"))
+        ResultOperator("301", Some("AAA"), Some("Jan"), street = Some("street2")),
+        ResultOperator("400", Some(COPY_GENERATED), Some("Jan"), street = Some("street1"))
+      )
+      val expectedUnmatchedDelta = Set[ResultOperator]()
+
+      matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
+    }
+
+    it("Get priority for golden ID integrated") {
+      val integratedContactPersons = createDataset(recordC1_2)
+      val deltaContactPersons = createDataset(recordD1_2).unionByName(createDataset(recordD1_3).unionByName(createDataset(recordD1))
+      )
+
+      val expectedMatchedExact =  Set(
+        ResultOperator("401",Some("123"),Some("Jan"),Some("street2"),None), //integ
+        ResultOperator("402",Some("124"),Some("Jan"),Some("street2"),None),
+        ResultOperator("301",Some("AAA"),Some("Jan"),Some("street2"),None),
+        ResultOperator("400",Some("AAA"),Some("Jan"),Some("street2"),None)
+      )
+
+      val expectedUnmatchedIntegrated = Set(
+        ResultOperator("301",Some("AAA"),Some("Jan"),Some("street2"),None)
+      )
+      val expectedUnmatchedDelta = Set[ResultOperator]()
+
+      matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
+    }
+
+    it("Get priority for golden ID delta") {
+      val integratedContactPersons = createDataset(recordC1_3)
+      val deltaContactPersons = createDataset(recordD1_2).unionByName(createDataset(recordD1_3).unionByName(createDataset(recordD1))
+      )
+
+      val expectedMatchedExact =  Set(
+        ResultOperator("401",Some("123"),Some("Jan"),Some("street2"),None), //delta
+        ResultOperator("402",Some("124"),Some("Jan"),Some("street2"),None),
+        ResultOperator("302",Some("MMM"),Some("FAN"),Some("street1"),None),
+        ResultOperator("400",Some("124"),Some("Jan"),Some("street2"),None)
+      )
+
+      val expectedUnmatchedIntegrated = Set(
+        ResultOperator("400",Some("124"),Some("Jan"),Some("street2"),None),
+        ResultOperator("302",Some("MMM"),Some("FAN"),Some("street1"),None)
+      )
+      val expectedUnmatchedDelta = Set[ResultOperator]()
+
+      matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
+    }
+
+    it("Get priority for golden ID: no ambiguity ") {
+      val integratedContactPersons = createDataset(recordC1_3)
+      val deltaContactPersons = createDataset(recordD1_4).unionByName(createDataset(recordD1_5).unionByName(createDataset(recordD1_6))
+      )
+
+      val expectedMatchedExact =  Set(
+        ResultOperator("401",Some("124"),Some("Jan"),Some("street2"),None), //delta
+        ResultOperator("402",Some("124"),Some("Jan"),Some("street2"),None),
+        ResultOperator("302",Some("MMM"),Some("FAN"),Some("street1"),None),
+        ResultOperator("400",Some("124"),Some("Jan"),Some("street2"),None)
+      )
+
+      val expectedUnmatchedIntegrated = Set(
+        ResultOperator("400",Some("124"),Some("Jan"),Some("street2"),None),
+        ResultOperator("302",Some("MMM"),Some("FAN"),Some("street1"),None)
+      )
+      val expectedUnmatchedDelta = Set[ResultOperator]()
+
+      matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
+    }
+    it("Get priority for golden ID, match case: no ambiguity") {
+      val integratedContactPersons = createDataset(recordC1_3)
+      val deltaContactPersons = createDataset(recordD1_4).unionByName(createDataset(recordD1_5).unionByName(createDataset(recordD1_6))
+      )
+
+      val expectedMatchedExact =  Set(
+        ResultOperator("401",Some("124"),Some("Jan"),Some("street2"),None), //delta
+        ResultOperator("402",Some("124"),Some("Jan"),Some("street2"),None),
+        ResultOperator("302",Some("MMM"),Some("FAN"),Some("street1"),None),
+        ResultOperator("400",Some("124"),Some("Jan"),Some("street2"),None)
+      )
+
+      val expectedUnmatchedIntegrated = Set(
+        ResultOperator("400",Some("124"),Some("Jan"),Some("street2"),None),
+        ResultOperator("302",Some("MMM"),Some("FAN"),Some("street1"),None)
+      )
+      val expectedUnmatchedDelta = Set[ResultOperator]()
+
+      matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
+    }
+
+    it("Get priority for golden ID for no match case: no ambiguity") {
+      val integratedContactPersons = createDataset(recordC1_3)
+      val deltaContactPersons = createDataset(recordD1_7).unionByName(createDataset(recordD1_8).unionByName(createDataset(recordD1_9))
+      )
+
+      val expectedMatchedExact =  Set(
+        ResultOperator("401",Some("124"),Some("Jan"),Some("street3"),None), //delta
+        ResultOperator("402",Some("124"),Some("Jan"),Some("street4"),None),
+        ResultOperator("302",Some("MMM"),Some("FAN"),Some("street1"),None),
+        ResultOperator("400",Some(COPY_GENERATED),Some("Jan"),Some("street2"),None)
+      )
+
+      val expectedUnmatchedIntegrated = Set(
+        ResultOperator("400",Some(COPY_GENERATED),Some("Jan"),Some("street2"),None),
+        ResultOperator("401",Some("124"),Some("Jan"),Some("street3"),None),
+        ResultOperator("302",Some("MMM"),Some("FAN"),Some("street1"),None)
       )
       val expectedUnmatchedDelta = Set[ResultOperator]()
 

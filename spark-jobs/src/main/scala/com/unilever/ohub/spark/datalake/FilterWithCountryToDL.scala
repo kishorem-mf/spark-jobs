@@ -57,6 +57,7 @@ object FilterWithCountryToDL extends SparkJob[CopyToDLConfig] {
     def transform(incomingRawPath: String, datalakeRawPath: String, salesOrgToCountryMap: Map[String, String]) = {
       listCsvFiles(incomingRawPath).foreach { file =>
         val df = storage.readFromCsv(file, ";")
+        val scFile=spark.sparkContext.textFile(file)
 
         config.countries.split(",").map(_.trim).foreach { country =>
           val cols = df.columns.toSeq
@@ -72,7 +73,7 @@ object FilterWithCountryToDL extends SparkJob[CopyToDLConfig] {
           }).drop(dropCols: _*)
           Try(filterDF.first).toOption match {
             case Some(_) => val fileName = file.split("/").last
-              DatalakeUtils.writeToCsv(s"$datalakeRawPath$country/${config.folderDate}", fileName, filterDF, spark)
+                DatalakeUtils.writeToCsv(s"$datalakeRawPath$country/${config.folderDate}", fileName, filterDF,scFile, spark)
             case None => log.debug(s"No record for $country in ${file}")
           }
         }

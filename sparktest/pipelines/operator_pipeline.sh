@@ -19,6 +19,7 @@ DATA_OPERATORS_INTEGRATED_INPUT="${DATA_ROOT_DIR}input/integrated/operators"
 DATA_OPERATORS_RAW="${RAW_OPERATORS_INPUT_PATH}*.csv"
 DATA_OPERATORS_INGESTED="${DATA_ROOT_DIR}ingested/common/operators.parquet"
 DATA_OPERATORS_PRE_PROCESSED="${DATA_ROOT_DIR}intermediate/operators_pre_processed.parquet"
+DATA_OPERATORS_STITCH_MATCHES="${DATA_ROOT_DIR}intermediate/operators_stitch_id.parquet"
 DATA_OPERATORS_EXACT_MATCHES="${DATA_ROOT_DIR}intermediate/operators_exact_matches.parquet"
 DATA_OPERATORS_UNMATCHED_INTEGRATED="${DATA_ROOT_DIR}intermediate/operators_unmatched_integrated.parquet"
 DATA_OPERATORS_UNMATCHED_DELTA="${DATA_ROOT_DIR}intermediate/operators_unmatched_delta.parquet"
@@ -56,10 +57,17 @@ spark-submit   --class="com.unilever.ohub.spark.merging.OperatorPreProcess" ${SP
                --deltaPreProcessedOutputFile=${DATA_OPERATORS_PRE_PROCESSED}
 
 echo
+echo OperatorIntegratedStitchMatch
+spark-submit   --class="com.unilever.ohub.spark.merging.OperatorStitchId" ${SPARK_JOBS_JAR} \
+               --integratedInputFile=${DATA_OPERATORS_INTEGRATED_INPUT} \
+               --deltaInputFile=${DATA_OPERATORS_PRE_PROCESSED} \
+               --stitchIdOutputFile=${DATA_OPERATORS_STITCH_MATCHES}
+
+echo
 echo OperatorIntegratedExactMatch
 spark-submit   --class="com.unilever.ohub.spark.merging.OperatorIntegratedExactMatch" ${SPARK_JOBS_JAR} \
                --integratedInputFile=${DATA_OPERATORS_INTEGRATED_INPUT} \
-               --deltaInputFile=${DATA_OPERATORS_PRE_PROCESSED} \
+               --deltaInputFile=${DATA_OPERATORS_STITCH_MATCHES} \
                --matchedExactOutputFile=${DATA_OPERATORS_EXACT_MATCHES} \
                --unmatchedIntegratedOutputFile=${DATA_OPERATORS_UNMATCHED_INTEGRATED} \
                --unmatchedDeltaOutputFile=${DATA_OPERATORS_UNMATCHED_DELTA}
