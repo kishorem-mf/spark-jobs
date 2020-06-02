@@ -2,18 +2,27 @@ package com.unilever.ohub.spark.ingest
 
 import java.sql.{Date, Timestamp}
 import java.time._
-import java.time.format.{DateTimeFormatter, DateTimeParseException}
 
 import org.apache.log4j.{LogManager, Logger}
+import java.time.format.{DateTimeFormatter, DateTimeParseException}
+
 
 object CustomParsers {
   implicit protected val log: Logger = LogManager.getLogger(CustomParsers.getClass)
 
   def parseDateTimeUnsafe(dateTimePattern: String = "yyyyMMdd HH:mm:ss")(input: String): Timestamp = {
     try {
-      val formatter = DateTimeFormatter.ofPattern("[yyyyMMdd HH:mm:ss]"
+      val formatter = DateTimeFormatter.ofPattern( "[yyyy-MM-dd'T'HH:mm:ss.SSSX]"
+        +"[yyyy-MM-dd'T'HH:mm:ss.SSS]"
+        + "[yyyyMMdd HH:mm:ss]"
         + "[yyyy-MM-dd'T'HH:mm:ss]"
-        + "[yyyy-MM-dd'T'HH:mm]")
+        + "[yyyy-MM-dd'T'HH:mm]"
+        + "[yyyy-MM-dd HH:mm:ss.SS]"
+        + "[yyyyMMddHHmmss]"
+        + "[dd/MM/yyyy HH:mm:ss]"
+        + "[yyyy-MM-dd'T'HH:mm:ss.SSS'Z']"
+        + "[yyyy-MM-dd'T'HH:mm:ss.SSSSSSS'Z']"
+      )
       val parsed = LocalDateTime.parse(input, formatter) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
       Timestamp.valueOf(parsed)
     } catch {
