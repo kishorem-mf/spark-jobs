@@ -8,7 +8,7 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import java.net.URI
 
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 import scala.util.Try
 
@@ -54,26 +54,30 @@ object FilterWithCountryToDL extends SparkJob[CopyToDLConfig] {
 
     }
 
+    def countryCodeSelection(salesOrgToCountryMap: Map[String, String], df: Dataset[Row], country: String, cols: Seq[String], dropCols: Seq[String]) = {
+      val filterDF = (cols.map(_.toUpperCase) match {
+        case col if col.contains("COUNTRY_CODE") => df.filter($"Country_Code" === country)
+        case col if col.contains("COUNTRY CODE") => df.filter($"Country Code" === country)
+        case col if col.contains("COUNTRYCODE") => df.filter($"countryCode" === country)
+        case _ => df.columns.find(_ == "SalesOrg") match {
+          case Some(column) => df.filter(col(column) === salesOrgToCountryMap.getOrElse(country, "ANY_STRING"))
+          case None => df
+        }
+      }).drop(dropCols: _*)
+      filterDF
+    }
+
     def transform(incomingRawPath: String, datalakeRawPath: String, salesOrgToCountryMap: Map[String, String]) = {
       listCsvFiles(incomingRawPath).foreach { file =>
         val df = storage.readFromCsv(file, ";")
-        val scFile=spark.sparkContext.textFile(file)
-
+        val scFile = spark.sparkContext.textFile(file)
         config.countries.split(",").map(_.trim).foreach { country =>
           val cols = df.columns.toSeq
           val dropCols = cols.filter(_.startsWith("_"))
-          val filterDF = (cols.map(_.toUpperCase) match {
-            case col if col.contains("COUNTRY_CODE") => df.filter($"Country_Code" === country)
-            case col if col.contains("COUNTRY CODE") => df.filter($"Country Code" === country)
-            case _ => df.columns.find(_ == "SalesOrg") match {
-              case Some(column) =>
-                df.filter(col(column) === salesOrgToCountryMap.getOrElse(country, "ANY_STRING"))
-              case None => df
-            }
-          }).drop(dropCols: _*)
+          val filterDF: DataFrame = countryCodeSelection(salesOrgToCountryMap, df, country, cols, dropCols)
           Try(filterDF.first).toOption match {
             case Some(_) => val fileName = file.split("/").last
-                DatalakeUtils.writeToCsv(s"$datalakeRawPath$country/${config.folderDate}", fileName, filterDF,scFile, spark)
+              DatalakeUtils.writeToCsv(s"$datalakeRawPath$country/${config.folderDate}", fileName, filterDF, scFile, spark)
             case None => log.debug(s"No record for $country in ${file}")
           }
         }

@@ -53,6 +53,12 @@ class CustomParsersSpec extends FunSpec with Matchers {
     it("should parse 2017-12-15T00:00 as 2017-12-15 00:00:00.0") {
       assert(parseDateTimeUnsafe()("2017-12-15T00:00").toString == "2017-12-15 00:00:00.0")
     }
+    it("should parse 2020-05-19T11:27:28.783 as 2020-05-19 11:27:28.783") {
+      assert(parseDateTimeUnsafe()("2020-05-19T11:27:28.783").toString == "2020-05-19 11:27:28.783")
+    }
+    it("should parse 2020-05-19T11:27:28.783+0000 as 2020-05-19 11:27:28.783") {
+      assert(parseDateTimeUnsafe()("2020-05-19T11:27:28.783+0000").toString == "2020-05-19 11:27:28.783")
+    }
   }
 
   describe("toTimestamp") {
