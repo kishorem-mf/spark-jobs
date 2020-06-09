@@ -11,6 +11,7 @@ import scopt.OptionParser
 
 case class ProductMergingConfig(
     products: String = "product-input-file",
+    products_sifu: String = "product-sifu-input-file",
     previousIntegrated: String = "previous-integrated-file",
     outputFile: String = "path-to-output-file"
 ) extends SparkJobConfig
@@ -18,10 +19,10 @@ case class ProductMergingConfig(
 object ProductMerging extends SparkJob[ProductMergingConfig] {
 
   def transform(
-    spark: SparkSession,
-    products: Dataset[Product],
-    previousIntegrated: Dataset[Product]
-  ): Dataset[Product] = {
+                 spark: SparkSession,
+                 products: Dataset[Product],
+                 previousIntegrated: Dataset[Product]
+               ): Dataset[Product] = {
     import spark.implicits._
 
     previousIntegrated
@@ -43,13 +44,13 @@ object ProductMerging extends SparkJob[ProductMergingConfig] {
   override private[spark] def configParser(): OptionParser[ProductMergingConfig] =
     new scopt.OptionParser[ProductMergingConfig]("Order merging") {
       head("merges products into an integrated products output file.", "1.0")
-      opt[String]("productsInputFile") required () action { (x, c) ⇒
+      opt[String]("productsInputFile") required() action { (x, c) ⇒
         c.copy(products = x)
       } text "productsInputFile is a string property"
-      opt[String]("previousIntegrated") required () action { (x, c) ⇒
+      opt[String]("previousIntegrated") required() action { (x, c) ⇒
         c.copy(previousIntegrated = x)
       } text "previousIntegrated is a string property"
-      opt[String]("outputFile") required () action { (x, c) ⇒
+      opt[String]("outputFile") required() action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
 
@@ -61,10 +62,20 @@ object ProductMerging extends SparkJob[ProductMergingConfig] {
     log.info(
       s"Merging products from [${config.products}] and [${config.previousIntegrated}] to [${config.outputFile}]"
     )
+    def enrich(
+                spark: SparkSession,
+                products: Dataset[Product],
+                location: String
+              ): Dataset[Product] = {
+      import spark.implicits._
+      val products_sifu = spark.read.parquet(location)
+      products
+    }
 
     val products = storage.readFromParquet[Product](config.products)
     val previousIntegrated = storage.readFromParquet[Product](config.previousIntegrated)
-    val transformed = transform(spark, products, previousIntegrated)
+    val enriched_products = enrich(spark,products, config.products_sifu)
+    val transformed = transform(spark, enriched_products, previousIntegrated)
 
     storage.writeToParquet(transformed, config.outputFile)
   }
