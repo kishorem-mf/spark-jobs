@@ -18,6 +18,8 @@ trait Storage {
     escapeChar: String = "\""
   ): Dataset[Row]
 
+  def readFromJson(location: Dataset[String]): Dataset[Row]
+
   def readFromParquet[T <: Product: TypeTag](location: String, selectColumns: Seq[Column] = Seq()): Dataset[T]
 
   def getCsvFilePaths(fs: FileSystem, path: Path): Array[Path]
@@ -50,6 +52,9 @@ trait Storage {
     dbTempDir: String,
     query: String
   ): DataFrame
+
+
+
 }
 
 class DefaultStorage(spark: SparkSession) extends Storage {
@@ -68,6 +73,14 @@ class DefaultStorage(spark: SparkSession) extends Storage {
       .option("encoding", "UTF-8")
       .option("escape", escapeChar)
       .csv(location)
+  }
+
+  override def readFromJson(
+                            location: Dataset[String]
+                          ): Dataset[Row] = {
+    spark
+      .read
+      .json(location)
   }
 
   override def getCsvFilePaths(fs: FileSystem, path: Path): Array[Path] = {
@@ -116,11 +129,11 @@ class DefaultStorage(spark: SparkSession) extends Storage {
   }
 
   override def writeToParquet(ds: Dataset[_], location: String, partitionBy: Seq[String] = Seq(), saveMode: SaveMode = SaveMode.Overwrite): Unit = {
-    ds
+      ds
       .write
-      .mode(saveMode)
-      .partitionBy(partitionBy: _*)
-      .parquet(location)
+        .mode(saveMode)
+        .partitionBy(partitionBy: _*)
+        .parquet(location)
   }
 
   // see also: http://spark.apache.org/docs/latest/sql-programming-guide.html#jdbc-to-other-databases
