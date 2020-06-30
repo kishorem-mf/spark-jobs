@@ -7,16 +7,18 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import java.net.URI
 
+import com.unilever.ohub.spark.datalake.DatalakeUtils.getFolderDateList
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 import scala.util.Try
 
 case class CopyToDLConfig(
-                           incomingRawPath: String = "incomingRawPath",
-                           datalakeRawPath: String = "datalakeRawPath",
-                           countries: String = "countries",
-                           folderDate: String = "folderDate"
+                          incomingRawPath: String = "incomingRawPath",
+                          datalakeRawPath: String = "datalakeRawPath",
+                          countries: String = "countries",
+                          fromDate: String = "fromDate",
+                          toDate: Option[String] = None
                          ) extends SparkJobConfig
 
 object FilterWithCountryToDL extends SparkJob[CopyToDLConfig] {
@@ -33,8 +35,11 @@ object FilterWithCountryToDL extends SparkJob[CopyToDLConfig] {
       opt[String]("countries") required() action { (x, c) ⇒
         c.copy(countries = x)
       } text "countries to copy"
-      opt[String]("folderDate") required() action { (x, c) ⇒
-        c.copy(folderDate = x)
+      opt[String]("fromDate") required() action { (x, c) ⇒
+        c.copy(fromDate = x)
+      } text "date for datalake folder"
+      opt[String]("toDate") optional() action { (x, c) ⇒
+        c.copy(toDate = Some(x))
       } text "date for datalake folder"
 
       version("1.0")
@@ -45,14 +50,13 @@ object FilterWithCountryToDL extends SparkJob[CopyToDLConfig] {
 
 
   override def run(spark: SparkSession, config: CopyToDLConfig, storage: Storage): Unit = {
-
     import spark.implicits._
     def listCsvFiles(basep: String): Seq[String] = {
       val conf = new Configuration(spark.sparkContext.hadoopConfiguration)
       val fs = FileSystem.get(new URI(basep), conf)
-      storage.getCsvFilePath(fs, new Path(basep)).map(_.toString)
-
-    }
+      Try(fs.listStatus(new Path(basep)).isEmpty).toOption match {
+        case Some(_) => storage.getCsvFilePath(fs, new Path(basep)).map(_.toString)
+        case None => None.toSeq}}
 
     def countryCodeSelection(salesOrgToCountryMap: Map[String, String], df: Dataset[Row], country: String, cols: Seq[String], dropCols: Seq[String]) = {
       val filterDF = (cols.map(_.toUpperCase) match {
@@ -64,11 +68,10 @@ object FilterWithCountryToDL extends SparkJob[CopyToDLConfig] {
           case None => df
         }
       }).drop(dropCols: _*)
-      filterDF
-    }
+      filterDF}
 
-    def transform(incomingRawPath: String, datalakeRawPath: String, salesOrgToCountryMap: Map[String, String]) = {
-      listCsvFiles(incomingRawPath).foreach { file =>
+    def transform(incomingRawPath: String, datalakeRawPath: String, folderDate: String, salesOrgToCountryMap: Map[String, String]) = {
+       listCsvFiles(incomingRawPath).foreach { file =>
         val df = storage.readFromCsv(file, ";")
         val scFile = spark.sparkContext.textFile(file)
         config.countries.split(",").map(_.trim).foreach { country =>
@@ -77,17 +80,17 @@ object FilterWithCountryToDL extends SparkJob[CopyToDLConfig] {
           val filterDF: DataFrame = countryCodeSelection(salesOrgToCountryMap, df, country, cols, dropCols)
           Try(filterDF.first).toOption match {
             case Some(_) => val fileName = file.split("/").last
-              DatalakeUtils.writeToCsv(s"$datalakeRawPath$country/${config.folderDate}", fileName, filterDF, scFile, spark)
+              DatalakeUtils.writeToCsv(s"$datalakeRawPath$country/${folderDate}", fileName, filterDF, scFile, spark)
             case None => log.debug(s"No record for $country in ${file}")
           }
         }
       }
     }
-
-    transform(config.incomingRawPath, config.datalakeRawPath, DomainDataProvider().salesOrgToCountryMap)
-
+    val folderDates = getFolderDateList(config.fromDate, config.toDate.getOrElse(config.fromDate).toString)
+    folderDates.foreach{ folderDate=>
+      val blobFolderPath = config.incomingRawPath + folderDate + "/"
+      transform(blobFolderPath, config.datalakeRawPath, folderDate, DomainDataProvider().salesOrgToCountryMap)}
   }
-
 }
 
 
