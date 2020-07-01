@@ -10,9 +10,19 @@ import java.time.format.{DateTimeFormatter, DateTimeParseException}
 object CustomParsers {
   implicit protected val log: Logger = LogManager.getLogger(CustomParsers.getClass)
 
-  def parseDateTimeUnsafe(dateTimePattern: String = "yyyyMMdd HH:mm:ss")(input: String): Timestamp = {
+  def parseDateTimeUnsafeOption(dateTimePattern: String = "yyyyMMdd HH:mm:ss")(input: String): Option[Timestamp] = {
+    try{
+      Option(parseDateTimeUnsafe(dateTimePattern)(input))
+    }
+    catch{
+      case a: NullPointerException => None
+    }
+  }
+
+  def parseDateTimeUnsafe(dateTimePattern: String = "yyyyMMdd HH:mm:ss")(input: String):Timestamp={
     try {
-      val formatter = DateTimeFormatter.ofPattern("[yyyy-MM-dd'T'HH:mm:ss.SSSX]"
+      val formatter = DateTimeFormatter.ofPattern("[yyyy-MM-dd HH:mm:ss]"
+        + "[yyyy-MM-dd'T'HH:mm:ss.SSSX]"
         + "[yyyy-MM-dd'T'HH:mm:ss.SSS]"
         + "[yyyyMMdd HH:mm:ss]"
         + "[yyyy-MM-dd'T'HH:mm:ss]"
@@ -25,12 +35,12 @@ object CustomParsers {
         + "[yyyyMMdd HH:mm:ss]"
       )
       val parsed = LocalDateTime.parse(input, formatter) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
-      Timestamp.valueOf(parsed)
+      (Timestamp.valueOf(parsed))
     } catch {
       case p: DateTimeParseException =>
         val format = DateTimeFormatter.ofPattern(dateTimePattern)
         val parsed = LocalDateTime.parse(input, format) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
-        Timestamp.valueOf(parsed)
+        (Timestamp.valueOf(parsed))
     }
   }
 

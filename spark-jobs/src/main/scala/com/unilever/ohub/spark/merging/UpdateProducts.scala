@@ -113,7 +113,7 @@ object UpdateProducts extends SparkJob[UpdateProductsConfig] {
       s"Updating products from [${config.productsSifuInputFile}] to [${config.outputFile}]"
     )
     val convert_to_timestamp = udf((s: String) =>
-      parseDateTimeUnsafe()(s)
+      parseDateTimeUnsafeOption()(s)
     )
     val products:Dataset[Product] = storage.readFromParquet[Product](config.currentIntegratedProducts)
     val products_sifu_raw = spark.read.parquet(config.productsSifuInputFile).cache()
