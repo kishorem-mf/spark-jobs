@@ -12,8 +12,8 @@ object CustomParsers {
 
   def parseDateTimeUnsafe(dateTimePattern: String = "yyyyMMdd HH:mm:ss")(input: String): Timestamp = {
     try {
-      val formatter = DateTimeFormatter.ofPattern( "[yyyy-MM-dd'T'HH:mm:ss.SSSX]"
-        +"[yyyy-MM-dd'T'HH:mm:ss.SSS]"
+      val formatter = DateTimeFormatter.ofPattern("[yyyy-MM-dd'T'HH:mm:ss.SSSX]"
+        + "[yyyy-MM-dd'T'HH:mm:ss.SSS]"
         + "[yyyyMMdd HH:mm:ss]"
         + "[yyyy-MM-dd'T'HH:mm:ss]"
         + "[yyyy-MM-dd'T'HH:mm]"
@@ -22,6 +22,7 @@ object CustomParsers {
         + "[dd/MM/yyyy HH:mm:ss]"
         + "[yyyy-MM-dd'T'HH:mm:ss.SSS'Z']"
         + "[yyyy-MM-dd'T'HH:mm:ss.SSSSSSS'Z']"
+        + "[yyyyMMdd HH:mm:ss]"
       )
       val parsed = LocalDateTime.parse(input, formatter) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
       Timestamp.valueOf(parsed)
