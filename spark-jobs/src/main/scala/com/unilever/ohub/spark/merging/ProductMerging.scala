@@ -11,11 +11,10 @@ import org.apache.spark.sql.{Dataset, Encoder, Encoders, SparkSession}
 import scopt.OptionParser
 
 case class ProductMergingConfig(
-    products: String = "product-input-file",
-    products_sifu: String = "product-sifu-input-file",
-    previousIntegrated: String = "previous-integrated-file",
-    outputFile: String = "path-to-output-file"
-) extends SparkJobConfig
+                                 products: String = "product-input-file",
+                                 previousIntegrated: String = "previous-integrated-file",
+                                 outputFile: String = "path-to-output-file"
+                               ) extends SparkJobConfig
 
 object ProductMerging extends SparkJob[ProductMergingConfig] {
 
@@ -63,20 +62,10 @@ object ProductMerging extends SparkJob[ProductMergingConfig] {
     log.info(
       s"Merging products from [${config.products}] and [${config.previousIntegrated}] to [${config.outputFile}]"
     )
-    def enrich(
-                spark: SparkSession,
-                products: Dataset[Product],
-                location: String
-              ): Dataset[Product] = {
-      import spark.implicits._
-      val products_sifu = spark.read.parquet(location)
-      products
-    }
 
     val products = storage.readFromParquet[Product](config.products)
     val previousIntegrated = storage.readFromParquet[Product](config.previousIntegrated)
-    val enriched_products = enrich(spark,products, config.products_sifu)
-    val transformed = transform(spark, enriched_products, previousIntegrated)
+    val transformed = transform(spark, products, previousIntegrated)
 
     storage.writeToParquet(transformed, config.outputFile)
   }
