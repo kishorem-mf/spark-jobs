@@ -80,7 +80,7 @@ object ProductConverter extends CommonDomainGateKeeper[Product] with ProductEmpt
         isUnileverProduct = Option.empty,
         itemType = Option.empty,
         language = Option.empty,
-        lastModifiedDate = Option.empty,
+        lastModifiedDate = optional("lastModifiedDate", parseDateTimeUnsafe()),
         nameSlug = Option.empty,
         number = Option.empty,
         nutrientTypes = List.empty,
