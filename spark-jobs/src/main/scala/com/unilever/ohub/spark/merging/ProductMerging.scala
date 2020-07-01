@@ -2,11 +2,12 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
-import com.unilever.ohub.spark.domain.entity.Product
+import com.unilever.ohub.spark.domain.DomainEntity
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import com.unilever.ohub.spark.domain.entity.{Product, ProductSifu}
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import org.apache.spark.sql.{Dataset, Encoder, Encoders, SparkSession}
 import scopt.OptionParser
 
 case class ProductMergingConfig(
@@ -42,7 +43,7 @@ object ProductMerging extends SparkJob[ProductMergingConfig] {
   override private[spark] def defaultConfig = ProductMergingConfig()
 
   override private[spark] def configParser(): OptionParser[ProductMergingConfig] =
-    new scopt.OptionParser[ProductMergingConfig]("Order merging") {
+    new scopt.OptionParser[ProductMergingConfig]("Product merging") {
       head("merges products into an integrated products output file.", "1.0")
       opt[String]("productsInputFile") required() action { (x, c) ⇒
         c.copy(products = x)
