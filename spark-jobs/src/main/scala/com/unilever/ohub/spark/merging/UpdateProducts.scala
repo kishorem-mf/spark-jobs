@@ -3,6 +3,7 @@ import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import com.unilever.ohub.spark.domain.entity.{Product, ProductSifu}
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
+import com.unilever.ohub.spark.ingest.CustomParsers._
 import org.apache.spark.sql.{Dataset, Encoder, Encoders, SparkSession}
 import org.apache.spark.sql.functions.{col, upper,array_union}
 import scopt.OptionParser
@@ -106,16 +107,19 @@ object UpdateProducts extends SparkJob[UpdateProductsConfig] {
 
   override def run(spark: SparkSession, config: UpdateProductsConfig, storage: Storage): Unit = {
     import spark.implicits._
+    import org.apache.spark.sql.functions.{col, udf}
     implicit val sifuProductEncoder: Encoder[ProductSifu] = Encoders.product[ProductSifu]
     log.info(
       s"Updating products from [${config.productsSifuInputFile}] to [${config.outputFile}]"
     )
-
+    val convert_to_timestamp = udf((s: String) =>
+      parseDateTimeUnsafeOption()(s)
+    )
     val products:Dataset[Product] = storage.readFromParquet[Product](config.currentIntegratedProducts)
     val products_sifu_raw = spark.read.parquet(config.productsSifuInputFile).cache()
     val products_sifu:Dataset[ProductSifu] = products_sifu_raw.select(col("code"), col("number"),
-      col("country"), col("language"), col("lastModifiedDate"),
-      col("name"), col("brandCode"), col("brandName"), col("subBrandCode"),
+      col("country"), col("language"), col("name"), col("brandCode"),
+      col("brandName"), col("subBrandCode"),
       col("subBrandName"), col("categoryCode"), col("categoryName"), col("subCategoryCode"),
       col("subCategoryName"), col("packagingCode"), col("packagingName"), col("cuEanCode"),
       col("duEanCode"), col("image1Id"), col("nutrientTypes"), col("nutrientValues"),
@@ -127,6 +131,7 @@ object UpdateProducts extends SparkJob[UpdateProductsConfig] {
       col("pictures").getItem("originalPicture").getItem("imageUrl").getItem(0).alias("extractedImageUrl"),
       col("pictures").getItem("originalPicture").getItem("imageUrl").getItem(1).alias("extractedPreviewImageUrl"),
       col("pictures").getItem("id").getItem(0).alias("extractedImageId"),col("dachClaimFooterTexts"),
+      (convert_to_timestamp(col("lastModifiedDate")).alias("lastModifiedDate")),
       col("nutritionalData").getItem("nutrition").alias("extractedNutritionalType"),col("isUnileverProduct"),
       col("nutritionalData").getItem("per100gAsPrep").alias("extractedPer100gAsPrep"),col("convenienceLevel"),
       col("nutritionalData").getItem("per100gAsPrepOffPackUnitOfMeasurement").alias("per100gAsPrepOffPackUnitOfMeasurement"),

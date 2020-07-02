@@ -11,10 +11,10 @@ import org.apache.spark.sql.{Dataset, Encoder, Encoders, SparkSession}
 import scopt.OptionParser
 
 case class ProductMergingConfig(
-    products: String = "product-input-file",
-    previousIntegrated: String = "previous-integrated-file",
-    outputFile: String = "path-to-output-file"
-) extends SparkJobConfig
+                                 products: String = "product-input-file",
+                                 previousIntegrated: String = "previous-integrated-file",
+                                 outputFile: String = "path-to-output-file"
+                               ) extends SparkJobConfig
 
 object ProductMerging extends SparkJob[ProductMergingConfig] {
 
