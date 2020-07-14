@@ -5,7 +5,7 @@ import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.ingest.CustomParsers._
 import org.apache.spark.sql.{Dataset, Encoder, Encoders, SparkSession}
-import org.apache.spark.sql.functions.{col, upper,array_union}
+import org.apache.spark.sql.functions.{when, upper,array_union}
 import scopt.OptionParser
 
 case class UpdateProductsConfig(
@@ -77,12 +77,13 @@ object UpdateProducts extends SparkJob[UpdateProductsConfig] {
                (ip("code") === products_sifu_limited("productCode"))
                ) && (ip("countryCode") === upper(products_sifu_limited("country")))
              , "inner")
-           .withColumn(s"sifu_$src", products_sifu_limited(src))
+           .withColumn(s"sifu_$src",when(products_sifu_limited(src).isNull, ip(dest)).otherwise(products_sifu_limited(src)))
            .select("ohub.*", s"sifu_$src")
            .drop(s"$dest")
            .withColumnRenamed(s"sifu_$src", dest)
            .dropDuplicates("concatId")
-     }.cache.as[Product]
+     }.cache
+     .as[Product]
     updatedWithSifu
   }
 
