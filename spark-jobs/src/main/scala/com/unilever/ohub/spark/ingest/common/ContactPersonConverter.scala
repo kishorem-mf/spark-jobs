@@ -78,6 +78,8 @@ object ContactPersonConverter extends CommonDomainGateKeeper[ContactPerson] with
         hasFaxOptIn = optional("hasFaxOptIn", toBoolean),
         hasFaxOptOut = optional("hasFaxOptOut", toBoolean),
         webUpdaterId = Option.empty, // TODO what to do with this one?
+        socialNetworkName = optional("socialNetworkName"),
+        socialNetworkId = optional("socialNetworkId"),
         isEmailAddressValid = Some(true),
         isMobileNumberValid = Some(true),
         additionalFields = additionalFields,

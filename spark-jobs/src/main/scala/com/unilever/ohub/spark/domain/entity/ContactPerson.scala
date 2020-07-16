@@ -81,6 +81,8 @@ case class ContactPerson(
                           hasFaxOptIn: Option[Boolean],
                           hasFaxOptOut: Option[Boolean],
                           webUpdaterId: Option[String],
+                          socialNetworkName: Option[String],
+                          socialNetworkId: Option[String],
                           isEmailAddressValid: Option[Boolean],
                           isMobileNumberValid: Option[Boolean],
 
