@@ -6,7 +6,6 @@ import java.time._
 import org.apache.log4j.{LogManager, Logger}
 import java.time.format.{DateTimeFormatter, DateTimeParseException}
 
-
 object CustomParsers {
   implicit protected val log: Logger = LogManager.getLogger(CustomParsers.getClass)
 
@@ -16,6 +15,7 @@ object CustomParsers {
     }
     catch{
       case a: NullPointerException => None
+      case p: DateTimeParseException => None
     }
   }
 
@@ -34,6 +34,7 @@ object CustomParsers {
         + "[yyyy-MM-dd'T'HH:mm:ss.SSSSSSS'Z']"
         + "[yyyyMMdd HH:mm:ss]"
       )
+
       val parsed = LocalDateTime.parse(input, formatter) // check whether it satisfies the supplied date time pattern (throws an exception if it doesn't)
       (Timestamp.valueOf(parsed))
     } catch {
