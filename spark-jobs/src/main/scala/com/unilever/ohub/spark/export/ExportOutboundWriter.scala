@@ -32,7 +32,8 @@ case class OutboundConfig(
                            mappingOutputLocation: Option[String] = None,
                            currentMerged: Option[String] = None,
                            previousMerged: Option[String] = None,
-                           currentMergedOPR: Option[String] = None
+                           currentMergedOPR: Option[String] = None,
+                           excludeCountryCodes: String = "Excluded countries"
                          ) extends SparkJobConfig
 
 abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig] {
@@ -64,6 +65,9 @@ abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig]
       opt[String]("previousMergedIntegratedInputFile") optional() action { (x, c) ⇒
         c.copy(previousMerged = Some(x))
       } text "previous Merged Integrated is a string property"
+      opt[String]("excludeCountryCodes") optional() action { (x, c) =>
+        c.copy(excludeCountryCodes = x)
+      } text "exclude countryCodes is a string array"
       version("1.0")
       help("help") text "help text"
     }
@@ -84,7 +88,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   override private[spark] def defaultConfig = OutboundConfig()
 
-  private[export] def goldenRecordOnlyFilter(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet.filter((row: DomainType) => row.isGoldenRecord)
+  private[export] def goldenRecordOnlyFilter(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet.filter((row: DomainType) =>(row.isGoldenRecord))
 
   private[export] def entitySpecificFilter(spark: SparkSession, dataSet: Dataset[DomainType], config: OutboundConfig) = dataSet
 
@@ -149,11 +153,14 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     import spark.implicits._
 
     val domainEntities = config.targetType match {
-      case ACM ⇒ goldenRecordOnlyFilter(spark, dataset)
+      case ACM ⇒ goldenRecordOnlyFilter(spark, dataset).filter(!$"countryCode".isin(config.excludeCountryCodes.split(";"): _*))
       case _ ⇒ dataset
     }
 
-    val filteredByCountries = if (config.countryCodes.isDefined) domainEntities.filter($"countryCode".isin(config.countryCodes.get: _*)) else domainEntities
+    val filteredByCountries =
+      if (config.countryCodes.isDefined) {domainEntities.filter($"countryCode".isin(config.countryCodes.get: _*))}
+      else {domainEntities}
+
     entitySpecificFilter(spark, filteredByCountries, config)
   }
 
