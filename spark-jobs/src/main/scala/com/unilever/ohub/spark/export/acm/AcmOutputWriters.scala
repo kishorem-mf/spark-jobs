@@ -134,6 +134,12 @@ object ProductOutboundWriter extends ExportOutboundWriter[Product] with AcmOptio
 
   override def explainConversion: Option[Product => AcmProduct] = Some((input: Product) => ProductAcmConverter.convert(input, true))
 
+  override private[export] def entitySpecificFilter(spark: SparkSession, dataSet: Dataset[Product], config: OutboundConfig) = {
+    import spark.implicits._
+    dataSet.filter(!$"type".isNull || !$"sourceName".isin("DEX","FUZZIT","LOYALTY","KANGAROO","MELLOWMESSAGE","ONE_MOBILE","SSD_OTHER","TELESALES","WEB_CRM","ARC","IOPERA"));
+    // exclude sources that has SSD data which is not needed in ACM
+  }
+
   override def entityName(): String = "PRODUCTS"
 }
 

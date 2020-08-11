@@ -34,7 +34,6 @@ abstract class BaseEmptyIntegratedWriter[DomainType <: DomainEntity: TypeTag] ex
 
   override def run(spark: SparkSession, config: EmptyIntegratedConfig, storage: Storage): Unit = {
     log.info(s"Initialize integrated parquet [${config.outputFile}] with empty dataset.")
-
     writeEmptyParquet(spark, storage, config.outputFile)
   }
 }

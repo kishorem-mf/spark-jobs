@@ -234,7 +234,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       "ohubCreated",
       "ohubUpdated",
       "additionalFields",
-      "ingestionErrors"
+      "ingestionErrors",
+      "lastModifiedDate"
     )
 
     val originalJoinColumns = dataset.columns.filter(!excludedColumns.contains(_))

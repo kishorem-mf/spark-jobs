@@ -77,6 +77,11 @@ object UpdateProducts extends SparkJob[UpdateProductsConfig] {
                (ip("code") === products_sifu_limited("productCode"))
                ) && (ip("countryCode") === upper(products_sifu_limited("country")))
              , "inner")
+           .filter(
+             upper(ip("language")) === upper(products_sifu_limited("language")) ||
+                  products_sifu_limited("language").isNull ||
+                  ip("language").isNull
+           )
            .withColumn(s"sifu_$src",when(products_sifu_limited(src).isNull, ip(dest)).otherwise(products_sifu_limited(src)))
            .select("ohub.*", s"sifu_$src")
            .drop(s"$dest")
