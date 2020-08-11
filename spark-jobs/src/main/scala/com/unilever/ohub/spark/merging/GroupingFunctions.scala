@@ -55,19 +55,20 @@ trait GroupingFunctions {
                                                  integrated: Dataset[T],
                                                  delta: Dataset[T],
                                                  groupingColumns: Seq[String],
-                                                 notNullColoumns: Seq[String])(implicit spark: SparkSession): Dataset[T] = {
+                                                 notNullColoumns: Seq[String],
+                                                 lowerCase: Boolean = false)(implicit spark: SparkSession): Dataset[T] = {
 
     val sameColumns = groupingColumns.map(col)
     val notNullCheckColumns = notNullColoumns.map(col)
 
     val integratedWithExact = integrated
       .columnsNotNullAndNotEmpty(notNullCheckColumns)
-      .concatenateColumns("group", sameColumns)
+      .concatenateColumns("group", sameColumns,lowerCase)
       .withColumn("inDelta", lit(false))
 
     val newWithExact = delta
       .columnsNotNullAndNotEmpty(notNullCheckColumns)
-      .concatenateColumns("group", sameColumns)
+      .concatenateColumns("group", sameColumns,lowerCase)
       .withColumn("inDelta", lit(true))
 
     integratedWithExact
