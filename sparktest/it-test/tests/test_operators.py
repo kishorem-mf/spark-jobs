@@ -39,4 +39,4 @@ class TestOperators(object):
         assert (spark
                 .read
                 .parquet("/usr/local/data/output/integrated/operators")
-                ).select('ohubId').distinct().count() == 769
+                ).select('ohubId').distinct().count() == 733
