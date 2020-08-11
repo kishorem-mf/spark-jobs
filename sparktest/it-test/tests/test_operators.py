@@ -21,7 +21,7 @@ class TestOperators(object):
 
         assertDataframeCount(spark, "/usr/local/data/intermediate/operators_unmatched_delta.parquet", 0)
 
-        assertDataframeCount(spark, "/usr/local/data/intermediate/operators_fuzzy_matched_delta_integrated.parquet", 71)
+        assertDataframeCount(spark, "/usr/local/data/intermediate/operators_fuzzy_matched_delta_integrated.parquet", 63)
 
         assertDataframeCount(spark, "/usr/local/data/intermediate/operators_delta_left_overs.parquet", 0)
 
