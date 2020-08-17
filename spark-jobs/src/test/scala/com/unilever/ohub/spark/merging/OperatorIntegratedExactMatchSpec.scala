@@ -18,11 +18,11 @@ class OperatorIntegratedExactMatchSpec extends SparkJobSpec with TestOperators {
 
   lazy implicit val implicitSpark: SparkSession = spark
 
-  private val recordA1 = defaultOperatorWithSourceEntityId("100").copy(ohubId = Some("AAA"), name = Some("Jan"))
-  private val recordA1_2 = defaultOperatorWithSourceEntityId("101").copy(ohubId = Some("AAA"), name = Some("Jan"))
+  private val recordA1 = defaultOperatorWithSourceEntityId("100").copy(ohubId = Some("AAA"), name = Some("Jan"), street = Some("street"))
+  private val recordA1_2 = defaultOperatorWithSourceEntityId("101").copy(ohubId = Some("AAA"), name = Some("jan"), street = Some("street"))
   private val recordB1 = defaultOperatorWithSourceEntityId("200").copy(ohubId = Some("BBB"), name = Some("Piet"))
   private val recordB1_2 = defaultOperatorWithSourceEntityId("201").copy(ohubId = Some("BBB"), name = Some("Piet"))
-  private val recordA2 = defaultOperatorWithSourceEntityId("200").copy(ohubId = None, name = Some("Jan"))
+  private val recordA2 = defaultOperatorWithSourceEntityId("200").copy(ohubId = None, name = Some(" ja~n"), street = Some(" street"))
 
   private val recordC1 = defaultOperatorWithSourceEntityId("300").copy(ohubId = None, name = Some("Jan"), street = Some("street1"))
   private val recordC1_2 = defaultOperatorWithSourceEntityId("301").copy(ohubId = Some("AAA"), name = Some("Jan"), street = Some("street2"))
@@ -66,7 +66,7 @@ class OperatorIntegratedExactMatchSpec extends SparkJobSpec with TestOperators {
 
       val expectedMatchedExact = Set(
         ResultOperator("100", Some("AAA"), Some("Jan"), Some("street")),
-        ResultOperator("200", Some("AAA"), Some("Jan"), Some("street"))
+        ResultOperator("200", Some("AAA"), Some("jan"), Some("street"))
       )
       val expectedUnmatchedIntegrated = Set[ResultOperator](
         ResultOperator("100", Some("AAA"), Some("Jan"), Some("street"))
@@ -87,6 +87,22 @@ class OperatorIntegratedExactMatchSpec extends SparkJobSpec with TestOperators {
       val expectedUnmatchedIntegrated = Set[ResultOperator](
         ResultOperator("301", Some("AAA"), Some("Jan"), street = Some("street2")),
         ResultOperator("400", Some(COPY_GENERATED), Some("Jan"), street = Some("street1"))
+      )
+      val expectedUnmatchedDelta = Set[ResultOperator]()
+
+      matchExactAndAssert(integratedContactPersons, deltaContactPersons, expectedMatchedExact, expectedUnmatchedIntegrated, expectedUnmatchedDelta)
+    }
+
+    it("should create same groups if mentioned columns are equal - case insensitive, trim and strange chars") {
+      val integratedContactPersons = createDataset(recordA1)
+      val deltaContactPersons = createDataset(recordA2)
+
+      val expectedMatchedExact = Set(
+        ResultOperator("100", Some("AAA"), Some("Jan"), street = Some("street")),
+        ResultOperator("200", Some(COPY_GENERATED), Some(" ja~n"), street = Some(" street"))
+      )
+      val expectedUnmatchedIntegrated = Set(
+        ResultOperator("100", Some("AAA"), Some("Jan"), street = Some("street"))
       )
       val expectedUnmatchedDelta = Set[ResultOperator]()
 
