@@ -41,7 +41,7 @@ object OperatorIntegratedExactMatch extends SparkJob[ExactMatchIngestedWithDbCon
     import spark.implicits._
     val columns = Seq("countryCode", "city", "street", "houseNumber", "houseNumberExtension", "zipCode", "name")
     val notNullColumns = Seq("name")
-    val goldenIds=dailyDeltaRecords.filter($"ohubId".isNotNull).as[Operator]
+    val goldenIds=dailyDeltaRecords.filter($"oldIntegrationId".isNotNull).as[Operator]
 
     val matchedExact: Dataset[Operator] = matchColumns[Operator](integratedRecords,
       dailyDeltaRecords, columns,notNullColumns,true)
