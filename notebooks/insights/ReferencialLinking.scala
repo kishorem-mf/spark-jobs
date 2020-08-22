@@ -733,7 +733,9 @@ val data = Seq(
 ,("CLUB_HELLMANNS", "198")
 ,("MARKETO", "199")
 ,("OUNIVERSE", "200")
-,("OUT_OF_HOME", "201"))
+,("OUT_OF_HOME", "201")
+,("MY_LOCAL_EATZ", "202")
+,("PARDOT", "203"))
 
 // COMMAND ----------
 
