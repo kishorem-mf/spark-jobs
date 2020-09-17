@@ -11,7 +11,7 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 object OperatorRexLiteDomainExportWriter extends DomainExportWriter[OperatorRexLite]
 
 object OperatorRexLite extends DomainEntityCompanion[OperatorRexLite] {
-  override val engineFolderName = "operators_rex_lite"
+  override val engineFolderName = "operators_golden_crm"
   override val domainExportWriter: Option[DomainExportWriter[OperatorRexLite]] = Some(OperatorRexLiteDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[OperatorRexLite]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[OperatorRexLite]] = None
