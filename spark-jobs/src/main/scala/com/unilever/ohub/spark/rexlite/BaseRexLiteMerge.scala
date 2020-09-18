@@ -31,7 +31,7 @@ abstract class BaseRexLiteMerge[T <: DomainEntity: TypeTag] extends SparkJob[Rex
       opt[String]("outputFile") required() action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
-      opt[String]("prevInteg") required() action { (x, c) ⇒
+      opt[String]("prevIntegrated") required() action { (x, c) ⇒
         c.copy(prevIntegrated = x)
       } text "prevIntegrated is a string property"
 
@@ -43,7 +43,7 @@ abstract class BaseRexLiteMerge[T <: DomainEntity: TypeTag] extends SparkJob[Rex
     import spark.implicits._
 
     val input_entity=storage.readFromParquet(config.inputUrl).toDF()
-    val prevIntegrated:Dataset[T]=storage.readFromParquet(config.prevIntegrated)
+    val prevIntegrated=storage.readFromParquet[T](config.prevIntegrated)
     val input_entity_golden=storage.readFromParquet(config.inputUrl.replace("operators","operators_golden")).toDF()
 
     val daily_merged_records:Dataset[T]=transform(spark,input_entity,input_entity_golden)
