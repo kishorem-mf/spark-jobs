@@ -12,7 +12,8 @@ import scopt.OptionParser
 import scala.reflect.runtime.universe._
 
 case class RexLiteMergeConfig (inputUrl: String = "input-file",
-                         outputFile: String = "path-to-output-file"
+                               outputFile: String = "path-to-output-file",
+                               prevIntegrated: String = "prev-integrated"
                         ) extends SparkJobConfig
 
 
@@ -30,6 +31,9 @@ abstract class BaseRexLiteMerge[T <: DomainEntity: TypeTag] extends SparkJob[Rex
       opt[String]("outputFile") required() action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
+      opt[String]("prevInteg") required() action { (x, c) ⇒
+        c.copy(prevIntegrated = x)
+      } text "prevIntegrated is a string property"
 
       version("1.0")
       help("help") text "help text"
@@ -39,11 +43,17 @@ abstract class BaseRexLiteMerge[T <: DomainEntity: TypeTag] extends SparkJob[Rex
     import spark.implicits._
 
     val input_entity=storage.readFromParquet(config.inputUrl).toDF()
+    val prevIntegrated:Dataset[T]=storage.readFromParquet(config.prevIntegrated)
     val input_entity_golden=storage.readFromParquet(config.inputUrl.replace("operators","operators_golden")).toDF()
 
-    val merged_records:Dataset[T]=transform(spark,input_entity,input_entity_golden)
+    val daily_merged_records:Dataset[T]=transform(spark,input_entity,input_entity_golden)
 
-    storage.writeToParquet(merged_records, config.outputFile)
+    val finalResult=prevIntegrated.unionByName(daily_merged_records.filter((col("rexLiteMergeDate").isNotNull)||
+      (col("rexLiteMergeDate")=!="")))
+      .dropDuplicates()
+      .as[T]
+
+    storage.writeToParquet(finalResult, config.outputFile)
   }
 
   def transform(
@@ -95,8 +105,8 @@ abstract class BaseRexLiteMerge[T <: DomainEntity: TypeTag] extends SparkJob[Rex
       .withColumn("additionalFields", typedLit(Map[String, String]()))
       .withColumn("ingestionErrors", typedLit(Map[String, IngestionError]()))
 
-    val finalResults=changedRecords.unionByName(notChangedRecords)
-    finalResults
+    val results=changedRecords.unionByName(notChangedRecords)
+    results
   }
 
   def mergeById(unionRecords:DataFrame):DataFrame = {
