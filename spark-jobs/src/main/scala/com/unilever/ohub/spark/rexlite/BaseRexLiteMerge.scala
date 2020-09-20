@@ -1,6 +1,7 @@
 package com.unilever.ohub.spark.rexlite
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
+import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.spark.sql.functions._
@@ -12,9 +13,10 @@ import scopt.OptionParser
 import scala.reflect.runtime.universe._
 
 case class RexLiteMergeConfig (inputUrl: String = "input-file",
+                               inputPrevious: String = "input-file-previous-integrated",
                                outputFile: String = "path-to-output-file",
                                prevIntegrated: String = "prev-integrated"
-                        ) extends SparkJobConfig
+                              ) extends SparkJobConfig
 
 
 
@@ -28,6 +30,9 @@ abstract class BaseRexLiteMerge[T <: DomainEntity: TypeTag] extends SparkJob[Rex
       opt[String]("inputUrl") required() action { (x, c) ⇒
         c.copy(inputUrl = x)
       } text "inputFile is a string property"
+      opt[String]("inputPrevious") required() action { (x, c) ⇒
+        c.copy(inputPrevious = x)
+      } text "inputPrevious is a string property"
       opt[String]("outputFile") required() action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
@@ -43,13 +48,14 @@ abstract class BaseRexLiteMerge[T <: DomainEntity: TypeTag] extends SparkJob[Rex
     import spark.implicits._
 
     val input_entity=storage.readFromParquet(config.inputUrl).toDF()
-    val prevIntegrated=storage.readFromParquet[T](config.prevIntegrated)
-    val input_entity_golden=storage.readFromParquet(config.inputUrl.replace("operators","operators_golden")).toDF()
+    val inputEntityPrevIntegrated=storage.readFromParquet(config.inputPrevious).toDF()
+    val prevRexIntegrated=storage.readFromParquet[T](config.prevIntegrated)
+    val input_entity_golden=storage.readFromParquet(config.inputUrl.replace(".parquet","_golden.parquet")).toDF()
+    val input_delta=input_entity.join(inputEntityPrevIntegrated,Seq("concatId"),JoinType.LeftAnti)
 
-    val daily_merged_records:Dataset[T]=transform(spark,input_entity,input_entity_golden)
+    val daily_merged_records:Dataset[T]=transform(spark,input_delta,input_entity_golden)
 
-    val finalResult=prevIntegrated.unionByName(daily_merged_records.filter((col("rexLiteMergeDate").isNotNull)||
-      (col("rexLiteMergeDate")=!="")))
+    val finalResult=prevRexIntegrated.unionByName(daily_merged_records.filter(col("rexLiteMergedDate")=!=""))
       .dropDuplicates()
       .as[T]
 
@@ -83,9 +89,9 @@ abstract class BaseRexLiteMerge[T <: DomainEntity: TypeTag] extends SparkJob[Rex
       .orderBy(col("ohubId"), col("concatId"))
 
     //Merge Partition by ohubId
-   val entityWithListOfValues=mergeById(unionRecords)
-   val latestFrontierInfoCopiedToAllFrontierRecordsWithSameOhubId=createDataFrameWithFirstValue(entityWithListOfValues,
-     rexLiteEntity)
+    val entityWithListOfValues=mergeById(unionRecords)
+    val latestFrontierInfoCopiedToAllFrontierRecordsWithSameOhubId=createDataFrameWithFirstValue(entityWithListOfValues,
+      rexLiteEntity)
     val results=addMergeDate(rexLiteEntity,
       latestFrontierInfoCopiedToAllFrontierRecordsWithSameOhubId).as[T]
     results
