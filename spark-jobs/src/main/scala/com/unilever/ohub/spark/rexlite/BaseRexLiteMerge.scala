@@ -51,7 +51,8 @@ abstract class BaseRexLiteMerge[T <: DomainEntity: TypeTag] extends SparkJob[Rex
     val inputEntityPrevIntegrated=storage.readFromParquet(config.inputPrevious).toDF()
     val prevRexIntegrated=storage.readFromParquet[T](config.prevIntegrated)
     val input_entity_golden=storage.readFromParquet(config.inputUrl.replace(".parquet","_golden.parquet")).toDF()
-    val input_delta=input_entity.join(inputEntityPrevIntegrated,Seq("concatId"),JoinType.LeftAnti)
+    val input_delta=(input_entity.join(inputEntityPrevIntegrated,Seq("concatId"),JoinType.LeftAnti))
+      .drop("additionalFields","ingestionErrors")
 
     val daily_merged_records:Dataset[T]=transform(spark,input_delta,input_entity_golden)
 
