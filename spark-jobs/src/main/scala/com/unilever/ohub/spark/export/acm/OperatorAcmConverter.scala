@@ -54,7 +54,8 @@ object OperatorAcmConverter extends Converter[Operator, AcmOperator] with TypeCo
       GLOBAL_CHANNEL = getValue("globalChannel"),
       GLOBAL_SUBCHANNEL = getValue("globalSubChannel"),
       SOURCE_IDS = getValue("sourceName", FormatSourceIDsConverter),
-      TARGET_OHUB_ID = getValue("additionalFields", GetTargetOhubId)
+      TARGET_OHUB_ID = getValue("additionalFields", GetTargetOhubId),
+      UFS_CLIENT_NUMBER = getValue("ufsClientNumber")
     )
   }
 }

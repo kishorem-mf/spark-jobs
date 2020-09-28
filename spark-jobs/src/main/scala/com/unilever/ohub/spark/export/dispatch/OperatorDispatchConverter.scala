@@ -70,7 +70,8 @@ object OperatorDispatchConverter extends Converter[Operator, DispatchOperator] w
       SOCIAL_COMMERCIAL = getValue("socialCommercial"),
       STRATEGIC_CHANNEL = getValue("strategicChannel"),
       GLOBAL_CHANNEL = getValue("globalChannel"),
-      GLOBAL_SUBCHANNEL = getValue("globalSubChannel")
+      GLOBAL_SUBCHANNEL = getValue("globalSubChannel"),
+      UFS_CLIENT_NUMBER = getValue("ufsClientNumber")
     )
   }
 }

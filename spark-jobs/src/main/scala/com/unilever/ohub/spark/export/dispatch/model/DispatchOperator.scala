@@ -61,5 +61,6 @@ case class DispatchOperator(
     SOCIAL_COMMERCIAL: String,
     STRATEGIC_CHANNEL: String,
     GLOBAL_CHANNEL: String,
-    GLOBAL_SUBCHANNEL: String
+    GLOBAL_SUBCHANNEL: String,
+    UFS_CLIENT_NUMBER: String
 ) extends DispatcherOutboundEntity
