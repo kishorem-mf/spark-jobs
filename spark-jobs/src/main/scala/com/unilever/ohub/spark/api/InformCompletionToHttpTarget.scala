@@ -9,24 +9,28 @@ import scopt.OptionParser
 import util.control.Breaks._
 
 
-case class PushToTarget(inputUrl: String = "input-file",
-                        authorization: String = "authorization-for-url"
-                       ) extends SparkJobConfig
+case class InformCompletionToHttpTarget(inputUrl: String = "input-file",
+                                        authorization: String = "authorization-for-url",
+                                        outputFile: String = "path-to-output-file"
+                                       ) extends SparkJobConfig
 
-object PushToTarget extends SparkJob[PushToTarget] {
+object InformCompletionToHttpTarget extends SparkJob[InformCompletionToHttpTarget] {
 
 
-  override private[spark] def defaultConfig = PushToTarget()
+  override private[spark] def defaultConfig = InformCompletionToHttpTarget()
 
-  override private[spark] def configParser(): OptionParser[PushToTarget] =
-    new scopt.OptionParser[PushToTarget]("PushToTarget") {
-      head("PushToTarget", "1.0")
+  override private[spark] def configParser(): OptionParser[InformCompletionToHttpTarget] =
+    new scopt.OptionParser[InformCompletionToHttpTarget]("InformCompletionToHttpTarget") {
+      head("InformCompletionToHttpTarget", "1.0")
       opt[String]("inputUrl") required() action { (x, c) ⇒
         c.copy(inputUrl = x)
       } text "inputFile is a string property"
       opt[String]("Authorization") required() action { (x, c) ⇒
         c.copy(authorization = x)
       } text "Authorization is a string property"
+      opt[String]("outputFile") required() action { (x, c) ⇒
+        c.copy(outputFile = x)
+      } text "outputFile is a string property"
 
       version("1.0")
       help("help") text "help text"
@@ -81,13 +85,15 @@ object PushToTarget extends SparkJob[PushToTarget] {
   }
 
 
-  override def run(spark: SparkSession, config: PushToTarget, storage: Storage): Unit = {
-    //import spark.implicits._
+  override def run(spark: SparkSession, config: InformCompletionToHttpTarget, storage: Storage): Unit = {
+    import spark.implicits._
 
     val resp = setRequestAndGetResponse(config.inputUrl,config.authorization,None)
 
-    //val productdataset = storage.readFromJson(resp.split("\n").toList.toDS())
-    //storage.writeToParquet(productdataset, config.outputFile)
     log.info(s"Response Status is $resp")
+
+    val status_response = storage.readFromJson(resp.split("\n").toList.toDS())
+    storage.writeToParquet(status_response, config.outputFile)
+
   }
 }
