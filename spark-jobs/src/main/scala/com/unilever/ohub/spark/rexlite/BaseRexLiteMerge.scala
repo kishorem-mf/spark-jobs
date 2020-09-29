@@ -47,27 +47,30 @@ abstract class BaseRexLiteMerge[T <: DomainEntity: TypeTag] extends SparkJob[Rex
   override def run(spark: SparkSession, config: RexLiteMergeConfig, storage: Storage): Unit = {
     import spark.implicits._
 
+    import spark.implicits._
     val input_entity=storage.readFromParquet(config.inputUrl).toDF()
     val inputEntityPrevIntegrated=storage.readFromParquet(config.inputPrevious).toDF()
-    val prevRexIntegrated=storage.readFromParquet[T](config.prevIntegrated)
+    val prevRexIntegrated=storage.readFromParquet[T](config.prevIntegrated).toDF()
     val input_entity_golden=storage.readFromParquet(config.inputUrl.replace(".parquet","_golden.parquet")).toDF()
     val input_delta=(input_entity.join(inputEntityPrevIntegrated,Seq("concatId"),JoinType.LeftAnti))
-      .drop("additionalFields","ingestionErrors")
 
     val daily_merged_records:Dataset[T]=transform(spark,input_delta,input_entity_golden)
+    val dailyRefreshRexData=daily_merged_records
+                              .filter(!col("rexLiteMergedDate").contains("1970-01-01"))
+                              .drop("additionalFields","ingestionErrors")
+    val prevIntegRex=prevRexIntegrated.drop("additionalFields","ingestionErrors")
 
-    val finalResult=prevRexIntegrated.unionByName(daily_merged_records.filter(col("rexLiteMergedDate")=!=""))
-      .dropDuplicates()
+    val finalResult=(prevIntegRex.unionByName(dailyRefreshRexData))
+      .drop("creationTimestamp")
+      .withColumn("creationTimestamp", current_timestamp())
+      .withColumn("additionalFields", typedLit(Map[String, String]()))
+      .withColumn("ingestionErrors", typedLit(Map[String, IngestionError]()))
       .as[T]
 
     storage.writeToParquet(finalResult, config.outputFile)
   }
 
-  def transform(
-                 spark: SparkSession,
-                 input_entity: DataFrame,
-                 input_entity_golden: DataFrame
-               ): Dataset[T] = {
+  def transform(spark: SparkSession, input_entity: DataFrame, input_entity_golden: DataFrame): Dataset[T] = {
     import spark.implicits._
 
     val rexLiteEntity = input_entity
@@ -91,31 +94,11 @@ abstract class BaseRexLiteMerge[T <: DomainEntity: TypeTag] extends SparkJob[Rex
 
     //Merge Partition by ohubId
     val entityWithListOfValues=mergeById(unionRecords)
-    val latestFrontierInfoCopiedToAllFrontierRecordsWithSameOhubId=createDataFrameWithFirstValue(entityWithListOfValues,
-      rexLiteEntity)
+    val latestFrontierInfoCopiedToAllFrontierRecordsWithSameOhubId=createDataFrameWithFirstValue(entityWithListOfValues, rexLiteEntity).drop("order")
     val results=addMergeDate(rexLiteEntity,
       latestFrontierInfoCopiedToAllFrontierRecordsWithSameOhubId).as[T]
     results
   }
-  def addMergeDate(rexLiteInitialData: DataFrame,latestTransformedData: DataFrame):DataFrame = {
-    val before=rexLiteInitialData.drop("additionalFields","ingestionErrors")
-    val columns: Array[String] = before.columns
-    val after=latestTransformedData
-      .select(columns.head, columns.tail: _*)
-
-    val changedRecords=(after.exceptAll(before))
-      .withColumn("rexLiteMergedDate",current_timestamp().as("current_timestamp"))
-      .withColumn("additionalFields", typedLit(Map[String, String]()))
-      .withColumn("ingestionErrors", typedLit(Map[String, IngestionError]()))
-    val notChangedRecords=(after.intersect(before))
-      .withColumn("rexLiteMergedDate",lit(""))
-      .withColumn("additionalFields", typedLit(Map[String, String]()))
-      .withColumn("ingestionErrors", typedLit(Map[String, IngestionError]()))
-
-    val results=changedRecords.unionByName(notChangedRecords)
-    results
-  }
-
   def mergeById(unionRecords:DataFrame):DataFrame = {
     val ohubIdOrderDateWindow = Window
       .partitionBy("ohubId")
@@ -142,7 +125,6 @@ abstract class BaseRexLiteMerge[T <: DomainEntity: TypeTag] extends SparkJob[Rex
       .agg(listExpressions.head, listExpressions.tail: _*)
     entityWithListOfValues
   }
-
   def createDataFrameWithFirstValue(entityWithListOfValues:DataFrame,rexLiteEntity:DataFrame):DataFrame = {
     val firstFromListExpressions = entityWithListOfValues
       .drop(col("ohubId"))
@@ -165,6 +147,23 @@ abstract class BaseRexLiteMerge[T <: DomainEntity: TypeTag] extends SparkJob[Rex
         .withColumnRenamed("rexSourceEntityId", "sourceEntityId")
         .orderBy("ohubId")
     latestValues
+  }
+  def addMergeDate(rexLiteInitialData: DataFrame,latestTransformedData: DataFrame):DataFrame = {
+    val before=rexLiteInitialData.drop("additionalFields","ingestionErrors")
+    val columns: Array[String] = before.columns
+    val after=latestTransformedData
+      .select(columns.head, columns.tail: _*)
+    val changedRecords=(after.exceptAll(before))
+      .withColumn("rexLiteMergedDate",current_timestamp())
+      .withColumn("additionalFields", typedLit(Map[String, String]()))
+      .withColumn("ingestionErrors", typedLit(Map[String, IngestionError]()))
+    val notChangedRecords=(after.intersect(before))
+      .withColumn("rexLiteMergedDate",lit(new java.sql.Timestamp(0L)))
+      .withColumn("additionalFields", typedLit(Map[String, String]()))
+      .withColumn("ingestionErrors", typedLit(Map[String, IngestionError]()))
+
+    val results=(changedRecords.unionByName(notChangedRecords))
+    results
   }
 
 }
