@@ -1,8 +1,6 @@
 package com.unilever.ohub.spark.rexlite
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
-import com.unilever.ohub.spark.sql.JoinType
-import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.expressions.Window
@@ -43,32 +41,6 @@ abstract class BaseRexLiteMerge[T <: DomainEntity: TypeTag] extends SparkJob[Rex
       version("1.0")
       help("help") text "help text"
     }
-
-  override def run(spark: SparkSession, config: RexLiteMergeConfig, storage: Storage): Unit = {
-    import spark.implicits._
-
-    import spark.implicits._
-    val input_entity=storage.readFromParquet(config.inputUrl).toDF()
-    val inputEntityPrevIntegrated=storage.readFromParquet(config.inputPrevious).toDF()
-    val prevRexIntegrated=storage.readFromParquet[T](config.prevIntegrated).toDF()
-    val input_entity_golden=storage.readFromParquet(config.inputUrl.replace(".parquet","_golden.parquet")).toDF()
-    val input_delta=(input_entity.join(inputEntityPrevIntegrated,Seq("concatId"),JoinType.LeftAnti))
-
-    val daily_merged_records:Dataset[T]=transform(spark,input_delta,input_entity_golden)
-    val dailyRefreshRexData=daily_merged_records
-                              .filter(!col("rexLiteMergedDate").contains("1970-01-01"))
-                              .drop("additionalFields","ingestionErrors")
-    val prevIntegRex=prevRexIntegrated.drop("additionalFields","ingestionErrors")
-
-    val finalResult=(prevIntegRex.unionByName(dailyRefreshRexData))
-      .drop("creationTimestamp")
-      .withColumn("creationTimestamp", current_timestamp())
-      .withColumn("additionalFields", typedLit(Map[String, String]()))
-      .withColumn("ingestionErrors", typedLit(Map[String, IngestionError]()))
-      .as[T]
-
-    storage.writeToParquet(finalResult, config.outputFile)
-  }
 
   def transform(spark: SparkSession, input_entity: DataFrame, input_entity_golden: DataFrame): Dataset[T] = {
     import spark.implicits._
@@ -165,5 +137,4 @@ abstract class BaseRexLiteMerge[T <: DomainEntity: TypeTag] extends SparkJob[Rex
     val results=(changedRecords.unionByName(notChangedRecords))
     results
   }
-
 }
