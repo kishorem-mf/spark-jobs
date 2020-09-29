@@ -24,9 +24,9 @@ object InformCompletionToHttpTarget extends SparkJob[InformCompletionToHttpTarge
       opt[String]("inputUrl") required() action { (x, c) ⇒
         c.copy(inputUrl = x)
       } text "inputFile is a string property"
-      opt[String]("Authorization") required() action { (x, c) ⇒
+      opt[String]("authorization") required() action { (x, c) ⇒
         c.copy(authorization = x)
-      } text "Authorization is a string property"
+      } text "authorization is a string property"
       opt[String]("outputFile") required() action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
