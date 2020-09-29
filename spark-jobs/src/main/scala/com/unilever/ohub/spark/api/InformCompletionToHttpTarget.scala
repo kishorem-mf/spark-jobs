@@ -2,7 +2,6 @@ package com.unilever.ohub.spark.api
 
 import sys.process._
 import com.unilever.ohub.spark.storage.Storage
-//import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.spark.sql.SparkSession
 import scopt.OptionParser
@@ -64,7 +63,6 @@ object InformCompletionToHttpTarget extends SparkJob[InformCompletionToHttpTarge
 
         val status_raw=Seq("/bin/bash", "-c", http_status).!!
         val status_code=status_raw.filter(_ >= ' ')
-        log.info(s"status_code is $status_code")
 
         if(status_code >= "301" && status_code <= "399"){
           val location_raw=Seq("/bin/bash", "-c", http_location).!!
@@ -90,7 +88,6 @@ object InformCompletionToHttpTarget extends SparkJob[InformCompletionToHttpTarge
 
     val resp = setRequestAndGetResponse(config.inputUrl,config.authorization,None)
 
-    log.info(s"Response Status is $resp")
 
     val status_response = storage.readFromJson(resp.split("\n").toList.toDS())
     storage.writeToParquet(status_response, config.outputFile)
