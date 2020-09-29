@@ -201,6 +201,15 @@ trait ContactPersonGoldenEmptyParquetWriter extends EmptyParquetWriter[ContactPe
   }
 }
 
+trait ContactPersonRexLiteEmptyParquetWriter extends EmptyParquetWriter[ContactPersonRexLite] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[ContactPersonRexLite] = {
+    import spark.implicits._
+
+    spark.createDataset[ContactPersonRexLite](Seq[ContactPersonRexLite]())
+  }
+}
+
 trait OperatorGoldenEmptyParquetWriter extends EmptyParquetWriter[OperatorGolden] {
 
   def createEmptyDataset(spark: SparkSession): Dataset[OperatorGolden] = {
