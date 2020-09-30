@@ -27,7 +27,7 @@ case class ContactPersonRexLite(
                                 customerType: String,
                                 dateCreated: Option[Timestamp],
                                 dateUpdated: Option[Timestamp],
-                                rextLiteMergedDate: Option[Timestamp],
+                                rexLiteMergedDate: Option[Timestamp],
                                 isActive: Boolean,
                                 isGoldenRecord: Boolean,
                                 ohubId: Option[String],
