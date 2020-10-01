@@ -22,10 +22,15 @@ abstract class AzureDWWriterNoPolicy[DomainType <: DomainEntity : TypeTag] exten
 
     import spark.implicits._
 
+    var dbSchema=config.dbSchema
+    if(config.entityName.contains("crm")){
+      dbSchema="crm"
+    }
+
     val insertedRowCount = storage.readAzureDWQuery(
       spark = spark, dbUrl = config.dbUrl, userName = config.dbUsername,
       userPassword = config.dbPassword, dbTempDir = config.dbTempDir,
-      query = s"select count(*) as insertedRowCount from ${config.dbSchema}.${config.entityName}"
+      query = s"select count(*) as insertedRowCount from ${dbSchema}.${config.entityName}"
     ).select("insertedRowCount").rdd.map(r ⇒ r(0)).collect()(0).toString.toInt
 
     val loggingDF = Seq(LogRow(
@@ -74,7 +79,12 @@ abstract class AzureDWWriterNoPolicy[DomainType <: DomainEntity : TypeTag] exten
     val integratedEntity: DataFrame = storage.readFromParquet[DomainType](config.integratedInputFile).toDF
     val result = transform(integratedEntity)
 
-    val dbFullTableName: String = Seq(config.dbSchema, config.entityName).mkString(".")
+    var dbSchema=config.dbSchema
+    if(config.entityName.contains("crm")){
+      dbSchema="crm"
+    }
+
+    val dbFullTableName: String = Seq(dbSchema, config.entityName).mkString(".")
 
     log.info(s"Destination table name: ${dbFullTableName}")
     log.info(s"Entity name: ${integratedEntity}")
