@@ -286,9 +286,9 @@ object ContactPersonGoldenDWWriter extends AzureDWWriter[ContactPersonGolden]
 
 object OperatorGoldenDWWriter extends AzureDWWriter[OperatorGolden]
 
-object OperatorRexLiteDWWriter extends AzureDWWriter[OperatorRexLite]
+object OperatorRexLiteDWWriter extends AzureDWWriterNoPolicy[OperatorRexLite]
 
-object ContactPersonRexliteDWWriter extends AzureDWWriter[ContactPersonRexLite]
+object ContactPersonRexliteDWWriter extends AzureDWWriterNoPolicy[ContactPersonRexLite]
 
 /**
  * Runs concrete [[com.unilever.ohub.spark.export.azuredw.AzureDWWriter]]'s run method for all
