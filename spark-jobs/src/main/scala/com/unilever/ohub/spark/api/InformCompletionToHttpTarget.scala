@@ -42,34 +42,37 @@ object InformCompletionToHttpTarget extends SparkJob[InformCompletionToHttpTarge
 
     val auth = authorization
     val http_headers = s"{'Authorization': 'Basic $auth','Content-Type': 'application/json; charset=utf-8'}"
-    val http_status =
-      s"""python3 -c "import requests;http_headers=$http_headers;
-         |print(requests.get('$url', headers=http_headers, allow_redirects=False).status_code)
-         | if($payload is None) else print(requests.post('$url', headers=http_headers, data=$payload, allow_redirects=False).status_code);" """.stripMargin
-
-    val http_location =
-      s"""python3 -c "import requests;http_headers=$http_headers;
-         |print(requests.get('$url', headers=http_headers, allow_redirects=False).headers["Location"])
-         | if($payload is None) else print(requests.post('$url', headers=http_headers, data=$payload, allow_redirects=False).headers["Location"]);" """.stripMargin
-
-    val http_raw =
-      s"""python3 -c "import requests;http_headers=$http_headers;
-         |print(requests.get('$url', headers=http_headers, allow_redirects=False))
-         | if($payload is None) else print(requests.post('$url', headers=http_headers, data=$payload, allow_redirects=False));" """.stripMargin
 
     breakable {
-
       while (true) {
+
+        val http_status =
+          s"""python3 -c "import requests;http_headers=$http_headers;
+             |print(requests.get('$url', headers=http_headers, allow_redirects=False).status_code) \\
+             | if($payload is None) else print(requests.post('$url', headers=http_headers, data=$payload, allow_redirects=False).status_code);" """.stripMargin
 
         val status_raw=Seq("/bin/bash", "-c", http_status).!!
         val status_code=status_raw.filter(_ >= ' ')
 
         if(status_code >= "301" && status_code <= "399"){
+
+          val http_location =
+            s"""python3 -c "import requests;http_headers=$http_headers;
+               |print(requests.get('$url', headers=http_headers, allow_redirects=False).headers["Location"]) \\
+               | if($payload is None) else print(requests.post('$url', headers=http_headers, data=$payload, allow_redirects=False).headers["Location"]);" """.stripMargin
+
           val location_raw=Seq("/bin/bash", "-c", http_location).!!
           val redirectedUrl=location_raw.filter(_ >= ' ')
           url = redirectedUrl
           raw_result = None
+
         }else{
+
+          val http_raw =
+            s"""python3 -c "import requests;http_headers=$http_headers;
+               |print(requests.get('$url', headers=http_headers, allow_redirects=False)) \\
+               | if($payload is None) else print(requests.post('$url', headers=http_headers, data=$payload, allow_redirects=False));" """.stripMargin
+
           val raw=Seq("/bin/bash", "-c", http_raw).!!
           raw_result=Some(raw.filter(_ >= ' '))
 
