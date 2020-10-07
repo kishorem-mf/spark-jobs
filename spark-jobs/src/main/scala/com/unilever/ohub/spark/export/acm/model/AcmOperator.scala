@@ -58,6 +58,5 @@ case class AcmOperator(
                         GLOBAL_CHANNEL: String,
                         GLOBAL_SUBCHANNEL: String,
                         SOURCE_IDS: String,
-                        TARGET_OHUB_ID: String,
-                        UFS_CLIENT_NUMBER: String
+                        TARGET_OHUB_ID: String
                       ) extends ACMOutboundEntity

@@ -112,7 +112,6 @@ case class Operator(
                      strategicChannel: Option[String],
                      globalChannel: Option[String],
                      globalSubChannel: Option[String],
-                     ufsClientNumber: Option[String],
                      // other fields
                      additionalFields: Map[String, String],
                      ingestionErrors: Map[String, IngestionError]

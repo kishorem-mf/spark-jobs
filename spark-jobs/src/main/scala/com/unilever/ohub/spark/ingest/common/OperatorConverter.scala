@@ -109,7 +109,6 @@ object OperatorConverter extends CommonDomainGateKeeper[Operator] with OperatorE
         strategicChannel = None,
         globalChannel = None,
         globalSubChannel = None,
-        ufsClientNumber = optional("ufsClientNumber"),
         additionalFields = additionalFields,
         ingestionErrors = errors
       )

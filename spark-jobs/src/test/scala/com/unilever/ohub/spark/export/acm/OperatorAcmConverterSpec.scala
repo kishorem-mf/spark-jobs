@@ -63,8 +63,7 @@ class OperatorAcmConverterSpec extends SparkJobSpec with TestOperators {
     GLOBAL_CHANNEL = ("global-channel"),
     GLOBAL_SUBCHANNEL = ("global-sub-channel"),
     SOURCE_IDS = "",
-    TARGET_OHUB_ID = "",
-    UFS_CLIENT_NUMBER= "ufsClientNumber"
+    TARGET_OHUB_ID = ""
   )
   private val defaultOperatorToConvert: Operator = defaultOperator.copy(
     concatId = "AU~WUFOO~AB123",

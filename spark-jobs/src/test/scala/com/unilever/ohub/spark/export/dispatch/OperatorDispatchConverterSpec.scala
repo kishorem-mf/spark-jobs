@@ -79,8 +79,7 @@ class OperatorDispatchConverterSpec extends SparkJobSpec with TestOperators {
           SOCIAL_COMMERCIAL= "social-commercial",
           STRATEGIC_CHANNEL= "strategic-channel",
           GLOBAL_CHANNEL= "global-channel",
-          GLOBAL_SUBCHANNEL= "global-sub-channel",
-          UFS_CLIENT_NUMBER= "ufsClientNumber")
+          GLOBAL_SUBCHANNEL= "global-sub-channel")
 
       result shouldBe expectedDispatchOperator
     }
