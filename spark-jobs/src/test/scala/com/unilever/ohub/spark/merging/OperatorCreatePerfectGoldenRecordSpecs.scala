@@ -23,6 +23,7 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
         ohubId = Some("tcMerge"),
         dateCreated = Some(Timestamp.valueOf("2017-10-16 18:09:49")),
         sourceName = "EMAKINA",
+        department = Some("OOH"),
         concatId = "whatever",
         countryCode = "BR"
       )
@@ -32,6 +33,7 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
         name = Some("anotherOldOp"),
         ohubId = Some("tcMerge"),
         sourceName = "FUZZIT",
+        department = Some("UFS"),
         concatId = "whatever555",
         countryCode = "BR"
       )
@@ -41,7 +43,8 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
         name = Some("newerOp"),
         ohubId = Some("tcMerge"),
         dateCreated = Some(Timestamp.valueOf("2017-10-17 18:09:49")),
-        sourceName = "FUZZIT",
+        sourceName = "DEX",
+        department = Some("OOH"),
         concatId = "whatever666",
         countryCode = "BR"
       )
@@ -150,7 +153,8 @@ class OperatorCreatePerfectGoldenRecordSpecs extends SparkJobSpec with TestOpera
         val tcResult = result.filter(_.ohubId == Some("tcMerge"))
         tcResult.length shouldBe 1
         tcResult.head.name shouldBe opMerge3.name
-        tcResult.head.sourceName shouldBe "EMAKINA,FUZZIT"
+        tcResult.head.sourceName shouldBe "DEX,EMAKINA,FUZZIT"
+        tcResult.head.department shouldBe Some("OOH,UFS")
       }
 
       it("should not merge sources when there is only 1 group") {

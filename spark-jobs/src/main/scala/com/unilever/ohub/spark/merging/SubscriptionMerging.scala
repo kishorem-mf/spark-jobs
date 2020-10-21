@@ -55,8 +55,10 @@ object SubscriptionMerging extends SparkJob[SubscriptionMergingConfig] with Grou
       .withColumn("isGoldenRecord", $"rn" === 1)
       .drop("rn", "orderDate")
       .withColumn("ohubId", first($"ohubId").over(w2)) // preserve ohubId
-      .withColumn("ohubId", when('ohubId.isNull, createOhubIdUdf(rand())).otherwise('ohubId))
+      .withColumn("rand", concat(monotonically_increasing_id(), rand()))
+      .withColumn("ohubId", when('ohubId.isNull, createOhubIdUdf($"rand")).otherwise('ohubId))
       .withColumn("ohubId", first('ohubId).over(w2)) // make sure the whole group gets the same ohubId
+      .drop("rand")
       .as[Subscription]
   }
 

@@ -121,6 +121,8 @@ trait TestOperators {
     strategicChannel            = None,
     globalChannel               = None,
     globalSubChannel            = None,
+    ufsClientNumber             = Some("ufsClientNumber"),
+    department                  = Some("OOH"),
     additionalFields            = Map(),
     ingestionErrors             = Map()
   )

@@ -109,6 +109,9 @@ object OperatorConverter extends CommonDomainGateKeeper[Operator] with OperatorE
         strategicChannel = None,
         globalChannel = None,
         globalSubChannel = None,
+        ufsClientNumber = optional("ufsClientNumber"),
+        department = if(!optional("department").isDefined){Some("UFS")} else { optional("department")},
+//        department = optional("department"),
         additionalFields = additionalFields,
         ingestionErrors = errors
       )

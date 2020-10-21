@@ -19,6 +19,7 @@ object ContactPersonsRexLiteMerge extends BaseRexLiteMerge[ContactPersonRexLite]
     val daily_merged_records:Dataset[ContactPersonRexLite]=transform(spark,input_delta,input_entity_golden)
     val dailyRefreshRexData=daily_merged_records
       .filter(!col("rexLiteMergedDate").contains("1970-01-01"))
+      .select(prevRexIntegrated.columns.head, prevRexIntegrated.columns.tail: _*)
       .drop("additionalFields","ingestionErrors")
     val prevIntegRex=prevRexIntegrated.drop("additionalFields","ingestionErrors")
 

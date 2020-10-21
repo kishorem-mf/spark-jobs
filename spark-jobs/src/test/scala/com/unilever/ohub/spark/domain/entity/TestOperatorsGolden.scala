@@ -110,6 +110,8 @@ trait TestOperatorsGolden {
     wayOfServingAlcohol         = Some("None"),
     website                     = Some("www.google.com"),
     webUpdaterId                = Some("web-updater-id"),
+    ufsClientNumber             = Some("ufsClientNumber"),
+    department                  = Some("OOH"),
     weeksClosed                 = Some(2),
     yearFounded                 = Some(1900),
     zipCode                     = Some("1234 AB"),

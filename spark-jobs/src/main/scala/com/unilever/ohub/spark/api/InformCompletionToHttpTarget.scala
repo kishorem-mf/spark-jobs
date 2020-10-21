@@ -10,7 +10,8 @@ import util.control.Breaks._
 
 case class InformCompletionToHttpTarget(inputUrl: String = "input-file",
                                         authorization: String = "authorization-for-url",
-                                        outputFile: String = "path-to-output-file"
+                                        targetType: String = "Source-Target-Name",
+                                        outputFolder: String ="path-to-output-file"
                                        ) extends SparkJobConfig
 
 object InformCompletionToHttpTarget extends SparkJob[InformCompletionToHttpTarget] {
@@ -27,9 +28,13 @@ object InformCompletionToHttpTarget extends SparkJob[InformCompletionToHttpTarge
       opt[String]("authorization") required() action { (x, c) ⇒
         c.copy(authorization = x)
       } text "authorization is a string property"
-      opt[String]("outputFile") required() action { (x, c) ⇒
-        c.copy(outputFile = x)
-      } text "outputFile is a string property"
+      opt[String]("targetType") required() action { (x, c) ⇒
+        c.copy(targetType = x)
+      } text "targetType is a string property"
+      opt[String]("outputFolder") required() action { (x, c) ⇒
+        c.copy(outputFolder = x)
+      } text "outputFolder is a string property"
+
 
       version("1.0")
       help("help") text "help text"
@@ -89,11 +94,24 @@ object InformCompletionToHttpTarget extends SparkJob[InformCompletionToHttpTarge
   override def run(spark: SparkSession, config: InformCompletionToHttpTarget, storage: Storage): Unit = {
     import spark.implicits._
 
-    val resp = setRequestAndGetResponse(config.inputUrl,config.authorization,None)
+    val specificUrl = config.inputUrl.split(";")
+    val specificAuth = config.authorization.split(";")
+    val specificType = config.targetType.split(";")
 
+    var resp = "202"
 
-    val status_response = storage.readFromJson(resp.split("\n").toList.toDS())
-    storage.writeToParquet(status_response, config.outputFile)
+    if((specificUrl.length == specificAuth.length) && (specificAuth.length == specificType.length) ){
+
+      for(i <- 0 until specificUrl.length) {
+
+        resp = setRequestAndGetResponse(specificUrl(i), specificAuth(i), None)
+        storage.writeToParquet(storage.readFromJson(resp.split("\n").toList.toDS()), config.outputFolder + specificType(i) + ".parquet")
+
+      }
+
+    }else{
+      throw new Exception("target_url, url_authorization, target_type length is not matching")
+    }
 
   }
 }
