@@ -11,10 +11,12 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 object Operator extends DomainEntityCompanion[Operator] {
   val customerType = "OPERATOR"
   override val engineFolderName = "operators"
+  override val auroraFolderLocation = Some("Restricted")
   override val engineGoldenFolderName = Some("operators_golden")
   override val domainExportWriter: Option[DomainExportWriter[Operator]] = Some(com.unilever.ohub.spark.export.domain.OperatorDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[Operator]] = Some(com.unilever.ohub.spark.export.acm.OperatorOutboundWriter)
   override val dispatchExportWriter: Option[ExportOutboundWriter[Operator]] = Some(com.unilever.ohub.spark.export.dispatch.OperatorOutboundWriter)
+  override val auroraExportWriter: Option[ExportOutboundWriter[Operator]] = Some(com.unilever.ohub.spark.export.aurora.OperatorOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[Operator]] = Some(OperatorDWWriter)
 }
 

@@ -12,12 +12,14 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 object ChainDomainExportWriter extends DomainExportWriter[Chain]
 
 object Chain extends DomainEntityCompanion[Chain] {
+  override val auroraFolderLocation = Some("Restricted")
   val customerType = "CHAIN"
   override val engineFolderName: String = "chains"
   override val domainExportWriter: Option[DomainExportWriter[Chain]] = Some(ChainDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[Chain]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[Chain]] = Some(ChainOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[Chain]] = Some(ChainDWWriter)
+  override val auroraExportWriter: Option[ExportOutboundWriter[Chain]] = Some(com.unilever.ohub.spark.export.aurora.ChainOutboundWriter)
 }
 
 case class Chain(

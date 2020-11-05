@@ -12,11 +12,13 @@ object SubscriptionDomainExportWriter extends DomainExportWriter[Subscription]
 
 object Subscription extends DomainEntityCompanion[Subscription] {
   val customerType = "SUBSCRIPTION"
+  override val auroraFolderLocation = None
   override val engineFolderName: String = "subscriptions"
   override val domainExportWriter: Option[DomainExportWriter[Subscription]] = Some(SubscriptionDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[Subscription]] = Some(com.unilever.ohub.spark.export.acm.SubscriptionOutboundWriter)
   override val dispatchExportWriter: Option[ExportOutboundWriter[Subscription]] = Some(com.unilever.ohub.spark.export.dispatch.SubscriptionOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[Subscription]] = Some(SubscriptionDWWriter)
+  override val auroraExportWriter: Option[ExportOutboundWriter[Subscription]] = Some(com.unilever.ohub.spark.export.aurora.SubscriptionOutboundWriter)
 }
 
 case class Subscription(

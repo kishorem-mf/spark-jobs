@@ -5,16 +5,18 @@ import java.sql.{Date, Timestamp}
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
-import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, ContactPersonRexliteDWWriter}
+import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, AzureDWWriterNoPolicy, ContactPersonRexliteDWWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ContactPersonRexliteDomainExportWriter extends DomainExportWriter[ContactPersonRexLite]
 
 object ContactPersonRexLite extends DomainEntityCompanion[ContactPersonRexLite] {
   override val engineFolderName = "contactpersons_golden_crm"
+  override val auroraFolderLocation = None
   override val domainExportWriter: Option[DomainExportWriter[ContactPersonRexLite]] = Some(ContactPersonRexliteDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[ContactPersonRexLite]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[ContactPersonRexLite]] = None
+  override val auroraExportWriter: Option[ExportOutboundWriter[ContactPersonRexLite]] = None
   override val azureDwWriter: Option[AzureDWWriter[ContactPersonRexLite]] = Some(ContactPersonRexliteDWWriter)
 }
 

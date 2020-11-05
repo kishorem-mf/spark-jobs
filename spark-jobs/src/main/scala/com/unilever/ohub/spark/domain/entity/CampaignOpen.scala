@@ -13,11 +13,13 @@ object CampaignOpenDomainExportWriter extends DomainExportWriter[CampaignOpen]
 
 object CampaignOpen extends DomainEntityCompanion[CampaignOpen] {
   val customerType = "CONTACTPERSON"
+  override val auroraFolderLocation = None
   override val engineFolderName = "campaignopens"
   override val domainExportWriter: Option[DomainExportWriter[CampaignOpen]] = Some(CampaignOpenDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[CampaignOpen]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[CampaignOpen]] = Some(CampaignOpenOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[CampaignOpen]] = Some(CampaignOpenDWWriter)
+  override val auroraExportWriter: Option[ExportOutboundWriter[CampaignOpen]] = Some(com.unilever.ohub.spark.export.aurora.CampaignOpenOutboundWriter)
 }
 
 case class CampaignOpen(

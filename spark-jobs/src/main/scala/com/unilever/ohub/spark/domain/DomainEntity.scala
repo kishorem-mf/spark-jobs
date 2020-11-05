@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.export.ExportOutboundWriter
-import com.unilever.ohub.spark.export.azuredw.AzureDWWriter
+import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, AzureDWWriterNoPolicy}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object DomainEntity {
@@ -49,6 +49,7 @@ object DomainEntityCompanion {
 
 trait DomainEntityCompanion[DomainEntityType <: DomainEntity] {
   val engineFolderName: String
+  val auroraFolderLocation: Option[String] = None
   val engineGoldenFolderName: Option[String] = None
   val excludedFieldsForCsvExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForCsvExport
   val defaultExcludedFieldsForParquetExport = Seq.empty[String]
@@ -56,4 +57,5 @@ trait DomainEntityCompanion[DomainEntityType <: DomainEntity] {
   val acmExportWriter: Option[ExportOutboundWriter[DomainEntityType]]
   val dispatchExportWriter: Option[ExportOutboundWriter[DomainEntityType]]
   val azureDwWriter: Option[AzureDWWriter[DomainEntityType]]
+  val auroraExportWriter: Option[ExportOutboundWriter[DomainEntityType]]
 }

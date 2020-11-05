@@ -12,10 +12,12 @@ object LoyaltyPointsDomainExportWriter extends DomainExportWriter[LoyaltyPoints]
 
 object LoyaltyPoints extends DomainEntityCompanion[LoyaltyPoints] {
   override val engineFolderName: String = "loyaltypoints"
+  override val auroraFolderLocation = None
   override val domainExportWriter: Option[DomainExportWriter[LoyaltyPoints]] = Some(LoyaltyPointsDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[LoyaltyPoints]] = Some(com.unilever.ohub.spark.export.acm.LoyaltyPointsOutboundWriter)
   override val dispatchExportWriter: Option[ExportOutboundWriter[LoyaltyPoints]] = Some(com.unilever.ohub.spark.export.dispatch.LoyaltyPointsOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[LoyaltyPoints]] = Some(LoyaltyPointsDWWriter)
+  override val auroraExportWriter: Option[ExportOutboundWriter[LoyaltyPoints]] = Some(com.unilever.ohub.spark.export.aurora.LoyaltyPointsOutboundWriter)
 }
 
 case class LoyaltyPoints(

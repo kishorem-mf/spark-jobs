@@ -73,13 +73,7 @@ object InformCompletionToHttpTarget extends SparkJob[InformCompletionToHttpTarge
 
         }else{
 
-          val http_raw =
-            s"""python3 -c "import requests;http_headers=$http_headers;
-               |print(requests.get('$url', headers=http_headers, allow_redirects=False)) \\
-               | if($payload is None) else print(requests.post('$url', headers=http_headers, data=$payload, allow_redirects=False));" """.stripMargin
-
-          val raw=Seq("/bin/bash", "-c", http_raw).!!
-          raw_result=Some(raw.filter(_ >= ' '))
+          raw_result=Some("Status_code = " + status_code)
 
           break
         }

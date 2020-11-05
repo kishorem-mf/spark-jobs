@@ -12,6 +12,7 @@ object ProductDomainExportWriter extends DomainExportWriter[Product]
 
 object Product extends DomainEntityCompanion[Product] {
   val customerType = "PRODUCT"
+  override val auroraFolderLocation = None
   override val engineFolderName = "products"
   override val excludedFieldsForCsvExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForCsvExport ++
     Seq("additives", "allergens", "dietetics", "nutrientTypes", "nutrientValues", "productCodes")
@@ -21,6 +22,7 @@ object Product extends DomainEntityCompanion[Product] {
   override val acmExportWriter: Option[ExportOutboundWriter[Product]] = Some(com.unilever.ohub.spark.export.acm.ProductOutboundWriter)
   override val dispatchExportWriter: Option[ExportOutboundWriter[Product]] = Some(com.unilever.ohub.spark.export.dispatch.ProductOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[Product]] = Some(ProductDWWriter)
+  override val auroraExportWriter: Option[ExportOutboundWriter[Product]] = Some(com.unilever.ohub.spark.export.aurora.ProductOutboundWriter)
 }
 
 case class ProductSifu(

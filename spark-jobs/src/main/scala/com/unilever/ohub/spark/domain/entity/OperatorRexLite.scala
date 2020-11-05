@@ -5,17 +5,19 @@ import java.sql.Timestamp
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
-import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, OperatorRexLiteDWWriter}
+import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, AzureDWWriterNoPolicy, OperatorRexLiteDWWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object OperatorRexLiteDomainExportWriter extends DomainExportWriter[OperatorRexLite]
 
 object OperatorRexLite extends DomainEntityCompanion[OperatorRexLite] {
   override val engineFolderName = "operators_golden_crm"
+  override val auroraFolderLocation = None
   override val domainExportWriter: Option[DomainExportWriter[OperatorRexLite]] = Some(OperatorRexLiteDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[OperatorRexLite]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[OperatorRexLite]] = None
   override val azureDwWriter: Option[AzureDWWriter[OperatorRexLite]] = Some(OperatorRexLiteDWWriter)
+  override val auroraExportWriter: Option[ExportOutboundWriter[OperatorRexLite]] = None
 }
 
 case class OperatorRexLite(

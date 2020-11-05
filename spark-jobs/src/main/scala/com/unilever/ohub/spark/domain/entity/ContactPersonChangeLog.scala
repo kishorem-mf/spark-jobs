@@ -13,6 +13,7 @@ object ContactPersonChangeLogDomainExportWriter extends DomainExportWriter[Conta
 object ContactPersonChangeLog extends DomainEntityCompanion[ContactPersonChangeLog] {
 
   override val engineFolderName: String = "contactpersons_change_log"
+  override val auroraFolderLocation = Some("Shared")
   override val domainExportWriter: Option[DomainExportWriter[ContactPersonChangeLog]] = Some(ContactPersonChangeLogDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = None
@@ -23,6 +24,7 @@ object ContactPersonChangeLog extends DomainEntityCompanion[ContactPersonChangeL
   override val defaultExcludedFieldsForParquetExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForParquetExport ++
     Seq("id", "creationTimestamp", "countryCode", "customerType", "sourceEntityId", "sourceName", "isActive", "ohubCreated", "ohubUpdated",
       "dateCreated", "dateUpdated", "isGoldenRecord")
+  override val auroraExportWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = Some(com.unilever.ohub.spark.export.aurora.ContactPersonChangeLogOutboundWriter)
 }
 //
 //case class ContactPersonChangeLog(
