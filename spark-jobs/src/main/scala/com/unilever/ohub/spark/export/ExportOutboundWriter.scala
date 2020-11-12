@@ -145,7 +145,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     if(!config.auroraCountryCodes.isEmpty()){
       val integrated = storage.readFromParquet[DomainType](config.integratedInputFile)
 
-      if(config.outboundLocation.contains("Shared")){
+      if(config.outboundLocation.contains("shared")){
         val location = config.outboundLocation + entityName() + s"/Processed/" + entityName() + ".parquet"
         val exportds = filterByCountry(integrated, None, spark)
         storage.writeToParquet(exportds,location)

@@ -223,7 +223,7 @@ object AllAuroraOutboundWriter  extends SparkJobWithOutboundExportConfig  {
         val writer = entity.auroraExportWriter.get
         val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
         val datalakeLocation = if(entity.auroraFolderLocation == Some("Restricted")){s"${config.outboundLocation}Restricted/"}
-        else if(entity.auroraFolderLocation == Some("Shared")){s"${config.outboundLocation}Shared/"}
+        else if(entity.auroraFolderLocation == Some("Shared")){s"${config.outboundLocation}shared/"}
         else {s"${config.outboundLocation}/"}
 
         writer.run(
