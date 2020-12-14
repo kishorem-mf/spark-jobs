@@ -35,7 +35,14 @@ var incomingData_cp = spark
 
 var driver = "org.postgresql.Driver"
 var url = "jdbc:postgresql://ohub2-db-prod.postgres.database.azure.com:5432/ohub2?sslmode=require"
-var query = "select FU.file_name as filename,ad.country,FU.status,FU.timestamp::date, CASE WHEN char_length(FU.user_name)-char_length(replace(FU.user_name,'-',''))=4 THEN spn.spnname ELSE FU.user_name END AS UserName FROM inbound.AUDIT_TRAILS AS FU LEFT JOIN inbound.adgroupusers AS ad ON FU.user_name = ad.username LEFT JOIN inbound.serviceprincipals as spn ON  spn.spnid = FU.user_name where (FU.status='COMPLETED' OR FU.status='FAILED') GROUP BY filename, ad.country, spn.spnname"
+var query = "select FU.file_name as filename, ad.country, FU.status, FU.timestamp::date, " +
+  "CASE WHEN char_length(FU.user_name)-char_length(replace(FU.user_name,'-',''))=4 THEN spn.spnname ELSE FU.user_name END AS UserName " +
+  "FROM inbound.AUDIT_TRAILS AS FU " +
+  "right join (select file_name, max(version) as version from inbound.audit_trails group by file_name) as at2 " +
+  "       on FU.file_name = at2.file_name and FU.version = at2.version " +
+  "LEFT JOIN inbound.adgroupusers AS ad ON FU.user_name = ad.username " +
+  "LEFT JOIN inbound.serviceprincipals as spn ON  spn.spnid = FU.user_name " +
+  "where (FU.status='COMPLETED' OR FU.status='FAILED') GROUP BY filename, ad.country, spn.spnname"
 
 var user = "ohub2reader@ohub2-db-prod"
 var password = "J2YneDDSajt3Mkks"
