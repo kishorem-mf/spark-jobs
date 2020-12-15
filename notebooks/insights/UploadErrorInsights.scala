@@ -49,8 +49,8 @@ def getFileInsightData(execDate: String) = {
           "WHERE (FU.status='COMPLETED' OR FU.status='FAILED') AND " +
           s"DATE(FU.timestamp) = '${execDate}' AND " +
           "BSE.step_name='model_step' " +
-          "GROUP BY FU.file_name, split_part(FUE.error_message::TEXT,' ', 2), FUE.is_warning, BSE.read_count, JEP.string_val,ad.country, spn.spnname " +
-          "ORDER BY FU.file_name,split_part(FUE.error_message::TEXT,' ', 2)"
+          "GROUP BY FU.file_name, FU.version, split_part(FUE.error_message::TEXT,' ', 2), FUE.is_warning, BSE.read_count, JEP.string_val,ad.country, spn.spnname " +
+          "ORDER BY FU.file_name, FU.version, split_part(FUE.error_message::TEXT,' ', 2)"
 
     getProdDbData(insightQuery)
         .withColumnRenamed("filename", "FILE_NAME")

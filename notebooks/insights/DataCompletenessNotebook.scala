@@ -28,7 +28,7 @@ def getAuditTrailsData() = {
       "LEFT JOIN inbound.serviceprincipals as spn " +
         "ON  spn.spnid = FU.user_name " +
       "where (FU.status='COMPLETED' OR FU.status='FAILED' OR FU.status='EXECUTING')  " +
-        "GROUP BY FU.file_name, ad.country, spn.spnname"
+        "GROUP BY FU.file_name, FU.version, ad.country, spn.spnname"
 
   getProdDbData(query)
     .withColumn("file_name", upper($"file_name"))

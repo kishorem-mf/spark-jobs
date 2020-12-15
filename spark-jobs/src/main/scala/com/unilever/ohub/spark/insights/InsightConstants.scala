@@ -23,7 +23,7 @@ object InsightConstants {
     "LEFT JOIN inbound.serviceprincipals as spn " +
     "ON  spn.spnid = FU.user_name " +
     "where (FU.status='COMPLETED' OR FU.status='FAILED' OR FU.status='EXECUTING')  " +
-    "GROUP BY FU.file_name, ad.country, spn.spnname"
+    "GROUP BY FU.file_name, FU.version, ad.country, spn.spnname"
 
   val CONTACTPERSON_FPO_FIELDS = Seq("FIRST_NAME", "LAST_NAME", "ZIP_CODE", "STREET", "CITY", "MOBILE_PHONE_NUMBER", "EMAIL_ADDRESS",
     "EM_OPT_IN_CONFIRMED", "EM_OPT_IN_CONFIRMED_DATE", "EM_OPT_IN", "EM_OPT_IN_DATE", "EM_OPT_OUT", "MOB_OPT_IN_CONFIRMED",
