@@ -32,7 +32,7 @@ object InsightConstants {
 
 
   val FILE_UPLOAD_ERRORS_FILENAME = "FileUploadErrorsInsights.csv"
-  val FILE_UPLOADS_QUERY = "select * from inbound.audit_trails as at1" +
+  val FILE_UPLOADS_QUERY = "select * from inbound.audit_trails as at1 " +
     "right join (select file_name, max(version) as version from inbound.audit_trails group by file_name) as at2" +
     "       on at1.file_name = at2.file_name and at1.version = at2.version " +
     "where at1.status = 'COMPLETED' or at1.status = 'FAILED'"
