@@ -2,7 +2,6 @@ package com.unilever.ohub.spark.domain.entity
 
 import java.sql.{Date, Timestamp}
 
-import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, ContactPersonChangeLogDWWriter}
@@ -24,7 +23,7 @@ object ContactPersonChangeLog extends DomainEntityCompanion[ContactPersonChangeL
   override val defaultExcludedFieldsForParquetExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForParquetExport ++
     Seq("id", "creationTimestamp", "countryCode", "customerType", "sourceEntityId", "sourceName", "isActive", "ohubCreated", "ohubUpdated",
       "dateCreated", "dateUpdated", "isGoldenRecord")
-  override val auroraExportWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = Some(com.unilever.ohub.spark.export.aurora.ContactPersonChangeLogOutboundWriter)
+  override val auroraInboundWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = None
 }
 //
 //case class ContactPersonChangeLog(
