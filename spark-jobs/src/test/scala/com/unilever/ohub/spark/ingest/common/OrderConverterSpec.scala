@@ -51,7 +51,7 @@ class OrderConverterSpec extends CsvDomainGateKeeperSpec[Order] with TestOrders 
           deliveryType = Some("DELIVERY"),
           preferredDeliveryDateOption = Some("DATE"),
           preferredDeliveryDate = Some(Timestamp.valueOf("2020-02-28 00:00:00")),
-          department = None
+          department = Some("OOH")
         )
 
         actualOrder shouldBe expectedOrder
