@@ -88,6 +88,7 @@ case class Order(
                   deliveryType: Option[String],
                   preferredDeliveryDateOption: Option[String],
                   preferredDeliveryDate: Option[Timestamp],
+                  department: Option[String],
                   // other fields
                   additionalFields: Map[String, String],
                   ingestionErrors: Map[String, IngestionError]

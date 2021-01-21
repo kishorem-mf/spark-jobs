@@ -66,6 +66,7 @@ trait TestOrders {
     deliveryType = Some("DELIVERY"),
     preferredDeliveryDateOption = Some("DATE"),
     preferredDeliveryDate = Some(Timestamp.valueOf("2020-02-28 00:00:00")),
+    department = Some("OOH"),
     // other fields
     additionalFields = Map(),
     ingestionErrors = Map()
