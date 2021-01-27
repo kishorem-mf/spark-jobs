@@ -23,7 +23,7 @@ import scala.reflect.runtime.universe._
 
 object TargetType extends Enumeration {
   type TargetType = Value
-  val ACM, DISPATCHER, DATASCIENCE, MEPS, UDL = Value
+  val ACM, DISPATCHER, DATASCIENCE, MEPS, UDL, BDL = Value
 }
 
 case class OutboundConfig(
