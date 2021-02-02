@@ -15,7 +15,9 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
 
   def transform(spark: SparkSession, ds: Dataset[T]): Dataset[T] = {
     import spark.implicits._
-
+// Check if the entity has department field
+    def hasColumn(entityCaseClassName: Dataset[T], colName: String) = entityCaseClassName.columns.contains(colName)
+    val entityHasColumn = hasColumn(ds,"department")
 
     val calConcatId = udf((countryCode: String, ohubId: String) => {
       val ohub2SourceName = "OHUB"
@@ -30,13 +32,23 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
       $"ohubUpdated".desc
     )
 
-    val mergeableRecords = ds
-      .filter($"isActive")
-      .withColumn("group_row_num", row_number().over(orderByDatesWindow))
-      .filter($"group_row_num" <= mergeGroupSizeCap)
-      .withColumn("sourceName", concat_ws(",", sort_array(collect_set("sourceName").over(groupWindow))))
-      .drop("additionalFields", "ingestionErrors")
-
+    val mergeableRecords = if(entityHasColumn.equals(true)) {
+      ds
+        .filter($"isActive")
+        .withColumn("group_row_num", row_number().over(orderByDatesWindow))
+        .filter($"group_row_num" <= mergeGroupSizeCap)
+        .withColumn("sourceName", concat_ws(",", sort_array(collect_set("sourceName").over(groupWindow))))
+        .withColumn("department", concat_ws(",", sort_array(collect_set("department").over(groupWindow))))
+        .drop("additionalFields", "ingestionErrors")
+    }
+    else {
+      ds
+        .filter($"isActive")
+        .withColumn("group_row_num", row_number().over(orderByDatesWindow))
+        .filter($"group_row_num" <= mergeGroupSizeCap)
+        .withColumn("sourceName", concat_ws(",", sort_array(collect_set("sourceName").over(groupWindow))))
+        .drop("additionalFields", "ingestionErrors")
+    }
     setFieldsToLatestValue(
       spark,
       orderByDatesWindow,

@@ -16,12 +16,14 @@ object InsightConstants {
     "FU.timestamp::date, " +
     "CASE WHEN char_length(FU.user_name)-char_length(replace(FU.user_name,'-',''))=4 THEN spn.spnname ELSE FU.user_name END AS UserName " +
     "FROM inbound.AUDIT_TRAILS AS FU " +
+    "right join (select file_name, max(version) as version from inbound.audit_trails group by file_name) as at2 " +
+    " on FU.file_name = at2.file_name and FU.version = at2.version " +
     "LEFT JOIN inbound.adgroupusers AS ad " +
     "ON FU.user_name = ad.username " +
     "LEFT JOIN inbound.serviceprincipals as spn " +
     "ON  spn.spnid = FU.user_name " +
     "where (FU.status='COMPLETED' OR FU.status='FAILED' OR FU.status='EXECUTING')  " +
-    "GROUP BY FU.file_name, ad.country, spn.spnname"
+    "GROUP BY FU.file_name, FU.version, ad.country, spn.spnname"
 
   val CONTACTPERSON_FPO_FIELDS = Seq("FIRST_NAME", "LAST_NAME", "ZIP_CODE", "STREET", "CITY", "MOBILE_PHONE_NUMBER", "EMAIL_ADDRESS",
     "EM_OPT_IN_CONFIRMED", "EM_OPT_IN_CONFIRMED_DATE", "EM_OPT_IN", "EM_OPT_IN_DATE", "EM_OPT_OUT", "MOB_OPT_IN_CONFIRMED",
@@ -30,8 +32,10 @@ object InsightConstants {
 
 
   val FILE_UPLOAD_ERRORS_FILENAME = "FileUploadErrorsInsights.csv"
-  val FILE_UPLOADS_QUERY = "select * from inbound.audit_trails " +
-    "where (status = 'COMPLETED' or status = 'FAILED')"
+  val FILE_UPLOADS_QUERY = "select at1.* from inbound.audit_trails as at1 " +
+    "right join (select file_name, max(version) as version from inbound.audit_trails group by file_name) as at2" +
+    "       on at1.file_name = at2.file_name and at1.version = at2.version " +
+    "where at1.status = 'COMPLETED' or at1.status = 'FAILED'"
     //"and  DATE(timestamp) ='${execDate}'"
   val FILE_UPLOAD_ERROR_QUERY = "select * from inbound.errors"
   val BATCH_JOB_EXEC_QUERY = "select * from inbound.batch_job_execution_params"

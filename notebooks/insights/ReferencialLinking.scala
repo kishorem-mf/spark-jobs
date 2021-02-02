@@ -35,7 +35,14 @@ var incomingData_cp = spark
 
 var driver = "org.postgresql.Driver"
 var url = "jdbc:postgresql://ohub2-db-prod.postgres.database.azure.com:5432/ohub2?sslmode=require"
-var query = "select FU.file_name as filename,ad.country,FU.status,FU.timestamp::date, CASE WHEN char_length(FU.user_name)-char_length(replace(FU.user_name,'-',''))=4 THEN spn.spnname ELSE FU.user_name END AS UserName FROM inbound.AUDIT_TRAILS AS FU LEFT JOIN inbound.adgroupusers AS ad ON FU.user_name = ad.username LEFT JOIN inbound.serviceprincipals as spn ON  spn.spnid = FU.user_name where (FU.status='COMPLETED' OR FU.status='FAILED') GROUP BY filename, ad.country, spn.spnname"
+var query = "select FU.file_name as filename, ad.country, FU.status, FU.timestamp::date, " +
+  "CASE WHEN char_length(FU.user_name)-char_length(replace(FU.user_name,'-',''))=4 THEN spn.spnname ELSE FU.user_name END AS UserName " +
+  "FROM inbound.AUDIT_TRAILS AS FU " +
+  "right join (select file_name, max(version) as version from inbound.audit_trails group by file_name) as at2 " +
+  "       on FU.file_name = at2.file_name and FU.version = at2.version " +
+  "LEFT JOIN inbound.adgroupusers AS ad ON FU.user_name = ad.username " +
+  "LEFT JOIN inbound.serviceprincipals as spn ON  spn.spnid = FU.user_name " +
+  "where (FU.status='COMPLETED' OR FU.status='FAILED') GROUP BY filename, ad.country, spn.spnname"
 
 var user = "ohub2reader@ohub2-db-prod"
 var password = "J2YneDDSajt3Mkks"
@@ -733,7 +740,47 @@ val data = Seq(
 ,("CLUB_HELLMANNS", "198")
 ,("MARKETO", "199")
 ,("OUNIVERSE", "200")
-,("OUT_OF_HOME", "201"))
+,("OUT_OF_HOME", "201")
+,("MY_LOCAL_EATZ", "202")
+,("PARDOT", "203")
+,("ARAMARK", "204")
+,("B2B_OOH", "205")
+,("BIDFOOD", "206")
+,("BLAKEMORES", "207")
+,("BRAKES", "208")
+,("BWG", "209")
+,("COM", "210")
+,("CREED", "211")
+,("DIRECT", "212")
+,("DUNNHUMBY", "213")
+,("GCS", "214")
+,("LYNAS", "215")
+,("MAGENTO", "216")
+,("MANUAL_SSD", "217")
+,("MUSGRAVES", "218")
+,("OMNE", "219")
+,("OOH_WHOLESALERS", "220")
+,("PITCHPOCKET", "221")
+,("POS_DYNAMIC", "222")
+,("SAP_SIRIUS", "223")
+,("SAVONA", "224")
+,("WEB_SCRAPER", "225")
+,("BUSINESS_TGT_GRP", "226")
+,("FRIGO_DB", "227")
+,("GFK", "228")
+,("IAE", "229")
+,("LOCAL_BUSINESS", "230")
+,("MILWARD_BROWN", "231")
+,("MINDSHARE", "232")
+,("MY_TSC", "233")
+,("OOH_REPORTING_TOOL", "234")
+,("PLANORAMA", "235")
+,("POS_DATABASE", "236")
+,("SWISS_GATEWAY", "237")
+,("UFS_WHOLESALERS", "238")
+,("IYSHUBTR", "239")
+,("NEOGRID", "240")
+,("SENSEDATA", "241"))
 
 // COMMAND ----------
 

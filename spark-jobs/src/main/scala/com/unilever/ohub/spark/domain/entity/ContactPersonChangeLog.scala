@@ -13,6 +13,7 @@ object ContactPersonChangeLogDomainExportWriter extends DomainExportWriter[Conta
 object ContactPersonChangeLog extends DomainEntityCompanion[ContactPersonChangeLog] {
 
   override val engineFolderName: String = "contactpersons_change_log"
+  override val auroraFolderLocation = Some("Shared")
   override val domainExportWriter: Option[DomainExportWriter[ContactPersonChangeLog]] = Some(ContactPersonChangeLogDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = None
@@ -23,35 +24,48 @@ object ContactPersonChangeLog extends DomainEntityCompanion[ContactPersonChangeL
   override val defaultExcludedFieldsForParquetExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForParquetExport ++
     Seq("id", "creationTimestamp", "countryCode", "customerType", "sourceEntityId", "sourceName", "isActive", "ohubCreated", "ohubUpdated",
       "dateCreated", "dateUpdated", "isGoldenRecord")
+  override val auroraExportWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = Some(com.unilever.ohub.spark.export.aurora.ContactPersonChangeLogOutboundWriter)
 }
+//
+//case class ContactPersonChangeLog(
+//                              id: String,
+//                              creationTimestamp: Timestamp,
+//                              concatId: String,
+//                              countryCode: String,
+//                              customerType: String,
+//                              sourceEntityId: String,
+//                              sourceName: String,
+//                              isActive: Boolean,
+//                              ohubCreated: Timestamp,
+//                              ohubUpdated: Timestamp,
+//
+//                              // optional fields
+//                              dateCreated: Option[Timestamp],
+//                              dateUpdated: Option[Timestamp],
+//                              // used for grouping and marking the golden record within the group
+//                              ohubId: Option[String],
+//                              isGoldenRecord: Boolean,
+//
+//                              //required fields
+//                              fromDate: Option[Date],
+//                              toDate: Option[Date],
+//
+//                              // other fields
+//                              additionalFields: Map[String, String],
+//                              ingestionErrors: Map[String, IngestionError]
+//
+//                            ) extends DomainEntity {
+//  override def getCompanion: DomainEntityCompanion[ContactPersonChangeLog] = ContactPersonChangeLog
+//}
 
-case class ContactPersonChangeLog(
-                              id: String,
-                              creationTimestamp: Timestamp,
-                              concatId: String,
-                              countryCode: String,
-                              customerType: String,
-                              sourceEntityId: String,
-                              sourceName: String,
-                              isActive: Boolean,
-                              ohubCreated: Timestamp,
-                              ohubUpdated: Timestamp,
+abstract case class ContactPersonChangeLog(
+                                   ohubId: Option[String],
+                                   concatId: String,
 
-                              // optional fields
-                              dateCreated: Option[Timestamp],
-                              dateUpdated: Option[Timestamp],
-                              // used for grouping and marking the golden record within the group
-                              ohubId: Option[String],
-                              isGoldenRecord: Boolean,
+                                   fromDate: Option[Date],
+                                   toDate: Option[Date]
 
-                              //required fields
-                              fromDate: Option[Date],
-                              toDate: Option[Date],
 
-                              // other fields
-                              additionalFields: Map[String, String],
-                              ingestionErrors: Map[String, IngestionError]
-
-                            ) extends DomainEntity {
+                                 ) extends DomainEntity {
   override def getCompanion: DomainEntityCompanion[ContactPersonChangeLog] = ContactPersonChangeLog
 }

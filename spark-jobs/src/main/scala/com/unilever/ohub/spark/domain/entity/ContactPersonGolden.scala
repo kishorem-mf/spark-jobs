@@ -11,11 +11,13 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 object ContactPersonGoldenDomainExportWriter extends DomainExportWriter[ContactPersonGolden]
 
 object ContactPersonGolden extends DomainEntityCompanion[ContactPersonGolden] {
+  override val auroraFolderLocation = Some("Restricted")
   override val engineFolderName = "contactpersons_golden"
   override val domainExportWriter: Option[DomainExportWriter[ContactPersonGolden]] = Some(ContactPersonGoldenDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[ContactPersonGolden]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[ContactPersonGolden]] = None
   override val azureDwWriter: Option[AzureDWWriter[ContactPersonGolden]] = Some(ContactPersonGoldenDWWriter)
+  override val auroraExportWriter: Option[ExportOutboundWriter[ContactPersonGolden]] = Some(com.unilever.ohub.spark.export.aurora.ContactPersonGoldenOutboundWriter)
 }
 
 case class ContactPersonGolden(
@@ -81,6 +83,8 @@ case class ContactPersonGolden(
                           hasFaxOptIn: Option[Boolean],
                           hasFaxOptOut: Option[Boolean],
                           webUpdaterId: Option[String],
+                          socialNetworkName: Option[String],
+                          socialNetworkId: Option[String],
                           isEmailAddressValid: Option[Boolean],
                           isMobileNumberValid: Option[Boolean],
 

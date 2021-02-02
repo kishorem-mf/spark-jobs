@@ -80,7 +80,7 @@ object ProductConverter extends CommonDomainGateKeeper[Product] with ProductEmpt
         isUnileverProduct = Option.empty,
         itemType = Option.empty,
         language = Option.empty,
-        lastModifiedDate = Option.empty,
+        lastModifiedDate = optional("lastModifiedDate", parseDateTimeUnsafe()),
         nameSlug = Option.empty,
         number = Option.empty,
         nutrientTypes = List.empty,
@@ -88,7 +88,6 @@ object ProductConverter extends CommonDomainGateKeeper[Product] with ProductEmpt
         orderScore = Option.empty,
         packagingCode = Option.empty,
         packagingName = Option.empty,
-        packshotUrl = Option.empty,
         portionSize = Option.empty,
         portionUnit = Option.empty,
         preparation = Option.empty,
@@ -105,7 +104,12 @@ object ProductConverter extends CommonDomainGateKeeper[Product] with ProductEmpt
         unitPrice = optional("unitPrice", toBigDecimal),
         youtubeUrl = Option.empty,
         additionalFields = additionalFields,
-        ingestionErrors = errors
+        ingestionErrors = errors,
+        url=Option.empty,
+        previewImageUrl = Option.empty,
+        imageUrl = Option.empty,
+        packshotUrl= Option.empty,
+        convenienceLevel= Option.empty
       )
   }
 }

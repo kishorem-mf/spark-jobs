@@ -10,11 +10,13 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ChannelMapping extends DomainEntityCompanion[ChannelMapping] {
   val customerType = "OPERATOR"
+  override val auroraFolderLocation = None
   override val engineFolderName: String = "channelmappings"
   override val domainExportWriter: Option[DomainExportWriter[ChannelMapping]] = None
   override val acmExportWriter: Option[ExportOutboundWriter[ChannelMapping]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[ChannelMapping]] = None
   override val azureDwWriter: Option[AzureDWWriter[ChannelMapping]] = Some(ChannelMappingDWWriter)
+  override val auroraExportWriter: Option[ExportOutboundWriter[ChannelMapping]] = Some(com.unilever.ohub.spark.export.aurora.ChannelMappingOutboundWriter)
 }
 
 object ChannelReference {

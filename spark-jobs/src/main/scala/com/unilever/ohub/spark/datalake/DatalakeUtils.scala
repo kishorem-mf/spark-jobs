@@ -1,8 +1,10 @@
 package com.unilever.ohub.spark.datalake
 
+import java.text.SimpleDateFormat
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
-import java.util.UUID
+import java.util.{Calendar, UUID}
 
 import com.unilever.ohub.spark.insights.{DatabaseConfig, DatabaseUtils}
 import com.unilever.ohub.spark.storage.Storage
@@ -10,8 +12,9 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions.date_format
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
 
+import scala.collection.mutable.ArrayBuffer
 
-trait DataLakeConfig extends DatabaseConfig {
+trait DataLakeConfig extends DatabaseConfig  {
   val country: String = " country_code"
   val previousIntegratedPath: String = "previous integrated file path"
   val outputPath: String = "output file path"
@@ -97,4 +100,20 @@ object DatalakeUtils extends DatabaseUtils {
         .filter($"country_code" === config.country)
   }
 
+  def getFolderDateList(fromDate:String, toDate:String): List[String] = {
+
+    val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
+    val dateFiled = Calendar.DAY_OF_MONTH
+    var dateFrom = dateFormat.parse(fromDate)
+    val dateTo = dateFormat.parse(toDate)
+    val calendar = Calendar.getInstance()
+
+    calendar.setTime(dateFrom)
+    val dateArray: ArrayBuffer[String] = ArrayBuffer()
+    while (dateFrom.compareTo(dateTo) <= 0) {
+      dateArray += dateFormat.format(dateFrom)
+      calendar.add(dateFiled, 1)
+      dateFrom = calendar.getTime}
+    dateArray.toList
+  }
 }

@@ -12,10 +12,12 @@ object QuestionDomainExportWriter extends DomainExportWriter[Question]
 
 object Question extends DomainEntityCompanion[Question] {
   override val engineFolderName: String = "questions"
+  override val auroraFolderLocation = None
   override val domainExportWriter: Option[DomainExportWriter[Question]] = Some(QuestionDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[Question]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[Question]] = None
   override val azureDwWriter: Option[AzureDWWriter[Question]] = Some(QuestionDWWriter)
+  override val auroraExportWriter: Option[ExportOutboundWriter[Question]] = Some(com.unilever.ohub.spark.export.aurora.QuestionOutboundWriter)
 }
 
 case class Question(

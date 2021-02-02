@@ -23,11 +23,13 @@ object OrderDomainExportWriter extends DomainExportWriter[Order] {
 
 object Order extends DomainEntityCompanion[Order] {
   val customerType = "ORDER"
+  override val auroraFolderLocation = Some("Restricted")
   override val engineFolderName = "orders"
   override val domainExportWriter: Option[DomainExportWriter[Order]] = Some(OrderDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[Order]] = Some(com.unilever.ohub.spark.export.acm.OrderOutboundWriter)
   override val dispatchExportWriter: Option[ExportOutboundWriter[Order]] = Some(com.unilever.ohub.spark.export.dispatch.OrderOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[Order]] = Some(OrderDWWriter)
+  override val auroraExportWriter: Option[ExportOutboundWriter[Order]] = Some(com.unilever.ohub.spark.export.aurora.OrderOutboundWriter)
 }
 
 case class Order(

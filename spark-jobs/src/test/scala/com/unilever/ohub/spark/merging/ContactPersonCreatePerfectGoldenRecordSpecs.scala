@@ -167,7 +167,10 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
 
         // Fax
         hasFaxOptIn = Some(true),
-        hasFaxOptOut = Some(true)
+        hasFaxOptOut = Some(true),
+
+        socialNetworkName = Some("Facebook"),
+        socialNetworkId = Some("1234")
       )
 
       val cpSameDateUpdated3 = defaultContactPersonGolden.copy(
@@ -275,6 +278,10 @@ class ContactPersonCreatePerfectGoldenRecordSpecs extends SparkJobSpec with Test
         // TeleMarketing
         tcResult.head.hasTeleMarketingOptIn shouldBe cpSameDateUpdated1.hasTeleMarketingOptIn
         tcResult.head.hasTeleMarketingOptOut shouldBe cpSameDateUpdated1.hasTeleMarketingOptOut
+
+        // socialNetworkName & Id
+        tcResult.head.socialNetworkName shouldBe cpSameDateUpdated2.socialNetworkName
+        tcResult.head.socialNetworkId shouldBe cpSameDateUpdated2.socialNetworkId
       }
     }
   }

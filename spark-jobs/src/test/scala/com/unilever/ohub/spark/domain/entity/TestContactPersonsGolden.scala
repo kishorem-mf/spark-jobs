@@ -74,6 +74,8 @@ trait TestContactPersonsGolden {
     hasFaxOptIn = Some(true),
     hasFaxOptOut = Some(true),
     webUpdaterId = None,
+    socialNetworkName = Some("Facebook"),
+    socialNetworkId = Some("1234"),
     isEmailAddressValid = None,
     isMobileNumberValid = None,
     additionalFields = Map(),

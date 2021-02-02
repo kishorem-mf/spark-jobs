@@ -1,9 +1,13 @@
 package com.unilever.ohub.spark.ingest
 
-import com.unilever.ohub.spark.domain.DomainEntity
+
+
+
+import com.unilever.ohub.spark.domain.{DomainEntity}
 import com.unilever.ohub.spark.domain.entity._
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{Dataset, SaveMode, SparkSession}
+
 
 trait EmptyParquetWriter[T <: DomainEntity] {
   def createEmptyDataset(spark: SparkSession): Dataset[T]
@@ -170,10 +174,12 @@ trait ChainEmptyParquetWriter extends EmptyParquetWriter[Chain] {
 
 trait OperatorChangeLogEmptyParquetWriter extends EmptyParquetWriter[OperatorChangeLog] {
 
+
   def createEmptyDataset(spark: SparkSession): Dataset[OperatorChangeLog] = {
     import spark.implicits._
 
     spark.createDataset[OperatorChangeLog](Seq[OperatorChangeLog]())
+
   }
 }
 
@@ -192,6 +198,24 @@ trait ContactPersonGoldenEmptyParquetWriter extends EmptyParquetWriter[ContactPe
     import spark.implicits._
 
     spark.createDataset[ContactPersonGolden](Seq[ContactPersonGolden]())
+  }
+}
+
+trait ContactPersonRexLiteEmptyParquetWriter extends EmptyParquetWriter[ContactPersonRexLite] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[ContactPersonRexLite] = {
+    import spark.implicits._
+
+    spark.createDataset[ContactPersonRexLite](Seq[ContactPersonRexLite]())
+  }
+}
+
+trait OperatorRexLiteEmptyParquetWriter extends EmptyParquetWriter[OperatorRexLite] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[OperatorRexLite] = {
+    import spark.implicits._
+
+    spark.createDataset[OperatorRexLite](Seq[OperatorRexLite]())
   }
 }
 

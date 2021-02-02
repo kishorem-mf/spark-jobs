@@ -39,6 +39,8 @@ def getFileInsightData(execDate: String) = {
           "FU.linked_file AS LinkedFile, " +
           "FUE.is_warning AS IsWarning " +
         "FROM inbound.AUDIT_TRAILS AS FU " +
+        "right join (select file_name, max(version) as version from inbound.audit_trails group by file_name) as at2 " +
+        "             on FU.file_name = at2.file_name and FU.version = at2.version " +
         "LEFT JOIN inbound.errors AS FUE ON FU.file_name = FUE.file_name  " +
         "INNER JOIN inbound.batch_job_execution_params JEP ON JEP.string_val = FU.file_name  " +
         "INNER JOIN inbound.batch_step_execution BSE ON BSE.job_execution_id=JEP.job_execution_id " +
@@ -47,8 +49,8 @@ def getFileInsightData(execDate: String) = {
           "WHERE (FU.status='COMPLETED' OR FU.status='FAILED') AND " +
           s"DATE(FU.timestamp) = '${execDate}' AND " +
           "BSE.step_name='model_step' " +
-          "GROUP BY FU.file_name, split_part(FUE.error_message::TEXT,' ', 2), FUE.is_warning, BSE.read_count, JEP.string_val,ad.country, spn.spnname " +
-          "ORDER BY FU.file_name,split_part(FUE.error_message::TEXT,' ', 2)"
+          "GROUP BY FU.file_name, FU.version, split_part(FUE.error_message::TEXT,' ', 2), FUE.is_warning, BSE.read_count, JEP.string_val,ad.country, spn.spnname " +
+          "ORDER BY FU.file_name, FU.version, split_part(FUE.error_message::TEXT,' ', 2)"
 
     getProdDbData(insightQuery)
         .withColumnRenamed("filename", "FILE_NAME")

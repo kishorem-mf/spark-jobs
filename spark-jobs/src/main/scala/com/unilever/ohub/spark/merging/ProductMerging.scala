@@ -2,26 +2,27 @@ package com.unilever.ohub.spark.merging
 
 import java.util.UUID
 
-import com.unilever.ohub.spark.{ SparkJob, SparkJobConfig }
-import com.unilever.ohub.spark.domain.entity.Product
+import com.unilever.ohub.spark.domain.DomainEntity
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import com.unilever.ohub.spark.domain.entity.{Product, ProductSifu}
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import org.apache.spark.sql.{ Dataset, SparkSession }
+import org.apache.spark.sql.{Dataset, Encoder, Encoders, SparkSession}
 import scopt.OptionParser
 
 case class ProductMergingConfig(
-    products: String = "product-input-file",
-    previousIntegrated: String = "previous-integrated-file",
-    outputFile: String = "path-to-output-file"
-) extends SparkJobConfig
+                                 products: String = "product-input-file",
+                                 previousIntegrated: String = "previous-integrated-file",
+                                 outputFile: String = "path-to-output-file"
+                               ) extends SparkJobConfig
 
 object ProductMerging extends SparkJob[ProductMergingConfig] {
 
   def transform(
-    spark: SparkSession,
-    products: Dataset[Product],
-    previousIntegrated: Dataset[Product]
-  ): Dataset[Product] = {
+                 spark: SparkSession,
+                 products: Dataset[Product],
+                 previousIntegrated: Dataset[Product]
+               ): Dataset[Product] = {
     import spark.implicits._
 
     previousIntegrated
@@ -41,15 +42,15 @@ object ProductMerging extends SparkJob[ProductMergingConfig] {
   override private[spark] def defaultConfig = ProductMergingConfig()
 
   override private[spark] def configParser(): OptionParser[ProductMergingConfig] =
-    new scopt.OptionParser[ProductMergingConfig]("Order merging") {
+    new scopt.OptionParser[ProductMergingConfig]("Product merging") {
       head("merges products into an integrated products output file.", "1.0")
-      opt[String]("productsInputFile") required () action { (x, c) ⇒
+      opt[String]("productsInputFile") required() action { (x, c) ⇒
         c.copy(products = x)
       } text "productsInputFile is a string property"
-      opt[String]("previousIntegrated") required () action { (x, c) ⇒
+      opt[String]("previousIntegrated") required() action { (x, c) ⇒
         c.copy(previousIntegrated = x)
       } text "previousIntegrated is a string property"
-      opt[String]("outputFile") required () action { (x, c) ⇒
+      opt[String]("outputFile") required() action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
 

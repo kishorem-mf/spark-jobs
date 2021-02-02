@@ -7,20 +7,22 @@ import java.util.UUID
 import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import com.unilever.ohub.spark.domain.DomainEntity
+import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityUtils}
 import com.unilever.ohub.spark.export.TargetType.{ACM, DISPATCHER, TargetType}
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
+import org.apache.spark.internal.config
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
+import org.apache.spark.sql.functions.col
 import scopt.OptionParser
 
 import scala.reflect.runtime.universe._
 
 object TargetType extends Enumeration {
   type TargetType = Value
-  val ACM, DISPATCHER, DATASCIENCE, MEPS = Value
+  val ACM, DISPATCHER, DATASCIENCE, MEPS, AURORA = Value
 }
 
 case class OutboundConfig(
@@ -32,7 +34,10 @@ case class OutboundConfig(
                            mappingOutputLocation: Option[String] = None,
                            currentMerged: Option[String] = None,
                            previousMerged: Option[String] = None,
-                           currentMergedOPR: Option[String] = None
+                           currentMergedOPR: Option[String] = None,
+                           excludeCountryCodes: String = "Excluded countries",
+                           auroraCountryCodes: String = "",
+                           integratedDate: String = ""
                          ) extends SparkJobConfig
 
 abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig] {
@@ -64,6 +69,15 @@ abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig]
       opt[String]("previousMergedIntegratedInputFile") optional() action { (x, c) ⇒
         c.copy(previousMerged = Some(x))
       } text "previous Merged Integrated is a string property"
+      opt[String]("excludeCountryCodes") optional() action { (x, c) =>
+        c.copy(excludeCountryCodes = x)
+      } text "exclude countryCodes is a string array"
+      opt[String]("auroraCountryCodes") optional() action { (x, c) =>
+        c.copy(auroraCountryCodes = x)
+      } text "aurora countryCodes is a string array"
+      opt[String]("integratedDate") optional() action { (x, c) =>
+        c.copy(integratedDate = x)
+      } text "integratedDate is a string array"
       version("1.0")
       help("help") text "help text"
     }
@@ -84,7 +98,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   override private[spark] def defaultConfig = OutboundConfig()
 
-  private[export] def goldenRecordOnlyFilter(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet.filter((row: DomainType) => row.isGoldenRecord)
+  private[export] def goldenRecordOnlyFilter(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet.filter((row: DomainType) =>(row.isGoldenRecord))
 
   private[export] def entitySpecificFilter(spark: SparkSession, dataSet: Dataset[DomainType], config: OutboundConfig) = dataSet
 
@@ -124,11 +138,31 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
         s"with parameters previousMerged:: [${config.previousMerged}]" +
         s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
         s"with parameters currentMergedOPR:: [${config.currentMergedOPR}]" +
+        s"with parameters auroraCountryCodes:: [${config.auroraCountryCodes}]" +
+        s"with parameters targetType:: [${config.targetType}]" +
         s"to outbound export csv file for ACM and DDB.")
 
-    val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[DomainType](Nil))(storage.readFromParquet[DomainType](_))
+    if(!config.auroraCountryCodes.isEmpty()){
+      val integrated = storage.readFromParquet[DomainType](config.integratedInputFile)
 
-    export(storage.readFromParquet[DomainType](config.integratedInputFile), previousIntegratedFile, config, spark)
+      if(config.outboundLocation.contains("shared")){
+        val location = config.outboundLocation + entityName() + s"/Processed/" + entityName() + ".parquet"
+        val exportds = filterByCountry(integrated, None, spark)
+        storage.writeToParquet(exportds,location)
+      }
+      else{
+        config.auroraCountryCodes.split(";").foreach {
+          country =>
+            val location = config.outboundLocation + country.toLowerCase + "/" + entityName() + s"/Processed/" + entityName() + ".parquet"
+            val exportds = filterByCountry(integrated, Some(country), spark)
+            storage.writeToParquet(exportds, location)
+        }
+      }
+    }
+    else {
+      val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[DomainType](Nil))(storage.readFromParquet[DomainType](_))
+      export(storage.readFromParquet[DomainType](config.integratedInputFile), previousIntegratedFile, config, spark)
+    }
   }
 
   /** Get Different Rows between two datasets */
@@ -149,11 +183,14 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     import spark.implicits._
 
     val domainEntities = config.targetType match {
-      case ACM ⇒ goldenRecordOnlyFilter(spark, dataset)
+      case ACM ⇒ goldenRecordOnlyFilter(spark, dataset).filter(!$"countryCode".isin(config.excludeCountryCodes.split(";"): _*))
       case _ ⇒ dataset
     }
 
-    val filteredByCountries = if (config.countryCodes.isDefined) domainEntities.filter($"countryCode".isin(config.countryCodes.get: _*)) else domainEntities
+    val filteredByCountries =
+      if (config.countryCodes.isDefined) {domainEntities.filter($"countryCode".isin(config.countryCodes.get: _*))}
+      else {domainEntities}
+
     entitySpecificFilter(spark, filteredByCountries, config)
   }
 
@@ -161,6 +198,22 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
                      ): Dataset[DomainType] = {
     val preProcessedDataset: Dataset[DomainType] = preProcess(spark, config, integrated)
     getDifferentRows(spark, preProcessedDataset, previousIntegrated)
+  }
+
+
+  def filterByCountry(
+              currentIntegrated: Dataset[DomainType],
+              country: Option[String],
+              spark: SparkSession
+            ): Dataset[DomainType] ={
+    import spark.implicits._
+
+    if(country.isDefined) {
+      currentIntegrated.filter($"countryCode" === country.get)
+    }
+    else{
+      currentIntegrated
+    }
   }
 
   def export(
@@ -227,7 +280,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       "ohubCreated",
       "ohubUpdated",
       "additionalFields",
-      "ingestionErrors"
+      "ingestionErrors",
+      "lastModifiedDate"
     )
 
     val originalJoinColumns = dataset.columns.filter(!excludedColumns.contains(_))

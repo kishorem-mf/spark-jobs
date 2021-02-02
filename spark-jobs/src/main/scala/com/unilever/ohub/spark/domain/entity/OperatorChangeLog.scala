@@ -11,9 +11,10 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object OperatorChangeLogDomainExportWriter extends DomainExportWriter[OperatorChangeLog]
 
-object OperatorChangeLog extends DomainEntityCompanion[OperatorChangeLog] {
+object OperatorChangeLog extends DomainEntityCompanion[OperatorChangeLog]{
 
   override val engineFolderName: String = "operators_change_log"
+  override val auroraFolderLocation = Some("Shared")
   override val domainExportWriter: Option[DomainExportWriter[OperatorChangeLog]] = Some(OperatorChangeLogDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[OperatorChangeLog]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[OperatorChangeLog]] = None
@@ -24,35 +25,48 @@ object OperatorChangeLog extends DomainEntityCompanion[OperatorChangeLog] {
   override val defaultExcludedFieldsForParquetExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForParquetExport ++
     Seq("id", "creationTimestamp", "countryCode", "customerType", "sourceEntityId", "sourceName", "isActive", "ohubCreated", "ohubUpdated",
       "dateCreated", "dateUpdated", "isGoldenRecord")
-}
+  override val auroraExportWriter: Option[ExportOutboundWriter[OperatorChangeLog]] = Some(com.unilever.ohub.spark.export.aurora.OperatorChangeLogOutboundWriter)
+  }
 
-case class OperatorChangeLog(
-                       id: String,
-                       creationTimestamp: Timestamp,
-                       concatId: String,
-                       countryCode: String,
-                       customerType: String,
-                       sourceEntityId: String,
-                       sourceName: String,
-                       isActive: Boolean,
-                       ohubCreated: Timestamp,
-                       ohubUpdated: Timestamp,
 
-                       // optional fields
-                       dateCreated: Option[Timestamp],
-                       dateUpdated: Option[Timestamp],
-                       // used for grouping and marking the golden record within the group
-                       ohubId: Option[String],
-                       isGoldenRecord: Boolean,
+//case class OperatorChangeLog(
+//                       id: String,
+//                       creationTimestamp: Timestamp,
+//                       concatId: String,
+//                       countryCode: String,
+//                       customerType: String,
+//                       sourceEntityId: String,
+//                       sourceName: String,
+//                       isActive: Boolean,
+//                       ohubCreated: Timestamp,
+//                       ohubUpdated: Timestamp,
+//
+//                       // optional fields
+//                       dateCreated: Option[Timestamp],
+//                       dateUpdated: Option[Timestamp],
+//                       // used for grouping and marking the golden record within the group
+//                       ohubId: Option[String],
+//                       isGoldenRecord: Boolean,
+//
+//                       //required fields
+//                       fromDate: Option[Date],
+//                       toDate: Option[Date],
+//
+//                       // other fields
+//                       additionalFields: Map[String, String],
+//                       ingestionErrors: Map[String, IngestionError]
+//
+//                     ) extends DomainEntity {
+//  override def getCompanion: DomainEntityCompanion[OperatorChangeLog] = OperatorChangeLog
+//
+//  }
+abstract case class OperatorChangeLog(
+                              ohubId: Option[String],
+                              concatId: String,
+                              fromDate: Option[Date],
+                              toDate: Option[Date]
 
-                       //required fields
-                       fromDate: Option[Date],
-                       toDate: Option[Date],
-
-                       // other fields
-                       additionalFields: Map[String, String],
-                       ingestionErrors: Map[String, IngestionError]
-
-                     ) extends DomainEntity {
+                            ) extends DomainEntity {
   override def getCompanion: DomainEntityCompanion[OperatorChangeLog] = OperatorChangeLog
+
 }

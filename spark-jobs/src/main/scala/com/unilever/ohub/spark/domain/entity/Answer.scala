@@ -11,11 +11,13 @@ import com.unilever.ohub.spark.export.domain.DomainExportWriter
 object AnswerDomainExportWriter extends DomainExportWriter[Answer]
 
 object Answer extends DomainEntityCompanion[Answer] {
+  override val auroraFolderLocation = None
   override val engineFolderName: String = "answers"
   override val domainExportWriter: Option[DomainExportWriter[Answer]] = Some(AnswerDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[Answer]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[Answer]] = None
   override val azureDwWriter: Option[AzureDWWriter[Answer]] = Some(AnswerDWWriter)
+  override val auroraExportWriter: Option[ExportOutboundWriter[Answer]] = Some(com.unilever.ohub.spark.export.aurora.AnswerOutboundWriter)
 }
 
 case class Answer(

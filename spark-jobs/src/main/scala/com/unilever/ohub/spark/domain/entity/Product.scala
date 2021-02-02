@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.domain.entity
 
-import java.sql.Timestamp
+import java.sql.{Timestamp}
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
@@ -12,14 +12,70 @@ object ProductDomainExportWriter extends DomainExportWriter[Product]
 
 object Product extends DomainEntityCompanion[Product] {
   val customerType = "PRODUCT"
+  override val auroraFolderLocation = None
   override val engineFolderName = "products"
   override val excludedFieldsForCsvExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForCsvExport ++
     Seq("additives", "allergens", "dietetics", "nutrientTypes", "nutrientValues", "productCodes")
+  override val defaultExcludedFieldsForParquetExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForParquetExport ++
+    Seq("lastModifiedDate")
   override val domainExportWriter: Option[DomainExportWriter[Product]] = Some(ProductDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[Product]] = Some(com.unilever.ohub.spark.export.acm.ProductOutboundWriter)
   override val dispatchExportWriter: Option[ExportOutboundWriter[Product]] = Some(com.unilever.ohub.spark.export.dispatch.ProductOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[Product]] = Some(ProductDWWriter)
+  override val auroraExportWriter: Option[ExportOutboundWriter[Product]] = Some(com.unilever.ohub.spark.export.aurora.ProductOutboundWriter)
 }
+
+case class ProductSifu(
+                      brandCode:Option[String],
+                      brandName:Option[String],
+                      ingredients:Option[String],
+                      language:Option[String],
+                      lastModifiedDate:Option[Timestamp],
+                      subBrandName:Option[String],
+                      youtubeUrl:Option[String],
+                      productNumber:Option[String],
+                      productCode:Option[String],
+                      duEanCode:Option[String],
+                      cuEanCode:Option[String],
+                      country:Option[String],
+                      packagingName:Option[String],
+                      productType:Option[String],
+                      url:Option[String],
+                      loyaltyReward:Option[Boolean],
+                      categoryCode:Option[String],
+                      categoryName:Option[String],
+                      subCategoryCode:Option[String],
+                      subCategoryName:Option[String],
+                      subBrandCode: Option[String],
+                      packagingCode:Option[String],
+                      image1Id:Option[String],
+                      packshotUrl:Option[String],
+                      allergens: List[String],
+                      nutrientTypes: List[String],
+                      nutrientValues: List[String],
+                      cuPriceInCents: Option[Long],
+                      duPriceInCents: Option[Long],
+                      packshotResizedUrl:Option[String],
+                      code:Option[String],
+                      dachClaimFooterTexts:List[String],
+                      name:Option[String],
+                      number:Option[String],
+                      productName:Option[String],
+                      categoryCodes_1:Option[String],
+                      itemType:Option[String],
+                      subCategoryCodes_1:Option[String],
+                      isUnileverProduct: Option[String],
+                      subCategoryNames_1:Option[String],
+                      convenienceLevel:Option[String],
+                      extractedImageUrl:Option[String],
+                      extractedPreviewImageUrl:Option[String],
+                      extractedImageId:Option[String],
+                      extractedNutritionalType: List[String],
+                      extractedNutritionalValue: List[String],
+                      extractedPer100gAsPrep: Option[String],
+                      per100gAsPrepOffPackUnitOfMeasurement: Option[String],
+                      description: Option[String]
+) extends scala.Product
 
 case class Product(
                     // generic fields
@@ -111,7 +167,12 @@ case class Product(
                     youtubeUrl: Option[String],
                     // other fields
                     additionalFields: Map[String, String],
-                    ingestionErrors: Map[String, IngestionError]
+                    ingestionErrors: Map[String, IngestionError],
+                    url: Option[String],
+                    previewImageUrl: Option[String],
+                    imageUrl: Option[String],
+                    convenienceLevel: Option[String]
+
                   ) extends DomainEntity {
   override def getCompanion: DomainEntityCompanion[Product] = Product
 }
