@@ -5,6 +5,7 @@ import java.sql.Timestamp
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, AzureDWWriterNoPolicy}
+import com.unilever.ohub.spark.export.businessdatalake.AzureDLWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object DomainEntity {
@@ -58,4 +59,5 @@ trait DomainEntityCompanion[DomainEntityType <: DomainEntity] {
   val dispatchExportWriter: Option[ExportOutboundWriter[DomainEntityType]]
   val azureDwWriter: Option[AzureDWWriter[DomainEntityType]]
   val auroraInboundWriter: Option[ExportOutboundWriter[DomainEntityType]]
+  val dataLakeWriter: Option[AzureDLWriter[DomainEntityType]]
 }
