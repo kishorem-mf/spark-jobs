@@ -18,6 +18,7 @@ object Question extends DomainEntityCompanion[Question] {
   override val dispatchExportWriter: Option[ExportOutboundWriter[Question]] = None
   override val azureDwWriter: Option[AzureDWWriter[Question]] = Some(QuestionDWWriter)
   override val auroraExportWriter: Option[ExportOutboundWriter[Question]] = Some(com.unilever.ohub.spark.export.aurora.QuestionOutboundWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[Question]] = None
 }
 
 case class Question(

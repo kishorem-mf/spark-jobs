@@ -23,6 +23,7 @@ object Product extends DomainEntityCompanion[Product] {
   override val dispatchExportWriter: Option[ExportOutboundWriter[Product]] = Some(com.unilever.ohub.spark.export.dispatch.ProductOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[Product]] = Some(ProductDWWriter)
   override val auroraExportWriter: Option[ExportOutboundWriter[Product]] = Some(com.unilever.ohub.spark.export.aurora.ProductOutboundWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[Product]] = None
 }
 
 case class ProductSifu(

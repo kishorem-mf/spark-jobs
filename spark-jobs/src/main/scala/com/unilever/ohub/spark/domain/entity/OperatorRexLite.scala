@@ -18,6 +18,7 @@ object OperatorRexLite extends DomainEntityCompanion[OperatorRexLite] {
   override val dispatchExportWriter: Option[ExportOutboundWriter[OperatorRexLite]] = None
   override val azureDwWriter: Option[AzureDWWriter[OperatorRexLite]] = Some(OperatorRexLiteDWWriter)
   override val auroraExportWriter: Option[ExportOutboundWriter[OperatorRexLite]] = None
+  override val ddlExportWriter: Option[ExportOutboundWriter[OperatorRexLite]] = None
 }
 
 case class OperatorRexLite(

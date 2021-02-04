@@ -25,6 +25,7 @@ object ContactPersonChangeLog extends DomainEntityCompanion[ContactPersonChangeL
     Seq("id", "creationTimestamp", "countryCode", "customerType", "sourceEntityId", "sourceName", "isActive", "ohubCreated", "ohubUpdated",
       "dateCreated", "dateUpdated", "isGoldenRecord")
   override val auroraExportWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = Some(com.unilever.ohub.spark.export.aurora.ContactPersonChangeLogOutboundWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = None
 }
 //
 //case class ContactPersonChangeLog(

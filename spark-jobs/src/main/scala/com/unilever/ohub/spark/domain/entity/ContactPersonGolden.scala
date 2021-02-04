@@ -18,6 +18,7 @@ object ContactPersonGolden extends DomainEntityCompanion[ContactPersonGolden] {
   override val dispatchExportWriter: Option[ExportOutboundWriter[ContactPersonGolden]] = None
   override val azureDwWriter: Option[AzureDWWriter[ContactPersonGolden]] = Some(ContactPersonGoldenDWWriter)
   override val auroraExportWriter: Option[ExportOutboundWriter[ContactPersonGolden]] = Some(com.unilever.ohub.spark.export.aurora.ContactPersonGoldenOutboundWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[ContactPersonGolden]] = None
 }
 
 case class ContactPersonGolden(

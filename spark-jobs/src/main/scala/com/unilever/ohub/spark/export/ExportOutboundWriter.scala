@@ -1,5 +1,6 @@
 package com.unilever.ohub.spark.export
 
+import java.io.{ByteArrayOutputStream, ObjectOutputStream}
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -7,22 +8,20 @@ import java.util.UUID
 import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityUtils}
-import com.unilever.ohub.spark.export.TargetType.{ACM, DISPATCHER, TargetType}
+import com.unilever.ohub.spark.domain.DomainEntity
+import com.unilever.ohub.spark.export.TargetType.{ACM, DDL, DISPATCHER, TargetType}
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
-import org.apache.spark.internal.config
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
-import org.apache.spark.sql.functions.col
 import scopt.OptionParser
 
 import scala.reflect.runtime.universe._
 
 object TargetType extends Enumeration {
   type TargetType = Value
-  val ACM, DISPATCHER, DATASCIENCE, MEPS, AURORA = Value
+  val ACM, DISPATCHER, DATASCIENCE, MEPS, AURORA, DDL = Value
 }
 
 case class OutboundConfig(
@@ -37,7 +36,9 @@ case class OutboundConfig(
                            currentMergedOPR: Option[String] = None,
                            excludeCountryCodes: String = "Excluded countries",
                            auroraCountryCodes: String = "",
-                           integratedDate: String = ""
+                           integratedDate: String = "",
+                           fromDate: String = "",
+                           toDate: String = ""
                          ) extends SparkJobConfig
 
 abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig] {
@@ -78,6 +79,12 @@ abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig]
       opt[String]("integratedDate") optional() action { (x, c) =>
         c.copy(integratedDate = x)
       } text "integratedDate is a string array"
+      opt[String]("fromDate") optional() action { (x, c) ⇒
+        c.copy(fromDate = x)
+      } text "from date is a string property"
+      opt[String]("toDate") optional() action { (x, c) ⇒
+        c.copy(toDate = x)
+      } text "to date is a string property"
       version("1.0")
       help("help") text "help text"
     }
@@ -98,7 +105,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   override private[spark] def defaultConfig = OutboundConfig()
 
-  private[export] def goldenRecordOnlyFilter(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet.filter((row: DomainType) =>(row.isGoldenRecord))
+  private[export] def goldenRecordOnlyFilter(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet.filter((row: DomainType) => (row.isGoldenRecord))
 
   private[export] def entitySpecificFilter(spark: SparkSession, dataSet: Dataset[DomainType], config: OutboundConfig) = dataSet
 
@@ -126,6 +133,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     targetType match {
       case ACM ⇒ "UFS_" + entityName() + "_" + timestampFile + ".csv"
       case DISPATCHER ⇒ "UFS_DISPATCHER" + "_" + entityName() + "_" + timestampFile + ".csv"
+      case DDL ⇒ "UFS_DDL_" + entityName() + "_" + timestampFile + "_" + UUID.randomUUID()  + ".csv"
     }
   }
 
@@ -142,15 +150,15 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
         s"with parameters targetType:: [${config.targetType}]" +
         s"to outbound export csv file for ACM and DDB.")
 
-    if(!config.auroraCountryCodes.isEmpty()){
+    if (!config.auroraCountryCodes.isEmpty()) {
       val integrated = storage.readFromParquet[DomainType](config.integratedInputFile)
 
-      if(config.outboundLocation.contains("shared")){
+      if (config.outboundLocation.contains("shared")) {
         val location = config.outboundLocation + entityName() + s"/Processed/" + entityName() + ".parquet"
         val exportds = filterByCountry(integrated, None, spark)
-        storage.writeToParquet(exportds,location)
+        storage.writeToParquet(exportds, location)
       }
-      else{
+      else {
         config.auroraCountryCodes.split(";").foreach {
           country =>
             val location = config.outboundLocation + country.toLowerCase + "/" + entityName() + s"/Processed/" + entityName() + ".parquet"
@@ -158,8 +166,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
             storage.writeToParquet(exportds, location)
         }
       }
-    }
-    else {
+    } else {
       val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[DomainType](Nil))(storage.readFromParquet[DomainType](_))
       export(storage.readFromParquet[DomainType](config.integratedInputFile), previousIntegratedFile, config, spark)
     }
@@ -171,25 +178,30 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
   }
 
   /** Applies a set of pre-processing steps
-   *
-   * Transformations applied:
-   *  - filter golden records for (ACM only)
-   *  - filter on selected countries
-   *  - entity-specific transformations (implemented in subclass)
-   *
-   * @param dataset the current dataset
-   */
+    *
+    * Transformations applied:
+    *  - filter golden records for (ACM only)
+    *  - filter on selected countries
+    *  - entity-specific transformations (implemented in subclass)
+    *
+    * @param dataset the current dataset
+    */
   private def preProcess(spark: SparkSession, config: OutboundConfig, dataset: Dataset[DomainType]) = {
     import spark.implicits._
 
     val domainEntities = config.targetType match {
       case ACM ⇒ goldenRecordOnlyFilter(spark, dataset).filter(!$"countryCode".isin(config.excludeCountryCodes.split(";"): _*))
+      case DDL ⇒ dataset.filter($"countryCode".isin(config.auroraCountryCodes.split(";"):_*)).where($"ohubUpdated".between(config.fromDate, config.toDate))
       case _ ⇒ dataset
     }
 
     val filteredByCountries =
-      if (config.countryCodes.isDefined) {domainEntities.filter($"countryCode".isin(config.countryCodes.get: _*))}
-      else {domainEntities}
+      if (config.countryCodes.isDefined) {
+        domainEntities.filter($"countryCode".isin(config.countryCodes.get: _*))
+      }
+      else {
+        domainEntities
+      }
 
     entitySpecificFilter(spark, filteredByCountries, config)
   }
@@ -202,16 +214,16 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
 
   def filterByCountry(
-              currentIntegrated: Dataset[DomainType],
-              country: Option[String],
-              spark: SparkSession
-            ): Dataset[DomainType] ={
+                       currentIntegrated: Dataset[DomainType],
+                       country: Option[String],
+                       spark: SparkSession
+                     ): Dataset[DomainType] = {
     import spark.implicits._
 
-    if(country.isDefined) {
+    if (country.isDefined) {
       currentIntegrated.filter($"countryCode" === country.get)
     }
-    else{
+    else {
       currentIntegrated
     }
   }
@@ -241,6 +253,31 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     writeToCsv(config, outputDataset, spark)
   }
 
+  def exportToDdl(
+                   currentIntegrated: Dataset[DomainType],
+                   config: OutboundConfig,
+                   spark: SparkSession
+                 ) {
+    import spark.implicits._
+
+    val preProcessedDataset: Dataset[DomainType] = preProcess(spark, config, currentIntegrated)
+
+    val columnsInOrder = currentIntegrated.columns
+    val result = preProcessedDataset
+      .select(columnsInOrder.head, columnsInOrder.tail: _*)
+      .as[DomainType]
+
+    if (config.mappingOutputLocation.isDefined && explainConversion.isDefined && currentIntegrated.head(1).nonEmpty) {
+      log.info(s"ConversionExplanation found, writing output to ${config.mappingOutputLocation.get}")
+      val mapping = explainConversion.get.apply(currentIntegrated.head)
+      writeToJson(spark, new Path(config.mappingOutputLocation.get), deserializeJsonFields(mapping))
+    }
+
+    val outputDataset = filterValid(spark, convertDataSet(spark, result), config)
+
+    writeToCsvInDdl(config, outputDataset, spark)
+  }
+
   def export(
               currentIntegrated: Dataset[DomainType],
               processedChanged: Dataset[DomainType] => Dataset[DomainType],
@@ -255,7 +292,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     val deltaIntegrated = commonTransform(currentMerged, previousMerged, config, spark)
     val filtered = filterValid(spark, deltaIntegrated, config).as[DomainType]
     val processedChangedDS = processedChanged(filtered)
-    val operatorLinking = linkOperator(spark,currentMergedOPR, processedChangedDS).as[DomainType]
+    val operatorLinking = linkOperator(spark, currentMergedOPR, processedChangedDS).as[DomainType]
 
     val columnsInOrder = currentIntegrated.columns
     val result = operatorLinking
@@ -306,6 +343,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       .option("header", shouldWriteHeaders(config.targetType))
       .options(options)
 
+
     if (mergeCsvFiles(config.targetType)) {
       writeableData.csv(temporaryPath.toString)
       val header = ds.columns.map(c ⇒ if (mustQuotesFields) "\"" + c + "\"" else c).mkString(delimiter)
@@ -354,17 +392,53 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     headerFile
   }
 
+
+  def writeToCsvInDdl(config: OutboundConfig, ds: Dataset[_], sparkSession: SparkSession): Unit = {
+    val outputFolderPath = new Path(config.outboundLocation)
+    val outputFilePath = new Path(outputFolderPath, filename(config.targetType))
+
+    val rowSize = getBytes(ds.head(1))
+    val rowCount = ds.count()
+    val partitionSize = 60000000
+    val noPartitions: Int = (rowSize * rowCount / partitionSize).toInt
+
+    if (noPartitions.equals(0)) {
+      val writeData = ds.write.mode(SaveMode.Overwrite)
+        .option("header", "true")
+        .option("quoteAll", "true")
+        .option("delimiter", ";")
+        .option("encoding", "UTF-8")
+      writeData.csv(outputFilePath.toString + ".csv")
+
+    } else {
+      val writeableData = ds.repartition(noPartitions).write.mode(SaveMode.Overwrite)
+        .option("header", "true")
+        .option("quoteAll", "true")
+        .option("delimiter", ";")
+        .option("encoding", "UTF-8")
+      writeableData.csv(outputFilePath.toString + ".csv")
+    }
+  }
+
+  def getBytes(value: Any): Long = {
+    val stream: ByteArrayOutputStream = new ByteArrayOutputStream()
+    val oos = new ObjectOutputStream(stream)
+    oos.writeObject(value)
+    oos.close
+    stream.toByteArray.length
+  }
+
   /**
-   * This function works for objects that only contain string fields with JSON content. The object is transformed to
-   * a map with jsonNodes so the mapper can convert it to one JSON object (without escaped JSON as values).
-   *
-   * F.e. {"key": "{\"name\": \"nested object\"}"}
-   * will become a map[String, JsonNode] which can be written (by the objectMapper) like
-   * {"key": {"name": "nested object"}}
-   *
-   * @param subject
-   * @return
-   */
+    * This function works for objects that only contain string fields with JSON content. The object is transformed to
+    * a map with jsonNodes so the mapper can convert it to one JSON object (without escaped JSON as values).
+    *
+    * F.e. {"key": "{\"name\": \"nested object\"}"}
+    * will become a map[String, JsonNode] which can be written (by the objectMapper) like
+    * {"key": {"name": "nested object"}}
+    *
+    * @param subject
+    * @return
+    */
   private def deserializeJsonFields(subject: Any): Map[String, Any] = {
     (Map[String, Any]() /: subject.getClass.getDeclaredFields) { (a, f) =>
       f.setAccessible(true)
@@ -396,8 +470,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
                                                      currMergedDS: Dataset[DomainType]
                                                    ) = {
 
-    import spark.implicits._
     import org.apache.spark.sql.functions._
+    import spark.implicits._
 
     val appendTargetOhubIdToAdditionalFields = (additionalFieldsMap: Map[String, String], targetOhubId: String) =>
       additionalFieldsMap + ("targetOhubId" -> targetOhubId)
@@ -445,8 +519,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
                                                         currMergedDS: Dataset[DomainType]
                                                       ) = {
 
-    import spark.implicits._
     import org.apache.spark.sql.functions._
+    import spark.implicits._
 
     // Fetch the ohubid that changed group
     val deletedOhubIdDataset = prevIntegratedDS

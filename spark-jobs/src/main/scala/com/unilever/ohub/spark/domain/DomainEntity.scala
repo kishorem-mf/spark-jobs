@@ -58,4 +58,5 @@ trait DomainEntityCompanion[DomainEntityType <: DomainEntity] {
   val dispatchExportWriter: Option[ExportOutboundWriter[DomainEntityType]]
   val azureDwWriter: Option[AzureDWWriter[DomainEntityType]]
   val auroraExportWriter: Option[ExportOutboundWriter[DomainEntityType]]
+  val ddlExportWriter: Option[ExportOutboundWriter[DomainEntityType]]
 }

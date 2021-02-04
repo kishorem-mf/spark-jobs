@@ -18,6 +18,7 @@ object LoyaltyPoints extends DomainEntityCompanion[LoyaltyPoints] {
   override val dispatchExportWriter: Option[ExportOutboundWriter[LoyaltyPoints]] = Some(com.unilever.ohub.spark.export.dispatch.LoyaltyPointsOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[LoyaltyPoints]] = Some(LoyaltyPointsDWWriter)
   override val auroraExportWriter: Option[ExportOutboundWriter[LoyaltyPoints]] = Some(com.unilever.ohub.spark.export.aurora.LoyaltyPointsOutboundWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[LoyaltyPoints]] = None
 }
 
 case class LoyaltyPoints(

@@ -26,6 +26,7 @@ object OperatorChangeLog extends DomainEntityCompanion[OperatorChangeLog]{
     Seq("id", "creationTimestamp", "countryCode", "customerType", "sourceEntityId", "sourceName", "isActive", "ohubCreated", "ohubUpdated",
       "dateCreated", "dateUpdated", "isGoldenRecord")
   override val auroraExportWriter: Option[ExportOutboundWriter[OperatorChangeLog]] = Some(com.unilever.ohub.spark.export.aurora.OperatorChangeLogOutboundWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[OperatorChangeLog]] = None
   }
 
 

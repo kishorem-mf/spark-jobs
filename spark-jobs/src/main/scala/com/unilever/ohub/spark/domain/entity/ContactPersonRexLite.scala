@@ -18,6 +18,7 @@ object ContactPersonRexLite extends DomainEntityCompanion[ContactPersonRexLite] 
   override val dispatchExportWriter: Option[ExportOutboundWriter[ContactPersonRexLite]] = None
   override val auroraExportWriter: Option[ExportOutboundWriter[ContactPersonRexLite]] = None
   override val azureDwWriter: Option[AzureDWWriter[ContactPersonRexLite]] = Some(ContactPersonRexliteDWWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[ContactPersonRexLite]] = None
 }
 
 case class ContactPersonRexLite(

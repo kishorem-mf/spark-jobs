@@ -18,6 +18,7 @@ object OperatorGolden extends DomainEntityCompanion[OperatorGolden] {
   override val dispatchExportWriter: Option[ExportOutboundWriter[OperatorGolden]] = None
   override val azureDwWriter: Option[AzureDWWriter[OperatorGolden]] = Some(OperatorGoldenDWWriter)
   override val auroraExportWriter: Option[ExportOutboundWriter[OperatorGolden]] = Some(com.unilever.ohub.spark.export.aurora.OperatorGoldenOutboundWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[OperatorGolden]] = None
 }
 
 
