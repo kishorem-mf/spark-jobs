@@ -54,7 +54,7 @@ abstract class SparkJobWithAzureDLConfiguration extends SparkJob[DataLakeConfig]
 
 abstract class AzureDLWriter[DomainType <: DomainEntity : TypeTag] extends SparkJobWithAzureDLConfiguration {
 
-  def splitAndWriteParquetFiles(entityName:String, inputData: Dataset[DomainType], folderDate: String, config: DataLakeConfig, spark:SparkSession, storage: Storage) = {
+  private def splitAndWriteParquetFiles(entityName:String, inputData: Dataset[DomainType], folderDate: String, config: DataLakeConfig, spark:SparkSession, storage: Storage) = {
     import spark.implicits._
 
     val splitArrayHyphen=folderDate.split("-")

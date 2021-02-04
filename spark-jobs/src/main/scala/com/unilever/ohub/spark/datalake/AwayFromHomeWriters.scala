@@ -210,7 +210,7 @@ object SubscriptionOutboundWriter extends ExportOutboundWriter[Subscription] {
 }
 
 
-object AllDataLakeWriter  extends SparkJobWithOutboundExportConfig  {
+object AllAwayFromHomeUDLWriter  extends SparkJobWithOutboundExportConfig  {
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
 
       DomainEntityUtils.domainCompanionObjects
