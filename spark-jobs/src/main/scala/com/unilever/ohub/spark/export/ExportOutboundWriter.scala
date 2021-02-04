@@ -16,8 +16,11 @@ import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
+import org.apache.spark.sql.functions.{upper,when,lit}
 import scopt.OptionParser
 import scala.util.Try
+import com.unilever.ohub.spark.Constants
+import org.apache.spark.sql.types.{StructType}
 
 import scala.reflect.runtime.universe._
 
@@ -143,24 +146,65 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     val year = folderDate.split("-")(0)
     val month = folderDate.split("-")(1)
     val day = folderDate.split("-")(2)
-
     val inboundProcessedCsv = Try(storage.readFromCsv(inboundProcessPath, ";", true,"\\")).getOrElse(spark.createDataset[DomainType](Nil))
-//  val exclusionlist = spark.read.option("sep",";").option("header","true").csv(DomainDataProvider().exclusionFile)
+
+    val exclusionlist = spark.createDataFrame(
+      spark.sparkContext.parallelize(Constants.exclusionSourceEntityCountryList),
+      StructType(Constants.schemaforexclusionSourceEntityCountryList)
+    )
+
+    val inclusionOrderList = spark.createDataFrame(
+      spark.sparkContext.parallelize(Constants.includeOrderList),
+      StructType(Constants.schemaforincludeOrderList)
+    )
+
     val distinctSourceNames = inboundProcessedCsv.select("sourceName").distinct()
     if (distinctSourceNames.count() > 0)
-     {
-       //If there are no records and only headers are present then we dont want to write any file
+     { //If there are no records and only headers are present then we dont want to write any file
        config.auroraCountryCodes.split(";").foreach {
         country =>
           distinctSourceNames.collect.toSeq.foreach {
             source =>
               val sourceName = source.toString.drop(1).dropRight(1) //as the sourcenames will be like [EMAKINA],[MARKETO]
-
             val fileName = s"UFS_${sourceName}_" + entityName().toUpperCase + s"_${country}_${year}${month}${day}.csv"
               val location = config.outboundLocation + sourceName + "/" + country.toLowerCase + "/" + entityName() + "/Processed/YYYY=" + year + "/MM=" + month + "/DD=" + day
+              val dateValue = year.toInt - 1 + "-" + month + " -01"
+              // Used for sending the last 12 month transactionDate for orders/orderlines
               val filterdf = inboundProcessedCsv.filter($"countryCode" === country && $"sourceName" === sourceName)
-              if(filterdf.count()>0){
-                DatalakeUtils.writeToCsv(location, fileName, filterdf, spark)}
+              val exDf = filterdf.as("o").join(
+                exclusionlist.as("e")
+                , $"o.countryCode" === $"e.countryCode"
+                  && upper($"o.sourceName") === upper($"e.sourceName")
+                  && $"e.entity" === entityName()
+                , "left").filter($"e.countryCode".isNull)
+                .select($"o.*")
+
+              val exOrders = entityName() match {
+                case "orders" => {
+                  filterdf.as("o").join(
+                    inclusionOrderList.alias("exo")
+                    , $"o.countryCode" === $"exo.countryCode" && upper($"o.sourceName") === upper($"exo.sourceName") && upper($"o.orderType") === upper($"exo.orderType")
+                      && $"transactionDate" >= dateValue && $"exo.entity" === entityName()
+                    , "inner").select($"o.*").unionByName(exDf)
+                }
+                case "orderlines" => {
+                  val orders = Try(storage.readFromCsv(inboundProcessPath.replace("orderlines", "orders"), ";", true, "\\")).getOrElse(spark.createDataset[DomainType](Nil))
+                  val oid = orders.filter($"transactionDate" >= dateValue).select(orders("concatId").as("ordConcatId")).dropDuplicates()
+                  filterdf.as("o").join(
+                    inclusionOrderList.alias("inc")
+                    ,$"o.countryCode" === $"inc.countryCode" && upper($"o.sourceName") === upper($"inc.sourceName") &&  upper($"o.orderType") === upper($"inc.orderType")
+                      && $"inc.entity" === entityName()
+                    ,"inner").select($"o.*")
+                    .join(
+                      oid.alias("ex"),
+                      $"o.orderConcatId" === $"ex.ordConcatid"
+                      ,"inner").select($"o.*").unionByName(exDf)
+                }
+                case _ => exDf
+              }
+            if(filterdf.count()>0) {
+                DatalakeUtils.writeToCsv(location, fileName, exOrders, spark)
+            }
           }
         }
       }
