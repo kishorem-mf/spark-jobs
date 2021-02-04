@@ -54,7 +54,7 @@ abstract class SparkJobWithAzureDLConfiguration extends SparkJob[DataLakeConfig]
 
 abstract class AzureDLWriter[DomainType <: DomainEntity : TypeTag] extends SparkJobWithAzureDLConfiguration {
 
-  private def splitAndWriteParquetFiles(entityName:String, inputData: Dataset[DomainType], folderDate: String, config: DataLakeConfig, spark:SparkSession, storage: Storage) = {
+   def splitAndWriteParquetFiles(entityName:String, inputData: Dataset[DomainType], folderDate: String, config: DataLakeConfig, spark:SparkSession, storage: Storage):String = {
     import spark.implicits._
 
     val splitArrayHyphen=folderDate.split("-")
@@ -63,6 +63,7 @@ abstract class AzureDLWriter[DomainType <: DomainEntity : TypeTag] extends Spark
     val year = splitArraySlash(splitArraySlash.length-1)
     val month = splitArrayHyphen(splitArrayHyphenIndex-1)
     val day = splitArrayHyphen(splitArrayHyphenIndex).split("/")(0)
+    var result = ""
 
     //If there are no records and only headers are present then we dont want to write any file
     config.countryCodes.split(";").foreach {
@@ -70,8 +71,12 @@ abstract class AzureDLWriter[DomainType <: DomainEntity : TypeTag] extends Spark
           val location = config.outboundLocation + "/" + country.toLowerCase + "/" + entityName + "/Processed/YYYY=" + year + "/MM=" + month + "/DD=" + day + s"/${entityName}.parquet"
           val filterDs = inputData.filter($"countryCode" === country)
           if(filterDs.count()>0){
-            Try(storage.writeToParquet(filterDs,location, Seq(), SaveMode.Overwrite)).getOrElse("")}
+            Try {
+              storage.writeToParquet(filterDs, location, Seq(), SaveMode.Overwrite)
+              result="Success"
+            }.getOrElse(result)}
     }
+    result
   }
 
   /**
