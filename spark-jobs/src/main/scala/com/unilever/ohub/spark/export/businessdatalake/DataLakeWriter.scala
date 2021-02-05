@@ -69,7 +69,7 @@ abstract class AzureDLWriter[DomainType <: DomainEntity : TypeTag] extends Spark
     config.countryCodes.split(";").foreach {
       country =>
           val location = config.outboundLocation + "/" + country.toLowerCase + "/" + entityName + "/Processed/YYYY=" + year + "/MM=" + month + "/DD=" + day + s"/${entityName}.parquet"
-          val filterDs = inputData.filter($"concatId".startsWith(country+"~"))
+          val filterDs = inputData.filter($"concatId".startsWith(country + "~"))
           if(filterDs.count()>0){
             Try {
               storage.writeToParquet(filterDs, location, Seq(), SaveMode.Overwrite)
