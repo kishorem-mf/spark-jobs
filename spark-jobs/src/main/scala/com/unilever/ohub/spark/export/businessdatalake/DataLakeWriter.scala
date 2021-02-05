@@ -137,8 +137,6 @@ object SubscriptionDLWriter extends AzureDLWriter[Subscription]
 
 object ChainDLWriter extends AzureDLWriter[Chain]
 
-object OperatorChangeLogDLWriter extends AzureDLWriter[OperatorChangeLog]
-
 object ContactPersonGoldenDLWriter extends AzureDLWriter[ContactPersonGolden]
 
 object OperatorGoldenDLWriter extends AzureDLWriter[OperatorGolden]

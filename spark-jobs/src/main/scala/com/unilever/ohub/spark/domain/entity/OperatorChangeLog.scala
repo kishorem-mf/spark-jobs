@@ -6,7 +6,7 @@ import java.sql.Date
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, OperatorChangeLogDWWriter}
-import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter, OperatorChangeLogDLWriter}
+import com.unilever.ohub.spark.export.businessdatalake.AzureDLWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object OperatorChangeLogDomainExportWriter extends DomainExportWriter[OperatorChangeLog]
@@ -26,7 +26,7 @@ object OperatorChangeLog extends DomainEntityCompanion[OperatorChangeLog]{
     Seq("id", "creationTimestamp", "countryCode", "customerType", "sourceEntityId", "sourceName", "isActive", "ohubCreated", "ohubUpdated",
       "dateCreated", "dateUpdated", "isGoldenRecord")
   override val auroraInboundWriter: Option[ExportOutboundWriter[OperatorChangeLog]] = None
-  override val dataLakeWriter: Option[AzureDLWriter[OperatorChangeLog]] = Some(OperatorChangeLogDLWriter)
+  override val dataLakeWriter: Option[AzureDLWriter[OperatorChangeLog]] = None
 }
 
 
