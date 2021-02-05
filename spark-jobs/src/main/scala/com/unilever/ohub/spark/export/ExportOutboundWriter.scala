@@ -313,12 +313,15 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
               spark: SparkSession
             ) {
     import spark.implicits._
-
+    log.info("ACM_DEBUG: Inside Export")
     val deltaIntegrated = commonTransform(currentMerged, previousMerged, config, spark)
+    log.info("ACM_DEBUG: After common transform")
     val filtered = filterValid(spark, deltaIntegrated, config).as[DomainType]
+    log.info("ACM_DEBUG: After filtered")
     val processedChangedDS = processedChanged(filtered)
+    log.info("ACM_DEBUG: After processedChanged")
     val operatorLinking = linkOperator(spark,currentMergedOPR, processedChangedDS).as[DomainType]
-
+    log.info("ACM_DEBUG: After linkOperator")
     val columnsInOrder = currentIntegrated.columns
     val result = operatorLinking
       .select(columnsInOrder.head, columnsInOrder.tail: _*)
@@ -329,8 +332,9 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       val mapping = explainConversion.get.apply(currentIntegrated.head)
       writeToJson(spark, new Path(config.mappingOutputLocation.get), deserializeJsonFields(mapping))
     }
-
+    log.info("ACM_DEBUG: Before WriteToCSV")
     writeToCsv(config, convertDataSet(spark, result), spark)
+    log.info("ACM_DEBUG: After WriteToCSV")
   }
 
   def filterOnlyChangedRows(dataset: Dataset[DomainType], previousIntegratedFile: Dataset[DomainType], spark: SparkSession): Dataset[DomainType] = {

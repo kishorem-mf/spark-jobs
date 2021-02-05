@@ -32,6 +32,14 @@ trait Converter[DomainType <: DomainEntity, OutboundType <: OutboundEntity] exte
               value match {
                 case None => ""
                 case Some(optVal) => tryInvocation(optVal.asInstanceOf[Any], function)
+                case _ => "Error in additional fields due to target ohubid"
+              }
+            }
+            case _: NullPointerException => {
+              value match {
+                case None => ""
+                case Some(optVal) => tryInvocation(optVal.asInstanceOf[Any], function)
+                case _ => "Error in additional fields due to target ohubid"
               }
             }
           }
