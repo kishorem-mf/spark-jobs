@@ -10,18 +10,26 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.export.TargetType.{ACM, DDL, DISPATCHER, TargetType}
+import com.unilever.ohub.spark.datalake.DatalakeUtils
+import com.unilever.ohub.spark.datalake.DatalakeUtils._
+import com.unilever.ohub.spark.domain.{DomainEntity}
+import com.unilever.ohub.spark.export.TargetType.{ACM, DISPATCHER, UDL, TargetType}
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
+import org.apache.spark.sql.functions.{upper,when,lit}
 import scopt.OptionParser
+import scala.util.Try
+import com.unilever.ohub.spark.Constants
+import org.apache.spark.sql.types.{StructType}
 
 import scala.reflect.runtime.universe._
 
 object TargetType extends Enumeration {
   type TargetType = Value
-  val ACM, DISPATCHER, DATASCIENCE, MEPS, AURORA, DDL = Value
+  val ACM, DISPATCHER, DATASCIENCE, MEPS, UDL, DDL = Value
 }
 
 case class OutboundConfig(
@@ -36,9 +44,8 @@ case class OutboundConfig(
                            currentMergedOPR: Option[String] = None,
                            excludeCountryCodes: String = "Excluded countries",
                            auroraCountryCodes: String = "",
-                           integratedDate: String = "",
-                           fromDate: String = "",
-                           toDate: String = ""
+                           fromDate: String = "fromDate",
+                           toDate: Option[String] = None
                          ) extends SparkJobConfig
 
 abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig] {
@@ -76,15 +83,12 @@ abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig]
       opt[String]("auroraCountryCodes") optional() action { (x, c) =>
         c.copy(auroraCountryCodes = x)
       } text "aurora countryCodes is a string array"
-      opt[String]("integratedDate") optional() action { (x, c) =>
-        c.copy(integratedDate = x)
-      } text "integratedDate is a string array"
-      opt[String]("fromDate") optional() action { (x, c) ⇒
+      opt[String]("fromDate") optional() action { (x, c) =>
         c.copy(fromDate = x)
-      } text "from date is a string property"
-      opt[String]("toDate") optional() action { (x, c) ⇒
-        c.copy(toDate = x)
-      } text "to date is a string property"
+      } text "fromDate is a string"
+      opt[String]("toDate") optional() action { (x, c) =>
+        c.copy(toDate = Some(x))
+      } text "toDate is an optional string"
       version("1.0")
       help("help") text "help text"
     }
@@ -137,36 +141,89 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     }
   }
 
+  //scalastyle:off
+  def transformInboundFilesByDate(inboundProcessPath: String, folderDate: String, config: OutboundConfig, spark:SparkSession, storage: Storage) = {
+    import spark.implicits._
+
+    val year = folderDate.split("-")(0)
+    val month = folderDate.split("-")(1)
+    val day = folderDate.split("-")(2)
+    val inboundProcessedCsv = Try(storage.readFromCsv(inboundProcessPath, ";", true,"\\")).getOrElse(spark.createDataset[DomainType](Nil))
+
+    val exclusionlist = spark.createDataFrame(
+      spark.sparkContext.parallelize(Constants.exclusionSourceEntityCountryList),
+      StructType(Constants.schemaforexclusionSourceEntityCountryList)
+    )
+
+    val inclusionOrderList = spark.createDataFrame(
+      spark.sparkContext.parallelize(Constants.includeOrderList),
+      StructType(Constants.schemaforincludeOrderList)
+    )
+
+    val distinctSourceNames = inboundProcessedCsv.select("sourceName").distinct()
+    if (distinctSourceNames.count() > 0)
+     { //If there are no records and only headers are present then we dont want to write any file
+       config.auroraCountryCodes.split(";").foreach {
+        country =>
+          distinctSourceNames.collect.toSeq.foreach {
+            source =>
+              val sourceName = source.toString.drop(1).dropRight(1) //as the sourcenames will be like [EMAKINA],[MARKETO]
+            val fileName = s"UFS_${sourceName}_" + entityName().toUpperCase + s"_${country}_${year}${month}${day}.csv"
+              val location = config.outboundLocation + sourceName + "/" + country.toLowerCase + "/" + entityName() + "/Processed/YYYY=" + year + "/MM=" + month + "/DD=" + day
+              val dateValue = year.toInt - 1 + "-" + month + " -01"
+              // Used for sending the last 12 month transactionDate for orders/orderlines
+              val filterdf = inboundProcessedCsv.filter($"countryCode" === country && $"sourceName" === sourceName)
+              val exDf = filterdf.as("o").join(
+                exclusionlist.as("e")
+                , $"o.countryCode" === $"e.countryCode"
+                  && upper($"o.sourceName") === upper($"e.sourceName")
+                  && $"e.entity" === entityName()
+                , "left").filter($"e.countryCode".isNull)
+                .select($"o.*")
+
+              val exOrders = entityName() match {
+                case "orders" => {
+                  filterdf.as("o").join(
+                    inclusionOrderList.alias("exo")
+                    , $"o.countryCode" === $"exo.countryCode" && upper($"o.sourceName") === upper($"exo.sourceName") && upper($"o.orderType") === upper($"exo.orderType")
+                      && $"transactionDate" >= dateValue && $"exo.entity" === entityName()
+                    , "inner").select($"o.*").unionByName(exDf)
+                }
+                case "orderlines" => {
+                  val orders = Try(storage.readFromCsv(inboundProcessPath.replace("orderlines", "orders"), ";", true, "\\")).getOrElse(spark.createDataset[DomainType](Nil))
+                  val oid = orders.filter($"transactionDate" >= dateValue).select(orders("concatId").as("ordConcatId")).dropDuplicates()
+                  filterdf.as("o").join(
+                    inclusionOrderList.alias("inc")
+                    ,$"o.countryCode" === $"inc.countryCode" && upper($"o.sourceName") === upper($"inc.sourceName") &&  upper($"o.orderType") === upper($"inc.orderType")
+                      && $"inc.entity" === entityName()
+                    ,"inner").select($"o.*")
+                    .join(
+                      oid.alias("ex"),
+                      $"o.orderConcatId" === $"ex.ordConcatid"
+                      ,"inner").select($"o.*").unionByName(exDf)
+                }
+                case _ => exDf
+              }
+            if(filterdf.count()>0) {
+                DatalakeUtils.writeToCsv(location, fileName, exOrders, spark)
+            }
+          }
+        }
+      }
+    }
+  //scalastyle:on
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     import spark.implicits._
 
-    log.info(
-      s"writing integrated entities ::   [${config.integratedInputFile}] " +
-        s"with parameters currentMerged :: [${config.currentMerged}]" +
-        s"with parameters previousMerged:: [${config.previousMerged}]" +
-        s"with parameters prevIntegrated:: [${config.previousIntegratedInputFile}]" +
-        s"with parameters currentMergedOPR:: [${config.currentMergedOPR}]" +
-        s"with parameters auroraCountryCodes:: [${config.auroraCountryCodes}]" +
-        s"with parameters targetType:: [${config.targetType}]" +
-        s"to outbound export csv file for ACM and DDB.")
-
-    if (!config.auroraCountryCodes.isEmpty()) {
-      val integrated = storage.readFromParquet[DomainType](config.integratedInputFile)
-
-      if (config.outboundLocation.contains("shared")) {
-        val location = config.outboundLocation + entityName() + s"/Processed/" + entityName() + ".parquet"
-        val exportds = filterByCountry(integrated, None, spark)
-        storage.writeToParquet(exportds, location)
+    if(config.targetType.equals(UDL)){
+      // if aurora countryCodes are defined then we are exporting to UDL aurora folders
+      val folderDates = getFolderDateList(config.fromDate, config.toDate.getOrElse(config.fromDate).toString)
+      folderDates.foreach { folderDate =>
+        val blobFolderPath = config.integratedInputFile + "/" + folderDate + "/*.csv"
+        transformInboundFilesByDate(blobFolderPath, folderDate, config, spark, storage)
       }
-      else {
-        config.auroraCountryCodes.split(";").foreach {
-          country =>
-            val location = config.outboundLocation + country.toLowerCase + "/" + entityName() + s"/Processed/" + entityName() + ".parquet"
-            val exportds = filterByCountry(integrated, Some(country), spark)
-            storage.writeToParquet(exportds, location)
-        }
-      }
-    } else {
+    }
+    else{
       val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[DomainType](Nil))(storage.readFromParquet[DomainType](_))
       export(storage.readFromParquet[DomainType](config.integratedInputFile), previousIntegratedFile, config, spark)
     }
@@ -341,7 +398,6 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       .option("encoding", "UTF-8")
       .option("header", shouldWriteHeaders(config.targetType))
       .options(options)
-
 
     if (mergeCsvFiles(config.targetType)) {
       writeableData.csv(temporaryPath.toString)

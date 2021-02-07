@@ -2,6 +2,7 @@ package com.unilever.ohub.spark.domain.entity
 
 import java.sql.Timestamp
 
+import com.unilever.ohub.spark.datalake.OperatorGoldenOutboundWriter
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
@@ -17,7 +18,7 @@ object OperatorGolden extends DomainEntityCompanion[OperatorGolden] {
   override val acmExportWriter: Option[ExportOutboundWriter[OperatorGolden]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[OperatorGolden]] = None
   override val azureDwWriter: Option[AzureDWWriter[OperatorGolden]] = Some(OperatorGoldenDWWriter)
-  override val auroraExportWriter: Option[ExportOutboundWriter[OperatorGolden]] = Some(com.unilever.ohub.spark.export.aurora.OperatorGoldenOutboundWriter)
+  override val auroraInboundWriter: Option[ExportOutboundWriter[OperatorGolden]] = None
   override val ddlExportWriter: Option[ExportOutboundWriter[OperatorGolden]] = None
 }
 

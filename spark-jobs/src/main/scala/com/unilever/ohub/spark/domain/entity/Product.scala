@@ -1,6 +1,6 @@
 package com.unilever.ohub.spark.domain.entity
 
-import java.sql.{Timestamp}
+import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
@@ -22,7 +22,7 @@ object Product extends DomainEntityCompanion[Product] {
   override val acmExportWriter: Option[ExportOutboundWriter[Product]] = Some(com.unilever.ohub.spark.export.acm.ProductOutboundWriter)
   override val dispatchExportWriter: Option[ExportOutboundWriter[Product]] = Some(com.unilever.ohub.spark.export.dispatch.ProductOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[Product]] = Some(ProductDWWriter)
-  override val auroraExportWriter: Option[ExportOutboundWriter[Product]] = Some(com.unilever.ohub.spark.export.aurora.ProductOutboundWriter)
+  override val auroraInboundWriter: Option[ExportOutboundWriter[Product]] = Some(com.unilever.ohub.spark.datalake.ProductOutboundWriter)
   override val ddlExportWriter: Option[ExportOutboundWriter[Product]] = None
 }
 

@@ -17,7 +17,7 @@ object Activity extends DomainEntityCompanion[Activity] {
   override val acmExportWriter: Option[ExportOutboundWriter[Activity]] = Some(com.unilever.ohub.spark.export.acm.ActivityOutboundWriter)
   override val dispatchExportWriter: Option[ExportOutboundWriter[Activity]] = Some(com.unilever.ohub.spark.export.dispatch.ActivityOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[Activity]] = Some(ActivityDWWriter)
-  override val auroraExportWriter: Option[ExportOutboundWriter[Activity]] = Some(com.unilever.ohub.spark.export.aurora.ActivityOutboundWriter)
+  override val auroraInboundWriter: Option[ExportOutboundWriter[Activity]] = Some(com.unilever.ohub.spark.datalake.ActivityOutboundWriter)
   override val ddlExportWriter: Option[ExportOutboundWriter[Activity]] = None
 }
 

@@ -6,7 +6,6 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, ChainDWWriter}
-import com.unilever.ohub.spark.export.dispatch.ChainOutboundWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ChainDomainExportWriter extends DomainExportWriter[Chain]
@@ -17,9 +16,9 @@ object Chain extends DomainEntityCompanion[Chain] {
   override val engineFolderName: String = "chains"
   override val domainExportWriter: Option[DomainExportWriter[Chain]] = Some(ChainDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[Chain]] = None
-  override val dispatchExportWriter: Option[ExportOutboundWriter[Chain]] = Some(ChainOutboundWriter)
+  override val dispatchExportWriter: Option[ExportOutboundWriter[Chain]] = Some(com.unilever.ohub.spark.export.dispatch.ChainOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[Chain]] = Some(ChainDWWriter)
-  override val auroraExportWriter: Option[ExportOutboundWriter[Chain]] = Some(com.unilever.ohub.spark.export.aurora.ChainOutboundWriter)
+  override val auroraInboundWriter: Option[ExportOutboundWriter[Chain]] = Some(com.unilever.ohub.spark.datalake.ChainOutboundWriter)
   override val ddlExportWriter: Option[ExportOutboundWriter[Chain]] = None
 }
 

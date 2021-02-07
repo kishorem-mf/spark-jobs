@@ -74,6 +74,7 @@ object OrderConverter extends CommonDomainGateKeeper[Order] with OrderEmptyParqu
         deliveryType = optional("deliveryType"),
         preferredDeliveryDateOption = optional("preferredDeliveryDateOption"),
         preferredDeliveryDate = optional("preferredDeliveryDate", parseDateTimeUnsafe()),
+        department = optional("department"),
         // other fields
         additionalFields = additionalFields,
         ingestionErrors = errors

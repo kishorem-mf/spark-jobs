@@ -18,7 +18,7 @@ object Subscription extends DomainEntityCompanion[Subscription] {
   override val acmExportWriter: Option[ExportOutboundWriter[Subscription]] = Some(com.unilever.ohub.spark.export.acm.SubscriptionOutboundWriter)
   override val dispatchExportWriter: Option[ExportOutboundWriter[Subscription]] = Some(com.unilever.ohub.spark.export.dispatch.SubscriptionOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[Subscription]] = Some(SubscriptionDWWriter)
-  override val auroraExportWriter: Option[ExportOutboundWriter[Subscription]] = Some(com.unilever.ohub.spark.export.aurora.SubscriptionOutboundWriter)
+  override val auroraInboundWriter: Option[ExportOutboundWriter[Subscription]] = Some(com.unilever.ohub.spark.datalake.SubscriptionOutboundWriter)
   override val ddlExportWriter: Option[ExportOutboundWriter[Subscription]] = None
 }
 
