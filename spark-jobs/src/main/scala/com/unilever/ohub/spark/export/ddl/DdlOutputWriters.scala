@@ -53,7 +53,7 @@ trait DdlOptions extends CsvOptions {
             spark,
             config.copy(
               integratedInputFile = integratedLocation,
-              outboundLocation = config.outboundLocation + "/DDL/",
+              outboundLocation = config.outboundLocation,
               auroraCountryCodes = config.auroraCountryCodes,
               fromDate = config.fromDate,
               toDate = config.toDate,

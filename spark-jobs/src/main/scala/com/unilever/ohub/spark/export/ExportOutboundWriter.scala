@@ -202,7 +202,6 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       else {
         domainEntities
       }
-
     entitySpecificFilter(spark, filteredByCountries, config)
   }
 
@@ -408,7 +407,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
         .option("quoteAll", "true")
         .option("delimiter", ";")
         .option("encoding", "UTF-8")
-      writeData.csv(outputFilePath.toString + ".csv")
+      writeData.csv(outputFilePath.toString)
 
     } else {
       val writeableData = ds.repartition(noPartitions).write.mode(SaveMode.Overwrite)
@@ -416,7 +415,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
         .option("quoteAll", "true")
         .option("delimiter", ";")
         .option("encoding", "UTF-8")
-      writeableData.csv(outputFilePath.toString + ".csv")
+      writeableData.csv(outputFilePath.toString)
     }
   }
 
@@ -427,6 +426,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     oos.close
     stream.toByteArray.length
   }
+
 
   /**
     * This function works for objects that only contain string fields with JSON content. The object is transformed to
