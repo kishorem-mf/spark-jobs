@@ -454,7 +454,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
     val rowSize = getBytes(ds.head(1))
     val rowCount = ds.count()
-    val partitionSize = 60000000
+    val partitionSize = 6291456
     val noPartitions: Int = (rowSize * rowCount / partitionSize).toInt
 
     if (noPartitions.equals(0)) {
