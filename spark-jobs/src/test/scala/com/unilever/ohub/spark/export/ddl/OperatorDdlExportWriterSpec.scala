@@ -25,7 +25,8 @@ class OperatorDdlExportWriterSpec extends SparkJobSpec with TestOperators with B
     targetType = TargetType.DDL,
     auroraCountryCodes = "AU;country-code",
     fromDate = "2017-10-16 18:09:49",
-    toDate = Some("2017-10-16 18:09:49")
+    toDate = Some("2017-10-16 18:09:49"),
+    sourceName = "FRONTIER"
   )
 
   val storage = new InMemStorage(spark, operators, integrated)
@@ -40,9 +41,9 @@ class OperatorDdlExportWriterSpec extends SparkJobSpec with TestOperators with B
 
 
       val integratedDs = Seq(
-        defaultOperator.copy(concatId = "AU~WUFOO~101", ohubId = Some("1")),
-        defaultOperator.copy(concatId = "AU~WUFOO~102", ohubId = Some("3")),
-        defaultOperator.copy(concatId = "AU~WUFOO~104", ohubId = Some("2"))
+        defaultOperator.copy(concatId = "AU~WUFOO~101", ohubId = Some("1"), isGoldenRecord = true, sourceName = "FRONTIER"),
+        defaultOperator.copy(concatId = "AU~WUFOO~102", ohubId = Some("3"), isGoldenRecord = true, sourceName = "FRONTIER"),
+        defaultOperator.copy(concatId = "AU~WUFOO~104", ohubId = Some("2"), isGoldenRecord = true, sourceName = "FRONTIER")
       ).toDataset
 
       SUT.exportToDdl(integratedDs, config, spark)

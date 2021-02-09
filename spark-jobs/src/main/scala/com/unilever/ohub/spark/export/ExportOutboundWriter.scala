@@ -19,7 +19,7 @@ import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
-import org.apache.spark.sql.functions.{upper,when,lit}
+import org.apache.spark.sql.functions.{upper, when, lit}
 import scopt.OptionParser
 import scala.util.Try
 import com.unilever.ohub.spark.Constants
@@ -45,7 +45,8 @@ case class OutboundConfig(
                            excludeCountryCodes: String = "Excluded countries",
                            auroraCountryCodes: String = "",
                            fromDate: String = "fromDate",
-                           toDate: Option[String] = None
+                           toDate: Option[String] = None,
+                           sourceName: String = ""
                          ) extends SparkJobConfig
 
 abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig] {
@@ -89,6 +90,9 @@ abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig]
       opt[String]("toDate") optional() action { (x, c) =>
         c.copy(toDate = Some(x))
       } text "toDate is an optional string"
+      opt[String]("sourceName") optional() action { (x, c) =>
+        c.copy(toDate = Some(x))
+      } text "sourceName is an optional string"
       version("1.0")
       help("help") text "help text"
     }
@@ -137,18 +141,18 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     targetType match {
       case ACM ⇒ "UFS_" + entityName() + "_" + timestampFile + ".csv"
       case DISPATCHER ⇒ "UFS_DISPATCHER" + "_" + entityName() + "_" + timestampFile + ".csv"
-      case DDL ⇒ "UFS_DDL_" + entityName() + "_" + timestampFile + "_" + UUID.randomUUID()  + ".csv"
+      case DDL ⇒ "UFS_DDL_" + entityName() + "_" + timestampFile + "_" + UUID.randomUUID() + ".csv"
     }
   }
 
   //scalastyle:off
-  def transformInboundFilesByDate(inboundProcessPath: String, folderDate: String, config: OutboundConfig, spark:SparkSession, storage: Storage) = {
+  def transformInboundFilesByDate(inboundProcessPath: String, folderDate: String, config: OutboundConfig, spark: SparkSession, storage: Storage) = {
     import spark.implicits._
 
     val year = folderDate.split("-")(0)
     val month = folderDate.split("-")(1)
     val day = folderDate.split("-")(2)
-    val inboundProcessedCsv = Try(storage.readFromCsv(inboundProcessPath, ";", true,"\\")).getOrElse(spark.createDataset[DomainType](Nil))
+    val inboundProcessedCsv = Try(storage.readFromCsv(inboundProcessPath, ";", true, "\\")).getOrElse(spark.createDataset[DomainType](Nil))
 
     val exclusionlist = spark.createDataFrame(
       spark.sparkContext.parallelize(Constants.exclusionSourceEntityCountryList),
@@ -161,9 +165,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     )
 
     val distinctSourceNames = inboundProcessedCsv.select("sourceName").distinct()
-    if (distinctSourceNames.count() > 0)
-     { //If there are no records and only headers are present then we dont want to write any file
-       config.auroraCountryCodes.split(";").foreach {
+    if (distinctSourceNames.count() > 0) { //If there are no records and only headers are present then we dont want to write any file
+      config.auroraCountryCodes.split(";").foreach {
         country =>
           distinctSourceNames.collect.toSeq.foreach {
             source =>
@@ -194,28 +197,29 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
                   val oid = orders.filter($"transactionDate" >= dateValue).select(orders("concatId").as("ordConcatId")).dropDuplicates()
                   filterdf.as("o").join(
                     inclusionOrderList.alias("inc")
-                    ,$"o.countryCode" === $"inc.countryCode" && upper($"o.sourceName") === upper($"inc.sourceName") &&  upper($"o.orderType") === upper($"inc.orderType")
+                    , $"o.countryCode" === $"inc.countryCode" && upper($"o.sourceName") === upper($"inc.sourceName") && upper($"o.orderType") === upper($"inc.orderType")
                       && $"inc.entity" === entityName()
-                    ,"inner").select($"o.*")
+                    , "inner").select($"o.*")
                     .join(
                       oid.alias("ex"),
                       $"o.orderConcatId" === $"ex.ordConcatid"
-                      ,"inner").select($"o.*").unionByName(exDf)
+                      , "inner").select($"o.*").unionByName(exDf)
                 }
                 case _ => exDf
               }
-            if(filterdf.count()>0) {
+              if (filterdf.count() > 0) {
                 DatalakeUtils.writeToCsv(location, fileName, exOrders, spark)
-            }
+              }
           }
-        }
       }
     }
+  }
+
   //scalastyle:on
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     import spark.implicits._
 
-    if(config.targetType.equals(UDL)){
+    if (config.targetType.equals(UDL)) {
       // if aurora countryCodes are defined then we are exporting to UDL aurora folders
       val folderDates = getFolderDateList(config.fromDate, config.toDate.getOrElse(config.fromDate).toString)
       folderDates.foreach { folderDate =>
@@ -223,7 +227,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
         transformInboundFilesByDate(blobFolderPath, folderDate, config, spark, storage)
       }
     }
-    else{
+    else {
       val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[DomainType](Nil))(storage.readFromParquet[DomainType](_))
       export(storage.readFromParquet[DomainType](config.integratedInputFile), previousIntegratedFile, config, spark)
     }
@@ -248,7 +252,9 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
     val domainEntities = config.targetType match {
       case ACM ⇒ goldenRecordOnlyFilter(spark, dataset).filter(!$"countryCode".isin(config.excludeCountryCodes.split(";"): _*))
-      case DDL ⇒ dataset.filter($"countryCode".isin(config.auroraCountryCodes.split(";"):_*)).where($"ohubUpdated".between(config.fromDate, config.toDate.getOrElse(config.fromDate)))
+      case DDL ⇒ dataset.filter($"countryCode".isin(config.auroraCountryCodes.split(";"): _*)).filter($"isGoldenRecord" === "true")
+        .filter($"sourceName".like(config.sourceName))
+        .where($"ohubUpdated".between(config.fromDate, config.toDate.getOrElse(config.fromDate)))
       case _ ⇒ dataset
     }
 
