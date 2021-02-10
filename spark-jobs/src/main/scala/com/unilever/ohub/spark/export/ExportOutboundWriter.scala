@@ -252,8 +252,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
     val domainEntities = config.targetType match {
       case ACM ⇒ goldenRecordOnlyFilter(spark, dataset).filter(!$"countryCode".isin(config.excludeCountryCodes.split(";"): _*))
-      case DDL ⇒ dataset.filter($"countryCode".isin(config.auroraCountryCodes.split(";"): _*)).filter($"isGoldenRecord" === "true")
-        .filter($"sourceName".like(config.sourceName))
+      case DDL ⇒ dataset.filter($"countryCode".isin(config.auroraCountryCodes.split(";"): _*))
         .where($"ohubUpdated".between(config.fromDate, config.toDate.getOrElse(config.fromDate)))
       case _ ⇒ dataset
     }
