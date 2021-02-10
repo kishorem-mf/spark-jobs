@@ -26,7 +26,7 @@ class OperatorDdlExportWriterSpec extends SparkJobSpec with TestOperators with B
     auroraCountryCodes = "AU;country-code",
     fromDate = "2017-10-16 18:09:49",
     toDate = Some("2017-10-16 18:09:49"),
-    sourceName = "FRONTIER"
+    sourceName = Some("FRONTIER")
   )
 
   val storage = new InMemStorage(spark, operators, integrated)

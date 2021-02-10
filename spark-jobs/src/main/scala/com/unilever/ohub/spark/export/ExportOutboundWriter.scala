@@ -8,24 +8,21 @@ import java.util.UUID
 import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import com.unilever.ohub.spark.domain.DomainEntity
-import com.unilever.ohub.spark.export.TargetType.{ACM, DDL, DISPATCHER, TargetType}
 import com.unilever.ohub.spark.datalake.DatalakeUtils
 import com.unilever.ohub.spark.datalake.DatalakeUtils._
-import com.unilever.ohub.spark.domain.{DomainEntity}
-import com.unilever.ohub.spark.export.TargetType.{ACM, DISPATCHER, UDL, TargetType}
+import com.unilever.ohub.spark.domain.DomainEntity
+import com.unilever.ohub.spark.export.TargetType.{ACM, DDL, DISPATCHER, TargetType, UDL}
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
+import com.unilever.ohub.spark.{Constants, SparkJob, SparkJobConfig}
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
+import org.apache.spark.sql.functions.upper
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
-import org.apache.spark.sql.functions.{upper, when, lit}
 import scopt.OptionParser
-import scala.util.Try
-import com.unilever.ohub.spark.Constants
-import org.apache.spark.sql.types.{StructType}
 
 import scala.reflect.runtime.universe._
+import scala.util.Try
 
 object TargetType extends Enumeration {
   type TargetType = Value
@@ -46,7 +43,7 @@ case class OutboundConfig(
                            auroraCountryCodes: String = "",
                            fromDate: String = "fromDate",
                            toDate: Option[String] = None,
-                           sourceName: String = ""
+                           sourceName: Option[String] = None
                          ) extends SparkJobConfig
 
 abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig] {
@@ -253,6 +250,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     val domainEntities = config.targetType match {
       case ACM ⇒ goldenRecordOnlyFilter(spark, dataset).filter(!$"countryCode".isin(config.excludeCountryCodes.split(";"): _*))
       case DDL ⇒ dataset.filter($"countryCode".isin(config.auroraCountryCodes.split(";"): _*))
+        .filter($"sourceName".like(config.sourceName.getOrElse("")))
+        .filter($"isGoldenRecord" === true)
         .where($"ohubUpdated".between(config.fromDate, config.toDate.getOrElse(config.fromDate)))
       case _ ⇒ dataset
     }
