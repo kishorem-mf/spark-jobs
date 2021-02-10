@@ -6,6 +6,7 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, CampaignDWWriter}
+import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter,CampaignDLWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object CampaignDomainExportWriter extends DomainExportWriter[Campaign]
@@ -20,6 +21,7 @@ object Campaign extends DomainEntityCompanion[Campaign] {
   override val dispatchExportWriter: Option[ExportOutboundWriter[Campaign]] = Some(com.unilever.ohub.spark.export.dispatch.CampaignOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[Campaign]] = Some(CampaignDWWriter)
   override val auroraInboundWriter: Option[ExportOutboundWriter[Campaign]] = Some(com.unilever.ohub.spark.datalake.CampaignOutboundWriter)
+  override val dataLakeWriter: Option[AzureDLWriter[Campaign]] = Some(CampaignDLWriter)
 }
 
 case class Campaign(
