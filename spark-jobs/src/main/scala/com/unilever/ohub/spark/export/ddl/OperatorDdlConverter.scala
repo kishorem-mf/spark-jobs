@@ -1,7 +1,5 @@
 package com.unilever.ohub.spark.export.ddl
 
-import java.sql.Timestamp
-
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.export._
 import com.unilever.ohub.spark.export.ddl.model.DdlOperator

@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.export.ddl.model
 
 import com.unilever.ohub.spark.export.DDLOutboundEntity
-
+// scalastyle:off
 case class DdlOperator(
                         id: String,
                         concatId: String,
