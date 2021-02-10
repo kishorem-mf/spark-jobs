@@ -22,7 +22,7 @@ case class DataLakeConfig(
                            integratedInputFile: String = "integrated-input-file",
                            entityName: String = "entity-name",
                            outboundLocation: String = "outbound-location",
-                           countryCodes: String = "GB,IE"
+                           countryCodes: String = "GB;IE"
                          ) extends SparkJobConfig
 
 abstract class SparkJobWithAzureDLConfiguration extends SparkJob[DataLakeConfig] {
