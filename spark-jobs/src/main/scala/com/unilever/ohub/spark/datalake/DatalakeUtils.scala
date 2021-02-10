@@ -38,6 +38,7 @@ object DatalakeUtils extends DatabaseUtils {
       val outputFolderPath = new Path(path)
       val temporaryPath = new Path(outputFolderPath, UUID.randomUUID().toString)
       val outputFilePath = new Path(outputFolderPath, s"$fileName")
+
       val writeableData = ds
         .write
         .mode(SaveMode.Overwrite)
@@ -50,6 +51,28 @@ object DatalakeUtils extends DatabaseUtils {
       val header = ds.columns.map(c ⇒ "\"" + c + "\"").mkString(";")
       mergeDirectoryToOneFile(temporaryPath, outputFilePath, spark, header)
     }
+  }
+
+  //scalastyle:off
+  def writeToCsv(path: String, fileName: String, ds: Dataset[_], spark: SparkSession): Unit = {
+    val outputFolderPath = new Path(path)
+    val temporaryPath = new Path(outputFolderPath, UUID.randomUUID().toString)
+    val outputFilePath = new Path(outputFolderPath, s"$fileName")
+    val nullValue = null
+    val writeableData = ds
+      .write
+      .mode("Overwrite")
+      .option("encoding", "UTF-8")
+      .option("header", "false")
+      .option("quoteAll", "false")
+//      .option("quote", "\"")
+      .option("delimiter", ";")
+      .option("escape", "\\")
+      .option("nullValue",nullValue)
+
+    writeableData.csv(temporaryPath.toString)
+    val header = ds.columns.map(c ⇒ c ).mkString(";")
+    mergeDirectoryToOneFile(temporaryPath, outputFilePath, spark, header)
   }
 
   def mergeDirectoryToOneFile(sourceDirectory: Path, outputFile: Path, spark: SparkSession, header: String): Boolean = {
@@ -73,6 +96,7 @@ object DatalakeUtils extends DatabaseUtils {
     }
 
     val tmpCsvSourceDirectory: Path = moveOnlyCsvFilesToOtherDirectory
+    fs.delete(outputFile, true) // This is to delete any existing file that is present there. Its an indirect overwrite
     FileUtil.copyMerge(fs, tmpCsvSourceDirectory, fs, outputFile, true, spark.sparkContext.hadoopConfiguration, null) // scalastyle:ignore
     fs.delete(sourceDirectory, true)
   }

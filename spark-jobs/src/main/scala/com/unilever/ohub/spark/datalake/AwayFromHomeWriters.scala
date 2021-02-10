@@ -1,15 +1,10 @@
-package com.unilever.ohub.spark.export.aurora
+package com.unilever.ohub.spark.datalake
 
 import com.unilever.ohub.spark.domain.DomainEntityUtils
 import com.unilever.ohub.spark.domain.entity._
-import com.unilever.ohub.spark.domain.utils.OperatorRef
-import com.unilever.ohub.spark.export.dispatch.{CampaignOpenDispatcherConverter, DispatcherOptions, OperatorDispatchConverter}
-import com.unilever.ohub.spark.export.dispatch.model.{DispatchContactPerson, _}
-import com.unilever.ohub.spark.export.{CsvOptions, ExportOutboundWriter, OutboundConfig, OutboundEntity, SparkJobWithOutboundExportConfig}
+import com.unilever.ohub.spark.export.{ExportOutboundWriter, OutboundConfig, SparkJobWithOutboundExportConfig}
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{Dataset, SparkSession}
-import org.apache.spark.sql._
-import org.apache.spark.sql.functions._
 
 
 /**
@@ -214,29 +209,36 @@ object SubscriptionOutboundWriter extends ExportOutboundWriter[Subscription] {
   override def entityName(): String = domainEntityCompanion.engineFolderName
 }
 
-object AllAuroraOutboundWriter  extends SparkJobWithOutboundExportConfig  {
-  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
-    DomainEntityUtils.domainCompanionObjects
-      .par
-      .filter(_.auroraExportWriter.isDefined)
-      .foreach(entity => {
-        val writer = entity.auroraExportWriter.get
-        val integratedLocation = s"${config.integratedInputFile}/${entity.engineFolderName}.parquet"
-        val datalakeLocation = if(entity.auroraFolderLocation == Some("Restricted")){s"${config.outboundLocation}Restricted/"}
-        else if(entity.auroraFolderLocation == Some("Shared")){s"${config.outboundLocation}shared/"}
-        else {s"${config.outboundLocation}/"}
 
-        writer.run(
-          spark,
-          config.copy(
-            integratedInputFile = integratedLocation,
-            outboundLocation = datalakeLocation,
-            auroraCountryCodes = config.auroraCountryCodes,
-            targetType = config.targetType
-          ),
-          storage)
-      }
-      )
+object AllAwayFromHomeUDLWriter  extends SparkJobWithOutboundExportConfig  {
+  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
+
+      DomainEntityUtils.domainCompanionObjects
+        .par
+        .filter(_.auroraInboundWriter.isDefined)
+        .foreach(entity => {
+          val writer = entity.auroraInboundWriter.get
+          val integratedLocation = s"${config.integratedInputFile}${entity.engineFolderName}"
+          val datalakeLocation = if (entity.auroraFolderLocation == Some("Restricted")) {
+            s"${config.outboundLocation}Restricted/"
+          }
+          else if (entity.auroraFolderLocation == Some("Shared")) {
+            s"${config.outboundLocation}shared/"
+          }
+          else {s"${config.outboundLocation}/"}
+
+          writer.run(
+            spark,
+            config.copy(
+              integratedInputFile = integratedLocation,
+              outboundLocation = datalakeLocation,
+              auroraCountryCodes = config.auroraCountryCodes,
+              targetType = config.targetType
+            ),
+            storage)
+        }
+        )
+    }
   }
-}
+
 

@@ -6,7 +6,6 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, CampaignSendDWWriter}
-import com.unilever.ohub.spark.export.dispatch.CampaignSendOutboundWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object CampaignSendDomainExportWriter extends DomainExportWriter[CampaignSend]
@@ -17,9 +16,9 @@ object CampaignSend extends DomainEntityCompanion[CampaignSend] {
   override val engineFolderName = "campaignsends"
   override val domainExportWriter: Option[DomainExportWriter[CampaignSend]] = Some(CampaignSendDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[CampaignSend]] = None
-  override val dispatchExportWriter: Option[ExportOutboundWriter[CampaignSend]] = Some(CampaignSendOutboundWriter)
+  override val dispatchExportWriter: Option[ExportOutboundWriter[CampaignSend]] = Some(com.unilever.ohub.spark.export.dispatch.CampaignSendOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[CampaignSend]] = Some(CampaignSendDWWriter)
-  override val auroraExportWriter: Option[ExportOutboundWriter[CampaignSend]] = Some(com.unilever.ohub.spark.export.aurora.CampaignSendOutboundWriter)
+  override val auroraInboundWriter: Option[ExportOutboundWriter[CampaignSend]] = Some(com.unilever.ohub.spark.datalake.CampaignSendOutboundWriter)
 }
 
 case class CampaignSend(

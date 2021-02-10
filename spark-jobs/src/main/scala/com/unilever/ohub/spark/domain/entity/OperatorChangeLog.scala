@@ -1,9 +1,8 @@
 package com.unilever.ohub.spark.domain.entity
 
-import java.sql.Timestamp
+
 import java.sql.Date
 
-import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, OperatorChangeLogDWWriter}
@@ -25,7 +24,7 @@ object OperatorChangeLog extends DomainEntityCompanion[OperatorChangeLog]{
   override val defaultExcludedFieldsForParquetExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForParquetExport ++
     Seq("id", "creationTimestamp", "countryCode", "customerType", "sourceEntityId", "sourceName", "isActive", "ohubCreated", "ohubUpdated",
       "dateCreated", "dateUpdated", "isGoldenRecord")
-  override val auroraExportWriter: Option[ExportOutboundWriter[OperatorChangeLog]] = Some(com.unilever.ohub.spark.export.aurora.OperatorChangeLogOutboundWriter)
+  override val auroraInboundWriter: Option[ExportOutboundWriter[OperatorChangeLog]] = None
   }
 
 

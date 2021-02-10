@@ -29,7 +29,7 @@ object Order extends DomainEntityCompanion[Order] {
   override val acmExportWriter: Option[ExportOutboundWriter[Order]] = Some(com.unilever.ohub.spark.export.acm.OrderOutboundWriter)
   override val dispatchExportWriter: Option[ExportOutboundWriter[Order]] = Some(com.unilever.ohub.spark.export.dispatch.OrderOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[Order]] = Some(OrderDWWriter)
-  override val auroraExportWriter: Option[ExportOutboundWriter[Order]] = Some(com.unilever.ohub.spark.export.aurora.OrderOutboundWriter)
+  override val auroraInboundWriter: Option[ExportOutboundWriter[Order]] = Some(com.unilever.ohub.spark.datalake.OrderOutboundWriter)
 }
 
 case class Order(
@@ -88,6 +88,7 @@ case class Order(
                   deliveryType: Option[String],
                   preferredDeliveryDateOption: Option[String],
                   preferredDeliveryDate: Option[Timestamp],
+                  department: Option[String],
                   // other fields
                   additionalFields: Map[String, String],
                   ingestionErrors: Map[String, IngestionError]
