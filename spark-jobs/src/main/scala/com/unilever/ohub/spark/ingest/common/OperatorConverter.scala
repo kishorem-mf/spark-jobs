@@ -114,7 +114,6 @@ object OperatorConverter extends CommonDomainGateKeeper[Operator] with OperatorE
         department = if(!optional("department").isDefined){Some("UFS")} else { optional("department")},
         //CRM fields
         crmFields = None,
-//        department = optional("department"),
         additionalFields = additionalFields,
         ingestionErrors = errors
       )
