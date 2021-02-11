@@ -43,7 +43,7 @@ case class OutboundConfig(
                            auroraCountryCodes: String = "",
                            fromDate: String = "fromDate",
                            toDate: Option[String] = None,
-                           sourceName: Option[String] = None
+                           sourceName: String = ""
                          ) extends SparkJobConfig
 
 abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig] {
@@ -88,8 +88,8 @@ abstract class SparkJobWithOutboundExportConfig extends SparkJob[OutboundConfig]
         c.copy(toDate = Some(x))
       } text "toDate is an optional string"
       opt[String]("sourceName") optional() action { (x, c) =>
-        c.copy(toDate = Some(x))
-      } text "sourceName is an optional string"
+        c.copy(sourceName = x)
+      } text "toDate is an optional string"
       version("1.0")
       help("help") text "help text"
     }
@@ -250,8 +250,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     val domainEntities = config.targetType match {
       case ACM ⇒ goldenRecordOnlyFilter(spark, dataset).filter(!$"countryCode".isin(config.excludeCountryCodes.split(";"): _*))
       case DDL ⇒ dataset.filter($"countryCode".isin(config.auroraCountryCodes.split(";"): _*))
-        .filter($"sourceName".like(config.sourceName.getOrElse("")))
-        .filter($"isGoldenRecord" === true)
+        .filter($"sourceName".like(config.sourceName))
+        .filter($"isGoldenRecord" )
         .where($"ohubUpdated".between(config.fromDate, config.toDate.getOrElse(config.fromDate)))
       case _ ⇒ dataset
     }

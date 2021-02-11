@@ -3,7 +3,6 @@ package com.unilever.ohub.spark.export.ddl
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.export._
 import com.unilever.ohub.spark.export.ddl.model.DdlOperator
-import com.unilever.ohub.spark.ingest.CustomParsers._
 
 object OperatorDdlConverter extends Converter[Operator, DdlOperator] with TypeConversionFunctions {
 
