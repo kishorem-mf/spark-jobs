@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.domain.entity
 import java.sql.Timestamp
 import java.util.UUID
 
-import com.unilever.ohub.spark.domain.DomainEntity
+import com.unilever.ohub.spark.domain.{DomainEntity, entity}
 
 object TestOperators extends TestOperators
 
@@ -124,7 +124,62 @@ trait TestOperators {
     ufsClientNumber             = Some("ufsClientNumber"),
     department                  = Some("OOH"),
     //CRM Fields
-    crmFields = None,
+    crmFields = Operator.OperatorCRM(None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None
+    ),
     additionalFields            = Map(),
     ingestionErrors             = Map()
   )

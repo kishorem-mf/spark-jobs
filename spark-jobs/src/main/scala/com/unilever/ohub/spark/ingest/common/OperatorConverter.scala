@@ -2,6 +2,7 @@ package com.unilever.ohub.spark.ingest.common
 
 import java.sql.Timestamp
 
+import com.unilever.ohub.spark.domain.entity
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.ingest.CustomParsers._
 import com.unilever.ohub.spark.ingest.{DomainTransformer, OperatorEmptyParquetWriter}
@@ -17,6 +18,62 @@ object OperatorConverter extends CommonDomainGateKeeper[Operator] with OperatorE
       implicit val source: Row = row
 
       val ohubCreated = new Timestamp(System.currentTimeMillis())
+      val crmData= new entity.Operator.OperatorCRM(crmAccountId = optional("crmAccountId"),
+        division = optional("division"),
+        salesOrgId = optional("salesOrgId"),
+        parentSourceCustomerCode = optional("parentSourceCustomerCode"),
+        closingTimeWorkingDay = optional("closingTimeWorkingDay"),
+        openingTimeWorkingDay = optional("openingTimeWorkingDay"),
+        preferredVisitDays = optional("preferredVisitDays"),
+        preferredVisitStartTime = optional("preferredVisitStartTime"),
+        preferredVisitEndTime = optional("preferredVisitEndTime"),
+        preferredDeliveryDays = optional("preferredDeliveryDays"),
+        preferredVisitWeekOfMonth = optional("preferredVisitWeekOfMonth"),
+        name2 = optional("name2"),
+        accountType = optional("accountType"),
+        monthlyFoodSpend = optional("monthlyFoodSpend",toDecimal),
+        latitude = optional("latitude"),
+        longitude = optional("longitude"),
+        customerHierarchyLevel3 = optional("customerHierarchyLevel3"),
+        customerHierarchyLevel4 = optional("customerHierarchyLevel4"),
+        customerHierarchyLevel5 = optional("customerHierarchyLevel5"),
+        customerHierarchyLevel7 = optional("customerHierarchyLevel7"),
+        mixedOrUfs = optional("mixedOrUfs"),
+        salesGroupKey = optional("salesGroupKey"),
+        salesOfficeKey = optional("salesOfficeKey"),
+        industryKey = optional("industryKey"),
+        salesDistrict = optional("salesDistrict"),
+        customerGroup = optional("customerGroup"),
+        languageKey = optional("languageKey"),
+        recordType = optional("recordType"),
+        isIndirectAccount = optional("isIndirectAccount",toBoolean),
+        keyNumber = optional("keyNumber"),
+        hasOutsideSeatings = optional("hasOutsideSeatings",toBoolean),
+        hasTakeAway = optional("hasTakeAway",toBoolean),
+        hasHomeDelivery = optional("hasHomeDelivery",toBoolean),
+        numberOfSeats = optional("numberOfSeats",toInt),
+        numberOfBedsRange = optional("numberOfBedsRange"),
+        numberOfRoomsRange = optional("numberOfRoomsRange"),
+        numberOfStudentsRange = optional("numberOfStudentsRange"),
+        hasFoodOnsite = optional("hasFoodOnsite",toBoolean),
+        hasConference = optional("hasConference",toBoolean),
+        twitterUrl = optional("twitterUrl"),
+        facebookUrl = optional("facebookUrl"),
+        instagramUrl = optional("instagramUrl"),
+        numberOfChildSites = optional("numberOfChildSites",toInt),
+        totalFacebookCampaignsClicked = optional("totalFacebookCampaignsClicked",toInt),
+        accountSubType = optional("accountSubType"),
+        visitorsPerYear = optional("visitorsPerYear"),
+        unileverNowClassification = optional("unileverNowClassification"),
+        tradingStatus = optional("tradingStatus"),
+        hasTelephoneSuppressed = optional("hasTelephoneSuppressed",toBoolean),
+        caterlystPotentialTurnover = optional("caterlystPotentialTurnover",toDecimal),
+        salesRepEstimatedPotentialTurnover = optional("salesRepEstimatedPotentialTurnover",toDecimal),
+        preferredCommunicationMethod = optional("preferredCommunicationMethod"),
+        hasPermittedToShareSsd = optional("hasPermittedToShareSsd",toBoolean),
+        otmOohCalculated = optional("otmOohCalculated"),
+        otmUfsCalculated = optional("otmUfsCalculated")
+      )
 
       Operator(
         id = mandatory("id"),
@@ -113,7 +170,7 @@ object OperatorConverter extends CommonDomainGateKeeper[Operator] with OperatorE
         ufsClientNumber = optional("ufsClientNumber"),
         department = if(!optional("department").isDefined){Some("UFS")} else { optional("department")},
         //CRM fields
-        crmFields = None,
+        crmFields = crmData,
         additionalFields = additionalFields,
         ingestionErrors = errors
       )

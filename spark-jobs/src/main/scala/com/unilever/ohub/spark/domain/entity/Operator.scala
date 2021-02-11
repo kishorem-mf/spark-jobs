@@ -180,7 +180,7 @@ case class Operator(
                      ufsClientNumber: Option[String],
                      department: Option[String],
                      //CRM fields
-                     crmFields: Option[OperatorCRM],
+                     crmFields: OperatorCRM,
                      // other fields
                      additionalFields: Map[String, String],
                      ingestionErrors: Map[String, IngestionError]
