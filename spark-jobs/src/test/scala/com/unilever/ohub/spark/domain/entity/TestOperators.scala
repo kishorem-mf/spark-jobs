@@ -123,6 +123,8 @@ trait TestOperators {
     globalSubChannel            = None,
     ufsClientNumber             = Some("ufsClientNumber"),
     department                  = Some("OOH"),
+    //CRM Fields
+    crmFields = None,
     additionalFields            = Map(),
     ingestionErrors             = Map()
   )

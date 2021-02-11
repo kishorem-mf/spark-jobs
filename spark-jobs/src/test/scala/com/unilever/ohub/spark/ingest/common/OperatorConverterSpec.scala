@@ -113,6 +113,8 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
           strategicChannel = None,
           globalChannel = None,
           globalSubChannel = None,
+          //CRM Fields
+          crmFields = None,
           additionalFields = Map(),
           ingestionErrors = Map(),
           ufsClientNumber = None,

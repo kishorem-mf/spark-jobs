@@ -6,6 +6,8 @@ import java.time._
 import org.apache.log4j.{LogManager, Logger}
 import java.time.format.{DateTimeFormatter, DateTimeParseException}
 
+import org.apache.spark.sql.types.Decimal
+
 object CustomParsers {
   implicit protected val log: Logger = LogManager.getLogger(CustomParsers.getClass)
 
@@ -62,4 +64,6 @@ object CustomParsers {
   def toLong: String ⇒ Long = input ⇒ input.toLong
 
   def toBigDecimal: String ⇒ BigDecimal = input ⇒ BigDecimal(input)
+
+  def toDecimal: String ⇒ Decimal = input ⇒ Decimal(input)
 }

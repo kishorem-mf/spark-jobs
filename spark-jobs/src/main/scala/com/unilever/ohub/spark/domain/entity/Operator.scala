@@ -3,11 +3,13 @@ package com.unilever.ohub.spark.domain.entity
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
+import com.unilever.ohub.spark.domain.entity.Operator.OperatorCRM
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, OperatorDWWriter}
 import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter, OperatorDLWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
+import org.apache.spark.sql.types.Decimal
 
 object Operator extends DomainEntityCompanion[Operator] {
   val customerType = "OPERATOR"
@@ -20,6 +22,65 @@ object Operator extends DomainEntityCompanion[Operator] {
   override val auroraInboundWriter: Option[ExportOutboundWriter[Operator]] = Some(com.unilever.ohub.spark.datalake.OperatorOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[Operator]] = Some(OperatorDWWriter)
   override val dataLakeWriter: Option[AzureDLWriter[Operator]] = Some(OperatorDLWriter)
+
+  case class OperatorCRM (
+
+                           crmAccountId: Option[String],
+                           division: Option[String],
+                           salesOrgId: Option[String],
+                           parentSourceCustomerCode: Option[String],
+                           closingTimeWorkingDay: Option[String],
+                           openingTimeWorkingDay: Option[String],
+                           preferredVisitDays: Option[String],
+                           preferredVisitStartTime: Option[String],
+                           preferredVisitEndTime: Option[String],
+                           preferredDeliveryDays: Option[String],
+                           preferredVisitWeekOfMonth: Option[String],
+                           name2: Option[String],
+                           accountType: Option[String],
+                           monthlyFoodSpend: Option[Decimal],
+                           latitude: Option[String],
+                           longitude: Option[String],
+                           customerHierarchyLevel3: Option[String],
+                           customerHierarchyLevel4: Option[String],
+                           customerHierarchyLevel5: Option[String],
+                           customerHierarchyLevel7: Option[String],
+                           mixedOrUfs: Option[String],
+                           salesGroupKey: Option[String],
+                           salesOfficeKey: Option[String],
+                           industryKey: Option[String],
+                           salesDistrict: Option[String],
+                           customerGroup: Option[String],
+                           languageKey: Option[String],
+                           recordType: Option[String],
+                           isIndirectAccount: Option[Boolean],
+                           keyNumber: Option[String],
+                           hasOutsideSeatings: Option[Boolean],
+                           hasTakeAway: Option[Boolean],
+                           hasHomeDelivery: Option[Boolean],
+                           numberOfSeats: Option[Int],
+                           numberOfBedsRange: Option[String],
+                           numberOfRoomsRange: Option[String],
+                           numberOfStudentsRange: Option[String],
+                           hasFoodOnsite: Option[Boolean],
+                           hasConference: Option[Boolean],
+                           twitterUrl: Option[String],
+                           facebookUrl: Option[String],
+                           instagramUrl: Option[String],
+                           numberOfChildSites: Option[Int],
+                           totalFacebookCampaignsClicked: Option[Int],
+                           accountSubType: Option[String],
+                           visitorsPerYear: Option[String],
+                           unileverNowClassification: Option[String],
+                           tradingStatus: Option[String],
+                           hasTelephoneSuppressed: Option[Boolean],
+                           caterlystPotentialTurnover: Option[Decimal],
+                           salesRepEstimatedPotentialTurnover: Option[Decimal],
+                           preferredCommunicationMethod: Option[String],
+                           hasPermittedToShareSsd: Option[Boolean],
+                           otmOohCalculated: Option[String],
+                           otmUfsCalculated: Option[String]
+                         )
 }
 
 case class Operator(
@@ -118,6 +179,8 @@ case class Operator(
                      globalSubChannel: Option[String],
                      ufsClientNumber: Option[String],
                      department: Option[String],
+                     //CRM fields
+                     crmFields: Option[OperatorCRM],
                      // other fields
                      additionalFields: Map[String, String],
                      ingestionErrors: Map[String, IngestionError]
