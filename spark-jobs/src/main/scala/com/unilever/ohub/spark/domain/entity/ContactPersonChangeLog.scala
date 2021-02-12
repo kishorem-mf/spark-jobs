@@ -17,7 +17,7 @@ object ContactPersonChangeLog extends DomainEntityCompanion[ContactPersonChangeL
   override val domainExportWriter: Option[DomainExportWriter[ContactPersonChangeLog]] = Some(ContactPersonChangeLogDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = None
-  override val azureDwWriter: Option[AzureDWWriter[ContactPersonChangeLog]] = None
+  override val azureDwWriter: Option[AzureDWWriter[ContactPersonChangeLog]] = Some(ContactPersonChangeLogDWWriter)
   override val excludedFieldsForCsvExport: Seq[String] = DomainEntityCompanion.defaultExcludedFieldsForCsvExport ++
     Seq("id", "creationTimestamp", "countryCode", "customerType", "sourceEntityId", "sourceName", "isActive", "ohubCreated", "ohubUpdated",
       "dateCreated", "dateUpdated", "isGoldenRecord")
