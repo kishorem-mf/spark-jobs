@@ -1,9 +1,11 @@
 package com.unilever.ohub.spark.export.ddl
 
+import java.util.UUID
+
 import com.unilever.ohub.spark.domain.DomainEntityUtils
-import com.unilever.ohub.spark.domain.entity.Operator
+import com.unilever.ohub.spark.domain.entity._
 import com.unilever.ohub.spark.export._
-import com.unilever.ohub.spark.export.ddl.model.DdlOperator
+import com.unilever.ohub.spark.export.ddl.model.{DdlContactPerson, DdlOperator, DdlOrder}
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{Dataset, SparkSession}
 
@@ -39,6 +41,52 @@ trait DdlOptions extends CsvOptions {
     }
 
   }
+
+object ContactPersonDdlOutboundWriter extends ExportOutboundWriter[ContactPerson] with DdlOptions {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[ContactPerson]) = {
+    import spark.implicits._
+    dataSet.map(ContactPersonDdlConverter.convert(_))
+  }
+
+  override def explainConversion: Option[ContactPerson => DdlContactPerson] = Some((input: ContactPerson) => ContactPersonDdlConverter.convert(input, true))
+
+  override def entityName(): String = "CONTACT PERSONS"
+
+  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
+
+    val currentIntegrated = storage.readFromParquet[ContactPerson](config.integratedInputFile)
+
+    exportToDdl(
+      currentIntegrated,
+      config.copy(targetType = TargetType.DDL),
+      spark
+    )
+  }
+
+}
+
+object OrderDdlOutboundWriter extends ExportOutboundWriter[Order] with DdlOptions {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Order]) = {
+    import spark.implicits._
+    dataSet.map(OrderDdlConverter.convert(_))
+  }
+
+  override def explainConversion: Option[Order => DdlOrder] = Some((input: Order) => OrderDdlConverter.convert(input, true))
+
+  override def entityName(): String = "ORDERS"
+
+  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
+
+    val currentIntegrated = storage.readFromParquet[Order](config.integratedInputFile)
+
+    exportToDdl(
+      currentIntegrated,
+      config.copy(targetType = TargetType.DDL),
+      spark
+    )
+  }
+
+}
 
   object AllDdlOutboundWriter extends SparkJobWithOutboundExportConfig {
     override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
