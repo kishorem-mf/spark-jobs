@@ -1,4 +1,5 @@
--J-Xms2000M
+-J-Xms1024M
+-J-Xss4M
 -J-Xmx6G
 -J-XX:-UseConcMarkSweepGC
 -J-XX:+UseG1GC
