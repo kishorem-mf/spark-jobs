@@ -7,6 +7,7 @@ import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.TargetType.{MEPS, TargetType}
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, OrderLineDWWriter}
+import com.unilever.ohub.spark.export.ddl.OrderlineDdlOutboundWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 import org.apache.spark.sql.{Dataset, SparkSession}
 
@@ -30,7 +31,7 @@ object OrderLine extends DomainEntityCompanion[OrderLine] {
   override val dispatchExportWriter: Option[ExportOutboundWriter[OrderLine]] = Some(com.unilever.ohub.spark.export.dispatch.OrderLineOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[OrderLine]] = Some(OrderLineDWWriter)
   override val auroraInboundWriter: Option[ExportOutboundWriter[OrderLine]] = Some(com.unilever.ohub.spark.datalake.OrderLineOutboundWriter)
-  override val ddlExportWriter: Option[ExportOutboundWriter[OrderLine]] = None
+  override val ddlExportWriter: Option[ExportOutboundWriter[OrderLine]] = Some(OrderlineDdlOutboundWriter)
 }
 
 case class OrderLine(
