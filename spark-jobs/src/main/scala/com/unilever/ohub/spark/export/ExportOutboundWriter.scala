@@ -138,7 +138,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     targetType match {
       case ACM ⇒ "UFS_" + entityName() + "_" + timestampFile + ".csv"
       case DISPATCHER ⇒ "UFS_DISPATCHER" + "_" + entityName() + "_" + timestampFile + ".csv"
-      case DDL ⇒ "UFS_DDL_" + entityName() + "_" + timestampFile + "_" + UUID.randomUUID() + ".csv"
+      case DDL ⇒ "AFH_DDL_" + entityName() + "_" + timestampFile + ".csv"
     }
   }
 
