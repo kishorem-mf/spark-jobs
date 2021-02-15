@@ -38,6 +38,18 @@ trait TestOrderLines {
     loyaltyPoints = Some(123),
     productOhubId = Some("product-ohub-id"),
     orderType = None,
+    //BDL fields
+    discount = None,
+    discountPercentage = None,
+    distributorProductCode = None,
+    freeOfCharge = None,
+    lineNumber = None,
+    materialNetWeight = None,
+    netInvoiceValue = None,
+    salesPrice = None,
+    unitOfMeasure = None,
+    volumeCasesSold = None,
+    wholesalerSellingPrice = None,
     // other fields
     additionalFields = Map(),
     ingestionErrors = Map()
