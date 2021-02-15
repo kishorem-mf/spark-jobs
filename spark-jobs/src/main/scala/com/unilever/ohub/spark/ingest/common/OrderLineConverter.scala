@@ -43,6 +43,18 @@ object OrderLineConverter extends CommonDomainGateKeeper[OrderLine] with OrderLi
         loyaltyPoints = optional("loyaltyPoints", toBigDecimal),
         productOhubId = None, // set in OrderLineMerging
         orderType = optional("orderType"),
+        //BDL Fields
+        discount = optional("discount", toBigDecimal),
+        discountPercentage = optional("discountPercentage", toBigDecimal),
+        distributorProductCode = optional("distributorProductCode"),
+        freeOfCharge = optional("freeOfCharge", toBoolean),
+        lineNumber = optional("lineNumber"),
+        materialNetWeight = optional("materialNetWeight", toBigDecimal),
+        netInvoiceValue = optional("netInvoiceValue", toBigDecimal),
+        salesPrice = optional("salesPrice", toBigDecimal),
+        unitOfMeasure = optional("unitOfMeasure"),
+        volumeCasesSold = optional("volumeCasesSold", toBigDecimal),
+        wholesalerSellingPrice = optional("wholesalerSellingPrice", toBigDecimal),
         additionalFields = additionalFields,
         ingestionErrors = errors
       )

@@ -63,6 +63,18 @@ case class OrderLine(
                       loyaltyPoints: Option[BigDecimal],
                       productOhubId: Option[String],
                       orderType: Option[String],
+                      //BDL fields
+                      discount : Option[BigDecimal],
+                      discountPercentage : Option[BigDecimal],
+                      distributorProductCode : Option[String],
+                      freeOfCharge : Option[Boolean],
+                      lineNumber : Option[String],
+                      materialNetWeight : Option[BigDecimal],
+                      netInvoiceValue : Option[BigDecimal],
+                      salesPrice : Option[BigDecimal],
+                      unitOfMeasure : Option[String],
+                      volumeCasesSold : Option[BigDecimal],
+                      wholesalerSellingPrice : Option[BigDecimal],
                       // other fields
                       additionalFields: Map[String, String],
                       ingestionErrors: Map[String, IngestionError]
