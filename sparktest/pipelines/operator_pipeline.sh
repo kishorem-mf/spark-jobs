@@ -122,8 +122,6 @@ spark-submit   --class="com.unilever.ohub.spark.merging.OperatorUpdateChannelMap
 echo
 echo OperatorCreatePerfectGoldenRecord
 spark-submit   --class="com.unilever.ohub.spark.merging.OperatorCreatePerfectGoldenRecord" ${SPARK_JOBS_JAR} \
-               --driver-memory=4G \
-               --executor-memory=4G \ 
                --inputFile=${DATA_OPERATORS_INTEGRATED_OUTPUT} \
                --outputFile=${DATA_OPERATORS_CREATED_GOLDEN_RECORDS}
 
