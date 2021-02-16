@@ -19,6 +19,7 @@ def spark(request):
     spark = (
         SparkSession.builder
         .master("local[2]")
+        .config("spark.driver.memory", "10g")
         .appName("pytest")
         .config("spark.ui.enabled", "false")
         .getOrCreate()
