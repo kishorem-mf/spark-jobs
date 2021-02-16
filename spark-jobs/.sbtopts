@@ -1,5 +1,6 @@
--J-Xms512M
--J-Xmx2G
+-J-Xms1024M
+-J-Xss4M
+-J-Xmx6G
 -J-XX:-UseConcMarkSweepGC
 -J-XX:+UseG1GC
 -J-XX:MaxGCPauseMillis=200
