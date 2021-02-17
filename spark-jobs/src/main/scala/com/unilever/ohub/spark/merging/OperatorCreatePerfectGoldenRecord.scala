@@ -9,9 +9,6 @@ import org.apache.spark.sql.SparkSession
 object OperatorCreatePerfectGoldenRecord extends BaseMerging[OperatorGolden] {
 
   override def run(spark: SparkSession, config: DefaultConfig, storage: Storage): Unit = {
-
-    log.info(s"Creating golden operators records based on [${config.inputFile}] and writing them to [${config.outputFile}]")
-
     val entity = storage.readFromParquet[OperatorGolden](config.inputFile)
 
     val transformed = transform(spark, entity)
