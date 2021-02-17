@@ -24,8 +24,6 @@ trait SparkJob[Config <: SparkJobConfig] { self ⇒
     implicit val spark = SparkSession
       .builder()
       .appName(jobName)
-      .config("spark.driver.memory", "10g")
-      .config("spark.executor.memory", "10g")
       .getOrCreate()
 
     val storage = new DefaultStorage(spark)
