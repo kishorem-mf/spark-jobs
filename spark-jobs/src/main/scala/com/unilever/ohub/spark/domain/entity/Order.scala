@@ -9,6 +9,7 @@ import com.unilever.ohub.spark.export.TargetType.{MEPS, TargetType}
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, OrderDWWriter}
 import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter, OrderDLWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
+import org.apache.spark.sql.types.Decimal
 import org.apache.spark.sql.{Dataset, SparkSession}
 
 object OrderDomainExportWriter extends DomainExportWriter[Order] {
@@ -103,13 +104,13 @@ case class Order(
                   customerNameLevel5 : Option[String],
                   customerNameLevel6 : Option[String],
                   deliveryStatus : Option[String],
-                  discount : Option[BigDecimal],
+                  discount : Option[Decimal],
                   externalCustomerHierarchyLevel1 : Option[String],
                   externalCustomerHierarchyLevel1Description : Option[String],
                   externalCustomerHierarchyLevel2 : Option[String],
                   externalCustomerHierarchyLevel2Description : Option[String],
                   invoiceNumber : Option[String],
-                  netInvoiceValue : Option[BigDecimal],
+                  netInvoiceValue : Option[Decimal],
                   opportunityOwner : Option[String],
                   orderCreationDate : Option[Timestamp],
                   purchaseOrderNumber : Option[String],
@@ -117,10 +118,10 @@ case class Order(
                   rejectionStatus : Option[String],
                   sellInOrSellOut : Option[String],
                   stageOfCompletion : Option[String],
-                  totalGrossPrice : Option[BigDecimal],
-                  totalSurcharge : Option[BigDecimal],
+                  totalGrossPrice : Option[Decimal],
+                  totalSurcharge : Option[Decimal],
                   wholesalerDistributionCenter : Option[String],
-                  wholesalerSellingPriceBasedAmount : Option[BigDecimal],
+                  wholesalerSellingPriceBasedAmount : Option[Decimal],
                   // other fields
                   additionalFields: Map[String, String],
                   ingestionErrors: Map[String, IngestionError]
