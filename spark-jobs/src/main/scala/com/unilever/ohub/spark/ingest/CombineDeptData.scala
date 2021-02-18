@@ -21,13 +21,15 @@ object CombineDeptData extends SparkJob[CombineDeptDataConfig] {
                  oohDeptData: DataFrame
                ): DataFrame = {
     import spark.implicits._
-
+    // scalastyle:off
+    // null values are added as they are empty cells
     def customSelect(availableCols: List[String], requiredCols: List[String]) = {
       requiredCols.map(column => column match {
         case column if availableCols.contains(column) => col(column)
         case _ => lit(null).as(column)
       })
     }
+    // scalastyle:on
     val combinedData = ufsDeptData.select(customSelect(
       ufsDeptData.columns.toList,
       oohDeptData.columns.toList)
