@@ -202,7 +202,7 @@ object OperatorConverter extends CommonDomainGateKeeper[Operator] with OperatorE
         hasPermittedToOrder = optional("hasPermittedToOrder",toBoolean),
         ofsValue = optional("ofsValue"),
         routeToMarketIceCreamCategory = optional("routeToMarketIceCreamCategory"),
-    //other fields
+        //other fields
         additionalFields = additionalFields,
         ingestionErrors = errors
       )
