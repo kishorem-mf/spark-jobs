@@ -11,8 +11,8 @@ object OperatorCreatePerfectGoldenRecord extends BaseMerging[OperatorGolden] {
   override def run(spark: SparkSession, config: DefaultConfig, storage: Storage): Unit = {
     val entity = storage.readFromParquet[OperatorGolden](config.inputFile)
 
-    val transformed = transform(spark, entity)
+    //val transformed = transform(spark, entity)
 
-    storage.writeToParquet(transformed, config.outputFile)
+    storage.writeToParquet(entity, config.outputFile)
   }
 }
