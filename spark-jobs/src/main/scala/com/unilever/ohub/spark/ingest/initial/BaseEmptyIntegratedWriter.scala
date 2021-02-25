@@ -42,6 +42,8 @@ object ActivityEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Activity]
 
 object AnswerEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Answer] with AnswerEmptyParquetWriter
 
+object AssetEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Asset] with AssetEmptyParquetWriter
+
 object CampaignEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[Campaign] with CampaignEmptyParquetWriter
 
 object CampaignBounceEmptyIntegratedWriter extends BaseEmptyIntegratedWriter[CampaignBounce] with CampaignBounceEmptyParquetWriter

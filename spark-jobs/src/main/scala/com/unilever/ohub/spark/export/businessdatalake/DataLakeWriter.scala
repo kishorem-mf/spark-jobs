@@ -105,6 +105,8 @@ abstract class AzureDLWriter[DomainType <: DomainEntity : TypeTag] extends Spark
 }
 object ActivityDLWriter extends AzureDLWriter[Activity]
 
+object AssetDLWriter extends AzureDLWriter[Asset]
+
 object AnswerDLWriter extends AzureDLWriter[Answer]
 
 object CampaignDLWriter extends AzureDLWriter[Campaign]

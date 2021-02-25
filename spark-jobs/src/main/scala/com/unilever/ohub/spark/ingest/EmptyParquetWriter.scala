@@ -228,4 +228,11 @@ trait OperatorGoldenEmptyParquetWriter extends EmptyParquetWriter[OperatorGolden
   }
 }
 
+trait AssetEmptyParquetWriter extends EmptyParquetWriter[Asset] {
 
+  def createEmptyDataset(spark: SparkSession): Dataset[Asset] = {
+    import spark.implicits._
+
+    spark.createDataset[Asset](Seq[Asset]())
+  }
+}
