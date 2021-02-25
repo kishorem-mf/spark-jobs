@@ -27,6 +27,8 @@ object ActivityPreProcess extends BasePreProcess[Activity]
 
 object AnswerPreProcess extends BasePreProcess[Answer]
 
+object AssetMovementPreProcess extends BasePreProcess[AssetMovement]
+
 object AssetPreProcess extends BasePreProcess[Asset]
 
 object QuestionPreProcess extends BasePreProcess[Question]
