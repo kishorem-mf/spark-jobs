@@ -5,7 +5,7 @@ import com.unilever.ohub.spark.domain.entity._
 import org.apache.spark.sql.Dataset
 import com.unilever.ohub.spark.SharedSparkSession.spark
 
-class AnswerMergingSpec extends SparkJobSpec with TestAssets {
+class AssetMergingSpec extends SparkJobSpec with TestAssets {
 
   import spark.implicits._
 
