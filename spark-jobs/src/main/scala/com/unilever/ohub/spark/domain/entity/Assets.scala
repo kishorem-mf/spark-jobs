@@ -13,7 +13,7 @@ object AssetDomainExportWriter extends DomainExportWriter[Asset]
 
 object Asset extends DomainEntityCompanion[Asset] {
   override val auroraFolderLocation = None
-  override val engineFolderName: String = "activities"
+  override val engineFolderName: String = "assets"
   override val domainExportWriter: Option[DomainExportWriter[Asset]] = Some(AssetDomainExportWriter)
   override val acmExportWriter: Option[ExportOutboundWriter[Asset]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[Asset]] = None
