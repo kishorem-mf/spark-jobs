@@ -34,6 +34,7 @@ trait TestAssetMovements {
     comment = None,
     owner = None,
     quantityOfUnits = None,
+    `type` = None,
     returnDate = None,
     assetStatus = None,
 

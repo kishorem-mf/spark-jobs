@@ -241,8 +241,6 @@ object AssetDWWriter extends AzureDWWriter[Asset]
 
 object AnswerDWWriter extends AzureDWWriter[Answer]
 
-object AssetMovementDWWriter extends AzureDWWriter[AssetMovement]
-
 object CampaignDWWriter extends AzureDWWriter[Campaign]
 
 object CampaignBounceDWWriter extends AzureDWWriter[CampaignBounce]

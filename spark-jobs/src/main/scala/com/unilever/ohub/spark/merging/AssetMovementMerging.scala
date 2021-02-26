@@ -10,7 +10,7 @@ import org.apache.spark.sql.{ Dataset, SparkSession }
 import scopt.OptionParser
 
 case class AssetMovementMergingConfig(
-                                       AssetMovements: String = "answer-input-file",
+                                       AssetMovements: String = "assetmovement-input-file",
                                        previousIntegrated: String = "previous-integrated-file",
                                        outputFile: String = "path-to-output-file"
                                      ) extends SparkJobConfig

@@ -5,7 +5,7 @@ import java.sql.Timestamp
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
-import com.unilever.ohub.spark.export.azuredw.{AssetMovementDWWriter, AzureDWWriter}
+import com.unilever.ohub.spark.export.azuredw.AzureDWWriter
 import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter,AssetMovementDLWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
@@ -13,12 +13,12 @@ object AssetMovementDomainExportWriter extends DomainExportWriter[AssetMovement]
 
 object AssetMovement extends DomainEntityCompanion[AssetMovement] {
   override val auroraFolderLocation = None
-  override val engineFolderName: String = "AssetMovement"
-  override val domainExportWriter: Option[DomainExportWriter[AssetMovement]] = Some(AssetMovementDomainExportWriter)
+  override val engineFolderName: String = "assetmovements"
+  override val domainExportWriter: Option[DomainExportWriter[AssetMovement]] = None
   override val acmExportWriter: Option[ExportOutboundWriter[AssetMovement]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[AssetMovement]] = None
-  override val azureDwWriter: Option[AzureDWWriter[AssetMovement]] = Some(AssetMovementDWWriter)
-  override val auroraInboundWriter: Option[ExportOutboundWriter[AssetMovement]] = Some(com.unilever.ohub.spark.datalake.AssetMovementOutboundWriter)
+  override val azureDwWriter: Option[AzureDWWriter[AssetMovement]] = None
+  override val auroraInboundWriter: Option[ExportOutboundWriter[AssetMovement]] = None
   override val dataLakeWriter: Option[AzureDLWriter[AssetMovement]] = Some(AssetMovementDLWriter)
 }
 
@@ -55,6 +55,7 @@ case class AssetMovement(
                           comment: Option[String],
                           owner: Option[String],
                           quantityOfUnits: Option[Int],
+                          `type`: Option[String],
                           returnDate: Option[Timestamp],
                           assetStatus: Option[String],
 

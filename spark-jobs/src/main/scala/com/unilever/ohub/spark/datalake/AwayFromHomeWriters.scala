@@ -56,15 +56,6 @@ object AnswerOutboundWriter extends ExportOutboundWriter[Answer] {
   override def entityName(): String = domainEntityCompanion.engineFolderName
 }
 
-object AssetMovementOutboundWriter extends ExportOutboundWriter[AssetMovement] {
-  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[AssetMovement]) = {
-    // This is needed because in ExportOutboundWriter convertDataSet and entityName is mandatory
-    dataSet
-  }
-  protected val domainEntityCompanion = DomainEntityUtils.domainCompanionOf[AssetMovement]
-  override def entityName(): String = domainEntityCompanion.engineFolderName
-}
-
 object CampaignOutboundWriter extends ExportOutboundWriter[Campaign] {
   override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Campaign]) = {
     // This is needed because in ExportOutboundWriter convertDataSet and entityName is mandatory
