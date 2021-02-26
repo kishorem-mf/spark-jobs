@@ -100,6 +100,15 @@ trait AnswerEmptyParquetWriter extends EmptyParquetWriter[Answer] {
   }
 }
 
+trait AssetMovementEmptyParquetWriter extends EmptyParquetWriter[AssetMovement] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[AssetMovement] = {
+    import spark.implicits._
+
+    spark.createDataset[AssetMovement](Seq[AssetMovement]())
+  }
+}
+
 trait LoyaltyPointsEmptyParquetWriter extends EmptyParquetWriter[LoyaltyPoints] {
 
   def createEmptyDataset(spark: SparkSession): Dataset[LoyaltyPoints] = {

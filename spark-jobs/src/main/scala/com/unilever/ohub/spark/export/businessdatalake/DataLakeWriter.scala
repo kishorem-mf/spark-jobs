@@ -109,6 +109,8 @@ object AssetDLWriter extends AzureDLWriter[Asset]
 
 object AnswerDLWriter extends AzureDLWriter[Answer]
 
+object AssetMovementDLWriter extends AzureDLWriter[AssetMovement]
+
 object CampaignDLWriter extends AzureDLWriter[Campaign]
 
 object CampaignBounceDLWriter extends AzureDLWriter[CampaignBounce]
