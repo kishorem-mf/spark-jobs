@@ -4,17 +4,15 @@ import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.{Calendar, UUID}
 
-import com.unilever.ohub.spark.SparkJobConfig
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
-import org.apache.spark.sql.{SparkSession, _}
-import org.apache.spark.sql.functions._
 import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{SparkSession, _}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{LocalDate, Period}
 
-import scala.collection.immutable.Stream.Empty
 import scala.util.control.Breaks._
 
 

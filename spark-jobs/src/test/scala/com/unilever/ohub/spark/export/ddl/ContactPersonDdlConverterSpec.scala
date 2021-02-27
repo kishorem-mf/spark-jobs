@@ -1,12 +1,12 @@
 package com.unilever.ohub.spark.export.ddl
 
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.TestContactPersons
+import com.unilever.ohub.spark.domain.entity.TestContactPersonsGolden
 import com.unilever.ohub.spark.export.ddl.model.DdlContactPerson
 
-class ContactPersonDdlConverterSpec extends SparkJobSpec with TestContactPersons {
+class ContactPersonDdlConverterSpec extends SparkJobSpec with TestContactPersonsGolden {
   val SUT = ContactPersonDdlConverter
-  val contactPersonToConvert = defaultContactPerson.copy(ohubId = Some("12345"))
+  val contactPersonToConvert = defaultContactPersonGolden.copy(ohubId = Some("12345"))
 
   describe("Contact person ddl converter") {
     it("should convert a contact person parquet correctly into an contact person csv") {

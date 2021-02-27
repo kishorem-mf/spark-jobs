@@ -1,14 +1,14 @@
 package com.unilever.ohub.spark.export.ddl
 
 import com.unilever.ohub.spark.SparkJobSpec
-import com.unilever.ohub.spark.domain.entity.TestOperators
+import com.unilever.ohub.spark.domain.entity.TestOperatorsGolden
 import com.unilever.ohub.spark.export.ddl.model.DdlOperator
 
-class OperatorDdlConverterSpec extends SparkJobSpec with TestOperators {
+class OperatorDdlConverterSpec extends SparkJobSpec with TestOperatorsGolden {
 
 
   val SUT = OperatorDdlConverter
-  val operatorToConvert = defaultOperator.copy(ohubId = Some("12345"), globalChannel = Some("globalChannel"))
+  val operatorToConvert = defaultOperatorGolden.copy(ohubId = Some("12345"), globalChannel = Some("globalChannel"))
 
   describe("operator ddl converter") {
     it("should convert a domain operator correctly into an ddl operator") {

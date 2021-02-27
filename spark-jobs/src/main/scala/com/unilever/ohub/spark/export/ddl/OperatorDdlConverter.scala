@@ -1,13 +1,13 @@
 package com.unilever.ohub.spark.export.ddl
 
-import com.unilever.ohub.spark.domain.entity.Operator
+import com.unilever.ohub.spark.domain.entity.OperatorGolden
 import com.unilever.ohub.spark.export._
 import com.unilever.ohub.spark.export.ddl.model.DdlOperator
 
-object OperatorDdlConverter extends Converter[Operator, DdlOperator] with TypeConversionFunctions {
+object OperatorDdlConverter extends Converter[OperatorGolden, DdlOperator] with TypeConversionFunctions {
 
   // scalastyle:off method.length
-  override def convert(implicit op: Operator, explain: Boolean = false): DdlOperator = {
+  override def convert(implicit op: OperatorGolden, explain: Boolean = false): DdlOperator = {
     DdlOperator(
       afhCustomerGoldenID = getValue("ohubId"),
       crmAccountID = Option.empty,

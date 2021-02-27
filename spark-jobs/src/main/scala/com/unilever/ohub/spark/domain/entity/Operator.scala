@@ -19,7 +19,7 @@ object Operator extends DomainEntityCompanion[Operator] {
   override val dispatchExportWriter: Option[ExportOutboundWriter[Operator]] = Some(com.unilever.ohub.spark.export.dispatch.OperatorOutboundWriter)
   override val auroraInboundWriter: Option[ExportOutboundWriter[Operator]] = Some(com.unilever.ohub.spark.datalake.OperatorOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[Operator]] = Some(OperatorDWWriter)
-  override val ddlExportWriter: Option[ExportOutboundWriter[Operator]] = Some(OperatorDdlOutboundWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[Operator]] = None
 }
 
 case class Operator(

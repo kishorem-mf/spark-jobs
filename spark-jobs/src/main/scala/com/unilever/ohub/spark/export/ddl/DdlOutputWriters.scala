@@ -17,19 +17,19 @@ trait DdlOptions extends CsvOptions {
 
 }
 
-object OperatorDdlOutboundWriter extends ExportOutboundWriter[Operator] with DdlOptions {
-  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Operator]) = {
+object OperatorDdlOutboundWriter extends ExportOutboundWriter[OperatorGolden] with DdlOptions {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[OperatorGolden]) = {
     import spark.implicits._
     dataSet.map(OperatorDdlConverter.convert(_))
   }
 
-  override def explainConversion: Option[Operator => DdlOperator] = Some((input: Operator) => OperatorDdlConverter.convert(input, true))
+  override def explainConversion: Option[OperatorGolden => DdlOperator] = Some((input: OperatorGolden) => OperatorDdlConverter.convert(input, true))
 
   override def entityName(): String = "OPERATORS"
 
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
 
-    val currentIntegrated = storage.readFromParquet[Operator](config.integratedInputFile)
+    val currentIntegrated = storage.readFromParquet[OperatorGolden](config.integratedInputFile)
 
     exportToDdl(
       currentIntegrated,
@@ -37,22 +37,21 @@ object OperatorDdlOutboundWriter extends ExportOutboundWriter[Operator] with Ddl
       spark
     )
   }
-
 }
 
-object ContactPersonDdlOutboundWriter extends ExportOutboundWriter[ContactPerson] with DdlOptions {
-  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[ContactPerson]) = {
+object ContactPersonDdlOutboundWriter extends ExportOutboundWriter[ContactPersonGolden] with DdlOptions {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[ContactPersonGolden]) = {
     import spark.implicits._
     dataSet.map(ContactPersonDdlConverter.convert(_))
   }
 
-  override def explainConversion: Option[ContactPerson => DdlContactPerson] = Some((input: ContactPerson) => ContactPersonDdlConverter.convert(input, true))
+  override def explainConversion: Option[ContactPersonGolden => DdlContactPerson] = Some((input: ContactPersonGolden) => ContactPersonDdlConverter.convert(input, true))
 
   override def entityName(): String = "CONTACTPERSON"
 
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
 
-    val currentIntegrated = storage.readFromParquet[ContactPerson](config.integratedInputFile)
+    val currentIntegrated = storage.readFromParquet[ContactPersonGolden](config.integratedInputFile)
 
     exportToDdl(
       currentIntegrated,
@@ -124,6 +123,30 @@ object OrderlineDdlOutboundWriter extends ExportOutboundWriter[OrderLine] with D
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
 
     val currentIntegrated = storage.readFromParquet[OrderLine](config.integratedInputFile)
+
+    exportToDdl(
+      currentIntegrated,
+      config.copy(targetType = TargetType.DDL),
+      spark
+    )
+  }
+
+}
+
+object ProductDdlOutboundWriter extends ExportOutboundWriter[Product] with DdlOptions {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Product]) = {
+    import spark.implicits._
+    dataSet.map(ProductsDdlConverter.convert(_))
+  }
+
+  override def explainConversion: Option[Product => DdlProducts] = Some((input: Product)
+  => ProductsDdlConverter.convert(input, true))
+
+  override def entityName(): String = "PRODUCTS"
+
+  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
+
+    val currentIntegrated = storage.readFromParquet[Product](config.integratedInputFile)
 
     exportToDdl(
       currentIntegrated,

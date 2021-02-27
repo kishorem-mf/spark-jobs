@@ -3,20 +3,20 @@ package com.unilever.ohub.spark.export.ddl
 import java.util.UUID
 
 import com.unilever.ohub.spark.SharedSparkSession.spark
-import com.unilever.ohub.spark.domain.entity.TestContactPersons
+import com.unilever.ohub.spark.domain.entity.TestContactPersonsGolden
 import com.unilever.ohub.spark.export.TargetType
 import com.unilever.ohub.spark.export.domain.InMemStorage
 import com.unilever.ohub.spark.{SparkJobSpec, export}
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.scalatest.{BeforeAndAfter, Matchers}
 
-class ContactPersonDdlExportWriterSpec extends SparkJobSpec with TestContactPersons with BeforeAndAfter with Matchers {
+class ContactPersonDdlExportWriterSpec extends SparkJobSpec with TestContactPersonsGolden with BeforeAndAfter with Matchers {
 
   import spark.implicits._
 
 
-  private val contactpersons = Seq(defaultContactPerson).toDataset
-  private val integrated = Seq(defaultContactPerson).toDataset
+  private val contactpersons = Seq(defaultContactPersonGolden).toDataset
+  private val integrated = Seq(defaultContactPersonGolden).toDataset
   private val SUT = com.unilever.ohub.spark.export.ddl.ContactPersonDdlOutboundWriter
   private val outboundLocation = UUID.randomUUID().toString
   private val config = export.OutboundConfig(
@@ -41,16 +41,15 @@ class ContactPersonDdlExportWriterSpec extends SparkJobSpec with TestContactPers
 
 
       val integratedDs = Seq(
-        defaultContactPerson.copy(concatId = "AU~WUFOO~101", ohubId = Some("1"), isGoldenRecord = true, sourceName = "FRONTIER"),
-        defaultContactPerson.copy(concatId = "AU~WUFOO~102", ohubId = Some("3"), isGoldenRecord = true, sourceName = "FRONTIER"),
-        defaultContactPerson.copy(concatId = "AU~WUFOO~104", ohubId = Some("2"), isGoldenRecord = true, sourceName = "FRONTIER")
+        defaultContactPersonGolden.copy(concatId = "AU~WUFOO~101", ohubId = Some("1"), sourceName = "FRONTIER", isGoldenRecord = true),
+        defaultContactPersonGolden.copy(concatId = "AU~WUFOO~102", ohubId = Some("3"), sourceName = "FRONTIER", isGoldenRecord = true),
+        defaultContactPersonGolden.copy(concatId = "AU~WUFOO~104", ohubId = Some("2"), sourceName = "FRONTIER", isGoldenRecord = true)
       ).toDataset
 
       SUT.exportToDdl(integratedDs, config, spark)
 
-      val result = spark.read.option("sep",";").option("header","true").csv(config.outboundLocation + "/UFS_DDL_*.csv/*.csv")
+      val result = spark.read.option("sep", ";").option("header", "true").csv(config.outboundLocation + "/AFH_SALESFORCE_*/*/AFH_SALESFORCE_*.csv")
       result.count() shouldBe 3
     }
-
   }
 }

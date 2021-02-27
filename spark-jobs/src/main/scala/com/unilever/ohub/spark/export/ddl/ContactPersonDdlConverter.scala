@@ -1,12 +1,12 @@
 package com.unilever.ohub.spark.export.ddl
 
-import com.unilever.ohub.spark.domain.entity.ContactPerson
+import com.unilever.ohub.spark.domain.entity.ContactPersonGolden
 import com.unilever.ohub.spark.export._
 import com.unilever.ohub.spark.export.ddl.model.DdlContactPerson
 
-object ContactPersonDdlConverter extends Converter[ContactPerson, DdlContactPerson] with TypeConversionFunctions {
+object ContactPersonDdlConverter extends Converter[ContactPersonGolden, DdlContactPerson] with TypeConversionFunctions {
 
-  override def convert(implicit cp: ContactPerson, explain: Boolean = false): DdlContactPerson = {
+  override def convert(implicit cp: ContactPersonGolden, explain: Boolean = false): DdlContactPerson = {
     DdlContactPerson(
       crmConcatId = Option.empty,
       contactJobTitle = getValue("jobTitle"),

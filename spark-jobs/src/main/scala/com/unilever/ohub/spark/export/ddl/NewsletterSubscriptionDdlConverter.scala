@@ -24,7 +24,7 @@ object NewsletterSubscriptionDdlConverter extends Converter[Subscription, DdlNew
       status = Option.empty,
       statusOptOut = Option.empty,
       subscribed = getValue("hasSubscription", BooleanToYNConverter),
-      subscriptionConfirmed = Some(getValue("hasConfirmedSubscription", BooleanToYNConverter)),
+      subscriptionConfirmed = getValue("hasConfirmedSubscription", BooleanToYNConverter),
       subscriptionConfirmedDate = getValue("confirmedSubscriptionDate"),
       subscriptionDate = getValue("subscriptionDate"),
       subscriptionType = getValue("subscriptionType"),

@@ -48,7 +48,7 @@ class NewsletterSubscriptionDdlExportWriterSpec extends SparkJobSpec with TestSu
 
       SUT.exportToDdl(integratedDs, config, spark)
 
-      val result = spark.read.option("sep", ";").option("header", "true").csv(config.outboundLocation + "/UFS_DDL_*.csv/*.csv")
+      val result = spark.read.option("sep", ";").option("header", "true").csv(config.outboundLocation + "/AFH_SALESFORCE_*/*/AFH_SALESFORCE_*.csv")
       result.count() shouldBe 3
     }
 

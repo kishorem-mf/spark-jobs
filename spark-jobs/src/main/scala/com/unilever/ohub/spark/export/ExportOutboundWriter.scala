@@ -16,7 +16,7 @@ import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
 import com.unilever.ohub.spark.{Constants, SparkJob, SparkJobConfig}
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
-import org.apache.spark.sql.functions.upper
+import org.apache.spark.sql.functions.{current_timestamp, date_format, upper}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
 import scopt.OptionParser
@@ -138,7 +138,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     targetType match {
       case ACM ⇒ "UFS_" + entityName() + "_" + timestampFile + ".csv"
       case DISPATCHER ⇒ "UFS_DISPATCHER" + "_" + entityName() + "_" + timestampFile + ".csv"
-      case DDL ⇒ "AFH_DDL_" + entityName() + "_" + timestampFile + ".csv"
+      case DDL ⇒ "AFH_SALESFORCE_" + entityName()
     }
   }
 
@@ -250,8 +250,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     val domainEntities = config.targetType match {
       case ACM ⇒ goldenRecordOnlyFilter(spark, dataset).filter(!$"countryCode".isin(config.excludeCountryCodes.split(";"): _*))
       case DDL ⇒ dataset.filter($"countryCode".isin(config.auroraCountryCodes.split(";"): _*))
-        .filter($"sourceName".like(config.sourceName))
-        .filter($"isGoldenRecord" )
+        .filter($"sourceName".isin(config.sourceName))
+        .filter($"isGoldenRecord")
         .where($"ohubUpdated".between(config.fromDate, config.toDate.getOrElse(config.fromDate)))
       case _ ⇒ dataset
     }
@@ -477,6 +477,18 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
         .option("encoding", "UTF-8")
       writeableData.csv(outputFilePath.toString)
     }
+    import sparkSession.implicits._
+    val fs = FileSystem.get(sparkSession.sparkContext.hadoopConfiguration)
+    val sourceDirectory = new Path(outputFilePath.toString)
+    fs.listStatus(sourceDirectory)
+      .filter(p ⇒ p.isFile)
+      .filter(p ⇒ p.getPath.getName.endsWith(".csv"))
+      .map(_.getPath)
+      .foreach({
+        val dateFormat = "yyyyMMddHHmmSS"
+        val dateValue = sparkSession.range(1).select(date_format(current_timestamp, dateFormat)).as[(String)].first
+        fs.rename(_, new Path(outputFilePath.toString + "/" + filename(config.targetType) + "_" + "_" + dateValue.toString() + "_" + UUID.randomUUID.toString() + ".csv"))
+      })
   }
 
   def getBytes(value: Any): Long = {
