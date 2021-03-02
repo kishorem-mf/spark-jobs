@@ -37,7 +37,7 @@ class AssetConverterSpec extends CsvDomainGateKeeperSpec[Asset] {
           crmId = None,
           name =  None,
           brandName =  None,
-          assetType = None,
+          `type` = None,
           description =  None,
           dimensions =  None,
           numberOfTimesRepaired =  None,

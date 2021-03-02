@@ -44,7 +44,7 @@ case class Asset(
                      // specific fields
                      crmId: Option[String],
                      name: Option[String],
-                     assetType: Option[String],
+                     `type`: Option[String],
                      brandName: Option[String],
                      description: Option[String],
                      dimensions: Option[String],
