@@ -34,7 +34,7 @@ object AssetConverter extends CommonDomainGateKeeper[Asset] with AssetEmptyParqu
 
         crmId = optional("crmId"),
         name = optional("name"),
-        `type` = optional("assetType"),
+        `type` = optional("type"),
         brandName = optional("brandName"),
         description = optional("description"),
         dimensions = optional("dimensions"),
