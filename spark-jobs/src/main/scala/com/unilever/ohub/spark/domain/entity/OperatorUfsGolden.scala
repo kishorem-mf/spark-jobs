@@ -13,7 +13,7 @@ import org.apache.spark.sql.types.Decimal
 
 object OperatorUfsGolden extends DomainEntityCompanion[OperatorUfsGolden] {
   override val auroraFolderLocation = None
-  override val engineFolderName = "operators_golden"
+  override val engineFolderName = "operators_golden_ufs"
   override val domainExportWriter: Option[DomainExportWriter[OperatorUfsGolden]] = None
   override val acmExportWriter: Option[ExportOutboundWriter[OperatorUfsGolden]] = None
   override val dispatchExportWriter: Option[ExportOutboundWriter[OperatorUfsGolden]] = None
