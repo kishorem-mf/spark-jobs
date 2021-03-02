@@ -33,7 +33,7 @@ class TestOperators(object):
 
         assertDataframeCount(spark, "/usr/local/data/output/integrated/operators", 1000)
 
-        assertDataframeCount(spark, "/usr/local/data/output/integrated/operators_golden_ufs", 733)
+        assertDataframeCount(spark, "/usr/local/data/output/integrated/operators_golden", 733)
 
         # 46 unique ohubId's for DE
         assert (spark
