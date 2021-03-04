@@ -146,8 +146,10 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     val year = folderDate.split("-")(0)
     val month = folderDate.split("-")(1)
     val day = folderDate.split("-")(2)
-    val inboundProcessedCsv = Try(storage.readFromCsv(inboundProcessPath, ";", true,"\\")).getOrElse(spark.createDataset[DomainType](Nil))
-
+    var inboundProcessedCsv = Try(storage.readFromCsv(inboundProcessPath, ";", true, "\\")).getOrElse(spark.createDataset[DomainType](Nil))
+    if(entityName().equals("loyaltypoints")) {
+     inboundProcessedCsv = inboundProcessedCsv.withColumn("isActive",lit("true"))
+    }
     val exclusionlist = spark.createDataFrame(
       spark.sparkContext.parallelize(Constants.exclusionSourceEntityCountryList),
       StructType(Constants.schemaforexclusionSourceEntityCountryList)
@@ -176,6 +178,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
                 , $"o.countryCode" === $"e.countryCode"
                   && upper($"o.sourceName") === upper($"e.sourceName")
                   && $"e.entity" === entityName()
+                  && $"o.isActive" === $"e.isActive"
                 , "left").filter($"e.countryCode".isNull)
                 .select($"o.*")
 
