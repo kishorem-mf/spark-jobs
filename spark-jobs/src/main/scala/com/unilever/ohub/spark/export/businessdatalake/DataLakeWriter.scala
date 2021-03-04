@@ -153,6 +153,8 @@ object OperatorChangeLogDLWriter extends AzureDLWriter[OperatorChangeLog]
 
 object ContactPersonChangeLogDLWriter extends AzureDLWriter[ContactPersonChangeLog]
 
+object WholesalerAssignmentDLWriter extends AzureDLWriter[WholesalerAssignment]
+
 object AllDLOutboundWriter extends SparkJobWithAzureDLConfiguration {
   override def run(spark: SparkSession, config: DataLakeConfig, storage: Storage): Unit = {
     DomainEntityUtils.domainCompanionObjects

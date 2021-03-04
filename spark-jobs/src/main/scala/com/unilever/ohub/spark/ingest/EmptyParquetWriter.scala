@@ -237,6 +237,15 @@ trait OperatorGoldenEmptyParquetWriter extends EmptyParquetWriter[OperatorGolden
   }
 }
 
+trait WholesalerAssignmentEmptyParquetWriter extends EmptyParquetWriter[WholesalerAssignment] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[WholesalerAssignment] = {
+    import spark.implicits._
+
+    spark.createDataset[WholesalerAssignment](Seq[WholesalerAssignment]())
+  }
+}
+
 trait AssetEmptyParquetWriter extends EmptyParquetWriter[Asset] {
 
   def createEmptyDataset(spark: SparkSession): Dataset[Asset] = {

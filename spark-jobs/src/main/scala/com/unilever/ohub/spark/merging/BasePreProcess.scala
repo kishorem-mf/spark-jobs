@@ -49,6 +49,8 @@ object ChannelMappingPreProcess extends BasePreProcess[ChannelMapping]
 
 object ChainPreProcess extends BasePreProcess[Chain]
 
+object WholesalerAssignmentPreProcess extends BasePreProcess[WholesalerAssignment]
+
 case class PreProcessConfig(
     integratedInputFile: String = "path-to-integrated-input-file",
     deltaInputFile: String = "path-to-delta-input-file",

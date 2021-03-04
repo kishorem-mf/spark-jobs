@@ -207,7 +207,6 @@ class OperatorConverterSpec extends CsvDomainGateKeeperSpec[Operator] {
           ingestionErrors = Map(),
           ufsClientNumber = None,
           department = Some("UFS")
-//          department = None
         )
 
         actualOperator shouldBe expectedOperator

@@ -67,13 +67,10 @@ class ClearInvalidEmail(emailValid: Option[Boolean]) extends TransformationFunct
   If in case if we want to fetch other values from additionalFields then we need to instantiate (class)
  */
 object GetTargetOhubId extends TransformationFunction[Map[String, String]] {
-  def impl(input: Map[String, String]): Any =
-    if (input != null) {
-
-      input.contains("targetOhubId") match {
-        case true => input("targetOhubId")
-        case _ => ""
-      }
+  def impl(input: Map[String, String]): String =
+    input.contains("targetOhubId") match {
+      case true => input("targetOhubId")
+      case _ => ""
     }
 
   override val description: String = "retrieves targetOhubId value from additional fields"
