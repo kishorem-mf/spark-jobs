@@ -49,7 +49,7 @@ object AssetConverter extends CommonDomainGateKeeper[Asset] with AssetEmptyParqu
         dateCreatedInUdl = optional("dateCreatedInUdl",parseDateTimeUnsafe()),
         leasedOrSold = optional("leasedOrSold"),
         crmTaskId = optional("crmTaskId"),
-
+        assemblyDate = optional("assemblyDate",parseDateTimeUnsafe()),
         additionalFields = additionalFields,
         ingestionErrors = errors
       )

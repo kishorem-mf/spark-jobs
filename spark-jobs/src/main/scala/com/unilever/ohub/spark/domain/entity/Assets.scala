@@ -59,6 +59,7 @@ case class Asset(
                      dateCreatedInUdl: Option[Timestamp],
                      leasedOrSold: Option[String],
                      crmTaskId: Option[String],
+                     assemblyDate: Option[Timestamp],
                     // other fields
                      additionalFields: Map[String, String],
                      ingestionErrors: Map[String, IngestionError]

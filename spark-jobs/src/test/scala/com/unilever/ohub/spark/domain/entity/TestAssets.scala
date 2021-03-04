@@ -39,6 +39,7 @@ trait TestAssets {
     dateCreatedInUdl =  None,
     leasedOrSold =  None,
     crmTaskId =  None,
+    assemblyDate =  None,
 
     additionalFields = Map(),
     ingestionErrors = Map()
