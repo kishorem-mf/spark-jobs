@@ -49,7 +49,7 @@ object WholesalerAssignmentMerging extends SparkJob[WholesalerAssignmentMergingC
   override private[spark] def configParser(): OptionParser[WholesalerAssignmentMergingConfig] =
     new scopt.OptionParser[WholesalerAssignmentMergingConfig]("AssetMovement merging") {
       head("merges wholesaler assignment into an integrated wholesaler assignment output file.", "1.0")
-      opt[String]("wholesalerassignmentInputFile") required () action { (x, c) ⇒
+      opt[String]("wholesalerAssignmentInputFile") required () action { (x, c) ⇒
         c.copy(wholesalerAssignmentInputFile = x)
       } text "WholeSalerAssignmentInputFile is a string property"
       opt[String]("previousIntegrated") required () action { (x, c) ⇒
@@ -61,7 +61,6 @@ object WholesalerAssignmentMerging extends SparkJob[WholesalerAssignmentMergingC
       opt[String]("outputFile") required () action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
-
       version("1.0")
       help("help") text "help text"
     }
