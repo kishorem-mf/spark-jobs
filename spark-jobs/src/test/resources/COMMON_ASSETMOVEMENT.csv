@@ -1,2 +1,2 @@
-id;creationTimestamp;concatId;countryCode;customerType;dateCreated;dateUpdated;isActive;isGoldenRecord;sourceEntityId;sourceName;ohubId;ohubCreated;ohubUpdated
-id-1;1542205922011;DE~EMAKINA~123;DE;ASSETMOVEMENT;20171218 10:33:54;20171218 10:33:54;true;false;123;EMAKINA;;20171218 10:33:54;20171218 10:33:54
+id;creationTimestamp;concatId;countryCode;customerType;dateCreated;dateUpdated;isActive;isGoldenRecord;sourceEntityId;sourceName;ohubId;ohubCreated;ohubUpdated;operatorConcatId
+id-1;1542205922011;DE~EMAKINA~123;DE;ASSETMOVEMENT;20171218 10:33:54;20171218 10:33:54;true;false;123;EMAKINA;;20171218 10:33:54;20171218 10:33:54;DE~EMAKINA~123

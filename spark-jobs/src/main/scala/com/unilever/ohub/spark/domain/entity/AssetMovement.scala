@@ -45,6 +45,7 @@ case class AssetMovement(
                           // specific fields
                           crmId: Option[String],
                           operatorOhubId: Option[String],
+                          operatorConcatId: Option[String],
                           assemblyDate: Option[Timestamp],
                           assetConcatId: Option[String],
                           createdBy: Option[String],

@@ -24,6 +24,7 @@ trait TestAssetMovements {
 
     crmId = None,
     operatorOhubId = None,
+    operatorConcatId = None,
     assemblyDate = None,
     assetConcatId = None,
     createdBy = None,

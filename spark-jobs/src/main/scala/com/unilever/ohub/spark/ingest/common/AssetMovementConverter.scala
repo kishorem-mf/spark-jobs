@@ -34,6 +34,7 @@ object AssetMovementConverter extends CommonDomainGateKeeper[AssetMovement] with
 
         crmId = optional("crmId"),
         operatorOhubId = optional("operatorOhubId"),
+        operatorConcatId = optional("operatorConcatId"),
         assemblyDate = optional("assemblyDate", parseDateTimeUnsafe()),
         assetConcatId = optional("assetConcatId"),
         createdBy = optional("createdBy"),
