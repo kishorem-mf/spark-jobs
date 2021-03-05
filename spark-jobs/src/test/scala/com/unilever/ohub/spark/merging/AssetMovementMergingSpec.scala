@@ -1,11 +1,11 @@
 package com.unilever.ohub.spark.merging
 
+import com.unilever.ohub.spark.SharedSparkSession.spark
 import com.unilever.ohub.spark.SparkJobSpec
 import com.unilever.ohub.spark.domain.entity._
 import org.apache.spark.sql.Dataset
-import com.unilever.ohub.spark.SharedSparkSession.spark
 
-class AssetMovementMergingSpec extends SparkJobSpec with TestAssetMovements {
+class AssetMovementMergingSpec extends SparkJobSpec with TestAssetMovements with TestOperators {
 
   import spark.implicits._
 
@@ -19,15 +19,41 @@ class AssetMovementMergingSpec extends SparkJobSpec with TestAssetMovements {
       ).toDataset
 
       val previous = Seq[AssetMovement]().toDataset
+      val operators = Seq[Operator]().toDataset
 
-      val result = SUT.transform(spark, input, previous)
+      val result = SUT.transform(spark, input, previous, operators)
         .collect()
 
       result.head.ohubId shouldBe defined
       result.head.isGoldenRecord shouldBe true
     }
 
+    it("should set the ohubId references to an operator") {
+      val input = Seq(
+        defaultAssetMovement.copy(
+          operatorConcatId = Some("DE~EMAKINA~123"),
+          operatorOhubId = None
+        )
+      ).toDataset
+
+      val previous = Seq[AssetMovement]().toDataset
+      val operators = Seq[Operator](
+        defaultOperator.copy(
+          concatId = "DE~EMAKINA~123",
+          ohubId = Some("OHUBID_1")
+        )
+      ).toDataset
+
+      val result = SUT.transform(spark, input, previous, operators)
+        .collect()
+      result.head.operatorOhubId shouldBe Some("OHUBID_1")
+    }
+
     it("should take newest data if available while retaining ohubId") {
+
+      val operators = Seq(
+        defaultOperator
+      ).toDataset
 
       val updatedRecord = defaultAssetMovement.copy(
         isGoldenRecord = true,
@@ -73,21 +99,16 @@ class AssetMovementMergingSpec extends SparkJobSpec with TestAssetMovements {
         newRecord
       ))
 
-      val result = SUT.transform(spark, input, previous)
+      val result = SUT.transform(spark, input, previous, operators)
         .collect()
         .sortBy(_.countryCode)
 
       result.length shouldBe 5
       result(0).isActive shouldBe false
-
       result(1).countryCode shouldBe "new"
-
       result(2).countryCode shouldBe "notADelta"
-
       result(3).countryCode shouldBe "unchanged"
-
       result(4).countryCode shouldBe "updated"
-      result(4).ohubId shouldBe Some("oldId")
     }
   }
 }

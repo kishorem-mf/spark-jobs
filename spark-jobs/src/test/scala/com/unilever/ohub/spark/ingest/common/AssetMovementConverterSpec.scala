@@ -36,6 +36,7 @@ class AssetMovementConverterSpec extends CsvDomainGateKeeperSpec[AssetMovement] 
 
           crmId = None,
           operatorOhubId = None,
+          operatorConcatId = Some("DE~EMAKINA~123"),
           assemblyDate = None,
           assetConcatId = None,
           createdBy = None,
