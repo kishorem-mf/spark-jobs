@@ -5,6 +5,7 @@ import java.sql.{Date, Timestamp}
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, ContactPersonChangeLogDWWriter}
+import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter,ContactPersonChangeLogDLWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ContactPersonChangeLogDomainExportWriter extends DomainExportWriter[ContactPersonChangeLog]
@@ -24,6 +25,7 @@ object ContactPersonChangeLog extends DomainEntityCompanion[ContactPersonChangeL
     Seq("id", "creationTimestamp", "countryCode", "customerType", "sourceEntityId", "sourceName", "isActive", "ohubCreated", "ohubUpdated",
       "dateCreated", "dateUpdated", "isGoldenRecord")
   override val auroraInboundWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = None
+  override val dataLakeWriter: Option[AzureDLWriter[ContactPersonChangeLog]] = Some(ContactPersonChangeLogDLWriter)
   override val ddlExportWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = None
 }
 //

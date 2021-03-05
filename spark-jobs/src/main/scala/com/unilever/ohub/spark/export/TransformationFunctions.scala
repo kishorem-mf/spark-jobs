@@ -69,8 +69,8 @@ class ClearInvalidEmail(emailValid: Option[Boolean]) extends TransformationFunct
 object GetTargetOhubId extends TransformationFunction[Map[String, String]] {
   def impl(input: Map[String, String]): String =
     input.contains("targetOhubId") match {
-      case true => input("targetOhubId")
-      case _ => ""
+        case true => input("targetOhubId")
+        case _ => ""
     }
 
   override val description: String = "retrieves targetOhubId value from additional fields"

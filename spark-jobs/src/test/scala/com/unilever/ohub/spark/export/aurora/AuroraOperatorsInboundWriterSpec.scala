@@ -42,7 +42,7 @@ class AuroraOperatorsInboundWriterSpec extends SparkJobSpec with TestOperators{
 
     it("Should filter based on countryCodes") {
       val resultcsv = spark.read.option("sep",";").option("header","true").csv(config.outboundLocation + "KANGAROO/tr/operators/Processed/YYYY=2020/MM=12/DD=28/*.csv")
-        resultcsv.count() shouldBe 6
+        resultcsv.count() shouldBe 5
     }
   }
 

@@ -6,6 +6,7 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, LoyaltyPointsDWWriter}
+import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter, LoyaltyPointsDLWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object LoyaltyPointsDomainExportWriter extends DomainExportWriter[LoyaltyPoints]
@@ -18,6 +19,7 @@ object LoyaltyPoints extends DomainEntityCompanion[LoyaltyPoints] {
   override val dispatchExportWriter: Option[ExportOutboundWriter[LoyaltyPoints]] = Some(com.unilever.ohub.spark.export.dispatch.LoyaltyPointsOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[LoyaltyPoints]] = Some(LoyaltyPointsDWWriter)
   override val auroraInboundWriter: Option[ExportOutboundWriter[LoyaltyPoints]] = Some(com.unilever.ohub.spark.datalake.LoyaltyPointsOutboundWriter)
+  override val dataLakeWriter: Option[AzureDLWriter[LoyaltyPoints]] = Some(LoyaltyPointsDLWriter)
   override val ddlExportWriter: Option[ExportOutboundWriter[LoyaltyPoints]] = None
 }
 

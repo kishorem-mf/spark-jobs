@@ -6,6 +6,7 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, AzureDWWriterNoPolicy, OperatorRexLiteDWWriter}
+import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object OperatorRexLiteDomainExportWriter extends DomainExportWriter[OperatorRexLite]
@@ -18,6 +19,7 @@ object OperatorRexLite extends DomainEntityCompanion[OperatorRexLite] {
   override val dispatchExportWriter: Option[ExportOutboundWriter[OperatorRexLite]] = None
   override val azureDwWriter: Option[AzureDWWriter[OperatorRexLite]] = Some(OperatorRexLiteDWWriter)
   override val auroraInboundWriter: Option[ExportOutboundWriter[OperatorRexLite]] = None
+  override val dataLakeWriter: Option[AzureDLWriter[OperatorRexLite]] = None
   override val ddlExportWriter: Option[ExportOutboundWriter[OperatorRexLite]] = None
 }
 

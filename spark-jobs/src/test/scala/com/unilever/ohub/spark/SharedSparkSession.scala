@@ -28,7 +28,7 @@ object SharedSparkSession {
       .config("spark.ui.enabled", "false")
       // Setting shuffle partitions to 1 significantly decreases the duration testrun (see: https://medium.com/@mrpowers/how-to-cut-the-run-time-of-a-spark-sbt-test-suite-by-40-52d71219773f)
       .config("spark.sql.shuffle.partitions", "1")
-      .config("spark.driver.memory", "4g")
+      .config("spark.driver.memory", "8g")
       .getOrCreate()
     session.sparkContext.setCheckpointDir(checkpointPath)
     session

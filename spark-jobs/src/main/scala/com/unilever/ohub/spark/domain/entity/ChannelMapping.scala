@@ -6,6 +6,7 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, ChannelMappingDWWriter}
+import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter, ChannelMappingDLWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ChannelMapping extends DomainEntityCompanion[ChannelMapping] {
@@ -17,6 +18,7 @@ object ChannelMapping extends DomainEntityCompanion[ChannelMapping] {
   override val dispatchExportWriter: Option[ExportOutboundWriter[ChannelMapping]] = None
   override val azureDwWriter: Option[AzureDWWriter[ChannelMapping]] = Some(ChannelMappingDWWriter)
   override val auroraInboundWriter: Option[ExportOutboundWriter[ChannelMapping]] = Some(com.unilever.ohub.spark.datalake.ChannelMappingOutboundWriter)
+  override val dataLakeWriter: Option[AzureDLWriter[ChannelMapping]] = Some(ChannelMappingDLWriter)
   override val ddlExportWriter: Option[ExportOutboundWriter[ChannelMapping]] = None
 }
 

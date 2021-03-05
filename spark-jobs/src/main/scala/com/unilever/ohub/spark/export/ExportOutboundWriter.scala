@@ -10,23 +10,24 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.unilever.ohub.spark.datalake.DatalakeUtils
 import com.unilever.ohub.spark.datalake.DatalakeUtils._
-import com.unilever.ohub.spark.domain.DomainEntity
-import com.unilever.ohub.spark.export.TargetType.{ACM, DDL, DISPATCHER, TargetType, UDL}
+import com.unilever.ohub.spark.domain.{DomainEntity}
+import com.unilever.ohub.spark.export.TargetType.{ACM, DISPATCHER, UDL, TargetType}
 import com.unilever.ohub.spark.sql.JoinType
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{Constants, SparkJob, SparkJobConfig}
+import com.unilever.ohub.spark.{SparkJob, SparkJobConfig}
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
-import org.apache.spark.sql.functions.{current_timestamp, date_format, upper}
-import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
+import org.apache.spark.sql.functions.{upper,when,lit}
 import scopt.OptionParser
+import scala.util.Try
+import com.unilever.ohub.spark.Constants
+import org.apache.spark.sql.types.{StructType}
 
 import scala.reflect.runtime.universe._
-import scala.util.Try
 
 object TargetType extends Enumeration {
   type TargetType = Value
-  val ACM, DISPATCHER, DATASCIENCE, MEPS, UDL, DDL = Value
+  val ACM, DISPATCHER, DATASCIENCE, MEPS, UDL, BDL, DDL = Value
 }
 
 case class OutboundConfig(
@@ -110,7 +111,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
   override private[spark] def defaultConfig = OutboundConfig()
 
-  private[export] def goldenRecordOnlyFilter(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet.filter((row: DomainType) => (row.isGoldenRecord))
+  private[export] def goldenRecordOnlyFilter(spark: SparkSession, dataSet: Dataset[DomainType]) = dataSet.filter((row: DomainType) =>(row.isGoldenRecord))
 
   private[export] def entitySpecificFilter(spark: SparkSession, dataSet: Dataset[DomainType], config: OutboundConfig) = dataSet
 
@@ -143,14 +144,16 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
   }
 
   //scalastyle:off
-  def transformInboundFilesByDate(inboundProcessPath: String, folderDate: String, config: OutboundConfig, spark: SparkSession, storage: Storage) = {
+  def transformInboundFilesByDate(inboundProcessPath: String, folderDate: String, config: OutboundConfig, spark:SparkSession, storage: Storage) = {
     import spark.implicits._
 
     val year = folderDate.split("-")(0)
     val month = folderDate.split("-")(1)
     val day = folderDate.split("-")(2)
-    val inboundProcessedCsv = Try(storage.readFromCsv(inboundProcessPath, ";", true, "\\")).getOrElse(spark.createDataset[DomainType](Nil))
-
+    var inboundProcessedCsv = Try(storage.readFromCsv(inboundProcessPath, ";", true, "\\")).getOrElse(spark.createDataset[DomainType](Nil))
+    if(entityName().equals("loyaltypoints")) {
+     inboundProcessedCsv = inboundProcessedCsv.withColumn("isActive",lit("true"))
+    }
     val exclusionlist = spark.createDataFrame(
       spark.sparkContext.parallelize(Constants.exclusionSourceEntityCountryList),
       StructType(Constants.schemaforexclusionSourceEntityCountryList)
@@ -162,8 +165,9 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     )
 
     val distinctSourceNames = inboundProcessedCsv.select("sourceName").distinct()
-    if (distinctSourceNames.count() > 0) { //If there are no records and only headers are present then we dont want to write any file
-      config.auroraCountryCodes.split(";").foreach {
+    if (distinctSourceNames.count() > 0)
+     { //If there are no records and only headers are present then we dont want to write any file
+       config.auroraCountryCodes.split(";").foreach {
         country =>
           distinctSourceNames.collect.toSeq.foreach {
             source =>
@@ -178,6 +182,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
                 , $"o.countryCode" === $"e.countryCode"
                   && upper($"o.sourceName") === upper($"e.sourceName")
                   && $"e.entity" === entityName()
+                  && $"o.isActive" === $"e.isActive"
                 , "left").filter($"e.countryCode".isNull)
                 .select($"o.*")
 
@@ -194,29 +199,28 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
                   val oid = orders.filter($"transactionDate" >= dateValue).select(orders("concatId").as("ordConcatId")).dropDuplicates()
                   filterdf.as("o").join(
                     inclusionOrderList.alias("inc")
-                    , $"o.countryCode" === $"inc.countryCode" && upper($"o.sourceName") === upper($"inc.sourceName") && upper($"o.orderType") === upper($"inc.orderType")
+                    ,$"o.countryCode" === $"inc.countryCode" && upper($"o.sourceName") === upper($"inc.sourceName") &&  upper($"o.orderType") === upper($"inc.orderType")
                       && $"inc.entity" === entityName()
-                    , "inner").select($"o.*")
+                    ,"inner").select($"o.*")
                     .join(
                       oid.alias("ex"),
                       $"o.orderConcatId" === $"ex.ordConcatid"
-                      , "inner").select($"o.*").unionByName(exDf)
+                      ,"inner").select($"o.*").unionByName(exDf)
                 }
                 case _ => exDf
               }
-              if (filterdf.count() > 0) {
+            if(filterdf.count()>0) {
                 DatalakeUtils.writeToCsv(location, fileName, exOrders, spark)
-              }
+            }
           }
+        }
       }
     }
-  }
-
   //scalastyle:on
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
     import spark.implicits._
 
-    if (config.targetType.equals(UDL)) {
+    if(config.targetType.equals(UDL)){
       // if aurora countryCodes are defined then we are exporting to UDL aurora folders
       val folderDates = getFolderDateList(config.fromDate, config.toDate.getOrElse(config.fromDate).toString)
       folderDates.foreach { folderDate =>
@@ -224,7 +228,7 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
         transformInboundFilesByDate(blobFolderPath, folderDate, config, spark, storage)
       }
     }
-    else {
+    else{
       val previousIntegratedFile = config.previousIntegratedInputFile.fold(spark.createDataset[DomainType](Nil))(storage.readFromParquet[DomainType](_))
       export(storage.readFromParquet[DomainType](config.integratedInputFile), previousIntegratedFile, config, spark)
     }
@@ -274,16 +278,16 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
 
   def filterByCountry(
-                       currentIntegrated: Dataset[DomainType],
-                       country: Option[String],
-                       spark: SparkSession
-                     ): Dataset[DomainType] = {
+              currentIntegrated: Dataset[DomainType],
+              country: Option[String],
+              spark: SparkSession
+            ): Dataset[DomainType] ={
     import spark.implicits._
 
-    if (country.isDefined) {
+    if(country.isDefined) {
       currentIntegrated.filter($"countryCode" === country.get)
     }
-    else {
+    else{
       currentIntegrated
     }
   }
@@ -348,12 +352,15 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
               spark: SparkSession
             ) {
     import spark.implicits._
-
+    log.info("ACM_DEBUG: Inside Export")
     val deltaIntegrated = commonTransform(currentMerged, previousMerged, config, spark)
+    log.info("ACM_DEBUG: After common transform")
     val filtered = filterValid(spark, deltaIntegrated, config).as[DomainType]
+    log.info("ACM_DEBUG: After filtered")
     val processedChangedDS = processedChanged(filtered)
-    val operatorLinking = linkOperator(spark, currentMergedOPR, processedChangedDS).as[DomainType]
-
+    log.info("ACM_DEBUG: After processedChanged")
+    val operatorLinking = linkOperator(spark,currentMergedOPR, processedChangedDS).as[DomainType]
+    log.info("ACM_DEBUG: After linkOperator")
     val columnsInOrder = currentIntegrated.columns
     val result = operatorLinking
       .select(columnsInOrder.head, columnsInOrder.tail: _*)
@@ -364,8 +371,9 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       val mapping = explainConversion.get.apply(currentIntegrated.head)
       writeToJson(spark, new Path(config.mappingOutputLocation.get), deserializeJsonFields(mapping))
     }
-
+    log.info("ACM_DEBUG: Before WriteToCSV")
     writeToCsv(config, convertDataSet(spark, result), spark)
+    log.info("ACM_DEBUG: After WriteToCSV")
   }
 
   def filterOnlyChangedRows(dataset: Dataset[DomainType], previousIntegratedFile: Dataset[DomainType], spark: SparkSession): Dataset[DomainType] = {

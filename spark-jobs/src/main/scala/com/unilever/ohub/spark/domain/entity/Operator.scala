@@ -6,8 +6,10 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, OperatorDWWriter}
+import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter, OperatorDLWriter}
 import com.unilever.ohub.spark.export.ddl.OperatorDdlOutboundWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
+import org.apache.spark.sql.types.Decimal
 
 object Operator extends DomainEntityCompanion[Operator] {
   val customerType = "OPERATOR"
@@ -19,6 +21,7 @@ object Operator extends DomainEntityCompanion[Operator] {
   override val dispatchExportWriter: Option[ExportOutboundWriter[Operator]] = Some(com.unilever.ohub.spark.export.dispatch.OperatorOutboundWriter)
   override val auroraInboundWriter: Option[ExportOutboundWriter[Operator]] = Some(com.unilever.ohub.spark.datalake.OperatorOutboundWriter)
   override val azureDwWriter: Option[AzureDWWriter[Operator]] = Some(OperatorDWWriter)
+  override val dataLakeWriter: Option[AzureDLWriter[Operator]] = Some(OperatorDLWriter)
   override val ddlExportWriter: Option[ExportOutboundWriter[Operator]] = None
 }
 

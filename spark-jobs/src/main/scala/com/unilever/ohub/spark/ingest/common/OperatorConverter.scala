@@ -2,10 +2,12 @@ package com.unilever.ohub.spark.ingest.common
 
 import java.sql.Timestamp
 
+import com.unilever.ohub.spark.domain.entity
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.ingest.CustomParsers._
 import com.unilever.ohub.spark.ingest.{DomainTransformer, OperatorEmptyParquetWriter}
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.Decimal
 
 object OperatorConverter extends CommonDomainGateKeeper[Operator] with OperatorEmptyParquetWriter {
 
@@ -111,7 +113,7 @@ object OperatorConverter extends CommonDomainGateKeeper[Operator] with OperatorE
         globalSubChannel = None,
         ufsClientNumber = optional("ufsClientNumber"),
         department = if(!optional("department").isDefined){Some("UFS")} else { optional("department")},
-//        department = optional("department"),
+        //        department = optional("department"),
         additionalFields = additionalFields,
         ingestionErrors = errors
       )
