@@ -13,17 +13,17 @@ class OrderlineDdlConverterSpec extends SparkJobSpec with TestOrderLines {
     it("should convert a Orderline parquet correctly into an Orderline csv") {
       var result = SUT.convert(orderlineToConvert)
       var expectedOrderline = DdlOrderline(
-        id = "source-entity-id",
-        quantity = "0",
-        listPrice = "10.00",
-        salesPrice = "",
-        productId = "product-source-entity-id",
-        opportunityId = "4",
-        foc = "",
-        unitOfMeasure = "",
-        totalPrice = "0.00",
-        discount = "",
-        discountPercentage = ""
+        Id = "source-entity-id",
+        Quantity = "0",
+        `List Price` = "10.00",
+      `Sales Price` = "",
+      `Product Id` = "product-source-entity-id",
+        OpportunityId = "4",
+        FOC = "",
+        `Unit Of Measure` = "",
+        `Total Price` = "0.00",
+        Discount = "",
+        `Discount%` = ""
       )
       result shouldBe expectedOrderline
     }
