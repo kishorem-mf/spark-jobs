@@ -154,7 +154,7 @@ object OrderOutboundWriter extends ExportOutboundWriter[Order] with AcmOptions {
 
   override private[export] def entitySpecificFilter(spark: SparkSession, dataSet: Dataset[Order], config: OutboundConfig) = {
     import spark.implicits._
-    dataSet.filter(!$"type".isin("SSD", "TRANSFER"));
+    dataSet.filter(!$"type".isin("SSD", "TRANSFER", "PANTRY"));
   }
 
   override def entityName(): String = "ORDERS"
@@ -163,7 +163,7 @@ object OrderOutboundWriter extends ExportOutboundWriter[Order] with AcmOptions {
 object OrderLineOutboundWriter extends ExportOutboundWriter[OrderLine] with AcmOptions {
   override private[export] def entitySpecificFilter(spark: SparkSession, dataSet: Dataset[OrderLine], config: OutboundConfig) = {
     dataSet.filter(o ⇒ {
-      o.orderType.fold(true)(t => !(t.equals("SSD") || t.equals("TRANSFER")))
+      o.orderType.fold(true)(t => !(t.equals("PANTRY") || t.equals("SSD") || t.equals("TRANSFER")))
     })
   }
 
