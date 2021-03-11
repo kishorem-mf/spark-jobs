@@ -41,6 +41,17 @@ object SubscriptionConverter extends CommonDomainGateKeeper[Subscription] with S
         hasConfirmedSubscription = optional("hasConfirmedSubscription", toBoolean),
         confirmedSubscriptionDate = optional("confirmedSubscriptionDate", parseDateTimeUnsafe()),
         fairKitchensSignUpType = optional("fairKitchensSignUpType"),
+        //BDL FIELDS
+        newsletterNumber = optional("newsletterNumber"),
+        createdBy = optional("createdBy"),
+        currency = optional("currency"),
+        hasPricingInfo = optional("hasPricingInfo", toBoolean),
+        language = optional("language"),
+        name = optional("name"),
+        owner = optional("owner"),
+        numberOfTimesSent = optional("numberOfTimesSent", toInt),
+        localOrGlobalSendOut = optional("localOrGlobalSendOut"),
+        comment = optional("comment"),
         additionalFields = additionalFields,
         ingestionErrors = errors
       )
