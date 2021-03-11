@@ -24,7 +24,7 @@ object ContactPersonCreatePerfectGoldenRecord extends BaseMerging[ContactPersonG
     "email" -> Consent(
       optInFields = List("hasEmailDoubleOptIn", "hasEmailOptIn"),
       optOutFields = List("hasEmailOptOut"),
-      sortingDateFields = List("emailDoubleOptInDate", "emailOptInDate")
+      sortingDateFields = List("emailOptOutDate","emailDoubleOptInDate", "emailOptInDate")
     ),
 
     "mobile" -> Consent(

@@ -3,7 +3,7 @@ package com.unilever.ohub.spark.ingest.common
 import java.sql.Timestamp
 
 import com.unilever.ohub.spark.domain.entity.ContactPerson
-import com.unilever.ohub.spark.ingest.CustomParsers._
+import com.unilever.ohub.spark.ingest.CustomParsers.{parseDateUnsafe, _}
 import com.unilever.ohub.spark.ingest.{ContactPersonEmptyParquetWriter, DomainTransformer}
 import org.apache.spark.sql.Row
 
@@ -82,6 +82,28 @@ object ContactPersonConverter extends CommonDomainGateKeeper[ContactPerson] with
         socialNetworkId = optional("socialNetworkId"),
         isEmailAddressValid = Some(true),
         isMobileNumberValid = Some(true),
+        //crm fields
+        crmId = optional("crmId"),
+        otherJobTitle = optional("otherJobTitle"),
+        optInSourceName = optional("optInSourceName"),
+        subscriptionsList = optional("subscriptionsList"),
+        executeRightToBeForgotten = optional("executeRightToBeForgotten",toBoolean),
+        hasTelephoneSuppressed = optional("hasTelephoneSuppressed",toBoolean),
+        emailOptOutDate = optional("emailOptOutDate",parseDateTimeUnsafe()),
+        startWorkDate = optional("startWorkDate",parseDateTimeUnsafe()),
+        endWorkDate = optional("endWorkDate",parseDateTimeUnsafe()),
+        doNotCall = optional("doNotCall",toBoolean),
+        emailOptInStatus = optional("emailOptInStatus"),
+        emailConsentDate = optional("emailConsentDate",parseDateTimeUnsafe()),
+        mobileOptOutDate = optional("mobileOptOutDate",parseDateTimeUnsafe()),
+        mobileOptInStatus = optional("mobileOptInStatus"),
+        mobileConsentDate = optional("mobileConsentDate",parseDateTimeUnsafe()),
+        teleMarketingOptInDate = optional("teleMarketingOptInDate",parseDateTimeUnsafe()),
+        hasTeleMarketingDoubleOptIn = optional("hasTeleMarketingDoubleOptIn",toBoolean),
+        teleMarketingDoubleOptInDate = optional("teleMarketingDoubleOptInDate",parseDateTimeUnsafe()),
+        teleMarketingOptOutDate = optional("teleMarketingOptOutDate",parseDateTimeUnsafe()),
+        teleMarketingOptInStatus = optional("teleMarketingOptInStatus"),
+        teleMarketingConsentDate = optional("teleMarketingConsentDate",parseDateTimeUnsafe()),
         additionalFields = additionalFields,
         ingestionErrors = errors
       )
