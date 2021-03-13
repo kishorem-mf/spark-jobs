@@ -46,6 +46,18 @@ class OrderLineConverterSpec extends CsvDomainGateKeeperSpec[OrderLine] with Tes
           loyaltyPoints = None,
           productOhubId = None, // set in OrderLineMerging
           orderType = Some("Merchandise"),
+          //BDL fields
+          discount = None,
+          discountPercentage = None,
+          distributorProductCode = None,
+          freeOfCharge = None,
+          lineNumber = None,
+          materialNetWeight = None,
+          netInvoiceValue = None,
+          salesPrice = None,
+          unitOfMeasure = None,
+          volumeCasesSold = None,
+          wholesalerSellingPrice = None,
           // other fields
           additionalFields = Map(),
           ingestionErrors = Map()

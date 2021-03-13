@@ -27,6 +27,10 @@ object ActivityPreProcess extends BasePreProcess[Activity]
 
 object AnswerPreProcess extends BasePreProcess[Answer]
 
+object AssetMovementPreProcess extends BasePreProcess[AssetMovement]
+
+object AssetPreProcess extends BasePreProcess[Asset]
+
 object QuestionPreProcess extends BasePreProcess[Question]
 
 object LoyaltyPointsPreProcess extends BasePreProcess[LoyaltyPoints]
@@ -44,6 +48,8 @@ object CampaignClickPreProcess extends BasePreProcess[CampaignClick]
 object ChannelMappingPreProcess extends BasePreProcess[ChannelMapping]
 
 object ChainPreProcess extends BasePreProcess[Chain]
+
+object WholesalerAssignmentPreProcess extends BasePreProcess[WholesalerAssignment]
 
 case class PreProcessConfig(
     integratedInputFile: String = "path-to-integrated-input-file",

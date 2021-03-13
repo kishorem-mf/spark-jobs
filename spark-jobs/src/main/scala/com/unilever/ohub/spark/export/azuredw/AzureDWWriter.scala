@@ -235,8 +235,9 @@ abstract class AzureDWWriter[DomainType <: DomainEntity : TypeTag] extends Spark
 }
 
 
-
 object ActivityDWWriter extends AzureDWWriter[Activity]
+
+object AssetDWWriter extends AzureDWWriter[Asset]
 
 object AnswerDWWriter extends AzureDWWriter[Answer]
 

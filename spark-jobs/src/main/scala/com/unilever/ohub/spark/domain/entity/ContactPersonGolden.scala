@@ -7,6 +7,7 @@ import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, ContactPersonGoldenDWWriter}
 import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter, ContactPersonGoldenDLWriter}
+import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter, ContactPersonGoldenDLWriter}
 import com.unilever.ohub.spark.export.ddl.ContactPersonDdlOutboundWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 

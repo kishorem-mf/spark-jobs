@@ -6,7 +6,7 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{ActivityDWWriter, AzureDWWriter}
-import com.unilever.ohub.spark.export.businessdatalake.{ActivityDLWriter, AzureDLWriter}
+import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter,ActivityDLWriter}
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ActivityDomainExportWriter extends DomainExportWriter[Activity]

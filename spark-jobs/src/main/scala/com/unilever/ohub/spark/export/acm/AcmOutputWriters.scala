@@ -102,6 +102,8 @@ object OperatorOutboundWriter extends ExportOutboundWriter[Operator] with AcmOpt
     val deletedOhubID = getDeletedOhubIdsWithTargetId(spark, previousIntegratedFile, currentIntegrated, previousMerged, currentMerged)
     val currentMergedOPR = config.currentMergedOPR.fold(spark.emptyDataFrame)(spark.read.parquet(_))
 
+    log.info("ACM_DEBUG: Before Export")
+
     export(
       currentIntegrated,
       deletedOhubID.unionByName,
@@ -218,6 +220,7 @@ object LoyaltyPointsOutboundWriter extends ExportOutboundWriter[LoyaltyPoints] w
  **/
 object AllAcmOutboundWriter extends SparkJobWithOutboundExportConfig {
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
+    log.info("ACM_DEBUG: Starting")
     DomainEntityUtils.domainCompanionObjects
       .par
       .filter(_.acmExportWriter.isDefined)
@@ -234,6 +237,7 @@ object AllAcmOutboundWriter extends SparkJobWithOutboundExportConfig {
         }
 
         val mappingOutputLocation1 = config.mappingOutputLocation.map(mappingOutboundLocation => s"${mappingOutboundLocation}/${config.targetType}_${writer.entityName()}_MAPPING.json")
+        log.info("ACM_DEBUG: Before starting run")
         writer.run(
           spark,
           config.copy(

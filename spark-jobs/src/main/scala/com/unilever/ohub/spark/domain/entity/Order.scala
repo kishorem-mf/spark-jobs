@@ -8,8 +8,9 @@ import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.TargetType.{MEPS, TargetType}
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, OrderDWWriter}
 import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter, OrderDLWriter}
-import com.unilever.ohub.spark.export.ddl.OrderDdlOutboundWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
+import com.unilever.ohub.spark.export.ddl.OrderDdlOutboundWriter
+import org.apache.spark.sql.types.Decimal
 import org.apache.spark.sql.{Dataset, SparkSession}
 
 object OrderDomainExportWriter extends DomainExportWriter[Order] {
@@ -93,6 +94,36 @@ case class Order(
                   preferredDeliveryDateOption: Option[String],
                   preferredDeliveryDate: Option[Timestamp],
                   department: Option[String],
+                  //BDL Fields
+                  createdBy : Option[String],
+                  createdBySap : Option[Boolean],
+                  customerHierarchyLevel3 : Option[String],
+                  customerHierarchyLevel4 : Option[String],
+                  customerHierarchyLevel5 : Option[String],
+                  customerHierarchyLevel6 : Option[String],
+                  customerNameLevel3 : Option[String],
+                  customerNameLevel4 : Option[String],
+                  customerNameLevel5 : Option[String],
+                  customerNameLevel6 : Option[String],
+                  deliveryStatus : Option[String],
+                  discount : Option[Decimal],
+                  externalCustomerHierarchyLevel1 : Option[String],
+                  externalCustomerHierarchyLevel1Description : Option[String],
+                  externalCustomerHierarchyLevel2 : Option[String],
+                  externalCustomerHierarchyLevel2Description : Option[String],
+                  invoiceNumber : Option[String],
+                  netInvoiceValue : Option[Decimal],
+                  opportunityOwner : Option[String],
+                  orderCreationDate : Option[Timestamp],
+                  purchaseOrderNumber : Option[String],
+                  purchaseOrderType : Option[String],
+                  rejectionStatus : Option[String],
+                  sellInOrSellOut : Option[String],
+                  stageOfCompletion : Option[String],
+                  totalGrossPrice : Option[Decimal],
+                  totalSurcharge : Option[Decimal],
+                  wholesalerDistributionCenter : Option[String],
+                  wholesalerSellingPriceBasedAmount : Option[Decimal],
                   // other fields
                   additionalFields: Map[String, String],
                   ingestionErrors: Map[String, IngestionError]

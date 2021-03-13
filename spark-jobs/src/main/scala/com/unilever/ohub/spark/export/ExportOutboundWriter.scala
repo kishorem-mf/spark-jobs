@@ -150,10 +150,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     val year = folderDate.split("-")(0)
     val month = folderDate.split("-")(1)
     val day = folderDate.split("-")(2)
-    var inboundProcessedCsv = Try(storage.readFromCsv(inboundProcessPath, ";", true, "\\")).getOrElse(spark.createDataset[DomainType](Nil))
-    if(entityName().equals("loyaltypoints")) {
-     inboundProcessedCsv = inboundProcessedCsv.withColumn("isActive",lit("true"))
-    }
+    val inboundProcessedCsv = Try(storage.readFromCsv(inboundProcessPath, ";", true,"\\")).getOrElse(spark.createDataset[DomainType](Nil))
+
     val exclusionlist = spark.createDataFrame(
       spark.sparkContext.parallelize(Constants.exclusionSourceEntityCountryList),
       StructType(Constants.schemaforexclusionSourceEntityCountryList)
@@ -182,7 +180,6 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
                 , $"o.countryCode" === $"e.countryCode"
                   && upper($"o.sourceName") === upper($"e.sourceName")
                   && $"e.entity" === entityName()
-                  && $"o.isActive" === $"e.isActive"
                 , "left").filter($"e.countryCode".isNull)
                 .select($"o.*")
 
@@ -240,14 +237,14 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
   }
 
   /** Applies a set of pre-processing steps
-    *
-    * Transformations applied:
-    *  - filter golden records for (ACM only)
-    *  - filter on selected countries
-    *  - entity-specific transformations (implemented in subclass)
-    *
-    * @param dataset the current dataset
-    */
+   *
+   * Transformations applied:
+   *  - filter golden records for (ACM only)
+   *  - filter on selected countries
+   *  - entity-specific transformations (implemented in subclass)
+   *
+   * @param dataset the current dataset
+   */
   private def preProcess(spark: SparkSession, config: OutboundConfig, dataset: Dataset[DomainType]) = {
     import spark.implicits._
 
@@ -261,12 +258,9 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
     }
 
     val filteredByCountries =
-      if (config.countryCodes.isDefined) {
-        domainEntities.filter($"countryCode".isin(config.countryCodes.get: _*))
-      }
-      else {
-        domainEntities
-      }
+      if (config.countryCodes.isDefined) {domainEntities.filter($"countryCode".isin(config.countryCodes.get: _*))}
+      else {domainEntities}
+
     entitySpecificFilter(spark, filteredByCountries, config)
   }
 
@@ -352,15 +346,12 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
               spark: SparkSession
             ) {
     import spark.implicits._
-    log.info("ACM_DEBUG: Inside Export")
+
     val deltaIntegrated = commonTransform(currentMerged, previousMerged, config, spark)
-    log.info("ACM_DEBUG: After common transform")
     val filtered = filterValid(spark, deltaIntegrated, config).as[DomainType]
-    log.info("ACM_DEBUG: After filtered")
     val processedChangedDS = processedChanged(filtered)
-    log.info("ACM_DEBUG: After processedChanged")
     val operatorLinking = linkOperator(spark,currentMergedOPR, processedChangedDS).as[DomainType]
-    log.info("ACM_DEBUG: After linkOperator")
+
     val columnsInOrder = currentIntegrated.columns
     val result = operatorLinking
       .select(columnsInOrder.head, columnsInOrder.tail: _*)
@@ -371,9 +362,8 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
       val mapping = explainConversion.get.apply(currentIntegrated.head)
       writeToJson(spark, new Path(config.mappingOutputLocation.get), deserializeJsonFields(mapping))
     }
-    log.info("ACM_DEBUG: Before WriteToCSV")
+
     writeToCsv(config, convertDataSet(spark, result), spark)
-    log.info("ACM_DEBUG: After WriteToCSV")
   }
 
   def filterOnlyChangedRows(dataset: Dataset[DomainType], previousIntegratedFile: Dataset[DomainType], spark: SparkSession): Dataset[DomainType] = {
@@ -509,16 +499,16 @@ abstract class ExportOutboundWriter[DomainType <: DomainEntity : TypeTag] extend
 
 
   /**
-    * This function works for objects that only contain string fields with JSON content. The object is transformed to
-    * a map with jsonNodes so the mapper can convert it to one JSON object (without escaped JSON as values).
-    *
-    * F.e. {"key": "{\"name\": \"nested object\"}"}
-    * will become a map[String, JsonNode] which can be written (by the objectMapper) like
-    * {"key": {"name": "nested object"}}
-    *
-    * @param subject
-    * @return
-    */
+   * This function works for objects that only contain string fields with JSON content. The object is transformed to
+   * a map with jsonNodes so the mapper can convert it to one JSON object (without escaped JSON as values).
+   *
+   * F.e. {"key": "{\"name\": \"nested object\"}"}
+   * will become a map[String, JsonNode] which can be written (by the objectMapper) like
+   * {"key": {"name": "nested object"}}
+   *
+   * @param subject
+   * @return
+   */
   private def deserializeJsonFields(subject: Any): Map[String, Any] = {
     (Map[String, Any]() /: subject.getClass.getDeclaredFields) { (a, f) =>
       f.setAccessible(true)
