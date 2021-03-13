@@ -87,7 +87,7 @@ trait TestContactPersons {
     subscriptionsList = None,
     executeRightToBeForgotten = None,
     hasTelephoneSuppressed = None,
-    emailOptOutDate = None,
+    emailOptOutDate =  Some(Timestamp.valueOf("2015-10-30 14:23:02.0")),
     startWorkDate = None,
     endWorkDate = None,
     doNotCall = None,
