@@ -105,7 +105,11 @@ abstract class AzureDLWriter[DomainType <: DomainEntity : TypeTag] extends Spark
 }
 object ActivityDLWriter extends AzureDLWriter[Activity]
 
+object AssetDLWriter extends AzureDLWriter[Asset]
+
 object AnswerDLWriter extends AzureDLWriter[Answer]
+
+object AssetMovementDLWriter extends AzureDLWriter[AssetMovement]
 
 object CampaignDLWriter extends AzureDLWriter[Campaign]
 
@@ -148,6 +152,8 @@ object ContactPersonRexLiteDLWriter extends AzureDLWriter[ContactPersonRexLite]
 object OperatorChangeLogDLWriter extends AzureDLWriter[OperatorChangeLog]
 
 object ContactPersonChangeLogDLWriter extends AzureDLWriter[ContactPersonChangeLog]
+
+object WholesalerAssignmentDLWriter extends AzureDLWriter[WholesalerAssignment]
 
 object AllDLOutboundWriter extends SparkJobWithAzureDLConfiguration {
   override def run(spark: SparkSession, config: DataLakeConfig, storage: Storage): Unit = {
