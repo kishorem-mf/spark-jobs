@@ -20,6 +20,7 @@ object OperatorUfsGolden extends DomainEntityCompanion[OperatorUfsGolden] {
   override val azureDwWriter: Option[AzureDWWriter[OperatorUfsGolden]] = None
   override val auroraInboundWriter: Option[ExportOutboundWriter[OperatorUfsGolden]] = None
   override val dataLakeWriter: Option[AzureDLWriter[OperatorUfsGolden]] = None
+  override val ddlExportWriter: Option[ExportOutboundWriter[OperatorUfsGolden]] = None
 }
 
 
