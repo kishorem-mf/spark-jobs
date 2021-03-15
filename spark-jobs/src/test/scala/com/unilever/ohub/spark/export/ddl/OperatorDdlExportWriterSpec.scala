@@ -48,7 +48,7 @@ class OperatorDdlExportWriterSpec extends SparkJobSpec with TestOperatorsGolden 
 
       SUT.exportToDdl(integratedDs, config, spark)
 
-      val result = spark.read.option("sep", ";").option("header", "true").csv(config.outboundLocation + "/AFH_SALESFORCE_*/*/AFH_SALESFORCE_*.csv")
+      val result = spark.read.option("sep", ";").option("header", "true").csv(config.outboundLocation + "/AFH_SALESFORCE_*.csv")
       result.count() shouldBe 3
     }
 
