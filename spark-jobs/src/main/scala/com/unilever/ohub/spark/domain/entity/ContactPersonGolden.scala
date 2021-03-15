@@ -7,6 +7,8 @@ import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, ContactPersonGoldenDWWriter}
 import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter, ContactPersonGoldenDLWriter}
+import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter, ContactPersonGoldenDLWriter}
+import com.unilever.ohub.spark.export.ddl.ContactPersonDdlOutboundWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ContactPersonGoldenDomainExportWriter extends DomainExportWriter[ContactPersonGolden]
@@ -20,6 +22,7 @@ object ContactPersonGolden extends DomainEntityCompanion[ContactPersonGolden] {
   override val azureDwWriter: Option[AzureDWWriter[ContactPersonGolden]] = Some(ContactPersonGoldenDWWriter)
   override val auroraInboundWriter: Option[ExportOutboundWriter[ContactPersonGolden]] = None
   override val dataLakeWriter: Option[AzureDLWriter[ContactPersonGolden]] = Some(ContactPersonGoldenDLWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[ContactPersonGolden]] = Some(ContactPersonDdlOutboundWriter)
 }
 
 case class ContactPersonGolden(

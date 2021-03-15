@@ -8,6 +8,7 @@ import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, OperatorGoldenDWWriter}
 import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter, OperatorGoldenDLWriter}
+import com.unilever.ohub.spark.export.ddl.OperatorDdlOutboundWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 import org.apache.spark.sql.types.Decimal
 
@@ -22,6 +23,7 @@ object OperatorGolden extends DomainEntityCompanion[OperatorGolden] {
   override val azureDwWriter: Option[AzureDWWriter[OperatorGolden]] = Some(OperatorGoldenDWWriter)
   override val auroraInboundWriter: Option[ExportOutboundWriter[OperatorGolden]] = None
   override val dataLakeWriter: Option[AzureDLWriter[OperatorGolden]] = Some(OperatorGoldenDLWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[OperatorGolden]] = Some(OperatorDdlOutboundWriter)
 }
 
 

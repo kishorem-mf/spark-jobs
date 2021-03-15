@@ -26,6 +26,7 @@ object ContactPersonChangeLog extends DomainEntityCompanion[ContactPersonChangeL
       "dateCreated", "dateUpdated", "isGoldenRecord")
   override val auroraInboundWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = None
   override val dataLakeWriter: Option[AzureDLWriter[ContactPersonChangeLog]] = Some(ContactPersonChangeLogDLWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[ContactPersonChangeLog]] = None
 }
 //
 //case class ContactPersonChangeLog(

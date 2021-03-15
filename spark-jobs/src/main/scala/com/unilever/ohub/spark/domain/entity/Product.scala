@@ -7,6 +7,7 @@ import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter, ProductDWWriter}
 import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter, ProductDLWriter}
+import com.unilever.ohub.spark.export.ddl.ProductDdlOutboundWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object ProductDomainExportWriter extends DomainExportWriter[Product]
@@ -25,6 +26,7 @@ object Product extends DomainEntityCompanion[Product] {
   override val azureDwWriter: Option[AzureDWWriter[Product]] = Some(ProductDWWriter)
   override val auroraInboundWriter: Option[ExportOutboundWriter[Product]] = Some(com.unilever.ohub.spark.datalake.ProductOutboundWriter)
   override val dataLakeWriter: Option[AzureDLWriter[Product]] = Some(ProductDLWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[Product]] = Some(ProductDdlOutboundWriter)
 }
 
 case class ProductSifu(
