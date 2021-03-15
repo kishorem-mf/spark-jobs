@@ -18,6 +18,7 @@ object WholesalerAssignment extends DomainEntityCompanion[WholesalerAssignment] 
   override val auroraInboundWriter: Option[ExportOutboundWriter[WholesalerAssignment]] = None
   override val azureDwWriter: Option[AzureDWWriter[WholesalerAssignment]] = None
   override val dataLakeWriter: Option[AzureDLWriter[WholesalerAssignment]] = Some(WholesalerAssignmentDLWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[WholesalerAssignment]] = None
 }
 
 case class WholesalerAssignment(
