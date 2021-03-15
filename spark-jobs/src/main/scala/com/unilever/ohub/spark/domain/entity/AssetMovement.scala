@@ -20,6 +20,8 @@ object AssetMovement extends DomainEntityCompanion[AssetMovement] {
   override val azureDwWriter: Option[AzureDWWriter[AssetMovement]] = None
   override val auroraInboundWriter: Option[ExportOutboundWriter[AssetMovement]] = None
   override val dataLakeWriter: Option[AzureDLWriter[AssetMovement]] = Some(AssetMovementDLWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[AssetMovement]] = None
+
 }
 
 case class AssetMovement(
