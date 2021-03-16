@@ -30,6 +30,17 @@ trait TestSubscription {
     hasConfirmedSubscription = Some(true),
     confirmedSubscriptionDate = Some(Timestamp.valueOf("2015-06-30 13:49:00.0")),
     fairKitchensSignUpType = Some("pledger"),
+    //BDL Fields
+    newsletterNumber= None,
+    createdBy= None,
+    currency= None,
+    hasPricingInfo= None,
+    language= None,
+    name= None,
+    owner= None,
+    numberOfTimesSent= None,
+    localOrGlobalSendOut= None,
+    comment= None,
     // other fields
     additionalFields = Map(),
     ingestionErrors = Map()
