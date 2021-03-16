@@ -94,7 +94,7 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
             subscriptionsList = None,
             executeRightToBeForgotten = None,
             hasTelephoneSuppressed = None,
-            emailOptOutDate = Some(Timestamp.valueOf("2015-10-30 14:23:02.0")),
+            emailOptOutDate = None,
             startWorkDate = None,
             endWorkDate = None,
             doNotCall = None,
