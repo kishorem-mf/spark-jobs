@@ -22,6 +22,7 @@ object CampaignBounce extends DomainEntityCompanion[CampaignBounce] {
   override val azureDwWriter: Option[AzureDWWriter[CampaignBounce]] = Some(CampaignBounceDWWriter)
   override val auroraInboundWriter: Option[ExportOutboundWriter[CampaignBounce]] = Some(com.unilever.ohub.spark.datalake.CampaignBounceOutboundWriter)
   override val dataLakeWriter: Option[AzureDLWriter[CampaignBounce]] = Some(CampaignBounceDLWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[CampaignBounce]] = None
 }
 
 

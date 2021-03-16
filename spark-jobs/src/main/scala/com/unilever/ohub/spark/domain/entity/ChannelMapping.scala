@@ -19,6 +19,7 @@ object ChannelMapping extends DomainEntityCompanion[ChannelMapping] {
   override val azureDwWriter: Option[AzureDWWriter[ChannelMapping]] = Some(ChannelMappingDWWriter)
   override val auroraInboundWriter: Option[ExportOutboundWriter[ChannelMapping]] = Some(com.unilever.ohub.spark.datalake.ChannelMappingOutboundWriter)
   override val dataLakeWriter: Option[AzureDLWriter[ChannelMapping]] = Some(ChannelMappingDLWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[ChannelMapping]] = None
 }
 
 object ChannelReference {

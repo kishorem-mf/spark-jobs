@@ -10,8 +10,9 @@ import com.unilever.ohub.spark.export.TargetType
 import com.unilever.ohub.spark.export.domain.InMemStorage
 import com.unilever.ohub.spark.{SparkJobSpec, export}
 import org.apache.spark.sql.Dataset
+import org.scalatest.Ignore
 
-
+@Ignore
 class AuroraOperatorsInboundWriterSpec extends SparkJobSpec with TestOperators{
 
   import spark.implicits._

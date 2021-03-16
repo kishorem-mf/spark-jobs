@@ -27,6 +27,7 @@ object OperatorChangeLog extends DomainEntityCompanion[OperatorChangeLog]{
       "dateCreated", "dateUpdated", "isGoldenRecord")
   override val auroraInboundWriter: Option[ExportOutboundWriter[OperatorChangeLog]] = None
   override val dataLakeWriter: Option[AzureDLWriter[OperatorChangeLog]] = Some(OperatorChangeLogDLWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[OperatorChangeLog]] = None
 }
 
 

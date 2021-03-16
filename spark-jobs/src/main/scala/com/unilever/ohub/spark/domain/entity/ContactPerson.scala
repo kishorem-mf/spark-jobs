@@ -20,6 +20,7 @@ object ContactPerson extends DomainEntityCompanion[ContactPerson] {
   override val azureDwWriter: Option[AzureDWWriter[ContactPerson]] = Some(ContactPersonDWWriter)
   override val auroraInboundWriter: Option[ExportOutboundWriter[ContactPerson]] = Some(com.unilever.ohub.spark.datalake.ContactPersonOutboundWriter)
   override val dataLakeWriter: Option[AzureDLWriter[ContactPerson]] = Some(ContactPersonDLWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[ContactPerson]] = None
 }
 
 case class ContactPerson(

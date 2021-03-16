@@ -21,6 +21,7 @@ object Chain extends DomainEntityCompanion[Chain] {
   override val azureDwWriter: Option[AzureDWWriter[Chain]] = Some(ChainDWWriter)
   override val auroraInboundWriter: Option[ExportOutboundWriter[Chain]] = Some(com.unilever.ohub.spark.datalake.ChainOutboundWriter)
   override val dataLakeWriter: Option[AzureDLWriter[Chain]] = Some(ChainDLWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[Chain]] = None
 }
 
 case class Chain(

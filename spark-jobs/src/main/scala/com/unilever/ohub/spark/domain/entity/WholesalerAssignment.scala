@@ -5,8 +5,9 @@ import java.sql.Timestamp
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
-import com.unilever.ohub.spark.export.azuredw.{AzureDWWriter}
+import com.unilever.ohub.spark.export.azuredw.AzureDWWriter
 import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter, WholesalerAssignmentDLWriter}
+import com.unilever.ohub.spark.export.ddl.WholesalerAssignmentDdlOutboundWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object WholesalerAssignment extends DomainEntityCompanion[WholesalerAssignment] {
@@ -18,6 +19,7 @@ object WholesalerAssignment extends DomainEntityCompanion[WholesalerAssignment] 
   override val auroraInboundWriter: Option[ExportOutboundWriter[WholesalerAssignment]] = None
   override val azureDwWriter: Option[AzureDWWriter[WholesalerAssignment]] = None
   override val dataLakeWriter: Option[AzureDLWriter[WholesalerAssignment]] = Some(WholesalerAssignmentDLWriter)
+  override val ddlExportWriter: Option[ExportOutboundWriter[WholesalerAssignment]] = Some(WholesalerAssignmentDdlOutboundWriter)
 }
 
 case class WholesalerAssignment(

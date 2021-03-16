@@ -97,7 +97,13 @@ object FormatSourceIDsConverter extends TransformationFunction[String] {
     val sourceIdArr = sourceNames.split(",").flatMap(sourcesMap.get).mkString("-")
     if (sourceIdArr.isEmpty) "" else s"$separator" + sourceIdArr + s"$separator"
   }
-
   override val exampleValue: String = "-3-2-1-"
   val description: String = "Converts sourceNames to sourceIds seperated by hyphen"
+}
+
+object getSourceEntityIdBasedOnConcatId extends TransformationFunction[String] {
+  def impl(input: String): String = if (!input.isEmpty()) {input.split("~")(2) } else {""}
+
+  override val exampleValue: String = "countryCode~source~sourceEntityId"
+  val description: String = "sourceEntityId is derived from concatId"
 }
