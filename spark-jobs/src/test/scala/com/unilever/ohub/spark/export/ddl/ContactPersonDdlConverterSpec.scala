@@ -38,7 +38,12 @@ class ContactPersonDdlConverterSpec extends SparkJobSpec with TestContactPersons
         `Opt out date` = "2015-09-30 02:23:02:000",
         `Opt out` = "Y",
         `Date Account Associated From` = "",
-        `Date Account Associated To` = ""
+        `Date Account Associated To` = "",
+        `Email Opt In` = "Y",
+        `Email Opt In date` = "2015-09-30 02:23:02:000",
+        `Email Opt In 2` = "Y",
+        `Email Opt In 2 date` = "2015-09-30 02:23:03:000",
+        `Email Opt In Status` = ""
       )
       result shouldBe expectedDdlContactPerson
     }

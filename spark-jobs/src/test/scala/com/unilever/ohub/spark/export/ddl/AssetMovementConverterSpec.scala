@@ -19,7 +19,7 @@ class AssetMovementConverterSpec extends SparkJobSpec with TestAssetMovements {
       val expectedDdlAssetMovement = DdlAssetMovements(
         ID = "1",
         Account = "operatorOhubId",
-        `Assembly Date` = "2015-06-30 01:49:00:000",
+        `Assembly Date` = "2015-06-30 01:49:00:0",
         Asset = "1~2~3",
         CabinetCode = "b3a6208c-d7f6-44e2-80e2-f26d461f64c0",
         `Created By` = "Reshma",

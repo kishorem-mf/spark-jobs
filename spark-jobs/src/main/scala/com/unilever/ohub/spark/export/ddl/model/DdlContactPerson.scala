@@ -28,5 +28,10 @@ case class DdlContactPerson(
                              `Opt out date`: String,
                              `Opt out`: String,
                              `Date Account Associated From`: String,
-                             `Date Account Associated To`: String
+                             `Date Account Associated To`: String,
+                             `Email Opt In`: String,
+                             `Email Opt In date`: String,
+                             `Email Opt In 2`: String,
+                             `Email Opt In 2 date`: String,
+                             `Email Opt In Status`: String
                            ) extends DDLOutboundEntity

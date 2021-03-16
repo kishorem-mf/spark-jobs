@@ -154,6 +154,77 @@ object ProductDdlOutboundWriter extends ExportOutboundWriter[Product] with DdlOp
       spark
     )
   }
+}
+
+object AssetDdlOutboundWriter extends ExportOutboundWriter[Asset] with DdlOptions {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[Asset]) = {
+    import spark.implicits._
+    dataSet.map(AssetDdlConverter.convert(_))
+  }
+
+  override def explainConversion: Option[Asset => DdlAssets] = Some((input: Asset)
+  => AssetDdlConverter.convert(input, true))
+
+  override def entityName(): String = "CABINET"
+
+  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
+
+    val currentIntegrated = storage.readFromParquet[Asset](config.integratedInputFile)
+
+    exportToDdl(
+      currentIntegrated,
+      config.copy(targetType = TargetType.DDL),
+      spark
+    )
+  }
+
+}
+
+object AssetMovementDdlOutboundWriter extends ExportOutboundWriter[AssetMovement] with DdlOptions {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[AssetMovement]) = {
+    import spark.implicits._
+    dataSet.map(AssetMovementDdlConverter.convert(_))
+  }
+
+  override def explainConversion: Option[AssetMovement => DdlAssetMovements] = Some((input: AssetMovement)
+  => AssetMovementDdlConverter.convert(input, true))
+
+  override def entityName(): String = "CUSTOMER_CABINET"
+
+  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
+
+    val currentIntegrated = storage.readFromParquet[AssetMovement](config.integratedInputFile)
+
+    exportToDdl(
+      currentIntegrated,
+      config.copy(targetType = TargetType.DDL),
+      spark
+    )
+  }
+
+}
+
+object WholesalerAssignmentDdlOutboundWriter extends ExportOutboundWriter[WholesalerAssignment] with DdlOptions {
+  override private[spark] def convertDataSet(spark: SparkSession, dataSet: Dataset[WholesalerAssignment]) = {
+    import spark.implicits._
+    dataSet.map(WholesalerAssignmentDdlConverter.convert(_))
+  }
+
+  override def explainConversion: Option[WholesalerAssignment => DdlWholesalerAssignment] = Some((input: WholesalerAssignment)
+  => WholesalerAssignmentDdlConverter.convert(input, true))
+
+  override def entityName(): String = "WS_ASSIGNMENT"
+
+  override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
+
+    val currentIntegrated = storage.readFromParquet[WholesalerAssignment](config.integratedInputFile)
+
+    exportToDdl(
+      currentIntegrated,
+      config.copy(targetType = TargetType.DDL),
+      spark
+    )
+  }
 
 }
 
