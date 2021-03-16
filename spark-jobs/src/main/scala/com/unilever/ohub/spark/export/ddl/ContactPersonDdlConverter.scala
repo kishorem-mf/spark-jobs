@@ -33,7 +33,12 @@ object ContactPersonDdlConverter extends Converter[ContactPersonGolden, DdlConta
       `Opt out date` = getValue("emailOptInDate"),
       `Opt out` = getValue("hasEmailOptIn", BooleanToYNConverter),
       `Date Account Associated From` = Option.empty,
-      `Date Account Associated To` = Option.empty
+      `Date Account Associated To` = Option.empty,
+      `Email Opt In` = getValue("hasEmailOptIn", BooleanToYNConverter),
+      `Email Opt In date` = getValue("emailOptInDate"),
+      `Email Opt In 2` = getValue("hasEmailDoubleOptIn", BooleanToYNConverter),
+      `Email Opt In 2 date` = getValue("emailDoubleOptInDate"),
+      `Email Opt In Status` = Option.empty
     )
   }
 }

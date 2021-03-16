@@ -8,7 +8,12 @@ class OperatorDdlConverterSpec extends SparkJobSpec with TestOperatorsGolden {
 
 
   val SUT = OperatorDdlConverter
-  val operatorToConvert = defaultOperatorGolden.copy(ohubId = Some("12345"), globalChannel = Some("globalChannel"))
+  val operatorToConvert = defaultOperatorGolden.copy(ohubId = Some("12345"),
+    globalChannel = Some("globalChannel"), customerHierarchyLevel3 = Some("customerHierarchyLevel3"),
+    customerHierarchyLevel4 = Some("customerHierarchyLevel4"),
+    customerHierarchyLevel5 = Some("customerHierarchyLevel5"),
+    customerHierarchyLevel7 = Some("customerHierarchyLevel7"), latitude = Some("latitude"),
+    longitude = Some("longitude"))
 
   describe("operator ddl converter") {
     it("should convert a domain operator correctly into an ddl operator") {
@@ -55,12 +60,12 @@ class OperatorDdlConverterSpec extends SparkJobSpec with TestOperatorsGolden {
         `Week/Year Open` = "4",
         `Food Spend Month` = "",
         `Convenience Level` = "cooking-convenience-level",
-        Latitude = "",
-        Longitude = "",
-        `Customer Hierarchy Level 3 Desc` = "",
-        `Customer Hierarchy Level 4 Desc` = "",
-        `Customer Hierarchy Level 5 Desc` = "",
-        `Customer Hierarchy Level 7 Desc` = "",
+        Latitude = "latitude",
+        Longitude = "longitude",
+        `Customer Hierarchy Level 3 Desc` = "customerHierarchyLevel3",
+        `Customer Hierarchy Level 4 Desc` = "customerHierarchyLevel4",
+        `Customer Hierarchy Level 5 Desc` = "customerHierarchyLevel5",
+        `Customer Hierarchy Level 7 Desc` = "customerHierarchyLevel7",
         MixedorUFS = "",
         SalesGroupKey = "",
         SalesOfficeKey = "",

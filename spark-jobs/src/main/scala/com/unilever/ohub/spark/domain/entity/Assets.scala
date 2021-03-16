@@ -6,7 +6,8 @@ import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityCompanion}
 import com.unilever.ohub.spark.export.ExportOutboundWriter
 import com.unilever.ohub.spark.export.azuredw.{AssetDWWriter, AzureDWWriter}
-import com.unilever.ohub.spark.export.businessdatalake.{AzureDLWriter,AssetDLWriter}
+import com.unilever.ohub.spark.export.businessdatalake.{AssetDLWriter, AzureDLWriter}
+import com.unilever.ohub.spark.export.ddl.AssetDdlOutboundWriter
 import com.unilever.ohub.spark.export.domain.DomainExportWriter
 
 object AssetDomainExportWriter extends DomainExportWriter[Asset]
@@ -20,7 +21,7 @@ object Asset extends DomainEntityCompanion[Asset] {
   override val azureDwWriter: Option[AzureDWWriter[Asset]] = Some(AssetDWWriter)
   override val auroraInboundWriter: Option[ExportOutboundWriter[Asset]] = None
   override val dataLakeWriter: Option[AzureDLWriter[Asset]] = Some(AssetDLWriter)
-  override val ddlExportWriter: Option[ExportOutboundWriter[Asset]] = None
+  override val ddlExportWriter: Option[ExportOutboundWriter[Asset]] = Some(AssetDdlOutboundWriter)
 }
 
 case class Asset(
