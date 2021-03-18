@@ -25,6 +25,7 @@ trait TypeConversionFunctions {
       case value: Timestamp => value
       case Some(value: Timestamp) => value
       case Some(value: Int) => value.toString
+      case Some(value: Long) => value.toString
       case Some(value: Double) => value
       case Some(value: BigDecimal) => value
       case Some(value: Date) => value
