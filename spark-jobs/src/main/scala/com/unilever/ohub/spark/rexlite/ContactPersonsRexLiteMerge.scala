@@ -15,8 +15,11 @@ object ContactPersonsRexLiteMerge extends BaseRexLiteMerge[ContactPersonRexLite]
     val prevRexIntegrated=storage.readFromParquet[ContactPersonRexLite](config.prevIntegrated).toDF()
     val input_entity_golden=storage.readFromParquet[ContactPersonGolden](config.inputUrl.replace(".parquet","_golden.parquet")).toDF()
     val input_delta=(input_entity.join(inputEntityPrevIntegrated,Seq("concatId"),JoinType.LeftAnti))
+    val reqColumns=prevRexIntegrated.drop("rexLiteMergedDate").columns
 
-    val daily_merged_records:Dataset[ContactPersonRexLite]=transform(spark,input_delta,input_entity_golden)
+    val daily_merged_records:Dataset[ContactPersonRexLite]=transform(spark,
+      input_delta.select(reqColumns.head, reqColumns.tail: _*),
+      input_entity_golden.select(reqColumns.head, reqColumns.tail: _*))
     val dailyRefreshRexData=daily_merged_records
       .filter(!col("rexLiteMergedDate").contains("1970-01-01"))
       .select(prevRexIntegrated.columns.head, prevRexIntegrated.columns.tail: _*)
