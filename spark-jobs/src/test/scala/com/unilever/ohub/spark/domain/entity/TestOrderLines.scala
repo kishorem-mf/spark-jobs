@@ -29,7 +29,7 @@ trait TestOrderLines {
     orderConcatId = "",
     productConcatId = "product-concat-id",
     productSourceEntityId = "product-source-entity-id",
-    quantityOfUnits= 0,
+    quantityOfUnits = Some(0),
     amount = BigDecimal(0),
     pricePerUnit = None,
     currency = None,

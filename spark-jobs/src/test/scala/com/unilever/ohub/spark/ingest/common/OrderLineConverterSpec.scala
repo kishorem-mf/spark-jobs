@@ -38,7 +38,7 @@ class OrderLineConverterSpec extends CsvDomainGateKeeperSpec[OrderLine] with Tes
           productConcatId = "NZ~EMAKINA~68024380",
           productSourceEntityId = "68024380",
           comment = None,
-          quantityOfUnits = 1,
+          quantityOfUnits = Some(1),
           amount = BigDecimal(0),
           pricePerUnit = Some(BigDecimal(0)),
           currency = None,

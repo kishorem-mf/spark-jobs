@@ -35,7 +35,7 @@ object OrderLineConverter extends CommonDomainGateKeeper[OrderLine] with OrderLi
         productConcatId = mandatory("productConcatId"),
         productSourceEntityId = mandatory("productRefId"),
         comment = optional("comment"),
-        quantityOfUnits = mandatory("quantityOfUnits", toInt),
+        quantityOfUnits = optional("quantityOfUnits", toLong),
         amount = mandatory("amount", toBigDecimal),
         pricePerUnit = optional("pricePerUnit", toBigDecimal),
         currency = optional("currency"),

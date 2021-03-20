@@ -56,7 +56,7 @@ case class OrderLine(
                       orderConcatId: String,
                       productConcatId: String,
                       productSourceEntityId: String,
-                      quantityOfUnits: Int,
+                      quantityOfUnits: Option[Long],
                       amount: BigDecimal,
                       pricePerUnit: Option[BigDecimal],
                       currency: Option[String],

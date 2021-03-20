@@ -51,6 +51,17 @@ case class Subscription(
                          hasConfirmedSubscription: Option[Boolean],
                          confirmedSubscriptionDate: Option[Timestamp],
                          fairKitchensSignUpType: Option[String],
+                         //BDL fields
+                         newsletterNumber: Option[String],
+                         createdBy: Option[String],
+                         currency: Option[String],
+                         hasPricingInfo: Option[Boolean],
+                         language: Option[String],
+                         name: Option[String],
+                         owner: Option[String],
+                         numberOfTimesSent: Option[Int],
+                         localOrGlobalSendOut: Option[String],
+                         comment: Option[String],
                          // other fields
                          additionalFields: Map[String, String],
                          ingestionErrors: Map[String, IngestionError]
