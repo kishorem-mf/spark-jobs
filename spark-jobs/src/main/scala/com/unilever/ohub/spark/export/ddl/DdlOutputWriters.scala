@@ -30,9 +30,10 @@ object OperatorDdlOutboundWriter extends ExportOutboundWriter[OperatorGolden] wi
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
 
     val currentIntegrated = storage.readFromParquet[OperatorGolden](config.integratedInputFile)
-
+    val folderName = "operators"
     exportToDdl(
       currentIntegrated,
+      folderName,
       config.copy(targetType = TargetType.DDL),
       spark
     )
@@ -52,9 +53,10 @@ object ContactPersonDdlOutboundWriter extends ExportOutboundWriter[ContactPerson
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
 
     val currentIntegrated = storage.readFromParquet[ContactPersonGolden](config.integratedInputFile)
-
+    val folderName = "contacts"
     exportToDdl(
       currentIntegrated,
+      folderName,
       config.copy(targetType = TargetType.DDL),
       spark
     )
@@ -75,9 +77,11 @@ object OrderDdlOutboundWriter extends ExportOutboundWriter[Order] with DdlOption
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
 
     val currentIntegrated = storage.readFromParquet[Order](config.integratedInputFile)
+    val folderName = "orders"
 
     exportToDdl(
       currentIntegrated,
+      folderName,
       config.copy(targetType = TargetType.DDL),
       spark
     )
@@ -99,9 +103,10 @@ object NewsletterSubscriptionDdlOutboundWriter extends ExportOutboundWriter[Subs
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
 
     val currentIntegrated = storage.readFromParquet[Subscription](config.integratedInputFile)
-
+    val folderName = "subscriptions"
     exportToDdl(
       currentIntegrated,
+      folderName,
       config.copy(targetType = TargetType.DDL),
       spark
     )
@@ -123,9 +128,10 @@ object OrderlineDdlOutboundWriter extends ExportOutboundWriter[OrderLine] with D
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
 
     val currentIntegrated = storage.readFromParquet[OrderLine](config.integratedInputFile)
-
+    val folderName = "orderlines"
     exportToDdl(
       currentIntegrated,
+      folderName,
       config.copy(targetType = TargetType.DDL),
       spark
     )
@@ -147,9 +153,10 @@ object ProductDdlOutboundWriter extends ExportOutboundWriter[Product] with DdlOp
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
 
     val currentIntegrated = storage.readFromParquet[Product](config.integratedInputFile)
-
+    val folderName = "products"
     exportToDdl(
       currentIntegrated,
+      folderName,
       config.copy(targetType = TargetType.DDL),
       spark
     )
@@ -170,9 +177,10 @@ object AssetDdlOutboundWriter extends ExportOutboundWriter[Asset] with DdlOption
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
 
     val currentIntegrated = storage.readFromParquet[Asset](config.integratedInputFile)
-
+    val folderName = "cabinets"
     exportToDdl(
       currentIntegrated,
+      folderName,
       config.copy(targetType = TargetType.DDL),
       spark
     )
@@ -194,9 +202,10 @@ object AssetMovementDdlOutboundWriter extends ExportOutboundWriter[AssetMovement
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
 
     val currentIntegrated = storage.readFromParquet[AssetMovement](config.integratedInputFile)
-
+    val folderName = "customercabinets"
     exportToDdl(
       currentIntegrated,
+      folderName,
       config.copy(targetType = TargetType.DDL),
       spark
     )
@@ -218,9 +227,10 @@ object WholesalerAssignmentDdlOutboundWriter extends ExportOutboundWriter[Wholes
   override def run(spark: SparkSession, config: OutboundConfig, storage: Storage): Unit = {
 
     val currentIntegrated = storage.readFromParquet[WholesalerAssignment](config.integratedInputFile)
-
+    val folderName = "wsassignments"
     exportToDdl(
       currentIntegrated,
+      folderName,
       config.copy(targetType = TargetType.DDL),
       spark
     )

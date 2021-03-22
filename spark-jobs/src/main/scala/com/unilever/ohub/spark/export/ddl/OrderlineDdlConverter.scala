@@ -8,7 +8,7 @@ object OrderlineDdlConverter extends Converter[OrderLine, DdlOrderline] with Typ
   override def convert(implicit order: OrderLine, explain: Boolean = false): DdlOrderline = {
     DdlOrderline(
     Id = getValue("sourceEntityId"),
-    Quantity = getValue("quantityOfUnits"),
+    Quantity = getValue("quantityOfUnits", LongToStringConverter),
     `List Price` = getValue("pricePerUnit"),
     `Sales Price` = Option.empty,
     `Product Id` = getValue("productSourceEntityId"),
