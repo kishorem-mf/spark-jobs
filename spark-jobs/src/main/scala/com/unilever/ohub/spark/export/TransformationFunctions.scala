@@ -1,7 +1,7 @@
 package com.unilever.ohub.spark.export
 
 import java.sql.Timestamp
-
+import org.apache.spark.sql.types.Decimal
 import com.unilever.ohub.spark.DomainDataProvider
 
 trait TransformationFunction[T] {
@@ -23,6 +23,20 @@ object BooleanToYNConverter extends TransformationFunction[Boolean] {
 
   override val exampleValue: String = "Y"
   val description: String = "Transforms a boolean to Y(es) or N(o)"
+}
+
+object DecimalToStringConverter extends TransformationFunction[Decimal] {
+  def impl(decimal: Decimal): String = String.valueOf(decimal)
+
+  override val exampleValue: String = "0.0"
+  val description: String = "Transforms a decimal to string"
+}
+
+object LongToStringConverter extends TransformationFunction[Long] {
+  def impl(long: Long): String = String.valueOf(long)
+
+  override val exampleValue: String = "11111"
+  val description: String = "Transforms a long to string"
 }
 
 object BooleanToYNUConverter extends TransformationFunction[Option[Boolean]] {

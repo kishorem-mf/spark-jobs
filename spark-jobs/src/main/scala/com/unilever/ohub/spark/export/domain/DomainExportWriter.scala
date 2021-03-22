@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter
 
 import com.unilever.ohub.spark.domain.entity.{ContactPerson, Operator}
 import com.unilever.ohub.spark.domain.{DomainEntity, DomainEntityUtils}
-import com.unilever.ohub.spark.export.TargetType.{DATASCIENCE, MEPS, TargetType}
+import com.unilever.ohub.spark.export.TargetType.{DATASCIENCE, MEPS, TargetType, DDL}
 import com.unilever.ohub.spark.export.{CsvOptions, ExportOutboundWriter, OutboundConfig, SparkJobWithOutboundExportConfig}
 import com.unilever.ohub.spark.storage.Storage
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
@@ -34,6 +34,7 @@ abstract class DomainExportWriter[DomainType <: DomainEntity : TypeTag] extends 
     targetType match {
       case DATASCIENCE => false
       case MEPS => true
+      case DDL => true
       case _ => throw new IllegalArgumentException("provided targetType not supported")
     }
   }
