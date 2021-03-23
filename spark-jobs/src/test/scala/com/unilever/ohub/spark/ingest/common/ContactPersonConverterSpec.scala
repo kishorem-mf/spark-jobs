@@ -109,6 +109,9 @@ class ContactPersonConverterSpec extends CsvDomainGateKeeperSpec[ContactPerson] 
             teleMarketingOptOutDate = None,
             teleMarketingOptInStatus = None,
             teleMarketingConsentDate = None,
+            hasCalculatedEmailConsent = None,
+            hasCalculatedMobileConsent = None,
+            hasCalculatedTeleMarketingConsent = None,
 
             additionalFields = Map(),
             ingestionErrors = Map()
