@@ -112,6 +112,9 @@ case class ContactPerson(
                           teleMarketingOptOutDate:Option[Timestamp],
                           teleMarketingOptInStatus:Option[String],
                           teleMarketingConsentDate:Option[Timestamp],
+                          hasCalculatedEmailConsent:Option[Boolean],
+                          hasCalculatedMobileConsent:Option[Boolean],
+                          hasCalculatedTeleMarketingConsent:Option[Boolean],
                           // other fields
                           additionalFields: Map[String, String],
                           ingestionErrors: Map[String, IngestionError]

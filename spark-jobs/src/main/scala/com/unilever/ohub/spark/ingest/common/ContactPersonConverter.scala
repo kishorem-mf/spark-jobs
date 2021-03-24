@@ -104,6 +104,9 @@ object ContactPersonConverter extends CommonDomainGateKeeper[ContactPerson] with
         teleMarketingOptOutDate = optional("teleMarketingOptOutDate",parseDateTimeUnsafe()),
         teleMarketingOptInStatus = optional("teleMarketingOptInStatus"),
         teleMarketingConsentDate = optional("teleMarketingConsentDate",parseDateTimeUnsafe()),
+        hasCalculatedEmailConsent = optional("hasCalculatedEmailConsent",toBoolean),
+        hasCalculatedMobileConsent = optional("hasCalculatedMobileConsent",toBoolean),
+        hasCalculatedTeleMarketingConsent = optional("hasCalculatedTeleMarketingConsent",toBoolean),
         additionalFields = additionalFields,
         ingestionErrors = errors
       )
