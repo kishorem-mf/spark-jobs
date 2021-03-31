@@ -11,7 +11,7 @@ object Constants {
 
   //countrycode-entity-sourceName combination
   val exclusionSourceEntityCountryList = Seq(
-    Row("GB","campaignbounces","ACM","true")
+     Row("GB","campaignbounces","ACM","true")
     ,Row("GB","campaignclicks","ACM","true")
     ,Row("GB","campaigns","ACM","true")
     ,Row("GB","campaignopens","ACM","true")
@@ -308,6 +308,8 @@ object Constants {
     ,Row("TR","contactpersons","UFS_ACADEMY_LITE","false")
     ,Row("TR","contactpersons","UFS_APP","false")
     ,Row("TR","contactpersons","UFS_TRAINING_ACADEMY_APP","false")
+    ,Row("TR","contactpersons","OTHER_SOURCE","true")
+    ,Row("TR","contactpersons","OTHER_SOURCE","false")
     ,Row("TR","contactpersons_golden","OHUB","false")
     ,Row("TR","operators","CAMPAIGN_MARKETING","false")
     ,Row("TR","operators","COMPLAINTS","false")
@@ -321,6 +323,8 @@ object Constants {
     ,Row("TR","operators","UFS_ACADEMY_LITE","false")
     ,Row("TR","operators","UFS_APP","false")
     ,Row("TR","operators","UFS_TRAINING_ACADEMY_APP","false")
+    ,Row("TR","operators","OTHER_SOURCE","true")
+    ,Row("TR","operators","OTHER_SOURCE","false")
     ,Row("TR","operators_golden","OHUB","false")
     ,Row("TR","products","EMAKINA","false")
     ,Row("TR","products","KANGAROO","false")
@@ -331,6 +335,11 @@ object Constants {
     ,Row("TR","subscriptions","UFS_ACADEMY_LITE","false")
     ,Row("TR","subscriptions","UFS_APP","false")
     ,Row("TR","subscriptions","UFS_TRAINING_ACADEMY_APP","false")
+    ,Row("TR","loyaltypoints","EMAKINA","false")
+    ,Row("TR","orderlines","EMAKINA","false")
+    ,Row("TR","orderlines","KANGAROO","false")
+    ,Row("TR","orders","EMAKINA","false")
+    ,Row("TR","orders","KANGAROO","false")
   )
 
 //countryCode;entity;sourceName;orderType
