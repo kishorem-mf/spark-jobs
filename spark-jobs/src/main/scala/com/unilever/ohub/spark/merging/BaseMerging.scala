@@ -9,6 +9,7 @@ import org.apache.spark.sql.expressions.{ Window, WindowSpec }
 import scala.reflect.runtime.universe._
 
 abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefaultConfig {
+  // scalastyle:off
   val mergeGroupSizeCap = 100
   val prefixNewColumn = "merged_"
   val excludeFields = Seq("group_row_num")
@@ -81,7 +82,9 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
         else {
           ds
             .filter($"isActive")
-            .withColumn("sourcePriority",when($"sourceName".isin(sources:_*), when($"dateCreated".isNull,when($"dateUpdated".isNull,$"ohubUpdated").otherwise($"dateUpdated")).otherwise($"dateCreated")).otherwise(null))
+            .withColumn("sourcePriority",when($"sourceName".isin(sources:_*), when($"dateCreated".isNull,
+              when($"dateUpdated".isNull,$"ohubUpdated").otherwise($"dateUpdated")).
+              otherwise($"dateCreated")).otherwise(null))
             .withColumn("group_row_num", row_number().over(customWindow))
             .filter($"group_row_num" <= mergeGroupSizeCap)
             .withColumn("sourceName", concat_ws(",", sort_array(collect_set("sourceName").over(groupWindow))))

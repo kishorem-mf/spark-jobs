@@ -9,7 +9,7 @@ import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions._
 
 object OperatorCreatePerfectGoldenRecord extends BaseMerging[OperatorGolden] {
-
+  // scalastyle:off
   override def run(spark: SparkSession, config: DefaultConfig, storage: Storage): Unit = {
     val entity = storage.readFromParquet[OperatorGolden](config.inputFile)
     val entityAllCountries = entity
