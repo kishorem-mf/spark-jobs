@@ -48,6 +48,7 @@ case class Activity(
                      name: Option[String],
                      details: Option[String],
                      actionType: Option[String],
+                     callType: Option[String],
                      contactPersonConcatId: Option[String],
                      contactPersonOhubId: Option[String],
                      operatorConcatId: Option[String],

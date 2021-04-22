@@ -26,6 +26,7 @@ trait TestActivities {
     name = Some("some name"),
     details = Some("some details"),
     actionType = Some("MyActionType"),
+    callType = Some("1"),
     contactPersonConcatId = Some("DE~SUBSCRIPTION~138175"),
     contactPersonOhubId = None,
     operatorConcatId = Some("DE~SUBSCRIPTION~138175"),

@@ -38,6 +38,7 @@ class ActivityConverterSpec extends CsvDomainGateKeeperSpec[Activity] {
           name = Some("QA"),
           details = Some("answering questions"),
           actionType = Some("type"),
+          callType = Some("1"),
           contactPersonConcatId = Some("DE~EMAKINA~456"),
           contactPersonOhubId = None,
           operatorConcatId = Some("DE~EMAKINA~789"),
