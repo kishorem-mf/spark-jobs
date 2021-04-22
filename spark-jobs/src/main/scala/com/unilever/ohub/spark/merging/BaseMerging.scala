@@ -9,6 +9,7 @@ import org.apache.spark.sql.expressions.{ Window, WindowSpec }
 import scala.reflect.runtime.universe._
 
 abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefaultConfig {
+  // scalastyle:off
   val mergeGroupSizeCap = 100
   val prefixNewColumn = "merged_"
   val excludeFields = Seq("group_row_num")
@@ -16,6 +17,22 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
   def transform(spark: SparkSession, ds: Dataset[T]): Dataset[T] = {
     import spark.implicits._
 // Check if the entity has department field
+    val groupWindow = Window.partitionBy($"ohubId")
+
+    val orderByDatesWindow = groupWindow.orderBy(
+      when($"dateUpdated".isNull, $"dateCreated").otherwise($"dateUpdated").desc_nulls_last,
+      $"dateCreated".desc_nulls_last,
+      $"ohubUpdated".desc
+    )
+
+    transform(spark,ds,orderByDatesWindow)
+  }
+
+  def transform(spark: SparkSession, ds: Dataset[T],
+                customWindow: org.apache.spark.sql.expressions.WindowSpec,
+                sources:List[String]=List(),nonPreferedCol:Seq[String]=Seq()): Dataset[T] = {
+    import spark.implicits._
+    // Check if the entity has department field
     def hasColumn(entityCaseClassName: Dataset[T], colName: String) = entityCaseClassName.columns.contains(colName)
     val entityHasColumn = hasColumn(ds,"department")
 
@@ -26,38 +43,66 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
 
     val groupWindow = Window.partitionBy($"ohubId")
 
-    val orderByDatesWindow = groupWindow.orderBy(
-      when($"dateUpdated".isNull, $"dateCreated").otherwise($"dateUpdated").desc_nulls_last,
-      $"dateCreated".desc_nulls_last,
-      $"ohubUpdated".desc
-    )
+    val mergeableRecords =
+      if(sources.isEmpty)
+      {
+        if (entityHasColumn.equals(true))
+        {
+          ds
+            .filter($"isActive")
+            .withColumn("group_row_num", row_number().over(customWindow))
+            .filter($"group_row_num" <= mergeGroupSizeCap)
+            .withColumn("sourceName", concat_ws(",", sort_array(collect_set("sourceName").over(groupWindow))))
+            .withColumn("department", concat_ws(",", sort_array(collect_set("department").over(groupWindow))))
+            .drop("additionalFields", "ingestionErrors")
+        }
+        else {
+          ds
+            .filter($"isActive")
+            .withColumn("group_row_num", row_number().over(customWindow))
+            .filter($"group_row_num" <= mergeGroupSizeCap)
+            .withColumn("sourceName", concat_ws(",", sort_array(collect_set("sourceName").over(groupWindow))))
+            .drop("additionalFields", "ingestionErrors")
+        }
+      }else {
 
-    val mergeableRecords = if(entityHasColumn.equals(true)) {
-      ds
-        .filter($"isActive")
-        .withColumn("group_row_num", row_number().over(orderByDatesWindow))
-        .filter($"group_row_num" <= mergeGroupSizeCap)
-        .withColumn("sourceName", concat_ws(",", sort_array(collect_set("sourceName").over(groupWindow))))
-        .withColumn("department", concat_ws(",", sort_array(collect_set("department").over(groupWindow))))
-        .drop("additionalFields", "ingestionErrors")
-    }
-    else {
-      ds
-        .filter($"isActive")
-        .withColumn("group_row_num", row_number().over(orderByDatesWindow))
-        .filter($"group_row_num" <= mergeGroupSizeCap)
-        .withColumn("sourceName", concat_ws(",", sort_array(collect_set("sourceName").over(groupWindow))))
-        .drop("additionalFields", "ingestionErrors")
-    }
+        if (entityHasColumn.equals(true))
+        {
+          ds
+            .filter($"isActive")
+            .withColumn("sourcePriority",when($"sourceName".isin(sources:_*), when($"dateCreated".isNull,
+              when($"dateUpdated".isNull,$"ohubUpdated").otherwise($"dateUpdated"))
+              .otherwise($"dateCreated")).otherwise(null))
+            .withColumn("group_row_num", row_number().over(customWindow))
+            .filter($"group_row_num" <= mergeGroupSizeCap)
+            .withColumn("sourceName", concat_ws(",", sort_array(collect_set("sourceName").over(groupWindow))))
+            .withColumn("department", concat_ws(",", sort_array(collect_set("department").over(groupWindow))))
+            .drop("additionalFields", "ingestionErrors")
+        }
+        else {
+          ds
+            .filter($"isActive")
+            .withColumn("sourcePriority",when($"sourceName".isin(sources:_*), when($"dateCreated".isNull,
+              when($"dateUpdated".isNull,$"ohubUpdated").otherwise($"dateUpdated")).
+              otherwise($"dateCreated")).otherwise(null))
+            .withColumn("group_row_num", row_number().over(customWindow))
+            .filter($"group_row_num" <= mergeGroupSizeCap)
+            .withColumn("sourceName", concat_ws(",", sort_array(collect_set("sourceName").over(groupWindow))))
+            .drop("additionalFields", "ingestionErrors")
+        }
+      }
+
+
     setFieldsToLatestValue(
       spark,
-      orderByDatesWindow,
+      customWindow,
       mergeableRecords,
       excludeFields = excludeFields,
-      reversedOrderColumns = Seq("dateCreated", "ohubCreated")
+      reversedOrderColumns = Seq("dateCreated", "ohubCreated"),
+      nonPreferredColumns = nonPreferedCol
     )
       .filter($"group_row_num" === 1)
-      .drop("group_row_num")
+      .drop("group_row_num","sourcePriority")
       .withColumn("isGoldenRecord", lit(true))
       .withColumn("concatId", calConcatId($"countryCode", $"ohubId"))
       .withColumn("additionalFields", typedLit(Map[String, String]()))
@@ -80,9 +125,24 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
     )
   }
 
+  def pickForNonPrefferedFields(spark: SparkSession, df: DataFrame, column: String): DataFrame = {
+    import spark.implicits._
+    // Picks the records for non prefered columns
+    val groupWin = Window.partitionBy($"ohubId")
+    val orderByNonPreferredWindow = groupWin.orderBy(
+      when($"dateUpdated".isNull, $"dateCreated").otherwise($"dateUpdated").desc_nulls_last,
+      $"dateCreated".desc_nulls_last,
+      $"ohubUpdated".desc
+    )
+    df.withColumn(
+      prefixNewColumn + column, first(col(column), true).over(
+        orderByNonPreferredWindow.rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)
+      )
+    )
+  }
+
   private[merging] def pickNewest(spark: SparkSession, df: DataFrame, column: String, newestNotNullWindow: WindowSpec): DataFrame = {
     // Picks the newest per record and writes to a new column
-
     df.withColumn(
       prefixNewColumn + column, first(col(column), true).over(
         newestNotNullWindow.rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing))
@@ -94,7 +154,8 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
     orderByDatesWindow: WindowSpec,
     dataframe: DataFrame,
     excludeFields: Seq[String] = Seq(),
-    reversedOrderColumns: Seq[String] = Seq()
+    reversedOrderColumns: Seq[String] = Seq(),
+    nonPreferredColumns: Seq[String] = Seq()
   ): DataFrame = {
     // Set all columns of dataset on the first value of it's newestNotNullWindow
     // Note: we write the result to a new column as prefix+columnName because overwriting introduces randomness
