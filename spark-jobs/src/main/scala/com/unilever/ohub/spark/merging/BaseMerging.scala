@@ -4,8 +4,8 @@ import com.unilever.ohub.spark.domain.DomainEntity
 import com.unilever.ohub.spark.domain.DomainEntity.IngestionError
 import com.unilever.ohub.spark.SparkJobWithDefaultConfig
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{ DataFrame, Dataset, SparkSession }
-import org.apache.spark.sql.expressions.{ Window, WindowSpec }
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import scala.reflect.runtime.universe._
 
 abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefaultConfig {
@@ -27,10 +27,9 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
 
     transform(spark,ds,orderByDatesWindow)
   }
-
   def transform(spark: SparkSession, ds: Dataset[T],
-                customWindow: org.apache.spark.sql.expressions.WindowSpec,
-                sources:List[String]=List(),nonPreferedCol:Seq[String]=Seq()): Dataset[T] = {
+                customWindow: org.apache.spark.sql.expressions.WindowSpec
+               ): Dataset[T] = {
     import spark.implicits._
     // Check if the entity has department field
     def hasColumn(entityCaseClassName: Dataset[T], colName: String) = entityCaseClassName.columns.contains(colName)
@@ -44,8 +43,6 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
     val groupWindow = Window.partitionBy($"ohubId")
 
     val mergeableRecords =
-      if(sources.isEmpty)
-      {
         if (entityHasColumn.equals(true))
         {
           ds
@@ -64,15 +61,40 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
             .withColumn("sourceName", concat_ws(",", sort_array(collect_set("sourceName").over(groupWindow))))
             .drop("additionalFields", "ingestionErrors")
         }
-      }else {
+    setFieldsToLatestValue(
+      spark,
+      customWindow,
+      mergeableRecords,
+      excludeFields = excludeFields,
+      reversedOrderColumns = Seq("dateCreated", "ohubCreated"),
+      nonPreferredColumns = Seq()
+    )
+      .filter($"group_row_num" === 1)
+      .drop("group_row_num")
+      .withColumn("isGoldenRecord", lit(true))
+      .withColumn("concatId", calConcatId($"countryCode", $"ohubId"))
+      .withColumn("additionalFields", typedLit(Map[String, String]()))
+      .withColumn("ingestionErrors", typedLit(Map[String, IngestionError]()))
+      .as[T]
+  }
 
+  def transform(spark: SparkSession, ds: DataFrame,
+                customWindow: org.apache.spark.sql.expressions.WindowSpec,
+                nonPreferedCol:Seq[String]): DataFrame = {
+    import spark.implicits._
+    // Check if the entity has department field
+    def hasColumn(entityCaseClassName: Dataset[T], colName: String) = entityCaseClassName.columns.contains(colName)
+    val entityHasColumn = hasColumn(ds.drop("priority").as[T],"department")
+    val calConcatId = udf((countryCode: String, ohubId: String) => {
+      val ohub2SourceName = "OHUB"
+      Seq(countryCode, ohub2SourceName, ohubId).mkString("~")
+    } )
+    val groupWindow = Window.partitionBy($"ohubId")
+    val mergeableRecords =
         if (entityHasColumn.equals(true))
         {
           ds
             .filter($"isActive")
-            .withColumn("sourcePriority",when($"sourceName".isin(sources:_*), when($"dateCreated".isNull,
-              when($"dateUpdated".isNull,$"ohubUpdated").otherwise($"dateUpdated"))
-              .otherwise($"dateCreated")).otherwise(null))
             .withColumn("group_row_num", row_number().over(customWindow))
             .filter($"group_row_num" <= mergeGroupSizeCap)
             .withColumn("sourceName", concat_ws(",", sort_array(collect_set("sourceName").over(groupWindow))))
@@ -82,17 +104,11 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
         else {
           ds
             .filter($"isActive")
-            .withColumn("sourcePriority",when($"sourceName".isin(sources:_*), when($"dateCreated".isNull,
-              when($"dateUpdated".isNull,$"ohubUpdated").otherwise($"dateUpdated")).
-              otherwise($"dateCreated")).otherwise(null))
             .withColumn("group_row_num", row_number().over(customWindow))
             .filter($"group_row_num" <= mergeGroupSizeCap)
             .withColumn("sourceName", concat_ws(",", sort_array(collect_set("sourceName").over(groupWindow))))
             .drop("additionalFields", "ingestionErrors")
         }
-      }
-
-
     setFieldsToLatestValue(
       spark,
       customWindow,
@@ -102,12 +118,11 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
       nonPreferredColumns = nonPreferedCol
     )
       .filter($"group_row_num" === 1)
-      .drop("group_row_num","sourcePriority")
+      .drop("group_row_num")
       .withColumn("isGoldenRecord", lit(true))
       .withColumn("concatId", calConcatId($"countryCode", $"ohubId"))
       .withColumn("additionalFields", typedLit(Map[String, String]()))
       .withColumn("ingestionErrors", typedLit(Map[String, IngestionError]()))
-      .as[T]
   }
 
   private[merging] def pickOldest(spark: SparkSession, df: DataFrame, column: String): DataFrame = {
