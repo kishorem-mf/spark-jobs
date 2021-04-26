@@ -184,7 +184,11 @@ abstract class BaseMerging[T <: DomainEntity: TypeTag] extends SparkJobWithDefau
 
           if (reversedOrderColumns.contains(column)) {
             pickOldest(spark, op, column)
-          } else {
+          }
+          else if(nonPreferredColumns.contains(column)) {
+            pickForNonPrefferedFields(spark, op, column)
+          }
+          else {
             pickNewest(spark, op, column, orderByDatesWindow)
           }
         }
