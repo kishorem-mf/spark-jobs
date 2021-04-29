@@ -816,7 +816,10 @@ val data = Seq(
 ,("IYS_HUB", "274")
 ,("PEDIDOS_AHORA", "275")
 ,("SIPARIS_DIREKT", "276")
-,("SERVICE_CLOUD_CRM", "277"))
+,("SERVICE_CLOUD_CRM", "277")
+,("SAHABAT_UFS", "278")
+,("PITCHPOCKET", "279")
+,("MAILCHIMP", "280"))
 
 // COMMAND ----------
 
