@@ -819,7 +819,9 @@ val data = Seq(
 ,("SERVICE_CLOUD_CRM", "277")
 ,("SAHABAT_UFS", "278")
 ,("PITCHPOCKET", "279")
-,("MAILCHIMP", "280"))
+,("MAILCHIMP", "280")
+,("BLUERANK", "281")
+,("CH_CONCESSIONAIRE", "282"))
 
 // COMMAND ----------
 
