@@ -12,7 +12,8 @@ case class Record(dateUpdated:  Date, concat_source: String, concat_caterlyst: S
 case class OperatorStitchUpdateMappingConfig(
                                                udlLookupMappingsInputFile: String = "udl-lookup-mappings-input-file",
                                                operatorsInputFile: String = "operators-input-prev-integ-file",
-                                               outputFile: String = "path-to-output-file"
+                                               outputFile: String = "path-to-output-file",
+                                               deltaPreProcessedOutputFile: String = "operators-preprocessed-file"
                                              ) extends SparkJobConfig
 
 object OperatorStitchUpdateMapping extends SparkJob[OperatorStitchUpdateMappingConfig] {
@@ -22,7 +23,8 @@ object OperatorStitchUpdateMapping extends SparkJob[OperatorStitchUpdateMappingC
   def transform(
                  spark: SparkSession,
                  operators: DataFrame,
-                 udlReferences: DataFrame
+                 udlReferences: DataFrame,
+                 deltaPreProcessedOutputFile: Dataset[Operator]
                ): Dataset[Operator] = {
     import spark.implicits._
     val operator_udl=operators.join(udlReferences.select("concat_source","concat_caterlyst"),
@@ -33,7 +35,8 @@ object OperatorStitchUpdateMapping extends SparkJob[OperatorStitchUpdateMappingC
       .withColumn("oldIntegrationId",uncleaned_output("prev_ohubId"))
       .drop("prev_ohubId","prev_concatId")
       .as[Operator]
-    cleaned_result
+    val combine=cleaned_result.unionByName(deltaPreProcessedOutputFile)
+    combine
   }
 
   override private[spark] def configParser(): OptionParser[OperatorStitchUpdateMappingConfig] =
@@ -48,6 +51,9 @@ object OperatorStitchUpdateMapping extends SparkJob[OperatorStitchUpdateMappingC
       opt[String]("outputFile") optional() action { (x, c) ⇒
         c.copy(outputFile = x)
       } text "outputFile is a string property"
+      opt[String]("deltaPreProcessedOutputFile") optional() action { (x, c) ⇒
+        c.copy(outputFile = x)
+      } text "deltaPreProcessedOutputFile is a string property"
 
       version("1.0")
       help("help") text "help text"
@@ -56,6 +62,7 @@ object OperatorStitchUpdateMapping extends SparkJob[OperatorStitchUpdateMappingC
   override def run(spark: SparkSession, config: OperatorStitchUpdateMappingConfig, storage: Storage): Unit = {
     import spark.implicits._
     val operators = storage.readFromParquet[Operator](config.operatorsInputFile)
+    val operator_preprocessed=storage.readFromParquet[Operator](config.deltaPreProcessedOutputFile)
     val textRDD = spark.sparkContext.textFile(config.udlLookupMappingsInputFile)
     val format=new java.text.SimpleDateFormat("yyyy-MM-dd")
     val records = textRDD.map {
@@ -68,7 +75,7 @@ object OperatorStitchUpdateMapping extends SparkJob[OperatorStitchUpdateMappingC
       (r1: Record, r2: Record) => if (r1.dateUpdated.after(r2.dateUpdated)) r1 else r2
     }}
     val dfNoDuplicateSources = spark.createDataFrame(result)
-    val transformed = transform(spark, operators.toDF(),dfNoDuplicateSources)
+    val transformed = transform(spark, operators.toDF(),dfNoDuplicateSources,operator_preprocessed)
 
     storage.writeToParquet(transformed, config.outputFile)
   }
