@@ -26,7 +26,7 @@ object OperatorStitchUpdateMapping extends SparkJob[OperatorStitchUpdateMappingC
                  spark: SparkSession,
                  operators: DataFrame,
                  udlReferences: DataFrame,
-                 deltaPreProcessedOutputFile: Dataset[Operator]
+                 deltaPreProcessedOutput: Dataset[Operator]
                ): Dataset[Operator] = {
     import spark.implicits._
     val operator_udl=operators.join(udlReferences.select("concat_source","concat_caterlyst"),
@@ -37,7 +37,7 @@ object OperatorStitchUpdateMapping extends SparkJob[OperatorStitchUpdateMappingC
       .withColumn("oldIntegrationId",uncleaned_output("prev_ohubId"))
       .drop("prev_ohubId","prev_concatId")
       .as[Operator]
-    val combine=cleaned_result.unionByName(deltaPreProcessedOutputFile)
+    val combine=cleaned_result.unionByName(deltaPreProcessedOutput)
     combine
   }
 
@@ -54,7 +54,7 @@ object OperatorStitchUpdateMapping extends SparkJob[OperatorStitchUpdateMappingC
         c.copy(outputFile = x)
       } text "outputFile is a string property"
       opt[String]("deltaPreProcessedOutputFile") optional() action { (x, c) ⇒
-        c.copy(outputFile = x)
+        c.copy(deltaPreProcessedOutputFile = x)
       } text "deltaPreProcessedOutputFile is a string property"
 
       version("1.0")
