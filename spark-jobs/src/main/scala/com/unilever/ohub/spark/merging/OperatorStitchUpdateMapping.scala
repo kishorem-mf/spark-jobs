@@ -7,7 +7,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import scopt.OptionParser
 import java.sql.Date
 
-case class Record(dateUpdated:  Date, concat_source: String, concat_caterlyst: String) extends scala.Product
+case class Record(date_updated:  Date, concat_source: String, concat_caterlyst: String) extends scala.Product
 
 case class OperatorStitchUpdateMappingConfig(
                                                udlLookupMappingsInputFile: String = "udl-lookup-mappings-input-file",
@@ -27,13 +27,13 @@ object OperatorStitchUpdateMapping extends SparkJob[OperatorStitchUpdateMappingC
                  deltaPreProcessedOutputFile: Dataset[Operator]
                ): Dataset[Operator] = {
     import spark.implicits._
-    val operator_udl=operators.join(udlReferences.select("concat_source","concat_caterlyst"),
-                                                  operators("concatId")===udlReferences("concat_source"))
+    val operator_udl=operators.join(udlReferences, operators("concatId")===udlReferences("concat_source"))
     val rename_columns=operators.select($"ohubId".as("prev_ohubId"),$"concatId".as("prev_concatId"))
     val uncleaned_output=rename_columns.join(operator_udl,$"concat_caterlyst"===$"prev_concatId")
     val cleaned_result=uncleaned_output.drop("oldIntegrationId","concat_source","concat_caterlyst")
       .withColumn("oldIntegrationId",uncleaned_output("prev_ohubId"))
-      .drop("prev_ohubId","prev_concatId")
+      .withColumn("dateUpdated",uncleaned_output("date_updated"))
+      .drop("prev_ohubId","prev_concatId","date_updated")
       .as[Operator]
     val combine=cleaned_result.unionByName(deltaPreProcessedOutputFile)
     combine
@@ -72,7 +72,7 @@ object OperatorStitchUpdateMapping extends SparkJob[OperatorStitchUpdateMappingC
     }
 
     val result = records.groupBy(_.concat_source).map { _._2.reduce {
-      (r1: Record, r2: Record) => if (r1.dateUpdated.after(r2.dateUpdated)) r1 else r2
+      (r1: Record, r2: Record) => if (r1.date_updated.after(r2.date_updated)) r1 else r2
     }}
     val dfNoDuplicateSources = spark.createDataFrame(result)
     val transformed = transform(spark, operators.toDF(),dfNoDuplicateSources,operator_preprocessed)
