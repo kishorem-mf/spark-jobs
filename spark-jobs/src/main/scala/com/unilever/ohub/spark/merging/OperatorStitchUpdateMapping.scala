@@ -2,10 +2,12 @@ package com.unilever.ohub.spark.merging
 
 import com.unilever.ohub.spark.domain.entity.Operator
 import com.unilever.ohub.spark.storage.Storage
-import com.unilever.ohub.spark.{Constants,SparkJob, SparkJobConfig}
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import com.unilever.ohub.spark.{Constants, SparkJob, SparkJobConfig}
+import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
 import scopt.OptionParser
 import java.sql.Date
+
+import com.unilever.ohub.spark.sql.JoinType
 
 case class Record(dateUpdated:  Date, concat_source: String, concat_caterlyst: String) extends scala.Product
 
@@ -76,7 +78,9 @@ object OperatorStitchUpdateMapping extends SparkJob[OperatorStitchUpdateMappingC
     }}
     val dfNoDuplicateSources = spark.createDataFrame(result)
     val transformed = transform(spark, operators.toDF(),dfNoDuplicateSources,operator_preprocessed)
+    val prev_operator = operators.join(transformed,Seq("concatId"),JoinType.LeftAnti)
 
+    storage.writeToParquet(prev_operator, config.operatorsInputFile)
     storage.writeToParquet(transformed, config.outputFile)
   }
 }
