@@ -78,9 +78,9 @@ object OperatorStitchUpdateMapping extends SparkJob[OperatorStitchUpdateMappingC
     }}
     val dfNoDuplicateSources = spark.createDataFrame(result)
     val transformed = transform(spark, operators.toDF(),dfNoDuplicateSources,operator_preprocessed)
-    val prev_operator = operators.join(transformed,Seq("concatId"),JoinType.LeftAnti).as[Operator]
-
-    storage.writeToParquet(prev_operator, config.operatorsInputFile)
     storage.writeToParquet(transformed, config.outputFile)
+
+    val prev_operator = operators.join(transformed,Seq("concatId"),JoinType.LeftAnti).as[Operator]
+    storage.writeToParquet(prev_operator, config.operatorsInputFile)
   }
 }
