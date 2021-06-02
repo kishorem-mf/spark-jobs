@@ -202,6 +202,13 @@ object OperatorConverter extends CommonDomainGateKeeper[Operator] with OperatorE
         hasPermittedToOrder = optional("hasPermittedToOrder",toBoolean),
         ofsValue = optional("ofsValue"),
         routeToMarketIceCreamCategory = optional("routeToMarketIceCreamCategory"),
+        additionalTags = optional("additionalTags"),
+        advertisementId = optional("advertisementId"),
+        deviceId = optional("deviceId"),
+        googlePlacesId = optional("googlePlacesId"),
+        internationalMapCode = optional("internationalMapCode"),
+        ipAddress = optional("ipAddress"),
+        nationalMapCode = optional("nationalMapCode"),
         //other fields
         additionalFields = additionalFields,
         ingestionErrors = errors
