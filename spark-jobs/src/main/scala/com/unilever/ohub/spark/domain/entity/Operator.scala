@@ -210,6 +210,13 @@ case class Operator(
                      hasPermittedToOrder:Option[Boolean],
                      ofsValue:Option[String],
                      routeToMarketIceCreamCategory:Option[String],
+                     additionalTags: Option[String],
+                     advertisementId: Option[String],
+                     deviceId: Option[String],
+                     googlePlacesId: Option[String],
+                     internationalMapCode: Option[String],
+                     ipAddress: Option[String],
+                     nationalMapCode: Option[String],
                      // other fields
                      additionalFields: Map[String, String],
                      ingestionErrors: Map[String, IngestionError]
