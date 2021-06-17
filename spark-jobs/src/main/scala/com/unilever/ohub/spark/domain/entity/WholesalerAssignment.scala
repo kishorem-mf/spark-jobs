@@ -42,6 +42,7 @@ case class WholesalerAssignment(
                      ohubUpdated: Timestamp,
 
                      // specific fields
+                     routeToMarketIceCreamCategory: Option[String],
                      isPrimaryFoodsWholesaler: Option[Boolean],
                      isPrimaryIceCreamWholesaler: Option[Boolean],
                      isPrimaryFoodsWholesalerCrm: Option[Boolean],
