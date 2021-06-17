@@ -35,6 +35,7 @@ class WholesalerAssignmentConverterSpec extends CsvDomainGateKeeperSpec[Wholesal
           sourceName = "EMAKINA",
           ohubCreated = actualWS.ohubCreated,
           ohubUpdated = actualWS.ohubUpdated,
+          routeToMarketIceCreamCategory = None,
           isPrimaryFoodsWholesaler = Some(true),
           isPrimaryIceCreamWholesaler = Some(true),
           isPrimaryFoodsWholesalerCrm = Some(true),

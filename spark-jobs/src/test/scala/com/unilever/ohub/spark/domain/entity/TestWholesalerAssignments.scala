@@ -24,6 +24,7 @@ trait TestWholesalerAssignments {
     sourceName = "sourceName",
     ohubCreated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
     ohubUpdated = Timestamp.valueOf("2015-06-30 13:49:00.0"),
+    routeToMarketIceCreamCategory = Some("routeToMarketIceCreamCategory"),
     isPrimaryFoodsWholesaler = Some(true),
     isPrimaryIceCreamWholesaler = Some(true),
     isPrimaryFoodsWholesalerCrm = Some(true),

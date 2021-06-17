@@ -33,6 +33,7 @@ object WholesalerAssignmentConverter extends CommonDomainGateKeeper[WholesalerAs
         sourceName = mandatory("sourceName"),
         ohubCreated = ohubCreated,
         ohubUpdated = ohubCreated,
+        routeToMarketIceCreamCategory = optional("routeToMarketIceCreamCategory"),
         isPrimaryFoodsWholesaler = optional("isPrimaryFoodsWholesaler", toBoolean),
         isPrimaryIceCreamWholesaler = optional("isPrimaryIceCreamWholesaler", toBoolean),
         isPrimaryFoodsWholesalerCrm = optional("isPrimaryFoodsWholesalerCrm", toBoolean),
