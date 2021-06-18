@@ -254,3 +254,13 @@ trait AssetEmptyParquetWriter extends EmptyParquetWriter[Asset] {
     spark.createDataset[Asset](Seq[Asset]())
   }
 }
+
+trait EntityRelationshipsEmptyParquetWriter extends EmptyParquetWriter[EntityRelationships] {
+
+  def createEmptyDataset(spark: SparkSession): Dataset[EntityRelationships] = {
+    import spark.implicits._
+
+    spark.createDataset[EntityRelationships](Seq[EntityRelationships]())
+  }
+}
+

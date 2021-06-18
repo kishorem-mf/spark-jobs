@@ -51,6 +51,8 @@ object ChainPreProcess extends BasePreProcess[Chain]
 
 object WholesalerAssignmentPreProcess extends BasePreProcess[WholesalerAssignment]
 
+object EntityRelationshipsPreProcess extends BasePreProcess[EntityRelationships]
+
 case class PreProcessConfig(
     integratedInputFile: String = "path-to-integrated-input-file",
     deltaInputFile: String = "path-to-delta-input-file",
