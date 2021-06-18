@@ -49,9 +49,7 @@ abstract class SparkJobWithAzureDLConfiguration extends SparkJob[DataLakeConfig]
       version("1.0")
       help("help") text "help text"
     }
-
 }
-
 abstract class AzureDLWriter[DomainType <: DomainEntity : TypeTag] extends SparkJobWithAzureDLConfiguration {
 
    def splitAndWriteParquetFiles(entityName:String, inputData: Dataset[DomainType], folderDate: String, config: DataLakeConfig, spark:SparkSession, storage: Storage):String = {
@@ -103,6 +101,7 @@ abstract class AzureDLWriter[DomainType <: DomainEntity : TypeTag] extends Spark
       config.integratedInputFile,config,spark,storage)
   }
 }
+
 object ActivityDLWriter extends AzureDLWriter[Activity]
 
 object AssetDLWriter extends AzureDLWriter[Asset]
@@ -154,6 +153,8 @@ object OperatorChangeLogDLWriter extends AzureDLWriter[OperatorChangeLog]
 object ContactPersonChangeLogDLWriter extends AzureDLWriter[ContactPersonChangeLog]
 
 object WholesalerAssignmentDLWriter extends AzureDLWriter[WholesalerAssignment]
+
+object EntityRelationshipsDLWriter extends AzureDLWriter[EntityRelationships] // scalastyle:ignore
 
 object AllDLOutboundWriter extends SparkJobWithAzureDLConfiguration {
   override def run(spark: SparkSession, config: DataLakeConfig, storage: Storage): Unit = {
