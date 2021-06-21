@@ -7,6 +7,15 @@ import com.unilever.ohub.spark.ingest.CustomParsers._
 import com.unilever.ohub.spark.ingest.{DomainTransformer, EntityRelationshipsEmptyParquetWriter}
 import org.apache.spark.sql.Row
 
+object EntityType extends Enumeration {
+  type EntityType = Value
+
+  val AFFILIATION, AGGREGATOR, BUYINGGROUP, CONTRACTCATERER, OPERATOR, WHOLESALER = Value
+
+  def isEntityType(s: String) = values.exists(_.toString == s) //scalastyle:off
+}
+
+
 object EntityRelationshipsConverter extends CommonDomainGateKeeper[EntityRelationships] with EntityRelationshipsEmptyParquetWriter {
 
   override def toDomainEntity: DomainTransformer ⇒ Row ⇒ EntityRelationships = { transformer ⇒
@@ -25,13 +34,13 @@ object EntityRelationshipsConverter extends CommonDomainGateKeeper[EntityRelatio
         concatId = mandatory("concatId"),
         relationshipName = optional("relationshipName"),
         relationshipType = mandatory("relationshipType"),
-        fromEntityType = mandatory("fromEntityType"),
+        fromEntityType = mandatory("fromEntityType", contains),
         fromEntitySourceName = mandatory("fromEntitySourceName"),
         fromSourceEntityId = mandatory("fromSourceEntityId"),
         fromConcatId = mandatory("fromConcatId"),
         fromEntityOhubId = optional("fromEntityOhubId"),
         fromEntityName = optional("fromEntityName"),
-        toEntityType = mandatory("toEntityType"),
+        toEntityType = mandatory("toEntityType", contains),
         toEntitySourceName = mandatory("toEntitySourceName"),
         toSourceEntityId = mandatory("toSourceEntityId"),
         toConcatId = mandatory("toConcatId"),

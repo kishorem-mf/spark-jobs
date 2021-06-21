@@ -6,6 +6,7 @@ import java.time._
 import org.apache.log4j.{LogManager, Logger}
 import java.time.format.{DateTimeFormatter, DateTimeParseException}
 
+import com.unilever.ohub.spark.ingest.common.EntityType
 import org.apache.spark.sql.types.Decimal
 
 object CustomParsers {
@@ -54,6 +55,13 @@ object CustomParsers {
     val str = localDate.format(jdbcDatePattern)
     Date.valueOf(str)
   }
+
+  def contains(input: String): String =
+    if (EntityType.isEntityType(input)) {
+      input
+    } else {
+      EntityType.OPERATOR.toString
+    }
 
   def toTimestamp(input: String): Timestamp = new Timestamp(input.toLong)
 
