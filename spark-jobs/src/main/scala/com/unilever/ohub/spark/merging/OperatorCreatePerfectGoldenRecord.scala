@@ -57,7 +57,16 @@ object OperatorCreatePerfectGoldenRecord extends BaseMerging[OperatorGolden] {
     val outputGoldenOthers = transform(spark, entityAllCountries)
     val dachUkiGolden = outputGoldenDach.unionByName(outputGoldenUki)
     val allDataGolden = dachUkiGolden.unionByName(outputGoldenOthers)
+    val mostRecentOhubIdWindow = Window
+      .partitionBy(col("ohubId"))
+      .orderBy(
+        desc_nulls_last("dateUpdated"),desc_nulls_last("dateCreated"),desc_nulls_last("ohubUpdated"),desc_nulls_last("ohubCreated")
+      )
+    val operatorsGoldenDeduplicated = allDataGolden
+      .withColumn("partitioner", row_number.over(mostRecentOhubIdWindow))
+      .where(col("partitioner").===(1))
+      .drop(col("partitioner"))
 
-    storage.writeToParquet(allDataGolden, config.outputFile)
+    storage.writeToParquet(operatorsGoldenDeduplicated, config.outputFile)
   }
 }
