@@ -230,7 +230,7 @@ object WholesalerAssignmentMerging extends SparkJob[WholesalerAssignmentMergingC
       .join(operators_golden.select(col("ohubId"), col("crmId"), col("countryCode")),
         col("distributorOhubId").===(col("ohubId")),"inner")
       .withColumn("id", uuid())
-      .withColumn("creationTimestamp", unixTime())
+      .withColumn("creationTimestamp", current_timestamp())
       .withColumn("concatId",concat_ws("~",col("countryCode"),lit("SSD"),col("operatorOhubId"),col("distributorOhubId")))
       .withColumn("countryCode", col("countryCode"))
       .withColumn("customerType", lit("WHOLESALERASSIGNMENT"))
